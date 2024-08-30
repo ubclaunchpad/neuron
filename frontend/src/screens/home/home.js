@@ -1,5 +1,4 @@
 import React from 'react'
-import SignupForm from '../../components/SignupForm/SignupForm';
 
 function Home() {
     const [data, setData] = React.useState(null);
@@ -13,7 +12,6 @@ function Home() {
     return (
         <div className="homePage">
             <h1>{!data ? "Loading..." : data}</h1>
-            <SignupForm></SignupForm>
         </div>
       );
 }

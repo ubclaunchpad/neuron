@@ -1,3 +1,4 @@
+// home.js is the landing page of the application.
 import React from 'react'
 import { getHelloWorld } from '../../api/homePageService';
 

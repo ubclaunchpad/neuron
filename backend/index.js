@@ -11,8 +11,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
-app.get("/api", (_, res) => {
-  res.json({ message: "Hello Neuron!" });
+app.get("/", (_, res) => {
+  res.send({ message: "Hello Team Neuron!" });
 });
 
 app.listen(PORT, () => {

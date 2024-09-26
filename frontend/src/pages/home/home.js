@@ -1,12 +1,13 @@
 import React from 'react'
+import { getHelloWorld } from '../../api/homePageService';
 
 function Home() {
     const [data, setData] = React.useState(null);
 
     React.useEffect(() => {
-      fetch("/api")
-        .then((res) => res.json())
-        .then((data) => setData(data.message));
+      getHelloWorld()
+        .then((data) => setData(data.message))
+        .catch((error) => console.error(error));
     }, []);
 
     return (
@@ -14,6 +15,6 @@ function Home() {
             <h1>{!data ? "Loading..." : data}</h1>
         </div>
       );
-}
+};
 
 export default Home;

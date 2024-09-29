@@ -19,6 +19,7 @@
     "mysql": "^2.18.1"
   },
   "devDependencies": {
+    "@types/body-parser": "^1.19.5",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/mysql": "^2.15.26",

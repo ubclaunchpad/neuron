@@ -1,6 +1,9 @@
-import connection from '../config/database'
+import { Request, Response } from 'express';
+import VolunteerModel from '../models/volunteerModel.js';
 
-function getVolunteerProfile(req, res) {
+const volunteerModel = new VolunteerModel();
+
+async function getVolunteerByEmail(req: Request, res: Response) {
     const { volunteerEmail } = req.body;
 
     if (!volunteerEmail) {
@@ -10,22 +13,8 @@ function getVolunteerProfile(req, res) {
     }
 
     try {
-        const query = `SELECT * FROM <volunteer-profiles-table-name> WHERE <key> = ?`;
-        const values = [volunteerEmail];
-
-        connection.query(query, values, (error, results) => {
-            if (error) {
-                return res.status(500).json({
-                    error: error.message
-                });
-            }
-            if (results.length == 0) {
-                return res.status(500).json({
-                    error: "No volunteer found under the given email"
-                });
-            }
-            res.status(200).json(results[0]);
-        });
+        const volunteer = await volunteerModel.getVolunteerByEmail(volunteerEmail);
+        res.status(200).json(volunteer);
     } catch (error) {
         return res.status(500).json({
             error: "Internal server error"
@@ -33,18 +22,10 @@ function getVolunteerProfile(req, res) {
     }
 }
 
-function getVolunteers(req, res) {
+async function getVolunteers(req: Request, res: Response) {
     try {
-        const query = `SELECT * FROM <volunteer-profiles-table-name>`;
-
-        connection.query(query, [], (error, results) => {
-            if (error) {
-                return res.status(500).json({
-                    error: error.message
-                });
-            }
-            res.status(200).json(results);
-        });
+        const volunteers = await volunteerModel.getVolunteers();
+        res.status(200).json(volunteers);
     } catch (error) {
         return res.status(500).json({
             error: "Internal server error"
@@ -52,7 +33,7 @@ function getVolunteers(req, res) {
     }
 }
 
-module.exports = { 
-    getVolunteerProfile, 
+export { 
+    getVolunteerByEmail, 
     getVolunteers 
 };

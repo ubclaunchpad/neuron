@@ -1,5 +1,7 @@
-// home.js is the landing page of the application.
+// home/ is the landing page of the application.
+import "./index.css";
 import React from 'react'
+import Header from '../../components/header';
 import { getHelloWorld } from '../../api/homePageService';
 
 function Home() {
@@ -13,6 +15,7 @@ function Home() {
 
     return (
         <div className="homePage">
+            <Header />
             <h1>{!data ? "Loading..." : data}</h1>
         </div>
       );

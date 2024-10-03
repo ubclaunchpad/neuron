@@ -8,3 +8,6 @@ router.post('/volunteer-profile', volunteerController.getVolunteerByEmail);
 
 // get all volunteers
 router.get('/volunteers', volunteerController.getVolunteers);
+
+// update volunteer profile
+router.put('/volunteer/:volunteer_id', volunteerController.updateVolunteer);

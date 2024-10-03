@@ -30,4 +30,16 @@ export default class VolunteerModel {
             })
         })
     }
+
+    updateVolunteer(volunteer_id: string, volunteerData: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const query = `UPDATE volunteers SET ? WHERE volunteer_id = ?`;
+            connectionPool.query(query, [volunteerData, volunteer_id], (error: any, results: any) => {
+                if (error) {
+                    return reject(error);
+                }
+                resolve(results);
+            });
+        });
+    }
 }

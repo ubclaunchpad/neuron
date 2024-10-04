@@ -3,17 +3,10 @@ import VolunteerModel from '../models/volunteerModel.js';
 
 const volunteerModel = new VolunteerModel();
 
-async function getVolunteerByEmail(req: Request, res: Response) {
-    const { volunteerEmail } = req.body;
-
-    if (!volunteerEmail) {
-        return res.status(400).json({
-            error: "Missing required field: 'volunteerEmail'"
-        });
-    }
-
+async function getVolunteerById(req: Request, res: Response) {
+    const volunteerId = req.params.id;
     try {
-        const volunteer = await volunteerModel.getVolunteerByEmail(volunteerEmail);
+        const volunteer = await volunteerModel.getVolunteerById(volunteerId);
         res.status(200).json(volunteer);
     } catch (error) {
         return res.status(500).json({
@@ -34,6 +27,6 @@ async function getVolunteers(req: Request, res: Response) {
 }
 
 export { 
-    getVolunteerByEmail, 
-    getVolunteers 
+    getVolunteerById,
+    getVolunteers
 };

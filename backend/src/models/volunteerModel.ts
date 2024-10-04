@@ -2,10 +2,10 @@ import connectionPool from "../config/database.js";
 
 export default class VolunteerModel {
 
-    getVolunteerById(volunteerId: string): Promise<any> {
+    getVolunteerById(volunteer_id: string): Promise<any> {
         return new Promise((resolve, reject) => {
             const query = "SELECT * FROM volunteers WHERE volunteer_id = ?";
-            const values = [volunteerId];
+            const values = [volunteer_id];
     
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
@@ -29,5 +29,17 @@ export default class VolunteerModel {
                 resolve(results);
             })
         })
+    }
+
+    updateVolunteer(volunteer_id: string, volunteerData: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const query = `UPDATE volunteers SET ? WHERE volunteer_id = ?`;
+            connectionPool.query(query, [volunteerData, volunteer_id], (error: any, results: any) => {
+                if (error) {
+                    return reject(error);
+                }
+                resolve(results);
+            });
+        });
     }
 }

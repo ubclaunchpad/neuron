@@ -1,0 +1,160 @@
+import React, { useState, useEffect } from 'react';
+
+const UserProfileForm = () => {
+  const [userData, setUserData] = useState({
+    user_id: "", // Primary key
+    email: "",
+    role: "", // VOLUN or ADMIN or INSTR
+    password: "",
+    created_at: "",
+  });
+
+  const [volunteerData, setVolunteerData] = useState({
+    volunteer_id: "", // Primary key
+    user_id: "", // Foreign key
+    l_name: "",
+    f_name: "",
+    total_hours: "",
+    class_preferences: "",
+    bio: "",
+    active: false,
+  });
+
+  useEffect(() => {
+    // Fetch user profile data from the backend when the component mounts
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/sudo_get_USER?user_id=' + userData.user_id);
+        const data = await response.json();
+        setUserData(data);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    const fetchVolunteerData = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/sudo_get_VOLUN?user_id=' + userData.user_id);
+        const data = await response.json();
+        setVolunteerData(data);
+      } catch (error) {
+        console.error('Error fetching volunteer data:', error);
+      }
+    };
+
+    fetchUserData();
+    fetchVolunteerData();
+  }, []); // Empty dependency array ensures this runs only once when the component mounts
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setVolunteerData({
+      ...volunteerData,
+      [name]: value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:3001/api/sudo_put_VOLUN', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(volunteerData),
+      });
+      const data = await response.json();
+      console.log('Success:', data);
+      // Optionally fetch the updated data again
+      const updatedResponse = await fetch('http://localhost:3001/api/sudo_get_VOLUN?user_id=' + userData.user_id);
+      const updatedData = await updatedResponse.json();
+      setVolunteerData(updatedData);
+    } catch (error) {
+      console.error('Error updating volunteer data:', error);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* User Data (Read-Only) */}
+      <input
+        type="text"
+        name="email"
+        value={userData.email}
+        readOnly
+        placeholder="Email"
+      />
+      <input
+        type="text"
+        name="role"
+        value={userData.role}
+        readOnly
+        placeholder="Role"
+      />
+      <input
+        type="password"
+        name="password"
+        value={userData.password}
+        readOnly
+        placeholder="Password"
+      />
+      <input
+        type="text"
+        name="created_at"
+        value={userData.created_at}
+        readOnly
+        placeholder="Created At"
+      />
+
+      {/* Volunteer Data (Editable) */}
+      <input
+        type="text"
+        name="f_name"
+        value={volunteerData.f_name}
+        onChange={handleChange}
+        placeholder="First Name"
+      />
+      <input
+        type="text"
+        name="l_name"
+        value={volunteerData.l_name}
+        onChange={handleChange}
+        placeholder="Last Name"
+      />
+      <input
+        type="text"
+        name="total_hours"
+        value={volunteerData.total_hours}
+        onChange={handleChange}
+        placeholder="Total Hours"
+      />
+      <input
+        type="text"
+        name="class_preferences"
+        value={volunteerData.class_preferences}
+        onChange={handleChange}
+        placeholder="Class Preferences"
+      />
+      <input
+        type="text"
+        name="bio"
+        value={volunteerData.bio}
+        onChange={handleChange}
+        placeholder="Bio"
+      />
+      <label>
+        Active:
+        <input
+          type="checkbox"
+          name="active"
+          checked={volunteerData.active}
+          onChange={(e) => handleChange({ target: { name: 'active', value: e.target.checked } })}
+        />
+      </label>
+      <button type="submit">Submit</button>
+    </form>
+  );
+};
+
+export default UserProfileForm;

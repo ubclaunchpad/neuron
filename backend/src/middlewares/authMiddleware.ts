@@ -9,7 +9,7 @@ authMiddleware.use(async (req, res, next) => {
     if (!sessionId) {
         res.locals.user = null;
         res.locals.session = null;
-        if (req.originalUrl.startsWith("/login") || req.originalUrl.startsWith("/sigunp")) {
+        if (req.originalUrl.startsWith("/login") || req.originalUrl.startsWith("/signup")) {
             next();
             return
         }

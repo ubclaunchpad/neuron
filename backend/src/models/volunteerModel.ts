@@ -33,8 +33,12 @@ export default class VolunteerModel {
 
     updateVolunteer(volunteer_id: string, volunteerData: any): Promise<any> {
         return new Promise((resolve, reject) => {
-            const query = `UPDATE volunteers SET ? WHERE volunteer_id = ?`;
-            connectionPool.query(query, [volunteerData, volunteer_id], (error: any, results: any) => {
+            // Construct the SET clause dynamically
+            const setClause = Object.keys(volunteerData).map(key => `${key} = ?`).join(', ');
+            const query = `UPDATE volunteers SET ${setClause} WHERE volunteer_id = ?`;
+            const values = [...Object.values(volunteerData), volunteer_id];
+
+            connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
                     return reject(error);
                 }

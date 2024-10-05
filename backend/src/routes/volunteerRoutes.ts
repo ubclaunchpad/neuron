@@ -1,13 +1,18 @@
-import { Router } from 'express'
+import { Router, Request, Response } from 'express';
 
-const volunteerController = require('../controllers/volunteerController.js')
-const router = Router()
+import { 
+    getVolunteerById, 
+    getVolunteers, 
+    updateVolunteer 
+} from '../controllers/volunteerController.js';
+
+const router = Router();
 
 // get volunteer profile by id
-router.get('/volunteer/:volunteer_id', volunteerController.getVolunteerById);
+router.get('/volunteer/:volunteer_id', (req: Request, res: Response) => { getVolunteerById(req, res) });
 
 // get all volunteers
-router.get('/volunteers', volunteerController.getVolunteers);
+router.get('/volunteers', (req: Request, res: Response) => { getVolunteers(req, res) });
 
 // update volunteer profile
-router.put('/volunteer/:volunteer_id', volunteerController.updateVolunteer);
+router.put('/volunteer/:volunteer_id', (req: Request, res: Response) => { updateVolunteer(req, res) });

@@ -16,7 +16,7 @@ export default class VolunteerModel {
                 }
                 resolve(results[0]);
             });
-        })
+        });
     }
 
     getVolunteers(): Promise<any> {
@@ -27,8 +27,8 @@ export default class VolunteerModel {
                     return reject(error);
                 }
                 resolve(results);
-            })
-        })
+            });
+        });
     }
 
     updateVolunteer(volunteer_id: string, volunteerData: any): Promise<any> {

@@ -17,7 +17,7 @@ async function getVolunteerById(req: Request, res: Response) {
         res.status(200).json(volunteer);
     } catch (error) {
         return res.status(500).json({
-            error: `Internal server error ${error}`
+            error: `Internal server error. ${error}`
         });
     }
 }
@@ -28,7 +28,7 @@ async function getVolunteers(req: Request, res: Response) {
         res.status(200).json(volunteers);
     } catch (error) {
         return res.status(500).json({
-            error: `Internal server error ${error}`
+            error: `Internal server error. ${error}`
         });
     }
 }
@@ -49,7 +49,7 @@ async function updateVolunteer(req: Request, res: Response) {
         res.status(200).json(updatedVolunteer);
     } catch (error) {
         return res.status(500).json({
-            error: `Internal server error ${error}`
+            error: `Internal server error. ${error}`
         });
     }
 }

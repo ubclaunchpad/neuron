@@ -9,7 +9,7 @@ export default class VolunteerModel {
     
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
-                    return reject(error);
+                    return reject(`An error occurred while executing the query: ${error}`);
                 }
                 if (results.length == 0) {
                     return reject("No volunteer found under the given ID");
@@ -24,7 +24,7 @@ export default class VolunteerModel {
             const query = "SELECT * FROM volunteers";
             connectionPool.query(query, [], (error: any, results: any) => {
                 if (error) {
-                    return reject(error);
+                    return reject(`An error occurred while executing the query: ${error}`);
                 }
                 resolve(results);
             });
@@ -40,7 +40,7 @@ export default class VolunteerModel {
 
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
-                    return reject(error);
+                    return reject(`An error occurred while executing the query: ${error}`);
                 }
                 resolve(results);
             });

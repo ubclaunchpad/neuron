@@ -1,9 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { getInstructors } from '../controllers/instructorController.js';
+import InstructorController from '../controllers/instructorController.js';
 
 const router = Router();
+const instructorController = new InstructorController();
 
 // get all instructors
-router.get('/getInstructors', (req: Request, res: Response) => { getInstructors(req, res) });
+router.get('/', async (req: Request, res: Response) => { 
+    await instructorController.getInstructors(req, res) 
+});
 
 export default router;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { fetchUserData, fetchVolunteerData, updateVolunteerData } from '../api/volunteerService';
 
-const UserProfileForm = () => {
+const UserProfileForm = ({ user_id }) => {
   const [userData, setUserData] = useState({
     user_id: "", // Primary key
     email: "",
@@ -21,30 +22,20 @@ const UserProfileForm = () => {
   });
 
   useEffect(() => {
-    // Fetch user profile data from the backend when the component mounts
-    const fetchUserData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/sudo_get_USER?user_id=' + userData.user_id);
-        const data = await response.json();
-        setUserData(data);
+        const fetchedUserData = await fetchUserData(user_id);
+        setUserData(fetchedUserData);
+
+        const fetchedVolunteerData = await fetchVolunteerData(fetchedUserData.user_id);
+        setVolunteerData(fetchedVolunteerData);
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
-    const fetchVolunteerData = async () => {
-      try {
-        const response = await fetch('http://localhost:3001/api/sudo_get_VOLUN?user_id=' + userData.user_id);
-        const data = await response.json();
-        setVolunteerData(data);
-      } catch (error) {
-        console.error('Error fetching volunteer data:', error);
-      }
-    };
-
-    fetchUserData();
-    fetchVolunteerData();
-  }, []); // Empty dependency array ensures this runs only once when the component mounts
+    fetchData();
+  }, [user_id]); // Dependency array includes user_id to refetch data if it changes
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,19 +48,12 @@ const UserProfileForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3001/api/sudo_put_VOLUN', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(volunteerData),
-      });
-      const data = await response.json();
-      console.log('Success:', data);
+      const updatedData = await updateVolunteerData(volunteerData);
+      console.log('Success:', updatedData);
+
       // Optionally fetch the updated data again
-      const updatedResponse = await fetch('http://localhost:3001/api/sudo_get_VOLUN?user_id=' + userData.user_id);
-      const updatedData = await updatedResponse.json();
-      setVolunteerData(updatedData);
+      const refreshedData = await fetchVolunteerData(userData.user_id);
+      setVolunteerData(refreshedData);
     } catch (error) {
       console.error('Error updating volunteer data:', error);
     }

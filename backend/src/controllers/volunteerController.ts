@@ -54,8 +54,44 @@ async function updateVolunteer(req: Request, res: Response) {
     }
 }
 
+// post api to add a volunteer
+async function addVolunteer(req: Request, res: Response) {
+    const volunteerData = req.body;
+
+    try {
+        const newVolunteer = await volunteerModel.addVolunteer(volunteerData);
+        res.status(201).json(newVolunteer);
+    } catch (error) {
+        return res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+}
+
+// get volunteer profile with user Email
+async function getVolunteerWithUserEmail(req: Request, res: Response) {
+    const { volunteer_id } = req.params;
+
+    if (!volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'volunteer_id'"
+        });
+    }
+
+    try {
+        const volunteerData = await volunteerModel.getVolunteerWithUserEmail(volunteer_id);
+        res.status(200).json(volunteerData);
+    } catch (error) {
+        return res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+}
+
 export { 
     getVolunteerById, 
     getVolunteers,
-    updateVolunteer
+    updateVolunteer,
+    addVolunteer,
+    getVolunteerWithUserEmail
 };

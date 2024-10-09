@@ -3,7 +3,9 @@ import { Router, Request, Response } from 'express';
 import { 
     getVolunteerById, 
     getVolunteers, 
-    updateVolunteer 
+    updateVolunteer,
+    addVolunteer,
+    getVolunteerWithUserEmail
 } from '../controllers/volunteerController.js';
 
 const router = Router();
@@ -16,3 +18,9 @@ router.get('/volunteers', (req: Request, res: Response) => { getVolunteers(req, 
 
 // update volunteer profile
 router.put('/volunteer/:volunteer_id', (req: Request, res: Response) => { updateVolunteer(req, res) });
+
+// post api to add a volunteer
+router.post('/volunteer', (req: Request, res: Response) => { addVolunteer(req, res) });
+
+// get api to get all volunteers with user email
+router.get('/volunteers/user-email', (req: Request, res: Response) => { getVolunteerWithUserEmail(req, res) });

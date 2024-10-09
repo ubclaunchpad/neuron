@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
-const UserProfileForm = () => {
+const UserProfileForm = ({ volunteer_id }) => {
   const [userData, setUserData] = useState({
-    user_id: "", // Primary key
     email: "",
-    role: "", // VOLUN or ADMIN or INSTR
-    password: "",
-    created_at: "",
   });
 
   const [volunteerData, setVolunteerData] = useState({
@@ -20,33 +16,33 @@ const UserProfileForm = () => {
     active: false,
   });
 
+  // Fetch data on component mount
   useEffect(() => {
-    // Fetch user profile data from the backend when the component mounts
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch('http://localhost:3001/api/sudo_get_USER?user_id=' + userData.user_id);
-        const data = await response.json();
-        setUserData(data);
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-
     const fetchVolunteerData = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/sudo_get_VOLUN?user_id=' + userData.user_id);
-        const data = await response.json();
-        setVolunteerData(data);
+        const response = await axios.get(`/api/volunteers/${volunteer_id}/user_email`);
+        const data = response.data;
+        setUserData({
+          email: data.email,
+        });
+        setVolunteerData({
+          volunteer_id: data.volunteer_id,
+          l_name: data.l_name,
+          f_name: data.f_name,
+          total_hours: data.total_hours,
+          class_preferences: data.class_preferences,
+          bio: data.bio,
+          active: data.active,
+        });
       } catch (error) {
         console.error('Error fetching volunteer data:', error);
       }
     };
 
-    fetchUserData();
     fetchVolunteerData();
-  }, []); // Empty dependency array ensures this runs only once when the component mounts
+  }, [volunteer_id]);
 
-  const handleChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setVolunteerData({
       ...volunteerData,
@@ -54,105 +50,65 @@ const UserProfileForm = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Handle form submission
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     try {
-      const response = await fetch('http://localhost:3001/api/sudo_put_VOLUN', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(volunteerData),
+      await axios.put(`/api/volunteer/${volunteerData.volunteer_id}`, volunteerData);
+      alert('Volunteer profile updated successfully');
+
+      // Refetch the data to verify the update, for testing purposes
+      const response = await axios.get(`/api/volunteers/${volunteer_id}/user_email`);
+      const data = response.data;
+      setUserData({
+        email: data.email,
       });
-      const data = await response.json();
-      console.log('Success:', data);
-      // Optionally fetch the updated data again
-      const updatedResponse = await fetch('http://localhost:3001/api/sudo_get_VOLUN?user_id=' + userData.user_id);
-      const updatedData = await updatedResponse.json();
-      setVolunteerData(updatedData);
+      setVolunteerData({
+        volunteer_id: data.volunteer_id,
+        l_name: data.l_name,
+        f_name: data.f_name,
+        total_hours: data.total_hours,
+        class_preferences: data.class_preferences,
+        bio: data.bio,
+        active: data.active,
+      });
     } catch (error) {
-      console.error('Error updating volunteer data:', error);
+      console.error('Error updating volunteer profile:', error);
+      alert('Failed to update volunteer profile');
     }
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      {/* User Data (Read-Only) */}
-      <input
-        type="text"
-        name="email"
-        value={userData.email}
-        readOnly
-        placeholder="Email"
-      />
-      <input
-        type="text"
-        name="role"
-        value={userData.role}
-        readOnly
-        placeholder="Role"
-      />
-      <input
-        type="password"
-        name="password"
-        value={userData.password}
-        readOnly
-        placeholder="Password"
-      />
-      <input
-        type="text"
-        name="created_at"
-        value={userData.created_at}
-        readOnly
-        placeholder="Created At"
-      />
-
-      {/* Volunteer Data (Editable) */}
-      <input
-        type="text"
-        name="f_name"
-        value={volunteerData.f_name}
-        onChange={handleChange}
-        placeholder="First Name"
-      />
-      <input
-        type="text"
-        name="l_name"
-        value={volunteerData.l_name}
-        onChange={handleChange}
-        placeholder="Last Name"
-      />
-      <input
-        type="text"
-        name="total_hours"
-        value={volunteerData.total_hours}
-        onChange={handleChange}
-        placeholder="Total Hours"
-      />
-      <input
-        type="text"
-        name="class_preferences"
-        value={volunteerData.class_preferences}
-        onChange={handleChange}
-        placeholder="Class Preferences"
-      />
-      <input
-        type="text"
-        name="bio"
-        value={volunteerData.bio}
-        onChange={handleChange}
-        placeholder="Bio"
-      />
-      <label>
-        Active:
-        <input
-          type="checkbox"
-          name="active"
-          checked={volunteerData.active}
-          onChange={(e) => handleChange({ target: { name: 'active', value: e.target.checked } })}
-        />
-      </label>
-      <button type="submit">Submit</button>
+      <div>
+        <label>Email:</label>
+        <input type="email" value={userData.email} readOnly />
+      </div>
+      <div>
+        <label>First Name:</label>
+        <input type="text" name="f_name" value={volunteerData.f_name} onChange={handleInputChange} />
+      </div>
+      <div>
+        <label>Last Name:</label>
+        <input type="text" name="l_name" value={volunteerData.l_name} onChange={handleInputChange} />
+      </div>
+      <div>
+        <label>Total Hours:</label>
+        <input type="number" name="total_hours" value={volunteerData.total_hours} onChange={handleInputChange} />
+      </div>
+      <div>
+        <label>Class Preferences:</label>
+        <input type="text" name="class_preferences" value={volunteerData.class_preferences} onChange={handleInputChange} />
+      </div>
+      <div>
+        <label>Bio:</label>
+        <textarea name="bio" value={volunteerData.bio} onChange={handleInputChange}></textarea>
+      </div>
+      <div>
+        <label>Active:</label>
+        <input type="checkbox" name="active" checked={volunteerData.active} onChange={(e) => setVolunteerData({ ...volunteerData, active: e.target.checked })} />
+      </div>
+      <button type="submit">Update Profile</button>
     </form>
   );
 };

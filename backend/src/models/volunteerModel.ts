@@ -46,4 +46,65 @@ export default class VolunteerModel {
             });
         });
     }
+
+    // !!! TODO: Put this post api to a new branch after local test before making pr to the main branch
+    addVolunteer(volunteerData: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const query = `
+                INSERT INTO volunteers (
+                    volunteer_id,
+                    l_name,
+                    f_name,
+                    total_hours,
+                    class_preferences,
+                    bio,
+                    active
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            `;
+            const values = [
+                volunteerData.volunteer_id,
+                volunteerData.l_name,
+                volunteerData.f_name,
+                volunteerData.total_hours,
+                volunteerData.class_preferences,
+                volunteerData.bio,
+                volunteerData.active
+            ];
+
+            connectionPool.query(query, values, (error: any, results: any) => {
+                if (error) {
+                    return reject(error);
+                }
+                resolve(results);
+            });
+        });
+    }
+
+    getVolunteerWithUserEmail(volunteer_id: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const query = `
+                SELECT 
+                    users.email,
+                    volunteers.volunteer_id,
+                    volunteers.l_name,
+                    volunteers.f_name,
+                    volunteers.total_hours,
+                    volunteers.class_preferences,
+                    volunteers.bio,
+                    volunteers.active
+                FROM 
+                    volunteers
+                JOIN 
+                    users ON volunteers.user_id = users.user_id
+                WHERE 
+                    volunteers.volunteer_id = ?;
+            `;
+            connectionPool.query(query, [volunteer_id], (error, results) => {
+                if (error) {
+                    return reject(error);
+                }
+                resolve(results[0]); // Assuming volunteer_id is unique
+            });
+        });
+    }
 }

@@ -14,7 +14,7 @@ export const fetchUserData = async (user_id) => {
 
 export const fetchVolunteerData = async (volunteer_id) => {
   try {
-    const response = await api.get(`/volunteer/${volunteer_id}`);
+    const response = await api.get(`/volunteer/volunteer/${volunteer_id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching volunteer data:', error);
@@ -24,7 +24,7 @@ export const fetchVolunteerData = async (volunteer_id) => {
 
 export const updateVolunteerData = async (volunteerData) => {
   try {
-    const response = await api.put(`/volunteer/${volunteerData.volunteer_id}`, volunteerData);
+    const response = await api.put(`/volunteer/volunteer/${volunteerData.volunteer_id}`, volunteerData);
     return response.data;
   } catch (error) {
     console.error('Error updating volunteer data:', error);

@@ -14,6 +14,10 @@ app.use(cors());
 
 app.use("/classes", classRoutes);
 
+app.get('/', (req: Request, res: Response) => {
+  res.send({ message: "Hello Team Neuron!" });
+});
+
 
 app.listen(PORT, () => {
   console.log(`Neuron backend server listening on ${PORT}`);

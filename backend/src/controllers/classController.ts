@@ -1,31 +1,18 @@
 import { Request, Response } from 'express';
-import connectionPool from "../config/database.js";
+import ClassesModel from '../models/classModel.js';
 
-export const getAllClasses = async (req: Request, res: Response): Promise<void> => {
-	try {
-		const classes = await new Promise<any[]>((resolve, reject) => {
-			const query = 'SELECT * FROM neuron.class';
-			
-			connectionPool.query(query, (error, results) => {
-				if (error) {
-					reject(error);
-				} else {
-					resolve(results);
-				}
-			});
-		});
+export default class ClassesController {
 
+	public async getAllClasses(req: Request, res: Response){
+		const classesModel = new ClassesModel();
 		
-
-          try {
-               res.send({
-                    message: classes,
-               });
-          } catch (error) {
-               console.error(error);
-               res.status(500).json({ message: 'Error fetching users', error });
-          }
-	} catch (error) {
-		console.error('Error fetching classes:', error);
+		try {
+			const classes = await classesModel.getClassesFromDB();
+			res.status(200).json(classes);
+		} catch (error) {
+			return res.status(500).json({
+				error: `Internal server error: ${error}`
+			});
+		}
 	}
-};
+}

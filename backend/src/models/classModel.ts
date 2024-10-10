@@ -1,8 +1,17 @@
-import express from 'express';
-import { getAllClasses } from '../controllers/classController.js';
+import connection from '../config/database.js';
 
-const router = express.Router();
+export default class ClassesModel {
 
-router.get('/', getAllClasses);
+     public getClassesFromDB(): Promise<any> {
+          return new Promise((resolve, reject) => {
+               const query = `SELECT * FROM neuron.class`;
 
-export default router;
+               connection.query(query, [], (error: any, results: any) => {
+                    if (error) {
+                         return reject(error + 'Error fetching instructors');
+                    }
+                         resolve(results);
+               });
+          });
+     }
+}

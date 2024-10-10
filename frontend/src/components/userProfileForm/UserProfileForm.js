@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { fetchUserData, fetchVolunteerData, updateVolunteerData } from '../../api/volunteerService';
+import { fetchVolunteerData, updateVolunteerData } from '../../api/volunteerService';
 
 const UserProfileForm = ({ volunteer_id }) => {
-  // const [userData, setUserData] = useState({
-  //   user_id: "", // Primary key
-  //   email: "",
-  //   role: "", // VOLUN or ADMIN or INSTR
-  //   password: "",
-  //   created_at: "",
-  // });
 
   const [volunteerData, setVolunteerData] = useState({
     volunteer_id: "", // Primary key
@@ -25,9 +18,6 @@ const UserProfileForm = ({ volunteer_id }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // const fetchedUserData = await fetchUserData(user_id);
-        // setUserData(fetchedUserData);
-
         const fetchedVolunteerData = await fetchVolunteerData(volunteer_id);
         setVolunteerData(fetchedVolunteerData);
       } catch (error) {
@@ -63,34 +53,6 @@ const UserProfileForm = ({ volunteer_id }) => {
   return (
     <form onSubmit={handleSubmit}>
       {/* User Data (Read-Only) */}
-      {/* <input
-        type="text"
-        name="email"
-        value={userData.email}
-        readOnly
-        placeholder="Email"
-      />
-      <input
-        type="text"
-        name="role"
-        value={userData.role}
-        readOnly
-        placeholder="Role"
-      />
-      <input
-        type="password"
-        name="password"
-        value={userData.password}
-        readOnly
-        placeholder="Password"
-      />
-      <input
-        type="text"
-        name="created_at"
-        value={userData.created_at}
-        readOnly
-        placeholder="Created At"
-      /> */}
         <input
         type="text"
         name="email"

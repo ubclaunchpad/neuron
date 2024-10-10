@@ -1,16 +1,5 @@
 // frontend/src/api/volunteerService.js
-
 import api from './api';
-
-export const fetchUserData = async (user_id) => {
-  try {
-    const response = await api.get(`/user/${user_id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching user data:', error);
-    throw error;
-  }
-};
 
 export const fetchVolunteerData = async (volunteer_id) => {
   try {

@@ -8,7 +8,7 @@ export default class ClassesModel {
 
                connection.query(query, [], (error: any, results: any) => {
                     if (error) {
-                         return reject(error + 'Error fetching instructors');
+                         return reject(error + 'Error fetching classes');
                     }
                          resolve(results);
                });

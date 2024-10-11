@@ -1,11 +1,11 @@
 {
   "name": "neuron-backend",
   "version": "1.0.0",
-  "type": "module",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "npx tsx src/index.js",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc"
   },
   "keywords": [],
@@ -16,7 +16,9 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "mysql": "^2.18.1"
+    "express-openid-connect": "^2.17.1",
+    "lucia": "^3.2.0",
+    "mysql2": "^3.11.3"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.5",
@@ -24,7 +26,9 @@
     "@types/express": "^5.0.0",
     "@types/mysql": "^2.15.26",
     "@types/node": "^22.7.4",
+    "nodemon": "^3.1.7",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.1",
     "typescript": "^5.6.2"
   }
 }

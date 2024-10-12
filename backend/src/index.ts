@@ -2,6 +2,9 @@
 import express, { Request, Response } from 'express';
 import cors from "cors";
 import bodyParser from "body-parser";
+
+// volunteer routes
+import volunteerRouter from './routes/volunteerRoutes.js';
 import instructorRouter from './routes/instructorRoutes.js';
 
 // set default port to be 3001
@@ -15,6 +18,9 @@ app.use(cors());
 app.get('/', (req: Request, res: Response) =>  {
   res.send({ message: "Hello Team Neuron!" });
 });
+
+// all changes in the volunteers table
+app.use('/volunteer', volunteerRouter);
 
 // define routes
 app.use('/instructors', instructorRouter);

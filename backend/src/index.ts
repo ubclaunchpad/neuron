@@ -19,10 +19,8 @@ app.get('/', (req: Request, res: Response) =>  {
   res.send({ message: "Hello Team Neuron!" });
 });
 
-// all changes in the volunteers table
+// define all routes
 app.use('/volunteer', volunteerRouter);
-
-// define routes
 app.use('/instructors', instructorRouter);
 
 app.listen(PORT, () => {

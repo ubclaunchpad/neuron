@@ -1,15 +1,19 @@
-import { Router } from "express";
-// import { verify } from "@node-rs/argon2";
-// import { auth } from "../lib/auth.js";
 import connectionPool from "../config/database.js";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
-import { Request, Response } from "express";
-// import { hash } from "@node-rs/argon2";
-// const { generateId } = import("lucia");
+import e, { Router, Request, Response } from "express";
+import {
+    deleteUser,
+    getUserByEmail,
+    insertUser,
+} from "../controllers/userController";
+import {
+    deleteVolunteer,
+    insertVolunteer,
+} from "../controllers/volunteerController.js";
 
 // Load environment variables
 dotenv.config();
@@ -21,126 +25,204 @@ const HOST = process.env.HOST;
 
 //Mail Config
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_ID,
-    pass: process.env.GMAIL_PASSWORD,
-  },
+    service: "gmail",
+    auth: {
+        user: process.env.GMAIL_ID,
+        pass: process.env.GMAIL_PASSWORD,
+    },
 });
 
-authRouter.post("/register", async (req: Request, res: Response) => {
-  // Get the user details from the request body
-  let { firstName, lastName, email, password, role } = req.body;
+authRouter.post(
+    "/register",
+    async (req: Request, res: Response): Promise<any> => {
+        // Get the user details from the request body
+        let { firstName, lastName, email, password, role } = req.body;
 
-  // Validate the user details
-  if (!firstName || !lastName || !email || !password || !role) {
-    return res.json({
-      status: false,
-      error: "Please fill in all fields",
-    });
-  }
+        // Validate the user details
+        if (!firstName || !lastName || !email || !password || !role) {
+            return res.status(400).json({
+                error: "Please fill in all the required fields",
+            });
+        }
 
-  // Trim the user details
-  firstName = firstName.trim();
-  lastName = lastName.trim();
-  email = email.trim();
-  role = role.trim();
+        if (!process.env.TOKEN_SECRET) {
+            return res.status(500).json({
+                error: "Server configuration error: TOKEN_SECRET is not defined",
+            });
+        }
 
-  // Hash Password
-  const hashedPassword = await bcrypt.hash(password, 10);
+        // Trim the user details
+        firstName = firstName.trim();
+        lastName = lastName.trim();
+        email = email.trim();
+        role = role.trim();
 
-  // User Id
-  const user_id = uuidv4();
+        // Hash Password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        // console.log(hashedPassword);
 
-  // Create User
-  try {
-    let sql = `INSERT INTO users(user_id, email, password, role) VALUES (?, ?, ?, ?)`;
-    let result = connectionPool.query(sql, [
-      user_id,
-      email,
-      hashedPassword,
-      role,
-    ]);
+        // User Id
+        const user_id = uuidv4();
 
-    if (!process.env.TOKEN_SECRET) {
-      return res.json({
-        status: false,
-        error: "Server configuration error: TOKEN_SECRET is not defined",
-      });
-    }
+        // Token Secret
+        const secret = process.env.TOKEN_SECRET + hashedPassword;
+        const payload = {
+            user_id: user_id,
+        };
 
-    if (!result) {
-      return res.json({
-        status: false,
-        error: "Error inserting user into the USERS table",
-      });
-    }
+        // Create User
+        try {
+            await insertUser({
+                user_id: user_id,
+                email: email,
+                password: hashedPassword,
+                role: role.toUpperCase(),
+            });
 
-    const role_specific_id = uuidv4();
+            if (role == "volun") {
+                try {
+                    await insertVolunteer({
+                        volunteer_id: uuidv4(),
+                        fk_user_id: user_id,
+                        f_name: firstName,
+                        l_name: lastName,
+                        email: email,
+                    });
 
-    if (role == "volun") {
-      sql = `INSERT INTO volunteers(volunteer_id, fk_user_id, f_name, l_name, email) VALUES (?, ?, ?, ?, ?)`;
-      result = connectionPool.query(sql, [
-        role_specific_id,
-        user_id,
-        firstName,
-        lastName,
-        email,
-      ]);
+                    // Create a token that expires in 24 hours
+                    const token = jwt.sign(payload, secret, {
+                        expiresIn: "24h",
+                    });
+                    const verificationLink = `${HOST}/auth/verify/${token}`;
 
-      if (!result) {
-        return res.json({
-          status: false,
-          error: "Error inserting volunteer into the VOLUNTEERS table",
-        });
-      }
-    }
-
-    const secret = process.env.TOKEN_SECRET + hashedPassword;
-    const payload = {
-      _id: user_id,
-    };
-
-    // Create a token that expires in 24 hours
-    const token = jwt.sign(payload, secret, { expiresIn: "24h" });
-    const verificationLink = `${HOST}/auth/verify/${token}`;
-
-    // Send a verification email with a link that includes the token
-    const mailOptions = {
-      from: '"Team Neuron" <neuronbc@gmail.com>',
-      to: email,
-      subject: "Neuron - Account Created",
-      html: `Hello ${firstName} ${lastName},<br><br>
+                    // Send a verification email with a link that includes the token
+                    const mailOptions = {
+                        from: '"Team Neuron" <neuronbc@gmail.com>',
+                        to: email,
+                        subject: "Neuron - Account Created",
+                        html: `Hello ${firstName} ${lastName},<br><br>
           Your Neuron account has been created successfully.<br>
           Please click the link below to verify your account:<br>
           <a href="${verificationLink}">${verificationLink}</a><br><br>
           Please note that this link will expire in 24 hours. If you fail to verify your account within this time, you will need to create a new account.<br><br>
           Thank you!<br>
           Team Neuron`,
-    };
+                    };
 
-    // Send the mail
-    transporter.sendMail(mailOptions, async function (error, info) {
-      if (error) {
+                    // Send the mail
+                    transporter.sendMail(
+                        mailOptions,
+                        async function (mailError, info) {
+                            if (mailError) {
+                                // Delete the volunteer before deleting the user because volunteer has a foreign key constraint
+                                // Delete the volunteer if the mail is not sent successfully
+                                try {
+                                    await deleteVolunteer(user_id);
+
+                                    // Delete the user if the mail is not sent successfully
+                                    try {
+                                        await deleteUser(user_id);
+
+                                        return res.status(500).json({
+                                            error: mailError,
+                                        });
+                                    } catch (error: any) {
+                                        return res.status(500).json({
+                                            error: error.message,
+                                        });
+                                    }
+                                } catch (error: any) {
+                                    return res.status(500).json({
+                                        error: error.message,
+                                    });
+                                }
+                            } else {
+                                // If the mail is sent successfully, return a success message
+                                return res.status(200).json({
+                                    message: "User created successfully",
+                                });
+                            }
+                        }
+                    );
+                } catch (error: any) {
+                    // Delete the user if the volunteer is not created successfully
+                    try {
+                        await deleteUser(user_id);
+                        return res.status(500).json({
+                            error: error.message,
+                        });
+                    } catch (error: any) {
+                        return res.status(500).json({
+                            error: error.message,
+                        });
+                    }
+                }
+            }
+        } catch (error: any) {
+            return res.status(500).json({
+                error: error.message,
+            });
+        }
+    }
+);
+
+authRouter.post("/login", async (req: Request, res: Response): Promise<any> => {
+    // Get the user details from the request body
+    let { email, password } = req.body;
+
+    // Validate the user details
+    if (!email || !password) {
         return res.json({
-          status: false,
-          error: "User created but email not sent",
+            status: false,
+            error: "Please fill in all fields",
         });
-      } else {
-        // If the mail is sent successfully, return a success message
-        return res.json({
-          status: true,
-          message: "User created successfully",
+    }
+
+    // Trim the user details
+    email = email.trim();
+
+    // Get the user from the database
+    try {
+        const user = await getUserByEmail(email);
+
+        // console.log(user.password);
+
+        // If the password is incorrect, return an error
+        if (!(await bcrypt.compare(password, user.password))) {
+            return res.status(400).json({
+                error: "Incorrect password",
+            });
+        }
+
+        // If the TOKEN_SECRET is not defined, return an error
+        if (!process.env.TOKEN_SECRET) {
+            return res.status(500).json({
+                error: "Server configuration error: TOKEN_SECRET is not defined",
+            });
+        }
+
+        const secret = process.env.TOKEN_SECRET + user.password;
+        const payload = {
+            user_id: user.user_id,
+        };
+
+        // Create a token that expires in 24 hours
+        const token = jwt.sign(payload, secret, { expiresIn: "24h" });
+
+        return res.status(200).json({
+            token: token,
         });
-      }
-    });
-  } catch (err) {
-    return res.json({
-      status: false,
-      error: "Error creating user",
-      errMessage: (err as Error).message,
-    });
-  }
+    } catch (error: any) {
+        if (error.message.includes("Incorrect email: User not found")) {
+            return res.status(400).json({
+                error: error.message,
+            });
+        } else if (error.message.includes("Error logging in")) {
+            return res.status(500).json({
+                error: error.message,
+            });
+        }
+    }
 });
 
 // authRouter.get("/login", async (_, res) => {

@@ -3,10 +3,25 @@ import api from './api';
 
 const getAllClasses = () => api.get('/classes')
     .then((response) => {
-        console.log(response.data);
         return response.data;
     }).catch((error) => {
         console.error(error);
     });
 
-export { getAllClasses };
+const getShiftInfo = async (volunteerID, scheduleID, shiftDate) => {
+    try {
+        const response = await api.post('/classes/shifts', { 
+            volunteerID, 
+            scheduleID, 
+            shiftDate 
+        });
+
+        const res = response.data;
+        return res;  
+    } catch (error) {
+        console.error('Error fetching shift info:', error);
+        throw error;  
+    }
+}
+
+export { getAllClasses, getShiftInfo };

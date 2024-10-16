@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { Request, Response } from "express";
+import { AuthenticatedUserRequest } from "../types/types";
 import {
     deleteVolunteer,
     getVolunteerByUserId,
@@ -261,7 +262,7 @@ async function loginUser(req: Request, res: Response): Promise<any> {
             });
         }
 
-        const secret = TOKEN_SECRET + user.password;
+        const secret = TOKEN_SECRET;
         const payload = {
             user_id: user.user_id,
         };
@@ -487,11 +488,49 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
     }
 }
 
+async function updatePassword(
+    req: AuthenticatedUserRequest,
+    res: Response
+): Promise<any> {
+    // Get the user and password from the request
+    const { password } = req.body;
+
+    // User coming from the isAuthorized middleware
+    const user = req.user;
+
+    // console.log(user);
+
+    if (!user) {
+        return res.status(500).json({
+            error: "Couldn't verify a user from the token",
+        });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    try {
+        await updateUser(user.user_id, {
+            password: hashedPassword,
+        });
+
+        return res.status(200).json({
+            message: "Password updated successfully",
+        });
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
+        });
+    }
+}
+
 export {
+    getUserById,
     registerUser,
     loginUser,
     verifyUser,
     sendResetPasswordEmail,
     verifyAndRedirect,
     resetPassword,
+    updatePassword,
 };

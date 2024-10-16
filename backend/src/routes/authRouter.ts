@@ -6,7 +6,10 @@ import {
     resetPassword,
     verifyAndRedirect,
     sendResetPasswordEmail,
+    updatePassword,
 } from "../controllers/userController";
+import { isAuthorized } from "../config/isAuthorized";
+import { AuthenticatedUserRequest } from "../types/types";
 
 export const authRouter = Router();
 
@@ -30,4 +33,10 @@ authRouter.get("/forgot-password/:id/:token", (req: Request, res: Response) =>
 
 authRouter.post("/reset-password/:id/:token", (req: Request, res: Response) =>
     resetPassword(req, res)
+);
+
+authRouter.post(
+    "/update-password",
+    isAuthorized,
+    (req: AuthenticatedUserRequest, res: Response) => updatePassword(req, res)
 );

@@ -22,6 +22,19 @@ async function getVolunteerById(req: Request, res: Response) {
     }
 }
 
+async function getVolunteerByUserId(user_id: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+        volunteerModel
+            .getVolunteerByUserId(user_id)
+            .then((results: any) => {
+                resolve(results);
+            })
+            .catch((error: any) => {
+                reject(error);
+            });
+    });
+}
+
 async function getVolunteers(req: Request, res: Response) {
     try {
         const volunteers = await volunteerModel.getVolunteers();
@@ -62,31 +75,25 @@ async function deleteVolunteer(user_id: string): Promise<any> {
 }
 
 // Update a volunteer's profile based on the volunteer_id
-async function updateVolunteer(req: Request, res: Response) {
-    const { volunteer_id } = req.params;
-    const volunteerData = req.body;
-
-    if (!volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'volunteer_id'",
-        });
-    }
-
-    try {
-        const updatedVolunteer = await volunteerModel.updateVolunteer(
-            volunteer_id,
-            volunteerData
-        );
-        res.status(200).json(updatedVolunteer);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error. ${error}`,
-        });
-    }
+async function updateVolunteer(
+    volunteer_id: string,
+    volunteerData: any
+): Promise<any> {
+    return new Promise((resolve, reject) => {
+        volunteerModel
+            .updateVolunteer(volunteer_id, volunteerData)
+            .then((results: any) => {
+                resolve(results);
+            })
+            .catch((error: any) => {
+                reject(error);
+            });
+    });
 }
 
 export {
     getVolunteerById,
+    getVolunteerByUserId,
     getVolunteers,
     insertVolunteer,
     deleteVolunteer,

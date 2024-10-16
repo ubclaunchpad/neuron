@@ -1,6 +1,31 @@
 import connectionPool from "../config/database.js";
 
 export default class UserModel {
+    getUserById(user_id: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const query = `SELECT * FROM users WHERE user_id = ?`;
+            const values = [user_id];
+
+            connectionPool.query(query, values, (error: any, results: any) => {
+                if (error) {
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
+                }
+
+                if (results.length === 0) {
+                    return reject({
+                        status: 400,
+                        message: `No user found with the given user_id`,
+                    });
+                }
+
+                return resolve(results[0]);
+            });
+        });
+    }
+
     getUserByEmail(email: string): Promise<any> {
         return new Promise((resolve, reject) => {
             const query = `SELECT * FROM users WHERE email = ?`;
@@ -8,11 +33,17 @@ export default class UserModel {
 
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
-                    return reject(new Error(`Error logging in: ${error}`));
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
                 }
 
                 if (results.length === 0) {
-                    return reject(new Error("Incorrect email: User not found"));
+                    return reject({
+                        status: 400,
+                        message: `No user found with the given email`,
+                    });
                 }
 
                 return resolve(results[0]);
@@ -27,7 +58,33 @@ export default class UserModel {
 
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
-                    return reject(new Error(`Error creating user: ${error}`));
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
+                }
+
+                return resolve(results);
+            });
+        });
+    }
+
+    updateUser(user_id: string, userData: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const setClause = Object.keys(userData)
+                .map((key) => `${key} = ?`)
+                .join(", ");
+            const query = `UPDATE users SET ${setClause} WHERE user_id = ?`;
+            const values = [...Object.values(userData), user_id];
+
+            // console.log(query);
+
+            connectionPool.query(query, values, (error: any, results: any) => {
+                if (error) {
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
                 }
 
                 return resolve(results);
@@ -42,7 +99,10 @@ export default class UserModel {
 
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
-                    return reject(new Error(`Error deleting user: ${error}`));
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
                 }
 
                 return resolve(results);

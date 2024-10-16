@@ -8,12 +8,39 @@ export default class VolunteerModel {
 
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
-                    return reject(
-                        `An error occurred while executing the query: ${error}`
-                    );
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
                 }
                 if (results.length == 0) {
-                    return reject("No volunteer found under the given ID");
+                    return reject({
+                        status: 400,
+                        message: `No volunteer found under the given ID`,
+                    });
+                }
+                resolve(results[0]);
+            });
+        });
+    }
+
+    getVolunteerByUserId(user_id: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const query = "SELECT * FROM volunteers WHERE fk_user_id = ?";
+            const values = [user_id];
+
+            connectionPool.query(query, values, (error: any, results: any) => {
+                if (error) {
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
+                }
+                if (results.length == 0) {
+                    return reject({
+                        status: 400,
+                        message: `No volunteer found with the given user_id`,
+                    });
                 }
                 resolve(results[0]);
             });
@@ -25,9 +52,10 @@ export default class VolunteerModel {
             const query = "SELECT * FROM volunteers";
             connectionPool.query(query, [], (error: any, results: any) => {
                 if (error) {
-                    return reject(
-                        `An error occurred while executing the query: ${error}`
-                    );
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
                 }
                 resolve(results);
             });
@@ -45,9 +73,10 @@ export default class VolunteerModel {
 
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
-                    return reject(
-                        `An error occurred while executing the query: ${error}`
-                    );
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
                 }
                 resolve(results);
             });
@@ -64,15 +93,15 @@ export default class VolunteerModel {
                 volunteer.f_name,
                 volunteer.l_name,
                 volunteer.email,
+                volunteer.active,
             ];
 
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
-                    return reject(
-                        new Error(
-                            `An error occurred while executing the query: ${error}`
-                        )
-                    );
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
                 }
                 resolve(results);
             });
@@ -86,9 +115,10 @@ export default class VolunteerModel {
 
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
-                    return reject(
-                        `An error occurred while executing the query: ${error}`
-                    );
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
                 }
                 resolve(results);
             });

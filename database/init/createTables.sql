@@ -1,4 +1,15 @@
 -- Paste all 'create' SQL commands here
+DROP TABLE IF EXISTS shift_coverage_request;
+DROP TABLE IF EXISTS shifts;
+DROP TABLE IF EXISTS volunteer_class;
+DROP TABLE IF EXISTS availability;
+DROP TABLE IF EXISTS schedule;
+DROP TABLE IF EXISTS class;
+DROP TABLE IF EXISTS volunteers;
+DROP TABLE IF EXISTS admins;
+DROP TABLE IF EXISTS instructors;
+DROP TABLE IF EXISTS user_session;
+DROP TABLE IF EXISTS users;
 
 create table users (
     user_id VARCHAR(255) PRIMARY KEY,
@@ -8,18 +19,12 @@ create table users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-create table user_session (
-    id VARCHAR(255) PRIMARY KEY,
-    expires_at DATETIME NOT NULL,
-    fk_user_id VARCHAR(255) NOT NULL,
-    FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
-);
-
 create table instructors (
 	instructor_id VARCHAR(255) PRIMARY KEY, 
     fk_user_id VARCHAR(255),         
     f_name VARCHAR(15) NOT NULL,
     l_name VARCHAR(15) NOT NULL,
+    email VARCHAR(45) NOT NULL,
     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
 );
 
@@ -45,6 +50,7 @@ create table volunteers (
     active BOOLEAN,
     email VARCHAR(45) NOT NULL,
     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
+    ON DELETE CASCADE
 );
 
 create table admins (
@@ -53,6 +59,7 @@ create table admins (
     f_name VARCHAR(15) NOT NULL,
     l_name VARCHAR(15) NOT NULL,
     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
+    ON DELETE CASCADE
 );
 
 create table availability (
@@ -62,6 +69,7 @@ create table availability (
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
+    ON DELETE CASCADE
 );
 
 create table volunteer_class (
@@ -77,11 +85,14 @@ create table schedule (
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
+    ON DELETE CASCADE
 );
 
 create table shifts (
-	fk_volunteer_id VARCHAR(255) REFERENCES volunteers(volunteer_id),
-    fk_schedule_id INT REFERENCES schedule(schedule_id),
+	fk_volunteer_id VARCHAR(255) REFERENCES volunteers(volunteer_id)
+    ON DELETE CASCADE,
+    fk_schedule_id INT REFERENCES schedule(schedule_id)
+    ON DELETE CASCADE,
     shift_date DATE NOT NULL,
     duration INT NOT NULL,
     PRIMARY KEY (fk_volunteer_id, fk_schedule_id, shift_date)
@@ -95,8 +106,7 @@ CREATE TABLE shift_coverage_request (
     covered_by VARCHAR(255) NOT NULL,
     fulfilled BOOLEAN,
     FOREIGN KEY (fk_volunteer_id, fk_schedule_id, shift_date)
-        REFERENCES shifts(fk_volunteer_id, fk_schedule_id, shift_date),
+        REFERENCES shifts(fk_volunteer_id, fk_schedule_id, shift_date) ON DELETE CASCADE,
     FOREIGN KEY (covered_by)
-        REFERENCES volunteers(volunteer_id)
+        REFERENCES volunteers(volunteer_id) ON DELETE CASCADE
 );
-

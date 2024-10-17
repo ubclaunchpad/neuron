@@ -23,10 +23,10 @@ INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_li
 (1, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Strength & Balance Level 1', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class1', '2024-09-09', '2024-12-13');
 
 -- Set class schedule 
-INSERT INTO schedule (fk_class_id, day_of_week, start_time, end_time) VALUES
-(1, 2, '09:00:00', '10:30:00');
-INSERT INTO schedule (fk_class_id, day_of_week, start_time, end_time) VALUES
-(1, 4, '09:00:00', '10:30:00');
+INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+(1, 1, 2, '09:00:00', '10:30:00');
+INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+(2, 1, 4, '09:00:00', '10:30:00');
 
 -- Assign volunteer to class
 INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
@@ -37,3 +37,7 @@ INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUE
 ('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 1, '2024-09-10', 90);
 INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES
 ('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 2, '2024-09-12', 90);
+
+-- Create entry in shift_coverage_request table
+INSERT INTO shift_coverage_request (fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
+VALUES ('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 1, '2024-09-10', NULL);

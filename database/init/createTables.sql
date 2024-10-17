@@ -72,10 +72,14 @@ create table availability (
     ON DELETE CASCADE
 );
 
-create table volunteer_class (
-	fk_volunteer_id VARCHAR(255) REFERENCES volunteers(volunteer_id),
-    fk_class_id VARCHAR(255) REFERENCES class(class_id),
-    PRIMARY KEY (fk_volunteer_id, fk_class_id)
+CREATE TABLE volunteer_class (
+    fk_volunteer_id VARCHAR(255),
+    fk_class_id INT,
+    PRIMARY KEY (fk_volunteer_id, fk_class_id),
+    FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
+    ON DELETE CASCADE,
+    FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
+    ON DELETE CASCADE
 );
 
 create table schedule (
@@ -88,25 +92,27 @@ create table schedule (
     ON DELETE CASCADE
 );
 
-create table shifts (
-	fk_volunteer_id VARCHAR(255) REFERENCES volunteers(volunteer_id)
-    ON DELETE CASCADE,
-    fk_schedule_id INT REFERENCES schedule(schedule_id)
-    ON DELETE CASCADE,
+CREATE TABLE shifts (
+    fk_volunteer_id VARCHAR(255),
+    fk_schedule_id INT,
     shift_date DATE NOT NULL,
     duration INT NOT NULL,
-    PRIMARY KEY (fk_volunteer_id, fk_schedule_id, shift_date)
+    PRIMARY KEY (fk_volunteer_id, fk_schedule_id, shift_date),
+    FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
+    ON DELETE CASCADE,
+    FOREIGN KEY (fk_schedule_id) REFERENCES schedule(schedule_id)
+    ON DELETE CASCADE
 );
 
 CREATE TABLE shift_coverage_request (
-    request_id VARCHAR(255) PRIMARY KEY,                     
+    request_id INT PRIMARY KEY AUTO_INCREMENT,                     
     fk_volunteer_id VARCHAR(255) NOT NULL,                   
     fk_schedule_id INT NOT NULL,
     shift_date DATE NOT NULL,                       
-    covered_by VARCHAR(255) NOT NULL,
-    fulfilled BOOLEAN,
+    covered_by VARCHAR(255),
+
     FOREIGN KEY (fk_volunteer_id, fk_schedule_id, shift_date)
         REFERENCES shifts(fk_volunteer_id, fk_schedule_id, shift_date) ON DELETE CASCADE,
     FOREIGN KEY (covered_by)
-        REFERENCES volunteers(volunteer_id) ON DELETE CASCADE
+        REFERENCES volunteers(volunteer_id) ON DELETE SET NULL
 );

@@ -9,8 +9,10 @@ export default class InstructorModel {
      const query = `SELECT * FROM instructors`;
 
      connectionPool.query(query, [], (error: any, results: any) => {
-       if (error) {
-        return reject(`An error occurred while executing the query: ${error}`);
+       if (error) {reject({
+        status: 500,
+        message: `An error occurred while executing the query: ${error}`,
+        });
        }
        resolve(results);
      });
@@ -24,10 +26,16 @@ export default class InstructorModel {
 
       connectionPool.query(query, values, (error: any, results: any) => {
           if (error) {
-            return reject(`An error occurred while executing the query: ${error}`);
+            reject({
+              status: 500,
+              message: `An error occurred while executing the query: ${error}`,
+          });
           }
           if (results.length == 0) {
-              return reject("No instructor found under the given ID");
+            reject({
+              status: 400,
+              message: `No instructor found under the given ID: ${instructor_id}`,
+            });
           }
           resolve(results[0]);
       });

@@ -8,9 +8,9 @@ async function getInstructors(req: Request, res: Response) {
     try {
         const instructors = await instructorModel.getInstructors();
         res.status(200).json(instructors);
-    } catch (error) {
-        return res.status(500).json({
-        error: `Internal server error: ${error}`
+    } catch (error: any) {
+        return res.status(error.status).json({
+        error: `${error.message}`
         });
     }
 }
@@ -27,9 +27,9 @@ async function getInstructorById(req: Request, res: Response) {
     try {
         const instructor = await instructorModel.getInstructorById(instructor_id);
         res.status(200).json(instructor);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error. ${error}`
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: `${error.message}`
         });
     };
 }
@@ -48,8 +48,8 @@ async function insertInstructor(req: Request, res: Response) {
         const result = await instructorModel.insertInstructor(instructor);
         res.status(200).json(result);
     } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
+        return res.status(error.status).json({
+            error: `${error.message}`
         });
     }
 }

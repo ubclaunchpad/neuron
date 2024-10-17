@@ -9,7 +9,7 @@ export default class Instructor {
 
      connectionPool.query(query, [], (error: any, results: any) => {
        if (error) {
-         return reject(error + 'Error fetching instructors');
+        return reject(`An error occurred while executing the query: ${error}`);
        }
        resolve(results);
      });
@@ -23,7 +23,7 @@ export default class Instructor {
 
       connectionPool.query(query, values, (error: any, results: any) => {
           if (error) {
-              return reject(`An error occurred while executing the query: ${error}`);
+            return reject(`An error occurred while executing the query: ${error}`);
           }
           if (results.length == 0) {
               return reject("No instructor found under the given ID");

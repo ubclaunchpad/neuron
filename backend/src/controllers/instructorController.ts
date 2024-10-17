@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import InstructorModel from '../models/instructor.js';
+import { Instructor } from '../common/types.js';
+import InstructorModel from '../models/instructorModel.js';
 
 const instructorModel = new InstructorModel();
 
@@ -33,7 +34,28 @@ async function getInstructorById(req: Request, res: Response) {
     };
 }
 
+async function insertInstructor(req: Request, res: Response) {
+    const instructor: Instructor = req.body;
+    
+    const { instructor_id, f_name, l_name, email } = instructor;
+    if (!instructor_id || !f_name || !l_name || !email) {
+        return res.status(400).json({
+            error: "Missing required fields. 'instructor_id', 'f_name', 'l_name', and 'email' are required."
+        });
+    }
+    
+    try {
+        const result = await instructorModel.insertInstructor(instructor);
+        res.status(200).json(result);
+    } catch (error: any) {
+        return res.status(500).json({
+            error: `Internal server error. ${error.message}`
+        });
+    }
+}
+
 export { 
     getInstructors, 
     getInstructorById,
+    insertInstructor
 };

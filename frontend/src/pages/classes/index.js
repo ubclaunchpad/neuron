@@ -1,7 +1,8 @@
 import "./index.css";
 import React, {useEffect, useState} from 'react'
 import Header from '../../components/header';
-import { getAllClasses, getShiftInfo } from '../../api/classesPageService';
+import { getAllClasses } from '../../api/classesPageService';
+import { getShiftInfo } from "../../api/shiftService";
 
 function Classes() {
      const [data, setData] = useState(null);
@@ -52,7 +53,7 @@ function Classes() {
                          Shift Duration: {shiftInfo.duration} <br/>
                          </div> : null
                }
-               
+
                <br/>
 
           </div>

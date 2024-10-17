@@ -32,9 +32,12 @@ export default class ShiftModel {
 
                connection.query(query, [fk_volunteer_id, fk_schedule_id, shift_date], (error: any, results: any) => {
                     if (error) {
-                         return reject(error + 'Error fetching classes');
+                         return reject({
+                              status: 500,
+                              message: `An error occurred while executing the query: ${error}`,
+                         });
                     }
-                         resolve(results);
+                    resolve(results);
                });
           });
      }

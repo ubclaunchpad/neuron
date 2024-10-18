@@ -43,7 +43,7 @@ export default class ClassesController {
             const result = await classesModel.addClassToDB(newClass);
             res.status(201).json({
                 message: 'Class successfully added',
-                class_id: result.insertId // assuming MySQL returns the inserted class ID
+                class_id: result.class_id
             });
         } catch (error) {
             return res.status(500).json({

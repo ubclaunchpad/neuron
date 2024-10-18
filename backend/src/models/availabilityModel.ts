@@ -72,7 +72,7 @@ export default class AvailabilityModel {
     return new Promise(async (resolve, reject) => {
       try {
 
-        // Get exisitng availabilities and conform them to our interface
+        // Get exisitng availabilities and conform them to our Availability type
         const existingAvailabilities = (await this.getAvailabilityByVolunteerId(volunteer_id))
           .map((availability: any) => ({
             day: availability.day_of_week,

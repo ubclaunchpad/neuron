@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
-app.get('/', (req: Request, res: Response) =>  {
+app.get('/', (req: Request, res: Response) => {
   res.send({ message: "Hello Team Neuron!" });
 });
 

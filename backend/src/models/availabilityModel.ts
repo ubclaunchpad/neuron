@@ -54,40 +54,6 @@ export default class AvailabilityModel {
     });
   }
 
-  deleteOverlappingAvailabilities(volunteer_id: string, availabilities: Availability[]): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if (availabilities.length === 0) {
-        return resolve([]);
-      }
-
-      const conditions = availabilities.map(() => `
-        (day_of_week = ? AND (
-          (start_time < ? AND end_time > ?) OR 
-          (start_time >= ? AND start_time < ?) OR
-          (end_time > ? AND end_time <= ?)
-        ))
-      `).join(' OR ');
-
-      const query = `DELETE FROM availability WHERE fk_volunteer_id = ? AND (${conditions})`;
-      const values = [volunteer_id, ...availabilities.flatMap(availability => [
-        availability.day,
-        availability.end_time, availability.start_time,
-        availability.start_time, availability.end_time,
-        availability.start_time, availability.end_time
-      ])];
-
-      connectionPool.query(query, values, (error: any, results: any) => {
-        if (error) {
-          return reject({
-            status: 500,
-            message: `An error occurred while executing the query: ${error}`
-          });
-        }
-        resolve(results);
-      });
-    });
-  }
-
   deleteAvailabilitiesByAvailabilityId(volunteer_id: string, availabilityIds: string[]): Promise<any> {
     return new Promise((resolve, reject) => {
       const query = `DELETE FROM availability WHERE fk_volunteer_id = ? AND availability_id IN (?)`;
@@ -106,15 +72,8 @@ export default class AvailabilityModel {
     return new Promise(async (resolve, reject) => {
       try {
 
-        // Remove overlapping availabilities first
-        await this.deleteOverlappingAvailabilities(volunteer_id, newAvailabilities);
-
-        // Find days that are affected by the new availabilities
-        const affectedDays = new Set(newAvailabilities.map(availability => availability.day));
-
-        // Only get existing availabilities that will be affected + conform them to our interface
-        const conformExistingAvailabilities = (await this.getAvailabilityByVolunteerId(volunteer_id))
-          .filter((availability: any) => affectedDays.has(availability.day_of_week))
+        // Get exisitng availabilities and conform them to our interface
+        const existingAvailabilities = (await this.getAvailabilityByVolunteerId(volunteer_id))
           .map((availability: any) => ({
             day: availability.day_of_week,
             start_time: availability.start_time.slice(0, 5),
@@ -122,51 +81,44 @@ export default class AvailabilityModel {
             availability_id: availability.availability_id
           }));
 
-        // Combine old and new availabilities then sort them by day and start_time
-        const allAvailabilities = [...conformExistingAvailabilities, ...newAvailabilities].sort((a, b) => {
-          if (a.day !== b.day) {
-            return a.day - b.day;
+        const availabilityIdsToDelete: Set<string> = new Set();
+        const availabilitiesToSkip: Set<Availability> = new Set();
+
+        // Helper function to check if two availabilities are an exact match
+        const isExactMatch = (a: Availability, b: any) => (
+          a.day === b.day &&
+          a.start_time === b.start_time &&
+          a.end_time === b.end_time
+        );
+
+        existingAvailabilities.forEach((existing: Availability) => {
+          const matchingNewAvailability = newAvailabilities.find((newAvailability: Availability) => isExactMatch(existing, newAvailability));
+
+          // No new availability matches the existing availability -> Mark existing availability for deletion
+          if (!matchingNewAvailability) {
+            if (existing.availability_id) {
+              availabilityIdsToDelete.add(existing.availability_id);
+            }
+
+            // Some new availability matches the existing availability -> We don't need to add the new availability
+          } else {
+            availabilitiesToSkip.add(matchingNewAvailability)
           }
-          return a.start_time.localeCompare(b.start_time);
         });
 
-        const mergedAvailabilities: Availability[] = [];
-        const availiabilityIdsToDelete: Set<string> = new Set();
+        // Filter out availabilities that we don't need to add
+        const newAvailabilitiesToAdd = newAvailabilities.filter((newAvailability: Availability) => !availabilitiesToSkip.has(newAvailability));
 
-        // Merge availabilities that are adjacent to each other
-        for (let i = 0; i < allAvailabilities.length; i++) {
-          const current = allAvailabilities[i];
-
-          if (mergedAvailabilities.length === 0) {
-            mergedAvailabilities.push(current);
-          } else {
-            const last = mergedAvailabilities[mergedAvailabilities.length - 1];
-
-            if (current.day === last.day && current.start_time === last.end_time) {
-              last.end_time = current.end_time;
-
-              // Keep track of pre-existing availabilities whose times are merged with the new availabilities to be created
-              if (current.availability_id) {
-                availiabilityIdsToDelete.add(current.availability_id);
-              }
-              if (last.availability_id) {
-                availiabilityIdsToDelete.add(last.availability_id);
-              }
-
-            } else {
-              mergedAvailabilities.push(current);
-            }
-          }
+        if (availabilityIdsToDelete.size > 0) {
+          await this.deleteAvailabilitiesByAvailabilityId(volunteer_id, [...availabilityIdsToDelete]);
         }
 
-        // Delete pre-existing availabilities that are merged with the new availabilities to be created
-        if (availiabilityIdsToDelete.size > 0) {
-          await this.deleteAvailabilitiesByAvailabilityId(volunteer_id, [...availiabilityIdsToDelete]);
+        if (newAvailabilitiesToAdd.length > 0) {
+          const result = await this.setAvailabilityByVolunteerId(volunteer_id, newAvailabilitiesToAdd);
+          resolve(result);
         }
 
-        // Insert the merged availabilities
-        const result = await this.setAvailabilityByVolunteerId(volunteer_id, mergedAvailabilities);
-        resolve(result);
+        resolve([]);
 
       } catch (error) {
         return reject({

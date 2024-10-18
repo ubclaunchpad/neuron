@@ -16,3 +16,11 @@ export interface Class {
     start_date: Date,
     end_date: Date,
 }
+
+export interface Schedule {
+  schedule_id: number;
+  fk_class_id: number;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+}

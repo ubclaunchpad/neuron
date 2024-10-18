@@ -12,7 +12,7 @@ async function getAvailabilities(req: Request, res: Response) {
         res.status(200).json(availabilities);
     } catch (error) {
         return res.status(500).json({
-            error: `Internal server error: ${error}`
+            error: `Internal server error: ${JSON.stringify(error)}`
         });
     }
 }
@@ -33,7 +33,7 @@ async function getAvailabilityByVolunteerId(req: Request, res: Response) {
         res.status(200).json(availability);
     } catch (error) {
         return res.status(500).json({
-            error: `Internal server error: ${error}`
+            error: `Internal server error: ${JSON.stringify(error)}`
         });
     }
 }
@@ -81,14 +81,42 @@ async function setAvailabilityByVolunteerId(req: Request, res: Response) {
         res.status(200).json(result);
     } catch (error) {
         return res.status(500).json({
-            error: `Internal server error: ${error}`
+            error: `Internal server error: ${JSON.stringify(error)}`
         })
     }
 }
 
+async function updateAvailabilityByVolunteerId(req: Request, res: Response) {
+    // console.log("DEBUG: updateAvailabilityByVolunteerId");
+
+    const { volunteer_id } = req.params;
+    const availabilities: Availability[] = req.body;
+
+    if (!volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'volunteer_id'"
+        });
+    }
+
+    if (!isValidAvailabilities(availabilities)) {
+        return res.status(400).json({
+            error: "Invalid availability data"
+        });
+    }
+
+    try {
+        const result = await availabilityModel.updateAvailabilityByVolunteerId(volunteer_id, availabilities);
+        res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({
+            error: `Internal server error: ${JSON.stringify(error)}`
+        });
+    }
+}
 
 export {
     getAvailabilities,
     getAvailabilityByVolunteerId,
-    setAvailabilityByVolunteerId
+    setAvailabilityByVolunteerId,
+    updateAvailabilityByVolunteerId
 };

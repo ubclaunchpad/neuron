@@ -9,7 +9,8 @@ import {
 import {
     getAvailabilities,
     getAvailabilityByVolunteerId,
-    setAvailabilityByVolunteerId
+    setAvailabilityByVolunteerId,
+    updateAvailabilityByVolunteerId
 } from '../controllers/availabilityController.js';
 
 const router = Router();
@@ -25,6 +26,9 @@ router.get('/availability/:volunteer_id', (req: Request, res: Response) => { get
 
 // set availability for a volunteer
 router.post('/availability/:volunteer_id', (req: Request, res: Response) => { setAvailabilityByVolunteerId(req, res) });
+
+// update availability for a volunteer
+router.put('/availability/:volunteer_id', (req: Request, res: Response) => { updateAvailabilityByVolunteerId(req, res) });
 
 // get volunteer profile by id
 router.get('/:volunteer_id', (req: Request, res: Response) => { getVolunteerById(req, res) });

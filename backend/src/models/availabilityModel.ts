@@ -105,18 +105,24 @@ export default class AvailabilityModel {
   updateAvailabilityByVolunteerId(volunteer_id: string, newAvailabilities: Availability[]): Promise<any> {
     return new Promise(async (resolve, reject) => {
       try {
+
         // Remove overlapping availabilities first
         await this.deleteOverlappingAvailabilities(volunteer_id, newAvailabilities);
 
-        const existingAvailabilities = await this.getAvailabilityByVolunteerId(volunteer_id);
+        // Find days that are affected by the new availabilities
+        const affectedDays = new Set(newAvailabilities.map(availability => availability.day));
 
-        const conformExistingAvailabilities = existingAvailabilities.map((availability: any) => ({
-          day: availability.day_of_week,
-          start_time: availability.start_time.slice(0, 5),
-          end_time: availability.end_time.slice(0, 5),
-          availability_id: availability.availability_id
-        }));
+        // Only get existing availabilities that will be affected + conform them to our interface
+        const conformExistingAvailabilities = (await this.getAvailabilityByVolunteerId(volunteer_id))
+          .filter((availability: any) => affectedDays.has(availability.day_of_week))
+          .map((availability: any) => ({
+            day: availability.day_of_week,
+            start_time: availability.start_time.slice(0, 5),
+            end_time: availability.end_time.slice(0, 5),
+            availability_id: availability.availability_id
+          }));
 
+        // Combine old and new availabilities then sort them by day and start_time
         const allAvailabilities = [...conformExistingAvailabilities, ...newAvailabilities].sort((a, b) => {
           if (a.day !== b.day) {
             return a.day - b.day;
@@ -127,6 +133,7 @@ export default class AvailabilityModel {
         const mergedAvailabilities: Availability[] = [];
         const availiabilityIdsToDelete: Set<string> = new Set();
 
+        // Merge availabilities that are adjacent to each other
         for (let i = 0; i < allAvailabilities.length; i++) {
           const current = allAvailabilities[i];
 
@@ -138,10 +145,10 @@ export default class AvailabilityModel {
             if (current.day === last.day && current.start_time === last.end_time) {
               last.end_time = current.end_time;
 
+              // Keep track of pre-existing availabilities whose times are merged with the new availabilities to be created
               if (current.availability_id) {
                 availiabilityIdsToDelete.add(current.availability_id);
               }
-
               if (last.availability_id) {
                 availiabilityIdsToDelete.add(last.availability_id);
               }
@@ -152,10 +159,12 @@ export default class AvailabilityModel {
           }
         }
 
+        // Delete pre-existing availabilities that are merged with the new availabilities to be created
         if (availiabilityIdsToDelete.size > 0) {
           await this.deleteAvailabilitiesByAvailabilityId(volunteer_id, [...availiabilityIdsToDelete]);
         }
 
+        // Insert the merged availabilities
         const result = await this.setAvailabilityByVolunteerId(volunteer_id, mergedAvailabilities);
         resolve(result);
 

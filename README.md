@@ -16,7 +16,8 @@ To get a local copy up and running follow these simple steps.
 
 1. `cd` into backend folder
 2. run `npm install` to install dependencies
-3. run `npm start`
+3. run `npm run build` 
+4. run `npm start`
 
 Backend will be exposed on port 3001
 

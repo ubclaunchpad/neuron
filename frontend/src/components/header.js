@@ -1,1 +1,0 @@
-//EXAMPLE FILE: Global components should be placed in the components folder

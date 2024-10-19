@@ -1,7 +1,22 @@
-import { Request, Response } from "express";
-import ShiftModel from "../models/shiftModel.js";
+import { Request, Response } from 'express';
+import ShiftModel from '../models/shiftModel.js';
 
 const shiftModel = new ShiftModel();
+
+async function getShiftInfo(req: Request, res: Response){
+    
+    try {
+           const fk_volunteer_id = req.body.volunteerID; 
+           const fk_schedule_id = req.body.scheduleID;
+           const shift_date = req.body.shiftDate;
+        const shift_info = await shiftModel.getShiftInfoFromDB(fk_volunteer_id, fk_schedule_id, shift_date);
+        res.status(200).json(shift_info[0]);
+    } catch (error:any) {
+        return res.status(500).json({
+            error: `Internal server error: ${error.message}`
+        });
+    }
+}
 
 // get all the shifts assigned to a volunteer, using the volunteer's ID
 async function getShiftsByVolunteerId(req: Request, res: Response) {
@@ -55,6 +70,7 @@ async function getShiftsByDate(req: Request, res: Response) {
 }
 
 export {
+    getShiftInfo,
     getShiftsByVolunteerId,
     getShiftsByDate
 };

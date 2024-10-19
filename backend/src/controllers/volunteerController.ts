@@ -62,6 +62,12 @@ async function addVolunteer(req: Request, res: Response) {
         const newVolunteer = await volunteerModel.addVolunteer(volunteerData);
         res.status(201).json(newVolunteer);
     } catch (error) {
+        if ((error as Error).message === 'Volunteer ID already exists') {
+            return res.status(400).json({
+                error: "Volunteer ID already exists"
+            });
+        }
+        console.error('Error adding volunteer:', error);
         return res.status(500).json({
             error: "Internal server error"
         });

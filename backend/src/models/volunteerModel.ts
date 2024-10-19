@@ -47,35 +47,47 @@ export default class VolunteerModel {
         });
     }
 
-    // !!! TODO: Put this post api to a new branch after local test before making pr to the main branch
     addVolunteer(volunteerData: any): Promise<any> {
         return new Promise((resolve, reject) => {
-            const query = `
-                INSERT INTO volunteers (
-                    volunteer_id,
-                    l_name,
-                    f_name,
-                    total_hours,
-                    class_preferences,
-                    bio,
-                    active
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            `;
-            const values = [
-                volunteerData.volunteer_id,
-                volunteerData.l_name,
-                volunteerData.f_name,
-                volunteerData.total_hours,
-                volunteerData.class_preferences,
-                volunteerData.bio,
-                volunteerData.active
-            ];
-
-            connectionPool.query(query, values, (error: any, results: any) => {
-                if (error) {
-                    return reject(error);
+            // Check if volunteer_id already exists
+            const checkQuery = `SELECT COUNT(*) AS count FROM volunteers WHERE volunteer_id = ?`;
+            connectionPool.query(checkQuery, [volunteerData.volunteer_id], (checkError: any, checkResults: any) => {
+                if (checkError) {
+                    return reject(checkError);
                 }
-                resolve(results);
+
+                if (checkResults[0].count > 0) {
+                    return reject(new Error('Volunteer ID already exists'));
+                }
+
+                // If volunteer_id does not exist, proceed with the insertion
+                const query = `
+                    INSERT INTO volunteers (
+                        volunteer_id,
+                        l_name,
+                        f_name,
+                        total_hours,
+                        class_preferences,
+                        bio,
+                        active
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                `;
+                const values = [
+                    volunteerData.volunteer_id,
+                    volunteerData.l_name,
+                    volunteerData.f_name,
+                    volunteerData.total_hours,
+                    volunteerData.class_preferences,
+                    volunteerData.bio,
+                    volunteerData.active
+                ];
+
+                connectionPool.query(query, values, (error: any, results: any) => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    resolve(results);
+                });
             });
         });
     }

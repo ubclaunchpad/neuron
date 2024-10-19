@@ -43,6 +43,7 @@ create table volunteers (
     class_preferences VARCHAR(256) NOT NULL,
     bio VARCHAR(150),
     active BOOLEAN,
+    email VARCHAR(45) NOT NULL,
     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
 );
 

@@ -12,6 +12,7 @@ import {
     insertVolunteer,
     updateVolunteer,
 } from "../controllers/volunteerController";
+import VolunteerModel from "../models/volunteerModel";
 
 // Load environment variables
 dotenv.config();
@@ -31,6 +32,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const userModel = new UserModel();
+const volunteerModel = new VolunteerModel();
 
 async function getUserById(user_id: string): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -293,7 +295,9 @@ async function verifyUser(req: Request, res: Response): Promise<any> {
 
     // Update the user's active status
     try {
-        await updateVolunteer(volunteer_id, { active: 1 });
+        await volunteerModel.updateVolunteer(volunteer_id, {
+            active: 1,
+        });
 
         return res.status(200).json({
             message: "User verified successfully",

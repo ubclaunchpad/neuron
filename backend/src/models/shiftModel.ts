@@ -60,7 +60,7 @@ export default class ShiftModel {
      // get all shifts occuring on given date
      public getShiftsByDate(date: string): Promise<any> {
           return new Promise((resolve, reject) => {
-              const query = "SELECT * FROM shifts WHERE date = ?";
+              const query = "SELECT * FROM shifts WHERE shift_date = ?";
               const values = [date];
               connection.query(query, values, (error: any, results: any) => {
                   if (error) {

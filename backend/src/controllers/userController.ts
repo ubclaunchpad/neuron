@@ -1,17 +1,17 @@
-import UserModel from "../models/userModel";
-import VolunteerModel from "../models/volunteerModel";
+import UserModel from "../models/userModel.js";
+import VolunteerModel from "../models/volunteerModel.js";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { Request, Response } from "express";
-import { AuthenticatedUserRequest } from "../common/types";
+import { AuthenticatedUserRequest } from "../common/types.js";
 import {
     deleteVolunteer,
     getVolunteerByUserId,
     insertVolunteer,
-} from "../controllers/volunteerController";
+} from "../controllers/volunteerController.js";
 
 // Load environment variables
 dotenv.config();

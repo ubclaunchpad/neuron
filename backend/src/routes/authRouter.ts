@@ -7,9 +7,9 @@ import {
     verifyAndRedirect,
     sendResetPasswordEmail,
     updatePassword,
-} from "../controllers/userController";
-import { isAuthorized } from "../config/isAuthorized";
-import { AuthenticatedUserRequest } from "../types/types";
+} from "../controllers/userController.js";
+import { isAuthorized } from "../config/isAuthorized.js";
+import { AuthenticatedUserRequest } from "../common/types.js";
 
 export const authRouter = Router();
 

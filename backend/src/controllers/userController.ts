@@ -1,17 +1,17 @@
-import UserModel from "../models/userModel";
+import UserModel from "../models/userModel.js";
+import VolunteerModel from "../models/volunteerModel.js";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { Request, Response } from "express";
-import { AuthenticatedUserRequest } from "../types/types";
+import { AuthenticatedUserRequest } from "../common/types.js";
 import {
     deleteVolunteer,
     getVolunteerByUserId,
     insertVolunteer,
-    updateVolunteer,
-} from "../controllers/volunteerController";
+} from "../controllers/volunteerController.js";
 
 // Load environment variables
 dotenv.config();
@@ -31,6 +31,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const userModel = new UserModel();
+const volunteerModel = new VolunteerModel();
 
 async function getUserById(user_id: string): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -293,7 +294,9 @@ async function verifyUser(req: Request, res: Response): Promise<any> {
 
     // Update the user's active status
     try {
-        await updateVolunteer(volunteer_id, { active: 1 });
+        await volunteerModel.updateVolunteer(volunteer_id, {
+            active: 1,
+        });
 
         return res.status(200).json({
             message: "User verified successfully",

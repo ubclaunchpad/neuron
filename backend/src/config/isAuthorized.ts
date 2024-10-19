@@ -1,8 +1,11 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { Response, NextFunction } from "express";
-import { AuthenticatedUserRequest, DecodedJwtPayload } from "../types/types";
-import { getUserById } from "../controllers/userController";
+import {
+    AuthenticatedUserRequest,
+    DecodedJwtPayload,
+} from "../common/types.js";
+import { getUserById } from "../controllers/userController.js";
 
 // Load environment variables
 dotenv.config();

@@ -15,6 +15,6 @@ router.get('/volunteer/:volunteer_id', (req: Request, res: Response) => { getVol
 router.get('/volunteers', (req: Request, res: Response) => { getVolunteers(req, res) });
 
 // update volunteer profile
-router.put('/volunteer/:volunteer_id', (req: Request, res: Response) => { updateVolunteer(req.body, res) });
+router.put('/volunteer/:volunteer_id', (req: Request, res: Response) => { updateVolunteer(req, res) });
 
 export default router;

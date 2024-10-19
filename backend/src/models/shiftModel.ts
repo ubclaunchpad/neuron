@@ -2,6 +2,7 @@ import connection from '../config/database.js';
 
 export default class ShiftModel {
 
+     // get all the details of a shift
      public getShiftInfoFromDB(fk_volunteer_id:string, fk_schedule_id:number, shift_date:string): Promise<any> {
           return new Promise((resolve, reject) => {
                const query = `
@@ -41,6 +42,8 @@ export default class ShiftModel {
                });
           });
      }
+
+     // get all the shifts assigned to a single volunteer
      public getShiftsByVolunteerId(volunteer_id: string): Promise<any> {
           return new Promise((resolve, reject) => {
               const query = "SELECT * FROM shifts WHERE fk_volunteer_id = ?";
@@ -54,9 +57,10 @@ export default class ShiftModel {
           });
      }
 
-     public getShiftsByDate(date: string) {
+     // get all shifts occuring on given date
+     public getShiftsByDate(date: string): Promise<any> {
           return new Promise((resolve, reject) => {
-              const query = "SELECT * FROM shifts WHERE data = ?";
+              const query = "SELECT * FROM shifts WHERE date = ?";
               const values = [date];
               connection.query(query, values, (error: any, results: any) => {
                   if (error) {

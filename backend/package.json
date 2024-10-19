@@ -25,6 +25,7 @@
     "@types/mysql": "^2.15.26",
     "@types/node": "^22.7.4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.1",
     "typescript": "^5.6.2"
   }
 }

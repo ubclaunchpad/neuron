@@ -1,5 +1,5 @@
 import connectionPool from "../config/database.js";
-import { Availability } from "../common/types.js";
+import { Availability } from "../common/interfaces.js";
 
 export default class AvailabilityModel {
   getAvailabilities(): Promise<any> {

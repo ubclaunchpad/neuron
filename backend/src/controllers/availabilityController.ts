@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import AvailabilityModel from '../models/availabilityModel.js';
-import { Availability } from '../common/types.js';
+import { Availability } from '../common/interfaces.js';
 
 const availabilityModel = new AvailabilityModel();
 

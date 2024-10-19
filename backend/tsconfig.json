@@ -10,7 +10,6 @@
     "strict": true,
     "skipLibCheck": true,
     "declaration": true,
-    "typeRoots": ["./node_modules/@types", "./src/types"]
+    "typeRoots": ["./node_modules/@types", "./src/common"]
   },
-  "files":["./src/types/types.d.ts"]
 }

@@ -2,7 +2,7 @@ import connection from '../config/database.js';
 import { Schedule } from '../common/types.js'
 
 export default class ScheduleModel {
-    public addScheduleToDB(schedule: { fk_class_id: number, day_of_week: number, start_time: string, end_time: string }): Promise<any> {
+    public addScheduleToDB(schedule: Schedule): Promise<any> {
         return new Promise((resolve, reject) => {
             const query = `INSERT INTO neuron.schedule 
                           (fk_class_id, day_of_week, start_time, end_time)

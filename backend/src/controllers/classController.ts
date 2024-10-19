@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import ClassesModel from '../models/classModel.js';
-import { Class } from '../common/types.js'
+import ScheduleModel from '../models/scheduleModel.js';
+import { Class, Schedule } from '../common/types.js'
 
 export default class ClassesController {
 
@@ -20,6 +21,7 @@ export default class ClassesController {
 	 // New method to add a class
 	 public async addClass(req: Request, res: Response) {
         const classesModel = new ClassesModel();
+		const scheduleModel = new ScheduleModel();
         const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date } = req.body;
 
         // Input validation
@@ -41,10 +43,20 @@ export default class ClassesController {
 			};
 
             const result = await classesModel.addClassToDB(newClass);
-            res.status(201).json({
-                message: 'Class successfully added',
-                class_id: result.class_id
-            });
+            const newClassId = result.class_id;
+
+            // Create a schedule object using the Schedule interface
+            const newSchedule: Schedule = {
+                schedule_id: 0,
+                fk_class_id: newClassId,
+				// Not sure how we are going to get these values
+                // day_of_week,
+                // start_time,
+                // end_time
+            };
+
+            await scheduleModel.addScheduleToDB(newSchedule);
+
         } catch (error) {
             return res.status(500).json({
                 error: `Internal server error: ${error}`

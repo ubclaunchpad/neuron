@@ -2,6 +2,8 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
+import classRouter from "./routes/classRoutes.js";
+import shiftRouter from "./routes/shiftRoutes.js";
 
 // volunteer routes
 import volunteerRouter from "./routes/volunteerRoutes.js";
@@ -20,8 +22,11 @@ app.use(cors());
 // app.use(authMiddleware);
 app.use("/auth", authRouter);
 
+app.use("/classes", classRouter);
+app.use("/classes/shifts", shiftRouter);
+
 app.get("/", (req: Request, res: Response) => {
-    res.send("Working");
+    res.send({ message: "Hello Team Neuron!" });
 });
 
 // define all routes

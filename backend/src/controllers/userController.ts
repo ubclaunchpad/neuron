@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { Request, Response } from "express";
-import { AuthenticatedUserRequest } from "../types/types";
+import { AuthenticatedUserRequest } from "../common/types";
 import {
     deleteVolunteer,
     getVolunteerByUserId,

@@ -23,6 +23,38 @@ async function getShiftsByVolunteerId(req: Request, res: Response) {
     }
 } 
 
+// get all the shifts on a given date
+async function getShiftsByDate(req: Request, res: Response) {
+    const { date } = req.body;
+
+    if (!date) {
+        return res.status(400).json({
+            error: "Missing required property in request body: 'date'"
+        });
+    }
+
+    // regular expression to match the SQL DATE format: YYYY-MM-DD
+    const sqlDateRegex = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
+    // check if the input matches the regex
+    if (!sqlDateRegex.test(date)) {
+        return res.status(400).json({
+            error: "'date' must be an valid date of the format 'YYYY-MM-DD'"
+        });
+    }
+
+    try {
+        const shifts = await shiftModel.getShiftsByDate(date);
+        res.status(200).json(shifts);
+    } catch (error) {
+        return res.status(500).json({
+            error: `Internal server error. ${error}`
+        });
+    }
+
+}
+
 export {
-    getShiftsByVolunteerId
+    getShiftsByVolunteerId,
+    getShiftsByDate
 };

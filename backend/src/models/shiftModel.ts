@@ -14,4 +14,17 @@ export default class ShiftModel {
             });
         });
     }
+
+    getShiftsByDate(date: string) {
+        return new Promise((resolve, reject) => {
+            const query = "SELECT * FROM shifts WHERE data = ?";
+            const values = [date];
+            connectionPool.query(query, values, (error: any, results: any) => {
+                if (error) {
+                    return reject(`An error occurred while executing the query: ${error}`);
+                }
+                resolve(results);
+            });
+        });
+    }
 }

@@ -9,7 +9,7 @@ import {
     updatePassword,
 } from "../controllers/userController";
 import { isAuthorized } from "../config/isAuthorized";
-import { AuthenticatedUserRequest } from "../types/types";
+import { AuthenticatedUserRequest } from "../common/types";
 
 export const authRouter = Router();
 

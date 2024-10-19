@@ -1,4 +1,5 @@
 import UserModel from "../models/userModel";
+import VolunteerModel from "../models/volunteerModel";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
@@ -10,9 +11,7 @@ import {
     deleteVolunteer,
     getVolunteerByUserId,
     insertVolunteer,
-    updateVolunteer,
 } from "../controllers/volunteerController";
-import VolunteerModel from "../models/volunteerModel";
 
 // Load environment variables
 dotenv.config();

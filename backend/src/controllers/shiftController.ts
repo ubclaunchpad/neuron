@@ -3,12 +3,28 @@ import ShiftModel from '../models/shiftModel.js';
 
 const shiftModel = new ShiftModel();
 
+// regular expression to match the SQL DATE format: YYYY-MM-DD
+const sqlDateRegex = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
 async function getShiftInfo(req: Request, res: Response){
+    const fk_volunteer_id = req.body.volunteerID; 
+    const fk_schedule_id = req.body.scheduleID;
+    const shift_date = req.body.shiftDate;
+
+    if (!fk_volunteer_id || !fk_schedule_id || !shift_date) {
+        return res.status(400).json({
+            error: "Missing required fields. 'volunteerID', 'scheduleID' and 'shiftDate' are required."
+        });
+    }
+
+    // check if the input matches the regex
+    if (!sqlDateRegex.test(shift_date)) {
+        return res.status(400).json({
+            error: "'shiftDate' must be a valid date of the format 'YYYY-MM-DD'"
+        });
+    }
     
     try {
-           const fk_volunteer_id = req.body.volunteerID; 
-           const fk_schedule_id = req.body.scheduleID;
-           const shift_date = req.body.shiftDate;
         const shift_info = await shiftModel.getShiftInfoFromDB(fk_volunteer_id, fk_schedule_id, shift_date);
         res.status(200).json(shift_info[0]);
     } catch (error:any) {
@@ -40,26 +56,23 @@ async function getShiftsByVolunteerId(req: Request, res: Response) {
 
 // get all the shifts on a given date
 async function getShiftsByDate(req: Request, res: Response) {
-    const { date } = req.body;
+    const shift_date = req.body.shiftDate;
 
-    if (!date) {
+    if (!shift_date) {
         return res.status(400).json({
-            error: "Missing required property in request body: 'date'"
+            error: "Missing required field: 'shiftDate'"
         });
     }
 
-    // regular expression to match the SQL DATE format: YYYY-MM-DD
-    const sqlDateRegex = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
-
     // check if the input matches the regex
-    if (!sqlDateRegex.test(date)) {
+    if (!sqlDateRegex.test(shift_date)) {
         return res.status(400).json({
-            error: "'date' must be an valid date of the format 'YYYY-MM-DD'"
+            error: "'shiftDate' must be a valid date of the format 'YYYY-MM-DD'"
         });
     }
 
     try {
-        const shifts = await shiftModel.getShiftsByDate(date);
+        const shifts = await shiftModel.getShiftsByDate(shift_date);
         res.status(200).json(shifts);
     } catch (error) {
         return res.status(500).json({

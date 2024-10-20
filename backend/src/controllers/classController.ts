@@ -9,7 +9,7 @@ export default class ClassesController {
 		const classesModel = new ClassesModel();
 		
 		try {
-			const classes = await classesModel.getClassesFromDB();
+			const classes = await classesModel.getClasses();
 			res.status(200).json(classes);
 		} catch (error) {
 			return res.status(500).json({
@@ -42,20 +42,20 @@ export default class ClassesController {
 				end_date: new Date(end_date)
 			};
 
-            const result = await classesModel.addClassToDB(newClass);
+            const result = await classesModel.addClass(newClass);
             const newClassId = result.class_id;
 
             // Create a schedule object using the Schedule interface
-            const newSchedule: Schedule = {
-                schedule_id: 0,
-                fk_class_id: newClassId,
-				// Not sure how we are going to get these values
-                // day_of_week,
-                // start_time,
-                // end_time
-            };
+            // const newSchedule: Schedule = {
+            //     schedule_id: 0,
+            //     fk_class_id: newClassId,
+			// 	// Not sure how we are going to get these values
+            //     // day_of_week,
+            //     // start_time,
+            //     // end_time
+            // };
 
-            await scheduleModel.addScheduleToDB(newSchedule);
+            // await scheduleModel.addScheduleToDB(newSchedule);
 
         } catch (error) {
             return res.status(500).json({

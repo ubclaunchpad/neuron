@@ -3,9 +3,9 @@ import {Class} from '../common/types.js'
 
 export default class ClassesModel {
 
-     public getClassesFromDB(): Promise<any> {
+     public getClasses(): Promise<any> {
           return new Promise((resolve, reject) => {
-               const query = `SELECT * FROM neuron.class`;
+               const query = `SELECT * FROM class`;
 
                connection.query(query, [], (error: any, results: any) => {
                     if (error) {
@@ -16,9 +16,9 @@ export default class ClassesModel {
           });
      }
 
-     public addClassToDB(newClass: Class): Promise<Class> {
+     public addClass(newClass: Class): Promise<Class> {
           return new Promise((resolve, reject) => {
-               const query = `INSERT INTO neuron.class 
+               const query = `INSERT INTO class 
                              (fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date)
                              VALUES (?, ?, ?, ?, ?, ?)`;
    

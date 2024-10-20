@@ -4,7 +4,7 @@ import { Schedule } from '../common/types.js'
 export default class ScheduleModel {
     public addScheduleToDB(schedule: Schedule): Promise<any> {
         return new Promise((resolve, reject) => {
-            const query = `INSERT INTO neuron.schedule 
+            const query = `INSERT INTO schedule 
                           (fk_class_id, day_of_week, start_time, end_time)
                           VALUES (?, ?, ?, ?)`;
 

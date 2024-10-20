@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import ClassesModel from '../models/classModel.js';
 import ScheduleModel from '../models/scheduleModel.js';
-import { Class, Schedule } from '../common/types.js'
+import { Class, Schedule } from '../common/interfaces.js'
 
 export default class ClassesController {
 

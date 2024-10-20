@@ -1,5 +1,5 @@
 import connection from '../config/database.js';
-import { Schedule } from '../common/types.js'
+import { Schedule } from '../common/interfaces.js'
 
 export default class ScheduleModel {
     public addScheduleToDB(schedule: Schedule): Promise<any> {

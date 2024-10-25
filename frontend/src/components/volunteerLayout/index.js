@@ -1,6 +1,6 @@
 import "./index.css";
 import { NavLink } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BC_brain from "../../assets/bwp-logo-text.png";
 import sidebar_toggle from "../../assets/sidebar-toggle.png";
 import nav_item_dash from "../../assets/nav-item-dash.png";
@@ -9,11 +9,22 @@ import nav_item_classes from "../../assets/nav-item-classes.png";
 import nav_item_settings from "../../assets/nav-item-settings.png";
 
 function VolunteerLayout({ pageTitle, pageContent }) {
-    const [collapsed, setCollapsed] = useState(false);
-    
+    const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
+
+    // Toggle function for displaying/hiding sidebar
     const toggleSidebar = () => {
         setCollapsed(!collapsed);
     };
+
+    // Automatically collapse/expand sidebar based on screen width
+    useEffect(() => {
+        const handleResize = () => {
+            setCollapsed(window.innerWidth <= 800);
+        };
+        window.addEventListener('resize', handleResize);
+        handleResize();
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     return (
         <div className="main-container">

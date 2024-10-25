@@ -56,8 +56,10 @@ async function updateVolunteer(req: Request, res: Response) {
 
 // Update a volunteer's profile based on the volunteer_id
 async function shiftCheckIn(req: Request, res: Response) {
-    const { volunteer_id, schedule_id, shift_date } = req.params;
+    const { volunteer_id, fk_schedule_id, shift_date } = req.body;
     //const volunteerData = req.body;
+
+    console.log("In controller function beginning");
 
     if (!volunteer_id) {
         return res.status(400).json({
@@ -65,9 +67,9 @@ async function shiftCheckIn(req: Request, res: Response) {
         });
     }
 
-    if (!schedule_id) {
+    if (!fk_schedule_id) {
         return res.status(400).json({
-            error: "Missing required parameters: 'schedule_id'"
+            error: "Missing required parameters: 'fk_schedule_id'"
         });
     }
 
@@ -78,13 +80,15 @@ async function shiftCheckIn(req: Request, res: Response) {
     }
 
     try {
-        const updatedVolunteer = await volunteerModel.shiftCheckIn(volunteer_id, schedule_id, shift_date);
+        const updatedVolunteer = await volunteerModel.shiftCheckIn(volunteer_id, fk_schedule_id, shift_date);
         res.status(200).json(updatedVolunteer);
     } catch (error) {
         return res.status(500).json({
             error: `Internal server error. ${error}`
         });
     }
+
+    console.log("In end of controller fcn");
 }
 
 export { 

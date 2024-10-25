@@ -47,12 +47,15 @@ export default class VolunteerModel {
         });
     }
 
-    shiftCheckIn(volunteer_id: string, schedule_id: any, shift_date: any): Promise<any> {
+    shiftCheckIn(volunteer_id: string, fk_schedule_id: any, shift_date: any): Promise<any> {
         return new Promise((resolve, reject) => {
             // Construct the SET clause dynamically
             // Get the shift duration
+
+            console.log("Ran function");
+
             const query1 = `SELECT duration FROM shifts WHERE fk_volunteer_id = ? AND fk_schedule_id = ? AND shift_date = ?`;
-            const values1 = [volunteer_id, schedule_id, shift_date];
+            const values1 = [volunteer_id, fk_schedule_id, shift_date];
             connectionPool.query(query1, values1, (error: any, results: any) => {
                 if (error) {
                     return reject(`An error occurred while executing the query: ${error}`);

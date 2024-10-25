@@ -27,7 +27,7 @@ async function getShiftInfo(req: Request, res: Response){
     try {
         const shift_info = await shiftModel.getShiftInfoFromDB(fk_volunteer_id, fk_schedule_id, shift_date);
         res.status(200).json(shift_info[0]);
-    } catch (error:any) {
+    } catch (error: any) {
         return res.status(500).json({
             error: `Internal server error: ${error.message}`
         });
@@ -47,9 +47,9 @@ async function getShiftsByVolunteerId(req: Request, res: Response) {
     try {
         const shifts = await shiftModel.getShiftsByVolunteerId(volunteer_id);
         res.status(200).json(shifts);
-    } catch (error) {
+    } catch (error: any) {
         return res.status(500).json({
-            error: `Internal server error. ${error}`
+            error: `Internal server error. ${error.message}`
         });
     }
 } 
@@ -74,12 +74,11 @@ async function getShiftsByDate(req: Request, res: Response) {
     try {
         const shifts = await shiftModel.getShiftsByDate(shift_date);
         res.status(200).json(shifts);
-    } catch (error) {
+    } catch (error: any) {
         return res.status(500).json({
-            error: `Internal server error. ${error}`
+            error: `Internal server error. ${error.message}`
         });
     }
-
 }
 
 export {

@@ -46,27 +46,33 @@ export default class ShiftModel {
      // get all the shifts assigned to a single volunteer
      public getShiftsByVolunteerId(volunteer_id: string): Promise<any> {
           return new Promise((resolve, reject) => {
-              const query = "SELECT * FROM shifts WHERE fk_volunteer_id = ?";
-              const values = [volunteer_id];
-              connection.query(query, values, (error: any, results: any) => {
-                  if (error) {
-                      return reject(`An error occurred while executing the query: ${error}`);
-                  }
-                  resolve(results);
-              });
+               const query = "SELECT * FROM shifts WHERE fk_volunteer_id = ?";
+               const values = [volunteer_id];
+               connection.query(query, values, (error: any, results: any) => {
+                    if (error) {
+                         return reject({
+                              status: 500,
+                              message: `An error occurred while executing the query: ${error}`
+                         });
+                    }
+                    resolve(results);
+               });
           });
      }
 
      // get all shifts occuring on given date
      public getShiftsByDate(date: string): Promise<any> {
           return new Promise((resolve, reject) => {
-              const query = "SELECT * FROM shifts WHERE shift_date = ?";
-              const values = [date];
-              connection.query(query, values, (error: any, results: any) => {
-                  if (error) {
-                      return reject(`An error occurred while executing the query: ${error}`);
-                  }
-                  resolve(results);
+               const query = "SELECT * FROM shifts WHERE shift_date = ?";
+               const values = [date];
+               connection.query(query, values, (error: any, results: any) => {
+                    if (error) {
+                         return reject({
+                              status: 500,
+                              message: `An error occurred while executing the query: ${error}`,
+                         });
+                    }
+                    resolve(results);
               });
           });
      }

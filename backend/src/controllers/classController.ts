@@ -38,8 +38,8 @@ export default class ClassesController {
 				class_name,
 				instructions: instructions,
 				zoom_link: zoom_link,
-				start_date: new Date(start_date),
-				end_date: new Date(end_date)
+				start_date: start_date,
+				end_date: end_date
 			};
 
             const result = await classesModel.addClass(newClass);
@@ -56,7 +56,10 @@ export default class ClassesController {
             // };
 
             // await scheduleModel.addScheduleToDB(newSchedule);
-
+			return res.status(201).json({
+				message: 'Class added successfully',
+				class_id: result.class_id
+			});
         } catch (error) {
             return res.status(500).json({
                 error: `Internal server error: ${error}`

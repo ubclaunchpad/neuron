@@ -29,8 +29,8 @@ export interface Class {
   class_name: string,
   instructions: string,
   zoom_link: string,
-  start_date: Date,
-  end_date: Date,
+  start_date: string,
+  end_date: string,
 }
 
 export interface Schedule {

@@ -44,6 +44,15 @@ export default class ClassesController {
 
             const result = await classesModel.addClass(newClass);
             const newClassId = result.class_id;
+			const addedClass = {
+                class_id: newClassId,
+                fk_instructor_id,
+                class_name,
+                instructions,
+                zoom_link,
+                start_date,
+                end_date
+            };
 
             // Create a schedule object using the Schedule interface
             // const newSchedule: Schedule = {
@@ -58,7 +67,7 @@ export default class ClassesController {
             // await scheduleModel.addScheduleToDB(newSchedule);
 			return res.status(201).json({
 				message: 'Class added successfully',
-				class_id: result.class_id
+				data: addedClass
 			});
         } catch (error) {
             return res.status(500).json({

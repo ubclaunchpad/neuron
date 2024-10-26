@@ -54,17 +54,6 @@ export default class ClassesController {
                 end_date
             };
 
-            // Create a schedule object using the Schedule interface
-            // const newSchedule: Schedule = {
-            //     schedule_id: 0,
-            //     fk_class_id: newClassId,
-			// 	// Not sure how we are going to get these values
-            //     // day_of_week,
-            //     // start_time,
-            //     // end_time
-            // };
-
-            // await scheduleModel.addScheduleToDB(newSchedule);
 			return res.status(201).json({
 				message: 'Class added successfully',
 				data: addedClass

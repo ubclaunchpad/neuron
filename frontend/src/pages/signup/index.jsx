@@ -6,7 +6,7 @@ const SignUpPage = () => {
     return (
         <div className="signUpPage">
             <LeftSideBarWithLogo />
-            <RightSideWithForm type={"signup"} />
+            <RightSideWithForm type={"signup"} heading={"Welcome!"} />
         </div>
     );
 };

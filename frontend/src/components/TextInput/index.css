@@ -18,7 +18,7 @@ input {
     border: 1px solid var(--primary-blue);
 }
 
-lord-icon {
+#passwordIcon {
     position: absolute;
     right: 1vw;
     top: 2vw;

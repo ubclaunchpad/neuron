@@ -16,7 +16,9 @@ const LoginForm = () => {
                 placeholder="Enter your password"
                 label="Password"
             />
-            <p className="forgotPass">Forgot Password?</p>
+            <div className="forgotPass">
+                <Link to={"/auth/forgot-password"}>Forgot Password?</Link>
+            </div>
             <CustomButton text={"Log In"} />
             <p className="helper">
                 Don't have an account?{" "}

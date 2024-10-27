@@ -1,0 +1,25 @@
+.forgotPassForm {
+    width: 35vw;
+    font-family: var(--font-primary);
+}
+
+.forgot-helper {
+    text-align: center;
+    font-family: var(--font-primary);
+    font-weight: 300;
+    font-size: 1vw;
+    margin-top: 1.5vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.forgot-helper a {
+    color: black;
+    text-decoration: none;
+}
+
+#go-back-icon {
+    margin-right: 0.3vw;
+    transform: rotate(90deg);
+}

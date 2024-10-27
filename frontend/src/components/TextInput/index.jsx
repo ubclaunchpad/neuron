@@ -20,6 +20,7 @@ const TextInput = ({ type, placeholder, label }) => {
                     />
                     <lord-icon
                         ref={playerRef}
+                        id="passwordIcon"
                         src="https://cdn.lordicon.com/dicvhxpz.json"
                         onClick={() => {
                             setIsPasswordVisible(!isPasswordVisible);

@@ -16,3 +16,10 @@
     font-weight: 400;
     color: var(--primary-blue);
 }
+
+.welcomeHeading p {
+    font-weight: 400;
+    font-size: 0.9vw;
+    margin-top: -1vw;
+    margin-bottom: 2vw;
+}

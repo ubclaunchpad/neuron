@@ -37,7 +37,7 @@ const SignUpForm = () => {
             <p className="helper">
                 Already have an account?{" "}
                 <strong>
-                    <Link to={"/auth/login"}>Sign Up</Link>
+                    <Link to={"/auth/login"}>Log In</Link>
                 </strong>
             </p>
         </div>

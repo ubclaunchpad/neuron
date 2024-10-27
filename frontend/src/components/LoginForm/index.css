@@ -12,6 +12,11 @@
     font-size: 0.9vw;
 }
 
+.forgotPass a {
+    text-decoration: none;
+    color: black;
+}
+
 .helper {
     text-align: center;
     font-family: var(--font-primary);

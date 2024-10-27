@@ -1,0 +1,25 @@
+.loginForm {
+    width: 35vw;
+    font-family: var(--font-primary);
+}
+
+.loginForm > * {
+    margin-bottom: 1vw;
+}
+
+.forgotPass{
+    text-align: right;
+    font-size: 0.9vw;
+}
+
+.helper {
+    text-align: center;
+    font-family: var(--font-primary);
+    font-weight: 300;
+    font-size: 1vw;
+}
+
+.helper a {
+    color: black;
+    text-decoration: none;
+}

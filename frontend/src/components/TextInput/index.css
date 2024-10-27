@@ -1,0 +1,26 @@
+.inputWithLabel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  position: relative;
+}
+
+label {
+    margin-bottom: 0.5vw;
+    font-weight: light;
+    font-size: 0.9vw;
+}
+
+input {
+    font-family: var(--font-primary);
+    padding: 0.7vw 0.8vw;
+    border-radius: 8px;
+    border: 1px solid var(--primary-blue);
+}
+
+lord-icon {
+    position: absolute;
+    right: 1vw;
+    top: 2vw;
+    cursor: pointer;
+}

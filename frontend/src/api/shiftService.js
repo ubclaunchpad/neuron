@@ -17,4 +17,20 @@ const getShiftInfo = async (volunteerID, scheduleID, shiftDate) => {
     }
 }
 
-export { getShiftInfo };
+const getShiftOnDate = async (shiftDate) => {
+    try {
+        const response = await api.post('/classes/shifts/on-date', { 
+            "shift_date": shiftDate 
+        });
+
+        const res = response.data;
+        return res;  
+    } catch (error) {
+        console.error('Error fetching shift info:', error);
+        throw error;  
+    }
+}
+
+export { getShiftInfo,
+         getShiftOnDate
+        };

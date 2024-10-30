@@ -9,6 +9,7 @@ import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import Classes from "./pages/classes";
 import VolunteerProfile from "./pages/volunteerProfile";
 import AdminVerify from "./pages/AdminVerify";
+import VolunteerSchedule from './pages/schedule';
 
 function App() {
   const [isVolunteer, setIsVolunteer] = useState(false);

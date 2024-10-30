@@ -1,0 +1,25 @@
+@import '../../styles.css';
+
+.date-toolbar {
+    display: flex;             
+    align-items: center; 
+}
+
+/* Override default button styles */
+.date-toolbar .MuiButton-root {
+    color: var(--dark); 
+    text-transform: none;
+} 
+
+.day-navigation {
+    display: flex;           
+}
+
+button {
+    color: var(--dark);
+}
+
+/* Override default icon colors */
+.date-toolbar .MuiSvgIcon-root {
+    color: var(--dark); /* Set icon color to dark */
+}

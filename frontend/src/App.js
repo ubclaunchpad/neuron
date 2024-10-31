@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import "notyf/notyf.min.css";
 import Home from "./pages/home/index";
 import Classes from "./pages/classes";
 import VolunteerProfile from "./pages/volunteerProfile";

@@ -1,7 +1,17 @@
 import "./index.css";
 import { useRef, useState } from "react";
 
-const TextInput = ({ type, placeholder, label }) => {
+const TextInput = ({
+    type,
+    placeholder,
+    label,
+    name,
+    value,
+    handleChange,
+    handleBlur,
+    errors,
+    touched,
+}) => {
     const playerRef = useRef(null);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -9,15 +19,36 @@ const TextInput = ({ type, placeholder, label }) => {
         <div className="inputWithLabel">
             <label>{label}</label>
             {type !== "password" && (
-                <input type={type} placeholder={placeholder} />
+                <>
+                    <input
+                        id={name}
+                        type={type}
+                        placeholder={placeholder}
+                        value={value || ""}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={errors[name] && touched[name] && "error"}
+                    />
+                    {errors[name] && touched[name] && (
+                        <div className="error-message">{errors[name]}</div>
+                    )}
+                </>
             )}
 
             {type === "password" && (
                 <>
                     <input
+                        id={name}
                         type={isPasswordVisible ? "text" : "password"}
                         placeholder={placeholder}
+                        value={value || ""}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={errors[name] && touched[name] && "error"}
                     />
+                    {errors[name] && touched[name] && (
+                        <div className="error-message">{errors[name]}</div>
+                    )}
                     <lord-icon
                         ref={playerRef}
                         id="passwordIcon"

@@ -20,6 +20,7 @@
   --light-grey: #F0FAFF;
   --white: #FFFFFF;
   --button-blue: #1687CA;
+  --error-red: #DC3545;
 }
 
 :root {
@@ -31,4 +32,8 @@
 body {
   margin: 0;
   padding: 0;
+}
+
+.notyf {
+  font-family: var(--font-primary);
 }

@@ -7,6 +7,12 @@ button {
     font-family: var(--font-primary);
     box-shadow: 0px 4px 16px #0F111205;
     cursor: pointer;
-    margin-top: 0.3vw;
+    margin-top: 0.5vw;
     color: white;
+    font-size: 1vw;
+}
+
+button:disabled {
+    background-color: var(--grey);
+    cursor: not-allowed;
 }

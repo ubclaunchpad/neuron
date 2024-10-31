@@ -6,21 +6,35 @@
 }
 
 label {
-    margin-bottom: 0.5vw;
+    margin-bottom: 0.2vw;
     font-weight: light;
-    font-size: 0.9vw;
+    font-size: 1vw;
 }
 
 input {
     font-family: var(--font-primary);
-    padding: 0.7vw 0.8vw;
+    padding: 1vw 0.8vw;
     border-radius: 8px;
-    border: 1px solid var(--primary-blue);
+    border: 1px solid var(--grey);
+}
+
+input.error {
+    border: 1px solid var(--error-red);
+}
+
+input::placeholder {
+    font-size: 1vw;
 }
 
 #passwordIcon {
     position: absolute;
     right: 1vw;
-    top: 2vw;
+    top: 2.1vw;
     cursor: pointer;
+}
+
+.error-message {
+    color: var(--error-red);
+    font-size: 1vw;
+    margin-top: 0.4vw;
 }

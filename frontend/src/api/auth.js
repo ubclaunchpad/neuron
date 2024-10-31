@@ -22,4 +22,26 @@ const login = (data) =>
             throw error;
         });
 
-export { signUp, login };
+// Send reset password instructions
+const sendResetPasswordInstructions = (data) =>
+    api
+        .post("/auth/send-reset-password-email", data)
+        .then((response) => {
+            return response.data;
+        })
+        .catch((error) => {
+            throw error;
+        });
+
+// Reset password
+const resetPassword = (data) =>
+    api
+        .post("/auth/reset-password", data)
+        .then((response) => {
+            return response.data;
+        })
+        .catch((error) => {
+            throw error;
+        });
+
+export { signUp, login, sendResetPasswordInstructions, resetPassword };

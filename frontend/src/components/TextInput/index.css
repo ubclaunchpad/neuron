@@ -16,6 +16,7 @@ input {
     padding: 1vw 0.8vw;
     border-radius: 8px;
     border: 1px solid var(--grey);
+    font-size: 1vw;
 }
 
 input.error {
@@ -23,7 +24,7 @@ input.error {
 }
 
 input::placeholder {
-    font-size: 1vw;
+    font-size: 1vw !important;
 }
 
 #passwordIcon {

@@ -18,7 +18,7 @@ const SignUpSchema = Yup.object().shape({
         .required("Please fill out this field."),
     confirmPassword: Yup.string()
         .required("Please fill out this field.")
-        .oneOf([Yup.ref("password"), null], "Passwords do not match."),
+        .oneOf([Yup.ref("password"), null], "Passwords don't match."),
 });
 
 const SignUpForm = () => {

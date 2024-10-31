@@ -27,10 +27,9 @@ const LoginForm = () => {
                     login(values)
                         .then((response) => {
                             notyf.success("Logged in successfully");
+                            // Save the token in the local storage
+                            localStorage.setItem("token", response.token);
                             setSubmitting(false);
-                            // setTimeout(() => {
-                            //     window.location.href = "/dashboard";
-                            // }, 2500);
                         })
                         .catch((error) => {
                             notyf.error(error.response.data.error);

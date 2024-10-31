@@ -451,7 +451,9 @@ async function verifyAndRedirect(req: Request, res: Response): Promise<any> {
     try {
         await verifyUserWithIdAndToken(id, token);
 
-        return res.redirect(`${FRONTEND_HOST}/forgot-password/${id}/${token}`);
+        return res.redirect(
+            `${FRONTEND_HOST}/auth/reset-password?id=${id}&token=${token}`
+        );
     } catch (error: any) {
         return res.status(error.status).json({
             error: error.message,
@@ -460,9 +462,8 @@ async function verifyAndRedirect(req: Request, res: Response): Promise<any> {
 }
 
 async function resetPassword(req: Request, res: Response): Promise<any> {
-    // Get the id, token, and password from the request
-    const { id, token } = req.params;
-    const { password } = req.body;
+    // Get the id, token, and password from the request body
+    const { password, id, token } = req.body;
 
     try {
         // Verify if the id and token are valid

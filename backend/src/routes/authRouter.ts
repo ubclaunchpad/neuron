@@ -31,7 +31,7 @@ authRouter.get("/forgot-password/:id/:token", (req: Request, res: Response) =>
     verifyAndRedirect(req, res)
 );
 
-authRouter.post("/reset-password/:id/:token", (req: Request, res: Response) =>
+authRouter.post("/reset-password", (req: Request, res: Response) =>
     resetPassword(req, res)
 );
 

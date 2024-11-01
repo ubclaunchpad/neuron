@@ -23,3 +23,49 @@ button {
 .date-toolbar .MuiSvgIcon-root {
     color: var(--dark); /* Set icon color to dark */
 }
+
+/* StaticDatePicker Custom Styles */
+
+/* Styling for the day cells in the date picker */
+.MuiPickersDay-root {
+    transition: none !important;
+}
+
+/* Styling for the hovered day cell */
+.MuiPickersDay-root:hover {
+    background-color: transparent !important;
+    transform: none !important;
+}
+
+/* Styling for the selected day cell */
+.MuiPickersDay-root.Mui-selected {
+    border: 1px solid #1976d2 !important;
+    border-radius: 10px;
+    background-color: #e3f2fd !important;
+    color: #000 !important;
+    transform: none !important;
+}
+
+/* Hover effect for selected day cell */
+.MuiPickersDay-root.Mui-selected:hover {
+    background-color: rgba(25, 118, 210, 0.1) !important;
+}
+
+/* Styling for today's date (dot beneath the number) */
+.MuiPickersDay-root.MuiPickersDay-today {
+    position: relative;
+    border: none !important;
+    color: #000 !important;
+}
+
+.MuiPickersDay-root.MuiPickersDay-today::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background-color: #1976d2;
+    border-radius: 50%;
+}

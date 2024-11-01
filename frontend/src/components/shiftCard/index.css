@@ -1,47 +1,119 @@
 @import '../../styles.css';
 
+/* General Card Styles */
 .shift-card {
     display: flex;
-    width: 100%; /* Full width of the card */
-    margin: 1rem;
-    padding: 1rem .8rem;
-    border: 1px solid #ccc; /* Change this to your desired border color */
-    border-radius: .8rem; /* Rounded corners */
-    box-shadow: 0px 4px 16px rgba(15, 17, 17, 0.1); /* Box shadow */
+    width: 100%;
+    margin: .5rem;
+    padding: .5rem .8rem;
+    border: 1px solid #ccc;
+    border-radius: .8rem;
+    box-shadow: 0px 4px 16px rgba(15, 17, 17, 0.1);
     height: 3.5rem;
+    align-items: center;
 }
 
-.card-content {
-    padding: 1rem; /* Padding inside the card */
-    display: flex; /* Use flexbox for layout */
-    align-items: center; /* Center items vertically */
-}
-
+/* Vertical Line Styles */
 .vertical-line {
-    width: 10px; 
-    border-radius: 5px;
-    height: 100%; /* Adjust height as needed (e.g., 80% of card height) */
-    background-color: var(--secondary-blue); /* Change this to your desired color */
+    width: .5rem;
+    background-color: var(--grey);
+    border-radius: 1.5rem;
+    height: 80%;
+    margin-right: 2rem;
 }
 
-.segment {
-    padding: 0 10px; 
+/* Card Content Layout */
+.card-content {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    height: 80%;
 }
 
 .segment-1 {
     flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .segment-2 {
-    flex: 2;
+    flex: 4;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
-h6 {
-    margin: 0; /* Remove default margin */
-    font-size: 1rem; /* Adjust font size as needed */
+/* Text and Typography */
+.card-text {
+    margin: 0;
+    font-family: var(--font-primary);
 }
 
-p {
-    margin: 0; /* Remove default margin */
-    font-size: 0.875rem; /* Adjust font size as needed */
+.card-text h2 {
+    margin: .25rem 0;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-dark, #0F1111);
+}
+
+.card-text p {
+    margin: 0;
+    font-size: var(--small-text);
+    font-weight: 400;
+    color: var(--text-grey, #808080);
+}
+
+/* Button Layout */
+.button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.check-in-button {
+    position: relative;
+    height: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--primary-blue);
+    background: #FFF;
+    box-shadow: 0px 4px 16px 0px rgba(15, 17, 17, 0.05);
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+}
+
+/* Button Interactions */
+.check-in-button:not(:disabled):hover {
+    cursor: pointer;
+    background: var(--grey);
+    border: none;
+}
+
+.check-in-button:disabled {
+    background-color: #d3d3d3;
+    border: 1px solid #d3d3d3;
+    box-shadow: none;
+}
+
+/* Icon within Button */
+.card-button-icon {
+    width: 1rem;
+    height: 1rem;
+    margin-right: .5rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1000px) {
+    .segment-1 {
+        display: none;
+    }
+
+    .segment-2 {
+        flex: 1;
+        flex-direction: column;
+    }
+
+    .shift-card {
+        height: auto;
+    }
 }

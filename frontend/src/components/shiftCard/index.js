@@ -1,45 +1,108 @@
-import React from 'react';
+import dayjs from 'dayjs';
+import CheckInIcon from '../../assets/check-in-icon.png'
+import Plus from '../../assets/plus.png'
 import './index.css'; 
-import { Card, CardContent, Typography, Box, Button } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import { requestToCoverShift } from '../../api/shiftService';
+import { SHIFT_TYPES, COVERAGE_STATUSES } from '../../data/constants';
 
-function ShiftCard({ shift }) {
+function ShiftCard({ shift, shiftType, onUpdate }) {
+    // TODO replace with actual volunteer ID
+    const myVolunteerId = '1230545b-0505-4909-826c-59359503dae6'
+    const currentDate = dayjs();
+    const pastShift = dayjs(shift.shift_date).format('YYYY-MM-DD') <= currentDate.format('YYYY-MM-DD');
+
+    const handleCoverShiftClick = async () => {
+        try {
+            const body = {
+                request_id: shift.request_id,
+                volunteer_id: myVolunteerId,
+            };
+            await requestToCoverShift(body);
+            // notify parent
+            onUpdate();
+        } catch (error) {
+            console.error('Error generating request to cover shift:', error);
+        }
+    };
+
+    // TODO Check-in handler for 'my-shifts'
+    const handleCheckInClick = async () => {
+        if (!shift.checked_in && pastShift) {
+            // Perform check-in logic here
+            console.log(`Checking in for shift ${shift.shift_id}`);
+            // Set the state or make API call here to mark the shift as checked in
+        }
+    };
+
+    // TODO View details handler for the default button
+    const handleViewDetailsClick = () => {
+        console.log(`Viewing details for shift ${shift.shift_id}`);
+    };
+
+    const buttonConfig = {
+        [SHIFT_TYPES.MY_SHIFTS]: {
+            lineColor: 'var(--green)',
+            label: shift.checked_in ? 'Checked In' : pastShift ? 'Check In' : 'Upcoming',
+            icon: shift.checked_in ? null : pastShift ? CheckInIcon : null,
+            disabled: shift.checked_in || !pastShift,
+            buttonClass: shift.checked_in ? 'checked-in' : '',
+            onClick: handleCheckInClick,
+        },
+        [SHIFT_TYPES.COVERAGE]: {
+            lineColor: 'var(--red)',
+            label: shift.coverage_status === COVERAGE_STATUSES.RESOLVED
+                ? 'Resolved'
+                : shift.coverage_status === COVERAGE_STATUSES.PENDING
+                ? 'Pending Approval'
+                : 'Cover',
+            icon: shift.coverage_status === COVERAGE_STATUSES.OPEN ? Plus : null,
+            disabled: shift.coverage_status === COVERAGE_STATUSES.RESOLVED || shift.coverage_status === COVERAGE_STATUSES.PENDING,
+            onClick: handleCoverShiftClick,
+        },
+        [SHIFT_TYPES.MY_COVERAGE_REQUESTS]: {
+            lineColor: 'var(--yellow)',
+            label: 'Requested Coverage',
+            icon: null,
+            disabled: true,
+            onClick: () => {},  // No action for this state
+        },
+        [SHIFT_TYPES.DEFAULT]: {
+            lineColor: 'var(--grey)',
+            label: 'View Details',
+            icon: null,
+            disabled: false,
+            onClick: handleViewDetailsClick,
+        },
+    };
+
+    const { lineColor, label, icon, disabled, buttonClass, onClick } =
+        buttonConfig[shiftType] || buttonConfig.default;
+
     return (
-        // <Card className="shift-card" variant="outlined">
-        //     <CardContent className="card-content"> {/* Apply CSS class here */}
-        //         <Box sx={{ flexGrow: 1 }} className="card-box">
-        //             <Grid container spacing={2}>
-        //                 {/* Vertical Colored Line */}
-        //                 <Grid item xs={1}>
-        //                     <Box className="vertical-line" />
-        //                 </Grid>
-
-        //                 {/* Segment 1: Shift ID */}
-        //                 <Grid item xs={2}>
-        //                     <Typography variant="h6">Shift ID</Typography>
-        //                     <Typography variant="body2">{shift.fk_schedule_id}</Typography>
-        //                 </Grid>
-
-        //                 {/* Segment 2: Description */}
-        //                 <Grid item xs={9}>
-        //                     <Typography variant="h6">Description</Typography>
-        //                     <Typography variant="body2">Some description text here</Typography>
-        //                 </Grid>
-        //             </Grid>
-        //         </Box>
-        //     </CardContent>
-        // </Card>
-
-        <div className="shift-card"> {/* Use a div for the card */}
-            <div className="vertical-line" />
-            <div className="card-content"> {/* Content container */}
-                <div className="segment segment-1">
-                    <h6>Shift ID</h6>
-                    <p>{shift.fk_schedule_id}</p>
+        <div className="shift-card">
+            <div className="vertical-line" style={{ backgroundColor: lineColor }} />
+            <div className="card-content">
+                <div className="column segment-1">
+                    <div className="card-text">
+                        <h2 className="shift-time">{shift.start_time}</h2>
+                        <p>{shift.duration} hour</p>
+                    </div>
                 </div>
-                <div className="segment segment-2">
-                    <h6>Description</h6>
-                    <p>Some description text here</p>
+                <div className="column segment-2">
+                    <div className="card-text">
+                        <h2>{shift.class_name}</h2>
+                        <p>{shift.instructions.substring(0, 50)}{shift.instructions.length > 40 ? '...' : ''}</p>
+                    </div>
+                    <div className="button-container">
+                        <button
+                            className={`check-in-button ${buttonClass}`}
+                            disabled={disabled}
+                            onClick={onClick}
+                        >
+                            {icon && <img src={icon} alt="Button Icon" className="card-button-icon" />}
+                            {label}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

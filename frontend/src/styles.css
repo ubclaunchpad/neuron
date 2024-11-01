@@ -19,6 +19,12 @@
   --dark: #0F1111;
   --light-grey: #F0FAFF;
   --white: #FFFFFF;
+
+    /* Button-specific Colors */
+    --dark-grey: #808080;
+    --green: #28a745;
+    --yellow: #CB8324;
+    --red: #952018;
   --button-blue: #1687CA;
   --error-red: #DC3545;
 }
@@ -26,6 +32,7 @@
 :root {
   --small-text: 14px;
   --medium-text: 16px;
+  --large-text: 22px;
   --title-text: 24px;
 }
 

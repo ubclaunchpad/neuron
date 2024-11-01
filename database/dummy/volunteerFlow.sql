@@ -38,6 +38,66 @@ INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUE
 INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES
 ('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 2, '2024-09-12', 90);
 
+-- For volunteer schedule viewing, monthly view for volunteer_id 1230545b-0505-4909-826c-59359503dae6
+
+-- Insert data into the class table
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date) VALUES
+(100, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'High Intensity Interval Training', 'Get a sweat on.', 'https://zoom.example.com/class1', '2024-09-09', '2024-12-13');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date) VALUES
+(101, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Art From The Heart', 'Painting and pottery', 'https://zoom.example.com/class1', '2024-09-09', '2024-12-13');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date) VALUES
+(102, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Think, Feel, Dance', 'Move to the music!', 'https://zoom.example.com/class1', '2024-09-09', '2024-12-13');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date) VALUES
+(103, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Higher Intensity Chair Exercise', 'Movement that is easy on the joints', 'https://zoom.example.com/class1', '2024-09-09', '2024-12-13');
+
+-- Set class schedule 
+INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+(100, 100, 2, '09:30:00', '10:30:00');
+INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+(101, 101, 4, '11:00:00', '13:00:00');
+INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+(102, 102, 6, '10:00:00', '11:00:00');
+INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+(103, 103, 6, '14:00:00', '15:00:00');
+
+-- Assign volunteer to class
+INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
+('1230545b-0505-4909-826c-59359503dae6', 100);
+INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
+('e20d262b-8047-4a9a-9202-a97aa0412092', 101);
+INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
+('e20d262b-8047-4a9a-9202-a97aa0412092', 102);
+INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
+('e20d262b-8047-4a9a-9202-a97aa0412092', 103);
+
+-- Create entry in shifts table
+INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+('1230545b-0505-4909-826c-59359503dae6', 100, '2024-11-12', 2, false);
+INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+('1230545b-0505-4909-826c-59359503dae6', 100, '2024-11-19', 2, false);
+INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+('1230545b-0505-4909-826c-59359503dae6', 100, '2024-11-26', 2, false);
+INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+('e20d262b-8047-4a9a-9202-a97aa0412092', 101, '2024-11-14', 2, false);
+INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+('e20d262b-8047-4a9a-9202-a97aa0412092', 102, '2024-11-16', 1, false);
+INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+('e20d262b-8047-4a9a-9202-a97aa0412092', 103, '2024-11-16', 1, false);
+INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+('e20d262b-8047-4a9a-9202-a97aa0412092', 103, '2024-10-25', 1, false);
+
 -- Create entry in shift_coverage_request table
-INSERT INTO shift_coverage_request (fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
-VALUES ('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 1, '2024-09-10', NULL);
+INSERT INTO shift_coverage_request (request_id, fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
+VALUES (100, '1230545b-0505-4909-826c-59359503dae6', 100, '2024-11-19', NULL);
+INSERT INTO shift_coverage_request (request_id, fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
+VALUES (101, 'e20d262b-8047-4a9a-9202-a97aa0412092', 101, '2024-11-14', NULL);
+INSERT INTO shift_coverage_request (request_id, fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
+VALUES (102, 'e20d262b-8047-4a9a-9202-a97aa0412092', 102, '2024-11-16', NULL);
+INSERT INTO shift_coverage_request (request_id, fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
+VALUES (103, 'e20d262b-8047-4a9a-9202-a97aa0412092', 103, '2024-11-16', NULL);
+INSERT INTO shift_coverage_request (request_id, fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
+VALUES (104, 'e20d262b-8047-4a9a-9202-a97aa0412092', 103, '2024-10-25', '722a20a0-30da-4dc2-bb05-ea26e62824a7');
+
+--pending coverage table
+INSERT INTO pending_shift_coverage (request_id, pending_volunteer)
+VALUES ('e20d262b-8047-4a9a-9202-a97aa0412092', 103, '2024-10-25', NULL);

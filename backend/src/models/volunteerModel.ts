@@ -175,7 +175,10 @@ export default class VolunteerModel {
                     const volunteerData = {total_hours: new_total_hours};
                     this.updateVolunteer(volunteer_id, volunteerData);
 
-                    resolve(results);
+                    resolve({
+                        status: 200,
+                        message: 'Volunteer hours updated successfully.',
+                    });
                 });
             });
         });

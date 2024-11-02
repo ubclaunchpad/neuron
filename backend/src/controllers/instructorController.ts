@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-
 import { Instructor } from '../common/interfaces.js';
 import InstructorModel from '../models/instructorModel.js';
 

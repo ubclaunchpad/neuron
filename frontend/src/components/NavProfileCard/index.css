@@ -17,9 +17,13 @@
     align-items: center;
 }
 
-.nav-profile-card__avatar {
+.nav-profile-card__avatar, .nav-profile-card__avatar-collapse {
     display: flex;
     justify-content: center;
+}
+
+.nav-profile-card__avatar-collapse {
+    margin-bottom: 1rem;
 }
 
 .nav-profile-card__avatar img {

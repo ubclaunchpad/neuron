@@ -17,7 +17,7 @@ export default function NavProfileCard({
   };
 
   return collapse ? (
-    <div className="nav-profile-card__avatar">
+    <div className="nav-profile-card__avatar-collapse">
       {avatar ? (
         <img src={avatar} alt={name} width={24} height={24} />
       ) : (

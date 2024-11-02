@@ -3,7 +3,7 @@ import CustomButton from "../CustomButton";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useEffect, useState } from "react";
-import { resetPassword } from "../../api/auth";
+import { resetPassword } from "../../api/authService";
 import notyf from "../../utils/notyf";
 import "./index.css";
 

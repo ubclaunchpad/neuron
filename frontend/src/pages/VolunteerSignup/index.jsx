@@ -1,8 +1,8 @@
 import LeftSideBarWithLogo from "../../components/LeftSideBarWithLogo";
-import RightSideWithForm from "../../components/RightSideWithForm";
+import RightSideWithForm from "../../components/AuthenticationFormWrapper";
 import "./index.css";
 
-const SignUpPage = () => {
+const VolunteerSignup = () => {
     return (
         <div className="signUpPage">
             <LeftSideBarWithLogo />
@@ -11,4 +11,4 @@ const SignUpPage = () => {
     );
 };
 
-export default SignUpPage;
+export default VolunteerSignup;

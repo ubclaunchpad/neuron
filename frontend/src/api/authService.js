@@ -44,4 +44,22 @@ const resetPassword = (data) =>
             throw error;
         });
 
-export { signUp, login, sendResetPasswordInstructions, resetPassword };
+// Check if the user is logged in with a valid token
+const isAuthenticated = async () => {
+    const authToken = localStorage.getItem("neuronAuthToken");
+
+    if (!authToken) {
+        return false;
+    } else {
+        try {
+            const response = await api.post("/auth/is-authenticated", { token: authToken });
+            if (response.status === 200) {
+                return true;
+            }
+        } catch (error) {
+            return false;
+        }
+    }
+}
+
+export { signUp, login, sendResetPasswordInstructions, resetPassword, isAuthenticated };

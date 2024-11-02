@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useTimer } from "react-timer-hook";
-import { sendResetPasswordInstructions } from "../../api/auth";
+import { sendResetPasswordInstructions } from "../../api/authService";
 import notyf from "../../utils/notyf";
 import "./index.css";
 

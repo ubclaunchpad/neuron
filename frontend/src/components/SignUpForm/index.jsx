@@ -1,7 +1,7 @@
 import TextInput from "../TextInput";
 import CustomButton from "../CustomButton";
 import { Link } from "react-router-dom";
-import { signUp } from "../../api/auth";
+import { signUp } from "../../api/authService";
 import notyf from "../../utils/notyf";
 import { Formik } from "formik";
 import * as Yup from "yup";

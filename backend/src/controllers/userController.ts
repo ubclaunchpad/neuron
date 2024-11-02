@@ -242,6 +242,7 @@ async function loginUser(req: Request, res: Response): Promise<any> {
 
     // Trim the user details
     email = email.trim();
+    password = password.trim();
 
     // Get the user from the database
     try {
@@ -253,6 +254,14 @@ async function loginUser(req: Request, res: Response): Promise<any> {
         if (!(await bcrypt.compare(password, user.password))) {
             return res.status(400).json({
                 error: "Incorrect password",
+            });
+        }
+
+        // If the user is not verified, return an error
+        const volunteer = await getVolunteerByUserId(user.user_id);
+        if (volunteer.active == 0 || volunteer.active == null) {
+            return res.status(400).json({
+                error: "Your account is not verified yet",
             });
         }
 

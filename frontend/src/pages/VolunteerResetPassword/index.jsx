@@ -1,8 +1,8 @@
 import LeftSideBarWithLogo from "../../components/LeftSideBarWithLogo";
-import RightSideWithForm from "../../components/RightSideWithForm";
+import RightSideWithForm from "../../components/AuthenticationFormWrapper";
 import "./index.css";
 
-const ResetPasswordPage = () => {
+const VolunteerResetPassword = () => {
     return (
         <div className="forgotPassPage">
             <LeftSideBarWithLogo />
@@ -14,4 +14,4 @@ const ResetPasswordPage = () => {
     );
 };
 
-export default ResetPasswordPage;
+export default VolunteerResetPassword;

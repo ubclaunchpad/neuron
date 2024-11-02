@@ -13,6 +13,10 @@ import { AuthenticatedUserRequest } from "../common/types.js";
 
 export const authRouter = Router();
 
+authRouter.post("/is-authenticated", isAuthorized, (req: AuthenticatedUserRequest, res: Response) => {
+    res.status(200).json({ user: req.user });
+});
+
 authRouter.post("/register", (req: Request, res: Response) =>
     registerUser(req, res)
 );

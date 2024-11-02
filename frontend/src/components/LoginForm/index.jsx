@@ -1,7 +1,7 @@
 import TextInput from "../TextInput";
 import CustomButton from "../CustomButton";
-import { Link } from "react-router-dom";
-import { login } from "../../api/auth";
+import { Link, useNavigate } from "react-router-dom"
+import { login } from "../../api/authService";
 import notyf from "../../utils/notyf";
 import { Formik } from "formik";
 import * as Yup from "yup";
@@ -15,6 +15,8 @@ const LoginSchema = Yup.object().shape({
 });
 
 const LoginForm = () => {
+    const navigate = useNavigate();
+
     return (
         <>
             <Formik
@@ -28,7 +30,11 @@ const LoginForm = () => {
                         .then((response) => {
                             notyf.success("Logged in successfully");
                             // Save the token in the local storage
-                            localStorage.setItem("token", response.token);
+                            localStorage.setItem("neuronAuthToken", response.token);
+                            setTimeout(() => {
+                                // Redirect to the home page so that the user cannot go back to the login page
+                                navigate("/");
+                            }, 1500);       
                             setSubmitting(false);
                         })
                         .catch((error) => {

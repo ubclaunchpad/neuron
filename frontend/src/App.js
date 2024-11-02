@@ -1,10 +1,9 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-<<<<<<< HEAD
 import "notyf/notyf.min.css";
-import Home from "./pages/home/index";
 import Classes from "./pages/classes";
 import VolunteerProfile from "./pages/volunteerProfile";
+import VolunteerDash from "./pages/volunteerDash";
 import SignUpPage from "./pages/signup";
 import LoginPage from "./pages/login";
 import ForgotPasswordPage from "./pages/forgotPassword";
@@ -15,7 +14,7 @@ function App() {
         <div className="App">
             <BrowserRouter>
                 <Routes>
-                    <Route path="/" element={<Home />} />
+                    <Route path="/" element={<VolunteerDash />} />
                     <Route path="/auth/signup" element={<SignUpPage />} />
                     <Route path="/auth/login" element={<LoginPage />} />
                     <Route
@@ -31,31 +30,19 @@ function App() {
                         path="/volunteer/my-profile"
                         element={<VolunteerProfile />}
                     />
-                    <Route path="/volunteer/hours" element={<Home />} />
+                    <Route
+                        path="/volunteer/schedule"
+                        element={<VolunteerDash />}
+                    />
+                    <Route path="/volunteer/classes" element={<Classes />} />
+                    <Route
+                        path="/volunteer/my-profile"
+                        element={<VolunteerProfile />}
+                    />
                 </Routes>
             </BrowserRouter>
         </div>
     );
-=======
-import Classes from './pages/classes';
-import VolunteerProfile from './pages/volunteerProfile';
-import VolunteerDash from './pages/volunteerDash';
-
-function App() {
-
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<VolunteerDash/>} />
-          <Route path="/volunteer/classes" element={<Classes/>} />
-          <Route path="/volunteer/my-profile" element={<VolunteerProfile/>} />
-          <Route path="/volunteer/schedule" element={<VolunteerDash/>} />
-        </Routes>
-      </BrowserRouter>
-    </div>
-  );
->>>>>>> origin/main
 }
 
 export default App;

@@ -1,0 +1,83 @@
+@import '../../../styles.css';
+
+.change-password-card {
+    position: relative;
+    max-width: 100%;
+    height: fit-content;
+    border-radius: 8px;
+    border: 1px solid #D9D9D9;
+    padding: 32px;
+    box-shadow: 0px 4px 16px 0px #0F11110D;
+}
+
+.change-password-card h2 {
+    margin-top: 0;
+    margin-bottom: 24px;
+    font-size: 20px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+  
+/* Label styling */
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+input::-ms-reveal {
+    display: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+/* Input wrapper styling */
+.input-wrapper {
+    position: relative;
+    user-select: none;
+}
+
+/* Input field styling */
+input {
+    width: 100%; /* Make input take up the full width of its container */
+    padding: 10px;
+    padding-right: 40px; /* Add extra padding on the right for the toggle icon */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+/* Password toggle icon styling */
+.password-toggle {
+    position: absolute;
+    right: 12px; /* Position icon inside the input field */
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    color: #666;
+}
+
+/* Button styling */
+.change-password-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #1687CA;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 16px;
+}
+
+/* Button hover effect */
+.change-password-btn:hover {
+    background-color: #1a98e1;
+}

@@ -3,7 +3,16 @@ import connectionPool from "../config/database.js";
 export default class VolunteerModel {
     getVolunteerById(volunteer_id: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            const query = "SELECT * FROM volunteers WHERE volunteer_id = ?";
+            const query = `
+                SELECT 
+                    v.*, u.created_at 
+                FROM 
+                    volunteers v
+                JOIN 
+                    users u ON v.fk_user_id = u.user_id
+                WHERE 
+                    volunteer_id = ?
+                `;
             const values = [volunteer_id];
 
             connectionPool.query(query, values, (error: any, results: any) => {

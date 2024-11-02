@@ -1,0 +1,25 @@
+/* frontend/src/components/availabilityGrid/AvailabilityGrid.css */
+
+.availability-grid {
+    text-align: center;
+  }
+  
+  .slot {
+    width: 50px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    margin: 2px;
+  }
+  
+  .available {
+    background-color: #4caf50; /* Green for available slots */
+    color: white;
+  }
+  
+  .unavailable {
+    background-color: #f5f5f5; /* Grey for unavailable slots */
+  }  

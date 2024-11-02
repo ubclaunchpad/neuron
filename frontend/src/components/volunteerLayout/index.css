@@ -87,3 +87,11 @@ body {
     padding-top: 15px;
     width: 70px; /* Adjust width as needed */
 }
+
+.nav-profile-card-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}

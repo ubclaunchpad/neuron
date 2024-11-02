@@ -1,0 +1,47 @@
+.nav-profile-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: white;
+    margin: 0 1rem;
+    border-radius: 0.5rem;
+    padding: 0.8rem;
+    cursor: pointer;
+}
+
+.nav-profile-card__main {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.nav-profile-card__avatar {
+    display: flex;
+    justify-content: center;
+}
+
+.nav-profile-card__avatar img {
+    border-radius: 0.5rem;
+}
+
+.nav-profile-card__info {
+    display: flex;
+    flex-direction: column;
+    gap:0.2rem;
+}
+
+.nav-profile-card__name, .nav-profile-card__email {
+    margin: 0;
+    
+}
+
+.nav-profile-card__name {
+    font-size: 16px;
+}
+
+.nav-profile-card__email {
+    color: grey;
+    font-size: 14px;
+}

@@ -1,0 +1,131 @@
+@import '../../index.css';  /*Imports custom fonts*/
+
+.main-container {
+     height: 100%;
+     transition: 0.3s width ease-in-out;
+}
+
+.panel-container {
+     position: fixed;
+     height: 100vh;
+     top: 0px;
+     right: 0px;
+     z-index: 1;
+     transition: 0.3s width ease-in-out;
+     border-left: 1px solid #e3e3e3;
+     padding-top: 68px;
+     overflow: hidden;
+}
+
+.panel-header {
+     width: 392px;
+     height: auto;
+     margin-right: 36px; 
+     margin-left: 20px;
+     position: relative;
+     padding-bottom: 20px;
+     border-bottom: 1px solid #e3e3e3;
+     display: flex;
+     flex-direction: column;
+     gap: 4px;
+}
+
+.panel-header-class-name {
+     font-family: 'Montserrat';
+     font-weight: 600;
+     font-size: 20px;
+     line-height: 27px;
+     color: #0f1111;
+}
+
+.panel-button-icon {
+     padding: 0px;
+     background-color: transparent;
+     border: none;
+     cursor: pointer;
+}
+
+.panel-button-icon-close {
+     position: absolute;
+     right: 0px;
+     top: 0px;
+}
+
+.panel-header-time {
+     width: 100%;
+}
+
+.panel-button-icon:hover {
+     filter:brightness(0.6);
+}
+
+.panel-details {
+     margin-right: 36px; 
+     margin-left: 20px;
+     padding: 32px 0;
+}
+
+.panel-titles {
+     min-width: 120px;
+     font-family: 'Roboto';
+     font-weight: 400;
+     font-size: 16px;
+     line-height: 21.6px;
+     color: #808080;
+}
+
+.status {
+     background: rgba(24, 149, 49, 0.1);
+     padding: 4px 12px;
+     color: #189531;
+     width: fit-content;
+     border-radius: 4px;
+}
+
+.panel-details-shift {
+     display: flex;
+     flex-direction: column;
+     gap: 12px;
+}
+
+.panel-details-shift-row {
+     display: flex;
+     flex-direction: row;
+     align-items: center;
+}
+
+.panel-details-shift-right {
+     width: 264px;
+     font-family: 'Roboto';
+     font-weight: 400;
+     font-size: 16px;
+}
+
+.volunteer-profile {
+     width: 28px;
+     height: 28px;
+     background-color: #808080;
+     border-radius: 4px;
+     opacity: 0.3;
+     margin-right: 6px;
+}
+
+.panel-details-description {
+     margin-top: 20px;
+}
+
+.panel-description {
+     margin-top: 10px;
+     font-family: 'Roboto';
+     font-weight: 400;
+     font-size: 16px;
+     line-height: 21.6px;
+}
+.button-icons {
+     display: flex;
+     flex-direction: row;
+     gap: 4px;
+     width: fit-content;
+     margin-left: auto;
+     margin-right: 36px;
+}

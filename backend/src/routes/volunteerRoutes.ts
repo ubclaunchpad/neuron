@@ -1,10 +1,11 @@
 import { Router, Request, Response } from "express";
 
-import {
-    getVolunteerById,
-    getVolunteers,
-    updateVolunteer,
-} from "../controllers/volunteerController.js";
+import { 
+    getVolunteerById, 
+    getVolunteers, 
+    shiftCheckIn, 
+    updateVolunteer 
+} from '../controllers/volunteerController.js';
 
 import {
     getAvailabilities,
@@ -49,5 +50,8 @@ router.get("/:volunteer_id", (req: Request, res: Response) => {
 router.put("/:volunteer_id", (req: Request, res: Response) => {
     updateVolunteer(req, res);
 });
+
+// update a volunteer's total hours when checked into a shift
+router.post('/shiftCheckIn', (req: Request, res: Response) => { shiftCheckIn(req, res) });
 
 export default router;

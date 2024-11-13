@@ -52,6 +52,8 @@ router.put("/:volunteer_id", (req: Request, res: Response) => {
 });
 
 // update a volunteer's total hours when checked into a shift
-router.post('/shiftCheckIn', (req: Request, res: Response) => { shiftCheckIn(req, res) });
+router.post('/shiftCheckIn', (req: Request, res: Response) => { 
+    shiftCheckIn(req, res) 
+});
 
 export default router;

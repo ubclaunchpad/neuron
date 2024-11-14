@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Classes from './pages/classes';
 import VolunteerProfile from './pages/volunteerProfile';
 import VolunteerDash from './pages/volunteerDash';
+import AccountNotVerified from './pages/account_not_verified';
 
 function App() {
 
@@ -14,6 +15,7 @@ function App() {
           <Route path="/volunteer/classes" element={<Classes/>} />
           <Route path="/volunteer/my-profile" element={<VolunteerProfile/>} />
           <Route path="/volunteer/schedule" element={<VolunteerDash/>} />
+          <Route path="/volunteer/account-not-verified" element={<AccountNotVerified/>} />
         </Routes>
       </BrowserRouter>
     </div>

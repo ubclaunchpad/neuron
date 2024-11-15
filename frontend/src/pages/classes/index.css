@@ -1,1 +1,116 @@
-@import '../../styles.css';
+@import "../../styles.css";
+
+/* TODO debug: remove this after testing
+*:hover {
+  outline: 1px solid red;
+} */
+
+.classes-page {
+  font-family: var(--font-secondary);
+}
+
+.main-category-header {
+  display: flex; /* Arrange children in a row */
+  flex-wrap: nowrap; /* Prevent wrapping to the next line */
+  overflow-x: auto; /* Enable horizontal scrolling */
+  background-color: transparent;
+  border-bottom: 1px solid var(--grey);
+}
+
+.category-button {
+  flex: 0 0 auto; /* Prevent buttons from shrinking or growing */
+  /* margin: 0.5rem 1rem; */
+  padding: 0.5rem 1.75rem 0.5rem 0;
+  color: var(--dark-grey);
+  border: none;
+  white-space: nowrap; /* Prevent text from wrapping to multiple lines */
+  cursor: pointer; /* Change cursor on hover */
+  background-color: transparent;
+  transition: background-color 0.3s ease; /* Smooth background color transition */
+  width: fit-content;
+  min-width: 100px;
+  text-align: center;
+  align-content: center;
+  font-family: inherit; /* Need to specify inherit or it will use user agent stylesheet */
+}
+
+.category-button:first-child {
+  padding-left: 2vw;
+}
+
+/* ----- */
+
+.class-catalog {
+  margin: 0 2vw 2vh 2vw;
+}
+
+.category-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.category-header {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid var(--grey);
+  margin-top: 5vh;
+  padding-bottom: 1vh;
+}
+
+.category-title {
+  margin: 0;
+  font-size: var(--title-text);
+  font-weight: var(--semi-bold);
+}
+
+.sub-category-container {
+  padding: 0 1.5% 0 1.5%;
+}
+
+.sub-category-title {
+  margin: 4vh 0 2vh 0;
+  font-size: var(--title-text);
+  font-weight: var(--semi-bold);
+}
+
+.class-card {
+  display: flex;
+  flex-direction: column;
+  width: 23%;
+  border: 1px solid var(--grey);
+  border-radius: 8px;
+  padding: 1rem 1rem 1rem 1rem;
+}
+
+.class-image {
+  width: auto;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
+.class-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.class-level {
+  margin: 0;
+  color: var(--primary-blue);
+  font-size: var(--small-text);
+  font-weight: var(--regular);
+}
+
+.class-title {
+  margin: 0;
+  font-size: var(--medium-text);
+  font-weight: var(--semi-bold);
+}
+
+.class-schedule {
+  margin: 0;
+  font-size: var(--small-text);
+  font-weight: var(--regular);
+}

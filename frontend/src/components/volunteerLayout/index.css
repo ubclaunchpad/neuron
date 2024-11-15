@@ -3,7 +3,7 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: "Roboto", sans-serif;
+    font-family: var(--font-primary);
 }
 
 .main-container {
@@ -30,11 +30,11 @@ body {
     flex: 1;
     color: var(--primary-blue);
     text-decoration: none;
-    font-family: Montserrat;
+    font-family: var(--font-secondary);
     font-style: normal;
     font-weight: 700;
     padding-left: 2vw;
-    font-size: var(--title-text);
+    font-size: var(--page-title-text);
 }
 
 /* NAVBAR STYLING, ON ACTIVE, ON COLLAPSE */
@@ -80,7 +80,7 @@ body {
     color: var(--dark);
     text-decoration: none;
     font-weight: 400;
-    font-size: var(--small-text);
+    font-size: var(--medium-text);
 }
 
 .navbar.collapsed {

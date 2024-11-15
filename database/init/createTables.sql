@@ -5,8 +5,8 @@ DROP TABLE IF EXISTS volunteer_class;
 DROP TABLE IF EXISTS availability;
 DROP TABLE IF EXISTS schedule;
 DROP TABLE IF EXISTS class;
-DROP TABLE IF EXISTS volunteers;
 DROP TABLE IF EXISTS volunteer_profile_pics;
+DROP TABLE IF EXISTS volunteers;
 DROP TABLE IF EXISTS admins;
 DROP TABLE IF EXISTS instructors;
 DROP TABLE IF EXISTS user_session;
@@ -62,6 +62,7 @@ create table volunteer_profile_pics (
     fk_volunteer_id VARCHAR(255) PRIMARY KEY,
     profile_pic TEXT NOT NULL,
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
+    ON DELETE CASCADE
 );
 
 create table admins (

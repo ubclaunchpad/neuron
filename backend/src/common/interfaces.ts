@@ -15,6 +15,15 @@ export interface Volunteer {
   class_preferences: string;
   bio?: string;
   activate: boolean;
+  pronouns?: string;
+  phone_number?: string;
+  city?: string;
+  province?: string;
+}
+
+export interface ProfilePic {
+  volunteer_id: string,
+  profile_picture: string
 }
 
 export interface Instructor {

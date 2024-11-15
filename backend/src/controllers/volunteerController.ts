@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import VolunteerModel from "../models/volunteerModel.js";
+import { ProfilePic } from "../common/interfaces.js";
 
 const volunteerModel = new VolunteerModel();
 
@@ -98,6 +99,82 @@ async function updateVolunteer(req: Request, res: Response) {
     }
 }
 
+async function insertProfilePicture(req: Request, res: Response) {
+    const profilePic: ProfilePic = req.body;
+
+    if (!profilePic.volunteer_id || !profilePic.profile_picture) {
+        return res.status(400).json({
+            error: "Missing required fields. 'volunteer_id' and 'profile_picture' are required."
+        });
+    }
+
+    try {
+        const insertedProfilePic = await volunteerModel.insertProfilePicture(profilePic);
+        res.status(200).json(insertedProfilePic);
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
+        });
+    }
+}
+
+async function getProfilePicture(req: Request, res: Response) {
+    const { volunteer_id } = req.params;
+    if (!volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'volunteer_id'",
+        });
+    }
+
+    try {
+        const profilePic = await volunteerModel.getProfilePicture(volunteer_id);
+        res.status(200).json(profilePic);
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
+        });
+    }
+}
+
+async function updateProfilePicture(req: Request, res: Response) {
+    const profilePic: ProfilePic = req.body;
+
+    if (!profilePic.volunteer_id || !profilePic.profile_picture) {
+        return res.status(400).json({
+            error: "Missing required fields. 'volunteer_id' and 'profile_picture' are required."
+        });
+    }
+
+    try {
+        const result = await volunteerModel.updateProfilePicture(profilePic);
+        res.status(200).json(result);
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
+        });
+    }
+}
+
+async function deleteProfilePicture(req: Request, res: Response) {
+    const { volunteer_id } = req.params;
+
+    if (!volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'volunteer_id'",
+        });
+    }
+
+    try {
+        const result = await volunteerModel.deleteProfilePicture(volunteer_id);
+        res.status(200).json(result);
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
+        });
+    }
+}
+
+
 export {
     getVolunteerById,
     getVolunteerByUserId,
@@ -105,4 +182,8 @@ export {
     insertVolunteer,
     deleteVolunteer,
     updateVolunteer,
+    insertProfilePicture,
+    getProfilePicture,
+    updateProfilePicture,
+    deleteProfilePicture
 };

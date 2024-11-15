@@ -124,4 +124,96 @@ export default class VolunteerModel {
             });
         });
     }
+
+    insertProfilePicture(profilePic: any) : Promise<any> {
+        return new Promise((resolve, reject) => {
+            const query = "INSERT INTO volunteer_profile_pics (fk_volunteer_id, profile_pic) VALUES (?, ?)";
+            const values = [
+                profilePic.volunteer_id, 
+                profilePic.profile_picture
+            ];
+
+            connectionPool.query(query, values, (error: any, results: any) => {
+                if (error) {
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
+                }
+                resolve(results);
+            });
+        });
+    }
+
+    getProfilePicture(volunteer_id: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const query = "SELECT profile_pic FROM volunteer_profile_pics WHERE fk_volunteer_id = ?";
+            const values = [volunteer_id];
+
+            connectionPool.query(query, values, (error: any, results: any) => {
+                if (error) {
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
+                }
+                if (results.length == 0) {
+                    return reject({
+                        status: 400,
+                        message: `No profile picture found under the given volunteer ID`,
+                    });
+                }
+                resolve(results[0]);
+            });
+        });
+    }
+
+    updateProfilePicture(profilePic: any) {
+        return new Promise((resolve, reject) => {
+            const query = "UPDATE volunteer_profile_pics SET profile_pic = ? WHERE fk_volunteer_id = ?";
+            const values = [ 
+                profilePic.profile_picture,
+                profilePic.volunteer_id
+            ];
+
+            connectionPool.query(query, values, (error: any, results: any) => {
+                if (error) {
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
+                }
+                if (results.affectedRows === 0) {
+                    return reject({
+                        status: 400,
+                        message: `No profile picture found under the given volunteer ID.`,
+                    });
+                }
+                resolve(results);
+            });
+        });
+    }
+
+    deleteProfilePicture(volunteer_id: string) {
+        return new Promise((resolve, reject) => {
+            const query = "DELETE FROM volunteer_profile_pics WHERE fk_volunteer_id = ?";
+            const values = [volunteer_id];
+
+            connectionPool.query(query, values, (error: any, results: any) => {
+                if (error) {
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
+                }
+                if (results.affectedRows === 0) {
+                    return reject({
+                        status: 400,
+                        message: `No profile picture found under the given volunteer ID.`,
+                    });
+                }
+                resolve(results);
+            });
+        });
+    }
 }

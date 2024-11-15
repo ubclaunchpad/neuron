@@ -1,0 +1,29 @@
+.category-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.category-header {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid var(--grey);
+  margin-top: 5vh;
+  padding-bottom: 1vh;
+}
+
+.category-title {
+  margin: 0;
+  font-size: var(--title-text);
+  font-weight: var(--semi-bold);
+}
+
+.sub-category-container {
+  padding: 0 1.5% 0 1.5%;
+}
+
+.sub-category-title {
+  margin: 4vh 0 2vh 0;
+  font-size: var(--title-text);
+  font-weight: var(--semi-bold);
+}

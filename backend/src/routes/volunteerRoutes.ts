@@ -50,7 +50,7 @@ router.get("/:volunteer_id", (req: Request, res: Response) => {
 });
 
 // update volunteer profile
-router.put("/update/:volunteer_id", (req: Request, res: Response) => {
+router.put("/:volunteer_id", (req: Request, res: Response) => {
     updateVolunteer(req, res);
 });
 
@@ -65,7 +65,7 @@ router.get("/profile-picture/:volunteer_id", (req: Request, res: Response) => {
 });
 
 // update profile picture of a volunteer
-router.put("/profile-picture", (req: Request, res: Response) => {
+router.put("/profile-picture/:volunteer_id", (req: Request, res: Response) => {
     updateProfilePicture(req, res);
 });
 

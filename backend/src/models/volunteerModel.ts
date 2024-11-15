@@ -168,12 +168,12 @@ export default class VolunteerModel {
         });
     }
 
-    updateProfilePicture(profilePic: any) {
+    updateProfilePicture(volunteer_id: string, profile_picture: string) {
         return new Promise((resolve, reject) => {
             const query = "UPDATE volunteer_profile_pics SET profile_pic = ? WHERE fk_volunteer_id = ?";
             const values = [ 
-                profilePic.profile_picture,
-                profilePic.volunteer_id
+                profile_picture,
+                volunteer_id
             ];
 
             connectionPool.query(query, values, (error: any, results: any) => {

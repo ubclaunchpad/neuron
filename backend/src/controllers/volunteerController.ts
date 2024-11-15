@@ -137,16 +137,26 @@ async function getProfilePicture(req: Request, res: Response) {
 }
 
 async function updateProfilePicture(req: Request, res: Response) {
+    const { volunteer_id } = req.params;
     const profilePic: ProfilePic = req.body;
 
-    if (!profilePic.volunteer_id || !profilePic.profile_picture) {
+    if (!volunteer_id) {
         return res.status(400).json({
-            error: "Missing required fields. 'volunteer_id' and 'profile_picture' are required."
+            error: "Missing required parameter: 'volunteer_id'",
+        });
+    }
+
+    if (!profilePic.profile_picture) {
+        return res.status(400).json({
+            error: "Missing required fields. 'profile_picture' is required."
         });
     }
 
     try {
-        const result = await volunteerModel.updateProfilePicture(profilePic);
+        const result = await volunteerModel.updateProfilePicture(
+            volunteer_id,
+            profilePic.profile_picture
+        );
         res.status(200).json(result);
     } catch (error: any) {
         return res.status(error.status).json({

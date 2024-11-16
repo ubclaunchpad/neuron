@@ -17,7 +17,7 @@ export default class ClassesController {
 	}
 
 	public async addClass(req: Request, res: Response) {
-		const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date } = req.body;
+		const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category } = req.body;
 
 		if (!fk_instructor_id || !class_name || !start_date || !end_date) {
 			return res.status(400).json({
@@ -32,7 +32,8 @@ export default class ClassesController {
 				instructions: instructions,
 				zoom_link: zoom_link,
 				start_date: start_date,
-				end_date: end_date
+				end_date: end_date,
+				category: category,
 			};
 
 			const result = await this.classesModel.addClass(newClass);
@@ -44,7 +45,8 @@ export default class ClassesController {
 				instructions,
 				zoom_link,
 				start_date,
-				end_date
+				end_date, 
+				category,
 			};
 
 			return res.status(201).json({

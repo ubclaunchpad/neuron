@@ -50,6 +50,7 @@ export interface Class {
   zoom_link?: string;
   start_date: string;
   end_date?: string;
+  category: string;
 }
 
 export interface Shift {

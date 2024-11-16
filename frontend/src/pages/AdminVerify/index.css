@@ -3,7 +3,8 @@
 }
 
 table {
-    width: 100%;
+    width: 80vw;
+    margin: auto;
     border-collapse: collapse;
     border-spacing: 0;
     font-family: var(--font-secondary);
@@ -12,6 +13,7 @@ table {
 th {
     color: black;
     height: 2vw;
+    font-family: var(--font-secondary);
 }
 
 tr:hover {
@@ -24,6 +26,16 @@ th, td {
     padding: 0.7vw;
 }
 
+td {
+    font-family: var(--font-tertiary);
+}
+
 .errorMsg {
     text-align: center;
+}
+
+.verify-heading {
+    padding-top: 2vw;
+    padding-left: 10vw;
+    font-family: var(--font-secondary);
 }

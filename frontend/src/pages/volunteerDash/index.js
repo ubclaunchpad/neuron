@@ -13,8 +13,8 @@ function VolunteerDash() {
 
     useEffect(() => {
         isAuthenticated().then((response) => {
-            if (!response) {
-                console.log("here")
+            console.log(response);
+            if (!response.isAuthenticated) {
                 navigate("/auth/login");
             }
         }).catch((error) => {

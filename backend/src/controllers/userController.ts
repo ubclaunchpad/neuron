@@ -98,6 +98,35 @@ async function deleteUser(user_id: string): Promise<any> {
     });
 }
 
+async function sendVolunteerData(
+    req: AuthenticatedUserRequest,
+    res: Response
+): Promise<any> {
+    const user = req.user;
+
+    if (!user) {
+        return res.status(500).json({
+            error: "Couldn't verify a user from the token",
+        });
+    }
+
+    try {
+        const volunteer = await getVolunteerByUserId(user.user_id);
+
+        // remove password from user
+        delete user.password;
+
+        return res.status(200).json({
+            user: user,
+            volunteer: volunteer,
+        });
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
+        });
+    }
+}
+
 async function registerUser(req: Request, res: Response): Promise<any> {
     // Get the user details from the request body
     let { firstName, lastName, email, password, role } = req.body;
@@ -285,33 +314,6 @@ async function loginUser(req: Request, res: Response): Promise<any> {
         });
     } catch (error: any) {
         res.status(error.status).json({
-            error: error.message,
-        });
-    }
-}
-
-async function verifyUser(req: Request, res: Response): Promise<any> {
-    // Get the token from the request parameters
-    const volunteer_id = req.body.volunteer_id;
-
-    // If the token is not provided, return an error
-    if (!volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'volunteer_id'",
-        });
-    }
-
-    // Update the user's active status
-    try {
-        await volunteerModel.updateVolunteer(volunteer_id, {
-            active: 1,
-        });
-
-        return res.status(200).json({
-            message: "User verified successfully",
-        });
-    } catch (error: any) {
-        return res.status(500).json({
             error: error.message,
         });
     }
@@ -539,9 +541,9 @@ async function updatePassword(
 
 export {
     getUserById,
+    sendVolunteerData,
     registerUser,
     loginUser,
-    verifyUser,
     sendResetPasswordEmail,
     verifyAndRedirect,
     resetPassword,

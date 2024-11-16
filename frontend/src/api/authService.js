@@ -49,17 +49,35 @@ const isAuthenticated = async () => {
     const authToken = localStorage.getItem("neuronAuthToken");
 
     if (!authToken) {
-        return false;
+        return {
+            isAuthenticated: false,
+            user: null,
+        };
     } else {
         try {
-            const response = await api.post("/auth/is-authenticated", { token: authToken });
+            const response = await api.post("/auth/is-authenticated", {
+                token: authToken,
+            });
             if (response.status === 200) {
-                return true;
+                return {
+                    isAuthenticated: true,
+                    user: response.data.user,
+                    volunteer: response.data.volunteer,
+                };
             }
         } catch (error) {
-            return false;
+            return {
+                isAuthenticated: false,
+                user: null,
+            };
         }
     }
-}
+};
 
-export { signUp, login, sendResetPasswordInstructions, resetPassword, isAuthenticated };
+export {
+    signUp,
+    login,
+    sendResetPasswordInstructions,
+    resetPassword,
+    isAuthenticated,
+};

@@ -10,7 +10,7 @@ const VolunteerLogin = () => {
 
     useEffect(() => {
         isAuthenticated().then((response) => {
-            if (response) {
+            if (response.isAuthenticated) {
                 navigate("/");
             }
         }).catch((error) => {

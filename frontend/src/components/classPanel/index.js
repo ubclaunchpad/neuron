@@ -5,9 +5,6 @@ import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import { getClassById } from '../../api/classesPageService';
 
-
-
-
 function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}) {
      const [panelWidth, setPanelWidth] = useState("0px");
      const [panelInfo, setPanelInfo] = useState(null);
@@ -18,7 +15,6 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
      const [instructor, setInstructor] = useState("No instructor available");
      const [volunteers, setVolunteers] = useState(["No volunteer for this class"]);
      const [currIdx, setCurrIdx] = useState(itemIndex);
-
      
      useEffect(() => {
           setCurrIdx(itemIndex);
@@ -164,7 +160,6 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
           });
      };
       
-
      return (
           <>
           <div className="main-container" style={{width: 'calc(100% - ' + panelWidth +')'}}>

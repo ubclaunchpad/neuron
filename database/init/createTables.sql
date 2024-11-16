@@ -60,7 +60,7 @@ create table volunteers (
 
 create table volunteer_profile_pics (
     fk_volunteer_id VARCHAR(255) PRIMARY KEY,
-    profile_pic TEXT NOT NULL,
+    profile_pic BLOB NOT NULL,
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
     ON DELETE CASCADE
 );

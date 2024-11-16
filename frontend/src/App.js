@@ -15,7 +15,7 @@ function App() {
         <div className="App">
             <BrowserRouter>
                 <Routes>
-                <Route path="/" element={<VolunteerDash />} />
+                    <Route path="/" element={<VolunteerDash />} />
                     <Route path="/auth/signup" element={<VolunteerSignup />} />
                     <Route path="/auth/login" element={<VolunteerLogin />} />
                     <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />}/>

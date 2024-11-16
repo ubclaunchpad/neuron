@@ -7,25 +7,35 @@ import ClassCategoryContainer from "../../components/ClassCategoryContainer";
 
 function Classes() {
   const [data, setData] = useState(null);
-  const [infoDisplay, setInfoDisplay] = useState(false);
-  const [shiftInfo, setShiftInfo] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState("Online Exercise");
+  // const [infoDisplay, setInfoDisplay] = useState(false);
+  // const [shiftInfo, setShiftInfo] = useState({});
 
-  useEffect(() => {
-    getAllClasses()
-      .then((data) => setData(data))
-      .catch((error) => console.error(error));
-  }, []);
+  // useEffect(() => {
+  //   getAllClasses()
+  //     .then((data) => setData(data))
+  //     .catch((error) => console.error(error));
+  // }, []);
 
-  console.log(data);
+  // console.log(data);
 
-  const getInfo = () => {
-    getShiftInfo("8eafa250-393b-4918-afdb-d0cfa79b1bdd", "1", "2024-01-01")
-      .then((data) => {
-        setShiftInfo(data);
-        setInfoDisplay(true);
-      })
-      .catch((error) => console.error(error));
-  };
+  // const getInfo = () => {
+  //   getShiftInfo("8eafa250-393b-4918-afdb-d0cfa79b1bdd", "1", "2024-01-01")
+  //     .then((data) => {
+  //       setShiftInfo(data);
+  //       setInfoDisplay(true);
+  //     })
+  //     .catch((error) => console.error(error));
+  // };
+
+  const categories = [
+    "Online Exercise",
+    "Creative & Expressive",
+    "Care Partner Workshops",
+    "In-Person Exercise",
+    "One-on-One Exercise",
+    "Food & Nutrition",
+  ];
 
   return (
     <VolunteerLayout
@@ -33,12 +43,18 @@ function Classes() {
       pageContent={
         <div className="classes-page">
           <div className="main-category-header">
-            <button className="category-button">Online Exercise</button>
-            <button className="category-button">Creative & Expressive</button>
-            <button className="category-button">Care Partner Workshops</button>
-            <button className="category-button">In-Person Exercise</button>
-            <button className="category-button">One-on-One Exercise</button>
-            <button className="category-button">Food & Nutrition</button>
+            {categories.map((category) => {
+              const isSelected = selectedCategory === category;
+              return (
+                <button
+                  key={category}
+                  className={`category-button ${isSelected ? "selected" : ""}`}
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category}
+                </button>
+              );
+            })}
           </div>
           {/* ----- */}
           <div className="class-catalog">

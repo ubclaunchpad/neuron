@@ -15,18 +15,20 @@
   overflow-x: auto; /* Enable horizontal scrolling */
   background-color: transparent;
   border-bottom: 1px solid var(--grey);
+  padding-left: 2.5vw;
 }
 
 .category-button {
-  flex: 0 0 auto; /* Prevent buttons from shrinking or growing */
-  /* margin: 0.5rem 1rem; */
-  padding: 0.5rem 1.75rem 0.5rem 0;
+  position: relative;
+  flex: 0 0 auto; /* prevent shrinking or growing */
+  text-align: center;
+  margin: 0 1.125rem 0 1.125rem;
+  padding: 0 0 0.5rem 0;
   color: var(--dark-grey);
   border: none;
-  white-space: nowrap; /* Prevent text from wrapping to multiple lines */
-  cursor: pointer; /* Change cursor on hover */
+  white-space: nowrap;
+  cursor: pointer;
   background-color: transparent;
-  transition: background-color 0.3s ease; /* Smooth background color transition */
   width: fit-content;
   min-width: 100px;
   text-align: center;
@@ -35,7 +37,31 @@
 }
 
 .category-button:first-child {
-  padding-left: 2vw;
+  margin-left: 0;
+}
+
+.selected {
+  color: var(--primary-blue);
+}
+
+/* Pseudo elements for the bottom border */
+.category-button::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--secondary-blue);
+  border-radius: 2px 2px 0 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform: scaleX(0);
+  opacity: 0;
+}
+
+.category-button.selected::after {
+  transform: scaleX(1);
+  opacity: 1;
 }
 
 /* ----- */

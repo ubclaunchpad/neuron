@@ -58,12 +58,6 @@ export default class UserModel {
 
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
-                    if (error.code === "ER_DUP_ENTRY") {
-                        return reject({
-                            status: 400,
-                            message: `An account with the given email already exists`,
-                        });
-                    }
                     return reject({
                         status: 500,
                         message: `An error occurred while executing the query: ${error}`,

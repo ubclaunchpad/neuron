@@ -19,21 +19,10 @@
   --dark: #0F1111;
   --light-grey: #F0FAFF;
   --white: #FFFFFF;
-  --button-blue: #1687CA;
-  --error-red: #DC3545;
 }
 
 :root {
   --small-text: 14px;
   --medium-text: 16px;
   --title-text: 24px;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-}
-
-.notyf {
-  font-family: var(--font-primary);
 }

@@ -51,30 +51,10 @@ async function isAuthorized(
             });
         }
     } catch (err) {
-        return res.status(401).json({
+        return res.status(400).json({
             error: "The token is either invalid or has expired",
         });
     }
 }
 
-async function isAdmin(
-    req: AuthenticatedUserRequest,
-    res: Response,
-    next: NextFunction
-): Promise<any> {
-    if (!req.user) {
-        return res.status(401).json({
-            error: "Unauthorized",
-        });
-    }
-
-    if (req.user.role !== "ADMIN") {
-        return res.status(403).json({
-            error: "Forbidden",
-        });
-    }
-
-    next();
-}
-
-export { isAuthorized, isAdmin };
+export { isAuthorized };

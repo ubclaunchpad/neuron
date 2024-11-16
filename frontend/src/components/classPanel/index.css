@@ -13,12 +13,12 @@
      z-index: 1;
      transition: 0.3s width ease-in-out;
      border-left: 1px solid #e3e3e3;
-     padding-top: 68px;
+     padding-top: 50px;
      overflow: hidden;
 }
 
 .panel-header {
-     width: 392px;
+     width: 87%;
      height: auto;
      margin-right: 36px; 
      margin-left: 20px;
@@ -62,7 +62,7 @@
 .panel-details {
      margin-right: 36px; 
      margin-left: 20px;
-     padding: 32px 0;
+     padding: 32px 0px;
 }
 
 .panel-titles {
@@ -128,4 +128,5 @@
      width: fit-content;
      margin-left: auto;
      margin-right: 36px;
+     margin-top: 20px;
 }

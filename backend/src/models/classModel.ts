@@ -17,6 +17,9 @@ export default class ClassesModel {
 
      public getClassById(class_id: string): Promise<any> {
           return new Promise((resolve, reject) => {
+
+               // All class information is in one entry. Volunteer names, days of week, start times and end times can have multiple 
+               // values and seperated by commas. Days of week, start times and end times should have the same length. 
                const query = 
                `  
                WITH 

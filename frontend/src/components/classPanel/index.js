@@ -37,15 +37,15 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
                setPanelWidth("35vw");
                if (pageUsed==="Classes") {
                     if (panelInfo.days_of_week){
-                         setDayOfWeek(panelInfo.days_of_week.split(',').map(number => dow[number - 1])[0]);
+                         setDayOfWeek(panelInfo.days_of_week.split(',').map(number => dow[number - 1]));
                     } else setDayOfWeek(["Not Scheduled"]);
 
                     if (panelInfo.start_times) {
-                         setStartTimes(panelInfo.start_times.split(',').map(time => formatTime(time))[0]);
+                         setStartTimes(panelInfo.start_times.split(',').map(time => formatTime(time)));
                     } else setStartTimes(["Not Scheduled"]);
 
                     if (panelInfo.end_times){
-                         setEndTimes(panelInfo.end_times.split(',').map(time => formatTime(time))[0]);
+                         setEndTimes(panelInfo.end_times.split(',').map(time => formatTime(time)));
                     } else setEndTimes(["Not Scheduled"]);
 
                     if (panelInfo.instructions){
@@ -150,6 +150,21 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
           }
      };
 
+     const renderPanelTime = () => {
+          if (daysOfWeek.length !== startTimes.length || daysOfWeek.length !== endTimes.length || startTimes.length !== endTimes.length) {
+               return null;
+          }
+      
+          return daysOfWeek.map((day, index) => {
+               return (
+                    <div key={index} className="panel-header-dow panel-titles">
+                         {day}, {startTimes[index] + " - " + endTimes[index]}
+                    </div>
+               );
+          });
+     };
+      
+
      return (
           <>
           <div className="main-container" style={{width: 'calc(100% - ' + panelWidth +')'}}>
@@ -157,8 +172,7 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
           </div>
           <div className="panel-container" style={{width: panelWidth}}>
                <div className="panel-header">
-                    <div className="panel-header-dow panel-titles">{daysOfWeek}</div>
-                    <div className="panel-titles panel-header-time">{startTimes + " - " + endTimes}</div>
+                    {renderPanelTime()}
                     <div className="panel-header-class-name">{panelInfo?.class_name? panelInfo.class_name : "N/A"}</div>
                     <button className="panel-button-icon panel-button-icon-close" onClick={handleClosePanel}>
                          <img alt="" style={{width: 16, height: 16}} src={button_icon_close}/>
@@ -194,15 +208,16 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
                               {instructions}
                          </div>
                     </div>
+                    <div className="button-icons">
+                         <button className="panel-button-icon" onClick={handleToPrev}>
+                              <img alt="" src={button_icon_prev} style={{width: 16, height: 16}}/>
+                         </button>
+                         <button className="panel-button-icon" onClick={handleToNext}>
+                              <img alt="" src={button_icon_next} style={{width: 16, height: 16}}/>
+                         </button>    
+                    </div>
                </div>
-               <div className="button-icons">
-                    <button className="panel-button-icon" onClick={handleToPrev}>
-                         <img alt="" src={button_icon_prev} style={{width: 16, height: 16}}/>
-                    </button>
-                    <button className="panel-button-icon" onClick={handleToNext}>
-                         <img alt="" src={button_icon_next} style={{width: 16, height: 16}}/>
-                    </button>    
-               </div>
+               
           </div>
           </>
      );

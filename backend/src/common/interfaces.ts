@@ -69,9 +69,9 @@ export interface Instructor {
 
 
 export interface Schedule {
-schedule_id: number;
-fk_class_id?: number;
-day_of_week: number;
-start_time: string;
-end_time: string;
+  schedule_id: string;
+  fk_class_id: number;
+  day: day_of_week;
+  start_time: string;
+  end_time: string;
 }

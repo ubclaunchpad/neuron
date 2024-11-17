@@ -1,5 +1,5 @@
 import "./index.css";
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import VolunteerLayout from "../../components/volunteerLayout";
 import dayjs from 'dayjs';
 import DateToolbar from "../../components/DateToolbar";
@@ -8,6 +8,7 @@ import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
 
 function VolunteerSchedule() {
+    const volunteerID = localStorage.getItem('volunteerID');
     const currentDate = dayjs();
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [shifts, setShifts] = useState([]);
@@ -16,13 +17,12 @@ function VolunteerSchedule() {
     // Create a ref object to store references to each shifts-container for scrolling
     const shiftRefs = useRef({});
     const scheduleContainerRef = useRef(null); 
-    const currentVolunteer = '1230545b-0505-4909-826c-59359503dae6'; // TODO Hardcoded for now
 
-    // Fetch shifts for the selected date
+    // Fetch shifts for the selected date and filter
     useEffect(() => {
         const fetchShifts = async () => {
             const body = {
-                volunteer_id: currentVolunteer,
+                volunteer_id: volunteerID,
                 shiftDate: selectedDate.format('YYYY-MM-DD')
             };
             const response = await getVolunteerShiftsForMonth(body);
@@ -37,7 +37,7 @@ function VolunteerSchedule() {
             setShifts(filteredShifts);
         };
         fetchShifts();
-    }, [selectedDate, filter]); // Re-run when filter changes
+    }, [selectedDate, filter, volunteerID]);
 
     // map of shifts grouped by date { date: [shift1, shift2, ...] }
     const groupedShifts = shifts.reduce((acc, shift) => {
@@ -53,7 +53,7 @@ function VolunteerSchedule() {
     const handleShiftUpdate = () => {
         const fetchShifts = async () => {
             const body = {
-                volunteer_id: currentVolunteer,
+                volunteer_id: volunteerID,
                 shiftDate: selectedDate.format('YYYY-MM-DD')
             };
             const response = await getVolunteerShiftsForMonth(body);
@@ -99,6 +99,7 @@ function VolunteerSchedule() {
                     <div ref={scheduleContainerRef} className="schedule-container">
                         {Object.keys(groupedShifts).length > 0 ? (
                             Object.keys(groupedShifts).map((date) => (
+                        
                                 <div 
                                     key={date} 
                                     className="shifts-container"

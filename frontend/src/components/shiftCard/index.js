@@ -6,16 +6,15 @@ import { requestToCoverShift } from '../../api/shiftService';
 import { SHIFT_TYPES, COVERAGE_STATUSES } from '../../data/constants';
 
 function ShiftCard({ shift, shiftType, onUpdate }) {
-    // TODO replace with actual volunteer ID
-    const myVolunteerId = '1230545b-0505-4909-826c-59359503dae6'
     const currentDate = dayjs();
     const pastShift = dayjs(shift.shift_date).format('YYYY-MM-DD') <= currentDate.format('YYYY-MM-DD');
+    const volunteerID = localStorage.getItem('volunteerID');
 
     const handleCoverShiftClick = async () => {
         try {
             const body = {
                 request_id: shift.request_id,
-                volunteer_id: myVolunteerId,
+                volunteer_id: volunteerID,
             };
             await requestToCoverShift(body);
             // notify parent

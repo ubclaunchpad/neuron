@@ -11,26 +11,21 @@ import VolunteerProfile from "./pages/volunteerProfile";
 import AdminVerify from "./pages/AdminVerify";
 
 function App() {
-    const [isAuth, setIsAuth] = useState(false);
-    const [volunteerID, setVolunteerID] = useState(null);
+
+    const [isVolunteer, setIsVolunteer] = useState(false);
 
     useEffect(() => {
         const checkAuth = async () => {
             try {
                 const authResponse = await isAuthenticated();
                 if (authResponse && authResponse.volunteer && authResponse.volunteer.volunteer_id) {
-                    const volunteerId = authResponse.volunteer.volunteer_id;
-                    console.log("Authenticated as volunteer:", volunteerId);
-    
-                    setIsAuth(true);
-                    setVolunteerID(volunteerId);
-                    localStorage.setItem("volunteerID", volunteerId); // Store in localStorage
+                    setIsVolunteer(true);
                 } else {
-                    setIsAuth(false);
+                    setIsVolunteer(false);
                 }
             } catch (error) {
                 console.error("Authentication as volunteer failed:", error);
-                setIsAuth(false);
+                setIsVolunteer(false);
             }
         };
         checkAuth();
@@ -40,12 +35,12 @@ function App() {
         <div className="App">
             <BrowserRouter>
                 <Routes>
-                    <Route path="/" element={<VolunteerDash />} />
                     <Route path="/auth/signup" element={<VolunteerSignup />} />
                     <Route path="/auth/login" element={<VolunteerLogin />} />
                     <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />}/>
                     <Route path="/auth/reset-password" element={<VolunteerResetPassword />}/>
-                    {isAuth && volunteerID && ( <>
+                    {isVolunteer && ( <>
+                            <Route path="/" element={<VolunteerDash />} />
                             <Route path="/volunteer/classes" element={<Classes />} />
                             <Route path="/volunteer/my-profile" element={<VolunteerProfile />} />
                             <Route path="/volunteer/schedule" element={<VolunteerDash />}/>

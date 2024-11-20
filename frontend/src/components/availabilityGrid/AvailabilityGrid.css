@@ -1,25 +1,123 @@
-/* frontend/src/components/availabilityGrid/AvailabilityGrid.css */
+/* Availability Grid Container */
+.availability-grid-container {
+  border: 1px solid var(--bg-grey-outline, #D9D9D9);
+  border-radius: 8px; /* Rounded corners */
+  padding: 15px; /* Padding inside the container */
+  margin: 20px auto; /* Center the container */
+  background-color: #ffffff; /* White background */
+  width: 100%;
+  max-width: 800px; /* Limit max width */
+  background: var(--bg-white, #FFF); /* White background */
+  /* shadow */
+  box-shadow: 0px 4px 16px 0px rgba(15, 17, 17, 0.05);
+}
 
+/* Header Section */
+.availability-header {
+  display: flex;
+  justify-content: space-between; /* Align title and buttons horizontally */
+  align-items: center; /* Center vertically */
+  margin-bottom: 10px;
+}
+
+/* Title */
+.availability-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 10px; /* Space between buttons */
+}
+
+.submit-button,
+.cancel-button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.submit-button {
+  background-color: #4caf50; /* Green */
+}
+
+.cancel-button {
+  background-color: #f44336; /* Red */
+}
+
+.submit-button:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
+.cancel-button:hover {
+  background-color: #e53935; /* Darker red on hover */
+}
+
+/* Grid Structure */
 .availability-grid {
-    text-align: center;
-  }
-  
-  .slot {
-    width: 50px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border: 1px solid #ddd;
-    margin: 2px;
-  }
-  
-  .available {
-    background-color: #4caf50; /* Green for available slots */
-    color: white;
-  }
-  
-  .unavailable {
-    background-color: #f5f5f5; /* Grey for unavailable slots */
-  }  
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr); /* First column for time labels, then 7 equally spaced columns */
+  grid-template-rows: 15px repeat(20, 1fr); /* First row for day labels, rest for time slots with equal height */
+  gap: 1px; /* Gap between cells */
+}
+
+/* Time Labels */
+.time-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px; /* Adjust font size to fit smaller cells */
+  font-weight: bold;
+  text-align: right; /* Align text to the right for time labels */
+  padding-right: 5px; /* Space between time label and slots */
+  border-right: 1px solid #ddd; /* Keep the current border style for time labels */
+}
+
+/* Day Labels */
+.day-label {
+  text-align: center;
+  font-weight: bold;
+  background-color: white; /* Light gray background for headers */
+  font-size: 12px; /* Adjust font size */
+  color: #333; /* Text color for day labels */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #f0f0f0; /* White border for day labels */
+}
+
+/* Slot Cells */
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #f5f5f5; /* White border for availability slots */
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* Smooth color change */
+}
+
+.available {
+  background-color: #4caf50; /* Green for selected slots */
+  color: white;
+}
+
+.unavailable {
+  background-color: white; /* Grey for unselected slots */
+}
+
+/* Empty slot for top-left corner */
+.empty-slot {
+  grid-row: 1; /* First row */
+  grid-column: 1; /* First column */
+  background-color: #fff; /* Match grid background */
+}

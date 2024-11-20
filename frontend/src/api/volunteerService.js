@@ -1,4 +1,3 @@
-// frontend/src/api/volunteerService.js
 import api from './api';
 
 export const fetchVolunteerData = async (volunteer_id) => {
@@ -21,7 +20,6 @@ export const updateVolunteerData = async (volunteerData) => {
   }
 };
 
-// New methods for availability
 export const fetchVolunteerAvailability = async (volunteer_id) => {
   try {
     const response = await api.get(`/availability/${volunteer_id}`);

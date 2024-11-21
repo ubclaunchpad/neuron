@@ -106,8 +106,14 @@
   transition: background-color 0.3s ease; /* Smooth color change */
 }
 
-.available {
-  background-color: #4caf50; /* Green for selected slots */
+/* Saved and unsaved slot styles */
+.available.saved {
+  background-color: grey; /* Grey for saved slots */
+  color: white;
+}
+
+.available.unsaved {
+  background-color: #4caf50; /* Green for unsaved slots */
   color: white;
 }
 

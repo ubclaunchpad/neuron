@@ -52,7 +52,7 @@ const AvailabilityGrid = ({ volunteerId }) => {
     <div className="availability-grid-container">
       <div className="availability-header">
         <h2 className="availability-title">My Availability</h2>
-        {isEditing && (
+        {isEditing ? (
           <div className="action-buttons">
             <div className="submit-icon" onClick={handleSubmit}>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 17" fill="none">
@@ -72,6 +72,26 @@ const AvailabilityGrid = ({ volunteerId }) => {
               </svg>
             </div>
           </div>
+        ) : (
+          <div className="deselected-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
+              <g clip-path="url(#clip0_509_5373)">
+                <path
+                  d="M0.827148 15.9379C0.827148 16.1493 0.911143 16.3521 1.06065 16.5016C1.21016 16.6511 1.41294 16.7351 1.62438 16.7351H14.3802C14.5916 16.7351 14.7944 16.6511 14.9439 16.5016C15.0934 16.3521 15.1774 16.1493 15.1774 15.9379C15.1774 15.7264 15.0934 15.5236 14.9439 15.3741C14.7944 15.2246 14.5916 15.1406 14.3802 15.1406H1.62438C1.41295 15.1406 1.21017 15.2246 1.06067 15.3741C0.911157 15.5236 0.827159 15.7264 0.827148 15.9379Z"
+                  fill="#808080"
+                />
+                <path
+                  d="M2.92846 13.8367H5.18315C5.39259 13.8373 5.60007 13.7964 5.79358 13.7163C5.98709 13.6362 6.16278 13.5184 6.31049 13.37L13.9699 5.71058C14.2681 5.41126 14.4356 5.00591 14.4355 4.58335C14.4354 4.1608 14.2678 3.75551 13.9695 3.45629L11.714 1.20083C11.4146 0.902656 11.0093 0.735278 10.5868 0.735352C10.1643 0.735425 9.75899 0.902943 9.45972 1.20122L1.80073 8.86021C1.65225 9.00791 1.53454 9.18361 1.45442 9.37712C1.3743 9.57063 1.33337 9.77811 1.33399 9.98755V12.2422C1.33441 12.665 1.50254 13.0703 1.80147 13.3692C2.1004 13.6682 2.50571 13.8363 2.92846 13.8367ZM10.5871 2.32856L12.8421 4.58363L11.7144 5.71136L9.45934 3.45629L10.5871 2.32856ZM8.33199 4.58363L10.5871 6.8387L5.18315 12.2426L2.92846 12.2422L2.92807 9.98755L8.33199 4.58363Z"
+                  fill="#808080"
+                />
+              </g>
+              <defs>
+                <clipPath id="clip0_509_5373">
+                  <rect width="16" height="16" fill="white" transform="translate(0.00195312 0.735352)" />
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
         )}
       </div>
       <div className="availability-grid">
@@ -82,7 +102,7 @@ const AvailabilityGrid = ({ volunteerId }) => {
             {day}
           </div>
         ))}
-
+  
         {/* Time labels */}
         {timeLabels.map((time, index) => (
           <div
@@ -93,7 +113,7 @@ const AvailabilityGrid = ({ volunteerId }) => {
             {time}
           </div>
         ))}
-
+  
         {/* Availability slots */}
         {Array(20)
           .fill(null)
@@ -104,7 +124,11 @@ const AvailabilityGrid = ({ volunteerId }) => {
                 <div
                   key={`slot-${dayIndex}-${timeIndex}`}
                   className={`slot ${
-                    unsavedTimes.includes(`${dayIndex}-${timeIndex}`) ? "available" : "unavailable"
+                    unsavedTimes.includes(`${dayIndex}-${timeIndex}`)
+                      ? "available unsaved"
+                      : savedTimes.includes(`${dayIndex}-${timeIndex}`)
+                      ? "available saved"
+                      : "unavailable"
                   }`}
                   onClick={() => handleSlotClick(dayIndex, timeIndex)}
                 ></div>
@@ -112,7 +136,7 @@ const AvailabilityGrid = ({ volunteerId }) => {
           )}
       </div>
     </div>
-  );
+  );  
 };
 
 export default AvailabilityGrid;

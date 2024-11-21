@@ -3,7 +3,8 @@ import { Router, Request, Response } from "express";
 import {
     getVolunteerById,
     getVolunteers,
-    updateVolunteer,
+    updateVolunteer, 
+    shiftCheckIn,
     insertProfilePicture,
     getProfilePicture,
     updateProfilePicture,
@@ -72,6 +73,11 @@ router.put("/profile-picture/:volunteer_id", (req: Request, res: Response) => {
 // delete profile picture of a volunteer
 router.delete("/profile-picture/:volunteer_id", (req: Request, res: Response) => {
     deleteProfilePicture(req, res);
+});
+
+// update a volunteer's total hours when checked into a shift
+router.post('/shiftCheckIn', (req: Request, res: Response) => { 
+    shiftCheckIn(req, res) 
 });
 
 export default router;

@@ -36,7 +36,15 @@ create table class (
     zoom_link VARCHAR(3000) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
+    category VARCHAR(64),
     FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id)
+);
+
+create table class_image (
+    image_id INT PRIMARY KEY AUTO_INCREMENT,
+    fk_class_id INT,
+    image BLOB,
+    FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
 );
 
 create table volunteers (

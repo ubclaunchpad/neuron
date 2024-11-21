@@ -19,12 +19,12 @@ export default class ClassesModel {
      public addClass(newClass: Class): Promise<Class> {
           return new Promise((resolve, reject) => {
                const query = `INSERT INTO class 
-                             (fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date)
-                             VALUES (?, ?, ?, ?, ?, ?)`;
+                             (fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category)
+                             VALUES (?, ?, ?, ?, ?, ?, ?)`;
    
-               const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date } = newClass;
+               const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category } = newClass;
    
-               connection.query(query, [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date], 
+               connection.query(query, [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category], 
                (error: any, results: any) => {
                    if (error) {
                        return reject('Error adding class: ' + error);

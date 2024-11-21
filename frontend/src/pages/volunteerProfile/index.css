@@ -15,14 +15,3 @@
 .card {
     margin-bottom: 20px;
 }
-
-.availability-placeholder {
-    flex: 1;
-    position: relative;
-    max-width: 100%;
-    height: fit-content;
-    border-radius: 8px;
-    border: 1px solid #D9D9D9;
-    padding: 32px;
-    box-shadow: 0px 4px 16px 0px #0F11110D;
-}

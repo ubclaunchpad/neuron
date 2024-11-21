@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import VolunteerModel from "../models/volunteerModel.js";
+import { ProfilePic } from "../common/interfaces.js";
 
 const volunteerModel = new VolunteerModel();
 
@@ -98,6 +99,126 @@ async function updateVolunteer(req: Request, res: Response) {
     }
 }
 
+async function insertProfilePicture(req: Request, res: Response) {
+    const profilePic: ProfilePic = req.body;
+
+    if (!profilePic.volunteer_id || !profilePic.profile_picture) {
+        return res.status(400).json({
+            error: "Missing required fields. 'volunteer_id' and 'profile_picture' are required."
+        });
+    }
+
+    try {
+        const insertedProfilePic = await volunteerModel.insertProfilePicture(profilePic);
+        res.status(200).json(insertedProfilePic);
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
+        });
+    }
+}
+
+async function getProfilePicture(req: Request, res: Response) {
+    const { volunteer_id } = req.params;
+    if (!volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'volunteer_id'",
+        });
+    }
+
+    try {
+        const profilePic = await volunteerModel.getProfilePicture(volunteer_id);
+        res.status(200).json(profilePic);
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
+        });
+    }
+}
+
+async function updateProfilePicture(req: Request, res: Response) {
+    const { volunteer_id } = req.params;
+    const profilePic: ProfilePic = req.body;
+
+    if (!volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'volunteer_id'",
+        });
+    }
+
+    if (!profilePic.profile_picture) {
+        return res.status(400).json({
+            error: "Missing required fields. 'profile_picture' is required."
+        });
+    }
+
+    try {
+        const result = await volunteerModel.updateProfilePicture(
+            volunteer_id,
+            profilePic.profile_picture
+        );
+        res.status(200).json(result);
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
+        });
+    }
+}
+
+async function deleteProfilePicture(req: Request, res: Response) {
+    const { volunteer_id } = req.params;
+
+    if (!volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'volunteer_id'",
+        });
+    }
+
+    try {
+        const result = await volunteerModel.deleteProfilePicture(volunteer_id);
+        res.status(200).json(result);
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
+        });
+    }
+}
+
+
+// Update a volunteer's profile based on the volunteer_id
+async function shiftCheckIn(req: Request, res: Response) {
+    const fk_volunteer_id = req.body.volunteerID;
+    const fk_schedule_id = req.body.scheduleID;
+    const shift_date = req.body.shiftDate;
+
+    if (!fk_volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameters: 'volunteer_id'"
+        });
+    }
+
+    if (!fk_schedule_id) {
+        return res.status(400).json({
+            error: "Missing required parameters: 'fk_schedule_id'"
+        });
+    }
+
+    if (!shift_date) {
+        return res.status(400).json({
+            error: "Missing required parameters: 'shift_date'"
+        });
+    }
+
+    try {
+        const updatedVolunteer = await volunteerModel.shiftCheckIn(fk_volunteer_id, fk_schedule_id, shift_date);
+        res.status(200).json(updatedVolunteer);
+    } catch (error) {
+        return res.status(500).json({
+            error: `Internal server error. ${error}`
+        });
+    }
+}
+
 export {
     getVolunteerById,
     getVolunteerByUserId,
@@ -105,4 +226,9 @@ export {
     insertVolunteer,
     deleteVolunteer,
     updateVolunteer,
+    insertProfilePicture,
+    getProfilePicture,
+    updateProfilePicture,
+    deleteProfilePicture,
+    shiftCheckIn
 };

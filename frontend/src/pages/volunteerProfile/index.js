@@ -1,19 +1,18 @@
 // volunteer profile page
 import "./index.css";
-import React from 'react'
+import React, { useState } from 'react';
 import VolunteerLayout from "../../components/volunteerLayout";
-// import UserProfileForm from "../../components/userProfileForm/UserProfileForm";
 import { fetchVolunteerData } from "../../api/volunteerService";
 import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
 import ChangePasswordCard from "../../components/volunteerProfile/changePasswordCard";
 import ClassPreferencesCard from "../../components/volunteerProfile/classPreferencesCard";
-
-
+// import UserProfileForm from "../../components/userProfileForm/UserProfileForm";
+import AvailabilityGrid from "../../components/volunteerProfile/availabilityGrid";
 
 const pageTitle = "My Profile";
 
 function VolunteerProfile() {
-
+    const [availability, setAvailability] = useState([]);
     const [volunteer, setVolunteer] = React.useState(null);
 
     React.useEffect(() => {
@@ -35,8 +34,7 @@ function VolunteerProfile() {
                             <VolunteerDetailsCard volunteer={volunteer} />
                         </div>    
                         <div className="card">
-                            {/* brian's ticket */}
-                            <div className="availability-placeholder">Availability</div>
+                            <AvailabilityGrid availability={availability} setAvailability={setAvailability} />
                         </div>
                     </div>
                     <div className="column">

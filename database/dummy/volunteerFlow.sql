@@ -19,8 +19,8 @@ INSERT INTO instructors (instructor_id, f_name, l_name, email) VALUES
 ('c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Jane', 'Smith', 'jane.smith@example.com');
 
 -- Insert data into the class table
-INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date) VALUES
-(1, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Strength & Balance Level 1', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class1', '2024-09-09', '2024-12-13');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory) VALUES
+(1, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Moving & Breathing with Qi Gong & Tai Chi Principles', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class1', '2024-09-09', '2024-12-13',  'Online Exercise', 'Tai Chi');
 
 -- Set class schedule 
 INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES

@@ -37,6 +37,7 @@ create table class (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     category VARCHAR(64),
+    subcategory VARCHAR(64),
     FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id)
 );
 

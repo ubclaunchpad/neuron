@@ -45,7 +45,7 @@ export default class ClassesController {
 				instructions,
 				zoom_link,
 				start_date,
-				end_date, 
+				end_date,
 				category,
 			};
 
@@ -58,5 +58,64 @@ export default class ClassesController {
 				error: `Internal server error: ${error}`
 			});
 		}
+	}
+
+	public async getAllImages(req: Request, res: Response) {
+		try {
+			const images = await this.classesModel.getAllImages();
+			return res.status(200).json({
+				data: images
+			});
+		} catch (error) {
+			return res.status(500).json({
+				error: `Internal server error: ${error}`
+			});
+		}
+	}
+
+	public async getImageByClassId(req: Request, res: Response) {
+		const class_id = Number(req.params.class_id);
+
+		if (!class_id) {
+			return res.status(400).json({
+				error: 'Missing required field: class_id'
+			});
+		}
+
+		try {
+			const image = await this.classesModel.getImageByClassId(class_id);
+			return res.status(200).json({
+				data: image
+			});
+		} catch (error) {
+			return res.status(500).json({
+				error: `Internal server error: ${error}`
+			});
+		};
+	}
+
+	public async uploadImage(req: Request, res: Response) {
+
+		const class_id = Number(req.params.class_id);
+
+		if (!req.file) {
+			return res.status(400).json({
+				error: 'No image uploaded'
+			});
+		}
+
+		if (!class_id) {
+			return res.status(400).json({
+				error: 'Missing required field: class_id'
+			});
+		}
+
+		const image = req.file.buffer;
+
+		const result = await this.classesModel.uploadImage(class_id, image);
+		return res.status(201).json({
+			message: 'Image uploaded successfully',
+			data: result
+		});
 	}
 }

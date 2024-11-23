@@ -1,25 +1,59 @@
-import React from 'react'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Classes from './pages/classes';
-import VolunteerProfile from './pages/volunteerProfile';
-import VolunteerDash from './pages/volunteerDash';
+import { useEffect, useState } from "react";
+import { isAuthenticated } from "./api/authService";
+import VolunteerDash from "./pages/volunteerDash";
+import VolunteerSignup from "./pages/VolunteerSignup";
+import VolunteerLogin from "./pages/VolunteerLogin";
+import VolunteerForgotPassword from "./pages/VolunteerForgotPassword";
+import VolunteerResetPassword from "./pages/VolunteerResetPassword";
+import Classes from "./pages/classes";
+import VolunteerProfile from "./pages/volunteerProfile";
+import AdminVerify from "./pages/AdminVerify";
 import AccountNotVerified from './pages/account_not_verified';
 
 function App() {
 
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<VolunteerDash/>} />
-          <Route path="/volunteer/classes" element={<Classes/>} />
-          <Route path="/volunteer/my-profile" element={<VolunteerProfile/>} />
-          <Route path="/volunteer/schedule" element={<VolunteerDash/>} />
-          <Route path="/volunteer/account-not-verified" element={<AccountNotVerified/>} />
+    const [isVolunteer, setIsVolunteer] = useState(false);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const authResponse = await isAuthenticated();
+                if (authResponse && authResponse.volunteer && authResponse.volunteer.volunteer_id) {
+                    setIsVolunteer(true);
+                } else {
+                    setIsVolunteer(false);
+                }
+            } catch (error) {
+                console.error("Authentication as volunteer failed:", error);
+                setIsVolunteer(false);
+            }
+        };
+        checkAuth();
+    }, []);
+
+    return (
+        <div className="App">
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/auth/signup" element={<VolunteerSignup />} />
+                    <Route path="/auth/login" element={<VolunteerLogin />} />
+                    <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />}/>
+                    <Route path="/auth/reset-password" element={<VolunteerResetPassword />}/>
+                    <Route path="/auth/account-not-verified" element={<AccountNotVerified/>} />
+                    {isVolunteer && ( <>
+                            <Route path="/" element={<VolunteerDash />} />
+                            <Route path="/volunteer/classes" element={<Classes />} />
+                            <Route path="/volunteer/my-profile" element={<VolunteerProfile />} />
+                            <Route path="/volunteer/schedule" element={<VolunteerDash />}/>
+                            <Route path="/volunteer/classes" element={<Classes />} /> </>
+                    )}
+                    <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
+                  
         </Routes>
-      </BrowserRouter>
-    </div>
-  );
+            </BrowserRouter>
+        </div>
+    );
 }
 
 export default App;

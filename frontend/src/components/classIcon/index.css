@@ -1,0 +1,38 @@
+.class-icon-card {
+    width: 250px;
+    border: 1px solid #d9d9d9;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  .class-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+  }
+  
+  .class-details {
+    padding: 15px;
+  }
+  
+  .class-level {
+    font-size: 14px;
+    font-weight: 500;
+    color: #4385ac;
+    margin-bottom: 5px;
+  }
+  
+  .class-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f1111;
+    margin-bottom: 10px;
+  }
+  
+  .class-time {
+    font-size: 14px;
+    color: #555555;
+  }

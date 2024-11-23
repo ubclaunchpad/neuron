@@ -1,6 +1,4 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { isAuthenticated } from "./api/authService";
 import VolunteerDash from "./pages/volunteerDash";
 import VolunteerSignup from "./pages/VolunteerSignup";
 import VolunteerLogin from "./pages/VolunteerLogin";

@@ -48,6 +48,10 @@
 
 .all-shifts-button .button-icon {
     border-color: var(--dark-grey);
+}
+
+.all-shifts-button.selected .button-icon {
+    border-color: var(--dark-grey);
     background-color: var(--dark-grey);
 }
   
@@ -55,10 +59,25 @@
     border-color: var(--green);
 }
 
+.my-shifts-button.selected .button-icon {
+    border-color: var(--green);
+    background-color: var(--green);
+}
+
 .requested-coverage-button .button-icon {
     border-color: var(--yellow);
 }
 
+.requested-coverage-button.selected .button-icon {
+    border-color: var(--yellow);
+    background-color: var(--yellow);
+}
+
 .needs-coverage-button .button-icon {
     border-color: var(--red);
+}
+
+.needs-coverage-button.selected .button-icon {
+    border-color: var(--red);
+    background-color: var(--red);
 }

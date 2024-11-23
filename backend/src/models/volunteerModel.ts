@@ -217,6 +217,7 @@ export default class VolunteerModel {
     }
 
     updateShiftCheckIn(volunteer_id: string, fk_schedule_id: any, shift_date: any): Promise<any> {
+        console.log("in the shift check in function");
         return new Promise((resolve, reject) => {
             /*
             const shiftData = { checked_in: 1 };
@@ -229,17 +230,20 @@ export default class VolunteerModel {
 
             connectionPool.query(query, values, (error: any, results: any) => {
                 if (error) {
+                    console.log("error");
                     return reject({
                         status: 500,
                         message: `An error occurred while executing the query: ${error}`,
                     });
                 }
                 if (results.affectedRows === 0) {
+                    console.log("nothing changed");
                     return reject({
                         status: 400,
                         message: `No rows updated. Verify fk_volunteer_id, fk_schedule_id, and shift_date.`,
                     });
                 }
+                console.log("resolving");
                 resolve(results);
             });
         });

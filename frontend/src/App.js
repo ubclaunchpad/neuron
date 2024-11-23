@@ -42,22 +42,13 @@ function App() {
         <Routes>
           <Route path="/auth/signup" element={<VolunteerSignup />} />
           <Route path="/auth/login" element={<VolunteerLogin />} />
-          <Route
-            path="/auth/forgot-password"
-            element={<VolunteerForgotPassword />}
-          />
-          <Route
-            path="/auth/reset-password"
-            element={<VolunteerResetPassword />}
-          />
+          <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />}/>
+          <Route path="/auth/reset-password" element={<VolunteerResetPassword />}/>
           {isVolunteer && (
             <>
               <Route path="/" element={<VolunteerDash />} />
               <Route path="/volunteer/classes" element={<Classes />} />
-              <Route
-                path="/volunteer/my-profile"
-                element={<VolunteerProfile />}
-              />
+              <Route path="/volunteer/my-profile" element={<VolunteerProfile />}/>
               <Route path="/volunteer/schedule" element={<VolunteerSchedule />} />
               <Route path="/volunteer/classes" element={<Classes />} />{" "}
             </>

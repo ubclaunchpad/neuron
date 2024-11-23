@@ -40,7 +40,6 @@ export const getProfilePicture = async (volunteer_id) => {
     return URL.createObjectURL(response.data);
   } catch (error) {
     console.error('Error getting profile picture:', error);
-    throw error;
   }
 }
 

@@ -1,10 +1,10 @@
 @import '../../styles.css';
 
 .dash-container {
-    font: var(--font-secondary);
+    font-family: var(--font-secondary);
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
+    grid-template-rows: auto;
     gap: 1rem;
     margin: 2rem;
 }
@@ -27,6 +27,10 @@
 }
 
 .dash-card-title {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
     font-size: 20px;
     line-height: 28px;
     font-weight: 500;
@@ -126,4 +130,40 @@
     height: 12px;
     border: var(--primary-blue) 2px solid;
     border-radius: 4px;
+}
+
+.dash-check-in {
+    height: 240px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 0.5rem;
+    background-color: var(--button-blue);
+    color: white;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+.dash-check-in-title {
+    font-size: 40px;
+}
+
+.dash-next-check-in {
+    height: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--grey);
+}
+
+.dash-next-title {
+    font-size: 20px;
+}
+
+.dash-next-time-num {
+    font-size: 40px;
+    font-weight: 500;
 }

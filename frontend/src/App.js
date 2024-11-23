@@ -32,24 +32,36 @@ function App() {
     }, []);
 
     return (
-        <div className="App">
-            <BrowserRouter>
-                <Routes>
-                    <Route path="/auth/signup" element={<VolunteerSignup />} />
-                    <Route path="/auth/login" element={<VolunteerLogin />} />
-                    <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />}/>
-                    <Route path="/auth/reset-password" element={<VolunteerResetPassword />}/>
-                    {isVolunteer && ( <>
-                            <Route path="/" element={<VolunteerDash />} />
-                            <Route path="/volunteer/classes" element={<Classes />} />
-                            <Route path="/volunteer/my-profile" element={<VolunteerProfile />} />
-                            <Route path="/volunteer/schedule" element={<VolunteerDash />}/>
-                            <Route path="/volunteer/classes" element={<Classes />} /> </>
-                    )}
-                    <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
-                </Routes>
-            </BrowserRouter>
-        </div>
+      <div className="App">
+        <BrowserRouter>
+          <Routes>
+            <Route path="/auth/signup" element={<VolunteerSignup />} />
+            <Route path="/auth/login" element={<VolunteerLogin />} />
+            <Route
+              path="/auth/forgot-password"
+              element={<VolunteerForgotPassword />}
+            />
+            <Route
+              path="/auth/reset-password"
+              element={<VolunteerResetPassword />}
+            />
+            {isVolunteer && (
+              <>
+                <Route path="/" element={<VolunteerDash />} />
+                <Route path="/volunteer/classes" element={<Classes />} />
+                <Route
+                  path="/volunteer/my-profile"
+                  element={<VolunteerProfile />}
+                />
+                <Route path="/volunteer/schedule" element={<VolunteerDash />} />
+                <Route path="/volunteer/classes" element={<Classes />} />{" "}
+              </>
+            )}
+            <Route path="/" element={<VolunteerDash />} />
+            <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
+          </Routes>
+        </BrowserRouter>
+      </div>
     );
 }
 

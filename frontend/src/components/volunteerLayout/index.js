@@ -10,7 +10,7 @@ import nav_item_settings from "../../assets/nav-item-settings.png";
 
 import NavProfileCard from "../NavProfileCard";
 
-function VolunteerLayout({ pageTitle, pageContent }) {
+function VolunteerLayout({ pageTitle, children }) {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
 
   // Toggle function for displaying/hiding sidebar
@@ -99,7 +99,7 @@ function VolunteerLayout({ pageTitle, pageContent }) {
         <span>
           <h2 className="content-title">{pageTitle}</h2>
         </span>
-        {pageContent} {/* Render page content here */}
+        {children} {/* Render page content here */}
       </main>
     </div>
   );

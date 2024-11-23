@@ -14,12 +14,12 @@
   display: flex;
   justify-content: space-between; /* Align title and buttons horizontally */
   align-items: center; /* Center vertically */
-  margin-bottom: 10px;
+  margin-bottom: 18px;
 }
 
 /* Title */
 .availability-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
   margin: 0;
 }

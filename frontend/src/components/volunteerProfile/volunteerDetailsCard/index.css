@@ -3,8 +3,7 @@
 .profile-card {
     position: relative;
     max-width: 100%;
-    height: 30vh;
-    min-height: fit-content;
+    height: 250px;
     border-radius: 8px;
     border: 1px solid #D9D9D9;
     display: flex;
@@ -46,20 +45,62 @@
 .profile-content-container {
     position: relative;
     display: flex;
-    align-items: flex-start;
+    /* align-items: flex-start; */
     height: auto;
 }
 
 .profile-content {
     display: flex;
-    align-items: flex-start;
+    /* align-items: flex-start; */
+}
+
+.profile-picture-form {
+    width: 150px;
+    height: 150px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 5px;
 }
 
 .profile-image {
-    border-radius: 5px;
-    width: 25%;
-    height: 25%;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent overlay */
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0; /* Hidden by default */
+}
+
+.camera-icon {
+    width: 3vw;
+    height: 3vw;
+    filter: invert(1);
+}
+
+.edit-text {
+    margin: 0;
+    font-size: 14px;
+}
+
+.profile-picture-form:hover .overlay {
+    opacity: 1; /* Show overlay on hover */
+}
+
+.file-input {
+    display: none;
 }
 
 .profile-info {
@@ -76,22 +117,22 @@
 }
 
 .profile-table {
-    margin-left: -30px;
+    margin-left: 0;
     border-collapse: separate;
-    border-spacing: 30px 5px;
+    border-spacing: 5px;
     font-size: 13px;
+}
+
+.profile-table tr td:nth-child(2), td:nth-child(3) {
+    padding-left: 20px;
 }
 
 .profile-card tr td:nth-child(1) {
     color: #808080;
 }
 
-.volunteer-pn-value {
-    color: #808080;
-    font-style: italic;
-}
-
-.pn-input {
+.text-input {
     width: 100%;
+    padding: 6px;
 }
   

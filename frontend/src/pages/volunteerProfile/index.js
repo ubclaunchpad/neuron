@@ -2,7 +2,7 @@
 import "./index.css";
 import React, { useState } from 'react';
 import VolunteerLayout from "../../components/volunteerLayout";
-import { fetchVolunteerData } from "../../api/volunteerService";
+import { fetchVolunteerData, getProfilePicture } from "../../api/volunteerService";
 import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
 import ChangePasswordCard from "../../components/volunteerProfile/changePasswordCard";
 import ClassPreferencesCard from "../../components/volunteerProfile/classPreferencesCard";
@@ -16,39 +16,51 @@ function VolunteerProfile() {
     const [volunteer, setVolunteer] = React.useState(null);
 
     React.useEffect(() => {
-        // hardcoded id until auth is finished
-        const volunteer_id = "faff8f98-bc68-4fab-a4ca-151b09fc40c1";
-        fetchVolunteerData(volunteer_id)
-            .then((data) => setVolunteer(data))
-            .catch((error) => console.error(error));
+        async function fetch() {
+            // hardcoded id until auth is finished
+            const volunteer_id = "faff8f98-bc68-4fab-a4ca-151b09fc40c1";
+            try {
+                const volunteerData = await fetchVolunteerData(volunteer_id);
+                const profilePic = await getProfilePicture(volunteer_id);
+                setVolunteer({ 
+                    ...volunteerData, 
+                    profile_picture: profilePic ? profilePic : null
+                })
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        fetch();
     }, []);
 
     return (
-        <div className="volunteerProfile">
-            <VolunteerLayout 
-            pageTitle={pageTitle}
-            pageContent={
-                <div className="content">
-                    <div className="column">
-                        <div className="card">
-                            <VolunteerDetailsCard volunteer={volunteer} />
-                        </div>    
-                        <div className="card">
-                            <AvailabilityGrid availability={availability} setAvailability={setAvailability} />
+        volunteer ? (
+            <div className="volunteerProfile">
+                <VolunteerLayout 
+                pageTitle={pageTitle}
+                pageContent={
+                    <div className="content">
+                        <div className="column">
+                            <div className="card">
+                                <VolunteerDetailsCard volunteer={volunteer} />
+                            </div>    
+                            <div className="card">
+                                <AvailabilityGrid availability={availability} setAvailability={setAvailability} />
+                            </div>
+                        </div>
+                        <div className="column">
+                            <div className="card">
+                                <ChangePasswordCard volunteer={volunteer} />
+                            </div>
+                            <div className="card">
+                                <ClassPreferencesCard/>
+                            </div>
                         </div>
                     </div>
-                    <div className="column">
-                        <div className="card">
-                            <ChangePasswordCard volunteer={volunteer} />
-                        </div>
-                        <div className="card">
-                            <ClassPreferencesCard/>
-                        </div>
-                    </div>
-                </div>
-            }/>
-            {/* <UserProfileForm volunteer_id="1" /> */}
-        </div>
+                }/>
+                {/* <UserProfileForm volunteer_id="1" /> */}
+            </div>
+        ) : <></>
       );
 };
 

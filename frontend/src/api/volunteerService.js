@@ -20,6 +20,42 @@ export const updateVolunteerData = async (volunteerData) => {
   }
 };
 
+export const insertProfilePicture = async (profilePicData) => {
+  try {
+    const response = await api.post(`/volunteer/profile-picture`, profilePicData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating profile picture:', error);
+    throw error;
+  }
+}
+
+export const getProfilePicture = async (volunteer_id) => {
+  try {
+    const response = await api.get(`/volunteer/profile-picture/${volunteer_id}`, {
+      responseType: 'blob'
+    });
+    return URL.createObjectURL(response.data);
+  } catch (error) {
+    console.error('Error getting profile picture:', error);
+    throw error;
+  }
+}
+
+export const updateProfilePicture = async (volunteer_id, profilePicData) => {
+  try {
+    const response = await api.put(`/volunteer/profile-picture/${volunteer_id}`, profilePicData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating profile picture:', error);
+    throw error;
+  }
+}
+
 export const fetchVolunteerAvailability = async (volunteer_id) => {
   try {
     const response = await api.get(`/availability/${volunteer_id}`);

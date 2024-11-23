@@ -9,4 +9,9 @@ router.get('/', async (req: Request, res: Response) => {
      await classController.getAllClasses(req, res); 
  });
 
+router.post('/', async (req: Request, res: Response) => {
+    await classController.addClass(req, res);
+});
+
+
 export default router;

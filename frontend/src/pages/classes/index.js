@@ -1,5 +1,5 @@
 import "./index.css";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import VolunteerLayout from "../../components/volunteerLayout";
 import { getAllClasses, getAllClassImages } from "../../api/classesPageService";
 import { getShiftInfo } from "../../api/shiftService";
@@ -10,6 +10,9 @@ function Classes() {
   const [groupedByCategory, setGroupedByCategory] = useState({});
   const [selectedCategory, setSelectedCategory] = useState("Online Exercise");
 
+  const sectionRefs = useRef({});
+  const observer = useRef(null);
+
   useEffect(() => {
     const fetchClassesAndImages = async () => {
       try {
@@ -18,8 +21,8 @@ function Classes() {
           getAllClassImages(),
         ]);
 
-        console.log("Classes:", classData);
-        console.log("Images:", classImages);
+        // console.log("Classes:", classData);
+        // console.log("Images:", classImages);
 
         const classesWithImages = classData.map((classItem) => {
           const matchedImage = classImages.data.find(
@@ -84,6 +87,45 @@ function Classes() {
     "Food & Nutrition",
   ];
 
+  categories.forEach((category) => {
+    if (!sectionRefs.current[category]) {
+      sectionRefs.current[category] = React.createRef();
+    }
+  });
+
+  useEffect(() => {
+    observer.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setSelectedCategory(entry.target.getAttribute("data-category"));
+          }
+        });
+      },
+      { threshold: 0.5 } // triggers when 50% of section is visible
+    );
+
+    // observe all section refs
+    Object.entries(sectionRefs.current).forEach(([category, ref]) => {
+      if (ref.current) {
+        observer.current.observe(ref.current);
+      }
+    });
+
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+    };
+  }, [groupedByCategory]);
+
+  const scrollToSection = (category) => {
+    const sectionRef = sectionRefs.current[category];
+    if (sectionRef && sectionRef.current) {
+      sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <VolunteerLayout
       pageTitle="Classes"
@@ -96,7 +138,10 @@ function Classes() {
                 <button
                   key={category}
                   className={`category-button ${isSelected ? "selected" : ""}`}
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    scrollToSection(category);
+                  }}
                 >
                   {category}
                 </button>
@@ -109,8 +154,10 @@ function Classes() {
               return (
                 <ClassCategoryContainer
                   key={category}
+                  ref={sectionRefs.current[category]}
                   category={category}
                   classData={classData}
+                  data-category={category}
                 />
               );
             })}

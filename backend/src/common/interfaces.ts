@@ -23,7 +23,7 @@ export interface Volunteer {
 
 export interface ProfilePic {
   volunteer_id: string,
-  profile_picture: string
+  profile_picture: Buffer
 }
 
 export interface Instructor {

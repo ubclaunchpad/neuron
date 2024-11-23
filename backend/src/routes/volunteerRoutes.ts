@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import multer from 'multer';
 
 import {
     getVolunteerById,
@@ -19,6 +20,9 @@ import {
 } from "../controllers/availabilityController.js";
 
 const router = Router();
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 // get all volunteers
 router.get("/volunteers", (req: Request, res: Response) => {
@@ -56,7 +60,7 @@ router.put("/:volunteer_id", (req: Request, res: Response) => {
 });
 
 // create profile picture for a volunteer
-router.post("/profile-picture", (req: Request, res: Response) => {
+router.post("/profile-picture", upload.single('image'), (req: Request, res: Response) => {
     insertProfilePicture(req, res);
 });
 
@@ -66,7 +70,7 @@ router.get("/profile-picture/:volunteer_id", (req: Request, res: Response) => {
 });
 
 // update profile picture of a volunteer
-router.put("/profile-picture/:volunteer_id", (req: Request, res: Response) => {
+router.put("/profile-picture/:volunteer_id", upload.single('image'), (req: Request, res: Response) => {
     updateProfilePicture(req, res);
 });
 

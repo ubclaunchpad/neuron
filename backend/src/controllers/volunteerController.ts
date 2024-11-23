@@ -92,22 +92,33 @@ async function updateVolunteer(req: Request, res: Response) {
             volunteerData
         );
         res.status(200).json(updatedVolunteer);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error. ${error}`,
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
         });
     }
 }
 
 async function insertProfilePicture(req: Request, res: Response) {
-    const profilePic: ProfilePic = req.body;
+    const { volunteer_id } = req.body;
 
-    if (!profilePic.volunteer_id || !profilePic.profile_picture) {
+    if (!volunteer_id) {
         return res.status(400).json({
-            error: "Missing required fields. 'volunteer_id' and 'profile_picture' are required."
+            error: "Missing required fields. 'volunteer_id' is required."
         });
     }
 
+    if (!req.file) {
+        return res.status(400).json({
+            error: "Missing required profile picture file."
+        });
+    }
+
+    const imageBuffer = req.file.buffer;
+    const profilePic: ProfilePic = {
+        volunteer_id: volunteer_id,
+        profile_picture: imageBuffer
+    }
     try {
         const insertedProfilePic = await volunteerModel.insertProfilePicture(profilePic);
         res.status(200).json(insertedProfilePic);
@@ -128,7 +139,8 @@ async function getProfilePicture(req: Request, res: Response) {
 
     try {
         const profilePic = await volunteerModel.getProfilePicture(volunteer_id);
-        res.status(200).json(profilePic);
+        res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+        res.end(profilePic, 'binary');
     } catch (error: any) {
         return res.status(error.status).json({
             error: error.message,
@@ -138,7 +150,6 @@ async function getProfilePicture(req: Request, res: Response) {
 
 async function updateProfilePicture(req: Request, res: Response) {
     const { volunteer_id } = req.params;
-    const profilePic: ProfilePic = req.body;
 
     if (!volunteer_id) {
         return res.status(400).json({
@@ -146,17 +157,19 @@ async function updateProfilePicture(req: Request, res: Response) {
         });
     }
 
-    if (!profilePic.profile_picture) {
+    if (!req.file) {
         return res.status(400).json({
-            error: "Missing required fields. 'profile_picture' is required."
+            error: "Missing required profile picture file."
         });
     }
 
+    const imageBuffer = req.file.buffer;
+    const profilePic: ProfilePic = {
+        volunteer_id: volunteer_id,
+        profile_picture: imageBuffer
+    }
     try {
-        const result = await volunteerModel.updateProfilePicture(
-            volunteer_id,
-            profilePic.profile_picture
-        );
+        const result = await volunteerModel.updateProfilePicture(profilePic);
         res.status(200).json(result);
     } catch (error: any) {
         return res.status(error.status).json({

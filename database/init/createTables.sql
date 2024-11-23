@@ -45,6 +45,7 @@ create table volunteers (
     fk_user_id VARCHAR(255),         
     f_name VARCHAR(15) NOT NULL,
     l_name VARCHAR(15) NOT NULL,
+    p_name VARCHAR(45),
     total_hours INT NOT NULL,
     class_preferences VARCHAR(256) NOT NULL,
     bio VARCHAR(150),
@@ -60,7 +61,7 @@ create table volunteers (
 
 create table volunteer_profile_pics (
     fk_volunteer_id VARCHAR(255) PRIMARY KEY,
-    profile_pic BLOB NOT NULL,
+    profile_pic LONGBLOB NOT NULL,
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
     ON DELETE CASCADE
 );

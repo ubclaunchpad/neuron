@@ -1,3 +1,4 @@
+import { ProfilePic } from "../common/interfaces.js";
 import connectionPool from "../config/database.js";
 
 export default class VolunteerModel {
@@ -95,14 +96,37 @@ export default class VolunteerModel {
     insertVolunteer(volunteer: any): Promise<any> {
         return new Promise((resolve, reject) => {
             const query =
-                "INSERT INTO volunteers (volunteer_id, fk_user_id, f_name, l_name, email) VALUES (?, ?, ?, ?, ?)";
+                `INSERT INTO volunteers (
+                    volunteer_id, 
+                    fk_user_id, 
+                    f_name, 
+                    l_name, 
+                    p_name, 
+                    total_hours, 
+                    class_preferences, 
+                    bio, 
+                    active, 
+                    email, 
+                    pronouns, 
+                    phone_number, 
+                    city, 
+                    province
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
             const values = [
                 volunteer.volunteer_id,
                 volunteer.fk_user_id,
                 volunteer.f_name,
                 volunteer.l_name,
-                volunteer.email,
+                volunteer.p_name,
+                volunteer.total_hours,
+                volunteer.class_preferences,
+                volunteer.bio,
                 volunteer.active,
+                volunteer.email,
+                volunteer.pronouns,
+                volunteer.phone_number,
+                volunteer.city,
+                volunteer.province
             ];
 
             connectionPool.query(query, values, (error: any, results: any) => {
@@ -134,7 +158,7 @@ export default class VolunteerModel {
         });
     }
 
-    insertProfilePicture(profilePic: any) : Promise<any> {
+    insertProfilePicture(profilePic: ProfilePic) : Promise<any> {
         return new Promise((resolve, reject) => {
             const query = "INSERT INTO volunteer_profile_pics (fk_volunteer_id, profile_pic) VALUES (?, ?)";
             const values = [
@@ -172,17 +196,17 @@ export default class VolunteerModel {
                         message: `No profile picture found under the given volunteer ID`,
                     });
                 }
-                resolve(results[0]);
+                resolve(results[0].profile_pic);
             });
         });
     }
 
-    updateProfilePicture(volunteer_id: string, profile_picture: string) {
+    updateProfilePicture(profilePic: ProfilePic): Promise<any> {
         return new Promise((resolve, reject) => {
             const query = "UPDATE volunteer_profile_pics SET profile_pic = ? WHERE fk_volunteer_id = ?";
             const values = [ 
-                profile_picture,
-                volunteer_id
+                profilePic.profile_picture,
+                profilePic.volunteer_id
             ];
 
             connectionPool.query(query, values, (error: any, results: any) => {

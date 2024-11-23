@@ -38,15 +38,20 @@ const LoginForm = () => {
                             setSubmitting(false);
                         })
                         .catch((error) => {
-                            if (error && error.response && error.response.data && error.response.data.error) {
-                                const backendError = error.response?.data?.error;
-                                if (backendError == "verifyError") {
+                            console.log("erroring");
+                            console.log(error);
+                            //if (error && error.response && error.response.data && error.response.data.error) {
+                                
+                                //const backendError = error.response?.data?.error;
+                                //if (backendError == "verifyError") {
+                                if (error.response.data.error == "verifyError") {
                                     // Redirect to account not verified
+                                    console.log("erroring2");
                                     navigate("/auth/account-not-verified");
                                     setSubmitting(false);
                                 }
-                            }
                              else {
+                                console.log("erroringwhee");
                                 notyf.error(error.response.data.error);
                                 setSubmitting(false);
                             }

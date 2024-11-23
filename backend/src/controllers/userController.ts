@@ -290,7 +290,8 @@ async function loginUser(req: Request, res: Response): Promise<any> {
         const volunteer = await getVolunteerByUserId(user.user_id);
         if (volunteer.active == 0 || volunteer.active == null) {
             return res.status(400).json({
-                verifyError: "Your account is not verified yet",
+                //verifyError: "Your account is not verified yet",
+                verifyError: "verifyError",
             });
         }
 

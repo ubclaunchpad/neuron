@@ -11,46 +11,60 @@ import VolunteerProfile from "./pages/volunteerProfile";
 import AdminVerify from "./pages/AdminVerify";
 
 function App() {
+  const [isVolunteer, setIsVolunteer] = useState(false);
 
-    const [isVolunteer, setIsVolunteer] = useState(false);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const authResponse = await isAuthenticated();
+        if (
+          authResponse &&
+          authResponse.volunteer &&
+          authResponse.volunteer.volunteer_id
+        ) {
+          setIsVolunteer(true);
+        } else {
+          setIsVolunteer(false);
+        }
+      } catch (error) {
+        console.error("Authentication as volunteer failed:", error);
+        setIsVolunteer(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const authResponse = await isAuthenticated();
-                if (authResponse && authResponse.volunteer && authResponse.volunteer.volunteer_id) {
-                    setIsVolunteer(true);
-                } else {
-                    setIsVolunteer(false);
-                }
-            } catch (error) {
-                console.error("Authentication as volunteer failed:", error);
-                setIsVolunteer(false);
-            }
-        };
-        checkAuth();
-    }, []);
-
-    return (
-        <div className="App">
-            <BrowserRouter>
-                <Routes>
-                    <Route path="/auth/signup" element={<VolunteerSignup />} />
-                    <Route path="/auth/login" element={<VolunteerLogin />} />
-                    <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />}/>
-                    <Route path="/auth/reset-password" element={<VolunteerResetPassword />}/>
-                    {isVolunteer && ( <>
-                            <Route path="/" element={<VolunteerDash />} />
-                            <Route path="/volunteer/classes" element={<Classes />} />
-                            <Route path="/volunteer/my-profile" element={<VolunteerProfile />} />
-                            <Route path="/volunteer/schedule" element={<VolunteerDash />}/>
-                            <Route path="/volunteer/classes" element={<Classes />} /> </>
-                    )}
-                    <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
-                </Routes>
-            </BrowserRouter>
-        </div>
-    );
+  return (
+    <div className="App">
+      <BrowserRouter>
+        <Routes>
+          <Route path="/auth/signup" element={<VolunteerSignup />} />
+          <Route path="/auth/login" element={<VolunteerLogin />} />
+          <Route
+            path="/auth/forgot-password"
+            element={<VolunteerForgotPassword />}
+          />
+          <Route
+            path="/auth/reset-password"
+            element={<VolunteerResetPassword />}
+          />
+          {isVolunteer && (
+            <>
+              <Route path="/" element={<VolunteerDash />} />
+              <Route path="/volunteer/classes" element={<Classes />} />
+              <Route
+                path="/volunteer/my-profile"
+                element={<VolunteerProfile />}
+              />
+              <Route path="/volunteer/schedule" element={<VolunteerDash />} />
+              <Route path="/volunteer/classes" element={<Classes />} />{" "}
+            </>
+          )}
+          <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
+  );
 }
 
 export default App;

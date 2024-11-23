@@ -91,7 +91,7 @@ function VolunteerLayout({ pageTitle, pageContent }) {
             name={"Jessie"}
             email={"test@gmail.com"}
             collapse={collapsed}
-            link={"/"}
+            link={"/volunteer/my-profile"}
           />
         </div>
       </aside>

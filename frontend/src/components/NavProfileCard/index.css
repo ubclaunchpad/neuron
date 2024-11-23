@@ -10,6 +10,10 @@
     cursor: pointer;
 }
 
+.nav-profile-card:hover, .nav-profile-card:focus, .nav-profile-card__avatar-collapse img:hover, .nav-profile-card__avatar-collapse img:focus {
+    outline: 2px solid var(--primary-blue);
+}
+
 .nav-profile-card__main {
     display: flex;
     flex-direction: row;
@@ -22,7 +26,12 @@
     justify-content: center;
 }
 
+.nav-profile-card__avatar img, .nav-profile-card__avatar-collapse img {
+    border-radius: 4px;
+}
+
 .nav-profile-card__avatar-collapse {
+
     margin-bottom: 1rem;
 }
 

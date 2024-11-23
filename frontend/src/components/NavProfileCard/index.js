@@ -19,13 +19,13 @@ export default function NavProfileCard({
   return collapse ? (
     <div className="nav-profile-card__avatar-collapse">
       {avatar ? (
-        <img src={avatar} alt={name} width={24} height={24} />
+        <img src={avatar} alt={name} width={32} height={32} />
       ) : (
         <img
           src={`https://avatars.dicebear.com/api/human/${name}.svg`}
           alt={name}
-          width={24}
-          height={24}
+          width={32}
+          height={32}
         />
       )}
     </div>

@@ -5,7 +5,7 @@ export default class ClassesModel {
 
      public getClasses(): Promise<any> {
           return new Promise((resolve, reject) => {
-               const query = `SELECT * FROM class JOIN schedule ON class.class_id = schedule.fk_class_id`;
+               const query = `SELECT * FROM class`;
 
       connection.query(query, [], (error: any, results: any) => {
         if (error) {

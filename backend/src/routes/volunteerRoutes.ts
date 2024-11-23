@@ -4,7 +4,8 @@ import {
     getVolunteerById, 
     getVolunteers, 
     shiftCheckIn, 
-    updateVolunteer 
+    updateVolunteer,
+    updateShiftCheckIn 
 } from '../controllers/volunteerController.js';
 
 import {
@@ -53,5 +54,8 @@ router.put("/:volunteer_id", (req: Request, res: Response) => {
 
 // update a volunteer's total hours when checked into a shift
 router.post('/shiftCheckIn', (req: Request, res: Response) => { shiftCheckIn(req, res) });
+
+// update a shift's check in status when checking in
+router.put('/updateShiftCheckIn', (req: Request, res: Response) => { updateShiftCheckIn(req, res) });
 
 export default router;

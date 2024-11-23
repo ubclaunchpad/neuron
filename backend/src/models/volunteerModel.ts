@@ -171,17 +171,77 @@ export default class VolunteerModel {
                     // Add the hours
                     const new_total_hours = hours_so_far + duration;
 
+                    console.log('hi');
+
                     // Update the volunteer's hours
                     const volunteerData = {total_hours: new_total_hours};
                     this.updateVolunteer(volunteer_id, volunteerData);
 
+                    this.updateShiftCheckIn(volunteer_id, fk_schedule_id, shift_date);
+
+                    const query = `UPDATE shifts SET checked_in = 1 WHERE fk_volunteer_id = ? AND fk_schedule_id = ? AND shift_date = ?`;
+                    const values3 = [volunteer_id, fk_schedule_id, shift_date];
+                    console.log(query, values3);
+
+                    /*
+                    connectionPool.query(query, values3, (error: any, results: any) => {
+                        if (error) {
+                            return reject({
+                                status: 500,
+                                message: `An error occurred while executing the query: ${error}`,
+                            });
+                        }
+                        if (results.affectedRows === 0) {
+                            return reject({
+                                status: 400,
+                                message: `No rows updated. Verify fk_volunteer_id, fk_schedule_id, and shift_date.`,
+                            });
+                        }
+                        //resolve(results);
+                        /*resolve({
+                            status: 200,
+                            message: 'Volunteer hours and shift updated successfully.',
+                        });
+                    });*/
+
                     resolve({
                         status: 200,
-                        message: 'Volunteer hours updated successfully.',
+                        message: 'Volunteer hours and shift updated successfully.',
                     });
+
+                    
                 });
             });
         });
         
+    }
+
+    updateShiftCheckIn(volunteer_id: string, fk_schedule_id: any, shift_date: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            /*
+            const shiftData = { checked_in: 1 };
+            const setClause = Object.keys(shiftData)
+                .map((key) => `${key} = ?`)
+                .join(", ");*/
+            const query = `UPDATE shifts SET checked_in = 1 WHERE fk_volunteer_id = ? AND fk_schedule_id = ? AND shift_date = ?`;
+            const values = [volunteer_id, fk_schedule_id, shift_date];
+            console.log(query, values);
+
+            connectionPool.query(query, values, (error: any, results: any) => {
+                if (error) {
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
+                }
+                if (results.affectedRows === 0) {
+                    return reject({
+                        status: 400,
+                        message: `No rows updated. Verify fk_volunteer_id, fk_schedule_id, and shift_date.`,
+                    });
+                }
+                resolve(results);
+            });
+        });
     }
 }

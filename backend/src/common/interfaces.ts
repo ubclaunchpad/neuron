@@ -58,3 +58,20 @@ export interface Shift {
   shift_date: string;
   duration: number;
 }
+
+export interface Instructor {
+  instructor_id: string;
+  fk_user_id?: string;   // Foreign key (optional, since it might be nullable)
+  f_name: string;
+  l_name: string;
+  email: string;
+}
+
+
+export interface Schedule {
+schedule_id: number;
+fk_class_id?: number;
+day_of_week: number;
+start_time: string;
+end_time: string;
+}

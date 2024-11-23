@@ -1,13 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { isAuthenticated } from "./api/authService";
 import VolunteerDash from "./pages/volunteerDash";
 import VolunteerSignup from "./pages/VolunteerSignup";
 import VolunteerLogin from "./pages/VolunteerLogin";
 import VolunteerForgotPassword from "./pages/VolunteerForgotPassword";
 import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import Classes from "./pages/classes";
-import VolunteerProfile from "./pages/volunteerProfile";
 import VolunteerSchedule from "./pages/schedule";
-import Classes from "./pages/classes";
 import VolunteerProfile from "./pages/volunteerProfile";
 import AdminVerify from "./pages/AdminVerify";
 
@@ -24,6 +24,7 @@ function App() {
           authResponse.volunteer.volunteer_id
         ) {
           setIsVolunteer(true);
+          localStorage.setItem("volunteerID", authResponse.volunteer.volunteer_id);
         } else {
           setIsVolunteer(false);
         }
@@ -57,7 +58,7 @@ function App() {
                 path="/volunteer/my-profile"
                 element={<VolunteerProfile />}
               />
-              <Route path="/volunteer/schedule" element={<VolunteerDash />} />
+              <Route path="/volunteer/schedule" element={<VolunteerSchedule />} />
               <Route path="/volunteer/classes" element={<Classes />} />{" "}
             </>
           )}

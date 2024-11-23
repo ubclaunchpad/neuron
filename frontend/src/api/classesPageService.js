@@ -1,11 +1,26 @@
 // This file groups all the API calls related to the neuron Classes page.
-import api from './api';
+import api from "./api";
 
-const getAllClasses = () => api.get('/classes')
+const getAllClasses = () =>
+  api
+    .get("/classes")
     .then((response) => {
-        return response.data;
-    }).catch((error) => {
-        console.error(error);
+      return response.data;
+    })
+    .catch((error) => {
+      console.error(error);
+      throw error;
     });
 
-export { getAllClasses };
+const getAllClassImages = () =>
+  api
+    .get("/classes/images")
+    .then((response) => {
+      return response.data;
+    })
+    .catch((error) => {
+      console.error(error);
+      throw error;
+    });
+
+export { getAllClasses, getAllClassImages };

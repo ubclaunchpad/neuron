@@ -44,7 +44,7 @@ create table class (
 create table class_image (
     image_id INT PRIMARY KEY AUTO_INCREMENT,
     fk_class_id INT,
-    image BLOB,
+    image MEDIUMBLOB,
     FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
 );
 

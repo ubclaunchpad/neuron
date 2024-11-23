@@ -37,3 +37,10 @@
   font-size: var(--title-text);
   font-weight: var(--semi-bold);
 }
+
+.class-cards {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1rem;
+}

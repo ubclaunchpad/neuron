@@ -21,6 +21,22 @@ INSERT INTO instructors (instructor_id, f_name, l_name, email) VALUES
 -- Insert data into the class table
 INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory) VALUES
 (1, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Moving & Breathing with Qi Gong & Tai Chi Principles', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class1', '2024-09-09', '2024-12-13',  'Online Exercise', 'Tai Chi');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory) VALUES
+(2, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Chair Yoga', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class2', '2024-09-09', '2024-12-13',  'Online Exercise', 'Yoga');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory) VALUES
+(3, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Yoga Foundations', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class3', '2024-09-09', '2024-12-13',  'Online Exercise', 'Yoga');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory) VALUES
+(4, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Afternoon Unwind Yoga', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class4', '2024-09-09', '2024-12-13',  'Online Exercise', 'Yoga');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory) VALUES
+(5, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Art from the Heart', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class5', '2024-09-09', '2024-12-13',  'Creative & Expressive', '');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory) VALUES
+(6, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Artful Living', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class6', '2024-09-09', '2024-12-13',  'Creative & Expressive', '');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory) VALUES
+(7, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Brain Wellness Book Club', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class7', '2024-09-09', '2024-12-13',  'Creative & Expressive', '');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory) VALUES
+(8, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Crafters for a Cause', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class8', '2024-09-09', '2024-12-13',  'Creative & Expressive', '');
+INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory) VALUES
+(9, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Gardening & Cooking in Season', 'You will need 10lb weights and a chair.', 'https://zoom.example.com/class9', '2024-09-09', '2024-12-13',  'Creative & Expressive', '');
 
 -- Set class schedule 
 INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES

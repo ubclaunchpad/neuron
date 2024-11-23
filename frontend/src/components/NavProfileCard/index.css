@@ -1,0 +1,60 @@
+.nav-profile-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: white;
+    margin: 0 1rem;
+    border-radius: 0.5rem;
+    padding: 0.8rem;
+    cursor: pointer;
+}
+
+.nav-profile-card:hover, .nav-profile-card:focus, .nav-profile-card__avatar-collapse img:hover, .nav-profile-card__avatar-collapse img:focus {
+    outline: 2px solid var(--primary-blue);
+}
+
+.nav-profile-card__main {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.nav-profile-card__avatar, .nav-profile-card__avatar-collapse {
+    display: flex;
+    justify-content: center;
+}
+
+.nav-profile-card__avatar img, .nav-profile-card__avatar-collapse img {
+    border-radius: 4px;
+}
+
+.nav-profile-card__avatar-collapse {
+
+    margin-bottom: 1rem;
+}
+
+.nav-profile-card__avatar img {
+    border-radius: 0.5rem;
+}
+
+.nav-profile-card__info {
+    display: flex;
+    flex-direction: column;
+    gap:0.2rem;
+}
+
+.nav-profile-card__name, .nav-profile-card__email {
+    margin: 0;
+    
+}
+
+.nav-profile-card__name {
+    font-size: 16px;
+}
+
+.nav-profile-card__email {
+    color: grey;
+    font-size: 14px;
+}

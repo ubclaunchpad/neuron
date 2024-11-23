@@ -35,7 +35,19 @@ const AvailabilityGrid = ({ volunteerId }) => {
 
   const handleSubmit = async () => {
     try {
-      await updateVolunteerAvailability(volunteerId, unsavedTimes);
+      // Transform unsavedTimes into the expected format
+      const availabilities = unsavedTimes.map((slotKey) => {
+        const [dayIndex, timeIndex] = slotKey.split('-').map(Number);
+        const day = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][dayIndex];
+        const startHour = Math.floor(timeIndex / 2) + 9; // Assuming timeLabels start at 9 AM
+        const startMinute = (timeIndex % 2) * 30;
+        const start_time = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+        const end_time = `${String(startHour).padStart(2, '0')}:${String(startMinute + 30).padStart(2, '0')}`;
+
+        return { day, start_time, end_time };
+      });
+      console.log('Submitting availability:', availabilities); // Debug log statement
+      await updateVolunteerAvailability(volunteerId, availabilities);
       setSavedTimes(unsavedTimes);
       setIsEditing(false);
     } catch (error) {

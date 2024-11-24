@@ -1,20 +1,24 @@
 import express from 'express';
 import { Request, Response } from 'express';
-import ClassesController from '../controllers/classController.js';
+import { getAllClasses, getClassById, getClassesByDay, addClass} from '../controllers/classController.js';
 
 const router = express.Router();
-const classController = new ClassesController();
 
 router.get('/', async (req: Request, res: Response) => { 
-     await classController.getAllClasses(req, res); 
- });
+    await getAllClasses(req, res); 
+});
+
+
+router.get('/:class_id', async (req: Request, res: Response) => { 
+    await getClassById(req, res); 
+});
 
 router.get("/schedule/:day", async (req, res) => {
-  await classController.getClassesByDay(req, res);
+  await getClassesByDay(req, res);
 });
 
 router.post('/', async (req: Request, res: Response) => {
-    await classController.addClass(req, res);
+    await addClass(req, res);
 });
 
 

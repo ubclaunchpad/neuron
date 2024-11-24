@@ -49,6 +49,8 @@
      position: absolute;
      right: 0px;
      top: 0px;
+     width: fit-content;
+     height: fit-content;
 }
 
 .panel-header-time {
@@ -75,13 +77,18 @@
 }
 
 .status {
-     background: rgba(24, 149, 49, 0.1);
      padding: 4px 12px;
-     color: #189531;
      width: fit-content;
      border-radius: 4px;
 }
-
+.myClass {
+     background: rgba(24, 149, 49, 0.1);
+     color: #189531;
+}
+.classTaken {
+     background: rgb(211, 211, 211);
+     color: rgb(111, 111, 111)
+}
 .panel-details-shift {
      display: flex;
      flex-direction: column;

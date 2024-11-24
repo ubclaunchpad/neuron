@@ -4,6 +4,7 @@ import button_icon_close from "../../assets/images/button-icons/button-icon-clos
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import { getClassById } from '../../api/classesPageService';
+import { isAuthenticated } from "../../api/authService";
 
 function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}) {
      const [panelWidth, setPanelWidth] = useState("0px");
@@ -15,7 +16,9 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
      const [instructor, setInstructor] = useState("No instructor available");
      const [volunteers, setVolunteers] = useState(["No volunteer for this class"]);
      const [currIdx, setCurrIdx] = useState(itemIndex);
+     const [myClass,setMyClass] = useState(false);
      
+
      useEffect(() => {
           setCurrIdx(itemIndex);
           if (itemIndex !== null) {
@@ -28,12 +31,12 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
       }, [classIdList, itemIndex, rerenderKey]);
 
      useEffect(()=> {
-          const dow = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+          const dow = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
           if (panelInfo) {
                setPanelWidth("35vw");
                if (pageUsed==="Classes") {
                     if (panelInfo.days_of_week){
-                         setDayOfWeek(panelInfo.days_of_week.split(',').map(number => dow[number - 1]));
+                         setDayOfWeek(panelInfo.days_of_week.split(',').map(number => dow[number-1]));
                     } else setDayOfWeek(["Not Scheduled"]);
 
                     if (panelInfo.start_times) {
@@ -64,6 +67,18 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
                     } else {
                          setVolunteers(["No volunteer for this class"]);
                     }
+                    if (panelInfo.volunteer_user_ids !== null){
+                         const ids = panelInfo.volunteer_user_ids.split(",");
+                         const curr_id = getCurrentUserId();
+                         for (let i = 0; i < ids.length; i++) {
+                              if (ids[i] === curr_id) {
+                                   setMyClass(true);
+                                   break;
+                              }
+                         }
+                    } else {
+                         console.log("No user id for this class!");
+                    }
                }
           } else { 
                setPanelWidth("0px");
@@ -92,9 +107,11 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
      };
 
      const renderStatus = () => {
-          return (
-               <div className="status">My Shift</div>
-          );
+          if (myClass)
+               return (<div className="status myClass">My Class</div>);
+          else {
+               return (<div className="status classTaken">Class Taken</div>)
+          }
      }
 
      const renderVolunteers = () => {
@@ -152,6 +169,7 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
           }
       
           return daysOfWeek.map((day, index) => {
+               console.log(day);
                return (
                     <div key={index} className="panel-header-dow panel-titles">
                          {day}, {startTimes[index] + " - " + endTimes[index]}
@@ -159,6 +177,15 @@ function ClassPanel({classIdList, itemIndex, pageUsed, pageContent, rerenderKey}
                );
           });
      };
+
+     const getCurrentUserId  = () => {
+          const data = isAuthenticated();
+          let id;
+          data.then(result => {
+               id = result.user.user_id;
+             });
+          return id;
+     }
       
      return (
           <>

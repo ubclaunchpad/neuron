@@ -63,7 +63,8 @@ export default class ClassesModel {
                          SELECT 
                               vc.fk_class_id AS class_id,
                               GROUP_CONCAT(v.l_name) AS volunteer_l_names,
-                              GROUP_CONCAT(v.f_name) AS volunteer_f_names
+                              GROUP_CONCAT(v.f_name) AS volunteer_f_names,
+                              GROUP_CONCAT(v.fk_user_id) AS volunteer_user_ids
                          FROM volunteer_class vc
                          LEFT JOIN volunteers v ON vc.fk_volunteer_id = v.volunteer_id
                          WHERE vc.fk_class_id = (SELECT id FROM params)
@@ -88,6 +89,7 @@ export default class ClassesModel {
                     ci.instructor_f_name,
                     COALESCE(vi.volunteer_l_names, null) AS volunteer_l_names,
                     COALESCE(vi.volunteer_f_names, null) AS volunteer_f_names,
+                    COALESCE(vi.volunteer_user_ids, null) AS volunteer_user_ids,
                     COALESCE(si.start_times, null) AS start_times,
                     COALESCE(si.end_times, null) AS end_times,
                     COALESCE(si.days_of_week, null) AS days_of_week

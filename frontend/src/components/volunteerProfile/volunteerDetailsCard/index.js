@@ -193,8 +193,19 @@ function VolunteerDetailsCard({ volunteer }) {
                                     hidden={isEditing}>
                                         {mutableData.pronouns ? mutableData.pronouns : "not yet set"}
                                 </td>
-                                <td hidden={!isEditing}>
-                                    <input type="text" className="text-input" placeholder="Enter your pronouns" name="pronouns" value={mutableData.pronouns} onChange={handleInputChange}></input>
+                                <td className="pronouns-editor" hidden={!isEditing}>
+                                    <select 
+                                        className="pronouns-input" 
+                                        placeholder="Enter your pronouns" 
+                                        name="pronouns"
+                                        value={mutableData.pronouns} 
+                                        onChange={handleInputChange}
+                                    >
+                                        <option className="pronouns-none" value="">select</option>
+                                        <option className="pronouns-option" value="He/Him">He/Him</option>
+                                        <option className="pronouns-option" value="She/Her">She/Her</option>
+                                        <option className="pronouns-option" value="They/Them">They/Them</option>
+                                    </select>
                                 </td>
                             </tr>
                             <tr className="view volunteer-phone">

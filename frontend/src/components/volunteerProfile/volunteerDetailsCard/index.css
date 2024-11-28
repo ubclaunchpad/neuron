@@ -135,4 +135,36 @@
     width: 100%;
     padding: 6px;
 }
+
+.pronouns-editor {
+    position: relative;
+}
+
+.pronouns-input {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    appearance: none; /* Removes default arrow for styling */
+    cursor: pointer;  
+    font-size: 13px;
+}
+
+.pronouns-input:focus {
+    outline: none;
+    border-color: #1687CA; /* Highlight border color */
+    box-shadow: 0 0 5px rgba(0, 120, 215, 0.5); /* Glow effect */
+}
+
+.pronouns-input .pronouns-none {
+    color: #808080
+}
+
+.dropdown-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 8px;
+}
   

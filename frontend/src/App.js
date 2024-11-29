@@ -44,15 +44,10 @@ function App() {
           <Route path="/auth/login" element={<VolunteerLogin />} />
           <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />}/>
           <Route path="/auth/reset-password" element={<VolunteerResetPassword />}/>
-          {isVolunteer && (
-            <>
-              <Route path="/" element={<VolunteerDash />} />
-              <Route path="/volunteer/classes" element={<Classes />} />
-              <Route path="/volunteer/my-profile" element={<VolunteerProfile />}/>
-              <Route path="/volunteer/schedule" element={<VolunteerSchedule />} />
-              <Route path="/volunteer/classes" element={<Classes />} />{" "}
-            </>
-          )}
+          <Route path="/" element={isVolunteer ? <VolunteerDash /> : <VolunteerLogin />} />
+          <Route path="/volunteer/classes" element={isVolunteer ? <Classes /> : <VolunteerLogin />} />
+          <Route path="/volunteer/my-profile" element={isVolunteer ? <VolunteerProfile /> : <VolunteerLogin />}/>
+          <Route path="/volunteer/schedule" element={isVolunteer ? <VolunteerSchedule /> : <VolunteerLogin />} />
           <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
         </Routes>
       </BrowserRouter>

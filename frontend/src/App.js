@@ -7,6 +7,7 @@ import VolunteerLogin from "./pages/VolunteerLogin";
 import VolunteerForgotPassword from "./pages/VolunteerForgotPassword";
 import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import Classes from "./pages/classes";
+import VolunteerSchedule from "./pages/schedule";
 import VolunteerProfile from "./pages/volunteerProfile";
 import AdminVerify from "./pages/AdminVerify";
 
@@ -23,6 +24,7 @@ function App() {
           authResponse.volunteer.volunteer_id
         ) {
           setIsVolunteer(true);
+          localStorage.setItem("volunteerID", authResponse.volunteer.volunteer_id);
         } else {
           setIsVolunteer(false);
         }
@@ -40,23 +42,14 @@ function App() {
         <Routes>
           <Route path="/auth/signup" element={<VolunteerSignup />} />
           <Route path="/auth/login" element={<VolunteerLogin />} />
-          <Route
-            path="/auth/forgot-password"
-            element={<VolunteerForgotPassword />}
-          />
-          <Route
-            path="/auth/reset-password"
-            element={<VolunteerResetPassword />}
-          />
+          <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />}/>
+          <Route path="/auth/reset-password" element={<VolunteerResetPassword />}/>
           {isVolunteer && (
             <>
               <Route path="/" element={<VolunteerDash />} />
               <Route path="/volunteer/classes" element={<Classes />} />
-              <Route
-                path="/volunteer/my-profile"
-                element={<VolunteerProfile />}
-              />
-              <Route path="/volunteer/schedule" element={<VolunteerDash />} />
+              <Route path="/volunteer/my-profile" element={<VolunteerProfile />}/>
+              <Route path="/volunteer/schedule" element={<VolunteerSchedule />} />
               <Route path="/volunteer/classes" element={<Classes />} />{" "}
             </>
           )}

@@ -1,12 +1,15 @@
 import "./index.css";
 import React, { useEffect, useState, useRef } from "react";
 import VolunteerLayout from "../../components/volunteerLayout";
-import { getAllClasses, getAllClassImages } from "../../api/classesPageService";
-import { getShiftInfo } from "../../api/shiftService";
+import {
+  getAllClasses,
+  getAllClassImages,
+  getAllClassSchedules,
+} from "../../api/classesPageService";
 import ClassCategoryContainer from "../../components/ClassCategoryContainer";
 
 function Classes() {
-  const [classAndImageData, setClassAndImageData] = useState(null);
+  const [completeClassData, setCompleteClassData] = useState(null);
   const [groupedByCategory, setGroupedByCategory] = useState({});
   const [selectedCategory, setSelectedCategory] = useState("Online Exercise");
 
@@ -14,17 +17,15 @@ function Classes() {
   const observer = useRef(null);
 
   useEffect(() => {
-    const fetchClassesAndImages = async () => {
+    const fetchClassesImagesAndSchedules = async () => {
       try {
-        const [classData, classImages] = await Promise.all([
+        const [classData, classImages, classSchedules] = await Promise.all([
           getAllClasses(),
           getAllClassImages(),
+          getAllClassSchedules(),
         ]);
 
-        // console.log("Classes:", classData);
-        // console.log("Images:", classImages);
-
-        const classesWithImages = classData.map((classItem) => {
+        const classesWithImagesAndSchedules = classData.map((classItem) => {
           const matchedImage = classImages.data.find(
             (imageItem) => imageItem.fk_class_id === classItem.class_id
           );
@@ -36,28 +37,33 @@ function Classes() {
               )
             : null;
 
+          const matchedSchedules = classSchedules.filter((schedule) => {
+            return schedule.fk_class_id === classItem.class_id;
+          });
+
           return {
             class_id: classItem.class_id,
             class_name: classItem.class_name,
             category: classItem.category,
             subcategory: classItem.subcategory,
             image_url: imageUrl,
+            schedules: matchedSchedules,
           };
         });
 
-        setClassAndImageData(classesWithImages);
+        setCompleteClassData(classesWithImagesAndSchedules);
         // console.log(classesWithImages);
       } catch (error) {
         console.error(error);
       }
     };
 
-    fetchClassesAndImages();
+    fetchClassesImagesAndSchedules();
   }, []);
 
   useEffect(() => {
-    if (classAndImageData) {
-      const grouped = classAndImageData.reduce((acc, classItem) => {
+    if (completeClassData) {
+      const grouped = completeClassData.reduce((acc, classItem) => {
         if (!acc[classItem.category]) {
           acc[classItem.category] = [];
         }
@@ -66,16 +72,7 @@ function Classes() {
       }, {});
       setGroupedByCategory(grouped);
     }
-  }, [classAndImageData]);
-
-  // const getInfo = () => {
-  //   getShiftInfo("8eafa250-393b-4918-afdb-d0cfa79b1bdd", "1", "2024-01-01")
-  //     .then((data) => {
-  //       setShiftInfo(data);
-  //       setInfoDisplay(true);
-  //     })
-  //     .catch((error) => console.error(error));
-  // };
+  }, [completeClassData]);
 
   // TODO: Currently fixed categories for the header
   const categories = [

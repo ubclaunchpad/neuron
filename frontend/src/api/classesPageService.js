@@ -23,4 +23,15 @@ const getAllClassImages = () =>
       throw error;
     });
 
-export { getAllClasses, getAllClassImages };
+const getAllClassSchedules = () =>
+  api
+    .get("/schedules")
+    .then((response) => {
+      return response.data;
+    })
+    .catch((error) => {
+      console.error(error);
+      throw error;
+    });
+
+export { getAllClasses, getAllClassImages, getAllClassSchedules };

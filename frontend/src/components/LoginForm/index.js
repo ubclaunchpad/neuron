@@ -15,8 +15,6 @@ const LoginSchema = Yup.object().shape({
 });
 
 const LoginForm = () => {
-    const navigate = useNavigate();
-
     return (
         <>
             <Formik
@@ -32,8 +30,7 @@ const LoginForm = () => {
                             // Save the token in the local storage
                             localStorage.setItem("neuronAuthToken", response.token);
                             setTimeout(() => {
-                                // Redirect to the home page so that the user cannot go back to the login page
-                                navigate("/");
+                                window.location.href = "/";
                             }, 1500);       
                             setSubmitting(false);
                         })

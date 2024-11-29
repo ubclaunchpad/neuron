@@ -21,7 +21,7 @@
     align-items: center;
     overflow-y: auto; /* Allow vertical scroll */
     max-height: 0;
-    padding-bottom: 200rem;
+    padding-bottom: 70vh;
 }
 
 .shifts-container {

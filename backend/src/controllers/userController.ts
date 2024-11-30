@@ -291,7 +291,7 @@ async function loginUser(req: Request, res: Response): Promise<any> {
         if (volunteer.active == 0 || volunteer.active == null) {
             return res.status(400).json({
                 //verifyError: "Your account is not verified yet",
-                verifyError: "verifyError",
+                error: "verifyError",
             });
         }
 

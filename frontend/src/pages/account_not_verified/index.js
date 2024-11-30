@@ -14,7 +14,7 @@ function AccountNotVerified() {
     <div className="account-not-verified-page">
       <h2>Waiting for an admin to verify your account.</h2>
       <div>You can reach out to us at <b>bwp@gmail.com</b>. </div>
-      <button onClick={logOut}>
+      <button className = "account-not-verified-button" onClick={logOut}>
         <img 
           src={logoutIcon} 
           alt="Log out icon" 

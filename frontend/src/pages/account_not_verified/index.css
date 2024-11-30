@@ -32,7 +32,7 @@ body, html {
   margin-top: 10px;
 }
 
-button {
+.account-not-verified-button {
   margin-top: 20px;
   padding: 10px 20px;
   background-color: var(--white);
@@ -45,7 +45,7 @@ button {
   width: auto;
 }
 
-button:hover {
+.account-not-verified-button:hover {
   background-color: var(--secondary-blue);
 }
 

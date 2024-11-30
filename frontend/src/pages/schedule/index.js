@@ -6,13 +6,15 @@ import DateToolbar from "../../components/DateToolbar";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
+import ClassPanel from "../../components/classPanel";
 
 function VolunteerSchedule() {
     const volunteerID = localStorage.getItem('volunteerID');
     const currentDate = dayjs();
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [shifts, setShifts] = useState([]);
-    const [filter, setFilter] = useState('all-shifts'); // Default filter state
+    const [filter, setFilter] = useState('all-shifts');
+    const [selectedClassId, setSelectedClassId] = useState(null);
 
     // Create a ref object to store references to each shifts-container for scrolling
     const shiftRefs = useRef({});
@@ -87,50 +89,64 @@ function VolunteerSchedule() {
         scrollToTop();
     }, [scrollToTop, groupedShifts]); 
 
+    // side panel shift details
+    const handleShiftSelection = (classData) => {
+        console.log("Selected shift data: ", classData);
+        setSelectedClassId(classData._class_id);
+      };
+
     return (
         <VolunteerLayout
             pageTitle="Schedule"
             pageContent={
-                <div>
-                    <DateToolbar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-                    <hr />
-                    <ShiftStatusToolbar setFilter={setFilter} filter={filter} />
-                    <hr />  
-                    <div ref={scheduleContainerRef} className="schedule-container">
-                        {Object.keys(groupedShifts).length > 0 ? (
-                            Object.keys(groupedShifts).map((date) => (
-                        
-                                <div 
-                                    key={date} 
-                                    className="shifts-container"
-                                    ref={(el) => shiftRefs.current[dayjs(date).format('YYYY-MM-DD')] = el}  
-                                >
-                                    {/* Date Header */}
-                                    <h2
-                                        className={`date-header ${dayjs(date).isSame(selectedDate, 'day') ? 'selected-date' : 'non-selected-date'}`}
-                                    >
-                                        {dayjs(date).format('ddd, D')}
-                                        {dayjs(date).isSame(currentDate, 'day') && ' | Today'}
-                                    </h2>
+                <ClassPanel
+                    classId={selectedClassId}
+                    classList={shifts}
+                    setClassId={setSelectedClassId}
+                    pageContent={
+                        <div className="schedule-page">
+                            <DateToolbar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+                            <hr />
+                            <ShiftStatusToolbar setFilter={setFilter} filter={filter} />
+                            <hr />  
+                            <div ref={scheduleContainerRef} className="schedule-container">
+                                {Object.keys(groupedShifts).length > 0 ? (
+                                    Object.keys(groupedShifts).map((date) => (
+                                
+                                        <div 
+                                            key={date} 
+                                            className="shifts-container"
+                                            ref={(el) => shiftRefs.current[dayjs(date).format('YYYY-MM-DD')] = el}  
+                                        >
+                                            {/* Date Header */}
+                                            <h2
+                                                className={`date-header ${dayjs(date).isSame(selectedDate, 'day') ? 'selected-date' : 'non-selected-date'}`}
+                                            >
+                                                {dayjs(date).format('ddd, D')}
+                                                {dayjs(date).isSame(currentDate, 'day') && ' | Today'}
+                                            </h2>
 
-                                    {/* Shift List for this date */}
-                                    <div className="shift-list">
-                                        {groupedShifts[date].map((shift) => (
-                                            <ShiftCard 
-                                                key={shift.fk_schedule_id} 
-                                                shift={shift} 
-                                                shiftType={shift.shift_type} 
-                                                onUpdate={handleShiftUpdate} // Pass the handler
-                                            />
-                                        ))}
-                                    </div> 
-                                </div>
-                            ))
-                        ) : (
-                            <p>No shifts to display for this month.</p>
-                        )}
-                    </div>
-                </div>
+                                            {/* Shift List for this date */}
+                                            <div className="shift-list">
+                                                {groupedShifts[date].map((shift) => (
+                                                    <ShiftCard 
+                                                        key={shift.fk_schedule_id} 
+                                                        shift={shift} 
+                                                        shiftType={shift.shift_type} 
+                                                        onUpdate={handleShiftUpdate} 
+                                                        onShiftSelect={handleShiftSelection}
+                                                    />
+                                                ))}
+                                            </div> 
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p>No shifts to display for this month.</p>
+                                )}
+                            </div>
+                        </div>
+                    }>
+                </ClassPanel>
             }
         />
     );

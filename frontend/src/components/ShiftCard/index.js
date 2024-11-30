@@ -5,7 +5,7 @@ import './index.css';
 import { requestToCoverShift } from '../../api/shiftService';
 import { SHIFT_TYPES, COVERAGE_STATUSES } from '../../data/constants';
 
-function ShiftCard({ shift, shiftType, onUpdate }) {
+function ShiftCard({ shift, shiftType, onUpdate, onShiftSelect }) {
     const currentDate = dayjs();
     const pastShift = dayjs(shift.shift_date).format('YYYY-MM-DD') <= currentDate.format('YYYY-MM-DD');
     const volunteerID = localStorage.getItem('volunteerID');
@@ -78,7 +78,7 @@ function ShiftCard({ shift, shiftType, onUpdate }) {
         buttonConfig[shiftType] || buttonConfig.default;
 
     return (
-        <div className="shift-card">
+        <div className="shift-card" onClick={() => onShiftSelect(shift)}>
             <div className="vertical-line" style={{ backgroundColor: lineColor }} />
             <div className="card-content">
                 <div className="column segment-1">

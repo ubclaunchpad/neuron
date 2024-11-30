@@ -15,6 +15,8 @@ function VolunteerSchedule() {
     const [shifts, setShifts] = useState([]);
     const [filter, setFilter] = useState('all-shifts');
     const [selectedClassId, setSelectedClassId] = useState(null);
+    const [selectedShiftButtons, setSelectedShiftButtons] = useState([]);
+    const [selectedShiftDetails, setShiftDetails] = useState(null);
 
     // Create a ref object to store references to each shifts-container for scrolling
     const shiftRefs = useRef({});
@@ -91,9 +93,10 @@ function VolunteerSchedule() {
 
     // side panel shift details
     const handleShiftSelection = (classData) => {
-        console.log("Selected shift data: ", classData);
         setSelectedClassId(classData._class_id);
-      };
+        setSelectedShiftButtons(classData.buttons);
+        setShiftDetails(classData);
+    };
 
     return (
         <VolunteerLayout
@@ -103,6 +106,8 @@ function VolunteerSchedule() {
                     classId={selectedClassId}
                     classList={shifts}
                     setClassId={setSelectedClassId}
+                    shiftDetails={selectedShiftDetails}
+                    dynamicShiftbuttons={selectedShiftButtons}
                     pageContent={
                         <div className="schedule-page">
                             <DateToolbar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />

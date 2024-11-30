@@ -128,6 +128,7 @@
      font-size: 16px;
      line-height: 21.6px;
 }
+
 .button-icons {
      display: flex;
      flex-direction: row;
@@ -137,3 +138,43 @@
      margin-right: 36px;
      margin-top: 20px;
 }
+
+/* Dynamic Button Styling based on Shift Type */
+.panel-buttons {
+     padding-top: 2vh;
+     height: 4vh;
+     display: flex;
+     flex-direction: row;
+     gap: 12px;
+}
+
+.dynamic-button {
+     position: relative;
+     height: 100%;
+     border-radius: 8px;
+     border: 1px solid var(--primary-blue);
+     background: #FFF;
+     box-shadow: 0px 4px 16px 0px rgba(15, 17, 17, 0.05);
+     padding: 0 1rem;
+     display: flex;
+     align-items: center;
+ }
+ 
+ .dynamic-button:not(:disabled):hover {
+     cursor: pointer;
+     background: var(--button-blue);
+     border: none;
+ }
+ 
+ .dynamic-button:disabled {
+     background-color: #d3d3d3;
+     border: 1px solid #d3d3d3;
+     box-shadow: none;
+ }
+ 
+ /* Icon within Button */
+ .card-button-icon {
+     width: 1rem;
+     height: 1rem;
+     margin-right: .5rem;
+ }

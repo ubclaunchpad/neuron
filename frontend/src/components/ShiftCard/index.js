@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import CheckInIcon from '../../assets/check-in-icon.png'
 import Plus from '../../assets/plus.png'
+import RequestCoverageIcon from '../../assets/request-coverage.png'
 import './index.css'; 
 import { requestToCoverShift } from '../../api/shiftService';
 import { SHIFT_TYPES, COVERAGE_STATUSES } from '../../data/constants';
@@ -33,9 +34,10 @@ function ShiftCard({ shift, shiftType, onUpdate, onShiftSelect }) {
         }
     };
 
-    // TODO View details handler for the default button
-    const handleViewDetailsClick = () => {
-        console.log(`Viewing details for shift ${shift.shift_id}`);
+    // TODO
+    const handleRequestCoverageClick = () => {
+        console.log(`Requesting coverage for shift ${shift.shift_id}`);
+        // Add logic for requesting coverage
     };
 
     const buttonConfig = {
@@ -63,22 +65,44 @@ function ShiftCard({ shift, shiftType, onUpdate, onShiftSelect }) {
             label: 'Requested Coverage',
             icon: null,
             disabled: true,
-            onClick: () => {},  // No action for this state
+            onClick: () => {}, // No action for this state
         },
         [SHIFT_TYPES.DEFAULT]: {
             lineColor: 'var(--grey)',
             label: 'View Details',
             icon: null,
             disabled: false,
-            onClick: handleViewDetailsClick,
+        },
+        REQUEST_COVERAGE: {
+            lineColor: 'var(--yellow)',
+            label: 'Request Coverage',
+            icon: RequestCoverageIcon,
+            disabled: false,
+            onClick: handleRequestCoverageClick,
         },
     };
 
+    const generateButtonsForDetailsPanel = () => {
+        const buttons = [];
+        const primaryButton = buttonConfig[shiftType] || buttonConfig[SHIFT_TYPES.DEFAULT];
+
+        buttons.push(primaryButton);
+        if (shiftType === SHIFT_TYPES.MY_SHIFTS) {
+            buttons.push(buttonConfig.REQUEST_COVERAGE);
+        }
+        return buttons;
+    };
+
+    const handleShiftSelection = () => {
+        const buttons = generateButtonsForDetailsPanel();
+        onShiftSelect({ ...shift, buttons });
+    };
+
     const { lineColor, label, icon, disabled, buttonClass, onClick } =
-        buttonConfig[shiftType] || buttonConfig.default;
+        buttonConfig[shiftType] || buttonConfig[SHIFT_TYPES.DEFAULT];
 
     return (
-        <div className="shift-card" onClick={() => onShiftSelect(shift)}>
+        <div className="shift-card" onClick={handleShiftSelection}>
             <div className="vertical-line" style={{ backgroundColor: lineColor }} />
             <div className="card-content">
                 <div className="column segment-1">

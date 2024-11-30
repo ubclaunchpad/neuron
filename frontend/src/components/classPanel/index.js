@@ -5,8 +5,9 @@ import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import { getClassById } from "../../api/classesPageService";
 import { isAuthenticated } from "../../api/authService";
+import dayjs from "dayjs";
 
-function ClassPanel({ classId, classList, setClassId, pageContent }) {
+function ClassPanel({ classId, classList, setClassId, pageContent, dynamicShiftbuttons = [], shiftDetails }) {
   const [panelWidth, setPanelWidth] = useState("0px");
   const [panelInfo, setPanelInfo] = useState(null);
   const [myClass, setMyClass] = useState(false);
@@ -139,7 +140,11 @@ function ClassPanel({ classId, classList, setClassId, pageContent }) {
       </div>
       <div className="panel-container" style={{ width: panelWidth }}>
         <div className="panel-header">
-          {renderSchedules()}
+          {shiftDetails ? (
+              <span>{dayjs(shiftDetails.shift_date).format('YYYY-MM-DD')}</span>
+          ) : (
+              renderSchedules()
+          )}
           <div className="panel-header-class-name">
             {panelInfo?.class_name || "N/A"}
           </div>
@@ -187,6 +192,20 @@ function ClassPanel({ classId, classList, setClassId, pageContent }) {
             <div className="panel-description">
               {panelInfo?.instructions || "No instructions available"}
             </div>
+          </div>
+          { /* Conditionally render buttons based on Shift Card Type*/}
+          <div className="panel-buttons">
+              {dynamicShiftbuttons.map((button, index) => (
+                  <button
+                      key={index}
+                      className={`dynamic-button ${button.buttonClass || ''}`}
+                      disabled={button.disabled}
+                      onClick={button.onClick}
+                  >
+                      {button.icon && <img src={button.icon} className="card-button-icon"/>}
+                      {button.label}
+                  </button>
+              ))}
           </div>
           <div className="button-icons">
             <button className="panel-button-icon" onClick={handleToPrev}>

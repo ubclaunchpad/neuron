@@ -162,7 +162,9 @@ function ClassPanel({ classId, classList, setClassId, pageContent }) {
             <div className="panel-details-shift-row">
               <div className="panel-titles">Status</div>
               <div className="panel-details-shift-right">
-                {myClass ? "My Class" : "Class Taken"}
+                <div className={`status ${myClass ? "myClass" : "classTaken"}`}>
+                  {myClass ? "My Class" : "Class Taken"}
+                </div>
               </div>
             </div>
             <div className="panel-details-shift-row">

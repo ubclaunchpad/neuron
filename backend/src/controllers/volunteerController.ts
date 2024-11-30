@@ -132,40 +132,6 @@ async function shiftCheckIn(req: Request, res: Response) {
     }
 }
 
-// Update a volunteer's profile based on the volunteer_id
-async function updateShiftCheckIn(req: Request, res: Response) {
-    const fk_volunteer_id = req.body.volunteerID;
-    const fk_schedule_id = req.body.scheduleID;
-    const shift_date = req.body.shiftDate;
-
-    if (!fk_volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required parameters: 'volunteer_id'"
-        });
-    }
-
-    if (!fk_schedule_id) {
-        return res.status(400).json({
-            error: "Missing required parameters: 'fk_schedule_id'"
-        });
-    }
-
-    if (!shift_date) {
-        return res.status(400).json({
-            error: "Missing required parameters: 'shift_date'"
-        });
-    }
-
-    try {
-        const updatedShift = await volunteerModel.updateShiftCheckIn(fk_volunteer_id, fk_schedule_id, shift_date);
-        res.status(200).json(updatedShift);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error. ${error}`
-        });
-    }
-}
-
 export {
     getVolunteerById,
     getVolunteerByUserId,
@@ -173,6 +139,5 @@ export {
     insertVolunteer,
     deleteVolunteer,
     updateVolunteer,
-    shiftCheckIn,
-    updateShiftCheckIn
+    shiftCheckIn
 };

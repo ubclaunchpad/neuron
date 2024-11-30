@@ -4,14 +4,15 @@ import React from "react";
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import VolunteerLayout from "../../components/volunteerLayout";
-import { getHelloWorld } from "../../api/homePageService";
 import { isAuthenticated } from "../../api/authService";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForwardIos";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import DashShifts from "../../components/DashShifts";
+import DashCoverShifts from "../../components/DashCoverShifts";
 
 function VolunteerDash() {
   const [loading, setLoading] = useState(true);
-  const [checkIn, setCheckIn] = useState(true);
+  const [checkIn, setCheckIn] = useState(false);
   const [data, setData] = useState(null);
   const progressCompleted = useRef(null);
   const progressUpcoming = useRef(null);
@@ -41,40 +42,27 @@ function VolunteerDash() {
   };
 
   useEffect(() => {
-    // isAuthenticated()
-    //   .then((response) => {
-    //     console.log(response);
-    //     if (!response.isAuthenticated) {
-    //       navigate("/auth/login");
-    //     }
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //   });
-    getHelloWorld()
-      .then((data) => {
-        setData(data.message);
-        if (progressCompleted.current && progressUpcoming.current) {
-          progressCompleted.current.style.width = "35%";
-          progressUpcoming.current.style.width = "20%";
+    isAuthenticated()
+      .then((response) => {
+        console.log(response);
+        if (!response.isAuthenticated) {
+          navigate("/auth/login");
         }
-        setLoading(false);
       })
       .catch((error) => {
         console.error(error);
-        setLoading(false);
       });
-    // eslint-disable-next-line
+    if (progressCompleted.current && progressUpcoming.current) {
+      progressCompleted.current.style.width = "35%";
+      progressUpcoming.current.style.width = "20%";
+    }
   }, []);
 
   return (
     <VolunteerLayout pageTitle="Dashboard">
       <div className="dash-container">
         <div className="dash-col-card dash-grid-item">
-          <div className="dash-card-title">
-            Volunteer Hours{" "}
-            <ArrowForwardIcon sx={{ fontSize: "16px", color: "#808080" }} />
-          </div>
+          <div className="dash-card-title">Volunteer Hours </div>
           <div className="dash-hours-container">
             <div className="dash-hours">
               <h1 className="dash-completed-hours">20</h1>
@@ -88,10 +76,7 @@ function VolunteerDash() {
         </div>
         <div className="dash-col-card dash-grid-item">
           <div className="dash-card-header">
-            <div className="dash-card-title">
-              Coverage Hours{" "}
-              <ArrowForwardIcon sx={{ fontSize: "16px", color: "#808080" }} />
-            </div>
+            <div className="dash-card-title">Coverage Hours </div>
             <HelpOutlineIcon sx={{ color: "var(--primary-blue)" }} />
           </div>
           <div>
@@ -122,19 +107,19 @@ function VolunteerDash() {
             </div>
           </div>
         </div>
-        <div className="dash-col-card dash-grid-item">
-          <div className="dash-card-title">
-            My Upcoming Shifts{" "}
-            <ArrowForwardIcon sx={{ fontSize: "16px", color: "#808080" }} />
-          </div>
+        <div
+          className="dash-col-card dash-grid-item dash-col-card-click"
+          // onClick={navigate("/volunteer/schedule")}
+        >
+          <DashShifts current={true} />
         </div>
 
         <div className="dash-bottom-right dash-grid-item">
-          <div className="dash-col-card">
-            <div className="dash-card-title">
-              Shifts In Need of Coverage{" "}
-              <ArrowForwardIcon sx={{ fontSize: "16px", color: "#808080" }} />
-            </div>
+          <div
+            className="dash-col-card dash-col-card-click"
+            // onClick={navigate("/volunteer/schedule")}
+          >
+            <DashCoverShifts current={true} />
           </div>
           {checkInItem()}
         </div>

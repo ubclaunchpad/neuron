@@ -57,7 +57,6 @@ function App() {
                 <Route path="/volunteer/classes" element={<Classes />} />{" "}
               </>
             )}
-            <Route path="/" element={<VolunteerDash />} />
             <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
           </Routes>
         </BrowserRouter>

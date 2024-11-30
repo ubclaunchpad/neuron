@@ -26,6 +26,10 @@
     border-radius: 0.5rem;
 }
 
+.dash-col-card-click {
+    cursor: pointer;
+}
+
 .dash-card-title {
     display: flex;
     flex-direction: row;
@@ -157,6 +161,7 @@
     justify-content: center;
     align-items: center;
     background-color: var(--grey);
+    border-radius : 0.5rem;
 }
 
 .dash-next-title {

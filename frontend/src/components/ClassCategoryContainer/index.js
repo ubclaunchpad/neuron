@@ -4,7 +4,7 @@ import ClassCard from "../ClassCard";
 import moreInfo from "../../assets/more-info.png";
 
 const ClassCategoryContainer = React.forwardRef(
-  ({ category, classData, ...props }, ref) => {
+  ({ category, classData, onClassSelect, ...props }, ref) => {
     const groupedBySubcategory = classData.reduce((acc, classItem) => {
       const subcategory = classItem.subcategory || ""; // Handle no subcategory case
       if (!acc[subcategory]) {
@@ -27,7 +27,11 @@ const ClassCategoryContainer = React.forwardRef(
               <h3 className="sub-category-title">{subcategory}</h3>
               <div className="class-cards">
                 {subcategoryClasses.map((classItem) => (
-                  <ClassCard key={classItem.class_id} classData={classItem} />
+                  <ClassCard
+                    key={classItem.class_id}
+                    classData={classItem}
+                    onClassSelect={onClassSelect}
+                  />
                 ))}
               </div>
             </div>

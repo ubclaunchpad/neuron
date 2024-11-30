@@ -1,6 +1,7 @@
 import "./index.css";
 import React, { useEffect, useState, useRef } from "react";
 import VolunteerLayout from "../../components/volunteerLayout";
+import ClassPanel from "../../components/classPanel";
 import {
   getAllClasses,
   getAllClassImages,
@@ -12,6 +13,7 @@ function Classes() {
   const [completeClassData, setCompleteClassData] = useState(null);
   const [groupedByCategory, setGroupedByCategory] = useState({});
   const [selectedCategory, setSelectedCategory] = useState("Online Exercise");
+  const [selectedClassId, setSelectedClassId] = useState(null);
 
   const sectionRefs = useRef({});
   const observer = useRef(null);
@@ -123,43 +125,60 @@ function Classes() {
     }
   };
 
+  const handleClassSelection = (classData) => {
+    setSelectedClassId(classData.class_id);
+    console.log("Selected class data: ", classData);
+  };
+
   return (
     <VolunteerLayout
       pageTitle="Classes"
       pageContent={
-        <div className="classes-page">
-          <div className="main-category-header">
-            {categories.map((category) => {
-              const isSelected = selectedCategory === category;
-              return (
-                <button
-                  key={category}
-                  className={`category-button ${isSelected ? "selected" : ""}`}
-                  onClick={() => {
-                    setSelectedCategory(category);
-                    scrollToSection(category);
-                  }}
-                >
-                  {category}
-                </button>
-              );
-            })}
-          </div>
-          {/* ----- */}
-          <div className="class-catalog">
-            {Object.entries(groupedByCategory).map(([category, classData]) => {
-              return (
-                <ClassCategoryContainer
-                  key={category}
-                  ref={sectionRefs.current[category]}
-                  category={category}
-                  classData={classData}
-                  data-category={category}
-                />
-              );
-            })}
-          </div>
-        </div>
+        <ClassPanel
+          classId={selectedClassId}
+          classList={completeClassData}
+          setClassId={setSelectedClassId}
+          pageContent={
+            <div className="classes-page">
+              <div className="main-category-header">
+                {categories.map((category) => {
+                  const isSelected = selectedCategory === category;
+                  return (
+                    <button
+                      key={category}
+                      className={`category-button ${
+                        isSelected ? "selected" : ""
+                      }`}
+                      onClick={() => {
+                        setSelectedCategory(category);
+                        scrollToSection(category);
+                      }}
+                    >
+                      {category}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* ----- */}
+              <div className="class-catalog">
+                {Object.entries(groupedByCategory).map(
+                  ([category, classData]) => {
+                    return (
+                      <ClassCategoryContainer
+                        key={category}
+                        ref={sectionRefs.current[category]}
+                        category={category}
+                        classData={classData}
+                        data-category={category}
+                        onClassSelect={handleClassSelection}
+                      />
+                    );
+                  }
+                )}
+              </div>
+            </div>
+          }
+        ></ClassPanel>
       }
     ></VolunteerLayout>
   );

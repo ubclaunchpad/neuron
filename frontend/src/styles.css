@@ -18,13 +18,21 @@
   --grey: #d9d9d9;
   --dark: #0f1111;
   --light-grey: #f0faff;
-  --dark-grey: #808080;
   --white: #ffffff;
+
+  /* Button-specific Colors */
+  --dark-grey: #808080;
+  --green: #28a745;
+  --yellow: #cb8324;
+  --red: #952018;
+  --button-blue: #1687ca;
+  --error-red: #dc3545;
 }
 
 :root {
   --small-text: 12px;
   --medium-text: 16px;
+  --large-text: 22px;
   --title-text: 20px;
   --page-title-text: 28px;
 }
@@ -33,4 +41,13 @@
   --regular: 400;
   --semi-bold: 600;
   --bold: 700;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.notyf {
+  font-family: var(--font-primary);
 }

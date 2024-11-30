@@ -34,7 +34,7 @@ const formatSchedules = (schedules) => {
   });
 };
 
-const ClassCard = ({ classData }) => {
+const ClassCard = ({ classData, onClassSelect }) => {
   const { class_id, class_name, category, subcategory, image_url, schedules } =
     classData;
 
@@ -42,7 +42,7 @@ const ClassCard = ({ classData }) => {
 
   // TODO: Need to remove level
   return (
-    <div className="class-card">
+    <div className="class-card" onClick={() => onClassSelect(classData)}>
       <img className="class-image" src={image_url} />
       <div className="class-info">
         <p className="class-level">Level 2-4</p>

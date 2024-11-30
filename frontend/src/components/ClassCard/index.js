@@ -40,12 +40,10 @@ const ClassCard = ({ classData, onClassSelect }) => {
 
   const formattedSchedules = formatSchedules(schedules);
 
-  // TODO: Need to remove level
   return (
     <div className="class-card" onClick={() => onClassSelect(classData)}>
       <img className="class-image" src={image_url} />
       <div className="class-info">
-        <p className="class-level">Level 2-4</p>
         <h4 className="class-title">{class_name}</h4>
         <div className="class-schedule-container">
           {formattedSchedules.map((schedule, index) => (

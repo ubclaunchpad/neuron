@@ -10,6 +10,7 @@
     "axios": "^1.7.5",
     "bootstrap": "^5.3.3",
     "formik": "^2.4.6",
+    "moment": "^2.30.1",
     "notyf": "^3.10.0",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.5",
@@ -17,6 +18,7 @@
     "react-router-dom": "^6.26.1",
     "react-scripts": "5.0.1",
     "react-timer-hook": "^3.0.8",
+    "react-weekview": "^0.0.15",
     "web-vitals": "^2.1.4",
     "yup": "^1.4.0"
   },

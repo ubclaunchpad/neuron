@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
+import "notyf/notyf.min.css";
 import { isAuthenticated } from "./api/authService";
 import VolunteerDash from "./pages/volunteerDash";
 import VolunteerSignup from "./pages/VolunteerSignup";
@@ -9,9 +10,10 @@ import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import Classes from "./pages/classes";
 import VolunteerProfile from "./pages/volunteerProfile";
 import AdminVerify from "./pages/AdminVerify";
+import VolunteerSchedule from "./pages/schedule";
 
 function App() {
-    const [isVolunteer, setIsVolunteer] = useState(false);
+    const [isVolunteer, setIsVolunteer] = useState(true);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -40,39 +42,18 @@ function App() {
                 <Routes>
                     <Route path="/auth/signup" element={<VolunteerSignup />} />
                     <Route path="/auth/login" element={<VolunteerLogin />} />
-                    <Route
-                        path="/auth/forgot-password"
-                        element={<VolunteerForgotPassword />}
-                    />
-                    <Route
-                        path="/auth/reset-password"
-                        element={<VolunteerResetPassword />}
-                    />
+                    <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />}/>
+                    <Route path="/auth/reset-password" element={<VolunteerResetPassword />}/>
                     {isVolunteer && (
                         <>
                             <Route path="/" element={<VolunteerDash />} />
-                            <Route
-                                path="/volunteer/classes"
-                                element={<Classes />}
-                            />
-                            <Route
-                                path="/volunteer/my-profile"
-                                element={<VolunteerProfile />}
-                            />
-                            <Route
-                                path="/volunteer/schedule"
-                                element={<VolunteerDash />}
-                            />
-                            <Route
-                                path="/volunteer/classes"
-                                element={<Classes />}
-                            />{" "}
+                            <Route path="/volunteer/classes" element={<Classes />}/>
+                            <Route path="/volunteer/my-profile" element={<VolunteerProfile />}/>
+                            <Route path="/volunteer/schedule" element={<VolunteerSchedule />}/>
+                            <Route path="/volunteer/classes" element={<Classes />}/>{" "}
                         </>
                     )}
-                    <Route
-                        path="/admin/verify-volunteers"
-                        element={<AdminVerify />}
-                    />
+                    <Route path="/admin/verify-volunteers" element={<AdminVerify />}/>
                 </Routes>
             </BrowserRouter>
         </div>

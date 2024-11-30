@@ -30,6 +30,8 @@ body {
   flex-grow: 1;
   background-color: var(--white);
   padding: 0 2vw;
+  max-height: 100vh;
+  overflow-y: hidden;
 }
 
 .content-title {

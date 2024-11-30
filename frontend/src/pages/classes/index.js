@@ -120,8 +120,17 @@ function Classes() {
 
   const scrollToSection = (category) => {
     const sectionRef = sectionRefs.current[category];
-    if (sectionRef && sectionRef.current) {
-      sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    const catalog = document.querySelector(".class-catalog");
+  
+    if (sectionRef && sectionRef.current && catalog) {
+      const catalogTop = catalog.getBoundingClientRect().top;
+      const sectionTop = sectionRef.current.getBoundingClientRect().top;
+      const scrollOffset = sectionTop - catalogTop + catalog.scrollTop;
+  
+      catalog.scrollTo({
+        top: scrollOffset,
+        behavior: "smooth",
+      });
     }
   };
 
@@ -163,7 +172,7 @@ function Classes() {
               <div className="class-catalog">
                 {Object.entries(groupedByCategory).map(
                   ([category, classData]) => {
-                    return (
+                    return ( 
                       <ClassCategoryContainer
                         key={category}
                         ref={sectionRefs.current[category]}
@@ -175,6 +184,7 @@ function Classes() {
                     );
                   }
                 )}
+                <div className="spacer"></div>
               </div>
             </div>
           }

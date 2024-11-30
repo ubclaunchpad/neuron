@@ -27,40 +27,34 @@
   margin: 0;
 }
 
-/* Action Buttons */
-.action-buttons {
-  display: flex;
-  gap: 10px; /* Space between buttons */
-}
-
-.submit-button,
-.cancel-button {
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 50%;
-  font-size: 18px;
-  color: white;
+.edit-icon {
+  position: absolute;
+  top: 32px;
+  right: 32px;
   cursor: pointer;
+  height: 16px;
+  color: #808080;
+}
+
+.edit-options {
+  position: absolute;
+  top: 32px;
+  right: 32px;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  gap: 12px;
+  height: 16px;
 }
 
-.submit-button {
-  background-color: #4caf50; /* Green */
+.check-icon {
+  flex: 1;
 }
 
-.cancel-button {
-  background-color: #f44336; /* Red */
+.cancel-icon {
+  flex: 1;
 }
 
-.submit-button:hover {
-  background-color: #45a049; /* Darker green on hover */
-}
-
-.cancel-button:hover {
-  background-color: #e53935; /* Darker red on hover */
+.icon:hover {
+  cursor: pointer;
 }
 
 /* Grid Structure */
@@ -100,7 +94,6 @@
   align-items: center;
   justify-content: center;
   border: 1px solid #e7e7e7; /* White border for availability slots */
-  cursor: pointer;
   transition: background-color 0.3s ease; /* Smooth color change */
 }
 

@@ -3,9 +3,9 @@ import React from "react";
 
 import edit_icon from "../../../assets/edit-icon.png"
 import check_icon from "../../../assets/check-icon.png";
-import cancel_icon from "../../../assets/cancel-icon.png"
-import empty_profile from "../../../assets/empty-profile.png"
-import camera_icon from "../../../assets/camera.png"
+import cancel_icon from "../../../assets/cancel-icon.png";
+import empty_profile from "../../../assets/empty-profile.png";
+import camera_icon from "../../../assets/camera.png";
 
 import { updateVolunteerData, updateProfilePicture, insertProfilePicture } from "../../../api/volunteerService";
 
@@ -26,6 +26,9 @@ function VolunteerDetailsCard({ volunteer }) {
     });
     const [tempImage, setTempImage] = React.useState(null);
     const [prevTempImage, setPrevTempImage] = React.useState(null);
+
+    const [isPronounsMenuOpen, setIsPronounsMenuOpen] = React.useState(false);
+    const pronouns = ["None", "He/Him", "She/Her", "They/Them"];
 
     const handleImageUpload = (event) => {
         const image = event.target.files[0];
@@ -64,6 +67,7 @@ function VolunteerDetailsCard({ volunteer }) {
     async function handleCheck(e) {
         e.preventDefault();
         setIsEditing(false);
+        setIsPronounsMenuOpen(false);
 
         // update volunteer
         try {
@@ -119,6 +123,7 @@ function VolunteerDetailsCard({ volunteer }) {
         setIsEditing(false);
         setMutableData(prevMutableData);
         setTempImage(prevTempImage);
+        setIsPronounsMenuOpen(false);
     }
 
     function handleInputChange(e) {
@@ -126,117 +131,141 @@ function VolunteerDetailsCard({ volunteer }) {
         setMutableData({
             ...mutableData,
             [name]: value
-        })
+        });
+    }
+
+    function handlePronounsClick(option) {
+        setMutableData({
+            ...mutableData,
+            pronouns: option === "None" ? null : option
+        });
+        setIsPronounsMenuOpen(false);
     }
 
     return (
-        <div className="profile-card">
-            <img className="icon edit-icon" src={edit_icon} alt="Edit" hidden={isEditing} onClick={handleEdit}/>
-            <div className="edit-options"> 
-                <img className="icon check-icon" src={check_icon} alt="Check" hidden={!isEditing} onClick={handleCheck}/>          
-                <img className="icon cancel-icon" src={cancel_icon} alt="Cancel" hidden={!isEditing} onClick={handleCancel}/>
-            </div>
-            <div className="profile-content">
-                <div 
-                    className="profile-picture-form"
-                    style={{
-                        cursor: isEditing ? 'pointer' : 'default'
-                    }}
-                    onClick={() => {
-                        if (isEditing) 
-                            document.getElementById('fileInput').click()
-                    }}
-                >
-                    <img src={tempImage ? tempImage : mutableData.profilePicture ? mutableData.profilePicture : empty_profile} alt="Profile" className="profile-image"/>
-                    {isEditing && <div className="overlay">
-                        <img src={camera_icon} alt="Edit Profile" className="camera-icon" />
-                        <p className="edit-text">Edit</p>
-                    </div>}
-                    {isEditing && <input
-                        className="file-input"
-                        id="fileInput" 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleImageUpload} 
-                    />}
-                    
+        <div className="profile-card-container">
+            <div className="profile-card">
+                <img className="icon edit-icon" src={edit_icon} alt="Edit" hidden={isEditing} onClick={handleEdit}/>
+                <div className="edit-options"> 
+                    <img className="icon check-icon" src={check_icon} alt="Check" hidden={!isEditing} onClick={handleCheck}/>          
+                    <img className="icon cancel-icon" src={cancel_icon} alt="Cancel" hidden={!isEditing} onClick={handleCancel}/>
                 </div>
-                <div className="profile-info">
-                    <div className="header">
-                        <h2>{volunteer.f_name} {volunteer.l_name}</h2>
+                <div className="profile-content">
+                    <div 
+                        className="profile-picture-form"
+                        style={{
+                            cursor: isEditing ? 'pointer' : 'default'
+                        }}
+                        onClick={() => {
+                            if (isEditing) 
+                                document.getElementById('fileInput').click()
+                        }}
+                    >
+                        <img src={tempImage ? tempImage : mutableData.profilePicture ? mutableData.profilePicture : empty_profile} alt="Profile" className="profile-image"/>
+                        {isEditing && <div className="overlay">
+                            <img src={camera_icon} alt="Edit Profile" className="camera-icon" />
+                            <p className="edit-text">Edit</p>
+                        </div>}
+                        {isEditing && <input
+                            className="file-input"
+                            id="fileInput" 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleImageUpload} 
+                        />}
+                        
                     </div>
-                    <table className="profile-table">
-                        <tbody>
-                            <tr className="view volunteer-preferred-name">
-                                <td>Preferred Name</td>
-                                <td 
-                                    className="mutable-value" 
-                                    style={mutableData.preferredName ? {} : {
-                                        'color': '#808080',
-                                        'font-style': 'italic'
-                                    }}
-                                    hidden={isEditing}>
-                                        {mutableData.preferredName ? mutableData.preferredName : "not yet set"}
-                                </td>
-                                <td hidden={!isEditing}>
-                                    <input type="text" className="text-input" placeholder="Enter your preferred name" name="preferredName" value={mutableData.preferredName} onChange={handleInputChange}></input>
-                                </td>
-                            </tr>
-                            <tr className="view volunteer-pronouns">
-                                <td>Pronouns</td>
-                                <td 
-                                    className="mutable-value" 
-                                    style={mutableData.pronouns ? {} : {
-                                        'color': '#808080',
-                                        'font-style': 'italic'
-                                    }}
-                                    hidden={isEditing}>
-                                        {mutableData.pronouns ? mutableData.pronouns : "not yet set"}
-                                </td>
-                                <td className="pronouns-editor" hidden={!isEditing}>
-                                    <select 
-                                        className="pronouns-input" 
-                                        placeholder="Enter your pronouns" 
-                                        name="pronouns"
-                                        value={mutableData.pronouns} 
-                                        onChange={handleInputChange}
-                                    >
-                                        <option className="pronouns-none" value="">select</option>
-                                        <option className="pronouns-option" value="He/Him">He/Him</option>
-                                        <option className="pronouns-option" value="She/Her">She/Her</option>
-                                        <option className="pronouns-option" value="They/Them">They/Them</option>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr className="view volunteer-phone">
-                                <td>Phone</td>
-                                <td 
-                                    className="mutable-value" 
-                                    style={mutableData.phoneNumber ? {} : {
-                                        'color': '#808080',
-                                        'font-style': 'italic'
-                                    }}
-                                    hidden={isEditing}>
-                                        {mutableData.phoneNumber ? formatPhone(mutableData.phoneNumber) : "not yet set"}
-                                </td>
-                                <td hidden={!isEditing}>
-                                    <input type="text" className="text-input" placeholder="Enter your phone number" name="phoneNumber" maxLength={10} value={mutableData.phoneNumber} onChange={handleInputChange}></input>
-                                </td>
-                            </tr>
-                            <tr className="view volunteer-email">
-                                <td>Email</td>
-                                <td>{volunteer.email}</td>
-                            </tr>
-                            <tr className="view volunteer-joined-date">
-                                <td>Joined</td>
-                                <td>{formatDate(volunteer.created_at)}</td>
-                            </tr>
-                            <tr className="view volunteer-location">
-                                <td>Location</td>
-                                <td>{volunteer.city}, {volunteer.province}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div className="profile-info">
+                        <div className="header">
+                            <h2>{volunteer.f_name} {volunteer.l_name}</h2>
+                        </div>
+                        <table className="profile-table">
+                            <tbody>
+                                <tr className="view volunteer-preferred-name">
+                                    <td>Preferred Name</td>
+                                    <td 
+                                        className="mutable-value" 
+                                        style={mutableData.preferredName ? {} : {
+                                            'color': '#808080',
+                                            'font-style': 'italic'
+                                        }}
+                                        hidden={isEditing}>
+                                            {mutableData.preferredName ? mutableData.preferredName : "not yet set"}
+                                    </td>
+                                    <td hidden={!isEditing}>
+                                        <input type="text" className="text-input" placeholder="Enter your preferred name" name="preferredName" value={mutableData.preferredName} onChange={handleInputChange}></input>
+                                    </td>
+                                </tr>
+                                <tr className="view volunteer-pronouns">
+                                    <td>Pronouns</td>
+                                    <td 
+                                        className="mutable-value" 
+                                        style={mutableData.pronouns ? {} : {
+                                            'color': '#808080',
+                                            'font-style': 'italic'
+                                        }}
+                                        hidden={isEditing}>
+                                            {mutableData.pronouns ? mutableData.pronouns : "not yet set"}
+                                    </td>
+                                    {isEditing && (<td className="pronouns-editor">
+                                        <button 
+                                            className="pronouns-button" 
+                                            placeholder="Enter your pronouns" 
+                                            name="pronouns"
+                                            value={mutableData.pronouns} 
+                                            style={mutableData.pronouns ? {} : {
+                                                'color': '#808080'
+                                            }}
+                                            onClick={() => setIsPronounsMenuOpen(!isPronounsMenuOpen)}
+                                        >
+                                            {mutableData.pronouns ? mutableData.pronouns : "None"}
+                                        </button>
+                                        {isPronounsMenuOpen && (
+                                            <div className="pronouns-menu"
+>
+                                                {pronouns.map((option, index) => (
+                                                    <div
+                                                        className="pronouns-item"
+                                                        onClick={() => handlePronounsClick(option)}
+                                                        style={index === 0 ? {'color': '#808080'} : {}}
+                                                    >
+                                                        {option}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </td>)}
+                                </tr>
+                                <tr className="view volunteer-phone">
+                                    <td>Phone</td>
+                                    <td 
+                                        className="mutable-value" 
+                                        style={mutableData.phoneNumber ? {} : {
+                                            'color': '#808080',
+                                            'font-style': 'italic'
+                                        }}
+                                        hidden={isEditing}>
+                                            {mutableData.phoneNumber ? formatPhone(mutableData.phoneNumber) : "not yet set"}
+                                    </td>
+                                    <td hidden={!isEditing}>
+                                        <input type="number" className="text-input" placeholder="Enter your phone number" name="phoneNumber" value={mutableData.phoneNumber} onChange={handleInputChange}></input>
+                                    </td>
+                                </tr>
+                                <tr className="view volunteer-email" hidden={isEditing}>
+                                    <td>Email</td>
+                                    <td>{volunteer.email}</td>
+                                </tr>
+                                <tr className="view volunteer-joined-date" hidden={isEditing}>
+                                    <td>Joined</td>
+                                    <td>{formatDate(volunteer.created_at)}</td>
+                                </tr>
+                                <tr className="view volunteer-location" hidden={isEditing}>
+                                    <td>Location</td>
+                                    <td>{volunteer.city}, {volunteer.province}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

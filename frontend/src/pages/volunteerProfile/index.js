@@ -5,7 +5,7 @@ import VolunteerLayout from "../../components/volunteerLayout";
 import { fetchVolunteerData, getProfilePicture } from "../../api/volunteerService";
 import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
 import ChangePasswordCard from "../../components/volunteerProfile/changePasswordCard";
-import ClassPreferencesCard from "../../components/volunteerProfile/classPreferencesCard";
+// import ClassPreferencesCard from "../../components/volunteerProfile/classPreferencesCard";
 // import UserProfileForm from "../../components/userProfileForm/UserProfileForm";
 import AvailabilityGrid from "../../components/volunteerProfile/availabilityGrid";
 
@@ -40,21 +40,21 @@ function VolunteerProfile() {
                 pageTitle={pageTitle}
                 pageContent={
                     <div className="content">
-                        <div className="column">
-                            <div className="card">
+                        <div className="column-1">
+                            <div className="volunteer-card">
                                 <VolunteerDetailsCard volunteer={volunteer} />
                             </div>    
-                            <div className="card">
+                            <div className="availability-card">
                                 <AvailabilityGrid availability={availability} setAvailability={setAvailability} />
                             </div>
                         </div>
-                        <div className="column">
-                            <div className="card">
+                        <div className="column-2">
+                            <div className="password-card">
                                 <ChangePasswordCard volunteer={volunteer} />
                             </div>
-                            <div className="card">
+                            {/* <div className="card">
                                 <ClassPreferencesCard/>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 }/>

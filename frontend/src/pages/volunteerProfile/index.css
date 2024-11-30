@@ -1,17 +1,19 @@
 @import '../../styles.css';
 
+.volunteerProfile {
+    flex: 1;
+}
+
 .content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 32px;
+    display: flex;
+    margin: 0 32px;
     gap: 20px;
 }
 
-.column {
-    display: subgrid;
-    grid-auto-flow: row;
-}
-
-.card {
-    margin-bottom: 20px;
+.column-1,
+.column-2 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }

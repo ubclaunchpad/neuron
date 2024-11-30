@@ -1,15 +1,18 @@
 @import '../../../styles.css';
 
-.profile-card {
+.profile-card-container {
     position: relative;
     max-width: 100%;
-    height: 250px;
+    height: 100%;
     border-radius: 8px;
     border: 1px solid #D9D9D9;
     display: flex;
     align-items: center;
-    padding: 32px;
     box-shadow: 0px 4px 16px 0px #0F11110D;
+}
+
+.profile-card {
+    padding: 72px 32px;
 }
 
 .edit-icon {
@@ -123,8 +126,12 @@
     font-size: 13px;
 }
 
-.profile-table tr td:nth-child(2), td:nth-child(3) {
+/* .profile-table tr td:nth-child(2), td:nth-child(3) {
     padding-left: 20px;
+} */
+
+.profile-table tr td:nth-child(1) {
+    padding-right: 32px;
 }
 
 .profile-card tr td:nth-child(1) {
@@ -132,39 +139,71 @@
 }
 
 .text-input {
-    width: 100%;
     padding: 6px;
+    font-size: 13px;
+}
+
+.text-input:focus {
+    outline: none;
+    border: 1px solid #4385AC;
+}
+
+/* remove up and down arrow from phone number input */
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
 }
 
 .pronouns-editor {
     position: relative;
+    display: inline-block;
+    width: 100%;
 }
 
-.pronouns-input {
+.pronouns-button {
     width: 100%;
     padding: 6px;
     border: 1px solid #ccc;
     border-radius: 4px;
     background-color: #fff;
-    appearance: none; /* Removes default arrow for styling */
-    cursor: pointer;  
+    text-align: left;
+    cursor: pointer;
     font-size: 13px;
 }
 
-.pronouns-input:focus {
-    outline: none;
-    border-color: #1687CA; /* Highlight border color */
-    box-shadow: 0 0 5px rgba(0, 120, 215, 0.5); /* Glow effect */
+.pronouns-button:focus {
+    border-color: #4385AC;
 }
 
-.pronouns-input .pronouns-none {
-    color: #808080
-}
-
-.dropdown-icon {
+.pronouns-menu {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    right: 8px;
+    background-color: white;
+    border: 1px solid #4385AC;
+    border-radius: 5px;
+    margin-top: 1px;
+    width: 100%;
+    padding: 6px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.pronouns-item {
+    border: 1px solid #fff;
+    border-radius: 5px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+  
+.pronouns-item:hover {
+    border: 1px solid #4385AC;
+    border-radius: 5px;
+    background-color: #F0FAFF;
 }
   

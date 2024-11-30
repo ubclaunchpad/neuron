@@ -71,13 +71,6 @@ function VolunteerDash() {
         shiftDate: selectedDate.format("YYYY-MM-DD"),
       };
       const response = await getVolunteerShiftsForMonth(body);
-
-      // const filteredShifts = response.filter((shift) => {
-      //   if (filter === "all-shifts") {
-      //     return true;
-      //   }
-      //   return shift.shift_type === filter;
-      // });
       setShifts(response);
       console.log(response);
     };
@@ -114,15 +107,6 @@ function VolunteerDash() {
       return acc;
     }, {});
 
-  const groupedShifts = shifts.reduce((acc, shift) => {
-    const date = shift.shift_date;
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(shift);
-    return acc;
-  }, {});
-
   const handleShiftUpdate = () => {
     const fetchShifts = async () => {
       const body = {
@@ -130,12 +114,6 @@ function VolunteerDash() {
         shiftDate: selectedDate.format("YYYY-MM-DD"),
       };
       const response = await getVolunteerShiftsForMonth(body);
-      // const filteredShifts = response.filter((shift) => {
-      //   if (filter === "all-shifts") {
-      //     return true;
-      //   }
-      //   return shift.shift_type === filter;
-      // });
       setShifts(response);
     };
     fetchShifts();
@@ -143,7 +121,7 @@ function VolunteerDash() {
 
   useEffect(() => {
     setFuture(selectedDate >= monthDate);
-  }, [selectedDate]);
+  }, [selectedDate, shifts]);
 
   return (
     <VolunteerLayout pageTitle="Dashboard">
@@ -158,7 +136,7 @@ function VolunteerDash() {
             color: "var(--primary-blue)",
           }}
           value={selectedDate}
-          onChange={(newValue) => setSelectedDate(newValue)}
+          onChange={(newValue) => setSelectedDate(newValue.day(2))}
         />
       </LocalizationProvider>
 
@@ -170,10 +148,12 @@ function VolunteerDash() {
               <h1 className="dash-completed-hours">20</h1>
               <p>Completed</p>
             </div>
-            <div className="dash-hours">
-              <h1 className="dash-upcoming-hours">3</h1>
-              <p>Upcoming</p>
-            </div>
+            {future && (
+              <div className="dash-hours">
+                <h1 className="dash-upcoming-hours">3</h1>
+                <p>Upcoming</p>
+              </div>
+            )}
           </div>
         </div>
         <div className="dash-col-card dash-grid-item">
@@ -185,7 +165,7 @@ function VolunteerDash() {
         </div>
         <div
           className="dash-col-card dash-grid-item dash-col-card-click"
-          // onClick={navigate("/volunteer/schedule")}
+          onClick={() => navigate("/volunteer/schedule")}
         >
           <DashShifts
             groupedShifts={groupedUpcomingShifts}
@@ -197,7 +177,7 @@ function VolunteerDash() {
         <div className="dash-bottom-right dash-grid-item">
           <div
             className="dash-col-card dash-col-card-click"
-            // onClick={navigate("/volunteer/schedule")}
+            onClick={() => navigate("/volunteer/schedule")}
           >
             <DashCoverShifts
               future={future}

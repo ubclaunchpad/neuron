@@ -1,4 +1,4 @@
-@import '../../index.css';  /*Imports custom fonts*/
+@import '../../styles.css';  /*Imports custom fonts*/
 
 .main-container {
      height: 100%;

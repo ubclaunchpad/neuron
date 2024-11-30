@@ -1,11 +1,12 @@
 .class-icon-card {
     width: 250px;
     border: 1px solid #d9d9d9;
-    border-radius: 10px;
+    border-radius: 5px;
     overflow: hidden;
     background-color: #ffffff;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     font-family: 'Roboto', sans-serif;
+    padding: 15px;
   }
   
   .class-image {
@@ -15,7 +16,7 @@
   }
   
   .class-details {
-    padding: 15px;
+    padding: 0px;
   }
   
   .class-level {

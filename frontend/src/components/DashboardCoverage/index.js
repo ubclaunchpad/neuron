@@ -1,7 +1,7 @@
 import "./index.css";
 import React, { useState, useEffect, useRef } from "react";
 
-export default function DashboardCoverage({ data, future }) {
+export default function DashboardCoverage({ shifts, future }) {
   const progressCompleted = useRef(null);
   const progressUpcoming = useRef(null);
 

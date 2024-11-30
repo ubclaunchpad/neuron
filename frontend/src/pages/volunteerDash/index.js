@@ -14,12 +14,16 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import DashboardCoverage from "../../components/DashboardCoverage";
+import { getVolunteerShiftsForMonth } from "../../api/shiftService";
+import { SHIFT_TYPES } from "../../data/constants";
 
 function VolunteerDash() {
+  const volunteerID = localStorage.getItem("volunteerID");
   const [loading, setLoading] = useState(true);
   const [checkIn, setCheckIn] = useState(false);
-  const [data, setData] = useState(null);
-  const [displayDate, setDisplayDate] = useState(dayjs());
+  const [shifts, setShifts] = useState([]);
+  const monthDate = dayjs().date(1).hour(0).minute(0);
+  const [selectedDate, setSelectedDate] = useState(monthDate);
   const [future, setFuture] = useState(false);
 
   const navigate = useNavigate();
@@ -61,9 +65,85 @@ function VolunteerDash() {
   }, []);
 
   useEffect(() => {
-    const monthDate = dayjs().date(1).hour(0).minute(0);
-    setFuture(displayDate >= monthDate);
-  }, [displayDate]);
+    const fetchShifts = async () => {
+      const body = {
+        volunteer_id: volunteerID,
+        shiftDate: selectedDate.format("YYYY-MM-DD"),
+      };
+      const response = await getVolunteerShiftsForMonth(body);
+
+      // const filteredShifts = response.filter((shift) => {
+      //   if (filter === "all-shifts") {
+      //     return true;
+      //   }
+      //   return shift.shift_type === filter;
+      // });
+      setShifts(response);
+      console.log(response);
+    };
+    fetchShifts();
+  }, [selectedDate, volunteerID]);
+
+  const groupedUpcomingShifts = shifts
+    .filter((shift) => {
+      return (
+        shift.shift_type ===
+          (SHIFT_TYPES.MY_SHIFTS || SHIFT_TYPES.MY_COVERAGE_REQUESTS) &&
+        dayjs(shift.shift_date).isAfter(monthDate)
+      );
+    })
+    .reduce((acc, shift) => {
+      const date = shift.shift_date;
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(shift);
+      return acc;
+    }, {});
+
+  const groupedCoverShifts = shifts
+    .filter((shift) => {
+      return shift.shift_type === SHIFT_TYPES.COVERAGE;
+    })
+    .reduce((acc, shift) => {
+      const date = shift.shift_date;
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(shift);
+      return acc;
+    }, {});
+
+  const groupedShifts = shifts.reduce((acc, shift) => {
+    const date = shift.shift_date;
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(shift);
+    return acc;
+  }, {});
+
+  const handleShiftUpdate = () => {
+    const fetchShifts = async () => {
+      const body = {
+        volunteer_id: volunteerID,
+        shiftDate: selectedDate.format("YYYY-MM-DD"),
+      };
+      const response = await getVolunteerShiftsForMonth(body);
+      // const filteredShifts = response.filter((shift) => {
+      //   if (filter === "all-shifts") {
+      //     return true;
+      //   }
+      //   return shift.shift_type === filter;
+      // });
+      setShifts(response);
+    };
+    fetchShifts();
+  };
+
+  useEffect(() => {
+    setFuture(selectedDate >= monthDate);
+  }, [selectedDate]);
 
   return (
     <VolunteerLayout pageTitle="Dashboard">
@@ -77,8 +157,8 @@ function VolunteerDash() {
             fontSize: "16px",
             color: "var(--primary-blue)",
           }}
-          value={displayDate}
-          onChange={(newValue) => setDisplayDate(newValue)}
+          value={selectedDate}
+          onChange={(newValue) => setSelectedDate(newValue)}
         />
       </LocalizationProvider>
 
@@ -101,13 +181,17 @@ function VolunteerDash() {
             <div className="dash-card-title">Coverage Hours </div>
             <HelpOutlineIcon sx={{ color: "var(--primary-blue)" }} />
           </div>
-          <DashboardCoverage data={data} future={future} />
+          <DashboardCoverage shifts={shifts} future={future} />
         </div>
         <div
           className="dash-col-card dash-grid-item dash-col-card-click"
           // onClick={navigate("/volunteer/schedule")}
         >
-          <DashShifts future={future} />
+          <DashShifts
+            groupedShifts={groupedUpcomingShifts}
+            future={future}
+            handleShiftUpdate={handleShiftUpdate}
+          />
         </div>
 
         <div className="dash-bottom-right dash-grid-item">
@@ -115,7 +199,11 @@ function VolunteerDash() {
             className="dash-col-card dash-col-card-click"
             // onClick={navigate("/volunteer/schedule")}
           >
-            <DashCoverShifts future={future} />
+            <DashCoverShifts
+              future={future}
+              groupedShifts={groupedCoverShifts}
+              handleShiftUpdate={handleShiftUpdate}
+            />
           </div>
           {checkInItem()}
         </div>

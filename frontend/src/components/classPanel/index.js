@@ -184,7 +184,9 @@ function ClassPanel({ classId, classList, setClassId, pageContent }) {
           </div>
           <div className="panel-details-description">
             <div className="panel-titles">Description</div>
-            <div>{panelInfo?.instructions || "No instructions available"}</div>
+            <div className="panel-description">
+              {panelInfo?.instructions || "No instructions available"}
+            </div>
           </div>
           <div className="button-icons">
             <button className="panel-button-icon" onClick={handleToPrev}>

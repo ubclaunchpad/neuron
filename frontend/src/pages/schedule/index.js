@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import "./index.css";
 import { useState, useEffect, useRef, useCallback } from 'react';
 import VolunteerLayout from "../../components/volunteerLayout";
@@ -137,3 +138,18 @@ function VolunteerSchedule() {
 }
 
 export default VolunteerSchedule;
+=======
+import React from 'react'
+import VolunteerLayout from '../../components/volunteerLayout'
+import CalendarView from '../../components/CalendarView'
+
+const VolunteerSchedule = () => {
+  return (
+    <div>
+      <VolunteerLayout  pageTitle="Schedule" pageContent={<CalendarView />} />
+    </div>
+  )
+}
+
+export default VolunteerSchedule
+>>>>>>> 23f7dc5 (added and customized calendar with events)

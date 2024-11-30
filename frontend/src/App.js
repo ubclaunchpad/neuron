@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
+import "notyf/notyf.min.css";
 import { isAuthenticated } from "./api/authService";
 import VolunteerDash from "./pages/volunteerDash";
 import VolunteerSignup from "./pages/VolunteerSignup";

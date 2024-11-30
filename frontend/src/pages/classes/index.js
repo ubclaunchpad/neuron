@@ -5,6 +5,7 @@ import ClassPanel from "../../components/classPanel";
 import { getAllClasses } from '../../api/classesPageService';
 import { getShiftInfo } from "../../api/shiftService";
 import ClassIcon from "../../components/classIcon";
+import LoadingIcon from "../../components/loadingIcon";
 
 function Classes() {
      const [data, setData] = useState(null);
@@ -50,7 +51,7 @@ function Classes() {
                                    <div>
                                         <div style={{display: 'flex', flexWrap: 'wrap',}}>
                                              {!data ? (
-                                                  "Loading Classes..."
+                                                  <LoadingIcon/>
                                              ) : (
                                                   data.map((element, index) => (
                                                        <div key={index}>  

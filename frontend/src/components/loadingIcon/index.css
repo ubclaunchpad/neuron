@@ -1,0 +1,25 @@
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1; 
+  }
+  100% {
+    opacity: 0; 
+  }
+}
+
+.loading-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; 
+  background-color: white; 
+}
+
+.loading-image {
+  width: max-content; 
+  height: auto;
+  animation: fadeInOut 3s ease-in-out infinite; 
+}

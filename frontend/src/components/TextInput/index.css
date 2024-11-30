@@ -1,0 +1,41 @@
+.inputWithLabel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  position: relative;
+}
+
+label {
+    margin-bottom: 0.2vw;
+    font-weight: light;
+    font-size: 1vw;
+}
+
+input {
+    font-family: var(--font-primary);
+    padding: 1vw 0.8vw;
+    border-radius: 8px;
+    border: 1px solid var(--grey);
+    font-size: 1vw;
+}
+
+input.error {
+    border: 1px solid var(--error-red);
+}
+
+input::placeholder {
+    font-size: 1vw !important;
+}
+
+#passwordIcon {
+    position: absolute;
+    right: 1vw;
+    top: 2.1vw;
+    cursor: pointer;
+}
+
+.error-message {
+    color: var(--error-red);
+    font-size: 1vw;
+    margin-top: 0.4vw;
+}

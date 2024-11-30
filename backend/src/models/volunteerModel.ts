@@ -62,6 +62,23 @@ export default class VolunteerModel {
         });
     }
 
+    getUnverifiedVolunteers(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            // active is 0 or null
+            const query =
+                "SELECT * FROM volunteers WHERE active IS NULL OR active = 0";
+            connectionPool.query(query, [], (error: any, results: any) => {
+                if (error) {
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
+                }
+                resolve(results);
+            });
+        });
+    }
+
     updateVolunteer(volunteer_id: string, volunteerData: any): Promise<any> {
         return new Promise((resolve, reject) => {
             // Construct the SET clause dynamically
@@ -143,7 +160,6 @@ export default class VolunteerModel {
                         message: `No shift found for the given volunteer and schedule.`,
                     });
                 }
-    
                 const duration = results[0].duration;
     
                 // Get the volunteer's current hours

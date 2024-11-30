@@ -1,0 +1,18 @@
+.custom-button{
+    width: 100%;
+    padding: 0.9vw;
+    border-radius: 8px;
+    border: none;
+    background-color: var(--button-blue);
+    font-family: var(--font-primary);
+    box-shadow: 0px 4px 16px #0F111205;
+    cursor: pointer;
+    margin-top: 0.5vw;
+    color: white;
+    font-size: 1vw;
+}
+
+.custom-button:disabled {
+    background-color: var(--grey);
+    cursor: not-allowed;
+}

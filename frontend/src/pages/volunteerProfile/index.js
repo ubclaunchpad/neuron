@@ -45,7 +45,7 @@ function VolunteerProfile() {
                                 <VolunteerDetailsCard volunteer={volunteer} />
                             </div>    
                             <div className="availability-card">
-                                <AvailabilityGrid availability={availability} setAvailability={setAvailability} />
+                                <AvailabilityGrid volunteerId={volunteer.volunteer_id} availability={availability} setAvailability={setAvailability} />
                             </div>
                         </div>
                         <div className="column-2">

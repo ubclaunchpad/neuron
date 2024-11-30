@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './index.css';
-import { fetchVolunteerAvailability, updateVolunteerAvailability } from '../../../api/volunteerService';
+import { fetchVolunteerAvailability, setVolunteerAvailability, updateVolunteerAvailability } from '../../../api/volunteerService';
 
 import edit_icon from "../../../assets/edit-icon.png"
 import check_icon from "../../../assets/check-icon.png";
@@ -17,8 +17,16 @@ const AvailabilityGrid = ({ volunteerId }) => {
     const fetchAvailability = async () => {
       try {
         const availability = await fetchVolunteerAvailability(volunteerId);
-        setUnsavedTimes(availability);
-        setSavedTimes(availability);
+
+        // map slots to slot keys
+        const slotKeys = availability.map((slot) => {
+          const hourIndex = (Number(String(slot.start_time).substring(0, 2)) - 9) * 2;
+          const minuteIndex = (Number(String(slot.start_time).substring(3, 5))) / 30;
+          return `${slot.day_of_week}-${hourIndex + minuteIndex}`
+        })
+
+        setUnsavedTimes(slotKeys);
+        setSavedTimes(slotKeys);
       } catch (error) {
         console.error('Failed to fetch availability:', error);
       }
@@ -41,18 +49,35 @@ const AvailabilityGrid = ({ volunteerId }) => {
   const handleCheck = async () => {
     try {
       // Transform unsavedTimes into the expected format
+      console.log(unsavedTimes)
       const availabilities = unsavedTimes.map((slotKey) => {
         const [dayIndex, timeIndex] = slotKey.split('-').map(Number);
-        const day = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][dayIndex];
+        const day = dayIndex;
         const startHour = Math.floor(timeIndex / 2) + 9; // Assuming timeLabels start at 9 AM
         const startMinute = (timeIndex % 2) * 30;
         const start_time = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
-        const end_time = `${String(startHour).padStart(2, '0')}:${String(startMinute + 30).padStart(2, '0')}`;
+
+        let endHour;
+        let endMinute;
+        if (startMinute === 30) {
+          endHour = startHour + 1;
+          endMinute = 0;
+        } else {
+          endHour = startHour;
+          endMinute = startMinute + 30;
+        }
+        const end_time = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
 
         return { day, start_time, end_time };
       });
       console.log('Submitting availability:', availabilities); // Debug log statement
-      await updateVolunteerAvailability(volunteerId, availabilities);
+
+      if (savedTimes.length === 0) {
+        console.log("ID", volunteerId)
+        await setVolunteerAvailability(volunteerId, availabilities);
+      } else {
+        await updateVolunteerAvailability(volunteerId, availabilities);
+      }
       setSavedTimes(unsavedTimes);
       setIsEditing(false);
     } catch (error) {
@@ -84,8 +109,7 @@ const AvailabilityGrid = ({ volunteerId }) => {
           )}
         </div>
         <div 
-          className="availability-grid" 
-          style={isEditing ? { 'cursor':'pointer' } : {}}
+          className="availability-grid"
         >
           {/* Row for day labels */}
           <div className="empty-slot"></div> {/* Empty top-left corner */}
@@ -123,12 +147,12 @@ const AvailabilityGrid = ({ volunteerId }) => {
                         : "unavailable"
                     }`}
                     onClick={() => handleSlotClick(dayIndex, timeIndex)}
-                    style={
-                      !unsavedTimes.includes(`${dayIndex}-${timeIndex}`) && 
+                    style={{ 
+                      "background": !unsavedTimes.includes(`${dayIndex}-${timeIndex}`) && 
                       !savedTimes.includes(`${dayIndex}-${timeIndex}`) &&
-                      dayIndex % 2 === 1 ? 
-                        { "background": "#F7F7F7"
-                         } : {}}
+                      dayIndex % 2 === 1 ? "#F7F7F7" : "",
+                      "cursor": isEditing ? "pointer" : ""
+                    }}
                   ></div>
                 ))
             )}

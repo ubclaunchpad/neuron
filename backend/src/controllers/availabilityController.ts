@@ -41,9 +41,9 @@ async function getAvailabilityByVolunteerId(req: Request, res: Response) {
 function isValidAvailabilities(data: any): data is Availability[] {
     return Array.isArray(data) && data.every((availability) => {
         return (
-            // Validate its day is a number between 1 and 7
+            // Validate its day is a number between 0 and 6
             typeof availability.day === "number" &&
-            (availability.day >= 1 && availability.day <= 7) &&
+            (availability.day >= 0 && availability.day <= 6) &&
 
             // Validate its start_time is a string between 00:00 and 23:59
             typeof availability.start_time === "string" &&

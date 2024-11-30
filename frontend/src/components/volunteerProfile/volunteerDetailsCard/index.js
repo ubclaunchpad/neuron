@@ -215,7 +215,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                                 className="pronouns-button"
                                                 style={{
                                                     'color': mutableData.pronouns ? '':'#808080',
-                                                    'border-color': isComponentVisible ? '#4385AC':''
+                                                    'borderColor': isComponentVisible ? '#4385AC':''
                                                 }}
                                                 onClick={() => {
                                                     setIsComponentVisible(!isComponentVisible)
@@ -230,6 +230,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                                     {pronouns.map((option, index) => (
                                                         <div
                                                             className="pronouns-item"
+                                                            key={index}
                                                             onClick={() => handlePronounsClick(option)}
                                                             style={index === 0 ? {'color': '#808080'} : {}}
                                                         >

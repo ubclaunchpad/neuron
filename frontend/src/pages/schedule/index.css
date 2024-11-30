@@ -1,0 +1,45 @@
+/* Header Styling */
+.date-header {
+    font-weight: 600;
+    font-family: var(--font-secondary);
+    font-size: var(--large-text);
+}
+
+/* Date Styling */
+.selected-date {
+    color: var(--primary-blue);
+}
+
+.non-selected-date {
+    color: var(--dark);
+}
+
+/* Container Styling */
+.schedule-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto; /* Allow vertical scroll */
+    max-height: 0;
+    padding-bottom: 70vh;
+}
+
+.shifts-container {
+    padding-top: 2rem;
+    width: 70%;
+}
+
+/* List Styling */
+.shift-list {
+    display: flex; 
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Border Styling */
+hr {
+    margin: 0;                
+    border: none;            
+    height: 1px;            
+    background-color: var(--grey); 
+}

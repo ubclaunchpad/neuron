@@ -24,6 +24,7 @@ body {
 .content-container {
     flex-grow: 1;
     background-color: var(--white);
+    padding: 0 2vw;
 }
 
 .content-title {
@@ -33,7 +34,6 @@ body {
     font-family: Montserrat;
     font-style: normal;
     font-weight: 700;
-    padding-left: 2vw;
     font-size: var(--title-text);
 }
 
@@ -86,4 +86,12 @@ body {
 .navbar.collapsed {
     padding-top: 15px;
     width: 70px; /* Adjust width as needed */
+}
+
+.nav-profile-card-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
 }

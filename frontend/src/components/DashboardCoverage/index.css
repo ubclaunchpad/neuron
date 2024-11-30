@@ -1,0 +1,64 @@
+.dash-hours-to-complete {
+    font-size: 40px;
+    font-weight: 500;
+    color: #952018;
+    margin: 0px;
+}
+
+.dash-progress-bar {
+    width: 100%;
+    height: 28px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: row;
+    border: var(--primary-blue) 2px solid;
+    margin-top: 1rem;
+}
+
+.dash-progress-completed, .dash-progress-upcoming {
+    height: 100%;
+}
+
+.dash-progress-completed {
+    background-color: var(--primary-blue);
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+}
+
+.dash-progress-upcoming {
+    background-color: #808080;
+}
+
+.dash-progress-legend {
+    display: flex;
+    flex-direction: row;
+    gap: 1.2rem;
+}
+
+.dash-progress-indicator {
+    display: flex;
+    flex-direction: row;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.dash-indicator-blue {
+    width: 14px;
+    height: 14px;
+    background-color: var(--primary-blue);
+    border-radius: 4px;
+}
+
+.dash-indicator-grey {
+    width: 14px;
+    height: 14px;
+    background-color: #808080;
+    border-radius: 4px;
+}
+
+.dash-indicator-white {
+    width: 12px;
+    height: 12px;
+    border: var(--primary-blue) 2px solid;
+    border-radius: 4px;
+}

@@ -9,13 +9,19 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForwardIos";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import DashShifts from "../../components/DashShifts";
 import DashCoverShifts from "../../components/DashCoverShifts";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
+import DashboardCoverage from "../../components/DashboardCoverage";
 
 function VolunteerDash() {
   const [loading, setLoading] = useState(true);
   const [checkIn, setCheckIn] = useState(false);
   const [data, setData] = useState(null);
-  const progressCompleted = useRef(null);
-  const progressUpcoming = useRef(null);
+  const [displayDate, setDisplayDate] = useState(dayjs());
+  const [future, setFuture] = useState(false);
+
   const navigate = useNavigate();
 
   const checkInItem = () => {
@@ -52,14 +58,30 @@ function VolunteerDash() {
       .catch((error) => {
         console.error(error);
       });
-    if (progressCompleted.current && progressUpcoming.current) {
-      progressCompleted.current.style.width = "35%";
-      progressUpcoming.current.style.width = "20%";
-    }
   }, []);
+
+  useEffect(() => {
+    const monthDate = dayjs().date(1).hour(0).minute(0);
+    setFuture(displayDate >= monthDate);
+  }, [displayDate]);
 
   return (
     <VolunteerLayout pageTitle="Dashboard">
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <DatePicker
+          views={["month", "year"]}
+          sx={{
+            position: "absolute",
+            right: "4rem",
+            top: "1rem",
+            fontSize: "16px",
+            color: "var(--primary-blue)",
+          }}
+          value={displayDate}
+          onChange={(newValue) => setDisplayDate(newValue)}
+        />
+      </LocalizationProvider>
+
       <div className="dash-container">
         <div className="dash-col-card dash-grid-item">
           <div className="dash-card-title">Volunteer Hours </div>
@@ -79,39 +101,13 @@ function VolunteerDash() {
             <div className="dash-card-title">Coverage Hours </div>
             <HelpOutlineIcon sx={{ color: "var(--primary-blue)" }} />
           </div>
-          <div>
-            <span className="dash-hours-to-complete">6</span> to be completed
-          </div>
-          <div className="dash-progress-bar">
-            <div
-              ref={progressCompleted}
-              className="dash-progress-completed"
-            ></div>
-            <div
-              ref={progressUpcoming}
-              className="dash-progress-upcoming"
-            ></div>
-          </div>
-          <div className="dash-progress-legend">
-            <div className="dash-progress-indicator">
-              <div className="dash-indicator-blue"></div>
-              <span>Completed</span>
-            </div>
-            <div className="dash-progress-indicator">
-              <div className="dash-indicator-grey"></div>
-              <span>Upcoming</span>
-            </div>
-            <div className="dash-progress-indicator">
-              <div className="dash-indicator-white"></div>
-              <span>Requested</span>
-            </div>
-          </div>
+          <DashboardCoverage data={data} future={future} />
         </div>
         <div
           className="dash-col-card dash-grid-item dash-col-card-click"
           // onClick={navigate("/volunteer/schedule")}
         >
-          <DashShifts current={true} />
+          <DashShifts future={future} />
         </div>
 
         <div className="dash-bottom-right dash-grid-item">
@@ -119,7 +115,7 @@ function VolunteerDash() {
             className="dash-col-card dash-col-card-click"
             // onClick={navigate("/volunteer/schedule")}
           >
-            <DashCoverShifts current={true} />
+            <DashCoverShifts future={future} />
           </div>
           {checkInItem()}
         </div>

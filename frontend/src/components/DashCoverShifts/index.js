@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForwardIos";
 
-export default function DashCoverShifts({ current }) {
+export default function DashCoverShifts({ future }) {
   return (
     <div className="dash-card-title">
-      {current ? "Shifts In Need of Coverage" : "Shifts Covered"}{" "}
+      {future ? "Shifts In Need of Coverage" : "Shifts Covered"}{" "}
       <ArrowForwardIcon sx={{ fontSize: "16px", color: "#808080" }} />
     </div>
   );

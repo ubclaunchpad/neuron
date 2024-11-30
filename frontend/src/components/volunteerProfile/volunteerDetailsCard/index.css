@@ -141,6 +141,7 @@
 .text-input {
     padding: 6px;
     font-size: 13px;
+    border-radius: 4px;
 }
 
 .text-input:focus {
@@ -177,10 +178,6 @@ input[type=number] {
     font-size: 13px;
 }
 
-.pronouns-button:focus {
-    border-color: #4385AC;
-}
-
 .pronouns-menu {
     position: absolute;
     background-color: white;
@@ -198,7 +195,6 @@ input[type=number] {
     border-radius: 5px;
     padding: 6px 10px;
     cursor: pointer;
-    transition: all 0.3s ease;
 }
   
 .pronouns-item:hover {

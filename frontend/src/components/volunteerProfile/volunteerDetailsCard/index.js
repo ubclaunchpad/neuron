@@ -8,6 +8,7 @@ import empty_profile from "../../../assets/empty-profile.png";
 import camera_icon from "../../../assets/camera.png";
 
 import { updateVolunteerData, updateProfilePicture, insertProfilePicture } from "../../../api/volunteerService";
+import useComponentVisible from "../../../hooks/useComponentVisible";
 
 function VolunteerDetailsCard({ volunteer }) {
 
@@ -27,7 +28,7 @@ function VolunteerDetailsCard({ volunteer }) {
     const [tempImage, setTempImage] = React.useState(null);
     const [prevTempImage, setPrevTempImage] = React.useState(null);
 
-    const [isPronounsMenuOpen, setIsPronounsMenuOpen] = React.useState(false);
+    const { ref, isComponentVisible, setIsComponentVisible } = useComponentVisible(false);
     const pronouns = ["None", "He/Him", "She/Her", "They/Them"];
 
     const handleImageUpload = (event) => {
@@ -67,7 +68,6 @@ function VolunteerDetailsCard({ volunteer }) {
     async function handleCheck(e) {
         e.preventDefault();
         setIsEditing(false);
-        setIsPronounsMenuOpen(false);
 
         // update volunteer
         try {
@@ -123,7 +123,6 @@ function VolunteerDetailsCard({ volunteer }) {
         setIsEditing(false);
         setMutableData(prevMutableData);
         setTempImage(prevTempImage);
-        setIsPronounsMenuOpen(false);
     }
 
     function handleInputChange(e) {
@@ -139,7 +138,7 @@ function VolunteerDetailsCard({ volunteer }) {
             ...mutableData,
             pronouns: option === "None" ? null : option
         });
-        setIsPronounsMenuOpen(false);
+        setIsComponentVisible(false);
     }
 
     return (
@@ -207,34 +206,39 @@ function VolunteerDetailsCard({ volunteer }) {
                                         hidden={isEditing}>
                                             {mutableData.pronouns ? mutableData.pronouns : "not yet set"}
                                     </td>
-                                    {isEditing && (<td className="pronouns-editor">
-                                        <button 
-                                            className="pronouns-button" 
-                                            placeholder="Enter your pronouns" 
-                                            name="pronouns"
-                                            value={mutableData.pronouns} 
-                                            style={mutableData.pronouns ? {} : {
-                                                'color': '#808080'
-                                            }}
-                                            onClick={() => setIsPronounsMenuOpen(!isPronounsMenuOpen)}
+                                    {isEditing && (
+                                        <td 
+                                            className="pronouns-editor" 
+                                            ref={ref}
                                         >
-                                            {mutableData.pronouns ? mutableData.pronouns : "None"}
-                                        </button>
-                                        {isPronounsMenuOpen && (
-                                            <div className="pronouns-menu"
->
-                                                {pronouns.map((option, index) => (
-                                                    <div
-                                                        className="pronouns-item"
-                                                        onClick={() => handlePronounsClick(option)}
-                                                        style={index === 0 ? {'color': '#808080'} : {}}
-                                                    >
-                                                        {option}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </td>)}
+                                            <button 
+                                                className="pronouns-button"
+                                                style={{
+                                                    'color': mutableData.pronouns ? '':'#808080',
+                                                    'border-color': isComponentVisible ? '#4385AC':''
+                                                }}
+                                                onClick={() => {
+                                                    setIsComponentVisible(!isComponentVisible)
+                                                }}
+                                            >
+                                                {mutableData.pronouns ? mutableData.pronouns : "None"}
+                                            </button>
+                                            {isComponentVisible && (
+                                                <div 
+                                                    className="pronouns-menu"
+                                                >
+                                                    {pronouns.map((option, index) => (
+                                                        <div
+                                                            className="pronouns-item"
+                                                            onClick={() => handlePronounsClick(option)}
+                                                            style={index === 0 ? {'color': '#808080'} : {}}
+                                                        >
+                                                            {option}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </td>)}
                                 </tr>
                                 <tr className="view volunteer-phone">
                                     <td>Phone</td>

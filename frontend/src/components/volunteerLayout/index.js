@@ -27,6 +27,15 @@ function VolunteerLayout({ pageTitle, children }) {
     handleResize();
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+  // Automatically collapse/expand sidebar based on screen width
+  useEffect(() => {
+    const handleResize = () => {
+      setCollapsed(window.innerWidth <= 800);
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <div className="main-container">

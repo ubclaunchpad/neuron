@@ -76,4 +76,45 @@ export default class ShiftModel {
               });
           });
      }
+
+     // get all the shift details viewable to a volunteer for a specified month
+     public getShiftsByVolunteerIdAndMonth(volunteer_id: string, month: number, year: number): Promise<any> {
+          return new Promise((resolve, reject) => {
+              const query = `
+                  CALL GetShiftsByVolunteerIdAndMonth(?, ?, ?);
+              `;
+              
+              const values = [volunteer_id, month, year];
+              connection.query(query, values, (error: any, results: any) => {
+                  if (error) {
+                      return reject({
+                          status: 500,
+                          message: `An error occurred while executing the query: ${error}`
+                      });
+                  }
+                  resolve(results[0]); // The result set from the stored procedure will be in the first element of the results array
+              });
+          });
+      }
+
+      // create a new entry in the pending_shift_coverage table
+      public requestToCoverShift(request_id: number, volunteer_id: string): Promise<any> {
+          return new Promise((resolve, reject) => {
+              const query = `
+                  INSERT INTO pending_shift_coverage (request_id, pending_volunteer)
+                  VALUES (?, ?)
+              `;
+              const values = [request_id, volunteer_id];
+      
+              connection.query(query, values, (error: any, results: any) => {
+                  if (error) {
+                      return reject({
+                          status: 500,
+                          message: `An error occurred while executing the query: ${error}`
+                      });
+                  }
+                  resolve(results);
+              });
+          });
+      }
 }

@@ -8,4 +8,11 @@ const getAllClasses = () => api.get('/classes')
         console.error(error);
     });
 
-export { getAllClasses };
+const getClassById = (class_id) => api.get('/classes/' + class_id)
+    .then((response) => {
+        return response.data;
+    }).catch((error) => {
+        console.error(error);
+    });
+
+export { getAllClasses, getClassById };

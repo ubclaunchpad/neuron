@@ -4,6 +4,7 @@ import VolunteerLayout from "../../components/volunteerLayout";
 import ClassPanel from "../../components/classPanel";
 import { getAllClasses } from '../../api/classesPageService';
 import { getShiftInfo } from "../../api/shiftService";
+import ClassIcon from "../../components/classIcon";
 
 function Classes() {
      const [data, setData] = useState(null);
@@ -53,15 +54,11 @@ function Classes() {
                                              ) : (
                                                   data.map((element, index) => (
                                                        <div key={index}>  
-                                                            <button 
-                                                                 onClick={() => {
-                                                                      setItemIndex(index);
-                                                                      setRerenderKey(rerenderKey => rerenderKey + 1);
-                                                                 }} 
-                                                                 className="class-button"
-                                                            >
-                                                                 {element.class_name}
-                                                            </button>
+                                                            <ClassIcon 
+                                                                 imageUrl={element.imageUrl}
+                                                                 title={element.class_name}
+                                                                 time={element.end_time}
+                                                            />
                                                             <br />
                                                        </div>
                                                   ))

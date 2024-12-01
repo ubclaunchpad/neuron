@@ -37,7 +37,16 @@ create table class (
     zoom_link VARCHAR(3000) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
+    category VARCHAR(64),
+    subcategory VARCHAR(64),
     FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id)
+);
+
+create table class_image (
+    image_id INT PRIMARY KEY AUTO_INCREMENT,
+    fk_class_id INT,
+    image MEDIUMBLOB,
+    FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
 );
 
 create table volunteers (
@@ -110,6 +119,7 @@ CREATE TABLE shifts (
     fk_schedule_id INT,
     shift_date DATE NOT NULL,
     duration INT NOT NULL,
+    checked_in BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (fk_volunteer_id, fk_schedule_id, shift_date),
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
     ON DELETE CASCADE,
@@ -128,4 +138,15 @@ CREATE TABLE shift_coverage_request (
         REFERENCES shifts(fk_volunteer_id, fk_schedule_id, shift_date) ON DELETE CASCADE,
     FOREIGN KEY (covered_by)
         REFERENCES volunteers(volunteer_id) ON DELETE SET NULL
+);
+
+CREATE TABLE pending_shift_coverage (
+    request_id INT NOT NULL,
+    pending_volunteer VARCHAR(255) NOT NULL,
+    
+    PRIMARY KEY (request_id, pending_volunteer),
+    FOREIGN KEY (request_id)
+        REFERENCES shift_coverage_request(request_id) ON DELETE CASCADE,
+    FOREIGN KEY (pending_volunteer)
+        REFERENCES volunteers(volunteer_id) ON DELETE CASCADE
 );

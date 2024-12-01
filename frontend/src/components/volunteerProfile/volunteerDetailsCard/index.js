@@ -8,6 +8,7 @@ import empty_profile from "../../../assets/empty-profile.png";
 import camera_icon from "../../../assets/camera.png";
 
 import { updateVolunteerData, updateProfilePicture, insertProfilePicture } from "../../../api/volunteerService";
+import { CgSelect } from "react-icons/cg";
 import useComponentVisible from "../../../hooks/useComponentVisible";
 
 function VolunteerDetailsCard({ volunteer }) {
@@ -222,6 +223,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                                 }}
                                             >
                                                 {mutableData.pronouns ? mutableData.pronouns : "None"}
+                                                <CgSelect className="select-icon"/>
                                             </button>
                                             {isComponentVisible && (
                                                 <div 

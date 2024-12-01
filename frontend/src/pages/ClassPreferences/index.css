@@ -1,0 +1,74 @@
+@import '../../styles.css';  /*Imports custom fonts*/
+
+.header-text {
+     font-size: 12px;
+     font-family: 'Roboto';
+     font-weight: 400;
+     color: "#0f1111";
+     display: inline-block;
+     margin-right: 25px;
+}
+
+.filter-text {
+     border: 1px solid gray;
+     padding: 3px;
+     border-radius: 5px;
+}
+
+.page-content {
+     padding: 30px;
+}
+
+.my-preferences {
+     width: 60%;
+     margin: 20px auto;
+}
+
+.my-preferences-text {
+     font-family: 'Roboto';
+     font-weight: 500;
+     font-size: 13px;
+     margin-bottom: 20px;
+     padding-left: 20px;
+}
+
+.preference-box {
+     width: 100%;
+     border: 1px solid #d9d9d9;
+     display: flex;
+     height: auto;
+     align-items: center;
+     border-radius: 4px;
+     padding: 0px;
+     background: white;
+}
+
+.add-rank:hover {
+     filter: brightness(0.6);
+     cursor: pointer;
+}
+
+.rank-number {
+     height: 100%;
+     width: 15%;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     font-family: 'Montserrat';
+     color: #0f1111;
+     font-weight: 500;
+     font-size: 28px;
+     border-right: 1px solid #d9d9d9;
+}
+
+.preference-box-content {
+     margin-left: 20px;
+     min-height: 80px;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     font-family: 'Montserrat';
+     color: #808080;
+     font-size: 20px;
+     font-weight: 500;
+}

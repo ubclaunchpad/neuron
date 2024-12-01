@@ -9,6 +9,7 @@ import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import Classes from "./pages/classes";
 import VolunteerProfile from "./pages/volunteerProfile";
 import AdminVerify from "./pages/AdminVerify";
+import ClassPreferences from "./pages/ClassPreferences"
 
 function App() {
   const [isVolunteer, setIsVolunteer] = useState(false);
@@ -52,12 +53,11 @@ function App() {
             <>
               <Route path="/" element={<VolunteerDash />} />
               <Route path="/volunteer/classes" element={<Classes />} />
-              <Route
-                path="/volunteer/my-profile"
-                element={<VolunteerProfile />}
-              />
+              <Route path="/volunteer/my-profile" element={<VolunteerProfile />} />
               <Route path="/volunteer/schedule" element={<VolunteerDash />} />
-              <Route path="/volunteer/classes" element={<Classes />} />{" "}
+              <Route path="/volunteer/classes" element={<Classes />} /> {" "}
+              <Route path="/volunteer/class-preferences" element={<ClassPreferences/>} />{" "}
+
             </>
           )}
           <Route path="/admin/verify-volunteers" element={<AdminVerify />} />

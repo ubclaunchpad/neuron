@@ -1,0 +1,120 @@
+/* Availability Grid Container */
+.availability-grid-container {
+    position: relative;
+    max-width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    border: 1px solid #D9D9D9;
+    box-shadow: 0px 4px 16px 0px #0F11110D;
+}
+
+.availability-grid-content {
+  padding: 32px;
+}
+
+/* Header Section */
+.availability-header {
+  display: flex;
+  justify-content: space-between; /* Align title and buttons horizontally */
+  align-items: center; /* Center vertically */
+  margin-bottom: 18px;
+}
+
+/* Title */
+.availability-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.edit-icon {
+  position: absolute;
+  top: 32px;
+  right: 32px;
+  cursor: pointer;
+  height: 16px;
+  color: #808080;
+}
+
+.edit-options {
+  position: absolute;
+  top: 32px;
+  right: 32px;
+  display: flex;
+  gap: 12px;
+  height: 16px;
+}
+
+.check-icon {
+  flex: 1;
+}
+
+.cancel-icon {
+  flex: 1;
+}
+
+.icon:hover {
+  cursor: pointer;
+}
+
+/* Grid Structure */
+.availability-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr); /* First column for time labels, then 7 equally spaced columns */
+  grid-template-rows: 15px repeat(20, 16px); /* First row for day labels, rest for time slots with equal height */
+}
+
+/* Time Labels */
+.time-label {
+  display: flex;
+  /* align-items: center; */
+  /* justify-content: center; */
+  font-size: 12px; /* Adjust font size to fit smaller cells */
+  font-weight: bold;
+  text-align: right; /* Align text to the right for time labels */
+  padding-right: 5px; /* Space between time label and slots */
+}
+
+/* Day Labels */
+.day-label {
+  text-align: center;
+  font-weight: bold;
+  background-color: white; /* Light gray background for headers */
+  font-size: 12px; /* Adjust font size */
+  color: #333; /* Text color for day labels */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e7e7e7; /* White border for day labels */
+}
+
+/* Slot Cells */
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e7e7e7; /* White border for availability slots */
+  transition: background-color 0.3s ease; /* Smooth color change */
+}
+
+/* Saved and unsaved slot styles */
+.available.saved {
+  background-color: grey; /* Grey for saved slots */
+  color: white;
+}
+
+.available.unsaved {
+  background-color: #4caf50; /* Green for unsaved slots */
+  color: white;
+}
+
+.unavailable {
+  background-color: white; /* Grey for unselected slots */
+}
+
+/* Empty slot for top-left corner */
+.empty-slot {
+  grid-row: 1; /* First row */
+  grid-column: 1; /* First column */
+  background-color: #fff; /* Match grid background */
+}

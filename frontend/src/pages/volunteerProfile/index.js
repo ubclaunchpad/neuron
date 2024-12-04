@@ -5,8 +5,6 @@ import VolunteerLayout from "../../components/volunteerLayout";
 import { fetchVolunteerData, getProfilePicture } from "../../api/volunteerService";
 import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
 import ChangePasswordCard from "../../components/volunteerProfile/changePasswordCard";
-// import ClassPreferencesCard from "../../components/volunteerProfile/classPreferencesCard";
-// import UserProfileForm from "../../components/userProfileForm/UserProfileForm";
 import AvailabilityGrid from "../../components/volunteerProfile/availabilityGrid";
 
 const pageTitle = "My Profile";
@@ -52,13 +50,9 @@ function VolunteerProfile() {
                             <div className="password-card">
                                 <ChangePasswordCard volunteer={volunteer} />
                             </div>
-                            {/* <div className="card">
-                                <ClassPreferencesCard/>
-                            </div> */}
                         </div>
                     </div>
                 }/>
-                {/* <UserProfileForm volunteer_id="1" /> */}
             </div>
         ) : <></>
       );

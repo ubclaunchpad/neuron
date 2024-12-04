@@ -31,8 +31,7 @@ function VolunteerProfile() {
     }, []);
 
     return (
-        <div className="volunteerProfile">
-            <VolunteerLayout 
+        <VolunteerLayout 
             pageTitle={pageTitle}
             pageContent={
                 volunteer ? <div className="content">
@@ -50,9 +49,12 @@ function VolunteerProfile() {
                         </div>
                     </div>
                 </div> : <div>Loading...</div>
-            }/>
-        </div>
-      );
+            }
+            pageStyle={{
+                overflowY: 'auto'
+            }}
+        />
+    );
 };
 
 export default VolunteerProfile;

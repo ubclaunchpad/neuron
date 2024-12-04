@@ -16,7 +16,7 @@ function VolunteerProfile() {
     React.useEffect(() => {
         async function fetch() {
             // hardcoded id until auth is finished
-            const volunteer_id = "faff8f98-bc68-4fab-a4ca-151b09fc40c1";
+            const volunteer_id = "1230545b-0505-4909-826c-59359503dae6";
             try {
                 const volunteerData = await fetchVolunteerData(volunteer_id);
                 const profilePic = await getProfilePicture(volunteer_id);

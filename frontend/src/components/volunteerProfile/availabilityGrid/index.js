@@ -22,7 +22,7 @@ const AvailabilityGrid = ({ volunteerId }) => {
         const slotKeys = availability.map((slot) => {
           const hourIndex = (Number(String(slot.start_time).substring(0, 2)) - 9) * 2;
           const minuteIndex = (Number(String(slot.start_time).substring(3, 5))) / 30;
-          return `${slot.day_of_week}-${hourIndex + minuteIndex}`
+          return `${Number(slot.day_of_week) - 1}-${hourIndex + minuteIndex}`
         })
 
         setUnsavedTimes(slotKeys);
@@ -52,7 +52,7 @@ const AvailabilityGrid = ({ volunteerId }) => {
       console.log(unsavedTimes)
       const availabilities = unsavedTimes.map((slotKey) => {
         const [dayIndex, timeIndex] = slotKey.split('-').map(Number);
-        const day = dayIndex;
+        const day = dayIndex + 1;
         const startHour = Math.floor(timeIndex / 2) + 9; // Assuming timeLabels start at 9 AM
         const startMinute = (timeIndex % 2) * 30;
         const start_time = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;

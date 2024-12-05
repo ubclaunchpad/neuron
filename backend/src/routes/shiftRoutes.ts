@@ -2,7 +2,9 @@ import { Router, Request, Response } from 'express';
 import { 
     getShiftInfo,
     getShiftsByVolunteerId, 
-    getShiftsByDate 
+    getShiftsByDate,
+    getShiftsByVolunteerIdAndMonth,
+    requestToCoverShift
 } from '../controllers/shiftController.js';
 
 const router = Router();
@@ -20,6 +22,21 @@ router.get('/:volunteer_id', (req: Request, res: Response) => {
 // get shifts on a given date
 router.post('/on-date', (req: Request, res: Response) => { 
     getShiftsByDate(req, res)
+});
+
+// Retrieves all shifts viewable to a specific volunteer in a given month and year.
+// -- The shifts include:
+// -- 1. 'my-shifts' - shifts assigned to the volunteer.
+// -- 2. 'coverage' - shifts available for coverage by other volunteers.
+// -- 3. 'my-coverage-requests' - coverage requests made by the volunteer.
+// -- Returns shift details such as date, time, class, duration, and coverage status.
+router.post('/volunteer-month', (req: Request, res: Response) => {
+    getShiftsByVolunteerIdAndMonth(req, res);
+});
+
+// volunteer requesting to cover someone else’s open shift
+router.post('/request-to-cover-shift', (req: Request, res: Response) => {
+    requestToCoverShift(req, res);
 });
 
 export default router;

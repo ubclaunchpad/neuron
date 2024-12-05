@@ -1,0 +1,55 @@
+.forgotPassForm {
+    width: 35vw;
+    font-family: var(--font-primary);
+}
+
+.forgot-helper {
+    text-align: center;
+    font-family: var(--font-primary);
+    font-weight: 300;
+    font-size: 1vw;
+    margin-top: 1.5vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.forgot-helper a {
+    color: black;
+    text-decoration: none;
+}
+
+.helperTextAfterForgotSubmit {
+    width: 40vw;
+    font-size: 1vw;
+}
+
+.timer, .resendButton {
+    width: 35vw;
+    padding: 0.1vw;
+    border-radius: 8px;
+    border: none;
+    background-color: var(--grey);
+    font-family: var(--font-primary);
+    box-shadow: 0px 4px 16px #0F111205;
+    cursor: not-allowed;
+    margin-top: 1.3vw;
+    color: black;
+    font-size: 1vw;
+    text-align: center;
+    font-weight: bold;
+}
+
+.resendButton {
+    background-color: var(--button-blue);
+    cursor: pointer;
+    width: 100%;
+    padding: 0.9vw;
+    color: white;
+    font-weight: 400;
+}
+
+#go-back-icon {
+    margin-right: 0.3vw;
+    transform: rotate(90deg);
+}

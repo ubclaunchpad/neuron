@@ -1,0 +1,27 @@
+.leftSideBar{
+    height: 100vh;
+    width: 40vw;
+    background-color: var(--light-grey);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-right: 2px solid var(--grey);
+}
+
+.logo {
+    height: 13vw;
+    width: 13vw;
+    background: url('../../assets/logo-icon.png') no-repeat center center;
+    background-size: cover;
+    margin-top: -5vh;
+    margin-bottom: 3vh;
+}
+
+.text {
+    font-family: var(--font-secondary);
+    text-align: center;
+    color: #4385AC;
+    font-size: 2vw;
+    font-weight: normal;
+}

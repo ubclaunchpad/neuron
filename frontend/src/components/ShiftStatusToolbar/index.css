@@ -1,0 +1,83 @@
+@import '../../styles.css';
+
+/* Container and Layout Styles */
+.shift-status-container {
+    display: flex;
+    font-size: var(--small-text);
+    align-items: center;
+    padding: 0;
+}
+
+/* Button Group Layout */
+.button-group {
+    display: flex;
+    gap: 1rem;
+    padding: .75rem 2rem;
+}
+
+/* Button Styles */
+.button-group button {
+    padding: 1rem .5rem;
+    border-radius: 3px;
+    border: 1px solid var(--grey);
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: white;
+}
+
+.button-group button:hover {
+    background: var(--light-grey);
+    cursor: pointer;
+}
+
+.button-group button.selected {
+    border: 1px solid var(--grey);
+    background: rgba(217, 217, 217, 0.30);
+}
+
+/* Button Icon Styles */
+.button-icon {
+    width: 7px;
+    height: 7px;
+    border: 4px solid;
+    border-radius: 50%;
+    background-color: transparent;
+}
+
+.all-shifts-button .button-icon {
+    border-color: var(--dark-grey);
+}
+
+.all-shifts-button.selected .button-icon {
+    border-color: var(--dark-grey);
+    background-color: var(--dark-grey);
+}
+  
+.my-shifts-button .button-icon {
+    border-color: var(--green);
+}
+
+.my-shifts-button.selected .button-icon {
+    border-color: var(--green);
+    background-color: var(--green);
+}
+
+.requested-coverage-button .button-icon {
+    border-color: var(--yellow);
+}
+
+.requested-coverage-button.selected .button-icon {
+    border-color: var(--yellow);
+    background-color: var(--yellow);
+}
+
+.needs-coverage-button .button-icon {
+    border-color: var(--red);
+}
+
+.needs-coverage-button.selected .button-icon {
+    border-color: var(--red);
+    background-color: var(--red);
+}

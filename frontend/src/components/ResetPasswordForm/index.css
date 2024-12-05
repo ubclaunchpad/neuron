@@ -1,0 +1,8 @@
+.resetPassForm {
+    width: 35vw;
+    font-family: var(--font-primary);
+}
+
+.resetPassForm > * {
+    margin-bottom: 1vw;
+}

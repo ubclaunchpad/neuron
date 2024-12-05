@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS volunteer_class;
 DROP TABLE IF EXISTS availability;
 DROP TABLE IF EXISTS schedule;
 DROP TABLE IF EXISTS class;
+DROP TABLE IF EXISTS volunteer_profile_pics;
 DROP TABLE IF EXISTS volunteers;
 DROP TABLE IF EXISTS admins;
 DROP TABLE IF EXISTS instructors;
@@ -36,7 +37,16 @@ create table class (
     zoom_link VARCHAR(3000) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
+    category VARCHAR(64),
+    subcategory VARCHAR(64),
     FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id)
+);
+
+create table class_image (
+    image_id INT PRIMARY KEY AUTO_INCREMENT,
+    fk_class_id INT,
+    image MEDIUMBLOB,
+    FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
 );
 
 create table volunteers (
@@ -44,12 +54,24 @@ create table volunteers (
     fk_user_id VARCHAR(255),         
     f_name VARCHAR(15) NOT NULL,
     l_name VARCHAR(15) NOT NULL,
+    p_name VARCHAR(45),
     total_hours INT NOT NULL,
     class_preferences VARCHAR(256) NOT NULL,
     bio VARCHAR(150),
     active BOOLEAN,
     email VARCHAR(45) NOT NULL,
+    pronouns VARCHAR(15),
+    phone_number VARCHAR(15),
+    city VARCHAR(15),
+    province VARCHAR(15),
     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
+    ON DELETE CASCADE
+);
+
+create table volunteer_profile_pics (
+    fk_volunteer_id VARCHAR(255) PRIMARY KEY,
+    profile_pic LONGBLOB NOT NULL,
+    FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
     ON DELETE CASCADE
 );
 
@@ -97,6 +119,7 @@ CREATE TABLE shifts (
     fk_schedule_id INT,
     shift_date DATE NOT NULL,
     duration INT NOT NULL,
+    checked_in BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (fk_volunteer_id, fk_schedule_id, shift_date),
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
     ON DELETE CASCADE,
@@ -115,4 +138,15 @@ CREATE TABLE shift_coverage_request (
         REFERENCES shifts(fk_volunteer_id, fk_schedule_id, shift_date) ON DELETE CASCADE,
     FOREIGN KEY (covered_by)
         REFERENCES volunteers(volunteer_id) ON DELETE SET NULL
+);
+
+CREATE TABLE pending_shift_coverage (
+    request_id INT NOT NULL,
+    pending_volunteer VARCHAR(255) NOT NULL,
+    
+    PRIMARY KEY (request_id, pending_volunteer),
+    FOREIGN KEY (request_id)
+        REFERENCES shift_coverage_request(request_id) ON DELETE CASCADE,
+    FOREIGN KEY (pending_volunteer)
+        REFERENCES volunteers(volunteer_id) ON DELETE CASCADE
 );

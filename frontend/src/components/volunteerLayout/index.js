@@ -37,7 +37,6 @@ function VolunteerLayout({ pageTitle, pageContent }) {
         const authData = await isAuthenticated(); 
         if (authData.isAuthenticated && authData.volunteer) {
           setVolunteer(authData.volunteer); 
-          console.log(authData.volunteer);
         } else {
           setVolunteer(null);
         }

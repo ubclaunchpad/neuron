@@ -9,9 +9,11 @@ import nav_item_classes from "../../assets/nav-item-classes.png";
 import nav_item_settings from "../../assets/nav-item-settings.png";
 
 import NavProfileCard from "../NavProfileCard";
+import { isAuthenticated } from "../../api/authService";
 
 function VolunteerLayout({ pageTitle, pageContent, pageStyle }) {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
+  const [volunteer, setVolunteer] = useState(null);
 
   // Toggle function for displaying/hiding sidebar
   const toggleSidebar = () => {
@@ -27,6 +29,24 @@ function VolunteerLayout({ pageTitle, pageContent, pageStyle }) {
     handleResize();
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Fetch user info
+  useEffect(() => {
+    const fetchVolunteerData = async () => {
+      try {
+        const authData = await isAuthenticated(); 
+        if (authData.isAuthenticated && authData.volunteer) {
+          setVolunteer(authData.volunteer); 
+        } else {
+          setVolunteer(null);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setVolunteer(null);
+      }
+    };
+    fetchVolunteerData();
+}, []);
 
   return (
     <div className="main-container">
@@ -88,8 +108,8 @@ function VolunteerLayout({ pageTitle, pageContent, pageStyle }) {
         </div>
         <div className="nav-profile-card-container">
           <NavProfileCard
-            name={"Jessie"}
-            email={"test@gmail.com"}
+            name={volunteer?.f_name}
+            email={volunteer?.email}
             collapse={collapsed}
             link={"/volunteer/my-profile"}
           />

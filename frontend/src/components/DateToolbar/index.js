@@ -6,8 +6,9 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { Popover, Button } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Select from 'react-select';
 
-function DateToolbar({ selectedDate, setSelectedDate }) {
+function DateToolbar({ selectedDate, setSelectedDate, setViewMode }) {
     const [anchorEl, setAnchorEl] = useState(null);
     const handleDatePickerOpen = (event) => { setAnchorEl(event.currentTarget) };
     const handleDatePickerClose = () => { setAnchorEl(null) };
@@ -42,6 +43,18 @@ function DateToolbar({ selectedDate, setSelectedDate }) {
                     />
                 </Popover>
             </LocalizationProvider>
+            <Select
+                options={[
+                    { value: 'list', label: <span><i className='fa-solid fa-table-list'></i>&nbsp;List</span> },
+                    { value: 'calendar', label: <span><i className='fa-solid fa-calendar-week'></i>&nbsp;Week</span> }
+                ]}
+                defaultValue={{ value: 'list', label: <span><i className='fa-solid fa-table-list'></i>&nbsp;List</span> }}
+                isSearchable={false}
+                onChange={(selectedOption) => setViewMode(selectedOption.value)}
+                className='view-mode-select'
+                classNamePrefix={'viewMode'}
+                name='viewMode'
+            />
         </div>
     );
 }

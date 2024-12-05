@@ -6,6 +6,7 @@ import DateToolbar from "../../components/DateToolbar";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
+import CalendarView from "../../components/CalendarView";
 
 function VolunteerSchedule() {
     const volunteerID = localStorage.getItem('volunteerID');
@@ -13,6 +14,7 @@ function VolunteerSchedule() {
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [shifts, setShifts] = useState([]);
     const [filter, setFilter] = useState('all-shifts'); // Default filter state
+    const [viewMode, setViewMode] = useState('list'); // Default view mode
 
     // Create a ref object to store references to each shifts-container for scrolling
     const shiftRefs = useRef({});
@@ -92,8 +94,9 @@ function VolunteerSchedule() {
             pageTitle="Schedule"
             pageContent={
                 <div>
-                    <DateToolbar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+                    <DateToolbar selectedDate={selectedDate} setSelectedDate={setSelectedDate} setViewMode={setViewMode} />
                     <hr />
+                    {viewMode === "list" ? <>
                     <ShiftStatusToolbar setFilter={setFilter} filter={filter} />
                     <hr />  
                     <div ref={scheduleContainerRef} className="schedule-container">
@@ -129,7 +132,7 @@ function VolunteerSchedule() {
                         ) : (
                             <p>No shifts to display for this month.</p>
                         )}
-                    </div>
+                    </div></> : <CalendarView />}
                 </div>
             }
         />

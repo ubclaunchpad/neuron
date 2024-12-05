@@ -5,24 +5,25 @@
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
+    "@lordicon/react": "^1.10.0",
     "@mui/icons-material": "^6.1.6",
     "@mui/material": "^6.1.6",
-    "@lordicon/react": "^1.10.0",
     "@mui/x-date-pickers": "^7.22.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.7.5",
     "bootstrap": "^5.3.3",
+    "dayjs": "^1.11.13",
     "formik": "^2.4.6",
     "moment": "^2.30.1",
     "notyf": "^3.10.0",
-    "dayjs": "^1.11.13",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.5",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.1",
     "react-scripts": "5.0.1",
+    "react-select": "^5.8.3",
     "react-timer-hook": "^3.0.8",
     "react-weekview": "^0.0.15",
     "web-vitals": "^2.1.4",
@@ -53,7 +54,7 @@
     ]
   },
   "devDependencies": {
-    "ajv": "^8.17.1",
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "ajv": "^8.17.1"
   }
 }

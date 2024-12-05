@@ -11,7 +11,7 @@ import nav_item_settings from "../../assets/nav-item-settings.png";
 import NavProfileCard from "../NavProfileCard";
 import { isAuthenticated } from "../../api/authService";
 
-function VolunteerLayout({ pageTitle, pageContent }) {
+function VolunteerLayout({ pageTitle, pageContent, pageStyle }) {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
   const [volunteer, setVolunteer] = useState(null);
 
@@ -115,7 +115,7 @@ function VolunteerLayout({ pageTitle, pageContent }) {
           />
         </div>
       </aside>
-      <main className="content-container">
+      <main className="content-container" style={pageStyle}>
         <span>
           <h2 className="content-title">{pageTitle}</h2>
         </span>

@@ -11,7 +11,7 @@ label {
     font-size: 1vw;
 }
 
-input {
+.inputWithLabel input {
     font-family: var(--font-primary);
     padding: 1vw 0.8vw;
     border-radius: 8px;
@@ -23,7 +23,7 @@ input.error {
     border: 1px solid var(--error-red);
 }
 
-input::placeholder {
+.inputWithLabel input::placeholder {
     font-size: 1vw !important;
 }
 

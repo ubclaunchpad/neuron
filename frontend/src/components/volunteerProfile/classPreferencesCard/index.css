@@ -1,0 +1,88 @@
+@import '../../../styles.css';
+
+.class-preferences-card {
+    position: relative;
+    max-width: 100%;
+    height: fit-content;
+    border-radius: 8px;
+    border: 1px solid #D9D9D9;
+    padding: 32px;
+    box-shadow: 0px 4px 16px 0px #0F11110D;
+}
+
+.class-preferences-card h2 {
+    margin-top: 0;
+    margin-bottom: 24px;
+    font-size: 20px;
+}
+
+.edit-icon {
+    position: absolute;
+    top: 32px;
+    right: 32px;
+    cursor: pointer;
+    height: 16px;
+    color: #808080;
+}
+
+.class-preferences-column {
+    margin: -8px 0;
+    user-select: none;
+}
+
+.class-preference-box {
+    position: relative;
+    display: flex;
+    margin: 8px 0;
+}
+
+.class-preference-box:active {
+    cursor: grabbing;
+}
+
+.class-preference-index {
+    font-size: 16px;
+    margin-right: 16px;
+    color: #808080;
+    display: flex;
+    align-items: center;
+}
+
+.class-preference {
+    display: flex;
+    width: 100%;
+    height: fit-content;
+    padding: 12px 16px;
+    gap: 0px;
+    border-radius: 8px;
+    border: 1px solid #4385AC;
+    font-size: 12px;
+    justify-content: space-between;
+    opacity: 0px;
+}
+
+.class-preference:active {
+    background-color: #f5f8fc;
+}
+
+.class-preference-icon {
+    display: flex;
+    align-items: center;
+    margin-right: 12px;
+}
+
+.class-preference-icon:hover {
+    cursor: grab;
+}
+
+.class-preference-icon:active {
+    cursor: grabbing;
+}
+
+.class-preference-text {
+    flex: 1;
+}
+
+.class-preference-dragged .class-preference-box {
+    position: absolute;
+}

@@ -16,12 +16,7 @@ body {
   flex-direction: column;
   width: 275px;
   min-height: 100vh;
-  background: radial-gradient(
-    ellipse at bottom left,
-    var(--secondary-blue) 5%,
-    var(--dark-blue) 60%,
-    var(--light-grey) 100%
-  );
+  background: radial-gradient(circle at bottom left, #9bd6fd 5%, #c3e6ff 15%, #F0FAFF 100%);
   border-right: 2px solid var(--grey);
   transition: width 0.3s;
 }

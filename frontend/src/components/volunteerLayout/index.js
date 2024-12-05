@@ -36,10 +36,12 @@ function VolunteerLayout({ pageTitle, pageContent, pageStyle }) {
   useEffect(() => {
     const fetchVolunteerData = async () => {
       try {
-        const authData = await isAuthenticated(); 
+        const authData = await isAuthenticated();
         if (authData.isAuthenticated && authData.volunteer) {
-          setVolunteer(authData.volunteer); 
-          const picture = await getProfilePicture(authData.volunteer?.volunteer_id);
+          setVolunteer(authData.volunteer);
+          const picture = await getProfilePicture(
+            authData.volunteer?.volunteer_id
+          );
           setProfilePic(picture);
         } else {
           setVolunteer(null);
@@ -50,7 +52,7 @@ function VolunteerLayout({ pageTitle, pageContent, pageStyle }) {
       }
     };
     fetchVolunteerData();
-}, []);
+  }, []);
 
   return (
     <div className="main-container">

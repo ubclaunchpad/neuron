@@ -37,7 +37,7 @@ function VolunteerProfile() {
           overflowY: "auto",
         }}
       >
-        volunteer ?{" "}
+        { volunteer ?
         <div className="content">
           <div className="column-1">
             <div className="volunteer-card">
@@ -56,8 +56,9 @@ function VolunteerProfile() {
               <ChangePasswordCard volunteer={volunteer} />
             </div>
           </div>
-        </div>{" "}
-        : <div>Loading...</div>
+        </div>
+        : <div>Loading...</div> 
+        }
       </VolunteerLayout>
     );
 };

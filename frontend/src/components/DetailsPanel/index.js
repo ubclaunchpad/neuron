@@ -3,11 +3,12 @@ import React, { useEffect, useState } from "react";
 import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
+import zoom_icon from "../../assets/zoom.png";
 import { getClassById } from "../../api/classesPageService";
 import { isAuthenticated } from "../../api/authService";
 import dayjs from "dayjs";
 
-function ClassPanel({ classId, classList, setClassId, children, dynamicShiftbuttons = [], shiftDetails }) {
+function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbuttons = [], shiftDetails }) {
   const [panelWidth, setPanelWidth] = useState("0px");
   const [panelInfo, setPanelInfo] = useState(null);
   const [myClass, setMyClass] = useState(false);
@@ -140,6 +141,7 @@ function ClassPanel({ classId, classList, setClassId, children, dynamicShiftbutt
       </div>
       <div className="panel-container" style={{ width: panelWidth }}>
         <div className="panel-header">
+          {console.log(shiftDetails)}
           {shiftDetails ? (
               <span>{dayjs(shiftDetails.shift_date).format('YYYY-MM-DD')}</span>
           ) : (
@@ -166,11 +168,21 @@ function ClassPanel({ classId, classList, setClassId, children, dynamicShiftbutt
           <div className="panel-details-shift">
             <div className="panel-details-shift-row">
               <div className="panel-titles">Status</div>
-              <div className="panel-details-shift-right">
-                <div className={`status ${myClass ? "myClass" : "classTaken"}`}>
-                  {myClass ? "My Class" : "Class Taken"}
+              {shiftDetails ? (
+                <div className={shiftDetails.shift_type}>
+                  {shiftDetails.shift_type === "my-shifts"
+                    ? "My Class"
+                    : shiftDetails.shift_type === "my-coverage-requests"
+                    ? "Requested Coverage"
+                    : shiftDetails.shift_type === "coverage"
+                    ? "Needs Coverage"
+                    : ""}
                 </div>
-              </div>
+              ) : myClass ? (
+                <div className="my-shifts">My Class</div> 
+              ) : (
+                <div className="classTaken">Class Taken</div> 
+              )}
             </div>
             <div className="panel-details-shift-row">
               <div className="panel-titles">Instructor</div>
@@ -187,6 +199,26 @@ function ClassPanel({ classId, classList, setClassId, children, dynamicShiftbutt
               </div>
             </div>
           </div>
+          <div className="panel-details-shift-row">
+            {shiftDetails && shiftDetails.shift_type === "my-shifts" && (
+              <>
+                <div className="panel-titles">Zoom Link</div>
+                <div className="panel-details-shift-right">
+                  <button className="join-class-button">
+                  <a href={shiftDetails.zoom_link} >
+                    <img 
+                      src={zoom_icon}
+                      alt="Zoom" 
+                      className="zoom-icon" 
+                    />
+                    Join Class
+                  </a>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          
           <div className="panel-details-description">
             <div className="panel-titles">Description</div>
             <div className="panel-description">
@@ -229,4 +261,4 @@ function ClassPanel({ classId, classList, setClassId, children, dynamicShiftbutt
   );
 }
 
-export default ClassPanel;
+export default DetailsPanel;

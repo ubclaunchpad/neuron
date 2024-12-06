@@ -76,19 +76,46 @@
      color: #808080;
 }
 
-.status {
+.my-shifts {
      padding: 4px 12px;
      width: fit-content;
      border-radius: 4px;
-}
-.myClass {
      background: rgba(24, 149, 49, 0.1);
-     color: #189531;
-}
+     color: var(--green);
+     font-weight: bold;
+     text-align: center;
+ }
+ 
+ .my-coverage-requests {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(203, 131, 36, 0.1);
+     color: var(--yellow);
+     font-weight: bold;
+     text-align: center;
+ }
+ 
+ .coverage {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(149, 32, 24, 0.1);
+     color: var(--error-red);
+     font-weight: bold;
+     text-align: center;
+ }
+
 .classTaken {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
      background: rgb(211, 211, 211);
-     color: rgb(111, 111, 111)
+     color: rgb(111, 111, 111);
+     font-weight: bold;
+     text-align: center;
 }
+
 .panel-details-shift {
      display: flex;
      flex-direction: column;
@@ -139,6 +166,7 @@
      margin-top: 20px;
 }
 
+ /* Shift Details Panel */
 /* Dynamic Button Styling based on Shift Type */
 .panel-buttons {
      padding-top: 2vh;
@@ -177,4 +205,38 @@
      width: 1rem;
      height: 1rem;
      margin-right: .5rem;
+ }
+
+ .zoom-icon {
+     height: 1.5rem;
+     width: 1.5rem;
+     margin-right: 0.5rem; 
+ }
+ 
+ .join-class-button {
+     display: flex; 
+     flex-direction: row; 
+     align-items: center; 
+     padding: 0.5rem 1rem;
+     margin-top: 1rem;
+     text-decoration: none;
+     border-radius: 8px;
+     border: 1px solid var(--primary-blue);
+     background: #FFF;
+     cursor: pointer;
+     transition: background-color 0.3s ease;
+ }
+ 
+ .join-class-button a {
+     text-decoration: none;
+     color: var(--dark);
+     display: flex; 
+     flex-direction: row;
+     align-items: center; 
+ }
+ 
+ .join-class-button:hover {
+     cursor: pointer;
+     background: var(--button-blue);
+     border: none;
  }

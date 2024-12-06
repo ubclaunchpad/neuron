@@ -84,6 +84,7 @@ function Classes() {
     "In-Person Exercise",
     "One-on-One Exercise",
     "Food & Nutrition",
+    "Other Opportunities"
   ];
 
   categories.forEach((category) => {

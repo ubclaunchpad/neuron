@@ -8,6 +8,7 @@
     border-radius: 0.5rem;
     padding: 0.8rem;
     cursor: pointer;
+    box-shadow: -4px 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .nav-profile-card:hover, .nav-profile-card:focus, .nav-profile-card__avatar-collapse img:hover, .nav-profile-card__avatar-collapse img:focus {

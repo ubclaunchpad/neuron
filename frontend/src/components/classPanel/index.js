@@ -7,7 +7,7 @@ import { getClassById } from "../../api/classesPageService";
 import { isAuthenticated } from "../../api/authService";
 import dayjs from "dayjs";
 
-function ClassPanel({ classId, classList, setClassId, pageContent, dynamicShiftbuttons = [], shiftDetails }) {
+function ClassPanel({ classId, classList, setClassId, children, dynamicShiftbuttons = [], shiftDetails }) {
   const [panelWidth, setPanelWidth] = useState("0px");
   const [panelInfo, setPanelInfo] = useState(null);
   const [myClass, setMyClass] = useState(false);
@@ -136,7 +136,7 @@ function ClassPanel({ classId, classList, setClassId, pageContent, dynamicShiftb
         className="main-container"
         style={{ width: `calc(100% - ${panelWidth})` }}
       >
-        {pageContent}
+        {children}
       </div>
       <div className="panel-container" style={{ width: panelWidth }}>
         <div className="panel-header">

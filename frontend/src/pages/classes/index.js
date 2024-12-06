@@ -1,7 +1,7 @@
 import "./index.css";
 import React, { useEffect, useState, useRef } from "react";
 import VolunteerLayout from "../../components/volunteerLayout";
-import ClassPanel from "../../components/classPanel";
+import DetailsPanel from "../../components/DetailsPanel";
 import {
   getAllClasses,
   getAllClassImages,
@@ -142,7 +142,7 @@ function Classes() {
 
   return (
     <VolunteerLayout pageTitle="Classes">
-      <ClassPanel
+      <DetailsPanel
         classId={selectedClassId}
         classList={completeClassData}
         setClassId={setSelectedClassId}
@@ -182,7 +182,7 @@ function Classes() {
             <div className="spacer"></div>
           </div>
         </div>
-      </ClassPanel>
+      </DetailsPanel>
     </VolunteerLayout>
   );
 }

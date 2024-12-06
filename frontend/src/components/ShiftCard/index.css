@@ -13,6 +13,10 @@
     align-items: center;
 }
 
+.shift-card:hover {
+    cursor: pointer;
+}
+
 /* Vertical Line Styles */
 .vertical-line {
     width: .5rem;

@@ -12,7 +12,7 @@ import NavProfileCard from "../NavProfileCard";
 import { isAuthenticated } from "../../api/authService";
 import { getProfilePicture } from "../../api/volunteerService";
 
-function VolunteerLayout({ pageTitle, pageContent, pageStyle }) {
+function VolunteerLayout({ pageTitle, children, pageStyle }) {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
   const [volunteer, setVolunteer] = useState(null);
   const [profilePic, setProfilePic] = useState(null);
@@ -31,7 +31,7 @@ function VolunteerLayout({ pageTitle, pageContent, pageStyle }) {
     handleResize();
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
+  
   // Fetch user info
   useEffect(() => {
     const fetchVolunteerData = async () => {
@@ -123,10 +123,8 @@ function VolunteerLayout({ pageTitle, pageContent, pageStyle }) {
         </div>
       </aside>
       <main className="content-container" style={pageStyle}>
-        <span>
-          <h2 className="content-title">{pageTitle}</h2>
-        </span>
-        {pageContent} {/* Render page content here */}
+        <h2 className="content-title">{pageTitle}</h2>
+        {children} {/* Render page content here */}
       </main>
     </div>
   );

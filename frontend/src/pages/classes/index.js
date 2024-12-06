@@ -140,57 +140,49 @@ function Classes() {
   };
 
   return (
-    <VolunteerLayout
-      pageTitle="Classes"
-      pageContent={
-        <ClassPanel
-          classId={selectedClassId}
-          classList={completeClassData}
-          setClassId={setSelectedClassId}
-          pageContent={
-            <div className="classes-page">
-              <div className="main-category-header">
-                {categories.map((category) => {
-                  const isSelected = selectedCategory === category;
-                  return (
-                    <button
-                      key={category}
-                      className={`category-button ${
-                        isSelected ? "selected" : ""
-                      }`}
-                      onClick={() => {
-                        setSelectedCategory(category);
-                        scrollToSection(category);
-                      }}
-                    >
-                      {category}
-                    </button>
-                  );
-                })}
-              </div>
-              {/* ----- */}
-              <div className="class-catalog">
-                {Object.entries(groupedByCategory).map(
-                  ([category, classData]) => {
-                    return ( 
-                      <ClassCategoryContainer
-                        key={category}
-                        ref={sectionRefs.current[category]}
-                        category={category}
-                        classData={classData}
-                        data-category={category}
-                        onClassSelect={handleClassSelection}
-                      />
-                    );
-                  }
-                )}
-                <div className="spacer"></div>
-              </div>
-            </div>
-          }
-        ></ClassPanel>
-      }
-    ></VolunteerLayout>
+    <VolunteerLayout pageTitle="Classes">
+      <ClassPanel
+        classId={selectedClassId}
+        classList={completeClassData}
+        setClassId={setSelectedClassId}
+      >
+        <div className="classes-page">
+          <div className="main-category-header">
+            {categories.map((category) => {
+              const isSelected = selectedCategory === category;
+              return (
+                <button
+                  key={category}
+                  className={`category-button ${isSelected ? "selected" : ""}`}
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    scrollToSection(category);
+                  }}
+                >
+                  {category}
+                </button>
+              );
+            })}
+          </div>
+          {/* ----- */}
+          <div className="class-catalog">
+            {Object.entries(groupedByCategory).map(([category, classData]) => {
+              return (
+                <ClassCategoryContainer
+                  key={category}
+                  ref={sectionRefs.current[category]}
+                  category={category}
+                  classData={classData}
+                  data-category={category}
+                  onClassSelect={handleClassSelection}
+                />
+              );
+            })}
+            <div className="spacer"></div>
+          </div>
+        </div>
+      </ClassPanel>
+    </VolunteerLayout>
   );
 }
 

@@ -31,29 +31,34 @@ function VolunteerProfile() {
     }, []);
 
     return (
-        <VolunteerLayout 
-            pageTitle={pageTitle}
-            pageContent={
-                volunteer ? <div className="content">
-                    <div className="column-1">
-                        <div className="volunteer-card">
-                            <VolunteerDetailsCard volunteer={volunteer} />
-                        </div>    
-                        <div className="availability-card">
-                            <AvailabilityGrid volunteerId={volunteer.volunteer_id} availability={availability} setAvailability={setAvailability} />
-                        </div>
-                    </div>
-                    <div className="column-2">
-                        <div className="password-card">
-                            <ChangePasswordCard volunteer={volunteer} />
-                        </div>
-                    </div>
-                </div> : <div>Loading...</div>
-            }
-            pageStyle={{
-                overflowY: 'auto'
-            }}
-        />
+      <VolunteerLayout
+        pageTitle={pageTitle}
+        pageStyle={{
+          overflowY: "auto",
+        }}
+      >
+        volunteer ?{" "}
+        <div className="content">
+          <div className="column-1">
+            <div className="volunteer-card">
+              <VolunteerDetailsCard volunteer={volunteer} />
+            </div>
+            <div className="availability-card">
+              <AvailabilityGrid
+                volunteerId={volunteer.volunteer_id}
+                availability={availability}
+                setAvailability={setAvailability}
+              />
+            </div>
+          </div>
+          <div className="column-2">
+            <div className="password-card">
+              <ChangePasswordCard volunteer={volunteer} />
+            </div>
+          </div>
+        </div>{" "}
+        : <div>Loading...</div>
+      </VolunteerLayout>
     );
 };
 

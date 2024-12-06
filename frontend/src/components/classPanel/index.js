@@ -6,7 +6,7 @@ import button_icon_next from "../../assets/images/button-icons/button-icon-next.
 import { getClassById } from "../../api/classesPageService";
 import { isAuthenticated } from "../../api/authService";
 
-function ClassPanel({ classId, classList, setClassId, pageContent }) {
+function ClassPanel({ classId, classList, setClassId, children }) {
   const [panelWidth, setPanelWidth] = useState("0px");
   const [panelInfo, setPanelInfo] = useState(null);
   const [myClass, setMyClass] = useState(false);
@@ -135,7 +135,7 @@ function ClassPanel({ classId, classList, setClassId, pageContent }) {
         className="main-container"
         style={{ width: `calc(100% - ${panelWidth})` }}
       >
-        {pageContent}
+        {children}
       </div>
       <div className="panel-container" style={{ width: panelWidth }}>
         <div className="panel-header">

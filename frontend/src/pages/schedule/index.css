@@ -14,13 +14,17 @@
     color: var(--dark);
 }
 
+.schedule-page {
+    width: 100%;
+}
+
 /* Container Styling */
 .schedule-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     overflow-y: auto; /* Allow vertical scroll */
-    max-height: 0;
+    max-height: 10vh;
     padding-bottom: 70vh;
 }
 

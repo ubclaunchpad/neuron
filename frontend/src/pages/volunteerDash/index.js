@@ -171,10 +171,7 @@ function VolunteerDash() {
           </div>
           <DashboardCoverage shifts={shifts} future={future} />
         </div>
-        <div
-          className="dash-col-card dash-grid-item dash-col-card-click"
-          onClick={() => navigate("/volunteer/schedule")}
-        >
+        <div className="dash-col-card dash-grid-item">
           <DashShifts
             groupedShifts={future ? groupedUpcomingShifts : allShifts}
             future={future}
@@ -183,10 +180,7 @@ function VolunteerDash() {
         </div>
 
         <div className="dash-bottom-right dash-grid-item">
-          <div
-            className="dash-col-card dash-col-card-click"
-            onClick={() => navigate("/volunteer/schedule")}
-          >
+          <div className="dash-col-card">
             <DashCoverShifts
               future={future}
               groupedShifts={groupedCoverShifts}

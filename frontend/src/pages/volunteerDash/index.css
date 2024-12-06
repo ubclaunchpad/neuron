@@ -33,10 +33,6 @@
     border-radius: 0.5rem;
 }
 
-.dash-col-card-click {
-    cursor: pointer;
-}
-
 .dash-card-title {
     display: flex;
     flex-direction: row;
@@ -46,6 +42,12 @@
     line-height: 28px;
     font-weight: 500;
     margin: 0px;
+    width: fit-content;
+    cursor: pointer;
+}
+
+.dash-card-title:hover {
+    text-decoration: underline;
 }
 
 .dash-hours-container {

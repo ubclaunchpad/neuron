@@ -1,5 +1,6 @@
 import "./index.css";
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForwardIos";
 import dayjs from "dayjs";
 import ShiftCard from "../ShiftCard";
@@ -10,10 +11,14 @@ export default function DashShifts({
   handleShiftUpdate,
 }) {
   const currentDate = dayjs();
+  const navigate = useNavigate();
 
   return (
     <div className="dash-shifts-container">
-      <div className="dash-card-title">
+      <div
+        className="dash-card-title"
+        onClick={() => navigate("/volunteer/schedule")}
+      >
         My {future ? "Upcoming" : "Completed"} Shifts{" "}
         <ArrowForwardIcon sx={{ fontSize: "16px", color: "#808080" }} />
       </div>

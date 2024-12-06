@@ -9,6 +9,13 @@
     margin: 3rem 2rem 2rem 2rem;
 }
 
+.dash-date-picker {
+    position: absolute;
+    width: fit-content;
+    top: 1rem;
+    right: 4rem;
+}
+
 .dash-grid-item {
     display: flex;
     flex-direction: column;

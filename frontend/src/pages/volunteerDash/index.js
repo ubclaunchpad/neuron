@@ -23,7 +23,7 @@ function VolunteerDash() {
   const [checkIn, setCheckIn] = useState(false);
   const [shifts, setShifts] = useState([]);
   const monthDate = dayjs().date(1).hour(0).minute(0);
-  const [selectedDate, setSelectedDate] = useState(monthDate);
+  const [selectedDate, setSelectedDate] = useState(dayjs());
   const [future, setFuture] = useState(false);
 
   const navigate = useNavigate();
@@ -72,17 +72,26 @@ function VolunteerDash() {
       };
       const response = await getVolunteerShiftsForMonth(body);
       setShifts(response);
-      console.log(response);
     };
     fetchShifts();
   }, [selectedDate, volunteerID]);
+
+  const allShifts = shifts.reduce((acc, shift) => {
+    const date = shift.shift_date;
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(shift);
+    return acc;
+  }, {});
 
   const groupedUpcomingShifts = shifts
     .filter((shift) => {
       return (
         shift.shift_type ===
           (SHIFT_TYPES.MY_SHIFTS || SHIFT_TYPES.MY_COVERAGE_REQUESTS) &&
-        dayjs(shift.shift_date).isAfter(monthDate)
+        dayjs(shift.shift_date).isAfter(monthDate) &&
+        dayjs(shift.shift_date).isAfter(dayjs())
       );
     })
     .reduce((acc, shift) => {
@@ -125,20 +134,19 @@ function VolunteerDash() {
 
   return (
     <VolunteerLayout pageTitle="Dashboard">
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <DatePicker
-          views={["month", "year"]}
-          sx={{
-            position: "absolute",
-            right: "4rem",
-            top: "1rem",
-            fontSize: "16px",
-            color: "var(--primary-blue)",
-          }}
-          value={selectedDate}
-          onChange={(newValue) => setSelectedDate(newValue.day(2))}
-        />
-      </LocalizationProvider>
+      <div className="dash-date-picker">
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker
+            views={["month", "year"]}
+            sx={{
+              fontSize: "16px",
+              color: "var(--primary-blue)",
+            }}
+            value={selectedDate}
+            onChange={(newValue) => setSelectedDate(newValue.day(2))}
+          />
+        </LocalizationProvider>
+      </div>
 
       <div className="dash-container">
         <div className="dash-col-card dash-grid-item">
@@ -168,7 +176,7 @@ function VolunteerDash() {
           onClick={() => navigate("/volunteer/schedule")}
         >
           <DashShifts
-            groupedShifts={groupedUpcomingShifts}
+            groupedShifts={future ? groupedUpcomingShifts : allShifts}
             future={future}
             handleShiftUpdate={handleShiftUpdate}
           />

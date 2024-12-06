@@ -116,9 +116,7 @@ function VolunteerLayout({ pageTitle, children, pageStyle }) {
         </div>
       </aside>
       <main className="content-container" style={pageStyle}>
-        <span>
-          <h2 className="content-title">{pageTitle}</h2>
-        </span>
+        <h2 className="content-title">{pageTitle}</h2>
         {children} {/* Render page content here */}
       </main>
     </div>

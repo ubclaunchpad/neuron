@@ -6,6 +6,7 @@ import { fetchVolunteerData, getProfilePicture } from "../../api/volunteerServic
 import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
 import ChangePasswordCard from "../../components/volunteerProfile/changePasswordCard";
 import AvailabilityGrid from "../../components/volunteerProfile/availabilityGrid";
+import LoadingIcon from "../../components/loadingIcon";
 
 const pageTitle = "My Profile";
 
@@ -48,7 +49,7 @@ function VolunteerProfile() {
                             <ChangePasswordCard volunteer={volunteer} />
                         </div>
                     </div>
-                </div> : <div>Loading...</div>
+                </div> : <LoadingIcon/>
             }
             pageStyle={{
                 overflowY: 'auto'

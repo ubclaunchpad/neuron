@@ -26,7 +26,8 @@ body {
   background-color: var(--white);
   padding: 0 2vw;
   max-height: 100vh;
-  overflow-y: hidden;
+  overflow-y: scroll;
+  position: relative;
 }
 
 .content-title {

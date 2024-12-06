@@ -1,0 +1,18 @@
+.dash-shifts-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.dash-schedule-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.dash-shift-list {
+    display: flex; 
+    flex-direction: column;
+    width: 92%;
+}

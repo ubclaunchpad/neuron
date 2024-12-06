@@ -10,10 +10,12 @@ import nav_item_settings from "../../assets/nav-item-settings.png";
 
 import NavProfileCard from "../NavProfileCard";
 import { isAuthenticated } from "../../api/authService";
+import { getProfilePicture } from "../../api/volunteerService";
 
 function VolunteerLayout({ pageTitle, children, pageStyle }) {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
   const [volunteer, setVolunteer] = useState(null);
+  const [profilePic, setProfilePic] = useState(null);
 
   // Toggle function for displaying/hiding sidebar
   const toggleSidebar = () => {
@@ -34,9 +36,13 @@ function VolunteerLayout({ pageTitle, children, pageStyle }) {
   useEffect(() => {
     const fetchVolunteerData = async () => {
       try {
-        const authData = await isAuthenticated(); 
+        const authData = await isAuthenticated();
         if (authData.isAuthenticated && authData.volunteer) {
-          setVolunteer(authData.volunteer); 
+          setVolunteer(authData.volunteer);
+          const picture = await getProfilePicture(
+            authData.volunteer?.volunteer_id
+          );
+          setProfilePic(picture);
         } else {
           setVolunteer(null);
         }
@@ -46,7 +52,7 @@ function VolunteerLayout({ pageTitle, children, pageStyle }) {
       }
     };
     fetchVolunteerData();
-}, []);
+  }, []);
 
   return (
     <div className="main-container">
@@ -108,6 +114,7 @@ function VolunteerLayout({ pageTitle, children, pageStyle }) {
         </div>
         <div className="nav-profile-card-container">
           <NavProfileCard
+            avatar={profilePic}
             name={volunteer?.f_name}
             email={volunteer?.email}
             collapse={collapsed}

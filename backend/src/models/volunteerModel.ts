@@ -269,11 +269,9 @@ export default class VolunteerModel {
 
     shiftCheckIn(volunteer_id: string, fk_schedule_id: any, shift_date: any): Promise<any> {
         return new Promise((resolve, reject) => {
-            // Construct the SET clause dynamically
-            // Get the shift duration
-
             const query1 = `SELECT duration FROM shifts WHERE fk_volunteer_id = ? AND fk_schedule_id = ? AND shift_date = ?`;
             const values1 = [volunteer_id, fk_schedule_id, shift_date];
+            
             connectionPool.query(query1, values1, (error: any, results: any) => {
                 if (error) {
                     return reject({
@@ -287,14 +285,13 @@ export default class VolunteerModel {
                         message: `No shift found for the given volunteer and schedule.`,
                     });
                 }
-
                 const duration = results[0].duration;
-
-                // Get the volunteer's hours so far
-                const query = "SELECT * FROM volunteers WHERE volunteer_id = ?";
+    
+                // Get the volunteer's current hours
+                const query2 = "SELECT total_hours FROM volunteers WHERE volunteer_id = ?";
                 const values2 = [volunteer_id];
         
-                connectionPool.query(query, values2, (error: any, results: any) => {
+                connectionPool.query(query2, values2, (error: any, results: any) => {
                     if (error) {
                         return reject({
                             status: 500,
@@ -307,19 +304,41 @@ export default class VolunteerModel {
                             message: `No volunteer found under the given ID`,
                         });
                     }
-
+    
                     const hours_so_far = results[0].total_hours;
-
-                    // Add the hours
                     const new_total_hours = hours_so_far + duration;
-
-                    // Update the volunteer's hours
-                    const volunteerData = {total_hours: new_total_hours};
-                    this.updateVolunteer(volunteer_id, volunteerData);
-
-                    resolve({
-                        status: 200,
-                        message: 'Volunteer hours updated successfully.',
+    
+                    // Update volunteer hours and shift check-in in a single query
+                    const updateQuery = `
+                        UPDATE volunteers v
+                        JOIN shifts s ON s.fk_volunteer_id = v.volunteer_id
+                        SET 
+                            v.total_hours = ?,
+                            s.checked_in = 1
+                        WHERE 
+                            v.volunteer_id = ? AND
+                            s.fk_schedule_id = ? AND
+                            s.shift_date = ?
+                    `;
+                    const updateValues = [new_total_hours, volunteer_id, fk_schedule_id, shift_date];
+    
+                    connectionPool.query(updateQuery, updateValues, (error: any, results: any) => {
+                        if (error) {
+                            return reject({
+                                status: 500,
+                                message: `An error occurred while updating: ${error}`,
+                            });
+                        }
+                        if (results.affectedRows === 0) {
+                            return reject({
+                                status: 400,
+                                message: `No rows updated. Verify all parameters.`,
+                            });
+                        }
+                        resolve({
+                            status: 200,
+                            message: 'Volunteer hours and shift updated successfully.',
+                        });
                     });
                 });
             });

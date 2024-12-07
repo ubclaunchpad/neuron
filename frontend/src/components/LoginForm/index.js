@@ -44,7 +44,8 @@ const LoginForm = () => {
                                 if (error.response.data.error == "verifyError") {
                                     // Redirect to account not verified
                                     console.log("erroring2");
-                                    navigate("/auth/account-not-verified");
+                                    //navigate("/auth/account-not-verified");
+                                    window.location.href = "/auth/account-not-verified";
                                     setSubmitting(false);
                                 }
                              else {

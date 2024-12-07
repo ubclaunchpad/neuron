@@ -112,3 +112,8 @@ button {
     border: 1px solid var(--primary-blue) !important;
     background-color: var(--light-grey) !important;
 }
+
+#header-buttons {
+    display: flex;
+    flex-direction: row-reverse;
+}

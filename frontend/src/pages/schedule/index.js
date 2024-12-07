@@ -96,9 +96,9 @@ function VolunteerSchedule() {
                 <div>
                     <DateToolbar selectedDate={selectedDate} setSelectedDate={setSelectedDate} setViewMode={setViewMode} />
                     <hr />
-                    {viewMode === "list" ? <>
                     <ShiftStatusToolbar setFilter={setFilter} filter={filter} />
-                    <hr />  
+                    <hr /> 
+                    {viewMode === "list" ? <> 
                     <div ref={scheduleContainerRef} className="schedule-container">
                         {Object.keys(groupedShifts).length > 0 ? (
                             Object.keys(groupedShifts).map((date) => (
@@ -132,7 +132,7 @@ function VolunteerSchedule() {
                         ) : (
                             <p>No shifts to display for this month.</p>
                         )}
-                    </div></> : <CalendarView />}
+                    </div></> : <CalendarView selectedDate={selectedDate} shifts={shifts} />}
                 </div>
             }
         />

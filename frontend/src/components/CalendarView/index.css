@@ -16,7 +16,6 @@
 blockquote,
 dl,
 dd,
-h1,
 h3,
 h4,
 h5,
@@ -408,6 +407,28 @@ pre {
 
 /* My custom styles */
 .calendar-wrapper {
-    height: 90vh;
+    height: 75vh;
     overflow-y: scroll;
+    font-family: var(--font-secondary) !important;
+}
+
+.date-styles {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    font-weight: 400 !important;
+    color: var(--dark) !important;
+    padding-left: 0.5vw !important;
+}
+
+.date-styles span:nth-child(1) {
+    font-size: 1.3vw !important;
+}
+
+.date-styles span:nth-child(2) {
+    font-size: 0.9vw !important;
+}
+
+.next-prev-buttons button {
+    border: none !important;
 }

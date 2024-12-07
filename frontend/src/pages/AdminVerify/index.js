@@ -43,33 +43,33 @@ const AdminVerify = () => {
     return (
         <>
             <h1 className="verify-heading">Verify Volunteers</h1>
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Volunteer ID</th>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>Email</th>
-                        <th>Verify</th>
+            <table className="verify-table">
+                <thead className="verify-table-head">
+                    <tr className="verify-tr">
+                        <th className="verify-th">#</th>
+                        <th className="verify-th">Volunteer ID</th>
+                        <th className="verify-th">First Name</th>
+                        <th className="verify-th">Last Name</th>
+                        <th className="verify-th">Email</th>
+                        <th className="verify-th">Verify</th>
                     </tr>
                 </thead>
                 {volunteers.length === 0 && (
-                    <td colspan="6" className="errorMsg">
+                    <td colspan="6" className="verify-td errorMsg">
                         No unverified volunteers
                     </td>
                 )}
                 <tbody>
                     {volunteers.map((volunteer, index) => (
-                        <tr key={index}>
-                            <td className="table-data">{index + 1}</td>
-                            <td className="table-data">
+                        <tr key={index} className="verify-tr">
+                            <td className="verify-td table-data">{index + 1}</td>
+                            <td className="verify-td table-data">
                                 {volunteer.volunteer_id}
                             </td>
-                            <td className="table-data">{volunteer.f_name}</td>
-                            <td className="table-data">{volunteer.l_name}</td>
-                            <td className="table-data">{volunteer.email}</td>
-                            <td>
+                            <td className="verify-td table-data">{volunteer.f_name}</td>
+                            <td className="verify-td table-data">{volunteer.l_name}</td>
+                            <td className="verify-td table-data">{volunteer.email}</td>
+                            <td className="verify-td">
                                 <button
                                     className="btn btn-primary"
                                     onClick={() => {

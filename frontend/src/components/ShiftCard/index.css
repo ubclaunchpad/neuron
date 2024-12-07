@@ -9,8 +9,12 @@
     border: 1px solid #ccc;
     border-radius: .8rem;
     box-shadow: 0px 4px 16px rgba(15, 17, 17, 0.1);
-    height: 3.5rem;
+    min-height: 3.5rem;
     align-items: center;
+}
+
+.shift-card:hover {
+    cursor: pointer;
 }
 
 /* Vertical Line Styles */
@@ -19,6 +23,7 @@
     background-color: var(--grey);
     border-radius: 1.5rem;
     height: 80%;
+    min-height: 3rem;
     margin-right: 2rem;
 }
 
@@ -111,9 +116,5 @@
     .segment-2 {
         flex: 1;
         flex-direction: column;
-    }
-
-    .shift-card {
-        height: auto;
     }
 }

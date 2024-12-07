@@ -9,9 +9,13 @@ import nav_item_classes from "../../assets/nav-item-classes.png";
 import nav_item_settings from "../../assets/nav-item-settings.png";
 
 import NavProfileCard from "../NavProfileCard";
+import { isAuthenticated } from "../../api/authService";
+import { getProfilePicture } from "../../api/volunteerService";
 
-function VolunteerLayout({ pageTitle, pageContent }) {
+function VolunteerLayout({ pageTitle, children, pageStyle }) {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
+  const [volunteer, setVolunteer] = useState(null);
+  const [profilePic, setProfilePic] = useState(null);
 
   // Toggle function for displaying/hiding sidebar
   const toggleSidebar = () => {
@@ -26,6 +30,28 @@ function VolunteerLayout({ pageTitle, pageContent }) {
     window.addEventListener("resize", handleResize);
     handleResize();
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
+  // Fetch user info
+  useEffect(() => {
+    const fetchVolunteerData = async () => {
+      try {
+        const authData = await isAuthenticated();
+        if (authData.isAuthenticated && authData.volunteer) {
+          setVolunteer(authData.volunteer);
+          const picture = await getProfilePicture(
+            authData.volunteer?.volunteer_id
+          );
+          setProfilePic(picture);
+        } else {
+          setVolunteer(null);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setVolunteer(null);
+      }
+    };
+    fetchVolunteerData();
   }, []);
 
   return (
@@ -88,18 +114,17 @@ function VolunteerLayout({ pageTitle, pageContent }) {
         </div>
         <div className="nav-profile-card-container">
           <NavProfileCard
-            name={"Jessie"}
-            email={"test@gmail.com"}
+            avatar={profilePic}
+            name={volunteer?.f_name}
+            email={volunteer?.email}
             collapse={collapsed}
             link={"/volunteer/my-profile"}
           />
         </div>
       </aside>
-      <main className="content-container">
-        <span>
-          <h2 className="content-title">{pageTitle}</h2>
-        </span>
-        {pageContent} {/* Render page content here */}
+      <main className="content-container" style={pageStyle}>
+        <h2 className="content-title">{pageTitle}</h2>
+        {children} {/* Render page content here */}
       </main>
     </div>
   );

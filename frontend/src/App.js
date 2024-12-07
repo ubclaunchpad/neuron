@@ -10,6 +10,7 @@ import Classes from "./pages/classes";
 import VolunteerSchedule from "./pages/schedule";
 import VolunteerProfile from "./pages/volunteerProfile";
 import AdminVerify from "./pages/AdminVerify";
+import "notyf/notyf.min.css";
 
 function App() {
   const [isVolunteer, setIsVolunteer] = useState(false);

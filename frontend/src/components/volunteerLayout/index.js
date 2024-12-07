@@ -123,7 +123,17 @@ function VolunteerLayout({ pageTitle, children, pageStyle }) {
         </div>
       </aside>
       <main className="content-container" style={pageStyle}>
-        <h2 className="content-title">{pageTitle}</h2>
+        <div className="content-heading">
+          <h2 className="content-title">{pageTitle}</h2>
+          {pageTitle === "My Profile" && (
+            <button className="logout-button" onClick={() => {
+                localStorage.removeItem("neuronAuthToken");
+                window.location.href = "/auth/login";
+            }}>
+              <i className="fa-solid fa-arrow-right-from-bracket"></i>&nbsp;&nbsp;Log Out
+            </button>
+          )}
+        </div>
         {children} {/* Render page content here */}
       </main>
     </div>

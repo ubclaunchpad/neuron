@@ -31,12 +31,21 @@ const LoginForm = () => {
                             localStorage.setItem("neuronAuthToken", response.token);
                             setTimeout(() => {
                                 window.location.href = "/";
-                            }, 1500);       
+                            }, 1500); 
                             setSubmitting(false);
                         })
                         .catch((error) => {
-                            notyf.error(error.response.data.error);
-                            setSubmitting(false);
+                            if (error.response.data.error == "verifyError") {
+                                // Redirect to account not verified
+                                window.location.href = "/auth/account-not-verified";
+                                setSubmitting(false);
+                            }
+                            else {
+                                notyf.error(error.response.data.error);
+                                setSubmitting(false);
+                            }
+                            
+                            
                         });
                 }}>
                 {({

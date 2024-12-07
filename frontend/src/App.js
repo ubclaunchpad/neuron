@@ -10,6 +10,7 @@ import Classes from "./pages/classes";
 import VolunteerSchedule from "./pages/schedule";
 import VolunteerProfile from "./pages/volunteerProfile";
 import AdminVerify from "./pages/AdminVerify";
+import AccountNotVerified from './pages/account_not_verified';
 
 function App() {
   const [isVolunteer, setIsVolunteer] = useState(false);
@@ -35,7 +36,7 @@ function App() {
     };
     checkAuth();
   }, []);
-
+  
   return (
     <div className="App">
       <BrowserRouter>
@@ -44,6 +45,7 @@ function App() {
           <Route path="/auth/login" element={<VolunteerLogin />} />
           <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />}/>
           <Route path="/auth/reset-password" element={<VolunteerResetPassword />}/>
+          <Route path="/auth/account-not-verified" element={<AccountNotVerified/>} />
           <Route path="/" element={isVolunteer ? <VolunteerDash /> : <VolunteerLogin />} />
           <Route path="/volunteer/classes" element={isVolunteer ? <Classes /> : <VolunteerLogin />} />
           <Route path="/volunteer/my-profile" element={isVolunteer ? <VolunteerProfile /> : <VolunteerLogin />}/>

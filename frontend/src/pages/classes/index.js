@@ -81,8 +81,6 @@ function Classes() {
     "Online Exercise",
     "Creative & Expressive",
     "Care Partner Workshops",
-    "In-Person Exercise",
-    "One-on-One Exercise",
     "Food & Nutrition",
     "Other Opportunities"
   ];

@@ -56,7 +56,6 @@ create table volunteers (
     l_name VARCHAR(15) NOT NULL,
     p_name VARCHAR(45),
     total_hours INT NOT NULL,
-    class_preferences VARCHAR(256) NOT NULL,
     bio VARCHAR(150),
     active BOOLEAN,
     email VARCHAR(45) NOT NULL,
@@ -149,4 +148,12 @@ CREATE TABLE pending_shift_coverage (
         REFERENCES shift_coverage_request(request_id) ON DELETE CASCADE,
     FOREIGN KEY (pending_volunteer)
         REFERENCES volunteers(volunteer_id) ON DELETE CASCADE
+);
+
+CREATE TABLE class_preferences (
+    fk_volunteer_id VARCHAR(255), 
+    fk_class_id INT,        
+    class_rank INT,     
+    FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id),
+    FOREIGN KEY (fk_class_id) REFERENCES class(class_id) 
 );

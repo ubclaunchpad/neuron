@@ -2,7 +2,7 @@ import { Schedule } from '../common/generated.js';
 import connection from '../config/database.js';
 
 export default class ScheduleModel {
-    getSchedules(): Promise<any> {
+    getSchedules(): Promise<Schedule[]> {
         return new Promise((resolve, reject) => {
             const query = "SELECT * FROM schedule";
 
@@ -18,7 +18,7 @@ export default class ScheduleModel {
         });
     }
 
-    getSchedulesByClassId(classId: string): Promise<any> {
+    getSchedulesByClassId(classId: string): Promise<Schedule[]> {
         return new Promise((resolve, reject) => {
             const query = "SELECT * FROM schedule WHERE fk_class_id = ?";
             const values = [classId];
@@ -68,17 +68,18 @@ export default class ScheduleModel {
         });
     }
 
-    updateSchedulesByClassId(classId: string, newSchedules: Schedule[]): Promise<any> {
+    updateSchedulesByClassId(classId: string, newSchedules: Schedule[]): Promise<Schedule[]> {
         return new Promise(async (resolve, reject) => {
             try {
 
                 // Get exisitng schedules and conform them to our Schedule interface
                 const existingAvailabilities = (await this.getSchedulesByClassId(classId))
-                    .map((schedule: any) => ({
+                    .map((schedule: Schedule) => ({
                         day: schedule.day,
                         start_time: schedule.start_time.slice(0, 5),
                         end_time: schedule.end_time.slice(0, 5),
-                        schedule_id: schedule.availability_id
+                        schedule_id: schedule.schedule_id,
+                        fk_class_id: schedule.fk_class_id
                     }));
 
                 const scheduleIdsToDelete: Set<number> = new Set();

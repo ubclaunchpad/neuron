@@ -25,7 +25,7 @@ async function getShiftInfo(req: Request, res: Response){
     
     try {
         const shift_info = await shiftModel.getShiftInfoFromDB(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
-        res.status(200).json(shift_info[0]);
+        res.status(200).json(shift_info);
     } catch (error: any) {
         return res.status(500).json({
             error: `Internal server error: ${error.message}`

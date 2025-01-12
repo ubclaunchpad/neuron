@@ -2,7 +2,7 @@ import { Availability } from "../common/generated.js";
 import connectionPool from "../config/database.js";
 
 export default class AvailabilityModel {
-  getAvailabilities(): Promise<any> {
+  getAvailabilities(): Promise<Availability[]> {
     return new Promise((resolve, reject) => {
       const query = "SELECT * FROM availability";
 
@@ -18,7 +18,7 @@ export default class AvailabilityModel {
     });
   }
 
-  getAvailabilityByVolunteerId(volunteer_id: string): Promise<any> {
+  getAvailabilityByVolunteerId(volunteer_id: string): Promise<Availability[]> {
     return new Promise((resolve, reject) => {
       const query = "SELECT * FROM availability WHERE fk_volunteer_id = ?";
       const values = [volunteer_id];
@@ -68,17 +68,18 @@ export default class AvailabilityModel {
     });
   }
 
-  updateAvailabilityByVolunteerId(volunteer_id: string, newAvailabilities: Availability[]): Promise<any> {
+  updateAvailabilityByVolunteerId(volunteer_id: string, newAvailabilities: Availability[]): Promise<Availability[]> {
     return new Promise(async (resolve, reject) => {
       try {
 
         // Get exisitng availabilities and conform them to our Availability type
         const existingAvailabilities = (await this.getAvailabilityByVolunteerId(volunteer_id))
-          .map((availability: any) => ({
-            day: availability.day_of_week,
+          .map((availability: Availability) => ({
+            day: availability.day,
             start_time: availability.start_time.slice(0, 5),
             end_time: availability.end_time.slice(0, 5),
-            availability_id: availability.availability_id
+            availability_id: availability.availability_id,
+            fk_volunteer_id: availability.fk_volunteer_id
           }));
 
         const availabilityIdsToDelete: Set<number> = new Set();

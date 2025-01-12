@@ -60,7 +60,7 @@ create table volunteers (
     p_name VARCHAR(45),
     total_hours INT NOT NULL DEFAULT 0,
     bio VARCHAR(150),
-    active BOOLEAN,
+    active BOOLEAN NOT NULL DEFAULT FALSE,
     email VARCHAR(45) NOT NULL,
     pronouns VARCHAR(15),
     phone_number VARCHAR(15),

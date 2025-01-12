@@ -1,4 +1,4 @@
-import { Class } from '../common/generated.js';
+import { Class, ClassImage } from '../common/generated.js';
 import connection from '../config/database.js';
 
 export default class ClassesModel {
@@ -36,7 +36,7 @@ export default class ClassesModel {
           });
      }
 
-     public getClassById(class_id: string): Promise<any> {
+     public getClassById(class_id: string): Promise<Class> {
           return new Promise((resolve, reject) => {
 
                // All class information is in one entry. Volunteer names, days of week, start times and end times can have multiple 
@@ -140,7 +140,7 @@ export default class ClassesModel {
           });
      }
 
-     public getAllImages(): Promise<any> {
+     public getAllImages(): Promise<ClassImage[]> {
           return new Promise((resolve, reject) => {
                const query = `SELECT * FROM class_image`;
 
@@ -153,7 +153,7 @@ export default class ClassesModel {
           });
      }
 
-     public getImageByClassId(class_id: number): Promise<any> {
+     public getImageByClassId(class_id: number): Promise<ClassImage> {
           return new Promise((resolve, reject) => {
                const query = `SELECT image FROM class_image WHERE fk_class_id = ?`;
 

@@ -1,8 +1,8 @@
-import { VolunteerProfilePic } from "../common/generated.js";
+import { Volunteer, VolunteerProfilePic } from "../common/generated.js";
 import connectionPool from "../config/database.js";
 
 export default class VolunteerModel {
-    getVolunteerById(volunteer_id: string): Promise<any> {
+    getVolunteerById(volunteer_id: string): Promise<Volunteer> {
         return new Promise((resolve, reject) => {
             const query = `
                 SELECT 
@@ -34,7 +34,7 @@ export default class VolunteerModel {
         });
     }
 
-    getVolunteerByUserId(user_id: string): Promise<any> {
+    getVolunteerByUserId(user_id: string): Promise<Volunteer> {
         return new Promise((resolve, reject) => {
             const query = "SELECT * FROM volunteers WHERE fk_user_id = ?";
             const values = [user_id];
@@ -57,7 +57,7 @@ export default class VolunteerModel {
         });
     }
 
-    getVolunteers(): Promise<any> {
+    getVolunteers(): Promise<Volunteer[]> {
         return new Promise((resolve, reject) => {
             const query = "SELECT * FROM volunteers";
             connectionPool.query(query, [], (error: any, results: any) => {
@@ -72,11 +72,10 @@ export default class VolunteerModel {
         });
     }
 
-    getUnverifiedVolunteers(): Promise<any> {
+    getUnverifiedVolunteers(): Promise<Volunteer[]> {
         return new Promise((resolve, reject) => {
-            // active is 0 or null
             const query =
-                "SELECT * FROM volunteers WHERE active IS NULL OR active = 0";
+                "SELECT * FROM volunteers WHERE active = false";
             connectionPool.query(query, [], (error: any, results: any) => {
                 if (error) {
                     return reject({
@@ -195,7 +194,7 @@ export default class VolunteerModel {
         });
     }
 
-    getProfilePicture(volunteer_id: string): Promise<any> {
+    getProfilePicture(volunteer_id: string): Promise<VolunteerProfilePic> {
         return new Promise((resolve, reject) => {
             const query = "SELECT profile_pic FROM volunteer_profile_pics WHERE fk_volunteer_id = ?";
             const values = [volunteer_id];

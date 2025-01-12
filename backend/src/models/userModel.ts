@@ -1,7 +1,8 @@
+import { User } from "../common/generated.js";
 import connectionPool from "../config/database.js";
 
 export default class UserModel {
-    getUserById(user_id: string): Promise<any> {
+    getUserById(user_id: string): Promise<User> {
         return new Promise((resolve, reject) => {
             const query = `SELECT * FROM users WHERE user_id = ?`;
             const values = [user_id];
@@ -26,7 +27,7 @@ export default class UserModel {
         });
     }
 
-    getUserByEmail(email: string): Promise<any> {
+    getUserByEmail(email: string): Promise<User> {
         return new Promise((resolve, reject) => {
             const query = `SELECT * FROM users WHERE email = ?`;
             const values = [email];

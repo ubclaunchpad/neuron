@@ -60,6 +60,7 @@ export interface Class {
   start_date: string;
   end_date?: string;
   category: string;
+  subcategory?: string;
 }
 
 export interface Shift {

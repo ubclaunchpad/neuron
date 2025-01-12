@@ -15,7 +15,7 @@ async function getAllClasses(req: Request, res: Response) {
 }
 
 async function addClass(req: Request, res: Response) {
-	const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category } = req.body;
+	const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = req.body;
 
 	if (!fk_instructor_id || !class_name || !start_date || !end_date) {
 		return res.status(400).json({
@@ -32,10 +32,11 @@ async function addClass(req: Request, res: Response) {
 			start_date: start_date,
 			end_date: end_date,
 			category: category,
+			subcategory: subcategory
 		};
 
 		const result = await classesModel.addClass(newClass);
-		const newClassId = result.class_id;
+		const newClassId = result.insertId;
 		const addedClass = {
 			class_id: newClassId,
 			fk_instructor_id,
@@ -45,6 +46,7 @@ async function addClass(req: Request, res: Response) {
 			start_date,
 			end_date,
 			category,
+			subcategory
 		};
 
 		return res.status(201).json({
@@ -55,6 +57,62 @@ async function addClass(req: Request, res: Response) {
 		return res.status(500).json({
 			error: `Internal server error: ${error}`
 		});
+	}
+}
+
+async function updateClass(req: Request, res: Response) {
+	const { class_id } = req.params;
+	const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = req.body;
+
+	if (!class_id) {
+		return res.status(400).json({
+			error: 'Missing required field: class_id is required.'
+		});
+	}
+
+	if (!fk_instructor_id || !class_name || !start_date || !end_date) {
+		return res.status(400).json({
+			error: 'Missing required fields: fk_instructor_id, class_name, start_date, and end_date are required.'
+		});
+	}
+
+	try {
+		const updatedClass: Class = {
+			fk_instructor_id,
+			class_name,
+			instructions: instructions,
+			zoom_link: zoom_link,
+			start_date: start_date,
+			end_date: end_date,
+			category: category,
+			subcategory: subcategory
+		};
+
+		const result = await classesModel.updateClass(class_id, updatedClass);
+		return res.status(200).json(result);
+	} catch (error: any) {
+		return res.status(error.status).json({
+            error: error.message,
+        });
+	}
+}
+
+async function deleteClass(req: Request, res: Response) {
+	const { class_id } = req.params;
+
+	if (!class_id) {
+		return res.status(400).json({
+			error: 'Missing required field: class_id is required.'
+		});
+	}
+
+	try {
+		const result = await classesModel.deleteClass(class_id);
+		return res.status(200).json(result);
+	} catch (error: any) {
+		return res.status(error.status).json({
+            error: error.message,
+        });
 	}
 }
 
@@ -166,6 +224,8 @@ export {
 	getClassById,
 	getClassesByDay,
 	addClass,
+	updateClass,
+	deleteClass,
 	getAllImages,
 	getImageByClassId,
 	uploadImage

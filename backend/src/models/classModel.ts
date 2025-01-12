@@ -120,17 +120,15 @@ export default class ClassesModel {
           });
      }
 
-
-
-     public addClass(newClass: Class): Promise<Class> {
+     public addClass(newClass: Class): Promise<any> {
           return new Promise((resolve, reject) => {
                const query = `INSERT INTO class 
-                             (fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category)
-                             VALUES (?, ?, ?, ?, ?, ?, ?)`;
+                             (fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
-               const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category } = newClass;
+               const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = newClass;
 
-               connection.query(query, [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category],
+               connection.query(query, [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory],
                     (error: any, results: any) => {
                          if (error) {
                               return reject('Error adding class: ' + error);
@@ -138,6 +136,44 @@ export default class ClassesModel {
                          resolve(results);
                     });
           });
+     }
+
+     updateClass(class_id: string, classData: any): Promise<any> {
+          return new Promise((resolve, reject) => {
+               // Construct the SET clause dynamically
+               const setClause = Object.keys(classData)
+                    .map((key) => `${key} = ?`)
+                    .join(", ");
+               const query = `UPDATE class SET ${setClause} WHERE class_id = ?`;
+               const values = [...Object.values(classData), class_id];
+  
+               connection.query(query, values, (error: any, results: any) => {
+                    if (error) {
+                         return reject({
+                              status: 500,
+                              message: `An error occurred while executing the query: ${error}`,
+                         });
+                    }
+                    resolve(results);
+               });
+          });
+      }
+
+     public deleteClass(class_id: string): Promise<any> {
+          return new Promise((resolve, reject) => {
+               const query = "DELETE FROM class WHERE class_id = ?";
+               const values = [class_id];
+
+               connection.query(query, values, (error: any, results: any) => {
+                    if (error) {
+                         return reject({
+                              status: 500,
+                              message: `An error occurred while executing the query: ${error}`,
+                         });
+                    }
+                    resolve(results);
+               });
+          })
      }
 
      public getAllImages(): Promise<any> {

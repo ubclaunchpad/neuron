@@ -1,6 +1,16 @@
 import express from 'express';
 import { Request, Response } from 'express';
-import { getAllClasses, getClassById, getClassesByDay, addClass, getAllImages, getImageByClassId, uploadImage } from '../controllers/classController.js';
+import { 
+    getAllClasses, 
+    getClassById, 
+    getClassesByDay, 
+    addClass, 
+    updateClass,
+    deleteClass,
+    getAllImages, 
+    getImageByClassId, 
+    uploadImage 
+} from '../controllers/classController.js';
 import multer from 'multer'; // Used for file uploads
 
 const router = express.Router();
@@ -29,6 +39,14 @@ router.get("/schedule/:day", async (req, res) => {
 
 router.post('/', async (req: Request, res: Response) => {
     await addClass(req, res);
+});
+
+router.put('/:class_id', async (req: Request, res: Response) => {
+    await updateClass(req, res);
+});
+
+router.delete('/:class_id', async (req: Request, res: Response) => {
+    await deleteClass(req, res);
 });
 
 router.put('/images/:class_id', upload.single('image'), async (req: Request, res: Response) => {

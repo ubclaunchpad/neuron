@@ -1,5 +1,5 @@
+import { Class } from '../common/generated.js';
 import connection from '../config/database.js';
-import { Class } from '../common/interfaces.js'
 
 export default class ClassesModel {
 

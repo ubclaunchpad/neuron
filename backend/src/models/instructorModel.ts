@@ -1,5 +1,5 @@
+import { Instructor } from '../common/generated.js';
 import connectionPool from '../config/database.js';
-import { Instructor } from '../common/interfaces.js';
 
 // Instructor model
 export default class InstructorModel {

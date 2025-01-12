@@ -1,12 +1,15 @@
 -- Paste all 'create' SQL commands here
-DROP TABLE IF EXISTS shift_coverage_request;
-DROP TABLE IF EXISTS shifts;
 DROP TABLE IF EXISTS volunteer_class;
 DROP TABLE IF EXISTS availability;
-DROP TABLE IF EXISTS schedule;
-DROP TABLE IF EXISTS class;
+DROP TABLE IF EXISTS class_preferences;
+DROP TABLE IF EXISTS pending_shift_coverage;
+DROP TABLE IF EXISTS shift_coverage_request;
+DROP TABLE IF EXISTS shifts;
 DROP TABLE IF EXISTS volunteer_profile_pics;
 DROP TABLE IF EXISTS volunteers;
+DROP TABLE IF EXISTS schedule;
+DROP TABLE IF EXISTS class_image;
+DROP TABLE IF EXISTS class;
 DROP TABLE IF EXISTS admins;
 DROP TABLE IF EXISTS instructors;
 DROP TABLE IF EXISTS user_session;
@@ -86,7 +89,7 @@ create table admins (
 create table availability (
 	availability_id INT PRIMARY KEY AUTO_INCREMENT,
     fk_volunteer_id VARCHAR(255) NOT NULL,
-    day_of_week INT NOT NULL,
+    day INT NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
@@ -106,7 +109,7 @@ CREATE TABLE volunteer_class (
 create table schedule (
 	schedule_id INT PRIMARY KEY AUTO_INCREMENT,
     fk_class_id INT NOT NULL,
-    day_of_week INT NOT NULL,
+    day INT NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     FOREIGN KEY (fk_class_id) REFERENCES class(class_id)

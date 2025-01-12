@@ -1,5 +1,5 @@
+import { Availability } from "../common/generated.js";
 import connectionPool from "../config/database.js";
-import { Availability } from "../common/interfaces.js";
 
 export default class AvailabilityModel {
   getAvailabilities(): Promise<any> {
@@ -54,7 +54,7 @@ export default class AvailabilityModel {
     });
   }
 
-  deleteAvailabilitiesByAvailabilityId(volunteer_id: string, availabilityIds: string[]): Promise<any> {
+  deleteAvailabilitiesByAvailabilityId(volunteer_id: string, availabilityIds: number[]): Promise<any> {
     return new Promise((resolve, reject) => {
       const query = `DELETE FROM availability WHERE fk_volunteer_id = ? AND availability_id IN (?)`;
       const values = [volunteer_id, availabilityIds];
@@ -81,11 +81,11 @@ export default class AvailabilityModel {
             availability_id: availability.availability_id
           }));
 
-        const availabilityIdsToDelete: Set<string> = new Set();
+        const availabilityIdsToDelete: Set<number> = new Set();
         const availabilitiesToSkip: Set<Availability> = new Set();
 
         // Helper function to check if two availabilities are an exact match
-        const isExactMatch = (a: Availability, b: any) => (
+        const isExactMatch = (a: Availability, b: Availability) => (
           a.day === b.day &&
           a.start_time === b.start_time &&
           a.end_time === b.end_time

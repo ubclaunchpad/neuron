@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
+import { VolunteerProfilePic } from "../common/generated.js";
 import VolunteerModel from "../models/volunteerModel.js";
-import { ProfilePic } from "../common/interfaces.js";
 
 const volunteerModel = new VolunteerModel();
 
@@ -115,9 +115,9 @@ async function insertProfilePicture(req: Request, res: Response) {
     }
 
     const imageBuffer = req.file.buffer;
-    const profilePic: ProfilePic = {
-        volunteer_id: volunteer_id,
-        profile_picture: imageBuffer
+    const profilePic: VolunteerProfilePic = {
+        fk_volunteer_id: volunteer_id,
+        profile_pic: imageBuffer
     }
     try {
         const insertedProfilePic = await volunteerModel.insertProfilePicture(profilePic);
@@ -164,9 +164,9 @@ async function updateProfilePicture(req: Request, res: Response) {
     }
 
     const imageBuffer = req.file.buffer;
-    const profilePic: ProfilePic = {
-        volunteer_id: volunteer_id,
-        profile_picture: imageBuffer
+    const profilePic: VolunteerProfilePic = {
+        fk_volunteer_id: volunteer_id,
+        profile_pic: imageBuffer
     }
     try {
         const result = await volunteerModel.updateProfilePicture(profilePic);
@@ -233,15 +233,8 @@ async function shiftCheckIn(req: Request, res: Response) {
 }
 
 export {
-    getVolunteerById,
+    deleteProfilePicture, deleteVolunteer, getProfilePicture, getVolunteerById,
     getVolunteerByUserId,
-    getVolunteers,
-    insertVolunteer,
-    deleteVolunteer,
-    updateVolunteer,
-    insertProfilePicture,
-    getProfilePicture,
-    updateProfilePicture,
-    deleteProfilePicture,
-    shiftCheckIn
+    getVolunteers, insertProfilePicture, insertVolunteer, shiftCheckIn, updateProfilePicture, updateVolunteer
 };
+

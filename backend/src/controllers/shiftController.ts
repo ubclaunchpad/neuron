@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
+import { Shift } from '../common/generated.js';
 import ShiftModel from '../models/shiftModel.js';
-import { Shift } from '../common/interfaces.js';
 
 const shiftModel = new ShiftModel();
 
@@ -136,9 +136,6 @@ async function requestToCoverShift(req: Request, res: Response) {
 }
 
 export {
-    getShiftInfo,
-    getShiftsByVolunteerId,
-    getShiftsByDate,
-    getShiftsByVolunteerIdAndMonth,
+    getShiftInfo, getShiftsByDate, getShiftsByVolunteerId, getShiftsByVolunteerIdAndMonth,
     requestToCoverShift
 };

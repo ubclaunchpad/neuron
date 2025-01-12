@@ -34,7 +34,7 @@ export interface ClassImage {
 export interface ClassPreference {
   'class_rank'?: number | null;
   'fk_class_id'?: number | null;
-  'fk_volunteer_id'?: string | null;
+  'fk_volunter_id'?: string | null;
 }
 export interface Instructor {
   'email': string;
@@ -71,7 +71,7 @@ export interface Shift {
 export interface User {
   'created_at'?: Date | null;
   'email': string;
-  'password': string;
+  'password'?: string | null;
   'role': string;
   'user_id': string;
 }
@@ -95,6 +95,6 @@ export interface Volunteer {
   'phone_number'?: string | null;
   'pronouns'?: string | null;
   'province'?: string | null;
-  'total_hours': number;
+  'total_hours'?: number;
   'volunteer_id': string;
 }

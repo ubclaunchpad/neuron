@@ -58,7 +58,7 @@ create table volunteers (
     f_name VARCHAR(15) NOT NULL,
     l_name VARCHAR(15) NOT NULL,
     p_name VARCHAR(45),
-    total_hours INT NOT NULL,
+    total_hours INT NOT NULL DEFAULT 0,
     bio VARCHAR(150),
     active BOOLEAN,
     email VARCHAR(45) NOT NULL,

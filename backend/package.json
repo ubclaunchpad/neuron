@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "generate-schema": "node generate-types.js"
   },
   "keywords": [],
   "author": "",

@@ -1,14 +1,13 @@
-import "./index.css";
 import React from "react";
+import "./index.css";
 
-import edit_icon from "../../../assets/edit-icon.png"
-import check_icon from "../../../assets/check-icon.png";
-import cancel_icon from "../../../assets/cancel-icon.png";
-import empty_profile from "../../../assets/empty-profile.png";
 import camera_icon from "../../../assets/camera.png";
+import cancel_icon from "../../../assets/cancel-icon.png";
+import check_icon from "../../../assets/check-icon.png";
+import edit_icon from "../../../assets/edit-icon.png";
 
-import { updateVolunteerData, updateProfilePicture, insertProfilePicture } from "../../../api/volunteerService";
 import { CgSelect } from "react-icons/cg";
+import { insertProfilePicture, updateProfilePicture, updateVolunteerData } from "../../../api/volunteerService";
 import useComponentVisible from "../../../hooks/useComponentVisible";
 
 function VolunteerDetailsCard({ volunteer }) {
@@ -161,7 +160,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                 document.getElementById('fileInput').click()
                         }}
                     >
-                        <img src={tempImage ? tempImage : mutableData.profilePicture ? mutableData.profilePicture : empty_profile} alt="Profile" className="profile-image"/>
+                        <img src={tempImage ? tempImage : mutableData.profilePicture ? mutableData.profilePicture : `https://api.dicebear.com/9.x/initials/svg?seed=${mutableData.preferredName}`} alt="Profile" className="profile-image"/>
                         {isEditing && <div className="overlay">
                             <img src={camera_icon} alt="Edit Profile" className="camera-icon" />
                             <p className="edit-text">Edit</p>

@@ -21,7 +21,7 @@ export default class ClassesModel {
                const query =
                     `SELECT * FROM class INNER JOIN schedule ON class.class_id = schedule.fk_class_id 
                WHERE ? BETWEEN CAST(start_date as date) AND CAST(end_date as date)
-               AND WEEKDAY(?) = day_of_week`;
+               AND WEEKDAY(?) = day`;
 
                const values = [day, day];
                connection.query(query, values, (error: any, result: any) => {
@@ -75,7 +75,7 @@ export default class ClassesModel {
                               s.fk_class_id AS class_id,
                               GROUP_CONCAT(s.start_time) AS start_times,
                               GROUP_CONCAT(s.end_time) AS end_times,
-                              GROUP_CONCAT(s.day_of_week) AS days_of_week
+                              GROUP_CONCAT(s.day) AS days_of_week
                          FROM schedule s
                          WHERE s.fk_class_id = (SELECT id FROM params)
                          GROUP BY s.fk_class_id

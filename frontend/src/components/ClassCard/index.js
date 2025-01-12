@@ -20,14 +20,14 @@ const formatSchedules = (schedules) => {
 
   // sort by day of week then start time
   const sortedSchedules = schedules.sort((a, b) => {
-    if (a.day_of_week !== b.day_of_week) {
-      return a.day_of_week - b.day_of_week;
+    if (a.day !== b.day) {
+      return a.day - b.day;
     }
     return a.start_time.localeCompare(b.start_time);
   });
 
   return sortedSchedules.map((schedule) => {
-    const day = dayMap[schedule.day_of_week];
+    const day = dayMap[schedule.day];
     const startTime = formatTime(schedule.start_time);
     const endTime = formatTime(schedule.end_time);
     return `${day}, ${startTime} - ${endTime}`;

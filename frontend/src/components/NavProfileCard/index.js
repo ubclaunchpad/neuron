@@ -1,6 +1,6 @@
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import React from "react";
 import "./index.css";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 import { useNavigate } from "react-router-dom";
 
@@ -22,7 +22,7 @@ export default function NavProfileCard({
         <img src={avatar} alt={name} width={32} height={32} />
       ) : (
         <img
-          src={`https://avatars.dicebear.com/api/human/${name}.svg`}
+          src={`https://api.dicebear.com/9.x/initials/svg?seed=${name}`}
           alt={name}
           width={32}
           height={32}
@@ -37,7 +37,7 @@ export default function NavProfileCard({
             <img src={avatar} alt={name} width={40} height={40} />
           ) : (
             <img
-              src={`https://avatars.dicebear.com/api/human/${name}.svg`}
+              src={`https://api.dicebear.com/9.x/initials/svg?seed=${name}`}
               alt={name}
               width={40}
               height={40}

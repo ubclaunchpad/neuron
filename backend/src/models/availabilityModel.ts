@@ -37,7 +37,7 @@ export default class AvailabilityModel {
 
   setAvailabilityByVolunteerId(volunteer_id: string, availabilities: Availability[]): Promise<any> {
     return new Promise((resolve, reject) => {
-      const query = `INSERT INTO availability (fk_volunteer_id, day_of_week, start_time, end_time) VALUES ?`;
+      const query = `INSERT INTO availability (fk_volunteer_id, day, start_time, end_time) VALUES ?`;
       const values = availabilities.map((availability) => [
         volunteer_id,
         availability.day,

@@ -212,7 +212,7 @@ export default class VolunteerModel {
                         message: `No profile picture found under the given volunteer ID`,
                     });
                 }
-                resolve(results[0].profile_pic);
+                resolve(results[0]);
             });
         });
     }

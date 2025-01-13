@@ -139,10 +139,9 @@ async function getProfilePicture(req: Request, res: Response) {
 
     try {
         const profilePic = await volunteerModel.getProfilePicture(volunteer_id);
-        res.writeHead(200, { 'Content-Type': 'image/jpeg' });
-        res.end(profilePic, 'binary');
+        res.type('image/jpeg').send(profilePic.profile_pic);
     } catch (error: any) {
-        return res.status(error.status).json({
+        return res.status(error.status ?? 500).json({
             error: error.message,
         });
     }

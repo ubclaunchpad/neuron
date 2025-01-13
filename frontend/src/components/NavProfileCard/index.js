@@ -1,5 +1,6 @@
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import React from "react";
+import ProfileImg from "../ImgFallback";
 import "./index.css";
 
 import { useNavigate } from "react-router-dom";
@@ -18,31 +19,19 @@ export default function NavProfileCard({
 
   return collapse ? (
     <div className="nav-profile-card__avatar-collapse">
-      {avatar ? (
-        <img src={avatar} alt={name} width={32} height={32} />
-      ) : (
-        <img
-          src={`https://api.dicebear.com/9.x/initials/svg?seed=${name}`}
-          alt={name}
-          width={32}
-          height={32}
-        />
-      )}
+      <ProfileImg
+        src={avatar}
+        name={name}
+      ></ProfileImg>
     </div>
   ) : (
     <div className="nav-profile-card" onClick={toProfile}>
       <div className="nav-profile-card__main">
         <div className="nav-profile-card__avatar">
-          {avatar ? (
-            <img src={avatar} alt={name} width={40} height={40} />
-          ) : (
-            <img
-              src={`https://api.dicebear.com/9.x/initials/svg?seed=${name}`}
-              alt={name}
-              width={40}
-              height={40}
-            />
-          )}
+          <ProfileImg
+            src={avatar}
+            name={name}
+          ></ProfileImg>
         </div>
         <div className="nav-profile-card__info">
           <p className="nav-profile-card__name">{name}</p>

@@ -1,16 +1,16 @@
-import "./index.css";
-import { NavLink } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { React, useEffect, useState } from "react";
+import { NavLink, Outlet } from "react-router-dom";
 import BC_brain from "../../assets/bwp-logo-text.png";
-import sidebar_toggle from "../../assets/sidebar-toggle.png";
+import nav_item_classes from "../../assets/nav-item-classes.png";
 import nav_item_dash from "../../assets/nav-item-dash.png";
 import nav_item_schedule from "../../assets/nav-item-sched.png";
-import nav_item_classes from "../../assets/nav-item-classes.png";
 import nav_item_settings from "../../assets/nav-item-settings.png";
+import sidebar_toggle from "../../assets/sidebar-toggle.png";
+import "./index.css";
 
-import NavProfileCard from "../NavProfileCard";
 import { isAuthenticated } from "../../api/authService";
 import { getProfilePicture } from "../../api/volunteerService";
+import NavProfileCard from "../NavProfileCard";
 
 function VolunteerLayout({ pageTitle, children, pageStyle }) {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
@@ -118,23 +118,15 @@ function VolunteerLayout({ pageTitle, children, pageStyle }) {
             name={volunteer?.f_name}
             email={volunteer?.email}
             collapse={collapsed}
-            link={"/volunteer/my-profile"}
+            link="/volunteer/my-profile"
           />
         </div>
       </aside>
       <main className="content-container" style={pageStyle}>
         <div className="content-heading">
           <h2 className="content-title">{pageTitle}</h2>
-          {pageTitle === "My Profile" && (
-            <button className="logout-button" onClick={() => {
-                localStorage.removeItem("neuronAuthToken");
-                window.location.href = "/auth/login";
-            }}>
-              <i className="fa-solid fa-arrow-right-from-bracket"></i>&nbsp;&nbsp;Log Out
-            </button>
-          )}
         </div>
-        {children} {/* Render page content here */}
+        <Outlet /> {/* Render page content here */}
       </main>
     </div>
   );

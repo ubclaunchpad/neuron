@@ -1,22 +1,32 @@
 import { Router, Request, Response } from 'express';
-import { getSchedules, getSchedulesByClassId, setSchedulesByClassId, updateSchedulesByClassId } from '../controllers/scheduleController.js';
+import { 
+  getSchedules, 
+  getSchedulesByClassId, 
+  setSchedulesByClassId, 
+  updateSchedulesByClassId,
+  deleteSchedules
+} from '../controllers/scheduleController.js';
 
 const router = Router();
 
-router.get('/', (req: Request, res: Response) => {
-  getSchedules(req, res);
+router.get('/', async (req: Request, res: Response) => {
+  await getSchedules(req, res);
 });
 
-router.get('/:class_id', (req: Request, res: Response) => {
-  getSchedulesByClassId(req, res);
+router.get('/:class_id', async (req: Request, res: Response) => {
+  await getSchedulesByClassId(req, res);
 });
 
-router.post('/:class_id', (req: Request, res: Response) => {
-  setSchedulesByClassId(req, res);
+router.post('/:class_id', async (req: Request, res: Response) => {
+  await setSchedulesByClassId(req, res);
 });
 
-router.put('/:class_id', (req: Request, res: Response) => {
-  updateSchedulesByClassId(req, res);
+router.put('/:class_id', async (req: Request, res: Response) => {
+  await updateSchedulesByClassId(req, res);
 });
+
+router.delete('/:class_id', async (req: Request, res: Response) => {
+  await deleteSchedules(req, res);
+})
 
 export default router;

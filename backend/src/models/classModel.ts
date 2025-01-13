@@ -1,5 +1,5 @@
+import { Class, ClassImage } from '../common/generated.js';
 import connection from '../config/database.js';
-import { Class } from '../common/interfaces.js'
 
 export default class ClassesModel {
 
@@ -21,7 +21,7 @@ export default class ClassesModel {
                const query =
                     `SELECT * FROM class INNER JOIN schedule ON class.class_id = schedule.fk_class_id 
                WHERE ? BETWEEN CAST(start_date as date) AND CAST(end_date as date)
-               AND WEEKDAY(?) = day_of_week`;
+               AND WEEKDAY(?) = day`;
 
                const values = [day, day];
                connection.query(query, values, (error: any, result: any) => {
@@ -36,7 +36,7 @@ export default class ClassesModel {
           });
      }
 
-     public getClassById(class_id: string): Promise<any> {
+     public getClassById(class_id: string): Promise<Class> {
           return new Promise((resolve, reject) => {
 
                // All class information is in one entry. Volunteer names, days of week, start times and end times can have multiple 
@@ -75,7 +75,7 @@ export default class ClassesModel {
                               s.fk_class_id AS class_id,
                               GROUP_CONCAT(s.start_time) AS start_times,
                               GROUP_CONCAT(s.end_time) AS end_times,
-                              GROUP_CONCAT(s.day_of_week) AS days_of_week
+                              GROUP_CONCAT(s.day) AS days_of_week
                          FROM schedule s
                          WHERE s.fk_class_id = (SELECT id FROM params)
                          GROUP BY s.fk_class_id
@@ -157,7 +157,7 @@ export default class ClassesModel {
                     resolve(results);
                });
           });
-      }
+     }
 
      public deleteClass(class_id: string): Promise<any> {
           return new Promise((resolve, reject) => {
@@ -176,7 +176,7 @@ export default class ClassesModel {
           })
      }
 
-     public getAllImages(): Promise<any> {
+     public getAllImages(): Promise<ClassImage[]> {
           return new Promise((resolve, reject) => {
                const query = `SELECT * FROM class_image`;
 
@@ -189,7 +189,7 @@ export default class ClassesModel {
           });
      }
 
-     public getImageByClassId(class_id: number): Promise<any> {
+     public getImageByClassId(class_id: number): Promise<ClassImage> {
           return new Promise((resolve, reject) => {
                const query = `SELECT image FROM class_image WHERE fk_class_id = ?`;
 

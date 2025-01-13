@@ -11,7 +11,7 @@ BEGIN
     -- First query for 'my-shifts'
     SELECT 
         shifts.shift_date AS shift_date,
-        schedule.day_of_week AS day_of_week,
+        schedule.day AS day,
         schedule.start_time AS start_time,
         schedule.end_time AS end_time,
         class.class_id AS _class_id,
@@ -40,7 +40,7 @@ BEGIN
     -- Second query for 'coverage' with coverage status and request_id
     SELECT 
         shifts.shift_date AS shift_date,
-        schedule.day_of_week AS day_of_week,
+        schedule.day AS day,
         schedule.start_time AS start_time,
         schedule.end_time AS end_time,
         class.class_id AS _class_id,
@@ -83,7 +83,7 @@ BEGIN
     -- Third query for 'my-coverage-requests' with request_id
     SELECT 
         shifts.shift_date AS shift_date,
-        schedule.day_of_week AS day_of_week,
+        schedule.day AS day,
         schedule.start_time AS start_time,
         schedule.end_time AS end_time,
         class.class_id AS _class_id,

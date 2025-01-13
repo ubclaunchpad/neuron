@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import './index.css';
 import { fetchVolunteerAvailability, setVolunteerAvailability, updateVolunteerAvailability } from '../../../api/volunteerService';
+import './index.css';
 
-import edit_icon from "../../../assets/edit-icon.png"
-import check_icon from "../../../assets/check-icon.png";
 import cancel_icon from "../../../assets/cancel-icon.png";
+import check_icon from "../../../assets/check-icon.png";
+import edit_icon from "../../../assets/edit-icon.png";
 
 const AvailabilityGrid = ({ volunteerId }) => {
   const [unsavedTimes, setUnsavedTimes] = useState([]);
@@ -22,7 +22,7 @@ const AvailabilityGrid = ({ volunteerId }) => {
         const slotKeys = availability.map((slot) => {
           const hourIndex = (Number(String(slot.start_time).substring(0, 2)) - 9) * 2;
           const minuteIndex = (Number(String(slot.start_time).substring(3, 5))) / 30;
-          return `${Number(slot.day_of_week) - 1}-${hourIndex + minuteIndex}`
+          return `${Number(slot.day) - 1}-${hourIndex + minuteIndex}`
         })
 
         setUnsavedTimes(slotKeys);

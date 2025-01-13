@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Instructor } from '../common/interfaces.js';
+import { Instructor } from '../common/generated.js';
 import InstructorModel from '../models/instructorModel.js';
 
 const instructorModel = new InstructorModel();
@@ -55,7 +55,5 @@ async function insertInstructor(req: Request, res: Response) {
 }
 
 export {
-    getInstructors,
-    getInstructorById,
-    insertInstructor
+    getInstructorById, getInstructors, insertInstructor
 };

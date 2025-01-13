@@ -5,17 +5,17 @@ use neuron;
 INSERT INTO users (user_id, email, password, role) VALUES
 ('9bead604-6554-4db2-9b88-552d15695481', 'jessie.shang@gmail.com', 'password123', 'VOLUN');
 
-INSERT INTO volunteers (volunteer_id, fk_user_id, f_name, l_name, p_name, total_hours, class_preferences, bio, active, email, pronouns, phone_number, city, province) VALUES
-('faff8f98-bc68-4fab-a4ca-151b09fc40c1', '9bead604-6554-4db2-9b88-552d15695481', 'Jessie', 'Shang', null, 0, 'Strength & Balance Level 1', 'I love helping people.', 1, 'jessie.shang@gmail.com', "she/her", "2084248285", "Vancouver", "BC");
+INSERT INTO volunteers (volunteer_id, fk_user_id, f_name, l_name, p_name, total_hours, bio, active, email, pronouns, phone_number, city, province) VALUES
+('faff8f98-bc68-4fab-a4ca-151b09fc40c1', '9bead604-6554-4db2-9b88-552d15695481', 'Jessie', 'Shang', null, 0, 'I love helping people.', 1, 'jessie.shang@gmail.com', "she/her", "2084248285", "Vancouver", "BC");
 
 -- Set volunteer profile pic
 INSERT INTO volunteer_profile_pics (fk_volunteer_id, profile_pic) VALUES 
 ('faff8f98-bc68-4fab-a4ca-151b09fc40c1', null);
 
 -- Set volunteer availability
-INSERT INTO availability (fk_volunteer_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO availability (fk_volunteer_id, day, start_time, end_time) VALUES
 ('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 2, '09:00:00', '12:00:00');
-INSERT INTO availability (fk_volunteer_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO availability (fk_volunteer_id, day, start_time, end_time) VALUES
 ('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 4, '09:00:00', '12:00:00');
 
 -- Insert data into the instructors table
@@ -43,27 +43,27 @@ INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_li
 (9, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Gardening & Cooking in Season', 'What grows together goes together', 'https://zoom.example.com/class9', '2024-09-09', '2024-12-13',  'Creative & Expressive', '');
 
 -- Set class schedule 
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (1, 1, 3, '12:00:00', '13:00:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (2, 2, 3, '14:00:00', '15:00:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (3, 3, 3, '09:30:00', '10:30:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (4, 4, 4, '16:00:00', '17:00:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (5, 5, 4, '10:30:00', '12:00:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (6, 5, 4, '12:30:00', '14:15:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (7, 5, 5, '09:00:00', '10:30:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (8, 6, 5, '11:00:00', '12:30:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (9, 7, 6, '10:00:00', '11:00:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (10, 8, 1, '15:30:00', '16:30:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (11, 9, 3, '15:00:00', '16:00:00');
 
 -- Assign volunteer to class
@@ -89,13 +89,13 @@ INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_li
 (103, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Higher Intensity Chair Exercise', 'Movement that is easy on the joints', 'https://zoom.example.com/class1', '2024-09-09', '2024-12-13');
 
 -- Set class schedule 
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (100, 100, 2, '09:30:00', '10:30:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (101, 101, 4, '11:00:00', '13:00:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (102, 102, 6, '10:00:00', '11:00:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day_of_week, start_time, end_time) VALUES
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (103, 103, 6, '14:00:00', '15:00:00');
 
 -- Assign volunteer to class

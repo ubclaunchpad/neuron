@@ -1,8 +1,8 @@
+import { Availability } from "../common/generated.js";
 import connectionPool from "../config/database.js";
-import { Availability } from "../common/interfaces.js";
 
 export default class AvailabilityModel {
-  getAvailabilities(): Promise<any> {
+  getAvailabilities(): Promise<Availability[]> {
     return new Promise((resolve, reject) => {
       const query = "SELECT * FROM availability";
 
@@ -18,7 +18,7 @@ export default class AvailabilityModel {
     });
   }
 
-  getAvailabilityByVolunteerId(volunteer_id: string): Promise<any> {
+  getAvailabilityByVolunteerId(volunteer_id: string): Promise<Availability[]> {
     return new Promise((resolve, reject) => {
       const query = "SELECT * FROM availability WHERE fk_volunteer_id = ?";
       const values = [volunteer_id];
@@ -37,7 +37,7 @@ export default class AvailabilityModel {
 
   setAvailabilityByVolunteerId(volunteer_id: string, availabilities: Availability[]): Promise<any> {
     return new Promise((resolve, reject) => {
-      const query = `INSERT INTO availability (fk_volunteer_id, day_of_week, start_time, end_time) VALUES ?`;
+      const query = `INSERT INTO availability (fk_volunteer_id, day, start_time, end_time) VALUES ?`;
       const values = availabilities.map((availability) => [
         volunteer_id,
         availability.day,
@@ -54,7 +54,7 @@ export default class AvailabilityModel {
     });
   }
 
-  deleteAvailabilitiesByAvailabilityId(volunteer_id: string, availabilityIds: string[]): Promise<any> {
+  deleteAvailabilitiesByAvailabilityId(volunteer_id: string, availabilityIds: number[]): Promise<any> {
     return new Promise((resolve, reject) => {
       const query = `DELETE FROM availability WHERE fk_volunteer_id = ? AND availability_id IN (?)`;
       const values = [volunteer_id, availabilityIds];
@@ -68,24 +68,25 @@ export default class AvailabilityModel {
     });
   }
 
-  updateAvailabilityByVolunteerId(volunteer_id: string, newAvailabilities: Availability[]): Promise<any> {
+  updateAvailabilityByVolunteerId(volunteer_id: string, newAvailabilities: Availability[]): Promise<Availability[]> {
     return new Promise(async (resolve, reject) => {
       try {
 
         // Get exisitng availabilities and conform them to our Availability type
         const existingAvailabilities = (await this.getAvailabilityByVolunteerId(volunteer_id))
-          .map((availability: any) => ({
-            day: availability.day_of_week,
+          .map((availability: Availability) => ({
+            day: availability.day,
             start_time: availability.start_time.slice(0, 5),
             end_time: availability.end_time.slice(0, 5),
-            availability_id: availability.availability_id
+            availability_id: availability.availability_id,
+            fk_volunteer_id: availability.fk_volunteer_id
           }));
 
-        const availabilityIdsToDelete: Set<string> = new Set();
+        const availabilityIdsToDelete: Set<number> = new Set();
         const availabilitiesToSkip: Set<Availability> = new Set();
 
         // Helper function to check if two availabilities are an exact match
-        const isExactMatch = (a: Availability, b: any) => (
+        const isExactMatch = (a: Availability, b: Availability) => (
           a.day === b.day &&
           a.start_time === b.start_time &&
           a.end_time === b.end_time

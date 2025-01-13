@@ -1,32 +1,25 @@
 // home/ is the landing page of the application.
-import "./index.css";
-import React from "react";
-import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import VolunteerLayout from "../../components/volunteerLayout";
-import { isAuthenticated } from "../../api/authService";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForwardIos";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import DashShifts from "../../components/DashShifts";
-import DashCoverShifts from "../../components/DashCoverShifts";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
-import DashboardCoverage from "../../components/DashboardCoverage";
+import React, { useEffect, useState } from "react";
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
+import DashboardCoverage from "../../components/DashboardCoverage";
+import DashCoverShifts from "../../components/DashCoverShifts";
+import DashShifts from "../../components/DashShifts";
 import { SHIFT_TYPES } from "../../data/constants";
+import "./index.css";
 
 function VolunteerDash() {
   const volunteerID = localStorage.getItem("volunteerID");
-  const [loading, setLoading] = useState(true);
   const [checkIn, setCheckIn] = useState(false);
   const [shifts, setShifts] = useState([]);
   const monthDate = dayjs().date(1).hour(0).minute(0);
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [future, setFuture] = useState(false);
-
-  const navigate = useNavigate();
 
   const checkInItem = () => {
     return checkIn ? (
@@ -50,19 +43,6 @@ function VolunteerDash() {
       </div>
     );
   };
-
-  useEffect(() => {
-    isAuthenticated()
-      .then((response) => {
-        console.log(response);
-        if (!response.isAuthenticated) {
-          navigate("/auth/login");
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, []);
 
   useEffect(() => {
     const fetchShifts = async () => {
@@ -133,7 +113,10 @@ function VolunteerDash() {
   }, [selectedDate, shifts]);
 
   return (
-    <VolunteerLayout pageTitle="Dashboard">
+    <main className="content-container">
+      <div className="content-heading">
+          <h2 className="content-title">Dashboard</h2>
+      </div>
       <div className="dash-date-picker">
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker
@@ -190,7 +173,7 @@ function VolunteerDash() {
           {checkInItem()}
         </div>
       </div>
-    </VolunteerLayout>
+    </main>
   );
 }
 

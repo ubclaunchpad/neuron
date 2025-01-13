@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
+import { Class } from '../common/generated.js';
 import ClassesModel from '../models/classModel.js';
-import { Class } from '../common/interfaces.js'
 
 const classesModel = new ClassesModel();
 async function getAllClasses(req: Request, res: Response) {

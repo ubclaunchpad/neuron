@@ -1,13 +1,12 @@
-import "./index.css";
-import React, { useEffect, useState, useRef } from "react";
-import VolunteerLayout from "../../components/volunteerLayout";
-import DetailsPanel from "../../components/DetailsPanel";
+import React, { useEffect, useRef, useState } from "react";
 import {
   getAllClasses,
   getAllClassImages,
   getAllClassSchedules,
 } from "../../api/classesPageService";
 import ClassCategoryContainer from "../../components/ClassCategoryContainer";
+import DetailsPanel from "../../components/DetailsPanel";
+import "./index.css";
 
 function Classes() {
   const [completeClassData, setCompleteClassData] = useState(null);
@@ -139,7 +138,10 @@ function Classes() {
   };
 
   return (
-    <VolunteerLayout pageTitle="Classes">
+    <main className="content-container">
+      <div className="content-heading">
+        <h2 className="content-title">Classes</h2>
+      </div>
       <DetailsPanel
         classId={selectedClassId}
         classList={completeClassData}
@@ -181,7 +183,7 @@ function Classes() {
           </div>
         </div>
       </DetailsPanel>
-    </VolunteerLayout>
+    </main>
   );
 }
 

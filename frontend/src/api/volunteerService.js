@@ -1,3 +1,4 @@
+import { backend } from '../data/constants';
 import api from './api';
 
 export const fetchVolunteerData = async (volunteer_id) => {
@@ -33,14 +34,7 @@ export const insertProfilePicture = async (profilePicData) => {
 }
 
 export const getProfilePicture = async (volunteer_id) => {
-  try {
-    const response = await api.get(`/volunteer/profile-picture/${volunteer_id}`, {
-      responseType: 'blob'
-    });
-    return URL.createObjectURL(response.data);
-  } catch (error) {
-    console.error('Error getting profile picture:', error);
-  }
+  return `${backend}/volunteer/profile-picture/${volunteer_id}`
 }
 
 export const updateProfilePicture = async (volunteer_id, profilePicData) => {

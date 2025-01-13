@@ -1,14 +1,14 @@
-import "./index.css";
 import React from "react";
+import "./index.css";
 
-import edit_icon from "../../../assets/edit-icon.png"
-import check_icon from "../../../assets/check-icon.png";
-import cancel_icon from "../../../assets/cancel-icon.png";
-import empty_profile from "../../../assets/empty-profile.png";
 import camera_icon from "../../../assets/camera.png";
+import cancel_icon from "../../../assets/cancel-icon.png";
+import check_icon from "../../../assets/check-icon.png";
+import edit_icon from "../../../assets/edit-icon.png";
+import ProfileImg from "../../ImgFallback";
 
-import { updateVolunteerData, updateProfilePicture, insertProfilePicture } from "../../../api/volunteerService";
 import { CgSelect } from "react-icons/cg";
+import { insertProfilePicture, updateProfilePicture, updateVolunteerData } from "../../../api/volunteerService";
 import useComponentVisible from "../../../hooks/useComponentVisible";
 
 function VolunteerDetailsCard({ volunteer }) {
@@ -161,7 +161,11 @@ function VolunteerDetailsCard({ volunteer }) {
                                 document.getElementById('fileInput').click()
                         }}
                     >
-                        <img src={tempImage ? tempImage : mutableData.profilePicture ? mutableData.profilePicture : empty_profile} alt="Profile" className="profile-image"/>
+                        <ProfileImg
+                            className="profile-image"
+                            src={tempImage ? tempImage : mutableData.profilePicture}
+                            name={mutableData.preferredName}
+                        ></ProfileImg>
                         {isEditing && <div className="overlay">
                             <img src={camera_icon} alt="Edit Profile" className="camera-icon" />
                             <p className="edit-text">Edit</p>
@@ -190,7 +194,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                             'font-style': 'italic'
                                         }}
                                         hidden={isEditing}>
-                                            {mutableData.preferredName ? mutableData.preferredName : "not yet set"}
+                                            {mutableData.preferredName ?? "not yet set"}
                                     </td>
                                     <td hidden={!isEditing}>
                                         <input type="text" className="text-input" placeholder="Enter your preferred name" name="preferredName" value={mutableData.preferredName} onChange={handleInputChange}></input>
@@ -205,7 +209,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                             'font-style': 'italic'
                                         }}
                                         hidden={isEditing}>
-                                            {mutableData.pronouns ? mutableData.pronouns : "not yet set"}
+                                            {mutableData.pronouns ?? "not yet set"}
                                     </td>
                                     {isEditing && (
                                         <td 
@@ -268,7 +272,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                 </tr>
                                 <tr className="view volunteer-location" hidden={isEditing}>
                                     <td>Location</td>
-                                    <td>{volunteer.city}, {volunteer.province}</td>
+                                    <td>{volunteer.city && volunteer.province ? `${volunteer.city}, ${volunteer.province}` : 'not yet set'}</td>
                                 </tr>
                             </tbody>
                         </table>

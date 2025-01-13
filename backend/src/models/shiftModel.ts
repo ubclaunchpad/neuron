@@ -1,9 +1,10 @@
+import { Shift } from '../common/generated.js';
 import connection from '../config/database.js';
 
 export default class ShiftModel {
 
      // get all the details of a shift
-     public getShiftInfoFromDB(fk_volunteer_id:string, fk_schedule_id:number, shift_date:string): Promise<any> {
+     public getShiftInfoFromDB(fk_volunteer_id:string, fk_schedule_id:number, shift_date:string): Promise<Shift> {
           return new Promise((resolve, reject) => {
                const query = `
                     SELECT 
@@ -38,13 +39,13 @@ export default class ShiftModel {
                               message: `An error occurred while executing the query: ${error}`,
                          });
                     }
-                    resolve(results);
+                    resolve(results[0]);
                });
           });
      }
 
      // get all the shifts assigned to a single volunteer
-     public getShiftsByVolunteerId(volunteer_id: string): Promise<any> {
+     public getShiftsByVolunteerId(volunteer_id: string): Promise<Shift[]> {
           return new Promise((resolve, reject) => {
                const query = "SELECT * FROM shifts WHERE fk_volunteer_id = ?";
                const values = [volunteer_id];
@@ -61,7 +62,7 @@ export default class ShiftModel {
      }
 
      // get all shifts occuring on given date
-     public getShiftsByDate(date: string): Promise<any> {
+     public getShiftsByDate(date: string): Promise<Shift[]> {
           return new Promise((resolve, reject) => {
                const query = "SELECT * FROM shifts WHERE shift_date = ?";
                const values = [date];
@@ -78,7 +79,7 @@ export default class ShiftModel {
      }
 
      // get all the shift details viewable to a volunteer for a specified month
-     public getShiftsByVolunteerIdAndMonth(volunteer_id: string, month: number, year: number): Promise<any> {
+     public getShiftsByVolunteerIdAndMonth(volunteer_id: string, month: number, year: number): Promise<Shift[]> {
           return new Promise((resolve, reject) => {
               const query = `
                   CALL GetShiftsByVolunteerIdAndMonth(?, ?, ?);

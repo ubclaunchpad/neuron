@@ -7,12 +7,14 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "generate-schema": "node generate-types.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@rmp135/sql-ts": "^2.2.0",
     "@types/multer": "^1.4.12",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
+import { Schedule } from '../common/generated.js';
 import ScheduleModel from '../models/scheduleModel.js';
-import { Schedule } from '../common/interfaces.js';
 
 const scheduleModel = new ScheduleModel();
 

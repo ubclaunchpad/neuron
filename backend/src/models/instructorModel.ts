@@ -1,10 +1,10 @@
+import { Instructor } from '../common/generated.js';
 import connectionPool from '../config/database.js';
-import { Instructor } from '../common/interfaces.js';
 
 // Instructor model
 export default class InstructorModel {
 
-  getInstructors(): Promise<any> {
+  getInstructors(): Promise<Instructor[]> {
     return new Promise((resolve, reject) => {
       const query = `SELECT * FROM instructors`;
 
@@ -20,7 +20,7 @@ export default class InstructorModel {
     });
   }
 
-  getInstructorById(instructor_id: string): Promise<any> {
+  getInstructorById(instructor_id: string): Promise<Instructor> {
     return new Promise((resolve, reject) => {
       const query = "SELECT * FROM instructors WHERE instructor_id = ?";
       const values = [instructor_id];

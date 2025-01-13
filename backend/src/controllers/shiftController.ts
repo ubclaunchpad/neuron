@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
+import { Shift } from '../common/generated.js';
 import ShiftModel from '../models/shiftModel.js';
-import { Shift } from '../common/interfaces.js';
 
 const shiftModel = new ShiftModel();
 
@@ -25,7 +25,7 @@ async function getShiftInfo(req: Request, res: Response){
     
     try {
         const shift_info = await shiftModel.getShiftInfoFromDB(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
-        res.status(200).json(shift_info[0]);
+        res.status(200).json(shift_info);
     } catch (error: any) {
         return res.status(500).json({
             error: `Internal server error: ${error.message}`
@@ -136,9 +136,6 @@ async function requestToCoverShift(req: Request, res: Response) {
 }
 
 export {
-    getShiftInfo,
-    getShiftsByVolunteerId,
-    getShiftsByDate,
-    getShiftsByVolunteerIdAndMonth,
+    getShiftInfo, getShiftsByDate, getShiftsByVolunteerId, getShiftsByVolunteerIdAndMonth,
     requestToCoverShift
 };

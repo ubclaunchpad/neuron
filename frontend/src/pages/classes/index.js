@@ -1,103 +1,188 @@
 import "./index.css";
-import React, {useEffect, useState} from 'react'
+import React, { useEffect, useState, useRef } from "react";
 import VolunteerLayout from "../../components/volunteerLayout";
-import ClassPanel from "../../components/classPanel";
-import { getAllClasses } from '../../api/classesPageService';
-import { getShiftInfo } from "../../api/shiftService";
+import DetailsPanel from "../../components/DetailsPanel";
+import {
+  getAllClasses,
+  getAllClassImages,
+  getAllClassSchedules,
+} from "../../api/classesPageService";
+import ClassCategoryContainer from "../../components/ClassCategoryContainer";
 
 function Classes() {
-     const [data, setData] = useState(null);
-     const [infoDisplay ,setInfoDisplay] = useState(false);
-     const [shiftInfo, setShiftInfo] = useState({});
-     // const [classPanelItem, setClassPanelItem] = useState(null);
-     const [itemIndex, setItemIndex] = useState(null);
-     const [classIdList, setClassIdList] = useState([]);
-     const [rerenderKey, setRerenderKey] = useState(0);
+  const [completeClassData, setCompleteClassData] = useState(null);
+  const [groupedByCategory, setGroupedByCategory] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState("Online Exercise");
+  const [selectedClassId, setSelectedClassId] = useState(null);
 
-     useEffect( () => {
-          (getAllClasses())
-          .then((data) => {
-               setData(data);
-               let list = [];
-               for (let i = 0; i < data.length; i++) {
-                    list.push(data[i].class_id);
-               }
-               setClassIdList(list);
-          })
-          .catch((error) => console.error(error));
-     }, []);
+  const sectionRefs = useRef({});
+  const observer = useRef(null);
 
-     const getInfo = () => {
-          (getShiftInfo("8eafa250-393b-4918-afdb-d0cfa79b1bdd", "1", "2024-01-01"))
-          .then((data) => {
-               setShiftInfo(data);
-               setInfoDisplay(true);
-          })
-          .catch((error) => console.error(error));
-     }
+  useEffect(() => {
+    const fetchClassesImagesAndSchedules = async () => {
+      try {
+        const [classData, classImages, classSchedules] = await Promise.all([
+          getAllClasses(),
+          getAllClassImages(),
+          getAllClassSchedules(),
+        ]);
 
-     return (
-          <VolunteerLayout
-               pageTitle="Classes"
-               pageContent= {
-                    <ClassPanel
-                         classIdList={classIdList}
-                         pageUsed="Classes"
-                         itemIndex={itemIndex}
-                         pageContent={
-                              <div className="classes-page" >
-                                   <div>
-                                        <div style={{display: 'flex', flexWrap: 'wrap',}}>
-                                             {!data ? (
-                                                  "Loading Classes..."
-                                             ) : (
-                                                  data.map((element, index) => (
-                                                       <div key={index}>  
-                                                            <button 
-                                                                 onClick={() => {
-                                                                      setItemIndex(index);
-                                                                      setRerenderKey(rerenderKey => rerenderKey + 1);
-                                                                 }} 
-                                                                 className="class-button"
-                                                            >
-                                                                 {element.class_name}
-                                                            </button>
-                                                            <br />
-                                                       </div>
-                                                  ))
-                                             )}
-                                        </div>
-                                        <br/>
-                                        <div style={{margin: 5,}}>Test volunteer ID: 8eafa250-393b-4918-afdb-d0cfa79b1bdd</div>
-                                        <br/>
-                                        <div style={{margin: 5,}}>Test Schedule ID: 1</div>
-                                        <br/>
-                                        <div style={{margin: 5,}}>Test Shift Date: 2024-01-01</div>
-                                        
-          
-                                        <button onClick={getInfo}>Click for Shift Info</button>
-          
-                                        {
-                                             infoDisplay ? 
-                                             <div style={{color: 'green'}}>
-                                                  Volunteer: {shiftInfo.volunteer_f_name + " " + shiftInfo.volunteer_l_name}   <br/>
-                                                  Instructor: {shiftInfo.instructor_f_name + " " + shiftInfo.instructor_l_name}  <br/> 
-                                                  Class Name: {shiftInfo.class_name} <br/> 
-                                                  Start Time: {shiftInfo.start_time} <br/> 
-                                                  End Time: {shiftInfo.end_time} <br/> 
-                                                  Shift Duration: {shiftInfo.duration} <br/>
-                                                  </div> : null
-                                        }
-                                        <br/>
-                                   </div>
-          
-                              </div>
-                         }  
-                         rerenderKey={rerenderKey}  
-                    ></ClassPanel>
-               }
-          ></VolunteerLayout>
-     );
-};
+        const classesWithImagesAndSchedules = classData.map((classItem) => {
+          const matchedImage = classImages.data.find(
+            (imageItem) => imageItem.fk_class_id === classItem.class_id
+          );
+          const imageUrl = matchedImage
+            ? URL.createObjectURL(
+                new Blob([new Uint8Array(matchedImage.image.data)], {
+                  type: "image/png",
+                })
+              )
+            : null;
+
+          const matchedSchedules = classSchedules.filter((schedule) => {
+            return schedule.fk_class_id === classItem.class_id;
+          });
+
+          return {
+            class_id: classItem.class_id,
+            class_name: classItem.class_name,
+            category: classItem.category,
+            subcategory: classItem.subcategory,
+            image_url: imageUrl,
+            schedules: matchedSchedules,
+          };
+        });
+
+        setCompleteClassData(classesWithImagesAndSchedules);
+        // console.log(classesWithImages);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchClassesImagesAndSchedules();
+  }, []);
+
+  useEffect(() => {
+    if (completeClassData) {
+      const grouped = completeClassData.reduce((acc, classItem) => {
+        if (!acc[classItem.category]) {
+          acc[classItem.category] = [];
+        }
+        acc[classItem.category].push(classItem);
+        return acc;
+      }, {});
+      setGroupedByCategory(grouped);
+    }
+  }, [completeClassData]);
+
+  // TODO: Currently fixed categories for the header
+  const categories = [
+    "Online Exercise",
+    "Creative & Expressive",
+    "Care Partner Workshops",
+    "Food & Nutrition",
+    "Other Opportunities"
+  ];
+
+  categories.forEach((category) => {
+    if (!sectionRefs.current[category]) {
+      sectionRefs.current[category] = React.createRef();
+    }
+  });
+
+  useEffect(() => {
+    observer.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setSelectedCategory(entry.target.getAttribute("data-category"));
+          }
+        });
+      },
+      { threshold: 0.5 } // triggers when 50% of section is visible
+    );
+
+    // observe all section refs
+    Object.entries(sectionRefs.current).forEach(([category, ref]) => {
+      if (ref.current) {
+        observer.current.observe(ref.current);
+      }
+    });
+
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+    };
+  }, [groupedByCategory]);
+
+  const scrollToSection = (category) => {
+    const sectionRef = sectionRefs.current[category];
+    const catalog = document.querySelector(".class-catalog");
+  
+    if (sectionRef && sectionRef.current && catalog) {
+      const catalogTop = catalog.getBoundingClientRect().top;
+      const sectionTop = sectionRef.current.getBoundingClientRect().top;
+      const scrollOffset = sectionTop - catalogTop + catalog.scrollTop;
+  
+      catalog.scrollTo({
+        top: scrollOffset,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const handleClassSelection = (classData) => {
+    setSelectedClassId(classData.class_id);
+    console.log("Selected class data: ", classData);
+  };
+
+  return (
+    <VolunteerLayout pageTitle="Classes">
+      <DetailsPanel
+        classId={selectedClassId}
+        classList={completeClassData}
+        setClassId={setSelectedClassId}
+      >
+        <div className="classes-page">
+          <div className="main-category-header">
+            {categories.map((category) => {
+              const isSelected = selectedCategory === category;
+              return (
+                <button
+                  key={category}
+                  className={`category-button ${isSelected ? "selected" : ""}`}
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    scrollToSection(category);
+                  }}
+                >
+                  {category}
+                </button>
+              );
+            })}
+          </div>
+          {/* ----- */}
+          <div className="class-catalog">
+            {Object.entries(groupedByCategory).map(([category, classData]) => {
+              return (
+                <ClassCategoryContainer
+                  key={category}
+                  ref={sectionRefs.current[category]}
+                  category={category}
+                  classData={classData}
+                  data-category={category}
+                  onClassSelect={handleClassSelection}
+                />
+              );
+            })}
+            <div className="spacer"></div>
+          </div>
+        </div>
+      </DetailsPanel>
+    </VolunteerLayout>
+  );
+}
 
 export default Classes;

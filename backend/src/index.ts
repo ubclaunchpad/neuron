@@ -7,6 +7,7 @@ import classRouter from "./routes/classRoutes.js";
 import shiftRouter from "./routes/shiftRoutes.js";
 import volunteerRouter from "./routes/volunteerRoutes.js";
 import instructorRouter from "./routes/instructorRoutes.js";
+import scheduleRouter from "./routes/scheduleRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import authRouter from "./routes/authRoutes.js";
 
@@ -19,7 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 app.get("/", (req: Request, res: Response) => {
-    res.send({ message: "Hello Team Neuron!" });
+  res.send({ message: "Hello Team Neuron!" });
 });
 
 // define all routes
@@ -28,8 +29,9 @@ app.use("/admin", adminRouter);
 app.use("/instructors", instructorRouter);
 app.use("/classes", classRouter);
 app.use("/classes/shifts", shiftRouter);
+app.use('/schedules', scheduleRouter);
 app.use("/auth", authRouter);
 
 app.listen(PORT, () => {
-    console.log(`Neuron backend server listening on ${PORT}`);
+  console.log(`Neuron backend server listening on ${PORT}`);
 });

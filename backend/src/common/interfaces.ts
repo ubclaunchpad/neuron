@@ -12,9 +12,18 @@ export interface Volunteer {
   l_name: string;
   email: string;
   total_hours: number;
-  class_preferences: string;
+  // class_preferences: string;
   bio?: string;
   activate: boolean;
+  pronouns?: string;
+  phone_number?: string;
+  city?: string;
+  province?: string;
+}
+
+export interface ProfilePic {
+  volunteer_id: string,
+  profile_picture: Buffer
 }
 
 export interface Instructor {
@@ -50,6 +59,7 @@ export interface Class {
   zoom_link?: string;
   start_date: string;
   end_date?: string;
+  category: string;
 }
 
 export interface Shift {
@@ -69,9 +79,9 @@ export interface Instructor {
 
 
 export interface Schedule {
-schedule_id: number;
-fk_class_id?: number;
-day_of_week: number;
-start_time: string;
-end_time: string;
+  schedule_id: string;
+  fk_class_id: number;
+  day: day_of_week;
+  start_time: string;
+  end_time: string;
 }

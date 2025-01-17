@@ -7,9 +7,11 @@ import VolunteerLogin from "./pages/VolunteerLogin";
 import VolunteerForgotPassword from "./pages/VolunteerForgotPassword";
 import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import Classes from "./pages/classes";
+import VolunteerSchedule from "./pages/schedule";
 import VolunteerProfile from "./pages/volunteerProfile";
 import AdminVerify from "./pages/AdminVerify";
-import ClassPreferences from "./pages/ClassPreferences"
+import ClassPreferences from "./pages/ClassPreferences";
+import "notyf/notyf.min.css";
 
 function App() {
   const [isVolunteer, setIsVolunteer] = useState(false);
@@ -24,6 +26,7 @@ function App() {
           authResponse.volunteer.volunteer_id
         ) {
           setIsVolunteer(true);
+          localStorage.setItem("volunteerID", authResponse.volunteer.volunteer_id);
         } else {
           setIsVolunteer(false);
         }
@@ -41,25 +44,13 @@ function App() {
         <Routes>
           <Route path="/auth/signup" element={<VolunteerSignup />} />
           <Route path="/auth/login" element={<VolunteerLogin />} />
-          <Route
-            path="/auth/forgot-password"
-            element={<VolunteerForgotPassword />}
-          />
-          <Route
-            path="/auth/reset-password"
-            element={<VolunteerResetPassword />}
-          />
-          {isVolunteer && (
-            <>
-              <Route path="/" element={<VolunteerDash />} />
-              <Route path="/volunteer/classes" element={<Classes />} />
-              <Route path="/volunteer/my-profile" element={<VolunteerProfile />} />
-              <Route path="/volunteer/schedule" element={<VolunteerDash />} />
-              <Route path="/volunteer/classes" element={<Classes />} /> {" "}
-              <Route path="/volunteer/class-preferences" element={<ClassPreferences/>} />{" "}
-
-            </>
-          )}
+          <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />}/>
+          <Route path="/auth/reset-password" element={<VolunteerResetPassword />}/>
+          <Route path="/" element={isVolunteer ? <VolunteerDash /> : <VolunteerLogin />} />
+          <Route path="/volunteer/classes" element={isVolunteer ? <Classes /> : <VolunteerLogin />} />
+          <Route path="/volunteer/my-profile" element={isVolunteer ? <VolunteerProfile /> : <VolunteerLogin />}/>
+          <Route path="/volunteer/schedule" element={isVolunteer ? <VolunteerSchedule /> : <VolunteerLogin />} />
+          <Route path="/volunteer/class-preferences" element={isVolunteer ? <ClassPreferences /> : <VolunteerDash />} />
           <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
         </Routes>
       </BrowserRouter>

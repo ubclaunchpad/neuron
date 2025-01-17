@@ -9,7 +9,7 @@ const UserProfileForm = ({ volunteer_id }) => {
     l_name: "",
     f_name: "",
     total_hours: "",
-    class_preferences: "",
+    // class_preferences: "",
     bio: "",
     active: false,
     email: ""
@@ -83,13 +83,13 @@ const UserProfileForm = ({ volunteer_id }) => {
         onChange={handleChange}
         placeholder="Total Hours"
       />
-      <input
+      {/* <input
         type="text"
         name="class_preferences"
         value={volunteerData.class_preferences}
         onChange={handleChange}
         placeholder="Class Preferences"
-      />
+      /> */}
       <input
         type="text"
         name="bio"

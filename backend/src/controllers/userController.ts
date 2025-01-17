@@ -1,17 +1,14 @@
-import UserModel from "../models/userModel.js";
-import VolunteerModel from "../models/volunteerModel.js";
 import bcrypt from "bcrypt";
-import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
+import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
-import { Request, Response } from "express";
+import { v4 as uuidv4 } from "uuid";
+import { User, Volunteer } from "../common/generated.js";
 import { AuthenticatedUserRequest } from "../common/types.js";
-import {
-    deleteVolunteer,
-    getVolunteerByUserId,
-    insertVolunteer,
-} from "../controllers/volunteerController.js";
+import ImageService from "../models/ImageService.js";
+import UserModel from "../models/userModel.js";
+import VolunteerModel from "../models/volunteerModel.js";
 
 // Load environment variables
 dotenv.config();
@@ -32,70 +29,61 @@ const transporter = nodemailer.createTransport({
 
 const userModel = new UserModel();
 const volunteerModel = new VolunteerModel();
+const imageService = new ImageService();
 
-async function getUserById(user_id: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        userModel
-            .getUserById(user_id)
-            .then((user: any) => {
-                resolve(user);
-            })
-            .catch((error: any) => {
-                reject(error);
-            });
-    });
+async function getUserById(req: Request, res: Response) {
+    const { user_id } = req.params;
+
+    if (!user_id) {
+        return res.status(400).json({
+            error: "Missing required fields. 'user_id' is required."
+        });
+    }
+
+    try {
+        const user = await userModel.getUserById(user_id);
+        res.status(200).json(user);
+    } catch (error: any) {
+        return res.status(500).json({
+            error: error.message,
+        });
+    }
 }
 
-async function getUserByEmail(email: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        userModel
-            .getUserByEmail(email)
-            .then((user: any) => {
-                resolve(user);
-            })
-            .catch((error: any) => {
-                reject(error);
-            });
-    });
-}
+async function insertProfilePicture(req: Request, res: Response) {
+    const { user_id } = req.params;
 
-async function insertUser(user: any): Promise<any> {
-    return new Promise((resolve, reject) => {
-        userModel
-            .insertUser(user)
-            .then((results: any) => {
-                resolve(results);
-            })
-            .catch((error: any) => {
-                reject(error);
-            });
-    });
-}
+    if (!user_id) {
+        return res.status(400).json({
+            error: "Missing required fields. 'user_id' is required."
+        });
+    }
 
-async function updateUser(user_id: string, userData: any): Promise<any> {
-    return new Promise((resolve, reject) => {
-        userModel
-            .updateUser(user_id, userData)
-            .then((results: any) => {
-                resolve(results);
-            })
-            .catch((error: any) => {
-                reject(error);
-            });
-    });
-}
+    if (!req.file) {
+        return res.status(400).json({
+            error: "Missing required profile picture file."
+        });
+    }
 
-async function deleteUser(user_id: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        userModel
-            .deleteUser(user_id)
-            .then((results: any) => {
-                resolve(results);
-            })
-            .catch((error: any) => {
-                reject(error);
-            });
-    });
+    const image = req.file.buffer;
+
+    try {
+        const user = await userModel.getUserById(user_id);
+        
+        if (user.fk_image_id) {
+            await imageService.updateImage(user.fk_image_id, image)
+        } 
+        else {
+            const insertedId = await imageService.uploadImage(image);
+            await userModel.updateUser(user_id, { fk_image_id: insertedId } as User);
+        }
+
+        res.status(200);
+    } catch (error: any) {
+        return res.status(error.status).json({
+            error: error.message,
+        });
+    }
 }
 
 async function sendVolunteerData(
@@ -111,10 +99,10 @@ async function sendVolunteerData(
     }
 
     try {
-        const volunteer = await getVolunteerByUserId(user.user_id);
+        const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
 
         // remove password from user
-        delete user.password;
+        delete (user as any).password;
 
         return res.status(200).json({
             user: user,
@@ -165,23 +153,23 @@ async function registerUser(req: Request, res: Response): Promise<any> {
 
     // Create User
     try {
-        await insertUser({
+        await userModel.insertUser({
             user_id: user_id,
             email: email,
             password: hashedPassword,
             role: role.toUpperCase(),
-        });
+        } as User);
 
         if (role == "volun") {
             try {
-                await insertVolunteer({
+                await volunteerModel.insertVolunteer({
                     volunteer_id: uuidv4(),
                     fk_user_id: user_id,
                     f_name: firstName,
                     l_name: lastName,
                     email: email,
-                    active: 0,
-                });
+                    active: false,
+                } as Volunteer);
 
                 // Create a token that expires in 24 hours
                 const token = jwt.sign(payload, secret, {
@@ -209,11 +197,11 @@ async function registerUser(req: Request, res: Response): Promise<any> {
                             // Delete the volunteer before deleting the user because volunteer has a foreign key constraint
                             // Delete the volunteer if the mail is not sent successfully
                             try {
-                                await deleteVolunteer(user_id);
+                                await volunteerModel.deleteVolunteer(user_id);
 
                                 // Delete the user if the mail is not sent successfully
                                 try {
-                                    await deleteUser(user_id);
+                                    await userModel.deleteUser(user_id);
 
                                     return res.status(500).json({
                                         error: `Mail not sent: ${mailError}`,
@@ -239,7 +227,7 @@ async function registerUser(req: Request, res: Response): Promise<any> {
             } catch (error: any) {
                 // Delete the user if the volunteer is not created successfully
                 try {
-                    await deleteUser(user_id);
+                    await userModel.deleteUser(user_id);
                     res.status(error.status).json({
                         error: error.message,
                     });
@@ -275,7 +263,7 @@ async function loginUser(req: Request, res: Response): Promise<any> {
 
     // Get the user from the database
     try {
-        const user = await getUserByEmail(email);
+        const user = await userModel.getUserByEmail(email);
 
         // console.log(user.password);
 
@@ -287,7 +275,7 @@ async function loginUser(req: Request, res: Response): Promise<any> {
         }
 
         // If the user is not verified, return an error
-        const volunteer = await getVolunteerByUserId(user.user_id);
+        const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
         if (volunteer.active == 0 || volunteer.active == null) {
             return res.status(400).json({
                 error: "Your account is not verified yet",
@@ -334,10 +322,10 @@ async function sendResetPasswordEmail(
     }
 
     try {
-        const user = await getUserByEmail(email);
+        const user = await userModel.getUserByEmail(email);
 
         try {
-            const volunteer = await getVolunteerByUserId(user.user_id);
+            const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
 
             if (!TOKEN_SECRET) {
                 return res.status(500).json({
@@ -405,7 +393,7 @@ async function verifyUserWithIdAndToken(
 ): Promise<any> {
     return new Promise(async (resolve, reject) => {
         try {
-            const user = await getUserById(id);
+            const user = await userModel.getUserById(id);
 
             if (!TOKEN_SECRET) {
                 return reject({
@@ -484,9 +472,9 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         try {
-            await updateUser(id, {
+            await userModel.updateUser(id, {
                 password: hashedPassword,
-            });
+            } as User);
 
             return res.status(200).json({
                 message: "Password updated successfully",
@@ -513,8 +501,6 @@ async function updatePassword(
     // User coming from the isAuthorized middleware
     const user = req.user;
 
-    // console.log(user);
-
     if (!user) {
         return res.status(500).json({
             error: "Couldn't verify a user from the token",
@@ -525,9 +511,9 @@ async function updatePassword(
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
-        await updateUser(user.user_id, {
+        await userModel.updateUser(user.user_id, {
             password: hashedPassword,
-        });
+        } as User);
 
         return res.status(200).json({
             message: "Password updated successfully",
@@ -540,12 +526,6 @@ async function updatePassword(
 }
 
 export {
-    getUserById,
-    sendVolunteerData,
-    registerUser,
-    loginUser,
-    sendResetPasswordEmail,
-    verifyAndRedirect,
-    resetPassword,
-    updatePassword,
+    getUserById, insertProfilePicture, loginUser, registerUser, resetPassword, sendResetPasswordEmail, sendVolunteerData, updatePassword, verifyAndRedirect
 };
+

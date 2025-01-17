@@ -27,10 +27,10 @@ async function getShiftInfo(req: Request, res: Response){
         const shift_info = await shiftModel.getShiftInfoFromDB(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
         res.status(200).json(shift_info);
     } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error: ${error.message}`
-        });
-    }
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 // get all the shifts assigned to a volunteer, using the volunteer's ID
@@ -47,10 +47,10 @@ async function getShiftsByVolunteerId(req: Request, res: Response) {
         const shifts = await shiftModel.getShiftsByVolunteerId(volunteer_id);
         res.status(200).json(shifts);
     } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 } 
 
 // get all the shifts on a given date
@@ -74,10 +74,10 @@ async function getShiftsByDate(req: Request, res: Response) {
         const shifts = await shiftModel.getShiftsByDate(shift.shift_date);
         res.status(200).json(shifts);
     } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 // get all the shifts viewable for a volunteer for the month around a given date
@@ -109,10 +109,10 @@ async function getShiftsByVolunteerIdAndMonth(req: Request, res: Response) {
         const shifts = await shiftModel.getShiftsByVolunteerIdAndMonth(shift.fk_volunteer_id, month, year);
         res.status(200).json(shifts);
     } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 // volunteer requesting to cover someone else’s open shift
@@ -129,10 +129,10 @@ async function requestToCoverShift(req: Request, res: Response) {
         const request = await shiftModel.requestToCoverShift(request_id, volunteer_id);
         res.status(200).json(request);
     } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 export {

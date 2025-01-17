@@ -26,6 +26,7 @@
     "mysql": "^2.18.1",
     "mysql2": "^3.11.3",
     "nodemailer": "^6.9.15",
+    "sharp": "^0.33.5",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
@@ -38,6 +39,7 @@
     "@types/mysql": "^2.15.26",
     "@types/node": "^22.7.4",
     "@types/nodemailer": "^6.4.16",
+    "@types/sharp": "^0.31.1",
     "@types/uuid": "^10.0.0",
     "nodemon": "^3.1.7",
     "ts-node": "^10.9.2",

@@ -9,10 +9,10 @@ async function getInstructors(req: Request, res: Response) {
         const instructors = await instructorModel.getInstructors();
         res.status(200).json(instructors);
     } catch (error: any) {
-        return res.status(error.status).json({
-            error: `${error.message}`
-        });
-    }
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 async function getInstructorById(req: Request, res: Response) {
@@ -28,10 +28,10 @@ async function getInstructorById(req: Request, res: Response) {
         const instructor = await instructorModel.getInstructorById(instructor_id);
         res.status(200).json(instructor);
     } catch (error: any) {
-        return res.status(error.status).json({
-            error: `${error.message}`
-        });
-    };
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 async function insertInstructor(req: Request, res: Response) {
@@ -48,10 +48,10 @@ async function insertInstructor(req: Request, res: Response) {
         const result = await instructorModel.insertInstructor(instructor);
         res.status(200).json(result);
     } catch (error: any) {
-        return res.status(error.status).json({
-            error: `${error.message}`
-        });
-    }
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 export {

@@ -1,17 +1,19 @@
-import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { Response, NextFunction } from "express";
+import { NextFunction, Response } from "express";
+import jwt from "jsonwebtoken";
 import {
     AuthenticatedUserRequest,
     DecodedJwtPayload,
 } from "../common/types.js";
-import { getUserById } from "../controllers/userController.js";
+import UserModel from "../models/userModel.js";
 
 // Load environment variables
 dotenv.config();
 
 // Define environment variables
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
+
+const userModel = new UserModel();
 
 async function isAuthorized(
     req: AuthenticatedUserRequest,
@@ -39,7 +41,7 @@ async function isAuthorized(
         const decoded = jwt.verify(token, TOKEN_SECRET) as DecodedJwtPayload;
 
         try {
-            const result = await getUserById(decoded.user_id);
+            const result = await userModel.getUserById(decoded.user_id);
 
             // Attach the user to the request
             req.user = result;
@@ -77,4 +79,5 @@ async function isAdmin(
     next();
 }
 
-export { isAuthorized, isAdmin };
+export { isAdmin, isAuthorized };
+

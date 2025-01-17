@@ -1,7 +1,6 @@
-import express from 'express';
-import { Request, Response } from 'express';
-import { getAllClasses, getClassById, getClassesByDay, addClass, getAllImages, getImageByClassId, uploadImage } from '../controllers/classController.js';
+import express, { Request, Response } from 'express';
 import multer from 'multer'; // Used for file uploads
+import { addClass, getAllClasses, getClassById, getClassesByDay, uploadClassImage } from '../controllers/classController.js';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -9,14 +8,6 @@ const upload = multer({ storage: storage });
 
 router.get('/', async (req: Request, res: Response) => {
     await getAllClasses(req, res);
-});
-
-router.get('/images', async (req: Request, res: Response) => {
-    await getAllImages(req, res);
-});
-
-router.get('/images/:class_id', async (req: Request, res: Response) => {
-    await getImageByClassId(req, res);
 });
 
 router.get('/:class_id', async (req: Request, res: Response) => {
@@ -31,8 +22,8 @@ router.post('/', async (req: Request, res: Response) => {
     await addClass(req, res);
 });
 
-router.put('/images/:class_id', upload.single('image'), async (req: Request, res: Response) => {
-    await uploadImage(req, res);
+router.put('/:class_id/upload', upload.single('image'), async (req: Request, res: Response) => {
+    await uploadClassImage(req, res);
 });
 
 

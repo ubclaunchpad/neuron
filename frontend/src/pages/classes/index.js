@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   getAllClasses,
-  getAllClassImages,
-  getAllClassSchedules,
+  getAllClassSchedules
 } from "../../api/classesPageService";
+import { formatImageUrl } from "../../api/imageService";
 import ClassCategoryContainer from "../../components/ClassCategoryContainer";
 import DetailsPanel from "../../components/DetailsPanel";
 import "./index.css";
@@ -20,23 +20,13 @@ function Classes() {
   useEffect(() => {
     const fetchClassesImagesAndSchedules = async () => {
       try {
-        const [classData, classImages, classSchedules] = await Promise.all([
+        const [classData, classSchedules] = await Promise.all([
           getAllClasses(),
-          getAllClassImages(),
           getAllClassSchedules(),
         ]);
 
         const classesWithImagesAndSchedules = classData.map((classItem) => {
-          const matchedImage = classImages.data.find(
-            (imageItem) => imageItem.fk_class_id === classItem.class_id
-          );
-          const imageUrl = matchedImage
-            ? URL.createObjectURL(
-                new Blob([new Uint8Array(matchedImage.image.data)], {
-                  type: "image/png",
-                })
-              )
-            : null;
+          const imageUrl = classItem.fk_image_id ? formatImageUrl(classItem.fk_image_id) : null;
 
           const matchedSchedules = classSchedules.filter((schedule) => {
             return schedule.fk_class_id === classItem.class_id;

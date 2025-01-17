@@ -23,10 +23,18 @@ const config = {
     }
 };
 
-const contents = await Client
+let contents = await Client
     .fromConfig(config)
     .fetchDatabase()
+    .mapTables((t) => {
+        t.extends = "RowDataPacket"
+        return t;
+    })
     .toTypescript();
+
+contents = `import { RowDataPacket } from "mysql2";
+
+${contents}`
 
 writeFile(config.filename, contents, err => {
     if (err) console.error(err)

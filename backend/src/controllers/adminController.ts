@@ -1,6 +1,7 @@
+import { Response } from "express";
 import VolunteerModel from "../models/volunteerModel.js";
-import { Request, Response } from "express";
 
+import { Volunteer } from "../common/generated.js";
 import { AuthenticatedUserRequest } from "../common/types.js";
 
 const volunteerModel = new VolunteerModel();
@@ -16,10 +17,10 @@ async function getUnverifiedVolunteers(
             volunteers: unverifiedVolunteers,
         });
     } catch (error: any) {
-        res.status(error.status).json({
-            error: error.message,
-        });
-    }
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 async function verifyVolunteer(
@@ -39,17 +40,17 @@ async function verifyVolunteer(
     // Update the user's active status
     try {
         await volunteerModel.updateVolunteer(volunteer_id, {
-            active: 1,
-        });
+            active: true,
+        } as Volunteer);
 
         return res.status(200).json({
             message: "User verified successfully",
         });
     } catch (error: any) {
-        return res.status(500).json({
-            error: error.message,
-        });
-    }
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 export { getUnverifiedVolunteers, verifyVolunteer };

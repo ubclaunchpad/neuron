@@ -1,15 +1,17 @@
 // backend/index.ts
-import express, { Request, Response } from "express";
-import cors from "cors";
 import bodyParser from "body-parser";
+import cors from "cors";
+import express, { Request, Response } from "express";
 
-import classRouter from "./routes/classRoutes.js";
-import shiftRouter from "./routes/shiftRoutes.js";
-import volunteerRouter from "./routes/volunteerRoutes.js";
-import instructorRouter from "./routes/instructorRoutes.js";
-import scheduleRouter from "./routes/scheduleRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import authRouter from "./routes/authRoutes.js";
+import classRouter from "./routes/classRoutes.js";
+import imageRouter from "./routes/imageRoutes.js";
+import instructorRouter from "./routes/instructorRoutes.js";
+import scheduleRouter from "./routes/scheduleRoutes.js";
+import shiftRouter from "./routes/shiftRoutes.js";
+import userRouter from "./routes/userRoutes.js";
+import volunteerRouter from "./routes/volunteerRoutes.js";
 
 // set default port to be 3001
 const PORT: number = parseInt(process.env.PORT || "3001", 10);
@@ -30,6 +32,8 @@ app.use("/instructors", instructorRouter);
 app.use("/classes", classRouter);
 app.use("/classes/shifts", shiftRouter);
 app.use('/schedules', scheduleRouter);
+app.use("/user", userRouter);
+app.use("/image", imageRouter);
 app.use("/auth", authRouter);
 
 app.listen(PORT, () => {

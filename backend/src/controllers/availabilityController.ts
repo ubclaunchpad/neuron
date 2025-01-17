@@ -5,21 +5,17 @@ import AvailabilityModel from '../models/availabilityModel.js';
 const availabilityModel = new AvailabilityModel();
 
 async function getAvailabilities(req: Request, res: Response) {
-    // console.log("DEBUG: getAvailabilities");
-
     try {
         const availabilities = await availabilityModel.getAvailabilities();
         res.status(200).json(availabilities);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error: ${JSON.stringify(error)}`
-        });
-    }
+    } catch (error: any) {
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 async function getAvailabilityByVolunteerId(req: Request, res: Response) {
-    // console.log("DEBUG: getAvailabilityByVolunteerId");
-
     const { volunteer_id } = req.params;
 
     if (!volunteer_id) {
@@ -31,11 +27,11 @@ async function getAvailabilityByVolunteerId(req: Request, res: Response) {
     try {
         const availability = await availabilityModel.getAvailabilityByVolunteerId(volunteer_id);
         res.status(200).json(availability);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error: ${JSON.stringify(error)}`
-        });
-    }
+    } catch (error: any) {
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 function isValidAvailabilities(data: any): data is Availability[] {
@@ -79,11 +75,11 @@ async function setAvailabilityByVolunteerId(req: Request, res: Response) {
     try {
         const result = await availabilityModel.setAvailabilityByVolunteerId(volunteer_id, availabilities);
         res.status(200).json(result);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error: ${JSON.stringify(error)}`
-        })
-    }
+    } catch (error: any) {
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 async function updateAvailabilityByVolunteerId(req: Request, res: Response) {
@@ -107,11 +103,11 @@ async function updateAvailabilityByVolunteerId(req: Request, res: Response) {
     try {
         const result = await availabilityModel.updateAvailabilityByVolunteerId(volunteer_id, availabilities);
         res.status(200).json(result);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error: ${JSON.stringify(error)}`
-        });
-    }
+    } catch (error: any) {
+		return res.status(500).json({
+			error: `${error.message}`
+		});
+	}
 }
 
 export {

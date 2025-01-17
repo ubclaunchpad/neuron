@@ -1,18 +1,16 @@
 import { Request, Response } from 'express';
-import { Class } from '../common/generated.js';
+import { ClassDB } from '../common/databaseModels.js';
 import ClassesModel from '../models/classModel.js';
-import ImageService from '../models/ImageService.js';
 
 const classesModel = new ClassesModel();
-const imageService = new ImageService();
 
 async function getAllClasses(req: Request, res: Response) {
 	try {
 		const classes = await classesModel.getClasses();
 		res.status(200).json(classes);
 	} catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	}
 }
@@ -35,7 +33,7 @@ async function addClass(req: Request, res: Response) {
 			start_date: start_date,
 			end_date: end_date,
 			category: category,
-		} as Class;
+		} as ClassDB;
 
 		const result = await classesModel.addClass(newClass);
 		const newClassId = result.insertId;
@@ -55,8 +53,8 @@ async function addClass(req: Request, res: Response) {
 			data: addedClass
 		});
 	} catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	}
 }
@@ -79,8 +77,8 @@ async function getClassesByDay(req: Request, res: Response) {
 		const classes = await classModel.getClassesByDay(day);
 		res.status(200).json(classes);
 	} catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	}
 }
@@ -100,8 +98,8 @@ async function getClassById(req: Request, res: Response) {
 		const class_info = await classesModel.getClassById(class_id);
 		res.status(200).json(class_info);
 	} catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	};
 }
@@ -124,16 +122,15 @@ async function uploadClassImage(req: Request, res: Response) {
 	const image = req.file.buffer;
 
 	try	{
-		const insertedId = await imageService.uploadImage(image);
-		const result = await classesModel.updateClass(class_id, { fk_image_id: insertedId } as Class);
+		const imageId = await classesModel.upsertClassImage(class_id, image);
 	
 		return res.status(201).json({
 			message: 'Image uploaded successfully',
-			data: result
+			data: imageId
 		});
 	} catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	};
 }

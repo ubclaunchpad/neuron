@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Schedule } from '../common/generated.js';
+import { ScheduleDB } from '../common/databaseModels.js';
 import ScheduleModel from '../models/scheduleModel.js';
 
 const scheduleModel = new ScheduleModel();
@@ -9,8 +9,8 @@ async function getSchedules(req: Request, res: Response) {
     const schedules = await scheduleModel.getSchedules();
     res.status(200).json(schedules);
   } catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	}
 }
@@ -28,13 +28,13 @@ async function getSchedulesByClassId(req: Request, res: Response) {
     const schedules = await scheduleModel.getSchedulesByClassId(class_id);
     res.status(200).json(schedules);
   } catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	}
 }
 
-function isValidSchedules(data: any): data is Schedule[] {
+function isValidSchedules(data: any): data is ScheduleDB[] {
   return Array.isArray(data) && data.every((schedule) => {
     return (
       // Validate its day is a number between 1 and 7
@@ -56,7 +56,7 @@ function isValidSchedules(data: any): data is Schedule[] {
 
 async function setSchedulesByClassId(req: Request, res: Response) {
   const { class_id } = req.params;
-  const schedules: Schedule[] = req.body;
+  const schedules: ScheduleDB[] = req.body;
 
   if (!class_id) {
     return res.status(400).json({
@@ -74,8 +74,8 @@ async function setSchedulesByClassId(req: Request, res: Response) {
     const result = await scheduleModel.setSchedulesByClassId(class_id, schedules);
     res.status(200).json(result);
   } catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	}
 }
@@ -83,7 +83,7 @@ async function setSchedulesByClassId(req: Request, res: Response) {
 
 async function updateSchedulesByClassId(req: Request, res: Response) {
   const { class_id } = req.params;
-  const schedules: Schedule[] = req.body;
+  const schedules: ScheduleDB[] = req.body;
 
   if (!class_id) {
     return res.status(400).json({
@@ -101,8 +101,8 @@ async function updateSchedulesByClassId(req: Request, res: Response) {
     const result = await scheduleModel.updateSchedulesByClassId(class_id, schedules);
     res.status(200).json(result);
   } catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	}
 }

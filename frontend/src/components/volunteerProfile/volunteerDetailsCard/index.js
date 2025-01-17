@@ -8,6 +8,7 @@ import edit_icon from "../../../assets/edit-icon.png";
 import ProfileImg from "../../ImgFallback";
 
 import { CgSelect } from "react-icons/cg";
+import { formatImageUrl } from "../../../api/imageService";
 import { updateVolunteerData, uploadProfilePicture } from "../../../api/volunteerService";
 import useComponentVisible from "../../../hooks/useComponentVisible";
 
@@ -102,8 +103,8 @@ function VolunteerDetailsCard({ volunteer }) {
                 // attach id to req body
                 profilePicData.append('volunteer_id', volunteer.volunteer_id);
 
-                const profilePicResult = await uploadProfilePicture(volunteer.user_id, profilePicData);
-                console.log(profilePicResult)
+                const uploadedImageId = await uploadProfilePicture(volunteer.user_id, profilePicData);
+                setTempImage(formatImageUrl(uploadedImageId));
             }
             
         } catch (error) {

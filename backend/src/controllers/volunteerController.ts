@@ -15,10 +15,10 @@ async function getVolunteerById(req: Request, res: Response) {
     try {
         const volunteer = await volunteerModel.getVolunteerById(volunteer_id);
         res.status(200).json(volunteer);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error. ${error}`,
-        });
+    } catch (error: any) {
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 
@@ -26,10 +26,10 @@ async function getVolunteers(req: Request, res: Response) {
     try {
         const volunteers = await volunteerModel.getVolunteers();
         res.status(200).json(volunteers);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error. ${error}`,
-        });
+    } catch (error: any) {
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 
@@ -51,9 +51,9 @@ async function updateVolunteer(req: Request, res: Response) {
         );
         res.status(200).json(updatedVolunteer);
     } catch (error: any) {
-        return res.status(error.status).json({
-            error: error.message,
-        });
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 
@@ -84,10 +84,10 @@ async function shiftCheckIn(req: Request, res: Response) {
     try {
         const updatedVolunteer = await volunteerModel.shiftCheckIn(fk_volunteer_id, fk_schedule_id, shift_date);
         res.status(200).json(updatedVolunteer);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error. ${error}`
-        });
+    } catch (error: any) {
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 

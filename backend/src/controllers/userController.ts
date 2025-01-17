@@ -4,9 +4,9 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { v4 as uuidv4 } from "uuid";
-import { User, Volunteer } from "../common/generated.js";
+import { UserDB, VolunteerDB } from "../common/databaseModels.js";
 import { AuthenticatedUserRequest } from "../common/types.js";
-import ImageService from "../models/ImageService.js";
+import ImageModel from "../models/imageModel.js";
 import UserModel from "../models/userModel.js";
 import VolunteerModel from "../models/volunteerModel.js";
 
@@ -29,7 +29,7 @@ const transporter = nodemailer.createTransport({
 
 const userModel = new UserModel();
 const volunteerModel = new VolunteerModel();
-const imageService = new ImageService();
+const imageService = new ImageModel();
 
 async function getUserById(req: Request, res: Response) {
     const { user_id } = req.params;
@@ -44,9 +44,9 @@ async function getUserById(req: Request, res: Response) {
         const user = await userModel.getUserById(user_id);
         res.status(200).json(user);
     } catch (error: any) {
-        return res.status(500).json({
-            error: error.message,
-        });
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 
@@ -68,21 +68,13 @@ async function insertProfilePicture(req: Request, res: Response) {
     const image = req.file.buffer;
 
     try {
-        const user = await userModel.getUserById(user_id);
-        
-        if (user.fk_image_id) {
-            await imageService.updateImage(user.fk_image_id, image)
-        } 
-        else {
-            const insertedId = await imageService.uploadImage(image);
-            await userModel.updateUser(user_id, { fk_image_id: insertedId } as User);
-        }
+        const imageId = await userModel.upsertUserProfileImage(user_id, image);
 
-        res.status(200);
+        return res.status(201).json(imageId);
     } catch (error: any) {
-        return res.status(error.status).json({
-            error: error.message,
-        });
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 
@@ -109,9 +101,9 @@ async function sendVolunteerData(
             volunteer: volunteer,
         });
     } catch (error: any) {
-        return res.status(error.status).json({
-            error: error.message,
-        });
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 
@@ -158,7 +150,7 @@ async function registerUser(req: Request, res: Response): Promise<any> {
             email: email,
             password: hashedPassword,
             role: role.toUpperCase(),
-        } as User);
+        } as UserDB);
 
         if (role == "volun") {
             try {
@@ -169,7 +161,7 @@ async function registerUser(req: Request, res: Response): Promise<any> {
                     l_name: lastName,
                     email: email,
                     active: false,
-                } as Volunteer);
+                } as VolunteerDB);
 
                 // Create a token that expires in 24 hours
                 const token = jwt.sign(payload, secret, {
@@ -207,13 +199,13 @@ async function registerUser(req: Request, res: Response): Promise<any> {
                                         error: `Mail not sent: ${mailError}`,
                                     });
                                 } catch (error: any) {
-                                    res.status(error.status).json({
-                                        error: error.message,
+                                    return res.status(error.status ?? 500).json({
+                                        error: error.message
                                     });
                                 }
                             } catch (error: any) {
-                                res.status(error.status).json({
-                                    error: error.message,
+                                return res.status(error.status ?? 500).json({
+                                    error: error.message
                                 });
                             }
                         } else {
@@ -228,20 +220,20 @@ async function registerUser(req: Request, res: Response): Promise<any> {
                 // Delete the user if the volunteer is not created successfully
                 try {
                     await userModel.deleteUser(user_id);
-                    res.status(error.status).json({
-                        error: error.message,
+                    return res.status(error.status ?? 500).json({
+                        error: error.message
                     });
                 } catch (error: any) {
-                    res.status(error.status).json({
-                        error: error.message,
+                    return res.status(error.status ?? 500).json({
+                        error: error.message
                     });
                 }
             }
         }
     } catch (error: any) {
-        res.status(error.status).json({
-            error: error.message,
-        });
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 
@@ -264,8 +256,6 @@ async function loginUser(req: Request, res: Response): Promise<any> {
     // Get the user from the database
     try {
         const user = await userModel.getUserByEmail(email);
-
-        // console.log(user.password);
 
         // If the password is incorrect, return an error
         if (!(await bcrypt.compare(password, user.password))) {
@@ -301,9 +291,9 @@ async function loginUser(req: Request, res: Response): Promise<any> {
             token: token,
         });
     } catch (error: any) {
-        res.status(error.status).json({
-            error: error.message,
-        });
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 
@@ -376,14 +366,14 @@ async function sendResetPasswordEmail(
                 });
             });
         } catch (error: any) {
-            res.status(error.status).json({
-                error: error.message,
+            return res.status(error.status ?? 500).json({
+                error: error.message
             });
         }
     } catch (error: any) {
-        res.status(error.status).json({
-            error: error.message,
-        });
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 
@@ -454,9 +444,9 @@ async function verifyAndRedirect(req: Request, res: Response): Promise<any> {
             `${FRONTEND_HOST}/auth/reset-password?id=${id}&token=${token}`
         );
     } catch (error: any) {
-        return res.status(error.status).json({
-            error: error.message,
-        });
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 
@@ -474,20 +464,20 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
         try {
             await userModel.updateUser(id, {
                 password: hashedPassword,
-            } as User);
+            } as UserDB);
 
             return res.status(200).json({
                 message: "Password updated successfully",
             });
         } catch (error: any) {
-            return res.status(error.status).json({
-                error: error.message,
+            return res.status(error.status ?? 500).json({
+                error: error.message
             });
         }
     } catch (error: any) {
-        return res.status(error.status).json({
-            error: error.message,
-        });
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 
@@ -513,15 +503,15 @@ async function updatePassword(
     try {
         await userModel.updateUser(user.user_id, {
             password: hashedPassword,
-        } as User);
+        } as UserDB);
 
         return res.status(200).json({
             message: "Password updated successfully",
         });
     } catch (error: any) {
-        return res.status(error.status).json({
-            error: error.message,
-        });
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
     }
 }
 

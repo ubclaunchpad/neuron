@@ -1,9 +1,9 @@
 import { ResultSetHeader } from "mysql2/promise";
-import { Shift, Volunteer } from "../common/generated.js";
-import connection from "../config/database.js";
+import { ShiftDB, VolunteerDB } from "../common/databaseModels.js";
+import connectionPool from "../config/database.js";
 
 export default class VolunteerModel {
-    async getVolunteerById(volunteer_id: string): Promise<Volunteer> {
+    async getVolunteerById(volunteer_id: string): Promise<VolunteerDB> {
         const query = `
             SELECT 
                 v.*, u.created_at 
@@ -16,7 +16,7 @@ export default class VolunteerModel {
             `;
         const values = [volunteer_id];
 
-        const [results, _] = await connection.query<Volunteer[]>(query, values);
+        const [results, _] = await connectionPool.query<VolunteerDB[]>(query, values);
 
         if (results.length === 0) {
             throw {
@@ -28,11 +28,11 @@ export default class VolunteerModel {
         return results[0];
     }
 
-    async getVolunteerByUserId(user_id: string): Promise<Volunteer> {
+    async getVolunteerByUserId(user_id: string): Promise<VolunteerDB> {
         const query = "SELECT * FROM volunteers WHERE fk_user_id = ?";
         const values = [user_id];
 
-        const [results, _] = await connection.query<Volunteer[]>(query, values);
+        const [results, _] = await connectionPool.query<VolunteerDB[]>(query, values);
 
         if (results.length === 0) {
             throw {
@@ -44,23 +44,23 @@ export default class VolunteerModel {
         return results[0];
     }
 
-    async getVolunteers(): Promise<Volunteer[]> {
+    async getVolunteers(): Promise<VolunteerDB[]> {
         const query = "SELECT * FROM volunteers";
 
-        const [results, _] = await connection.query<Volunteer[]>(query, []);
+        const [results, _] = await connectionPool.query<VolunteerDB[]>(query, []);
 
         return results;
     }
 
-    async getUnverifiedVolunteers(): Promise<Volunteer[]> {
+    async getUnverifiedVolunteers(): Promise<VolunteerDB[]> {
         const query = "SELECT * FROM volunteers WHERE active = false";
 
-        const [results, _] = await connection.query<Volunteer[]>(query, []);
+        const [results, _] = await connectionPool.query<VolunteerDB[]>(query, []);
 
         return results
     }
 
-    async updateVolunteer(volunteer_id: string, volunteerData: Partial<Volunteer>): Promise<ResultSetHeader> {
+    async updateVolunteer(volunteer_id: string, volunteerData: Partial<VolunteerDB>): Promise<ResultSetHeader> {
         // Construct the SET clause dynamically
         const setClause = Object.keys(volunteerData)
             .map((key) => `${key} = ?`)
@@ -68,12 +68,12 @@ export default class VolunteerModel {
         const query = `UPDATE volunteers SET ${setClause} WHERE volunteer_id = ?`;
         const values = [...Object.values(volunteerData), volunteer_id];
 
-        const [results, _] = await connection.query<ResultSetHeader>(query, values);
+        const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 
         return results
     }
 
-    async insertVolunteer(volunteer: Partial<Volunteer>): Promise<any> {
+    async insertVolunteer(volunteer: Partial<VolunteerDB>): Promise<any> {
         const query =
             `INSERT INTO volunteers (
                 volunteer_id, 
@@ -108,7 +108,7 @@ export default class VolunteerModel {
             volunteer.province
         ];
 
-        const [results, _] = await connection.query<ResultSetHeader>(query, values);
+        const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 
         return results
     }
@@ -117,7 +117,7 @@ export default class VolunteerModel {
         const query = "DELETE FROM volunteers WHERE user_id = ?";
         const values = [user_id];
 
-        const [results, _] = await connection.query<ResultSetHeader>(query, values);
+        const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 
         return results;
     }
@@ -126,7 +126,7 @@ export default class VolunteerModel {
         const query1 = `SELECT duration FROM shifts WHERE fk_volunteer_id = ? AND fk_schedule_id = ? AND shift_date = ?`;
         const values1 = [volunteer_id, fk_schedule_id, shift_date];
             
-        const [results] = await connection.query<Shift[]>(query1, values1);
+        const [results] = await connectionPool.query<ShiftDB[]>(query1, values1);
 
         if (results.length === 0) {
             throw {
@@ -140,7 +140,7 @@ export default class VolunteerModel {
         const query2 = "SELECT total_hours FROM volunteers WHERE volunteer_id = ?";
         const values2 = [volunteer_id];
 
-        const [results2] = await connection.query<Volunteer[]>(query2, values2);
+        const [results2] = await connectionPool.query<VolunteerDB[]>(query2, values2);
 
         if (results2.length == 0) {
             throw {
@@ -166,7 +166,7 @@ export default class VolunteerModel {
         `;
         const updateValues = [new_total_hours, volunteer_id, fk_schedule_id, shift_date];
 
-        const [updateResults] = await connection.query<ResultSetHeader>(updateQuery, updateValues);
+        const [updateResults] = await connectionPool.query<ResultSetHeader>(updateQuery, updateValues);
 
         if (updateResults.affectedRows === 0) {
             throw {

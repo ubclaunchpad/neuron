@@ -1,13 +1,18 @@
 import { ResultSetHeader } from "mysql2";
-import { User } from "../common/generated.js";
-import connection from "../config/database.js";
+import { PoolConnection } from "mysql2/promise";
+import sharp from "sharp";
+import { UserDB } from "../common/databaseModels.js";
+import connectionPool from "../config/database.js";
+import ImageModel from "./imageModel.js";
+
+const imageModel = new ImageModel();
 
 export default class UserModel {
-    async getUserById(user_id: string): Promise<User> {
+    async getUserById(user_id: string): Promise<UserDB> {
         const query = `SELECT * FROM users WHERE user_id = ?`;
         const values = [user_id];
 
-        const [results, _] = await connection.query<User[]>(query, values);
+        const [results, _] = await connectionPool.query<UserDB[]>(query, values);
 
         if (results.length === 0) {
             throw {
@@ -19,11 +24,11 @@ export default class UserModel {
         return results[0];
     }
 
-    async getUserByEmail(email: string): Promise<User> {
+    async getUserByEmail(email: string): Promise<UserDB> {
         const query = `SELECT * FROM users WHERE email = ?`;
         const values = [email];
 
-        const [results, _] = await connection.query<User[]>(query, values);
+        const [results, _] = await connectionPool.query<UserDB[]>(query, values);
 
         if (results.length === 0) {
             throw {
@@ -35,11 +40,11 @@ export default class UserModel {
         return results[0];
     }
 
-    async insertUser(user: Partial<User>): Promise<ResultSetHeader> {
+    async insertUser(user: Partial<UserDB>): Promise<ResultSetHeader> {
         const query = `INSERT INTO users (user_id, email, password, role) VALUES (?, ?, ?, ?)`;
         const values = [user.user_id, user.email, user.password, user.role];
 
-        const [results, _] = await connection.query<ResultSetHeader>(query, values).catch(error => {
+        const [results, _] = await connectionPool.query<ResultSetHeader>(query, values).catch(error => {
             if (error.code === "ER_DUP_ENTRY") {
                 throw {
                     status: 400,
@@ -52,7 +57,9 @@ export default class UserModel {
         return results;
     }
 
-    async updateUser(user_id: string, userData: Partial<User>): Promise<ResultSetHeader> {
+    async updateUser(user_id: string, userData: Partial<UserDB>, transaction?: PoolConnection): Promise<ResultSetHeader> {
+        const connection = transaction ?? connectionPool;
+
         const setClause = Object.keys(userData)
             .map((key) => `${key} = ?`)
             .join(", ");
@@ -64,12 +71,58 @@ export default class UserModel {
         return results
     }
 
-    async deleteUser(user_id: string): Promise<any> {
-        const query = `DELETE FROM users WHERE user_id = ?`;
-        const values = [user_id];
+    async deleteUser(user_id: string): Promise<void> {
+        const transaction = await connectionPool.getConnection();
 
-        const [results, _] = await connection.query<ResultSetHeader>(query, values);
+        try {
+            const user = await this.getUserById(user_id);
 
-        return results
+            // Delete profile photo before user
+            if (user.fk_image_id) {
+                await imageModel.deleteImage(user.fk_image_id, transaction);
+            }
+
+            const query = `DELETE FROM users WHERE user_id = ?`;
+            const values = [user_id];
+
+            await transaction.query<ResultSetHeader>(query, values);
+
+            await transaction.commit();
+        } catch (error) {
+            // Rollback
+            await transaction.rollback();
+            throw error;
+        }
     }
+
+    async upsertUserProfileImage(user_id: string, image: Buffer): Promise<string> {
+        const transaction = await connectionPool.getConnection();
+
+        // Process image
+        const processedImage = await sharp(image)
+            .resize({ width: 300, fit: 'outside'})
+            .toFormat('webp')
+            .webp({ quality: 80 })
+            .toBuffer();
+
+        try {
+            const user = await this.getUserById(user_id);
+
+            // Delete old if exists
+            if (user.fk_image_id) {
+                await imageModel.deleteImage(user.fk_image_id, transaction);
+            }
+
+            const imageId = await imageModel.uploadImage(processedImage, transaction);
+            await this.updateUser(user_id, { fk_image_id: imageId } as UserDB, transaction);
+
+            await transaction.commit();
+
+            return imageId;
+        } catch (error) {
+            // Rollback
+            await transaction.rollback();
+            throw error;
+        }
+   }
 }

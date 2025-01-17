@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Availability } from '../common/generated.js';
+import { AvailabilityDB } from '../common/databaseModels.js';
 import AvailabilityModel from '../models/availabilityModel.js';
 
 const availabilityModel = new AvailabilityModel();
@@ -9,8 +9,8 @@ async function getAvailabilities(req: Request, res: Response) {
         const availabilities = await availabilityModel.getAvailabilities();
         res.status(200).json(availabilities);
     } catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	}
 }
@@ -28,13 +28,13 @@ async function getAvailabilityByVolunteerId(req: Request, res: Response) {
         const availability = await availabilityModel.getAvailabilityByVolunteerId(volunteer_id);
         res.status(200).json(availability);
     } catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	}
 }
 
-function isValidAvailabilities(data: any): data is Availability[] {
+function isValidAvailabilities(data: any): data is AvailabilityDB[] {
     return Array.isArray(data) && data.every((availability) => {
         return (
             // Validate its day is a number between 0 and 6
@@ -58,7 +58,7 @@ async function setAvailabilityByVolunteerId(req: Request, res: Response) {
     // console.log("DEBUG: setAvailabilityByVolunteerId");
 
     const { volunteer_id } = req.params;
-    const availabilities: Availability[] = req.body;
+    const availabilities: AvailabilityDB[] = req.body;
 
     if (!volunteer_id) {
         return res.status(400).json({
@@ -76,8 +76,8 @@ async function setAvailabilityByVolunteerId(req: Request, res: Response) {
         const result = await availabilityModel.setAvailabilityByVolunteerId(volunteer_id, availabilities);
         res.status(200).json(result);
     } catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	}
 }
@@ -86,7 +86,7 @@ async function updateAvailabilityByVolunteerId(req: Request, res: Response) {
     // console.log("DEBUG: updateAvailabilityByVolunteerId");
 
     const { volunteer_id } = req.params;
-    const availabilities: Availability[] = req.body;
+    const availabilities: AvailabilityDB[] = req.body;
 
     if (!volunteer_id) {
         return res.status(400).json({
@@ -104,8 +104,8 @@ async function updateAvailabilityByVolunteerId(req: Request, res: Response) {
         const result = await availabilityModel.updateAvailabilityByVolunteerId(volunteer_id, availabilities);
         res.status(200).json(result);
     } catch (error: any) {
-		return res.status(500).json({
-			error: `${error.message}`
+		return res.status(error.status ?? 500).json({
+			error: error.message
 		});
 	}
 }

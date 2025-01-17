@@ -23,7 +23,7 @@ create table users (
     role VARCHAR(5) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)
-        ON DELETE RESTRICT
+        ON DELETE SET NULL
 );
 
 create table instructors (
@@ -48,7 +48,7 @@ create table class (
     subcategory VARCHAR(64),
     FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id)
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)
-        ON DELETE RESTRICT
+        ON DELETE SET NULL
 );
 
 create table class_image (

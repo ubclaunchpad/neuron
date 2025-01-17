@@ -1,11 +1,11 @@
 import { ResultSetHeader } from 'mysql2/promise';
-import { Shift } from '../common/generated.js';
-import connection from '../config/database.js';
+import { ShiftDB } from '../common/databaseModels.js';
+import connectionPool from '../config/database.js';
 
 export default class ShiftModel {
 
      // get all the details of a shift
-     async getShiftInfoFromDB(fk_volunteer_id:string, fk_schedule_id:number, shift_date:string): Promise<Shift> {
+     async getShiftInfo(fk_volunteer_id:string, fk_schedule_id:number, shift_date:string): Promise<ShiftDB> {
           const query = `
                SELECT 
                     s.duration,
@@ -33,40 +33,40 @@ export default class ShiftModel {
           `;
           const values = [fk_volunteer_id, fk_schedule_id, shift_date];
           
-          const [results, _] = await connection.query<Shift[]>(query, values);
+          const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results[0];
      }
 
      // get all the shifts assigned to a single volunteer
-     async getShiftsByVolunteerId(volunteer_id: string): Promise<Shift[]> {
+     async getShiftsByVolunteerId(volunteer_id: string): Promise<ShiftDB[]> {
           const query = "SELECT * FROM shifts WHERE fk_volunteer_id = ?";
           const values = [volunteer_id];
           
-          const [results, _] = await connection.query<Shift[]>(query, values);
+          const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results;
      }
 
      // get all shifts occurring on given date
-     async getShiftsByDate(date: string): Promise<Shift[]> {
+     async getShiftsByDate(date: string): Promise<ShiftDB[]> {
           const query = "SELECT * FROM shifts WHERE shift_date = ?";
           const values = [date];
           
-          const [results, _] = await connection.query<Shift[]>(query, values);
+          const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results;
      }
 
      // get all the shift details viewable to a volunteer for a specified month
-     async getShiftsByVolunteerIdAndMonth(volunteer_id: string, month: number, year: number): Promise<Shift[]> {
+     async getShiftsByVolunteerIdAndMonth(volunteer_id: string, month: number, year: number): Promise<ShiftDB[]> {
           const query = `
                CALL GetShiftsByVolunteerIdAndMonth(?, ?, ?);
           `;
           
           const values = [volunteer_id, month, year];
           
-          const [results, _] = await connection.query<any>(query, values);
+          const [results, _] = await connectionPool.query<any>(query, values);
 
           return results[0]; // Value from procedure stored in the first value of the array
       }
@@ -79,7 +79,7 @@ export default class ShiftModel {
           `;
           const values = [request_id, volunteer_id];
 
-          const [results, _] = await connection.query<ResultSetHeader>(query, values);
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 
           return results;
      }

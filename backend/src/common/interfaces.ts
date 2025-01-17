@@ -12,7 +12,6 @@ export interface Volunteer {
   l_name: string;
   email: string;
   total_hours: number;
-  // class_preferences: string;
   bio?: string;
   activate: boolean;
   pronouns?: string;

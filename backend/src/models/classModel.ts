@@ -120,8 +120,6 @@ export default class ClassesModel {
           });
      }
 
-
-
      public addClass(newClass: Class): Promise<Class> {
           return new Promise((resolve, reject) => {
                const query = `INSERT INTO class 

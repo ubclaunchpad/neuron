@@ -9,7 +9,6 @@ const UserProfileForm = ({ volunteer_id }) => {
     l_name: "",
     f_name: "",
     total_hours: "",
-    // class_preferences: "",
     bio: "",
     active: false,
     email: ""
@@ -89,7 +88,9 @@ const UserProfileForm = ({ volunteer_id }) => {
         value={volunteerData.class_preferences}
         onChange={handleChange}
         placeholder="Class Preferences"
-      /> */}
+      /> 
+      // Can change to link to Class Preferences Page with an update option
+      */}
       <input
         type="text"
         name="bio"

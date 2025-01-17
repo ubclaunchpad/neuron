@@ -134,15 +134,15 @@ export default class VolunteerModel {
                 volunteer.fk_user_id,
                 volunteer.f_name,
                 volunteer.l_name,
-                null, //volunteer.p_name,
-                0, // volunteer.total_hours,
-                null, // volunteer.bio,
+                null,   //p_name,
+                0,      // total_hours,
+                null,   // bio,
                 volunteer.active,
                 volunteer.email,
-                null, //volunteer.pronouns,
-                null, //volunteer.phone_number,
-                null, //volunteer.city,
-                null // volunteer.province
+                null,   //pronouns,
+                null,   //phone_number,
+                null,   //city,
+                null    //province
             ];
 
             connectionPool.query(query, values, (error: any, results: any) => {

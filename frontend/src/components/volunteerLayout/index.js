@@ -12,7 +12,7 @@ import { isAuthenticated } from "../../api/authService";
 import { formatImageUrl } from "../../api/imageService";
 import NavProfileCard from "../NavProfileCard";
 
-function VolunteerLayout({ pageTitle, pageStyle }) {
+function VolunteerLayout() {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
   const [volunteer, setVolunteer] = useState(null);
   const [profilePic, setProfilePic] = useState(null);
@@ -126,12 +126,7 @@ function VolunteerLayout({ pageTitle, pageStyle }) {
           />
         </div>
       </aside>
-      <main className="content-container" style={pageStyle}>
-        <div className="content-heading">
-          <h2 className="content-title">{pageTitle}</h2>
-        </div>
-        <Outlet /> {/* Render page content here */}
-      </main>
+      <Outlet /> {/* Render page content here */}
     </div>
   );
 }

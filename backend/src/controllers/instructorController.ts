@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { InstructorDB } from '../common/databaseModels.js';
+import { InstructorDB } from '../common/generated.js';
 import InstructorModel from '../models/instructorModel.js';
 
 const instructorModel = new InstructorModel();

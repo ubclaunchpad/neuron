@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ScheduleDB } from '../common/databaseModels.js';
+import { ScheduleDB } from '../common/generated.js';
 import ScheduleModel from '../models/scheduleModel.js';
 
 const scheduleModel = new ScheduleModel();

@@ -4,9 +4,8 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { v4 as uuidv4 } from "uuid";
-import { UserDB, VolunteerDB } from "../common/databaseModels.js";
+import { UserDB, VolunteerDB } from "../common/generated.js";
 import { AuthenticatedUserRequest } from "../common/types.js";
-import ImageModel from "../models/imageModel.js";
 import UserModel from "../models/userModel.js";
 import VolunteerModel from "../models/volunteerModel.js";
 
@@ -29,7 +28,6 @@ const transporter = nodemailer.createTransport({
 
 const userModel = new UserModel();
 const volunteerModel = new VolunteerModel();
-const imageService = new ImageModel();
 
 async function getUserById(req: Request, res: Response) {
     const { user_id } = req.params;

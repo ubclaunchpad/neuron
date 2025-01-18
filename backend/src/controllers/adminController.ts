@@ -1,7 +1,7 @@
 import { Response } from "express";
 import VolunteerModel from "../models/volunteerModel.js";
 
-import { VolunteerDB } from "../common/databaseModels.js";
+import { VolunteerDB } from "../common/generated.js";
 import { AuthenticatedUserRequest } from "../common/types.js";
 
 const volunteerModel = new VolunteerModel();

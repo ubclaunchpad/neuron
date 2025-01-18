@@ -1,6 +1,6 @@
 import { ResultSetHeader } from 'mysql2';
 import { PoolConnection } from 'mysql2/promise';
-import { ScheduleDB } from '../common/databaseModels.js';
+import { ScheduleDB } from '../common/generated.js';
 import connectionPool from '../config/database.js';
 
 export default class ScheduleModel {

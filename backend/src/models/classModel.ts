@@ -1,6 +1,6 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import sharp from 'sharp';
-import { ClassDB } from '../common/databaseModels.js';
+import { ClassDB } from '../common/generated.js';
 import connectionPool from '../config/database.js';
 import ImageModel from './imageModel.js';
 

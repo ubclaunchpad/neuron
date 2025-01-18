@@ -1,5 +1,5 @@
 import { ResultSetHeader } from 'mysql2/promise';
-import { ShiftDB } from '../common/databaseModels.js';
+import { ShiftDB } from '../common/generated.js';
 import connectionPool from '../config/database.js';
 
 export default class ShiftModel {

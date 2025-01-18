@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { AvailabilityDB } from '../common/databaseModels.js';
+import { AvailabilityDB } from '../common/generated.js';
 import AvailabilityModel from '../models/availabilityModel.js';
 
 const availabilityModel = new AvailabilityModel();

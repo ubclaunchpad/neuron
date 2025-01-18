@@ -1,5 +1,5 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
-import { AvailabilityDB } from "../common/databaseModels.js";
+import { AvailabilityDB } from "../common/generated.js";
 import connectionPool from "../config/database.js";
 
 export default class AvailabilityModel {

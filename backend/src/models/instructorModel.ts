@@ -1,5 +1,5 @@
 import { ResultSetHeader } from 'mysql2';
-import { InstructorDB } from '../common/databaseModels.js';
+import { InstructorDB } from '../common/generated.js';
 import connectionPool from '../config/database.js';
 
 // Instructor model

@@ -1,5 +1,5 @@
 import { ResultSetHeader } from "mysql2/promise";
-import { ShiftDB, VolunteerDB } from "../common/databaseModels.js";
+import { ShiftDB, VolunteerDB } from "../common/generated.js";
 import connectionPool from "../config/database.js";
 
 export default class VolunteerModel {

@@ -5,6 +5,7 @@ import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
+import CalendarView from "../../components/CalendarView";
 import "./index.css";
 
 function VolunteerSchedule() {
@@ -16,6 +17,7 @@ function VolunteerSchedule() {
     const [selectedClassId, setSelectedClassId] = useState(null);
     const [selectedShiftButtons, setSelectedShiftButtons] = useState([]);
     const [selectedShiftDetails, setShiftDetails] = useState(null);
+    const [viewMode, setViewMode] = useState('week');
 
     // Create a ref object to store references to each shifts-container for scrolling
     const shiftRefs = useRef({});
@@ -109,44 +111,46 @@ function VolunteerSchedule() {
                 shiftDetails={selectedShiftDetails}
                 dynamicShiftbuttons={selectedShiftButtons}>
                 <div className="schedule-page">
-                    <DateToolbar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+                    <DateToolbar selectedDate={selectedDate} setSelectedDate={setSelectedDate} setViewMode={setViewMode} />
                     <hr />
                     <ShiftStatusToolbar setFilter={setFilter} filter={filter} />
                     <hr />  
-                    <div ref={scheduleContainerRef} className="schedule-container">
-                        {Object.keys(groupedShifts).length > 0 ? (
-                            Object.keys(groupedShifts).map((date) => (
-                              <div 
-                                key={date} 
-                                className="shifts-container"
-                                ref={(el) => shiftRefs.current[dayjs(date).format('YYYY-MM-DD')] = el}  
-                            >
-                                {/* Date Header */}
-                                <h2
-                                    className={`date-header ${dayjs(date).isSame(selectedDate, 'day') ? 'selected-date' : 'non-selected-date'}`}
+                    {viewMode === "list" ? <>
+                        <div ref={scheduleContainerRef} className="schedule-container">
+                            {Object.keys(groupedShifts).length > 0 ? (
+                                Object.keys(groupedShifts).map((date) => (
+                                <div 
+                                    key={date} 
+                                    className="shifts-container"
+                                    ref={(el) => shiftRefs.current[dayjs(date).format('YYYY-MM-DD')] = el}  
                                 >
-                                    {dayjs(date).format('ddd, D')}
-                                    {dayjs(date).isSame(currentDate, 'day') && ' | Today'}
-                                </h2>
+                                    {/* Date Header */}
+                                    <h2
+                                        className={`date-header ${dayjs(date).isSame(selectedDate, 'day') ? 'selected-date' : 'non-selected-date'}`}
+                                    >
+                                        {dayjs(date).format('ddd, D')}
+                                        {dayjs(date).isSame(currentDate, 'day') && ' | Today'}
+                                    </h2>
 
-                                {/* Shift List for this date */}
-                                <div className="shift-list">
-                                    {groupedShifts[date].map((shift) => (
-                                        <ShiftCard 
-                                            key={shift.fk_schedule_id} 
-                                            shift={shift} 
-                                            shiftType={shift.shift_type} 
-                                            onUpdate={handleShiftUpdate} 
-                                            onShiftSelect={handleShiftSelection}
-                                        />
-                                    ))}
-                                </div> 
-                              </div>
-                            ))
-                        ) : (
-                            <p>No shifts to display for this month.</p>
-                        )}
-                    </div>
+                                    {/* Shift List for this date */}
+                                    <div className="shift-list">
+                                        {groupedShifts[date].map((shift) => (
+                                            <ShiftCard 
+                                                key={shift.fk_schedule_id} 
+                                                shift={shift} 
+                                                shiftType={shift.shift_type} 
+                                                onUpdate={handleShiftUpdate} 
+                                                onShiftSelect={handleShiftSelection}
+                                            />
+                                        ))}
+                                    </div> 
+                                </div>
+                                ))
+                            ) : (
+                                <p>No shifts to display for this month.</p>
+                            )}
+                        </div> 
+                    </> : <CalendarView />}
                 </div>
             </DetailsPanel>
         </main>

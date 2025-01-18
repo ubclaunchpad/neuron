@@ -1,18 +1,22 @@
-@import '../../styles.css';
+@import "../../styles.css";
 
 .date-toolbar {
-    display: flex;             
-    align-items: left; 
+    display: flex;
+    justify-content: space-between;
+}
+
+.date-toolbar .left-nav {
+    display: flex;
 }
 
 /* Override default button styles */
 .date-toolbar .MuiButton-root {
-    color: var(--dark); 
+    color: var(--dark);
     text-transform: none;
-} 
+}
 
 .day-navigation {
-    display: flex;           
+    display: flex;
 }
 
 button {
@@ -59,7 +63,7 @@ button {
 }
 
 .MuiPickersDay-root.MuiPickersDay-today::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 4px;
     left: 50%;

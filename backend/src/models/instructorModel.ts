@@ -1,68 +1,42 @@
-import { Instructor } from '../common/generated.js';
+import { ResultSetHeader } from 'mysql2';
+import { InstructorDB } from '../common/generated.js';
 import connectionPool from '../config/database.js';
 
 // Instructor model
 export default class InstructorModel {
+  async getInstructors(): Promise<InstructorDB[]> {
+    const query = `SELECT * FROM instructors`;
 
-  getInstructors(): Promise<Instructor[]> {
-    return new Promise((resolve, reject) => {
-      const query = `SELECT * FROM instructors`;
-
-      connectionPool.query(query, [], (error: any, results: any) => {
-        if (error) {
-          reject({
-            status: 500,
-            message: `An error occurred while executing the query: ${error}`,
-          });
-        }
-        resolve(results);
-      });
-    });
+    const [results, _] = await connectionPool.query<InstructorDB[]>(query, []);
+     
+    return results;
   }
 
-  getInstructorById(instructor_id: string): Promise<Instructor> {
-    return new Promise((resolve, reject) => {
-      const query = "SELECT * FROM instructors WHERE instructor_id = ?";
-      const values = [instructor_id];
+  async getInstructorById(instructor_id: string): Promise<InstructorDB> {
+    const query = "SELECT * FROM instructors WHERE instructor_id = ?";
+    const values = [instructor_id];
 
-      connectionPool.query(query, values, (error: any, results: any) => {
-        if (error) {
-          reject({
-            status: 500,
-            message: `An error occurred while executing the query: ${error}`,
-          });
-        }
-        if (results.length == 0) {
-          reject({
-            status: 400,
-            message: `No instructor found under the given ID: ${instructor_id}`,
-          });
-        }
-        resolve(results[0]);
-      });
-    });
+    const [results, _] = await connectionPool.query<InstructorDB[]>(query, values);
+
+    if (results.length === 0) {
+      throw {
+        status: 400,
+        message: `No instructor found under the given ID: ${instructor_id}`,
+      };
+    }
+    
+    return results[0];
   };
 
-  insertInstructor(instructor: Instructor): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const query =
-        "INSERT INTO instructors (instructor_id, f_name, l_name, email) VALUES (?, ?, ?, ?)";
-      const values = [
-        instructor.instructor_id,
-        instructor.f_name,
-        instructor.l_name,
-        instructor.email
-      ];
+  async insertInstructor(instructor: InstructorDB): Promise<ResultSetHeader> {
+    const query =
+      "INSERT INTO instructors (instructor_id, f_name, l_name, email) VALUES (?, ?, ?, ?)";
 
-      connectionPool.query(query, values, (error: any, results: any) => {
-        if (error) {
-          return reject({
-            status: 500,
-            message: `An error occurred while executing the query: ${error}`,
-          });
-        }
-        resolve(results);
-      });
-    });
+    const { instructor_id, f_name, l_name, email } = instructor;
+    const values = [instructor_id, f_name, l_name, email];
+
+    const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+    return results;
   };
 }

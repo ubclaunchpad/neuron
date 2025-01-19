@@ -9,7 +9,7 @@ import {
     deleteClass,
     getAllImages, 
     getImageByClassId, 
-    uploadImage 
+    uploadClassImage
 } from '../controllers/classController.js';
 import multer from 'multer'; // Used for file uploads
 
@@ -19,14 +19,6 @@ const upload = multer({ storage: storage });
 
 router.get('/', async (req: Request, res: Response) => {
     await getAllClasses(req, res);
-});
-
-router.get('/images', async (req: Request, res: Response) => {
-    await getAllImages(req, res);
-});
-
-router.get('/images/:class_id', async (req: Request, res: Response) => {
-    await getImageByClassId(req, res);
 });
 
 router.get('/:class_id', async (req: Request, res: Response) => {
@@ -49,8 +41,8 @@ router.delete('/:class_id', async (req: Request, res: Response) => {
     await deleteClass(req, res);
 });
 
-router.put('/images/:class_id', upload.single('image'), async (req: Request, res: Response) => {
-    await uploadImage(req, res);
+router.put('/:class_id/upload', upload.single('image'), async (req: Request, res: Response) => {
+    await uploadClassImage(req, res);
 });
 
 

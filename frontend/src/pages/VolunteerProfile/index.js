@@ -1,6 +1,7 @@
 // volunteer profile page
 import React, { useState } from 'react';
-import { fetchVolunteerData, getProfilePicture } from "../../api/volunteerService";
+import { formatImageUrl } from '../../api/imageService';
+import { fetchUserData, fetchVolunteerData } from "../../api/volunteerService";
 import AvailabilityGrid from "../../components/volunteerProfile/availabilityGrid";
 import ChangePasswordCard from "../../components/volunteerProfile/changePasswordCard";
 import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
@@ -13,12 +14,14 @@ function VolunteerProfile() {
     React.useEffect(() => {
         async function fetch() {
             const volunteer_id = localStorage.getItem('volunteerID');
+            const user_id = localStorage.getItem('userID');
             try {
                 const volunteerData = await fetchVolunteerData(volunteer_id);
-                const profilePic = await getProfilePicture(volunteer_id);
-                setVolunteer({ 
+                const userData = await fetchUserData(user_id);
+                setVolunteer({
                     ...volunteerData, 
-                    profile_picture: profilePic ? profilePic : null
+                    profile_picture: userData.fk_image_id ? formatImageUrl(userData.fk_image_id) : null,
+                    user_id: userData.user_id
                 })
             } catch (error) {
                 console.error(error);

@@ -8,7 +8,8 @@ import edit_icon from "../../../assets/edit-icon.png";
 import ProfileImg from "../../ImgFallback";
 
 import { CgSelect } from "react-icons/cg";
-import { insertProfilePicture, updateProfilePicture, updateVolunteerData } from "../../../api/volunteerService";
+import { formatImageUrl } from "../../../api/imageService";
+import { updateVolunteerData, uploadProfilePicture } from "../../../api/volunteerService";
 import useComponentVisible from "../../../hooks/useComponentVisible";
 
 function VolunteerDetailsCard({ volunteer }) {
@@ -99,18 +100,11 @@ function VolunteerDetailsCard({ volunteer }) {
                 const profilePicData = new FormData();
                 profilePicData.append('image', mutableData.profilePicture);
 
-                // if no existing profile picture
-                if (prevMutableData.profilePicture === null) { 
+                // attach id to req body
+                profilePicData.append('volunteer_id', volunteer.volunteer_id);
 
-                    // attach id to req body
-                    profilePicData.append('volunteer_id', volunteer.volunteer_id);
-
-                    const profilePicResult = await insertProfilePicture(profilePicData);
-                    console.log("Successfully inserted profile picture.", profilePicResult);
-                } else {
-                    const profilePicResult = await updateProfilePicture(volunteer.volunteer_id, profilePicData);
-                    console.log("Successfully updated profile picture.", profilePicResult);
-                }
+                const uploadedImageId = await uploadProfilePicture(volunteer.user_id, profilePicData);
+                setTempImage(formatImageUrl(uploadedImageId));
             }
             
         } catch (error) {

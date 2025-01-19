@@ -31,6 +31,7 @@ function App() {
         } else {
           setIsVolunteer(false);
         }
+        localStorage.setItem("userID", authResponse.user.user_id);
       } catch (error) {
         console.error("Authentication as volunteer failed:", error);
         setIsVolunteer(false);
@@ -63,7 +64,7 @@ function App() {
             </Route>
           </Route>
 
-          {/* Admin Route (Assuming it's accessible without authentication or has its own protection) */}
+          {/* Admin Route */}
           <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
 
           {/* Catch-all Route for Undefined Paths */}

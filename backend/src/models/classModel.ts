@@ -99,11 +99,11 @@ export default class ClassesModel {
 
      async addClass(newClass: ClassDB): Promise<ResultSetHeader> {
           const query = `INSERT INTO class 
-                         (fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category)
-                         VALUES (?, ?, ?, ?, ?, ?, ?)`;
+                         (fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
-          const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category } = newClass;
-          const values = [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category];
+          const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = newClass;
+          const values = [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory];
 
           const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
           
@@ -117,7 +117,7 @@ export default class ClassesModel {
           const setClause = Object.keys(classData)
                .map((key) => `${key} = ?`)
                .join(", ");
-          const query = `UPDATE class SET ${setClause} WHERE volunteer_id = ?`;
+          const query = `UPDATE class SET ${setClause} WHERE class_id = ?`;
           const values = [...Object.values(classData), class_id];
 
           const [results, _] = await connection.query<ResultSetHeader>(query, values);

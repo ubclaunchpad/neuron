@@ -62,7 +62,8 @@ async function addClass(req: Request, res: Response) {
 }
 
 async function updateClass(req: Request, res: Response) {
-	const { class_id } = req.params;
+	const class_id = Number(req.params.class_id);
+
 	const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = req.body;
 
 	if (!class_id) {
@@ -92,14 +93,14 @@ async function updateClass(req: Request, res: Response) {
 		const result = await classesModel.updateClass(class_id, updatedClass);
 		return res.status(200).json(result);
 	} catch (error: any) {
-		return res.status(error.status).json({
+		return res.status(error.status ?? 500).json({
             error: error.message,
         });
 	}
 }
 
 async function deleteClass(req: Request, res: Response) {
-	const { class_id } = req.params;
+	const class_id = Number(req.params.class_id);
 
 	if (!class_id) {
 		return res.status(400).json({
@@ -195,6 +196,7 @@ async function uploadClassImage(req: Request, res: Response) {
 
 export {
 	addClass, getAllClasses, getClassById,
-	getClassesByDay, uploadClassImage
+	getClassesByDay, uploadClassImage,
+	updateClass, deleteClass
 };
 

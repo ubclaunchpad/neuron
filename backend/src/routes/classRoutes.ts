@@ -7,8 +7,6 @@ import {
     addClass, 
     updateClass,
     deleteClass,
-    getAllImages, 
-    getImageByClassId, 
     uploadClassImage
 } from '../controllers/classController.js';
 import multer from 'multer'; // Used for file uploads

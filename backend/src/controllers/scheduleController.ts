@@ -16,7 +16,7 @@ async function getSchedules(req: Request, res: Response) {
 }
 
 async function getSchedulesByClassId(req: Request, res: Response) {
-  const { class_id } = req.params;
+  const class_id = Number(req.params.class_id);
 
   if (!class_id) {
     return res.status(400).json({
@@ -55,7 +55,7 @@ function isValidSchedules(data: any): data is ScheduleDB[] {
 }
 
 async function setSchedulesByClassId(req: Request, res: Response) {
-  const { class_id } = req.params;
+  const class_id = Number(req.params.class_id);
   const schedules: ScheduleDB[] = req.body;
 
   if (!class_id) {
@@ -81,7 +81,7 @@ async function setSchedulesByClassId(req: Request, res: Response) {
 }
 
 async function updateSchedulesByClassId(req: Request, res: Response) {
-  const { class_id } = req.params;
+  const class_id = Number(req.params.class_id);
   const schedules: ScheduleDB[] = req.body;
 
   if (!class_id) {
@@ -107,7 +107,7 @@ async function updateSchedulesByClassId(req: Request, res: Response) {
 }
 
 async function deleteSchedules(req: Request, res: Response) {
-  const { class_id } = req.params;
+  const class_id = Number(req.params.class_id);
   const { schedule_ids } = req.body;
 
   if (!class_id) {

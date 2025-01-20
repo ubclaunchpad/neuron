@@ -73,40 +73,15 @@ export default class VolunteerModel {
         return results
     }
 
-    async insertVolunteer(volunteer: Partial<VolunteerDB>): Promise<any> {
-        const query =
-            `INSERT INTO volunteers (
-                volunteer_id, 
-                fk_user_id, 
-                f_name, 
-                l_name, 
-                p_name, 
-                total_hours, 
-                class_preferences, 
-                bio, 
-                active, 
-                email, 
-                pronouns, 
-                phone_number, 
-                city, 
-                province
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        const values = [
-            volunteer.volunteer_id,
-            volunteer.fk_user_id,
-            volunteer.f_name,
-            volunteer.l_name,
-            volunteer.p_name,
-            volunteer.total_hours,
-            volunteer.class_preferences,
-            volunteer.bio,
-            volunteer.active,
-            volunteer.email,
-            volunteer.pronouns,
-            volunteer.phone_number,
-            volunteer.city,
-            volunteer.province
-        ];
+    async insertVolunteer(volunteer: VolunteerDB): Promise<any> {
+        // Construct the INSERT clause dynamically
+        const insertClause = Object.keys(volunteer)
+            .join(", ");
+        const valuesClause = Object.keys(volunteer)
+            .map(_ => '?')
+            .join(", ");
+        const query = `INSERT INTO volunteers (${insertClause}) VALUES (${valuesClause})`;
+        const values = Object.values(volunteer);
 
         const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 

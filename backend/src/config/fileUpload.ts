@@ -10,10 +10,10 @@ export const imageUploadMiddleware = multer({
         // Allowed ext
         const allowedExts = ['jpeg', 'jpg', 'png', 'gif'];
         // Check ext
-        const extname = allowedExts.includes(path.extname(file.originalname).toLowerCase());
+        const extname = allowedExts.includes(path.extname(file.originalname).replace('.', '').toLowerCase());
         // Check mime
         const mimetype = allowedExts.map(ext => `image/${ext}`).includes(file.mimetype);
-          
+
         if(mimetype && extname){
             cb(null, true);
         } else {

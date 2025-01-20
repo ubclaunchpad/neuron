@@ -111,9 +111,9 @@ INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, durat
 (5, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1', 102, '2024-11-16', 1, false);
 INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
 (6, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1', 103, '2024-11-16', 1, false);
-INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
-(7, null, 103, '2024-10-25', 1, false);
-INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES
+(7, null, 103, '2024-10-25', 1);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES
 (8, null, 1, '2024-09-10', 90);
 INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES
 (9, null, 2, '2024-09-12', 90);

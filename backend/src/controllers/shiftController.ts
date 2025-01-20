@@ -150,7 +150,7 @@ async function addShift(req: Request, res: Response) {
         return res.status(400).json({
             error: "Missing required field: 'duration'.",
         });
-    }
+    } 
 
     try {
         const request = await shiftModel.addShift(shift);
@@ -159,7 +159,8 @@ async function addShift(req: Request, res: Response) {
             fk_volunteer_id: shift.fk_volunteer_id ?? null,
             fk_schedule_id: shift.fk_schedule_id,
             shift_date: shift.shift_date,
-            duration: shift.duration
+            duration: shift.duration,
+            checked_in: shift.checked_in
         };
 
         res.status(200).json(addedShift);

@@ -10,6 +10,7 @@ CREATE PROCEDURE GetShiftsByVolunteerIdAndMonth(
 BEGIN
     -- First query for 'my-shifts'
     SELECT 
+        shifts.shift_id AS shift_id,
         shifts.shift_date AS shift_date,
         schedule.day AS day,
         schedule.start_time AS start_time,
@@ -39,6 +40,7 @@ BEGIN
 
     -- Second query for 'coverage' with coverage status and request_id
     SELECT 
+        shifts.shift_id AS shift_id,
         shifts.shift_date AS shift_date,
         schedule.day AS day,
         schedule.start_time AS start_time,
@@ -84,6 +86,7 @@ BEGIN
 
     -- Third query for 'my-coverage-requests' with request_id
     SELECT 
+        shifts.shift_id AS shift_id,
         shifts.shift_date AS shift_date,
         schedule.day AS day,
         schedule.start_time AS start_time,

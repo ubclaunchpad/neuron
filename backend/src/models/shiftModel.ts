@@ -83,4 +83,53 @@ export default class ShiftModel {
 
           return results;
      }
+
+
+     // create a new shift. having fk_volunteer_id = null indicates an unassigned shift
+     async addShift(shift: ShiftDB): Promise<ResultSetHeader> {
+          const query = `
+               INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in)
+               VALUES (?, ?, ?, ?, ?)
+          `;
+          const values = [
+               shift.fk_volunteer_id,
+               shift.fk_schedule_id,
+               shift.shift_date,
+               shift.duration,
+               shift.checked_in
+          ];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
+     // update a shift by id
+     async updateShift(shift_id: number, shift: ShiftDB): Promise<ResultSetHeader> {
+
+          // Construct the SET clause dynamically
+          const setClause = Object.keys(shift)
+               .map((key) => `${key} = ?`)
+               .join(", ");
+          const query = `
+               UPDATE shifts SET ${setClause} WHERE shift_id = ?;
+          `;
+          const values = [...Object.values(shift), shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
+     // delete a shift by id
+     async deleteShift(shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               DELETE FROM shifts WHERE shift_id = ?;
+          `;
+          const values = [shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
 }

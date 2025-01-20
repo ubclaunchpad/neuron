@@ -81,8 +81,7 @@ export default class VolunteerModel {
                 f_name, 
                 l_name, 
                 p_name, 
-                total_hours, 
-                class_preferences, 
+                total_hours,
                 bio, 
                 active, 
                 email, 
@@ -90,14 +89,14 @@ export default class VolunteerModel {
                 phone_number, 
                 city, 
                 province
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const values = [
             volunteer.volunteer_id,
             volunteer.fk_user_id,
             volunteer.f_name,
             volunteer.l_name,
             volunteer.p_name,
-            volunteer.total_hours,
+            volunteer.total_hours ?? 0,
             volunteer.class_preferences,
             volunteer.bio,
             volunteer.active,
@@ -107,6 +106,7 @@ export default class VolunteerModel {
             volunteer.city,
             volunteer.province
         ];
+        console.log(values);
 
         const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 

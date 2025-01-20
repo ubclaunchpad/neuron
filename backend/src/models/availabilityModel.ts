@@ -21,7 +21,10 @@ export default class AvailabilityModel {
   async setAvailabilityByVolunteerId(volunteer_id: string, availabilities: AvailabilityDB[], transaction?: PoolConnection): Promise<ResultSetHeader> {
     const connection = transaction ?? connectionPool;
 
-    const query = `INSERT INTO availability (fk_volunteer_id, day, start_time, end_time) VALUES ?`;
+    const valuesCaluse = availabilities
+            .map(() => '(?)')
+            .join(", ");
+    const query = `INSERT INTO availability (fk_volunteer_id, day, start_time, end_time) VALUES ${valuesCaluse}`;
     const values = availabilities.map((availability) => [
       volunteer_id,
       availability.day,

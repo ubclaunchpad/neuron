@@ -69,8 +69,10 @@ BEGIN
     JOIN 
         class ON schedule.fk_class_id = class.class_id
     JOIN 
-        shift_coverage_request ON shifts.fk_schedule_id = shift_coverage_request.fk_schedule_id
-        AND shifts.shift_date = shift_coverage_request.shift_date
+        shift_coverage_request 
+            -- ON shifts.fk_schedule_id = shift_coverage_request.fk_schedule_id
+            -- AND shifts.shift_date = shift_coverage_request.shift_date
+            ON shifts.shift_id = shift_coverage_request.fk_shift_id -- CHANGED FOR UPDATED SHIFTS TABLE
     LEFT JOIN 
         pending_shift_coverage ON shift_coverage_request.request_id = pending_shift_coverage.request_id
     WHERE 
@@ -103,9 +105,11 @@ BEGIN
     JOIN 
         class ON schedule.fk_class_id = class.class_id
     JOIN 
-        shift_coverage_request ON shifts.fk_volunteer_id = shift_coverage_request.fk_volunteer_id
-        AND shifts.fk_schedule_id = shift_coverage_request.fk_schedule_id
-        AND shifts.shift_date = shift_coverage_request.shift_date
+        shift_coverage_request 
+            -- ON shifts.fk_volunteer_id = shift_coverage_request.fk_volunteer_id
+            -- AND shifts.fk_schedule_id = shift_coverage_request.fk_schedule_id
+            -- AND shifts.shift_date = shift_coverage_request.shift_date
+            ON shifts.shift_id = shift_coverage_request.fk_shift_id -- CHANGED FOR UPDATED SHIFTS TABLE
     WHERE 
         shifts.fk_volunteer_id = volunteer_id 
         AND MONTH(shifts.shift_date) = month 

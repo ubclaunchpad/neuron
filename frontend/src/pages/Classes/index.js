@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   getAllClasses,
+  getAllClassSchedules
 } from "../../api/classesPageService";
 import { formatImageUrl } from "../../api/imageService";
 import ClassCategoryContainer from "../../components/ClassCategoryContainer";

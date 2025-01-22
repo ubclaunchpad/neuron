@@ -14,19 +14,27 @@ const config = {
         "database" : process.env.RDS_DB
     },
     "tableNameCasing": "pascal",
-    "interfaceNameFormat": "${table}",
+    "interfaceNameFormat": "${table}DB",
     "singularTableNames": true,
-    "filename": "./src/common/generated.ts",
+    "filename": "./src/common/databaseModels.ts",
     "typeMap": {
         "Buffer": ["longblob", "mediumblob"],
         "string": ["time", "date"]
     }
 };
 
-const contents = await Client
+let contents = await Client
     .fromConfig(config)
     .fetchDatabase()
+    .mapTables((t) => {
+        t.extends = "RowDataPacket"
+        return t;
+    })
     .toTypescript();
+
+contents = `import { RowDataPacket } from "mysql2";
+
+${contents}`
 
 writeFile(config.filename, contents, err => {
     if (err) console.error(err)

@@ -15,10 +15,12 @@ export default function ProfileImg({
     }
   };
 
+  console.log(name, src)
+
   if (name)
     return <img
     className={className}
-      src={src}
+      src={src || fallbackUrl}
       alt={name}
       width={40}
       height={40}

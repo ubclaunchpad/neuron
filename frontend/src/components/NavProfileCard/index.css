@@ -39,6 +39,7 @@
 
 .nav-profile-card__avatar img {
     border-radius: 0.5rem;
+    object-fit: cover;
 }
 
 .nav-profile-card__info {
@@ -61,5 +62,5 @@
 
 .nav-profile-card__email {
     color: grey;
-    font-size: 14px;
+    font-size: 12px;
 }

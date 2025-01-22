@@ -24,7 +24,7 @@ body {
 .content-container {
   flex-grow: 1;
   background-color: var(--white);
-  padding: 0 2vw;
+  padding: 0 36px;
   max-height: 100vh;
   overflow-y: scroll;
   position: relative;

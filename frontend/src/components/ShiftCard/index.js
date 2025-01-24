@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import isBetween from 'dayjs/plugin/isBetween';
 import CheckInIcon from '../../assets/check-in-icon.png'
 import Plus from '../../assets/plus.png'
 import RequestCoverageIcon from '../../assets/request-coverage.png'
@@ -8,7 +9,13 @@ import { SHIFT_TYPES, COVERAGE_STATUSES } from '../../data/constants';
 
 function ShiftCard({ shift, shiftType, onUpdate, onShiftSelect }) {
     const currentDate = dayjs();
-    const pastShift = dayjs(shift.shift_date).format('YYYY-MM-DD') <= currentDate.format('YYYY-MM-DD');
+    const shiftDay = dayjs(shift.shift_date).format('YYYY-MM-DD');
+    const shiftStart = dayjs(`${shiftDay} ${shift.start_time}`);
+    const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
+
+    const pastShift = currentDate.isAfter(shiftEnd);
+    const currentShift = currentDate.isBetween(shiftStart, shiftEnd, 'minute', '[]');
+
     const volunteerID = localStorage.getItem('volunteerID');
 
     const handleCoverShiftClick = async () => {
@@ -27,7 +34,7 @@ function ShiftCard({ shift, shiftType, onUpdate, onShiftSelect }) {
 
     // TODO Check-in handler for 'my-shifts'
     const handleCheckInClick = async () => {
-        if (!shift.checked_in && pastShift) {
+        if (!shift.checked_in && currentShift) {
             // Perform check-in logic here
             console.log(`Checking in for shift ${shift.shift_id}`);
             // Set the state or make API call here to mark the shift as checked in
@@ -43,9 +50,15 @@ function ShiftCard({ shift, shiftType, onUpdate, onShiftSelect }) {
     const buttonConfig = {
         [SHIFT_TYPES.MY_SHIFTS]: {
             lineColor: 'var(--green)',
-            label: shift.checked_in ? 'Checked In' : pastShift ? 'Check In' : 'Upcoming',
-            icon: shift.checked_in ? null : pastShift ? CheckInIcon : null,
-            disabled: shift.checked_in || !pastShift,
+            label: shift.checked_in 
+                ? 'Checked In' 
+                    : currentShift 
+                    ? 'Check In' 
+                        : pastShift
+                        ? 'Missed Shift'
+                            : 'Upcoming',
+            icon: shift.checked_in ? null : currentShift ? CheckInIcon : null,
+            disabled: shift.checked_in || !currentShift,
             buttonClass: shift.checked_in ? 'checked-in' : '',
             onClick: handleCheckInClick,
         },
@@ -87,7 +100,7 @@ function ShiftCard({ shift, shiftType, onUpdate, onShiftSelect }) {
         const primaryButton = buttonConfig[shiftType] || buttonConfig[SHIFT_TYPES.DEFAULT];
 
         buttons.push(primaryButton);
-        if (shiftType === SHIFT_TYPES.MY_SHIFTS) {
+        if (shiftType === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
             buttons.push(buttonConfig.REQUEST_COVERAGE);
         }
         return buttons;

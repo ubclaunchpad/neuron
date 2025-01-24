@@ -94,7 +94,6 @@ export default class ScheduleModel {
 
             // Filter out schedules that we don't need to add
             const newSchedulesToAdd = newSchedules.filter((newSchedule: ScheduleDB) => !schedulesToSkip.has(newSchedule));
-            console.log(newSchedulesToAdd)
 
             if (scheduleIdsToDelete.size > 0) {
                 await this.deleteSchedulesByScheduleId(classId, [...scheduleIdsToDelete], transaction);

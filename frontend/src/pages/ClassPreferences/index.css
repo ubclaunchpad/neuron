@@ -1,74 +1,85 @@
 @import '../../styles.css';  /*Imports custom fonts*/
 
-.header-text {
-     font-size: 12px;
-     font-family: 'Roboto';
-     font-weight: 400;
-     color: "#0f1111";
-     display: inline-block;
-     margin-right: 25px;
+.parent-container {
+     padding: 32px;
+     border-radius: 8px;
+     border: 1px solid #D9D9D9;
+     box-shadow: 0px 4px 16px 0px #0F11110D;
+     margin-bottom: 40px;
 }
-
-.filter-text {
-     border: 1px solid gray;
-     padding: 3px;
-     border-radius: 5px;
-}
-
-.page-content {
-     padding: 30px;
-}
-
-.my-preferences {
-     width: 60%;
-     margin: 20px auto;
-}
-
-.my-preferences-text {
-     font-family: 'Roboto';
-     font-weight: 500;
-     font-size: 13px;
-     margin-bottom: 20px;
-     padding-left: 20px;
-}
-
-.preference-box {
-     width: 100%;
-     border: 1px solid #d9d9d9;
+.parent-container-header {
      display: flex;
-     height: auto;
-     align-items: center;
-     border-radius: 4px;
-     padding: 0px;
-     background: white;
 }
-
-.add-rank:hover {
-     filter: brightness(0.6);
-     cursor: pointer;
-}
-
-.rank-number {
-     height: 100%;
-     width: 15%;
+.parent-container-title {
+     margin-left: 0px;
+     margin-right: auto;
      display: flex;
-     justify-content: center;
      align-items: center;
      font-family: 'Montserrat';
-     color: #0f1111;
-     font-weight: 500;
-     font-size: 28px;
-     border-right: 1px solid #d9d9d9;
-}
-
-.preference-box-content {
-     margin-left: 20px;
-     min-height: 80px;
-     display: flex;
-     justify-content: center;
-     align-items: center;
-     font-family: 'Montserrat';
-     color: #808080;
      font-size: 20px;
+     font-weight: 600;
+     line-height: 27px;
+     text-align: left;
+     text-underline-position: from-font;
+     text-decoration-skip-ink: none;
+}
+
+.middle-button {
+     margin-left: auto;
+     margin-right: 16px;
+}
+.left-button {
+     margin-right: 0px;
+}
+.rank-container {
+     border: 1px solid #D9D9D9;
+     padding: 20px;
+     margin-top: 20px;
+     border-radius: 8px;
+     min-height: 180px;
+     display: flex;
+     flex-direction: column;
+     height: auto;
+}
+.rank-header {
+     border-right: 1px solid #D9D9D9;
+     padding-right: 20px;
+     width: 170px;
+     display: flex;
+     height: 100%;
+     flex: 1;
+     align-items: center;
+}
+.rank-name {
+     color: #0F1111;
+     font-family: Montserrat;
+     font-size: 28px;
      font-weight: 500;
+     line-height: 37.8px;
+     text-align: left;
+     width: 150px;
+     padding: 10px 0;
+     margin: 0px;
+}
+.edit-rank-button {
+     margin: 0px;
+     width: 150px; 
+     height: 40px;
+     display: flex;
+     flex-direction: row;
+     align-items: center;
+     justify-content: center;
+     border: 1px solid #4385AC;
+     background-color: white;
+     border-radius: 8px;
+}
+.edit-rank-button div {
+     margin-left: 8px;
+     font-family: "Roboto";
+     font-weight: 400;
+     font-size: 16px;
+}
+.edit-rank-button:hover {
+     cursor: pointer;
+     filter: brightness(0.7);
 }

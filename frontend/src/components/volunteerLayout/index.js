@@ -125,7 +125,7 @@ function VolunteerLayout({ pageTitle, children, pageStyle }) {
       <main className="content-container" style={pageStyle}>
         <div className="content-heading">
           <h2 className="content-title">{pageTitle}</h2>
-          {pageTitle === "My Profile" && (
+          {(pageTitle === "My Profile" || pageTitle === "Class Preferences") && (
             <button className="logout-button" onClick={() => {
                 localStorage.removeItem("neuronAuthToken");
                 window.location.href = "/auth/login";

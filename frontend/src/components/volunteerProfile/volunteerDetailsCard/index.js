@@ -20,13 +20,15 @@ function VolunteerDetailsCard({ volunteer }) {
         profilePicture: volunteer.profile_picture,
         preferredName: volunteer.p_name,
         pronouns: volunteer.pronouns,
-        phoneNumber: volunteer.phone_number
+        phoneNumber: volunteer.phone_number,
+        timeCommitment: volunteer.p_time_ctmt
     });
     const [prevMutableData, setPrevMutableData] = React.useState({
         profilePicture: null,
         preferredName: null,
         pronouns: null,
-        phoneNumber: null
+        phoneNumber: null,
+        timeCommitment: null
     });
     const [tempImage, setTempImage] = React.useState(null);
     const [prevTempImage, setPrevTempImage] = React.useState(null);
@@ -78,14 +80,16 @@ function VolunteerDetailsCard({ volunteer }) {
             // only send request if there are changes
             if (mutableData.preferredName !== prevMutableData.preferredName ||
                 mutableData.pronouns !== prevMutableData.pronouns ||
-                mutableData.phoneNumber !== prevMutableData.phoneNumber) {
+                mutableData.phoneNumber !== prevMutableData.phoneNumber ||
+                mutableData.timeCommitment !== prevMutableData.timeCommitment) {
                     
                 // store empty strings as null
                 const userData = {
                     ...volunteer,
                     p_name: mutableData.preferredName ? mutableData.preferredName : null,
                     pronouns: mutableData.pronouns ? mutableData.pronouns : null,
-                    phone_number: mutableData.phoneNumber ? mutableData.phoneNumber : null
+                    phone_number: mutableData.phoneNumber ? mutableData.phoneNumber : null,
+                    p_time_ctmt: mutableData.timeCommitment
                 }
 
                 // NOTE: created_at and profile_picture are not fields in volunteers table, need to be separated
@@ -216,6 +220,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                             <button 
                                                 className="pronouns-button"
                                                 style={{
+                                                    'fontFamily': 'var(--font-secondary)',
                                                     'color': mutableData.pronouns ? '':'#808080',
                                                     'borderColor': isComponentVisible ? '#4385AC':''
                                                 }}
@@ -244,6 +249,20 @@ function VolunteerDetailsCard({ volunteer }) {
                                             )}
                                         </td>)}
                                 </tr>
+                                <tr className="view volunteer-time-commitment">
+                                    <td>Preferred Time Commitment</td>
+                                    <td 
+                                        className="mutable-value" 
+                                        hidden={isEditing}>
+                                            <span className="bold">{mutableData.timeCommitment}</span> hr{mutableData.timeCommitment === 1 ? '':'s'}/week
+                                    </td>
+                                    <td hidden={!isEditing}>
+                                        <div className="time-commitment-input">
+                                            <input type="number" min={0} max={40} className="text-input" placeholder="Enter your preferred time commitment" name="timeCommitment" value={mutableData.timeCommitment} onChange={handleInputChange}></input>
+                                            <div className="time-commitment-units">hrs/week</div>
+                                        </div>
+                                    </td>
+                                </tr>
                                 <tr className="view volunteer-phone">
                                     <td>Phone</td>
                                     <td 
@@ -269,7 +288,14 @@ function VolunteerDetailsCard({ volunteer }) {
                                 </tr>
                                 <tr className="view volunteer-location" hidden={isEditing}>
                                     <td>Location</td>
-                                    <td>{volunteer.city && volunteer.province ? `${volunteer.city}, ${volunteer.province}` : 'not yet set'}</td>
+                                    <td
+                                        style={volunteer.city && volunteer.province ? {} : {
+                                            'color': '#808080',
+                                            'font-style': 'italic'
+                                        }}
+                                    >
+                                        {volunteer.city && volunteer.province ? `${volunteer.city}, ${volunteer.province}` : 'not yet set'}
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>

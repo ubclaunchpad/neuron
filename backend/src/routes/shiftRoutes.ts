@@ -4,7 +4,10 @@ import {
     getShiftsByVolunteerId, 
     getShiftsByDate,
     getShiftsByVolunteerIdAndMonth,
-    requestToCoverShift
+    requestToCoverShift,
+    addShift,
+    updateShift,
+    deleteShift
 } from '../controllers/shiftController.js';
 
 const router = Router();
@@ -38,5 +41,20 @@ router.post('/volunteer-month', (req: Request, res: Response) => {
 router.post('/request-to-cover-shift', (req: Request, res: Response) => {
     requestToCoverShift(req, res);
 });
+
+// create a new shift, either unassigned or assigned to a volunteer by id
+router.post('/', (req: Request, res: Response) => {
+    addShift(req, res);
+})
+
+// update a shift by id
+router.put('/:shift_id', (req: Request, res: Response) => {
+    updateShift(req, res);
+})
+
+// delete a shift by id
+router.delete('/:shift_id', (req: Request, res: Response) => {
+    deleteShift(req, res);
+})
 
 export default router;

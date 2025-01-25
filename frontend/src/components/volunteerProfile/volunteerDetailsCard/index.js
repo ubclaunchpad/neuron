@@ -105,6 +105,7 @@ function VolunteerDetailsCard({ volunteer }) {
                 profilePicData.append('volunteer_id', volunteer.volunteer_id);
 
                 const uploadedImageId = await uploadProfilePicture(volunteer.fk_user_id, profilePicData);
+
                 setTempImage(formatImageUrl(uploadedImageId));
             }
             

@@ -1,6 +1,16 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
+import { Request, Response } from 'express';
+import { 
+    getAllClasses, 
+    getClassById, 
+    getClassesByDay, 
+    addClass, 
+    updateClass,
+    deleteClass,
+    uploadClassImage
+} from '../controllers/classController.js';
 import { imageUploadMiddleware } from '../config/fileUpload.js';
-import { addClass, getAllClasses, getClassById, getClassesByDay, uploadClassImage } from '../controllers/classController.js';
+import multer from 'multer'; // Used for file uploads
 
 const router = express.Router();
 
@@ -18,6 +28,14 @@ router.get("/schedule/:day", async (req, res) => {
 
 router.post('/', async (req: Request, res: Response) => {
     await addClass(req, res);
+});
+
+router.put('/:class_id', async (req: Request, res: Response) => {
+    await updateClass(req, res);
+});
+
+router.delete('/:class_id', async (req: Request, res: Response) => {
+    await deleteClass(req, res);
 });
 
 router.put('/:class_id/upload', imageUploadMiddleware, async (req: Request, res: Response) => {

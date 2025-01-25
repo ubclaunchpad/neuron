@@ -16,7 +16,7 @@ async function getSchedules(req: Request, res: Response) {
 }
 
 async function getSchedulesByClassId(req: Request, res: Response) {
-  const { class_id } = req.params;
+  const class_id = Number(req.params.class_id);
 
   if (!class_id) {
     return res.status(400).json({
@@ -55,7 +55,7 @@ function isValidSchedules(data: any): data is ScheduleDB[] {
 }
 
 async function setSchedulesByClassId(req: Request, res: Response) {
-  const { class_id } = req.params;
+  const class_id = Number(req.params.class_id);
   const schedules: ScheduleDB[] = req.body;
 
   if (!class_id) {
@@ -80,9 +80,8 @@ async function setSchedulesByClassId(req: Request, res: Response) {
 	}
 }
 
-
 async function updateSchedulesByClassId(req: Request, res: Response) {
-  const { class_id } = req.params;
+  const class_id = Number(req.params.class_id);
   const schedules: ScheduleDB[] = req.body;
 
   if (!class_id) {
@@ -107,9 +106,42 @@ async function updateSchedulesByClassId(req: Request, res: Response) {
 	}
 }
 
+async function deleteSchedules(req: Request, res: Response) {
+  const class_id = Number(req.params.class_id);
+  const { schedule_ids } = req.body;
+
+  if (!class_id) {
+    return res.status(400).json({
+      error: "Missing required parameter: 'class_id'"
+    });
+  }
+
+  if (!schedule_ids) {
+    return res.status(400).json({
+      error: "Missing required field: 'schedule_ids'"
+    });
+  }
+
+  if (!Array.isArray(schedule_ids)) {
+    return res.status(400).json({
+      error: "Invalid field: 'schedule_ids' should be an array of values"
+    });
+  }
+
+  try {
+    const result = await scheduleModel.deleteSchedulesByScheduleId(class_id, schedule_ids);
+    res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      error: `Internal server error: ${JSON.stringify(error)}`
+    });
+  }
+}
+
 export {
   getSchedules,
   getSchedulesByClassId,
   setSchedulesByClassId,
-  updateSchedulesByClassId
+  updateSchedulesByClassId,
+  deleteSchedules
 };

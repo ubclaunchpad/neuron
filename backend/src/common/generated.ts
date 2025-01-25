@@ -63,10 +63,8 @@ export interface ScheduleDB extends RowDataPacket {
 }
 export interface ShiftCoverageRequestDB extends RowDataPacket {
   'covered_by'?: string | null;
-  'fk_schedule_id': number;
-  'fk_volunteer_id': string;
+  'fk_shift_id': number;
   'request_id'?: number;
-  'shift_date': string;
 }
 export interface ShiftDB extends RowDataPacket {
   'checked_in'?: any | null;
@@ -74,6 +72,7 @@ export interface ShiftDB extends RowDataPacket {
   'fk_schedule_id': number;
   'fk_volunteer_id': string;
   'shift_date': string;
+  'shift_id': number;
 }
 export interface UserDB extends RowDataPacket {
   'created_at'?: Date | null;

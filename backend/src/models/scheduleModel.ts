@@ -12,7 +12,7 @@ export default class ScheduleModel {
         return results;
     }
 
-    async getSchedulesByClassId(classId: string): Promise<ScheduleDB[]> {
+    async getSchedulesByClassId(classId: number): Promise<ScheduleDB[]> {
         const query = "SELECT * FROM schedule WHERE fk_class_id = ?";
         const values = [classId];
 
@@ -21,10 +21,13 @@ export default class ScheduleModel {
         return results;
     }
 
-    async setSchedulesByClassId(classId: string, scheduleItems: ScheduleDB[], transaction?: PoolConnection): Promise<any> {
+    async setSchedulesByClassId(classId: number, scheduleItems: ScheduleDB[], transaction?: PoolConnection): Promise<any> {
         const connection = transaction ?? connectionPool;
-
-        const query = `INSERT INTO schedule (fk_class_id, day, start_time, end_time) VALUES ?`;
+        
+        const valuesCaluse = scheduleItems
+            .map(() => '(?)')
+            .join(", ");
+        const query = `INSERT INTO schedule (fk_class_id, day, start_time, end_time) VALUES ${valuesCaluse}`;
         const values = scheduleItems.map((schedule) => [
             classId,
             schedule.day,
@@ -36,8 +39,8 @@ export default class ScheduleModel {
 
         return results;
     }
-
-    async deleteSchedulesByScheduleId(classId: string, scheduleIds: number[], transaction?: PoolConnection): Promise<any> {
+  
+    async deleteSchedulesByScheduleId(classId: number, scheduleIds: number[], transaction?: PoolConnection): Promise<any> {
         const connection = transaction ?? connectionPool;
 
         const query = `DELETE FROM schedule WHERE fk_class_id = ? AND schedule_id IN (?)`;
@@ -48,7 +51,7 @@ export default class ScheduleModel {
         return results;
     }
 
-    async updateSchedulesByClassId(classId: string, newSchedules: ScheduleDB[]): Promise<void> {
+    async updateSchedulesByClassId(classId: number, newSchedules: ScheduleDB[]): Promise<void> {
         const transaction = await connectionPool.getConnection();
 
         try {

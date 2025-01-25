@@ -1,4 +1,4 @@
-import { param } from 'express-validator';
+import { body, param } from 'express-validator';
 import {
     addShift,
     deleteShift,
@@ -27,11 +27,17 @@ export const ShiftRoutes: RouteDefinition = {
         {
             path: '/:volunteer_id',
             method: 'get',
+            validation: [
+                param('volunteer_id').isUUID('4')
+            ],
             action: getShiftsByVolunteerId
         },
         {
             path: '/on-date',
             method: 'post',
+            validation: [
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' })
+            ],
             action: getShiftsByDate
         },
         {
@@ -43,11 +49,19 @@ export const ShiftRoutes: RouteDefinition = {
             // -- Returns shift details such as date, time, class, duration, and coverage status.
             path: '/volunteer-month',
             method: 'post',
+            validation: [
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' }),
+                body('fk_volunteer_id').isUUID('4')
+            ],
             action: getShiftsByVolunteerIdAndMonth
         },
         {
             path: '/request-to-cover-shift',
             method: 'post',
+            validation: [
+                body('request_id').isInt({ min: 0 }),
+                body('volunteer_id').isUUID('4')
+            ],
             action: requestToCoverShift
         },
         {

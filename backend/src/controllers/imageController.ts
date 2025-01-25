@@ -12,13 +12,7 @@ export async function getImage(req: Request, res: Response) {
         });
     }
 
-    try {
-        const image = await imageService.getImage(image_id);
+    const image = await imageService.getImage(image_id);
 
-        res.type('image/png').send(image.image);
-    } catch (error: any) {
-        return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-    }
+    res.type('image/png').send(image.image);
 }

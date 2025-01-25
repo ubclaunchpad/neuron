@@ -23,14 +23,8 @@ async function getShiftInfo(req: Request, res: Response){
         });
     }
     
-    try {
-        const shift_info = await shiftModel.getShiftInfo(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
-        res.status(200).json(shift_info);
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    const shift_info = await shiftModel.getShiftInfo(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
+    res.status(200).json(shift_info);
 }
 
 // get all the shifts assigned to a volunteer, using the volunteer's ID
@@ -43,96 +37,39 @@ async function getShiftsByVolunteerId(req: Request, res: Response) {
         });
     }
 
-    try {
-        const shifts = await shiftModel.getShiftsByVolunteerId(volunteer_id);
-        res.status(200).json(shifts);
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    const shifts = await shiftModel.getShiftsByVolunteerId(volunteer_id);
+    res.status(200).json(shifts);
 } 
 
 // get all the shifts on a given date
 async function getShiftsByDate(req: Request, res: Response) {
     const shift: ShiftDB = req.body;
 
-    if (!shift.shift_date) {
-        return res.status(400).json({
-            error: "Missing required field: 'shift_date'"
-        });
-    }
+    const shifts = await shiftModel.getShiftsByDate(shift.shift_date);
 
-    // check if the input matches the regex
-    if (!sqlDateRegex.test(shift.shift_date)) {
-        return res.status(400).json({
-            error: "'shiftDate' must be a valid date of the format 'YYYY-MM-DD'"
-        });
-    }
-
-    try {
-        const shifts = await shiftModel.getShiftsByDate(shift.shift_date);
-        res.status(200).json(shifts);
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    res.status(200).json(shifts);
 }
 
 // get all the shifts viewable for a volunteer for the month around a given date
 async function getShiftsByVolunteerIdAndMonth(req: Request, res: Response) {
     const shift: ShiftDB = req.body;
 
-    if (!shift.shift_date) {
-        return res.status(400).json({
-            error: "Missing required field: 'shift_date'"
-        });
-    } else if (!shift.fk_volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required field: 'fk_volunteer_id'"
-        });
-    }
-
-    // check if the input matches the regex
-    if (!sqlDateRegex.test(shift.shift_date)) {
-        return res.status(400).json({
-            error: "'shiftDate' must be a valid date of the format 'YYYY-MM-DD'"
-        });
-    }
-
     const date = new Date(shift.shift_date + 'T00:00:00'); // Adding time to avoid timezone issues
     const month: number = new Date(date).getMonth() + 1;
     const year: number = new Date(shift.shift_date).getFullYear();
 
-    try {
-        const shifts = await shiftModel.getShiftsByVolunteerIdAndMonth(shift.fk_volunteer_id, month, year);
-        res.status(200).json(shifts);
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    const shifts = await shiftModel.getShiftsByVolunteerIdAndMonth(shift.fk_volunteer_id, month, year);
+        
+    res.status(200).json(shifts);
 }
 
 // volunteer requesting to cover someone else’s open shift
 async function requestToCoverShift(req: Request, res: Response) {
     const { request_id, volunteer_id } = req.body;
 
-    if (!request_id || !volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'request_id' or 'volunteer_id'",
-        });
-    }
+    const request = await shiftModel.requestToCoverShift(request_id, volunteer_id);
 
-    try {
-        const request = await shiftModel.requestToCoverShift(request_id, volunteer_id);
-        res.status(200).json(request);
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    res.status(200).json(request);
 }
 
 async function addShift(req: Request, res: Response) {

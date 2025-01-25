@@ -1,3 +1,4 @@
+import { body, param } from 'express-validator';
 import {
     getInstructorById,
     getInstructors,
@@ -16,11 +17,20 @@ export const InstructorRoutes: RouteDefinition = {
         {
             path: '/',
             method: 'post',
+            validation: [
+                body('instructor_id').isUUID('4'),
+                body('f_name').isString(),
+                body('l_name').isString(),
+                body('email').isEmail(),
+            ],
             action: insertInstructor
         },
         {
             path: '/:instructor_id',
             method: 'get',
+            validation: [
+                param('instructor_id').isUUID('4')
+            ],
             action: getInstructorById
         },
     ]

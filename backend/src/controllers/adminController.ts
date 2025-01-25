@@ -10,17 +10,11 @@ async function getUnverifiedVolunteers(
     req: AuthenticatedUserRequest,
     res: Response
 ) {
-    try {
-        const unverifiedVolunteers =
-            await volunteerModel.getUnverifiedVolunteers();
-        res.status(200).json({
-            volunteers: unverifiedVolunteers,
-        });
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    const unverifiedVolunteers = await volunteerModel.getUnverifiedVolunteers();
+
+    res.status(200).json({
+        volunteers: unverifiedVolunteers,
+    });
 }
 
 async function verifyVolunteer(
@@ -30,27 +24,14 @@ async function verifyVolunteer(
     // Get the token from the request parameters
     const volunteer_id = req.body.volunteer_id;
 
-    // If the token is not provided, return an error
-    if (!volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'volunteer_id'",
-        });
-    }
-
     // Update the user's active status
-    try {
-        await volunteerModel.updateVolunteer(volunteer_id, {
-            active: true,
-        } as VolunteerDB);
+    await volunteerModel.updateVolunteer(volunteer_id, {
+        active: true,
+    } as VolunteerDB);
 
-        return res.status(200).json({
-            message: "User verified successfully",
-        });
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    return res.status(200).json({
+        message: "User verified successfully",
+    });
 }
 
 export { getUnverifiedVolunteers, verifyVolunteer };

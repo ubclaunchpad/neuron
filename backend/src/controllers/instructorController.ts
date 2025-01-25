@@ -5,14 +5,9 @@ import InstructorModel from '../models/instructorModel.js';
 const instructorModel = new InstructorModel();
 
 async function getInstructors(req: Request, res: Response) {
-    try {
-        const instructors = await instructorModel.getInstructors();
-        res.status(200).json(instructors);
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    const instructors = await instructorModel.getInstructors();
+
+    res.status(200).json(instructors);
 }
 
 async function getInstructorById(req: Request, res: Response) {
@@ -24,14 +19,9 @@ async function getInstructorById(req: Request, res: Response) {
         });
     }
 
-    try {
-        const instructor = await instructorModel.getInstructorById(instructor_id);
-        res.status(200).json(instructor);
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    const instructor = await instructorModel.getInstructorById(instructor_id);
+
+    res.status(200).json(instructor);
 }
 
 async function insertInstructor(req: Request, res: Response) {
@@ -44,14 +34,9 @@ async function insertInstructor(req: Request, res: Response) {
         });
     }
 
-    try {
-        const result = await instructorModel.insertInstructor(instructor);
-        res.status(200).json(result);
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    const result = await instructorModel.insertInstructor(instructor);
+
+    res.status(200).json(result);
 }
 
 export {

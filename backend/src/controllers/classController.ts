@@ -5,14 +5,9 @@ import ClassesModel from '../models/classModel.js';
 const classesModel = new ClassesModel();
 
 async function getAllClasses(req: Request, res: Response) {
-	try {
-		const classes = await classesModel.getClasses();
-		res.status(200).json(classes);
-	} catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+	const classes = await classesModel.getClasses();
+
+	res.status(200).json(classes);
 }
 
 async function addClass(req: Request, res: Response) {
@@ -119,84 +114,37 @@ async function deleteClass(req: Request, res: Response) {
 }
 
 async function getClassesByDay(req: Request, res: Response) {
-	const day = req.params.day;
-	const classModel = new ClassesModel();
-	if (!day) {
-		return res.status(400).json({
-			error: "Missing required parameter: 'day'",
-		});
-	}
-	const regex = /^\d{4}-\d{2}-\d{2}$/; // YYYY-MM-DD
-	if (!regex.test(day)) {
-		return res.status(400).json({
-			error: "Invalid day format. Please use YYYY-MM-DD.",
-		});
-	}
-	try {
-		const classes = await classModel.getClassesByDay(day);
-		res.status(200).json(classes);
-	} catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+	const { day } = req.params;
+
+	const classes = await classesModel.getClassesByDay(day);
+
+	res.status(200).json(classes);
 }
 
 // get class info for a specific shift ID
 async function getClassById(req: Request, res: Response) {
 	const class_id = Number(req.params.class_id);
 
-	if (!class_id) {
-		return res.status(400).json({
-			error: "Missing required parameter: 'class_id'"
-		});
-	}
-
-	try {
-		const classesModel = new ClassesModel();
-		const class_info = await classesModel.getClassById(class_id);
-		res.status(200).json(class_info);
-	} catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	};
+	const class_info = await classesModel.getClassById(class_id);
+	
+	res.status(200).json(class_info);
 }
 
 async function uploadClassImage(req: Request, res: Response) {
 	const class_id = Number(req.params.class_id);
 
-	if (!class_id) {
-		return res.status(400).json({
-			error: 'Missing required field: class_id'
-		});
-	}
+	const image = req.file!.buffer;
 
-	if (!req.file) {
-		return res.status(400).json({
-			error: 'No image uploaded'
-		});
-	}
+	const imageId = await classesModel.upsertClassImage(class_id, image);
 
-	const image = req.file.buffer;
-
-	try	{
-		const imageId = await classesModel.upsertClassImage(class_id, image);
-	
-		return res.status(201).json({
-			message: 'Image uploaded successfully',
-			data: imageId
-		});
-	} catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	};
+	return res.status(201).json({
+		message: 'Image uploaded successfully',
+		data: imageId
+	});
 }
 
 export {
-	addClass, getAllClasses, getClassById,
-	getClassesByDay, uploadClassImage,
-	updateClass, deleteClass
+	addClass, deleteClass, getAllClasses, getClassById,
+	getClassesByDay, updateClass, uploadClassImage
 };
 

@@ -1,3 +1,4 @@
+import { body } from "express-validator";
 import { isAdmin, isAuthorized } from "../config/authCheck.js";
 import {
     getUnverifiedVolunteers,
@@ -20,6 +21,9 @@ export const AdminRoutes: RouteDefinition = {
         {
             path: '/verify-volunteer',
             method: 'post',
+            validation: [
+                body('volunteer_id').isUUID('4')
+            ],
             action: verifyVolunteer
         },
     ]

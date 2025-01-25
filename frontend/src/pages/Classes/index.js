@@ -27,8 +27,6 @@ function Classes() {
 
         const classesWithImagesAndSchedules = classData.map((classItem) => {
           const imageUrl = classItem.fk_image_id ? formatImageUrl(classItem.fk_image_id) : null;
-
-
           const matchedSchedules = classSchedules.filter((schedule) => {
             return schedule.fk_class_id === classItem.class_id;
           });

@@ -66,12 +66,6 @@ INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUE
 INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
 ('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 1);
 
--- Create entry in shifts table
-INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES
-('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 1, '2024-09-10', 90);
-INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES
-('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 2, '2024-09-12', 90);
-
 -- For volunteer schedule viewing, monthly view for volunteer_id 1230545b-0505-4909-826c-59359503dae6
 
 -- Insert data into the class table
@@ -95,43 +89,69 @@ INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUE
 (103, 103, 6, '14:00:00', '15:00:00');
 
 -- Assign volunteer to class
-INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
-('1230545b-0505-4909-826c-59359503dae6', 100);
-INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
-('e20d262b-8047-4a9a-9202-a97aa0412092', 101);
-INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
-('e20d262b-8047-4a9a-9202-a97aa0412092', 102);
-INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
-('e20d262b-8047-4a9a-9202-a97aa0412092', 103);
+-- INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
+-- ('1230545b-0505-4909-826c-59359503dae6', 100);
+-- INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
+-- ('e20d262b-8047-4a9a-9202-a97aa0412092', 101);
+-- INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
+-- ('e20d262b-8047-4a9a-9202-a97aa0412092', 102);
+-- INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
+-- ('e20d262b-8047-4a9a-9202-a97aa0412092', 103);
 
 -- Create entry in shifts table
-INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
-('1230545b-0505-4909-826c-59359503dae6', 100, '2024-11-12', 2, false);
-INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
-('1230545b-0505-4909-826c-59359503dae6', 100, '2024-11-19', 2, false);
-INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
-('1230545b-0505-4909-826c-59359503dae6', 100, '2024-11-26', 2, false);
-INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
-('e20d262b-8047-4a9a-9202-a97aa0412092', 101, '2024-11-14', 2, false);
-INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
-('e20d262b-8047-4a9a-9202-a97aa0412092', 102, '2024-11-16', 1, false);
-INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
-('e20d262b-8047-4a9a-9202-a97aa0412092', 103, '2024-11-16', 1, false);
-INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
-('e20d262b-8047-4a9a-9202-a97aa0412092', 103, '2024-10-25', 1, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(1, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1', 100, '2024-11-12', 2, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(2, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1', 100, '2024-11-19', 2, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(3, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1', 100, '2024-11-26', 2, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(4, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1', 101, '2024-11-14', 2, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(5, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1', 102, '2024-11-16', 1, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(6, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1', 103, '2024-11-16', 1, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES
+(7, null, 103, '2024-10-25', 1);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES
+(8, null, 1, '2024-09-10', 90);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES
+(9, null, 2, '2024-09-12', 90);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(10, 'd98889b0-2f2e-4172-b753-14cdccdd359c', 4, '2025-01-20', 4, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(11, 'd98889b0-2f2e-4172-b753-14cdccdd359c', 2, '2025-01-21', 4, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(12, 'd98889b0-2f2e-4172-b753-14cdccdd359c', 3, '2025-01-22', 4, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(13, 'd98889b0-2f2e-4172-b753-14cdccdd359c', 5, '2025-01-22', 4, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(14, 'd98889b0-2f2e-4172-b753-14cdccdd359c', 6, '2025-01-23', 4, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(15, 'd98889b0-2f2e-4172-b753-14cdccdd359c', 7, '2025-01-20', 4, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(16, 'd98889b0-2f2e-4172-b753-14cdccdd359c', 8, '2025-01-24', 4, false);
+INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
+(17, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1', 103, '2025-01-20', 1, false);
 
 -- Create entry in shift_coverage_request table
-INSERT INTO shift_coverage_request (request_id, fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
-VALUES (100, '1230545b-0505-4909-826c-59359503dae6', 100, '2024-11-19', NULL);
-INSERT INTO shift_coverage_request (request_id, fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
-VALUES (101, 'e20d262b-8047-4a9a-9202-a97aa0412092', 101, '2024-11-14', NULL);
-INSERT INTO shift_coverage_request (request_id, fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
-VALUES (102, 'e20d262b-8047-4a9a-9202-a97aa0412092', 102, '2024-11-16', NULL);
-INSERT INTO shift_coverage_request (request_id, fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
-VALUES (103, 'e20d262b-8047-4a9a-9202-a97aa0412092', 103, '2024-11-16', NULL);
-INSERT INTO shift_coverage_request (request_id, fk_volunteer_id, fk_schedule_id, shift_date, covered_by)
-VALUES (104, 'e20d262b-8047-4a9a-9202-a97aa0412092', 103, '2024-10-25', '722a20a0-30da-4dc2-bb05-ea26e62824a7');
+INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+VALUES (2, 2, NULL);
+INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+VALUES (4, 4, NULL);
+INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+VALUES (5, 5, NULL);
+INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+VALUES (6, 6, NULL);
+INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+VALUES (7, 1, 'd98889b0-2f2e-4172-b753-14cdccdd359c');
+INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+VALUES (8, 10, null);
+INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+VALUES (9, 17, null);
 
---pending coverage table
+-- pending coverage table
 INSERT INTO pending_shift_coverage (request_id, pending_volunteer)
-VALUES ('e20d262b-8047-4a9a-9202-a97aa0412092', 103, '2024-10-25', NULL);
+VALUES (2, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1');
+INSERT INTO pending_shift_coverage (request_id, pending_volunteer)
+VALUES (6, 'd98889b0-2f2e-4172-b753-14cdccdd359c');

@@ -1,3 +1,5 @@
+use neuron;
+
 -- Paste all 'create' SQL commands here
 DROP TABLE IF EXISTS volunteer_class;
 DROP TABLE IF EXISTS availability;
@@ -13,14 +15,20 @@ DROP TABLE IF EXISTS admins;
 DROP TABLE IF EXISTS instructors;
 DROP TABLE IF EXISTS user_session;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS images;
+
+create table images (
+    image_id VARCHAR(36) PRIMARY KEY,
+    image MEDIUMBLOB NOT NULL
+);
 
 create table users (
     user_id VARCHAR(255) PRIMARY KEY,
-    fk_image_id CHAR(36),
+    fk_image_id VARCHAR(36),
     email VARCHAR(45) NOT NULL,
-    password VARCHAR(72) NOT NULL,
+    password VARCHAR(60) NOT NULL,
     role VARCHAR(5) NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)
         ON DELETE SET NULL
 );
@@ -45,14 +53,9 @@ create table class (
     end_date DATE NOT NULL,
     category VARCHAR(64),
     subcategory VARCHAR(64),
-    FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id)
+    FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id),
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)
         ON DELETE SET NULL
-);
-
-create table images (
-    image_id CHAR(36) PRIMARY KEY,
-    image MEDIUMBLOB NOT NULL
 );
 
 create table volunteers (
@@ -63,7 +66,7 @@ create table volunteers (
     p_name VARCHAR(45),
     total_hours INT NOT NULL DEFAULT 0,
     bio VARCHAR(150),
-    active BOOLEAN NOT NULL DEFAULT FALSE,
+    active BOOLEAN DEFAULT FALSE,
     email VARCHAR(45) NOT NULL,
     pronouns VARCHAR(15),
     phone_number VARCHAR(15),
@@ -113,12 +116,12 @@ create table schedule (
 );
 
 CREATE TABLE shifts (
-    fk_volunteer_id VARCHAR(255),
+    shift_id INT PRIMARY KEY AUTO_INCREMENT,
+    fk_volunteer_id VARCHAR(255), -- now nullable to reperesent an unassigned shift
     fk_schedule_id INT,
     shift_date DATE NOT NULL,
     duration INT NOT NULL,
     checked_in BOOLEAN DEFAULT FALSE,
-    PRIMARY KEY (fk_volunteer_id, fk_schedule_id, shift_date),
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
         ON DELETE CASCADE,
     FOREIGN KEY (fk_schedule_id) REFERENCES schedule(schedule_id)
@@ -127,13 +130,10 @@ CREATE TABLE shifts (
 
 CREATE TABLE shift_coverage_request (
     request_id INT PRIMARY KEY AUTO_INCREMENT,                     
-    fk_volunteer_id VARCHAR(255) NOT NULL,                   
-    fk_schedule_id INT NOT NULL,
-    shift_date DATE NOT NULL,                       
+    fk_shift_id INT NOT NULL,                       
     covered_by VARCHAR(255),
-
-    FOREIGN KEY (fk_volunteer_id, fk_schedule_id, shift_date)
-        REFERENCES shifts(fk_volunteer_id, fk_schedule_id, shift_date) ON DELETE CASCADE,
+    FOREIGN KEY (fk_shift_id)
+        REFERENCES shifts(shift_id) ON DELETE CASCADE,
     FOREIGN KEY (covered_by)
         REFERENCES volunteers(volunteer_id) ON DELETE SET NULL
 );
@@ -153,8 +153,8 @@ CREATE TABLE class_preferences (
     fk_volunteer_id VARCHAR(255), 
     fk_class_id INT,        
     class_rank INT,     
-    FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id),
-        ON DELETE CASCADE
-    FOREIGN KEY (fk_class_id) REFERENCES class(class_id),
+    FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
         ON DELETE CASCADE
 );

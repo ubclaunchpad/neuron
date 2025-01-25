@@ -17,6 +17,12 @@ export const ShiftRoutes: RouteDefinition = {
         {
             path: '/',
             method: 'post',
+            validation: [
+                body('fk_volunteer_id').isUUID('4'),
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' }),
+                body('fk_schedule_id').isInt({ min: 0 }),
+                body('duration').isInt({ min: 0 }),
+            ],
             action: addShift
         },
         {
@@ -73,6 +79,11 @@ export const ShiftRoutes: RouteDefinition = {
                 {
                     path: '/',
                     method: 'put',
+                    validation: [
+                        body('fk_volunteer_id').isUUID('4').optional(),
+                        body('shift_date').isDate({ format: 'YYYY-MM-DD' }).optional(),
+                        body('duration').isInt({ min: 0 }).optional(),
+                    ],
                     action: updateShift
                 },
                 {

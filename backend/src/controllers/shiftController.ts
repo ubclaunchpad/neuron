@@ -75,79 +75,36 @@ async function requestToCoverShift(req: Request, res: Response) {
 async function addShift(req: Request, res: Response) {
     const shift: ShiftDB = req.body;
 
-    if (!shift.shift_date) {
-        return res.status(400).json({
-            error: "Missing required field: 'shift_date'.",
-        });
-    } else if (!shift.fk_schedule_id) {
-        return res.status(400).json({
-            error: "Missing required field: 'fk_schedule_id'.",
-        });
-    } else if (!shift.duration) {
-        return res.status(400).json({
-            error: "Missing required field: 'duration'.",
-        });
-    } 
+    const request = await shiftModel.addShift(shift);
+    const addedShift = {
+        shift_id: request.insertId,
+        fk_volunteer_id: shift.fk_volunteer_id ?? null,
+        fk_schedule_id: shift.fk_schedule_id,
+        shift_date: shift.shift_date,
+        duration: shift.duration,
+        checked_in: shift.checked_in
+    };
 
-    try {
-        const request = await shiftModel.addShift(shift);
-        const addedShift = {
-            shift_id: request.insertId,
-            fk_volunteer_id: shift.fk_volunteer_id ?? null,
-            fk_schedule_id: shift.fk_schedule_id,
-            shift_date: shift.shift_date,
-            duration: shift.duration,
-            checked_in: shift.checked_in
-        };
-
-        res.status(200).json(addedShift);
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    res.status(200).json(addedShift);
 }
 
 async function updateShift(req: Request, res: Response) {
     const shift_id = Number(req.params.shift_id);
     const shift: ShiftDB = req.body;
 
-    if (!shift_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'shift_id'.",
-        });
-    }
-
-    try {
-        const request = await shiftModel.updateShift(shift_id, shift);
-        res.status(200).json(request);
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    const request = await shiftModel.updateShift(shift_id, shift);
+    res.status(200).json(request);
 }
 
 async function deleteShift(req: Request, res: Response) {
     const shift_id = Number(req.params.shift_id);
 
-    if (!shift_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'shift_id'.",
-        });
-    }
-
-    try {
-        const request = await shiftModel.deleteShift(shift_id);
-        res.status(200).json(request);
-    } catch (error: any) {
-		return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-	}
+    const request = await shiftModel.deleteShift(shift_id);
+    res.status(200).json(request);
 }
 
 export {
-    getShiftInfo, getShiftsByDate, getShiftsByVolunteerId, getShiftsByVolunteerIdAndMonth,
-    requestToCoverShift, addShift, updateShift, deleteShift
+    addShift, deleteShift, getShiftInfo, getShiftsByDate, getShiftsByVolunteerId, getShiftsByVolunteerIdAndMonth,
+    requestToCoverShift, updateShift
 };
+

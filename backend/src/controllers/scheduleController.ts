@@ -38,12 +38,6 @@ async function deleteSchedules(req: Request, res: Response) {
   const class_id = Number(req.params.class_id);
   const { schedule_ids } = req.body;
 
-  if (!class_id) {
-    return res.status(400).json({
-      error: "Missing required parameter: 'class_id'"
-    });
-  }
-
   if (!schedule_ids) {
     return res.status(400).json({
       error: "Missing required field: 'schedule_ids'"

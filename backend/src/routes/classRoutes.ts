@@ -39,6 +39,15 @@ export const ClassRoutes: RouteDefinition = {
                 {
                     path: '/',
                     method: 'put',
+                    validation: [
+                        body('fk_instructor_id').isUUID('4').optional(),
+                        body('class_name').isString().optional(),
+                        body('instructions').isString().optional(),
+                        body('zoom_link').isURL().optional(),
+                        body('start_date').isTime({ hourFormat: 'hour24'}).optional(),
+                        body('end_date').isTime({ hourFormat: 'hour24'}).optional(),
+                        body('category').isString().optional(),
+                    ],
                     action: updateClass
                 },
                 {

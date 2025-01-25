@@ -61,18 +61,6 @@ async function updateClass(req: Request, res: Response) {
 
 	const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = req.body;
 
-	if (!class_id) {
-		return res.status(400).json({
-			error: 'Missing required field: class_id is required.'
-		});
-	}
-
-	if (!fk_instructor_id || !class_name || !start_date || !end_date) {
-		return res.status(400).json({
-			error: 'Missing required fields: fk_instructor_id, class_name, start_date, and end_date are required.'
-		});
-	}
-
 	try {
 		const updatedClass = {
 			fk_instructor_id,

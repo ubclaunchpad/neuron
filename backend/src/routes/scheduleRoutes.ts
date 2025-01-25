@@ -1,42 +1,8 @@
-import { deleteSchedules, getSchedules, getSchedulesByClassId, setSchedulesByClassId, updateSchedulesByClassId } from '../controllers/scheduleController.js';
 import { body, param } from 'express-validator';
-import { getSchedules, getSchedulesByClassId, setSchedulesByClassId, updateSchedulesByClassId } from '../controllers/scheduleController.js';
+import { deleteSchedules, getSchedules, getSchedulesByClassId, setSchedulesByClassId, updateSchedulesByClassId } from '../controllers/scheduleController.js';
 import { RouteDefinition } from './routes.js';
 
 export const ScheduleRoutes: RouteDefinition = {
-  path: '/schedules',
-  children: [
-    {
-      path: '/',
-      method: 'get',
-      action: getSchedules
-    },
-    {
-      path: '/:class_id',
-      children: [
-        {
-          path: '/',
-          method: 'get',
-          action: getSchedulesByClassId
-        },
-        {
-          path: '/',
-          method: 'post',
-          action: setSchedulesByClassId
-        },
-        {
-          path: '/',
-          method: 'put',
-          action: updateSchedulesByClassId
-        },
-        {
-          path: '/',
-          method: 'delete',
-          action: deleteSchedules
-        },
-      ]
-    },
-  ]
     path: '/schedules',
     children: [
         {
@@ -76,6 +42,15 @@ export const ScheduleRoutes: RouteDefinition = {
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
                     ],
                     action: updateSchedulesByClassId
+                },
+                {
+                    path: '/',
+                    method: 'delete',
+                    validation: [
+                        body('schedule_ids').isArray({ min: 0}),
+                        body('schedule_ids.*').isInt({ min: 0}),
+                    ],
+                    action: deleteSchedules
                 },
             ]
         },

@@ -24,10 +24,16 @@ body {
 .content-container {
   flex-grow: 1;
   background-color: var(--white);
-  padding: 0 2vw;
+  padding: 0 36px;
   max-height: 100vh;
   overflow-y: scroll;
   position: relative;
+}
+
+.content-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .content-title {
@@ -60,11 +66,13 @@ body {
   padding-left: 20px;
   padding-top: 14px;
   padding-bottom: 14px;
-  position: relative; /* Required for positioning the vertical line */
+  position: relative;
+  /* Required for positioning the vertical line */
 }
 
 .nav-item.active::before {
-  content: ""; /* Creates the line */
+  content: "";
+  /* Creates the line */
   position: absolute;
   left: 0;
   top: 50%;
@@ -89,7 +97,8 @@ body {
 
 .navbar.collapsed {
   padding-top: 15px;
-  width: 70px; /* Adjust width as needed */
+  width: 70px;
+  /* Adjust width as needed */
 }
 
 .nav-profile-card-container {
@@ -98,4 +107,19 @@ body {
   flex-direction: column;
   justify-content: flex-end;
   margin-bottom: 1rem;
+}
+
+.logout-button {
+  height: fit-content;
+  padding: 0.6vw 0.85vw;
+  background-color: var(--white);
+  border: 1px solid var(--primary-blue);
+  border-radius: 8px;
+  box-shadow: 0px 4px 16px #0f111105;
+  cursor: pointer;
+  font-family: var(--font-primary);
+}
+
+.logout-button i {
+  color: var(--dark-grey);
 }

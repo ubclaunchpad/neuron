@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
+import { ScheduleDB } from '../common/generated.js';
 import ScheduleModel from '../models/scheduleModel.js';
-import { Schedule } from '../common/interfaces.js';
 
 const scheduleModel = new ScheduleModel();
 
@@ -8,11 +8,11 @@ async function getSchedules(req: Request, res: Response) {
   try {
     const schedules = await scheduleModel.getSchedules();
     res.status(200).json(schedules);
-  } catch (error) {
-    return res.status(500).json({
-      error: `Internal server error: ${JSON.stringify(error)}`
-    });
-  }
+  } catch (error: any) {
+		return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+	}
 }
 
 async function getSchedulesByClassId(req: Request, res: Response) {
@@ -27,14 +27,14 @@ async function getSchedulesByClassId(req: Request, res: Response) {
   try {
     const schedules = await scheduleModel.getSchedulesByClassId(class_id);
     res.status(200).json(schedules);
-  } catch (error) {
-    return res.status(500).json({
-      error: `Internal server error: ${JSON.stringify(error)}`
-    });
-  }
+  } catch (error: any) {
+		return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+	}
 }
 
-function isValidSchedules(data: any): data is Schedule[] {
+function isValidSchedules(data: any): data is ScheduleDB[] {
   return Array.isArray(data) && data.every((schedule) => {
     return (
       // Validate its day is a number between 1 and 7
@@ -56,7 +56,7 @@ function isValidSchedules(data: any): data is Schedule[] {
 
 async function setSchedulesByClassId(req: Request, res: Response) {
   const { class_id } = req.params;
-  const schedules: Schedule[] = req.body;
+  const schedules: ScheduleDB[] = req.body;
 
   if (!class_id) {
     return res.status(400).json({
@@ -73,17 +73,17 @@ async function setSchedulesByClassId(req: Request, res: Response) {
   try {
     const result = await scheduleModel.setSchedulesByClassId(class_id, schedules);
     res.status(200).json(result);
-  } catch (error) {
-    return res.status(500).json({
-      error: `Internal server error: ${JSON.stringify(error)}`
-    })
-  }
+  } catch (error: any) {
+		return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+	}
 }
 
 
 async function updateSchedulesByClassId(req: Request, res: Response) {
   const { class_id } = req.params;
-  const schedules: Schedule[] = req.body;
+  const schedules: ScheduleDB[] = req.body;
 
   if (!class_id) {
     return res.status(400).json({
@@ -100,11 +100,11 @@ async function updateSchedulesByClassId(req: Request, res: Response) {
   try {
     const result = await scheduleModel.updateSchedulesByClassId(class_id, schedules);
     res.status(200).json(result);
-  } catch (error) {
-    return res.status(500).json({
-      error: `Internal server error: ${JSON.stringify(error)}`
-    });
-  }
+  } catch (error: any) {
+		return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+	}
 }
 
 export {

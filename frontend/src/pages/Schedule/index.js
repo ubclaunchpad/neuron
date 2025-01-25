@@ -1,12 +1,11 @@
-import "./index.css";
-import { useState, useEffect, useRef, useCallback } from 'react';
-import VolunteerLayout from "../../components/volunteerLayout";
 import dayjs from 'dayjs';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { getVolunteerShiftsForMonth } from "../../api/shiftService";
 import DateToolbar from "../../components/DateToolbar";
+import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
-import { getVolunteerShiftsForMonth } from "../../api/shiftService";
-import DetailsPanel from "../../components/DetailsPanel";
+import "./index.css";
 
 function VolunteerSchedule() {
     const volunteerID = localStorage.getItem('volunteerID');
@@ -99,8 +98,10 @@ function VolunteerSchedule() {
     };
 
     return (
-        <VolunteerLayout
-            pageTitle="Schedule">
+        <main className="content-container">
+            <div className="content-heading">
+                <h2 className="content-title">Schedule</h2>
+            </div>
             <DetailsPanel
                 classId={selectedClassId}
                 classList={shifts}
@@ -148,7 +149,7 @@ function VolunteerSchedule() {
                     </div>
                 </div>
             </DetailsPanel>
-        </VolunteerLayout>
+        </main>
     );
 }
 

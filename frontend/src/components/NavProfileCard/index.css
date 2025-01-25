@@ -20,6 +20,7 @@
     flex-direction: row;
     gap: 0.5rem;
     align-items: center;
+    min-width: 0;
 }
 
 .nav-profile-card__avatar, .nav-profile-card__avatar-collapse {
@@ -38,17 +39,21 @@
 
 .nav-profile-card__avatar img {
     border-radius: 0.5rem;
+    object-fit: cover;
 }
 
 .nav-profile-card__info {
     display: flex;
     flex-direction: column;
-    gap:0.2rem;
+    gap: 0.2rem;
+    min-width: 0;
 }
 
 .nav-profile-card__name, .nav-profile-card__email {
     margin: 0;
-    
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .nav-profile-card__name {
@@ -57,5 +62,5 @@
 
 .nav-profile-card__email {
     color: grey;
-    font-size: 14px;
+    font-size: 12px;
 }

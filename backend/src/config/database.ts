@@ -1,9 +1,9 @@
-import mysql, { PoolConfig, Pool } from 'mysql';
 import { config } from "dotenv";
+import mysql, { Pool, PoolOptions } from 'mysql2/promise';
 
 config();
 
-const configuration: PoolConfig = {
+const configuration: PoolOptions = {
   host: process.env.RDS_HOSTNAME || '',
   user: process.env.RDS_USERNAME || '',
   password: process.env.RDS_PASSWORD || '',

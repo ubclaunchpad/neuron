@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
+import { ShiftDB } from '../common/generated.js';
 import ShiftModel from '../models/shiftModel.js';
-import { Shift } from '../common/interfaces.js';
 
 const shiftModel = new ShiftModel();
 
@@ -8,7 +8,7 @@ const shiftModel = new ShiftModel();
 const sqlDateRegex = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 async function getShiftInfo(req: Request, res: Response){
-    const shift: Shift = req.body;
+    const shift: ShiftDB = req.body;
 
     if (!shift.fk_volunteer_id || !shift.fk_schedule_id || !shift.shift_date) {
         return res.status(400).json({
@@ -24,13 +24,13 @@ async function getShiftInfo(req: Request, res: Response){
     }
     
     try {
-        const shift_info = await shiftModel.getShiftInfoFromDB(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
-        res.status(200).json(shift_info[0]);
+        const shift_info = await shiftModel.getShiftInfo(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
+        res.status(200).json(shift_info);
     } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error: ${error.message}`
-        });
-    }
+		return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+	}
 }
 
 // get all the shifts assigned to a volunteer, using the volunteer's ID
@@ -47,15 +47,15 @@ async function getShiftsByVolunteerId(req: Request, res: Response) {
         const shifts = await shiftModel.getShiftsByVolunteerId(volunteer_id);
         res.status(200).json(shifts);
     } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
+		return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+	}
 } 
 
 // get all the shifts on a given date
 async function getShiftsByDate(req: Request, res: Response) {
-    const shift: Shift = req.body;
+    const shift: ShiftDB = req.body;
 
     if (!shift.shift_date) {
         return res.status(400).json({
@@ -74,15 +74,15 @@ async function getShiftsByDate(req: Request, res: Response) {
         const shifts = await shiftModel.getShiftsByDate(shift.shift_date);
         res.status(200).json(shifts);
     } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
+		return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+	}
 }
 
 // get all the shifts viewable for a volunteer for the month around a given date
 async function getShiftsByVolunteerIdAndMonth(req: Request, res: Response) {
-    const shift: Shift = req.body;
+    const shift: ShiftDB = req.body;
 
     if (!shift.shift_date) {
         return res.status(400).json({
@@ -109,10 +109,10 @@ async function getShiftsByVolunteerIdAndMonth(req: Request, res: Response) {
         const shifts = await shiftModel.getShiftsByVolunteerIdAndMonth(shift.fk_volunteer_id, month, year);
         res.status(200).json(shifts);
     } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
+		return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+	}
 }
 
 // volunteer requesting to cover someone else’s open shift
@@ -129,16 +129,13 @@ async function requestToCoverShift(req: Request, res: Response) {
         const request = await shiftModel.requestToCoverShift(request_id, volunteer_id);
         res.status(200).json(request);
     } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
+		return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+	}
 }
 
 export {
-    getShiftInfo,
-    getShiftsByVolunteerId,
-    getShiftsByDate,
-    getShiftsByVolunteerIdAndMonth,
+    getShiftInfo, getShiftsByDate, getShiftsByVolunteerId, getShiftsByVolunteerIdAndMonth,
     requestToCoverShift
 };

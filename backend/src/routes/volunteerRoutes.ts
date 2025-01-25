@@ -1,5 +1,4 @@
 import { Request, Response, Router } from "express";
-import multer from 'multer';
 
 import {
     getVolunteerById,
@@ -14,11 +13,9 @@ import {
     setAvailabilityByVolunteerId,
     updateAvailabilityByVolunteerId,
 } from "../controllers/availabilityController.js";
+import { RouteDefinition } from "./routes.js";
 
 const router = Router();
-
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
 
 // get all volunteers
 router.get("/volunteers", (req: Request, res: Response) => {
@@ -60,4 +57,63 @@ router.post('/shiftCheckIn', (req: Request, res: Response) => {
     shiftCheckIn(req, res) 
 });
 
-export default router;
+export const VolunteerRoutes: RouteDefinition = {
+    path: '/volunteer',
+    children: [
+        {
+            path: '/',
+            method: 'get',
+            action: getVolunteers
+        },
+        {
+            path: '/shift-check-in',
+            method: 'post',
+            action: shiftCheckIn
+        },
+        {
+            path: '/:volunteer_id',
+            children: [
+                {
+                    path: '/',
+                    method: 'get',
+                    action: getVolunteerById
+                },
+                {
+                    path: '/',
+                    method: 'put',
+                    action: updateVolunteer
+                },
+            ]
+        },
+        {
+            path: '/availability',
+            children: [
+                {
+                    path: '/',
+                    method: 'get',
+                    action: getAvailabilities
+                },
+                {
+                    path: '/:volunteer_id',
+                    children: [
+                        {
+                            path: '/',
+                            method: 'get',
+                            action: getAvailabilityByVolunteerId
+                        },
+                        {
+                            path: '/',
+                            method: 'put',
+                            action: updateAvailabilityByVolunteerId
+                        },
+                        {
+                            path: '/',
+                            method: 'post',
+                            action: setAvailabilityByVolunteerId
+                        },
+                    ]
+                },
+            ]
+        }
+    ]
+};

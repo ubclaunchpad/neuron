@@ -1,60 +1,72 @@
-import { Router, Request, Response } from 'express';
-import { 
+import { param } from 'express-validator';
+import {
+    addShift,
+    deleteShift,
     getShiftInfo,
-    getShiftsByVolunteerId, 
     getShiftsByDate,
+    getShiftsByVolunteerId,
     getShiftsByVolunteerIdAndMonth,
     requestToCoverShift,
-    addShift,
-    updateShift,
-    deleteShift
+    updateShift
 } from '../controllers/shiftController.js';
+import { RouteDefinition } from './routes.js';
 
-const router = Router();
-
-// gets all info associated with a shift
-router.post('/info', (req: Request, res: Response) => { 
-    getShiftInfo(req, res); 
- });
-
- // get shifts assigned to a volunteer by their volunteer id
-router.get('/:volunteer_id', (req: Request, res: Response) => { 
-    getShiftsByVolunteerId(req, res) 
-});
-
-// get shifts on a given date
-router.post('/on-date', (req: Request, res: Response) => { 
-    getShiftsByDate(req, res)
-});
-
-// Retrieves all shifts viewable to a specific volunteer in a given month and year.
-// -- The shifts include:
-// -- 1. 'my-shifts' - shifts assigned to the volunteer.
-// -- 2. 'coverage' - shifts available for coverage by other volunteers.
-// -- 3. 'my-coverage-requests' - coverage requests made by the volunteer.
-// -- Returns shift details such as date, time, class, duration, and coverage status.
-router.post('/volunteer-month', (req: Request, res: Response) => {
-    getShiftsByVolunteerIdAndMonth(req, res);
-});
-
-// volunteer requesting to cover someone else’s open shift
-router.post('/request-to-cover-shift', (req: Request, res: Response) => {
-    requestToCoverShift(req, res);
-});
-
-// create a new shift, either unassigned or assigned to a volunteer by id
-router.post('/', (req: Request, res: Response) => {
-    addShift(req, res);
-})
-
-// update a shift by id
-router.put('/:shift_id', (req: Request, res: Response) => {
-    updateShift(req, res);
-})
-
-// delete a shift by id
-router.delete('/:shift_id', (req: Request, res: Response) => {
-    deleteShift(req, res);
-})
-
-export default router;
+export const ShiftRoutes: RouteDefinition = {
+    path: '/shifts',
+    children: [
+        {
+            path: '/',
+            method: 'post',
+            action: addShift
+        },
+        {
+            path: '/info',
+            method: 'post',
+            action: getShiftInfo
+        },
+        {
+            path: '/:volunteer_id',
+            method: 'get',
+            action: getShiftsByVolunteerId
+        },
+        {
+            path: '/on-date',
+            method: 'post',
+            action: getShiftsByDate
+        },
+        {
+            // Retrieves all shifts viewable to a specific volunteer in a given month and year.
+            // -- The shifts include:
+            // -- 1. 'my-shifts' - shifts assigned to the volunteer.
+            // -- 2. 'coverage' - shifts available for coverage by other volunteers.
+            // -- 3. 'my-coverage-requests' - coverage requests made by the volunteer.
+            // -- Returns shift details such as date, time, class, duration, and coverage status.
+            path: '/volunteer-month',
+            method: 'post',
+            action: getShiftsByVolunteerIdAndMonth
+        },
+        {
+            path: '/request-to-cover-shift',
+            method: 'post',
+            action: requestToCoverShift
+        },
+        {
+            path: '/:shift_id',
+            validation: [
+                param('shift_id').isInt({ min: 0 })
+            ],
+            children: [
+                {
+                    path: '/',
+                    method: 'put',
+                    action: updateShift
+                },
+                {
+                    path: '/',
+                    method: 'put',
+                    action: deleteShift
+                },
+            ]
+        }
+    ]
+};

@@ -1,25 +1,27 @@
-import { Router, Request, Response } from 'express';
-import { 
-    getInstructors, 
+import {
     getInstructorById,
+    getInstructors,
     insertInstructor
 } from '../controllers/instructorController.js';
+import { RouteDefinition } from './routes.js';
 
-const router = Router();
-
-// get all instructors
-router.get('/', async (req: Request, res: Response) => { 
-    await getInstructors(req, res) 
-});
-
-// get instructor by ID
-router.get('/:instructor_id', async (req: Request, res: Response) => { 
-    await getInstructorById(req, res) 
-});
-
-// insert a new instructor
-router.post('/', async (req: Request, res: Response) => {
-    await insertInstructor(req, res);
-});
-
-export default router;
+export const InstructorRoutes: RouteDefinition = {
+    path: '/instructors',
+    children: [
+        {
+            path: '/',
+            method: 'get',
+            action: getInstructors
+        },
+        {
+            path: '/',
+            method: 'post',
+            action: insertInstructor
+        },
+        {
+            path: '/:instructor_id',
+            method: 'get',
+            action: getInstructorById
+        },
+    ]
+};

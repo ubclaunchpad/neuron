@@ -1,46 +1,50 @@
-import express from 'express';
-import { Request, Response } from 'express';
-import { 
-    getAllClasses, 
-    getClassById, 
-    getClassesByDay, 
-    addClass, 
-    updateClass,
-    deleteClass,
-    uploadClassImage
-} from '../controllers/classController.js';
 import { imageUploadMiddleware } from '../config/fileUpload.js';
-import multer from 'multer'; // Used for file uploads
+import { addClass, deleteClass, getAllClasses, getClassById, getClassesByDay, updateClass, uploadClassImage } from '../controllers/classController.js';
+import { RouteDefinition } from './routes.js';
 
-const router = express.Router();
-
-router.get('/', async (req: Request, res: Response) => {
-    await getAllClasses(req, res);
-});
-
-router.get('/:class_id', async (req: Request, res: Response) => {
-    await getClassById(req, res);
-});
-
-router.get("/schedule/:day", async (req, res) => {
-    await getClassesByDay(req, res);
-});
-
-router.post('/', async (req: Request, res: Response) => {
-    await addClass(req, res);
-});
-
-router.put('/:class_id', async (req: Request, res: Response) => {
-    await updateClass(req, res);
-});
-
-router.delete('/:class_id', async (req: Request, res: Response) => {
-    await deleteClass(req, res);
-});
-
-router.put('/:class_id/upload', imageUploadMiddleware, async (req: Request, res: Response) => {
-    await uploadClassImage(req, res);
-});
-
-
-export default router;
+export const ClassRoutes: RouteDefinition = {
+    path: '/classes',
+    children: [
+        {
+            path: '/',
+            method: 'get',
+            action: getAllClasses
+        },
+        {
+            path: '/',
+            method: 'post',
+            action: addClass
+        },
+        {
+            path: '/:class_id',
+            children: [
+                {
+                    path: '/',
+                    method: 'get',
+                    action: getClassById
+                },
+                {
+                    path: '/',
+                    method: 'put',
+                    action: updateClass
+                },
+                {
+                    path: '/',
+                    method: 'delete',
+                    action: deleteClass
+                },
+                {
+                    path: '/upload',
+                    method: 'put',
+                    middleware: [imageUploadMiddleware],
+                    action: uploadClassImage
+                }
+            ]
+        },
+        {
+            path: '/schedule/:day',
+            method: 'get',
+            action: getClassesByDay
+        },
+    ]
+};

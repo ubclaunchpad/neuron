@@ -109,10 +109,6 @@ export default class ScheduleModel {
             await transaction.rollback();
             throw error;
         }
-
-        const [results, _] = await connection.query<ResultSetHeader>(query, values);
-
-        return results;
     }
 
     async addScheduleToDB(schedule: ScheduleDB): Promise<ResultSetHeader> {

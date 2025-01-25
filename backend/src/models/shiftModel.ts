@@ -84,7 +84,6 @@ export default class ShiftModel {
           return results;
      }
 
-
      // create a new shift. having fk_volunteer_id = null indicates an unassigned shift
      async addShift(shift: ShiftDB): Promise<ResultSetHeader> {
           const query = `

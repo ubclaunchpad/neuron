@@ -119,7 +119,7 @@ function VolunteerLayout() {
         <div className="nav-profile-card-container">
           <NavProfileCard
             avatar={profilePic}
-            name={volunteer?.f_name}
+            name={volunteer?.p_name ?? volunteer?.f_name}
             email={volunteer?.email}
             collapse={collapsed}
             link="/volunteer/my-profile"

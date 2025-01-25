@@ -21,7 +21,6 @@ function VolunteerProfile() {
                 setVolunteer({
                     ...volunteerData, 
                     profile_picture: userData.fk_image_id ? formatImageUrl(userData.fk_image_id) : null,
-                    user_id: userData.user_id
                 })
             } catch (error) {
                 console.error(error);

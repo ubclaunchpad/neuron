@@ -14,6 +14,7 @@ import useComponentVisible from "../../../hooks/useComponentVisible";
 
 function VolunteerDetailsCard({ volunteer }) {
 
+    console.log(volunteer)
     const [isEditing, setIsEditing] = React.useState(false);
     const [mutableData, setMutableData] = React.useState({
         profilePicture: volunteer.profile_picture,
@@ -87,7 +88,7 @@ function VolunteerDetailsCard({ volunteer }) {
                     phone_number: mutableData.phoneNumber ? mutableData.phoneNumber : null
                 }
 
-                // NOTE: created_at and profile_picture are not fields in volunteers table, need to be seperated
+                // NOTE: created_at and profile_picture are not fields in volunteers table, need to be separated
                 const {created_at, profile_picture, ...volunteerData} = userData;
 
                 const volunteerResult = await updateVolunteerData(volunteerData);
@@ -103,11 +104,13 @@ function VolunteerDetailsCard({ volunteer }) {
                 // attach id to req body
                 profilePicData.append('volunteer_id', volunteer.volunteer_id);
 
-                const uploadedImageId = await uploadProfilePicture(volunteer.user_id, profilePicData);
+                const uploadedImageId = await uploadProfilePicture(volunteer.fk_user_id, profilePicData);
+
                 setTempImage(formatImageUrl(uploadedImageId));
             }
             
         } catch (error) {
+            console.log(error)
             setMutableData(prevMutableData);
             setTempImage(prevTempImage);
         }
@@ -157,8 +160,8 @@ function VolunteerDetailsCard({ volunteer }) {
                     >
                         <ProfileImg
                             className="profile-image"
-                            src={tempImage ? tempImage : mutableData.profilePicture}
-                            name={mutableData.preferredName}
+                            src={tempImage ?? mutableData.profilePicture}
+                            name={mutableData.preferredName || volunteer.f_name}
                         ></ProfileImg>
                         {isEditing && <div className="overlay">
                             <img src={camera_icon} alt="Edit Profile" className="camera-icon" />

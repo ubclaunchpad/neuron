@@ -39,7 +39,7 @@ export default class ScheduleModel {
 
         return results;
     }
-
+  
     async deleteSchedulesByScheduleId(classId: number, scheduleIds: number[], transaction?: PoolConnection): Promise<any> {
         const connection = transaction ?? connectionPool;
 
@@ -109,5 +109,22 @@ export default class ScheduleModel {
             await transaction.rollback();
             throw error;
         }
+
+        const [results, _] = await connection.query<ResultSetHeader>(query, values);
+
+        return results;
+    }
+
+    async addScheduleToDB(schedule: ScheduleDB): Promise<ResultSetHeader> {
+        const query = `INSERT INTO schedule 
+                        (fk_class_id, day, start_time, end_time)
+                        VALUES (?, ?, ?, ?)`;
+
+        const { fk_class_id, day, start_time, end_time } = schedule;
+        const values = [fk_class_id, day, start_time, end_time];
+
+        const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+        return results;
     }
 }

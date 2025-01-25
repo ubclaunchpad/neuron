@@ -7,10 +7,9 @@ DROP TABLE IF EXISTS class_preferences;
 DROP TABLE IF EXISTS pending_shift_coverage;
 DROP TABLE IF EXISTS shift_coverage_request;
 DROP TABLE IF EXISTS shifts;
-DROP TABLE IF EXISTS volunteer_profile_pics;
 DROP TABLE IF EXISTS volunteers;
 DROP TABLE IF EXISTS schedule;
-DROP TABLE IF EXISTS class_image;
+DROP TABLE IF EXISTS images;
 DROP TABLE IF EXISTS class;
 DROP TABLE IF EXISTS admins;
 DROP TABLE IF EXISTS instructors;
@@ -46,7 +45,7 @@ create table instructors (
 create table class (
 	class_id INT PRIMARY KEY AUTO_INCREMENT,
     fk_instructor_id VARCHAR(255) NOT NULL,
-    fk_image_id VARCHAR(36),
+    fk_image_id CHAR(36),
     class_name VARCHAR(64) NOT NULL,
     instructions VARCHAR(150),
     zoom_link VARCHAR(3000) NOT NULL,
@@ -57,13 +56,6 @@ create table class (
     FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id),
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)
         ON DELETE SET NULL
-);
-
-create table class_image (
-    image_id INT PRIMARY KEY AUTO_INCREMENT,
-    fk_class_id INT,
-    image MEDIUMBLOB,
-    FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
 );
 
 create table volunteers (
@@ -81,13 +73,6 @@ create table volunteers (
     city VARCHAR(15),
     province VARCHAR(15),
     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
-        ON DELETE CASCADE
-);
-
-create table volunteer_profile_pics (
-    fk_volunteer_id VARCHAR(255) PRIMARY KEY,
-    profile_pic LONGBLOB NOT NULL,
-    FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
         ON DELETE CASCADE
 );
 

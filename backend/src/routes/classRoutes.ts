@@ -9,11 +9,10 @@ import {
     deleteClass,
     uploadClassImage
 } from '../controllers/classController.js';
+import { imageUploadMiddleware } from '../config/fileUpload.js';
 import multer from 'multer'; // Used for file uploads
 
 const router = express.Router();
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 
 router.get('/', async (req: Request, res: Response) => {
     await getAllClasses(req, res);
@@ -39,7 +38,7 @@ router.delete('/:class_id', async (req: Request, res: Response) => {
     await deleteClass(req, res);
 });
 
-router.put('/:class_id/upload', upload.single('image'), async (req: Request, res: Response) => {
+router.put('/:class_id/upload', imageUploadMiddleware, async (req: Request, res: Response) => {
     await uploadClassImage(req, res);
 });
 

@@ -4,6 +4,7 @@ import button_icon_close from "../../assets/images/button-icons/button-icon-clos
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import zoom_icon from "../../assets/zoom.png";
+import email from "../../assets/email.png"
 import { getClassById } from "../../api/classesPageService";
 import { isAuthenticated } from "../../api/authService";
 import dayjs from "dayjs";
@@ -17,6 +18,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     if (classId) {
       getClassById(classId)
         .then((data) => {
+          console.log(data)
           setPanelInfo(data);
           setPanelWidth("35vw");
           myClassCheck(data);
@@ -131,6 +133,25 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     }
   };
 
+  const loadEmailIfMyShift = () => {
+    if (!shiftDetails || !shiftDetails.shift_type || !panelInfo?.instructor_email) return;
+
+    return shiftDetails.shift_type === "my-shifts" ? (
+      <button
+        className="email-icon panel-button-icon"
+        onClick={() => {
+          window.open(`mailto:${panelInfo.instructor_email}`);
+        }}
+      >
+        <img
+          alt="Email"
+          style={{ width: 16, height: 16 }}
+          src={email}
+        />
+      </button>
+    ) : null; 
+  };
+  
   return (
     <>
       <div
@@ -189,6 +210,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
                 {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
                   ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
                   : "No instructor available"}
+                {loadEmailIfMyShift()}
               </div>
             </div>
             <div className="panel-details-shift-row">

@@ -8,10 +8,12 @@ import { useNavigate } from "react-router-dom";
 import notyf from "../../utils/notyf";
 
 const AdminVerify = () => {
+    const [loading, setLoading] = useState(true);
     const [volunteers, setVolunteers] = useState([]);
     const navigate = useNavigate();
 
     const getUnverifiedVolunteersAndSetVolunteers = async () => {
+        setLoading(true);
         getUnverifiedVolunteers()
             .then((response) => {
                 if (response.volunteers === null) {
@@ -32,6 +34,9 @@ const AdminVerify = () => {
                     console.log("Error: ", error.response.data.message);
                     notyf.error("Internal server error");
                 }
+            })
+            .finally(() =>  {
+                setLoading(false);
             });
     };
 
@@ -39,6 +44,10 @@ const AdminVerify = () => {
         getUnverifiedVolunteersAndSetVolunteers();
         // eslint-disable-next-line
     }, []);
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <>

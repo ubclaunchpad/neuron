@@ -12,4 +12,8 @@
     "declaration": true,
     "typeRoots": ["./node_modules/@types", "./src/common"]
   },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.test.ts"
+  ]
 }

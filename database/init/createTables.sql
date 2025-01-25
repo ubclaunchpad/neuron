@@ -66,12 +66,13 @@ create table volunteers (
     p_name VARCHAR(45),
     total_hours INT NOT NULL DEFAULT 0,
     bio VARCHAR(150),
-    active BOOLEAN DEFAULT FALSE,
+    active BOOLEAN NOT NULL DEFAULT FALSE,
     email VARCHAR(45) NOT NULL,
     pronouns VARCHAR(15),
     phone_number VARCHAR(15),
     city VARCHAR(15),
     province VARCHAR(15),
+    p_time_ctmt INT NOT NULL DEFAULT 1,
     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
         ON DELETE CASCADE
 );

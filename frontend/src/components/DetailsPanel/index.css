@@ -116,6 +116,16 @@
      text-align: center;
 }
 
+.volunteersNeeded {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(89, 165, 213, 0.1);
+     color: var(--primary-blue);
+     font-weight: bold;
+     text-align: center;
+}
+
 .panel-details-shift {
      display: flex;
      flex-direction: column;

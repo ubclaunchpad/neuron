@@ -133,24 +133,33 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     }
   };
 
-  const loadEmailIfMyShift = () => {
+  const renderInstructorInfo = () => {
     if (!shiftDetails || !shiftDetails.shift_type || !panelInfo?.instructor_email) return;
-
-    return shiftDetails.shift_type === "my-shifts" ? (
-      <button
-        className="email-icon panel-button-icon"
-        onClick={() => {
-          window.open(`mailto:${panelInfo.instructor_email}`);
-        }}
-      >
-        <img
-          alt="Email"
-          style={{ width: 16, height: 16 }}
-          src={email}
-        />
-      </button>
-    ) : null; 
+  
+    return (
+      <>
+        {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
+          ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
+          : "No instructor available"}
+        {shiftDetails.shift_type === "my-shifts" 
+          ?
+          <button
+            className="email-icon panel-button-icon"
+            onClick={() => {
+              window.open(`mailto:${panelInfo.instructor_email}`);
+            }}
+          >
+            <img
+              alt="Email"
+              style={{ width: 16, height: 16 }}
+              src={email}
+            />
+          </button>
+          : null}
+      </>
+    );
   };
+  
   
   return (
     <>
@@ -207,10 +216,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
             <div className="panel-details-shift-row">
               <div className="panel-titles">Instructor</div>
               <div className="panel-details-shift-right">
-                {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
-                  ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
-                  : "No instructor available"}
-                {loadEmailIfMyShift()}
+                {renderInstructorInfo()}
               </div>
             </div>
             <div className="panel-details-shift-row">

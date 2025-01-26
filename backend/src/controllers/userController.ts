@@ -151,11 +151,11 @@ async function loginUser(req: Request, res: Response): Promise<any> {
     }
 
     // If the volunteer is not verified, return an error
-    if (user.role === 'volun') {
+    if (user.role === 'VOLUN') {
         const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
         if (!volunteer.active) {
             return res.status(400).json({
-                error: "Your account is not verified yet",
+                error: "Waiting for an admin to verify your account.\nYou can reach out to us at bwp@gmail.com",
             });
         }
     }

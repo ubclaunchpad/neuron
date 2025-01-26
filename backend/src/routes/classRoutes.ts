@@ -1,7 +1,7 @@
 import { body, param } from 'express-validator';
+import { RouteDefinition } from "../common/types.js";
 import { imageUploadMiddleware } from '../config/fileUpload.js';
 import { addClass, deleteClass, getAllClasses, getClassById, getClassesByDay, updateClass, uploadClassImage } from '../controllers/classController.js';
-import { RouteDefinition } from './routes.js';
 
 export const ClassRoutes: RouteDefinition = {
     path: '/classes',

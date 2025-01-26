@@ -3,7 +3,8 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Request, Response } from "express";
 import morgan from 'morgan';
-import { registerRoutes, Routes } from "./routes/routes.js";
+import { Routes } from "./routes/routes.js";
+import { registerRoutes } from "./utils/routeUtils.js";
 
 // set default port to be 3001
 const PORT: number = parseInt(process.env.PORT || "3001", 10);

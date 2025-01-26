@@ -1,10 +1,10 @@
 import { body, param } from 'express-validator';
+import { RouteDefinition } from "../common/types.js";
 import {
     getInstructorById,
     getInstructors,
     insertInstructor
 } from '../controllers/instructorController.js';
-import { RouteDefinition } from './routes.js';
 
 export const InstructorRoutes: RouteDefinition = {
     path: '/instructors',

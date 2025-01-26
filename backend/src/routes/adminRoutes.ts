@@ -1,10 +1,10 @@
 import { body } from "express-validator";
+import { RouteDefinition } from "../common/types.js";
 import { isAdmin, isAuthorized } from "../config/authCheck.js";
 import {
     getUnverifiedVolunteers,
     verifyVolunteer,
 } from "../controllers/adminController.js";
-import { RouteDefinition } from "./routes.js";
 
 export const AdminRoutes: RouteDefinition = {
     path: '/admin',

@@ -1,19 +1,17 @@
-
-import {
-    getVolunteerById,
-    getVolunteers,
-    shiftCheckIn,
-    updateVolunteer
-} from "../controllers/volunteerController.js";
-
 import { body, param } from "express-validator";
+import { RouteDefinition } from "../common/types.js";
 import {
     getAvailabilities,
     getAvailabilityByVolunteerId,
     setAvailabilityByVolunteerId,
     updateAvailabilityByVolunteerId,
 } from "../controllers/availabilityController.js";
-import { RouteDefinition } from "./routes.js";
+import {
+    getVolunteerById,
+    getVolunteers,
+    shiftCheckIn,
+    updateVolunteer
+} from "../controllers/volunteerController.js";
 
 export const VolunteerRoutes: RouteDefinition = {
     path: '/volunteer',

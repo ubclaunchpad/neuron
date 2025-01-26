@@ -1,4 +1,5 @@
 import { body, param } from 'express-validator';
+import { RouteDefinition } from "../common/types.js";
 import {
     addShift,
     deleteShift,
@@ -9,7 +10,6 @@ import {
     requestToCoverShift,
     updateShift
 } from '../controllers/shiftController.js';
-import { RouteDefinition } from './routes.js';
 
 export const ShiftRoutes: RouteDefinition = {
     path: '/shifts',

@@ -1,4 +1,5 @@
 import { body, param } from "express-validator";
+import { RouteDefinition } from "../common/types.js";
 import { isAuthorized } from "../config/authCheck.js";
 import {
     loginUser,
@@ -9,7 +10,6 @@ import {
     updatePassword,
     verifyAndRedirect,
 } from "../controllers/userController.js";
-import { RouteDefinition } from "./routes.js";
 
 export const AuthRoutes: RouteDefinition = {
     path: '/auth',

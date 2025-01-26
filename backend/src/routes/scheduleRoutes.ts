@@ -1,6 +1,6 @@
 import { body, param } from 'express-validator';
+import { RouteDefinition } from "../common/types.js";
 import { deleteSchedules, getSchedules, getSchedulesByClassId, setSchedulesByClassId, updateSchedulesByClassId } from '../controllers/scheduleController.js';
-import { RouteDefinition } from './routes.js';
 
 export const ScheduleRoutes: RouteDefinition = {
     path: '/schedules',

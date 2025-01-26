@@ -1,7 +1,7 @@
 import { param } from "express-validator";
+import { RouteDefinition } from "../common/types.js";
 import { imageUploadMiddleware } from "../config/fileUpload.js";
 import { getUserById, insertProfilePicture } from "../controllers/userController.js";
-import { RouteDefinition } from "./routes.js";
 
 export const UserRoutes: RouteDefinition = {
     path: '/user/:user_id',

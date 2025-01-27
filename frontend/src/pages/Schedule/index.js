@@ -34,7 +34,7 @@ function VolunteerSchedule() {
             const existingShift = shiftMap.get(shift.shift_id);
 
             // Prioritize showing coverage shifts over my shifts
-            if (existingShift && existingShift.shift_type === 'my-shifts' && shift.shift_type === 'coverage') {
+            if (existingShift && existingShift.shift_type === 'my-shifts' && shift.shift_type === 'my-coverage-requests') {
                 shiftMap.set(shift.shift_id, shift);
             } else if (!existingShift) {
                 shiftMap.set(shift.shift_id, shift);

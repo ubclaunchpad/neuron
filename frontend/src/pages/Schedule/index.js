@@ -21,43 +21,47 @@ function VolunteerSchedule() {
     const shiftRefs = useRef({});
     const scheduleContainerRef = useRef(null); 
 
-    // Fetch shifts for the selected date and filter
-    useEffect(() => {
-        const fetchShifts = async () => {
-            const body = {
-                volunteer_id: volunteerID,
-                shiftDate: selectedDate.format('YYYY-MM-DD')
-            };
-            const response = await getVolunteerShiftsForMonth(body);
-            
-            // Filter out duplicate shifts
-            const shiftMap = new Map();
-            response.forEach((shift) => {
-                const existingShift = shiftMap.get(shift.shift_id);
-
-                // Prioritize showing coverage shifts over my shifts
-                if (existingShift && existingShift.shift_type === 'my-shifts' && shift.shift_type === 'coverage') {
-                    shiftMap.set(shift.shift_id, shift);
-                } else if (!existingShift) {
-                    shiftMap.set(shift.shift_id, shift);
-                }
-            });
-
-            const uniqueShifts = Array.from(shiftMap.values());
-            
-            // Filter shifts based on selected filter type
-            const filteredShifts = uniqueShifts.filter((shift) => {
-
-                if (filter === 'all-shifts') {
-                    return true; // No filtering for 'all-shifts'
-                }
-                return shift.shift_type === filter;
-            });
-            setShifts(filteredShifts);
+    const fetchShifts = useCallback(async () => {
+        const body = {
+            volunteer_id: volunteerID,
+            shiftDate: selectedDate.format('YYYY-MM-DD')
         };
-        fetchShifts();
+        const response = await getVolunteerShiftsForMonth(body);
+        
+        // Filter out duplicate shifts
+        const shiftMap = new Map();
+        response.forEach((shift) => {
+            const existingShift = shiftMap.get(shift.shift_id);
+
+            // Prioritize showing coverage shifts over my shifts
+            if (existingShift && existingShift.shift_type === 'my-shifts' && shift.shift_type === 'coverage') {
+                shiftMap.set(shift.shift_id, shift);
+            } else if (!existingShift) {
+                shiftMap.set(shift.shift_id, shift);
+            }
+        });
+
+        const uniqueShifts = Array.from(shiftMap.values());
+        
+        // Filter shifts based on selected filter type
+        const filteredShifts = uniqueShifts.filter((shift) => {
+
+            if (filter === 'all-shifts') {
+                return true; // No filtering for 'all-shifts'
+            }
+            return shift.shift_type === filter;
+        });
+        setShifts(filteredShifts);
         
     }, [selectedDate, filter, volunteerID]);
+
+    // Fetch shifts for the selected date and filter
+    useEffect(() => {
+        const fetchData = async () => {
+            await fetchShifts();
+        }
+        fetchData();
+    }, [fetchShifts]);
 
     // map of shifts grouped by date { date: [shift1, shift2, ...] }
     const groupedShifts = shifts.reduce((acc, shift) => {
@@ -70,23 +74,7 @@ function VolunteerSchedule() {
     }, {});
 
     // Re-fetch shifts when a shift is covered or updated
-    const handleShiftUpdate = () => {
-        const fetchShifts = async () => {
-            const body = {
-                volunteer_id: volunteerID,
-                shiftDate: selectedDate.format('YYYY-MM-DD')
-            };
-            const response = await getVolunteerShiftsForMonth(body);
-            const filteredShifts = response.filter((shift) => {
-                if (filter === 'all-shifts') {
-                    return true;
-                }
-                return shift.shift_type === filter;
-            });
-            setShifts(filteredShifts);
-        };
-        fetchShifts();
-    };
+    const handleShiftUpdate = () => fetchShifts();
 
     const scrollToTop = useCallback(() => {
         const targetDate = selectedDate.format('YYYY-MM-DD');

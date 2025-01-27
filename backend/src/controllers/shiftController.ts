@@ -135,6 +135,26 @@ async function requestToCoverShift(req: Request, res: Response) {
 	}
 }
 
+// volunteer checks into a shift
+async function checkInShift(req: Request, res: Response) {
+    const shift_id = Number(req.params.shift_id);
+
+    if (!shift_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'shift_id'",
+        });
+    }
+
+    try {
+        const request = await shiftModel.checkInShift(shift_id);
+        res.status(200).json(request);
+    } catch (err: any) {
+        return res.status(err.status ?? 500).json({
+            error: err.message
+        });
+    }
+}
+
 async function addShift(req: Request, res: Response) {
     const shift: ShiftDB = req.body;
 
@@ -212,5 +232,5 @@ async function deleteShift(req: Request, res: Response) {
 
 export {
     getShiftInfo, getShiftsByDate, getShiftsByVolunteerId, getShiftsByVolunteerIdAndMonth,
-    requestToCoverShift, addShift, updateShift, deleteShift
+    requestToCoverShift, checkInShift, addShift, updateShift, deleteShift
 };

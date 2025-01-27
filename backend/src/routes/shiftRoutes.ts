@@ -5,6 +5,7 @@ import {
     getShiftsByDate,
     getShiftsByVolunteerIdAndMonth,
     requestToCoverShift,
+    checkInShift,
     addShift,
     updateShift,
     deleteShift
@@ -40,6 +41,11 @@ router.post('/volunteer-month', (req: Request, res: Response) => {
 // volunteer requesting to cover someone else’s open shift
 router.post('/request-to-cover-shift', (req: Request, res: Response) => {
     requestToCoverShift(req, res);
+});
+
+// volunteer checks into their shift
+router.patch('/check-in/:shift_id', (req: Request, res: Response) => {
+    checkInShift(req, res);
 });
 
 // create a new shift, either unassigned or assigned to a volunteer by id

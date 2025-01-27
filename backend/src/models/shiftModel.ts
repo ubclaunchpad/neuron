@@ -84,6 +84,18 @@ export default class ShiftModel {
           return results;
      }
 
+     // modify a shift to indicate that a volunteer has checked in
+     async checkInShift(shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               UPDATE shifts SET checked_in = 1 WHERE shift_id = ?
+          `;
+          const values = [shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
      // create a new shift. having fk_volunteer_id = null indicates an unassigned shift
      async addShift(shift: ShiftDB): Promise<ResultSetHeader> {
           const query = `

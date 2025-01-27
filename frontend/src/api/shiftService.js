@@ -54,7 +54,21 @@ const requestToCoverShift = async (body) => {
     }
 }
 
+// Creates a request to check in for a shift
+const checkInShift = async (shift_id) => {
+    try {
+        console.log("checkInShift shift_id param:", shift_id);
+        const response = await api.patch(`/classes/shifts/check-in/${shift_id}`);
+
+        return response.data
+    } catch (error) {
+        console.error('Error checking in for shift: ', error);
+        throw error;
+    }
+}
+
 export { getShiftInfo,
          getVolunteerShiftsForMonth,
-         requestToCoverShift
+         requestToCoverShift,
+         checkInShift
         };

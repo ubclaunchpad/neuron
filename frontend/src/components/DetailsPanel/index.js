@@ -36,10 +36,11 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     return data.then((result) => result.user.user_id).catch(() => null);
   };
 
-  const myClassCheck = (data) => {
+  const myClassCheck = async (data) => {
+
     if (data.volunteer_user_ids) {
-      const userIds = data.volunteer_user_ids.split(",");
-      const currentUserId = getCurrentUserId();
+      const userIds = data.volunteer_user_ids.split(",").map(id => id.trim());
+      const currentUserId = (await getCurrentUserId()).trim();
       setMyClass(userIds.includes(currentUserId));
       setClassTaken(true);
     } else {

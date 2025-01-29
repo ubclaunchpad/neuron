@@ -343,4 +343,27 @@ export default class VolunteerModel {
             });
         });
     }
+
+    getClassPreferences(volunteer_id: string): Promise <any> {
+        return new Promise ((resolve, reject) => {
+            const query = "SELECT * FROM neuron.class_preferences WHERE fk_volunteer_id= ?;";
+            const values = [volunteer_id];
+
+            connectionPool.query(query, values, (error: any, results: any) => {
+                if (error) {
+                    return reject({
+                        status: 500,
+                        message: `An error occurred while executing the query: ${error}`,
+                    });
+                }
+                if (results.length == 0) {
+                    return reject({
+                        status: 400,
+                        message: `No volunteer found with the given user_id`,
+                    });
+                }
+                resolve(results);
+            });
+        });
+    }
 }

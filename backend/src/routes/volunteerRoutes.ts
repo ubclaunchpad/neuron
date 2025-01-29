@@ -9,7 +9,8 @@ import {
     insertProfilePicture,
     getProfilePicture,
     updateProfilePicture,
-    deleteProfilePicture
+    deleteProfilePicture,
+    getClassPreferences
 } from "../controllers/volunteerController.js";
 
 import {
@@ -82,6 +83,10 @@ router.delete("/profile-picture/:volunteer_id", (req: Request, res: Response) =>
 // update a volunteer's total hours when checked into a shift
 router.post('/shiftCheckIn', (req: Request, res: Response) => { 
     shiftCheckIn(req, res) 
+});
+
+router.get("/class_preferences/:volunteer_id", (req: Request, res: Response) => {
+    getClassPreferences(req, res);
 });
 
 export default router;

@@ -231,7 +231,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
                       key={index}
                       className={`dynamic-button ${button.buttonClass || ''}`}
                       disabled={button.disabled}
-                      onClick={button.onClick}
+                      onClick={() => button.onClick(shiftDetails)}
                   >
                       {button.icon && <img src={button.icon} className="card-button-icon"/>}
                       {button.label}

@@ -1,10 +1,16 @@
 import dayjs from 'dayjs';
+import isBetween from 'dayjs/plugin/isBetween';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
+import { requestToCoverShift, checkInShift } from '../../api/shiftService';
+import { SHIFT_TYPES, COVERAGE_STATUSES } from '../../data/constants';
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
+import CheckInIcon from '../../assets/check-in-icon.png'
+import Plus from '../../assets/plus.png'
+import RequestCoverageIcon from '../../assets/request-coverage.png'
 import "./index.css";
 
 function VolunteerSchedule() {
@@ -73,8 +79,143 @@ function VolunteerSchedule() {
         return acc;
     }, {});
 
-    // Re-fetch shifts when a shift is covered or updated
-    const handleShiftUpdate = () => fetchShifts();
+    const handleCoverShiftClick = async (shift) => {
+        try {
+            const body = {
+                request_id: shift.request_id,
+                volunteer_id: volunteerID,
+            };
+            console.log(`Requesting to cover shift ${shift.shift_id}`);
+            await requestToCoverShift(body);
+            // notify parent
+
+            // TODO: Need to update this with the new onUpdate()!!!
+            handleShiftUpdate({ ...shift });
+        } catch (error) {
+            console.error('Error generating request to cover shift:', error);
+        }
+    };
+
+    const handleCheckInClick = async (shift) => {
+        try {
+            if (!shift.checked_in) {
+                console.log(`Checking in for shift ${shift.shift_id}`);
+                await checkInShift(shift.shift_id);
+                handleShiftUpdate({ ...shift, checked_in: 1 });
+            } 
+        } catch (error) {
+            console.error('Error checking in for shift:', error);
+        }
+    };
+
+    // TODO: Implement this function
+    const handleRequestCoverageClick = (shift) => {
+        console.log(`Requesting coverage for shift ${shift.shift_id}`);
+        // Add logic for requesting coverage
+    };
+
+    // Returns the button configuration for the shift based on the shift type
+    const getButtonConfig = (shift) => {
+
+        const shiftDay = dayjs(shift.shift_date).format('YYYY-MM-DD');
+        const shiftStart = dayjs(`${shiftDay} ${shift.start_time}`);
+        const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
+    
+        const pastShift = currentDate.isAfter(shiftEnd);
+        const currentShift = currentDate.isBetween(shiftStart, shiftEnd, 'minute', '[]');
+
+        return {
+            [SHIFT_TYPES.MY_SHIFTS]: {
+                lineColor: 'var(--green)',
+                label: shift.checked_in 
+                    ? 'Checked In' 
+                        : currentShift 
+                        ? 'Check In' 
+                            : pastShift
+                            ? 'Missed Shift'
+                                : 'Upcoming',
+                icon: shift.checked_in ? null : currentShift ? CheckInIcon : null,
+                disabled: shift.checked_in || !currentShift,
+                buttonClass: shift.checked_in ? 'checked-in' : '',
+                onClick: handleCheckInClick,
+            },
+            [SHIFT_TYPES.COVERAGE]: {
+                lineColor: 'var(--red)',
+                label: shift.coverage_status === COVERAGE_STATUSES.RESOLVED
+                    ? 'Resolved'
+                    : shift.coverage_status === COVERAGE_STATUSES.PENDING
+                    ? 'Pending Approval'
+                    : 'Cover',
+                icon: shift.coverage_status === COVERAGE_STATUSES.OPEN ? Plus : null,
+                disabled: shift.coverage_status === COVERAGE_STATUSES.RESOLVED || shift.coverage_status === COVERAGE_STATUSES.PENDING,
+                onClick: handleCoverShiftClick,
+            },
+            [SHIFT_TYPES.MY_COVERAGE_REQUESTS]: {
+                lineColor: 'var(--yellow)',
+                label: 'Requested Coverage',
+                icon: null,
+                disabled: true,
+                onClick: () => {}, // No action for this state
+            },
+            [SHIFT_TYPES.DEFAULT]: {
+                lineColor: 'var(--grey)',
+                label: 'View Details',
+                icon: null,
+                disabled: false,
+            },
+            REQUEST_COVERAGE: {
+                lineColor: 'var(--yellow)',
+                label: 'Request Coverage',
+                icon: RequestCoverageIcon,
+                disabled: false,
+                onClick: handleRequestCoverageClick,
+            },
+        };
+    }
+
+
+    // Creates the buttons for the details panel based on the shift type
+    const generateButtonsForDetailsPanel = (shift) => {
+
+        const shiftDay = dayjs(shift.shift_date).format('YYYY-MM-DD');
+        const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
+        const pastShift = currentDate.isAfter(shiftEnd);
+
+        const buttons = [];
+        const buttonConfig = getButtonConfig(shift);
+        const primaryButton = buttonConfig[shift.shift_type] || buttonConfig[SHIFT_TYPES.DEFAULT];
+
+        buttons.push(primaryButton);
+        if (shift.shiftType === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
+            buttons.push(buttonConfig.REQUEST_COVERAGE);
+        }
+
+        return buttons;
+    };
+
+    // Update state when we update a shift
+    const handleShiftUpdate = (updatedShift) => {
+        setShifts((staleShifts) => {
+            return staleShifts.map((shift) => {
+                if (shift.shift_id === updatedShift.shift_id) {
+                    return updatedShift;
+                }
+                return shift;
+            })
+        })
+
+        if (selectedShiftDetails && selectedShiftDetails.shift_id === updatedShift.shift_id) {
+            setShiftDetails(updatedShift);
+            setSelectedShiftButtons(generateButtonsForDetailsPanel(updatedShift));
+        }
+    };
+
+    // Update details for the side panel when a shift is selected or updated
+    const handleShiftSelection = (classData) => {
+        setSelectedClassId(classData._class_id);
+        setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
+        setShiftDetails(classData);
+    };
 
     const scrollToTop = useCallback(() => {
         const targetDate = selectedDate.format('YYYY-MM-DD');
@@ -94,13 +235,6 @@ function VolunteerSchedule() {
     useEffect(() => {
         scrollToTop();
     }, [scrollToTop, groupedShifts]); 
-
-    // side panel shift details
-    const handleShiftSelection = (classData) => {
-        setSelectedClassId(classData._class_id);
-        setSelectedShiftButtons(classData.buttons);
-        setShiftDetails(classData);
-    };
 
     return (
         <main className="content-container">
@@ -141,8 +275,8 @@ function VolunteerSchedule() {
                                             key={shift.fk_schedule_id} 
                                             shift={shift} 
                                             shiftType={shift.shift_type} 
-                                            onUpdate={handleShiftUpdate} 
                                             onShiftSelect={handleShiftSelection}
+                                            buttonConfig={getButtonConfig(shift)}
                                         />
                                     ))}
                                 </div> 

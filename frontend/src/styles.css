@@ -51,3 +51,24 @@ body {
 .notyf {
   font-family: var(--font-primary);
 }
+
+.save-button {
+  background: #1687CA;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 400;
+}
+.save-button:hover, .cancel-button:hover {
+  filter: brightness(0.7);
+  cursor: pointer;
+}
+.cancel-button {
+  background-color: white;
+  color: black;
+  padding: 10px 16px;
+  border: 1px solid #1687CA ;
+  border-radius: 8px ;
+}

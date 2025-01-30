@@ -13,6 +13,7 @@ import VolunteerLogin from "./pages/VolunteerLogin";
 import VolunteerProfile from "./pages/VolunteerProfile";
 import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import VolunteerSignup from "./pages/VolunteerSignup";
+import ClassPreferences from "./pages/ClassPreferences";
 
 function App() {
   const [isVolunteer, setIsVolunteer] = useState(false);
@@ -61,6 +62,7 @@ function App() {
               <Route path="classes" element={<Classes />} />
               <Route path="schedule" element={<VolunteerSchedule />} />
               <Route path="my-profile" element={<VolunteerProfile />} />
+              <Route path="class-preferences" element={<ClassPreferences />} />
             </Route>
           </Route>
 

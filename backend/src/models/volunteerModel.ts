@@ -150,4 +150,53 @@ export default class VolunteerModel {
             };
         }
     }
+
+    async getPreferredClassesById(volunteer_id: string): Promise<any> {
+
+        const query = `
+            WITH 
+                class_info AS (
+                    SELECT 
+                        c.class_id,
+                        c.class_name,
+                        c.instructions
+                    FROM class c
+                ),
+                schedule_info AS (
+                    SELECT 
+                        s.fk_class_id AS class_id,
+                        GROUP_CONCAT(s.start_time ORDER BY s.start_time) AS start_times,
+                        GROUP_CONCAT(s.end_time ORDER BY s.start_time) AS end_times,
+                        GROUP_CONCAT(s.day ORDER BY s.start_time) AS days_of_week
+                    FROM schedule s
+                    GROUP BY s.fk_class_id
+                )
+
+            SELECT 
+                ci.class_id,
+                ci.class_name,
+                cp.class_rank,
+                COALESCE(si.start_times, NULL) AS start_times,
+                COALESCE(si.end_times, NULL) AS end_times,
+                COALESCE(si.days_of_week, NULL) AS day_of_week,
+                ci.instructions
+            FROM volunteers v
+            JOIN class_preferences cp ON v.volunteer_id = cp.fk_volunteer_id
+            JOIN class_info ci ON ci.class_id = cp.fk_class_id
+            LEFT JOIN schedule_info si ON ci.class_id = si.class_id
+            WHERE v.volunteer_id = ?;
+        `;
+        const values = [volunteer_id];
+
+        const [results, _] = await connectionPool.query<any>(query, values);
+
+        if (results.length === 0) {
+            throw {
+                status: 400,
+                message: `No preferred classes found for given voluntter or volunteer not found`,
+            };
+        }
+
+        return results;
+    }
 }

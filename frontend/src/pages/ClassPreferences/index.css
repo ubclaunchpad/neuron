@@ -1,0 +1,96 @@
+@import '../../styles.css';  /*Imports custom fonts*/
+
+.parent-container {
+     padding: 32px;
+     border-radius: 8px;
+     border: 1px solid #D9D9D9;
+     box-shadow: 0px 4px 16px 0px #0F11110D;
+     margin-bottom: 40px;
+}
+.parent-container-header {
+     display: flex;
+}
+.parent-container-title {
+     margin-left: 0px;
+     margin-right: auto;
+     display: flex;
+     align-items: center;
+     font-family: 'Montserrat';
+     font-size: 20px;
+     font-weight: 600;
+     line-height: 27px;
+     text-align: left;
+     text-underline-position: from-font;
+     text-decoration-skip-ink: none;
+}
+
+.middle-button {
+     margin-left: auto;
+     margin-right: 16px;
+}
+.left-button {
+     margin-right: 0px;
+}
+.rank-container {
+     border: 1px solid #D9D9D9;
+     padding: 20px;
+     margin-top: 20px;
+     border-radius: 8px;
+     min-height: 180px;
+     display: flex;
+     flex-direction: row;
+     height: auto;
+     width: calc(100%-64px);
+     align-items: center;
+}
+.rank-header {
+     padding-right: 20px;
+     width: 170px;
+     max-width: 170px;
+     min-width: 170px;
+     display: flex;
+     flex: 1;
+     align-items: center;
+     min-height: 140px;
+}
+.rank-name {
+     color: #0F1111;
+     font-family: Montserrat;
+     font-size: 28px;
+     font-weight: 500;
+     line-height: 37.8px;
+     text-align: left;
+     width: 150px;
+     padding: 10px 0;
+     margin: 0px;
+}
+.edit-rank-button {
+     margin: 0px;
+     width: 150px; 
+     height: 40px;
+     display: flex;
+     flex-direction: row;
+     align-items: center;
+     justify-content: center;
+     border: 1px solid #4385AC;
+     background-color: white;
+     border-radius: 8px;
+}
+.edit-rank-button div {
+     margin-left: 8px;
+     font-family: "Roboto";
+     font-weight: 400;
+     font-size: 16px;
+}
+.edit-rank-button:hover {
+     cursor: pointer;
+     filter: brightness(0.7);
+}
+.class-preferences-card-container {
+     width: calc(100% - 170px);
+     padding-left: 32px;
+     min-height: 180px;
+     border-left: 1px solid #D9D9D9;
+     display: flex;
+     align-items: center;
+}

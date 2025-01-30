@@ -5,7 +5,8 @@ import {
     getVolunteerById,
     getVolunteers,
     shiftCheckIn,
-    updateVolunteer
+    updateVolunteer,
+    getPreferredClassesById
 } from "../controllers/volunteerController.js";
 
 import {
@@ -58,6 +59,11 @@ router.put("/:volunteer_id", (req: Request, res: Response) => {
 // update a volunteer's total hours when checked into a shift
 router.post('/shiftCheckIn', (req: Request, res: Response) => { 
     shiftCheckIn(req, res) 
+});
+
+// get preferred classes by volunteer id 
+router.get("/class_preferences/:volunteer_id", (req: Request, res: Response) => {
+    getPreferredClassesById(req, res);
 });
 
 export default router;

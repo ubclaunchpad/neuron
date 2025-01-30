@@ -91,8 +91,30 @@ async function shiftCheckIn(req: Request, res: Response) {
     }
 }
 
+async function getPreferredClassesById(req: Request, res: Response) {
+    const { volunteer_id } = req.params;
+
+    if (!volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'user_id'",
+        });
+    }
+
+    try {
+        const preferred_classes = await volunteerModel.getPreferredClassesById(volunteer_id);
+        res.status(200).json(preferred_classes);
+    } catch (error: any) {
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+    }
+}
+
 export {
     getVolunteerById,
-    getVolunteers, shiftCheckIn, updateVolunteer
+    getVolunteers, 
+    shiftCheckIn, 
+    updateVolunteer,
+    getPreferredClassesById
 };
 

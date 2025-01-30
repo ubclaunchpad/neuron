@@ -1,3 +1,14 @@
+import { Request, Response, Router } from "express";
+import multer from 'multer';
+
+import {
+    getVolunteerById,
+    getVolunteers,
+    shiftCheckIn,
+    updateVolunteer,
+    getPreferredClassesById
+} from "../controllers/volunteerController.js";
+
 import { body, param } from "express-validator";
 import { RouteDefinition } from "../common/types.js";
 import {
@@ -6,12 +17,6 @@ import {
     setAvailabilityByVolunteerId,
     updateAvailabilityByVolunteerId,
 } from "../controllers/availabilityController.js";
-import {
-    getVolunteerById,
-    getVolunteers,
-    shiftCheckIn,
-    updateVolunteer
-} from "../controllers/volunteerController.js";
 
 export const VolunteerRoutes: RouteDefinition = {
     path: '/volunteer',
@@ -105,5 +110,18 @@ export const VolunteerRoutes: RouteDefinition = {
                 },
             ]
         },
+        {
+            path: '/class_preferences',
+            children: [
+                {
+                    path: '/:volunteer_id',
+                    validation: [
+                        param('volunteer_id').isUUID('4')
+                    ],
+                    method: 'get',
+                    action: getPreferredClassesById
+                }
+            ]
+        }
     ]
 };

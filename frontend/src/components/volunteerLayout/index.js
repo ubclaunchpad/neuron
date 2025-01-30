@@ -115,6 +115,18 @@ function VolunteerLayout() {
             <img src={nav_item_settings} alt="Settings" />
             {!collapsed && "Settings"}
           </NavLink>
+
+
+          <NavLink
+            to="/volunteer/class-preferences"
+            className={({ isActive }) =>
+              isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
+            }
+          >
+            {!collapsed && "Class Preferences"}
+          </NavLink>
+
+
         </div>
         <div className="nav-profile-card-container">
           <NavProfileCard

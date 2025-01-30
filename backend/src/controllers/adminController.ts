@@ -28,7 +28,7 @@ async function verifyVolunteer(
     await volunteerModel.updateVolunteer(volunteer_id, {
         active: true,
     } as VolunteerDB);
-
+    
     return res.status(200).json({
         message: "User verified successfully",
     });

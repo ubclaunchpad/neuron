@@ -14,7 +14,7 @@ async function getAvailabilityByVolunteerId(req: Request, res: Response) {
     const { volunteer_id } = req.params;
 
     const availability = await availabilityModel.getAvailabilityByVolunteerId(volunteer_id);
-
+    
     res.status(200).json(availability);
 }
 

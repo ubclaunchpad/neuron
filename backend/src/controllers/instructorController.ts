@@ -13,26 +13,13 @@ async function getInstructors(req: Request, res: Response) {
 async function getInstructorById(req: Request, res: Response) {
     const { instructor_id } = req.params;
 
-    if (!instructor_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'instructor_id'"
-        });
-    }
-
     const instructor = await instructorModel.getInstructorById(instructor_id);
-
+    
     res.status(200).json(instructor);
 }
 
 async function insertInstructor(req: Request, res: Response) {
     const instructor: InstructorDB = req.body;
-
-    const { instructor_id, f_name, l_name, email } = instructor;
-    if (!instructor_id || !f_name || !l_name || !email) {
-        return res.status(400).json({
-            error: "Missing required fields. 'instructor_id', 'f_name', 'l_name', and 'email' are required."
-        });
-    }
 
     const result = await instructorModel.insertInstructor(instructor);
 

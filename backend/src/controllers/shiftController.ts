@@ -4,26 +4,11 @@ import ShiftModel from '../models/shiftModel.js';
 
 const shiftModel = new ShiftModel();
 
-// regular expression to match the SQL DATE format: YYYY-MM-DD
-const sqlDateRegex = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
-
 async function getShiftInfo(req: Request, res: Response){
     const shift: ShiftDB = req.body;
-
-    if (!shift.fk_volunteer_id || !shift.fk_schedule_id || !shift.shift_date) {
-        return res.status(400).json({
-            error: "Missing required fields. 'fk_volunteer_id', 'fk_schedule_id' and 'shift_date' are required."
-        });
-    }
-
-    // check if the input matches the regex
-    if (!sqlDateRegex.test(shift.shift_date)) {
-        return res.status(400).json({
-            error: "'shiftDate' must be a valid date of the format 'YYYY-MM-DD'"
-        });
-    }
     
     const shift_info = await shiftModel.getShiftInfo(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
+    
     res.status(200).json(shift_info);
 }
 
@@ -31,13 +16,8 @@ async function getShiftInfo(req: Request, res: Response){
 async function getShiftsByVolunteerId(req: Request, res: Response) {
     const { volunteer_id } = req.params;
 
-    if (!volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'volunteer_id'"
-        });
-    }
-
     const shifts = await shiftModel.getShiftsByVolunteerId(volunteer_id);
+
     res.status(200).json(shifts);
 } 
 
@@ -93,6 +73,7 @@ async function updateShift(req: Request, res: Response) {
     const shift: ShiftDB = req.body;
 
     const request = await shiftModel.updateShift(shift_id, shift);
+
     res.status(200).json(request);
 }
 
@@ -100,6 +81,7 @@ async function deleteShift(req: Request, res: Response) {
     const shift_id = Number(req.params.shift_id);
 
     const request = await shiftModel.deleteShift(shift_id);
+
     res.status(200).json(request);
 }
 

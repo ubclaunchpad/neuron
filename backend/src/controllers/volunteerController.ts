@@ -35,7 +35,7 @@ async function shiftCheckIn(req: Request, res: Response) {
     const { volunteerID, scheduleID, shiftDate } = req.body;
 
     const updatedVolunteer = await volunteerModel.shiftCheckIn(volunteerID, scheduleID, shiftDate);
-
+    
     res.status(200).json(updatedVolunteer);
 }
 

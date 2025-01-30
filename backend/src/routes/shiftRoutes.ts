@@ -28,6 +28,11 @@ export const ShiftRoutes: RouteDefinition = {
         {
             path: '/info',
             method: 'post',
+            validation: [
+                body('fk_volunteer_id').isUUID('4'),
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' }),
+                body('fk_schedule_id').isInt({ min: 0 }),
+            ],
             action: getShiftInfo
         },
         {

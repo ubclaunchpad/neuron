@@ -41,7 +41,8 @@ export default class ClassesModel {
                          c.instructions,
                          c.zoom_link, 
                          i.l_name AS instructor_l_name,
-                         i.f_name AS instructor_f_name
+                         i.f_name AS instructor_f_name,
+                         i.email AS instructor_email
                     FROM class c
                     LEFT JOIN instructors i ON c.fk_instructor_id = i.instructor_id
                     WHERE c.class_id = (SELECT id FROM params)
@@ -74,6 +75,7 @@ export default class ClassesModel {
                ci.zoom_link,
                ci.instructor_l_name,
                ci.instructor_f_name,
+               ci.instructor_email,
                COALESCE(vi.volunteer_l_names, null) AS volunteer_l_names,
                COALESCE(vi.volunteer_f_names, null) AS volunteer_f_names,
                COALESCE(vi.volunteer_user_ids, null) AS volunteer_user_ids,

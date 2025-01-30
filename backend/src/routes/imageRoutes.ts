@@ -1,11 +1,12 @@
-import { Request, Response, Router } from "express";
+import { param } from "express-validator";
+import { RouteDefinition } from "../common/types.js";
 import { getImage } from "../controllers/imageController.js";
 
-const router = Router();
-
-// create profile picture for a volunteer
-router.get("/:image_id", (req: Request, res: Response) => {
-    getImage(req, res);
-});
-
-export default router;
+export const ImageRoutes: RouteDefinition = {
+    path: '/image/:image_id',
+    method: 'get',
+    validation: [
+        param('image_id').isUUID('4')
+    ],
+    action: getImage
+}

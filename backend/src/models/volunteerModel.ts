@@ -1,4 +1,4 @@
-import { ResultSetHeader } from "mysql2/promise";
+import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { ShiftDB, VolunteerDB } from "../common/generated.js";
 import connectionPool from "../config/database.js";
 
@@ -73,7 +73,9 @@ export default class VolunteerModel {
         return results
     }
 
-    async insertVolunteer(volunteer: VolunteerDB): Promise<any> {
+    async insertVolunteer(volunteer: VolunteerDB, transaction?: PoolConnection): Promise<any> {
+        const connection = transaction ?? connectionPool;
+        
         // Construct the INSERT clause dynamically
         const insertClause = Object.keys(volunteer)
             .join(", ");
@@ -83,7 +85,7 @@ export default class VolunteerModel {
         const query = `INSERT INTO volunteers (${insertClause}) VALUES (${valuesClause})`;
         const values = Object.values(volunteer);
 
-        const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+        const [results, _] = await connection.query<ResultSetHeader>(query, values);
 
         return results
     }

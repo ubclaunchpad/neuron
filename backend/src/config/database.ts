@@ -9,6 +9,11 @@ const configuration: PoolOptions = {
   password: process.env.RDS_PASSWORD || '',
   database: process.env.RDS_DB || '',
   port: process.env.RDS_PORT ? parseInt(process.env.RDS_PORT, 10) : 3306, // Default to port 3306 if not specified
+  typeCast: (_, next) => {
+    // Turn null columns into undefined
+    const value = next();
+    return value === null ? undefined : value;
+  },
 };
 
 const connectionPool: Pool = mysql.createPool(configuration);

@@ -72,7 +72,7 @@ create table volunteers (
     phone_number VARCHAR(15),
     city VARCHAR(15),
     province VARCHAR(15),
-    p_time_ctmt INT NOT NULL DEFAULT 1,
+    p_time_ctmt INT NOT NULL DEFAULT 0,
     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
         ON DELETE CASCADE
 );

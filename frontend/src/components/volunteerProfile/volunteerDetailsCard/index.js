@@ -13,8 +13,6 @@ import { updateVolunteerData, uploadProfilePicture } from "../../../api/voluntee
 import useComponentVisible from "../../../hooks/useComponentVisible";
 
 function VolunteerDetailsCard({ volunteer }) {
-
-    console.log(volunteer)
     const [isEditing, setIsEditing] = React.useState(false);
     const [mutableData, setMutableData] = React.useState({
         profilePicture: volunteer.profile_picture,
@@ -22,12 +20,7 @@ function VolunteerDetailsCard({ volunteer }) {
         pronouns: volunteer.pronouns,
         phoneNumber: volunteer.phone_number
     });
-    const [prevMutableData, setPrevMutableData] = React.useState({
-        profilePicture: null,
-        preferredName: null,
-        pronouns: null,
-        phoneNumber: null
-    });
+    const [prevMutableData, setPrevMutableData] = React.useState({});
     const [tempImage, setTempImage] = React.useState(null);
     const [prevTempImage, setPrevTempImage] = React.useState(null);
 
@@ -81,17 +74,13 @@ function VolunteerDetailsCard({ volunteer }) {
                 mutableData.phoneNumber !== prevMutableData.phoneNumber) {
                     
                 // store empty strings as null
-                const userData = {
-                    ...volunteer,
-                    p_name: mutableData.preferredName ? mutableData.preferredName : null,
-                    pronouns: mutableData.pronouns ? mutableData.pronouns : null,
-                    phone_number: mutableData.phoneNumber ? mutableData.phoneNumber : null
+                const volunteerData = {
+                    p_name: mutableData.preferredName,
+                    pronouns: mutableData.pronouns,
+                    phone_number: mutableData.phoneNumber
                 }
 
-                // NOTE: created_at and profile_picture are not fields in volunteers table, need to be separated
-                const {created_at, profile_picture, ...volunteerData} = userData;
-
-                const volunteerResult = await updateVolunteerData(volunteerData);
+                const volunteerResult = await updateVolunteerData(volunteerData, volunteer.volunteer_id);
                 console.log("Successfully updated volunteer.", volunteerResult);
             }
 

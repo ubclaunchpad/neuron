@@ -237,4 +237,10 @@ input[type=number] {
     color: #808080;
     font-style: italic;
 }
+
+.row-gap {
+    margin-top: 14px;
+    border: red;
+    border-radius: 5px;
+}
   

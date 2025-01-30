@@ -7,6 +7,7 @@ import zoom_icon from "../../assets/zoom.png";
 import email from "../../assets/email.png"
 import { getClassById } from "../../api/classesPageService";
 import { isAuthenticated } from "../../api/authService";
+import {SHIFT_TYPES} from "../../data/constants";
 import dayjs from "dayjs";
 
 function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbuttons = [], shiftDetails }) {
@@ -141,7 +142,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
         {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
           ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
           : "No instructor available"}
-        {shiftDetails.shift_type === "my-shifts" 
+        {shiftDetails.shift_type === SHIFT_TYPES.MY_SHIFTS || shiftDetails.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS 
           ?
           <button
             className="email-icon panel-button-icon"

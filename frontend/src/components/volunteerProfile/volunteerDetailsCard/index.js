@@ -127,7 +127,7 @@ function VolunteerDetailsCard({ volunteer }) {
     async function handleCheck(e) {
         e.preventDefault();
 
-        if (Number(mutableData.timeCommitment) === 0) {
+        if (Number(mutableData.timeCommitment) <= 0) {
             sendTcNotif();
             return;
         }
@@ -286,7 +286,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                     <td hidden={!isEditing}>
                                         <div className="time-commitment-input">
                                             <input 
-                                                style={!Number(mutableData.timeCommitment) ? {
+                                                style={Number(mutableData.timeCommitment) <= 0 ? {
                                                     'border-color': 'red'
                                                 } : {}} 
                                                 type="number" 

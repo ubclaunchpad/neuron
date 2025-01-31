@@ -127,12 +127,13 @@ function VolunteerDetailsCard({ volunteer }) {
     async function handleCheck(e) {
         e.preventDefault();
 
-        if (mutableData.timeCommitment === "" || Number(mutableData.timeCommitment) === 0) {
+        if (Number(mutableData.timeCommitment) === 0) {
             sendTcNotif();
             return;
         }
 
         setIsEditing(false);
+        mutableData.timeCommitment = Number(mutableData.timeCommitment);
         // update volunteer
         try {
             await updateVoluteerData();
@@ -152,10 +153,10 @@ function VolunteerDetailsCard({ volunteer }) {
     }
 
     function handleInputChange(e) {
-        const { name, value, type } = e.target;
+        const { name, value } = e.target;
         setMutableData({
             ...mutableData,
-            [name]: type === 'number' ? Number(value) : value
+            [name]: value
         });
     }
 

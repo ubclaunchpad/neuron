@@ -89,8 +89,7 @@ function VolunteerSchedule() {
             await requestToCoverShift(body);
             // notify parent
 
-            // TODO: Need to update this with the new onUpdate()!!!
-            handleShiftUpdate({ ...shift });
+            handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.PENDING });
         } catch (error) {
             console.error('Error generating request to cover shift:', error);
         }
@@ -204,14 +203,13 @@ function VolunteerSchedule() {
             })
         })
 
-        if (selectedShiftDetails && selectedShiftDetails.shift_id === updatedShift.shift_id) {
-            setShiftDetails(updatedShift);
-            setSelectedShiftButtons(generateButtonsForDetailsPanel(updatedShift));
-        }
+        // Triggers a re-render of the details panel
+        handleShiftSelection(updatedShift);
     };
 
-    // Update details for the side panel when a shift is selected or updated
+    // Update details panel when a shift is selected
     const handleShiftSelection = (classData) => {
+        console.log("Selected shift ID: ", classData);
         setSelectedClassId(classData._class_id);
         setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
         setShiftDetails(classData);

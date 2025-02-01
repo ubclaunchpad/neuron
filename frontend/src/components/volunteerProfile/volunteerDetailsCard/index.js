@@ -291,10 +291,13 @@ function VolunteerDetailsCard({ volunteer }) {
                                     <td>{formatDate(volunteer.created_at)}</td>
                                 </tr>
                                 <tr className="view volunteer-location">
-                                    <td>Location</td>
+                                    <td hidden={isEditing}>Location</td>
                                     <td hidden={isEditing}>{volunteer.city && volunteer.province ? `${volunteer.city}, ${volunteer.province}` : 'No Location Set'}</td>
                                     {isEditing && (
                                         <>
+                                            <td style={{
+                                                'color': '#808080'
+                                            }}>Province</td>
                                             <td 
                                                 className="pronouns-editor" 
                                                 ref={provinceRef}
@@ -329,43 +332,45 @@ function VolunteerDetailsCard({ volunteer }) {
                                                     </div>
                                                 )}
                                             </td>
-
-                                            <td 
-                                            className="pronouns-editor" 
-                                            ref={cityRef}
-                                            >
-                                            <button 
-                                                className="pronouns-button"
-                                                style={{
-                                                    'color': mutableData.city ? '':'#808080',
-                                                    'borderColor': isCityVisible ? '#4385AC':''
-                                                }}
-                                                onClick={() => {
-                                                    setisCityVisible(!isCityVisible)
-                                                }}
-                                            >
-                                                {mutableData.city ? mutableData.city : "None"}
-                                                <CgSelect className="select-icon"/>
-                                            </button>
-                                            {isCityVisible && (
-                                                <div 
-                                                    className="pronouns-menu cities-menu"
-                                                >
-                                                    {cities.map((option, index) => (
-                                                        <div
-                                                            className="pronouns-item"
-                                                            key={index}
-                                                            onClick={() => handleCityClick(option)}
-                                                            style={index === 0 ? {'color': '#808080'} : {}}
-                                                        >
-                                                            {option.name}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                            </td>
                                         </>
                                     )}
+                                </tr>
+                                <tr hidden={!isEditing}>
+                                    <td>City</td>
+                                    <td 
+                                    className="pronouns-editor" 
+                                    ref={cityRef}
+                                    >
+                                    <button 
+                                        className="pronouns-button"
+                                        style={{
+                                            'color': mutableData.city ? '':'#808080',
+                                            'borderColor': isCityVisible ? '#4385AC':''
+                                        }}
+                                        onClick={() => {
+                                            setisCityVisible(!isCityVisible)
+                                        }}
+                                    >
+                                        {mutableData.city ? mutableData.city : "None"}
+                                        <CgSelect className="select-icon"/>
+                                    </button>
+                                    {isCityVisible && (
+                                        <div 
+                                            className="pronouns-menu cities-menu"
+                                        >
+                                            {cities.map((option, index) => (
+                                                <div
+                                                    className="pronouns-item"
+                                                    key={index}
+                                                    onClick={() => handleCityClick(option)}
+                                                    style={index === 0 ? {'color': '#808080'} : {}}
+                                                >
+                                                    {option.name}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>

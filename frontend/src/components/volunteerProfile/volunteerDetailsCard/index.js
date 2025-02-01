@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./index.css";
 
 import camera_icon from "../../../assets/camera.png";
@@ -87,26 +88,32 @@ function VolunteerDetailsCard({ volunteer }) {
         setPrevTempImage(tempImage);
     }
 
-    async function updateVoluteerData() {
+    async function handleCheck(e) {
+        e.preventDefault();
+        setIsEditing(false);
 
-        // only send request if there are changes
-        if (mutableData.preferredName !== prevMutableData.preferredName ||
-            mutableData.pronouns !== prevMutableData.pronouns ||
-            mutableData.phoneNumber !== prevMutableData.phoneNumber ||
-            mutableData.timeCommitment !== prevMutableData.timeCommitment) {
-                
-            // store empty strings as null
-            const volunteerData = {
-                p_name: mutableData.preferredName ?? null,
-                pronouns: mutableData.pronouns ?? null,
-                phone_number: mutableData.phoneNumber ?? null,
-                p_time_ctmt: mutableData.timeCommitment
+        // update volunteer
+        try {
+            // only send request if there are changes
+            if (mutableData.preferredName !== prevMutableData.preferredName ||
+                mutableData.pronouns !== prevMutableData.pronouns ||
+                mutableData.phoneNumber !== prevMutableData.phoneNumber ||
+                mutableData.city !== prevMutableData.city ||
+                mutableData.province !== prevMutableData.province) {
+                    
+                // store empty strings as null
+                const volunteerData = {
+                    p_name: mutableData.preferredName,
+                    pronouns: mutableData.pronouns,
+                    phone_number: mutableData.phoneNumber,
+                    city: mutableData.city === "None" ? "" : mutableData.city,
+                    province: mutableData.province === "None" ? "" : mutableData.province
+                }
+
+                const volunteerResult = await updateVolunteerData(volunteerData, volunteer.volunteer_id);
+                console.log("Successfully updated volunteer.", volunteerResult);
+                notyf.success("Data Updated! Please refresh the page to see changes.");
             }
-
-            const volunteerResult = await updateVolunteerData(volunteerData, volunteer.volunteer_id);
-            console.log("Successfully updated volunteer.", volunteerResult);
-        }
-    }
 
     async function updateProfilePicture() {
         // only send request if there are changes

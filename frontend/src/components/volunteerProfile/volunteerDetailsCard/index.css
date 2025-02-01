@@ -233,19 +233,14 @@ input[type="number"] {
     overflow: scroll;
 }
 
-.bold {
-    font-weight: var(--semi-bold);
-}
-
-.time-commitment-input {
+.location-editor {
     display: flex;
-    align-items: baseline;
+    justify-content: space-between;
 }
 
-.time-commitment-units {
-    margin-left: 8px;
-    color: #808080;
-    font-style: italic;
+.cities-menu {
+    max-height: 20.5vw;
+    overflow: scroll;
 }
 
 .row-gap {

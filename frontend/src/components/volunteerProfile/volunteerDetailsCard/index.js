@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import "./index.css";
 
 import camera_icon from "../../../assets/camera.png";
@@ -11,20 +11,29 @@ import { CgSelect } from "react-icons/cg";
 import { formatImageUrl } from "../../../api/imageService";
 import { updateVolunteerData, uploadProfilePicture } from "../../../api/volunteerService";
 import useComponentVisible from "../../../hooks/useComponentVisible";
+import {State, City} from 'country-state-city';
+import notyf from "../../../utils/notyf";
 
 function VolunteerDetailsCard({ volunteer }) {
-    const [isEditing, setIsEditing] = React.useState(false);
-    const [mutableData, setMutableData] = React.useState({
+    const [isEditing, setIsEditing] = useState(false);
+    const [mutableData, setMutableData] = useState({
         profilePicture: volunteer.profile_picture,
         preferredName: volunteer.p_name,
         pronouns: volunteer.pronouns,
-        phoneNumber: volunteer.phone_number
+        phoneNumber: volunteer.phone_number,
+        city: volunteer.city,
+        province: volunteer.province
     });
-    const [prevMutableData, setPrevMutableData] = React.useState({});
-    const [tempImage, setTempImage] = React.useState(null);
-    const [prevTempImage, setPrevTempImage] = React.useState(null);
+    const [prevMutableData, setPrevMutableData] = useState({});
+    const [tempImage, setTempImage] = useState(null);
+    const [prevTempImage, setPrevTempImage] = useState(null);
+    const provinces = [{isoCode: "None"}].concat(State.getStatesOfCountry('CA'));
+    const [selectedProvince, setSelectedProvince] = useState("BC");
+    const [cities, setCities] = useState(City.getCitiesOfState('CA', selectedProvince));
 
     const { ref, isComponentVisible, setIsComponentVisible } = useComponentVisible(false);
+    const { ref: provinceRef, isComponentVisible: isProvinceVisible, setIsComponentVisible: setisProvinceVisible } = useComponentVisible(false);
+    const { ref: cityRef, isComponentVisible: isCityVisible, setIsComponentVisible: setisCityVisible } = useComponentVisible(false);
     const pronouns = ["None", "He/Him", "She/Her", "They/Them"];
 
     const handleImageUpload = (event) => {
@@ -39,6 +48,10 @@ function VolunteerDetailsCard({ volunteer }) {
         };
         reader.readAsDataURL(image);
     };
+
+    useEffect(() => {
+        setCities([{name: "None"}].concat(City.getCitiesOfState('CA', selectedProvince)));
+    }, [selectedProvince]);
 
 
     function formatDate(created_at) {
@@ -67,21 +80,25 @@ function VolunteerDetailsCard({ volunteer }) {
 
         // update volunteer
         try {
-
             // only send request if there are changes
             if (mutableData.preferredName !== prevMutableData.preferredName ||
                 mutableData.pronouns !== prevMutableData.pronouns ||
-                mutableData.phoneNumber !== prevMutableData.phoneNumber) {
+                mutableData.phoneNumber !== prevMutableData.phoneNumber ||
+                mutableData.city !== prevMutableData.city ||
+                mutableData.province !== prevMutableData.province) {
                     
                 // store empty strings as null
                 const volunteerData = {
                     p_name: mutableData.preferredName,
                     pronouns: mutableData.pronouns,
-                    phone_number: mutableData.phoneNumber
+                    phone_number: mutableData.phoneNumber,
+                    city: mutableData.city === "None" ? "" : mutableData.city,
+                    province: mutableData.province === "None" ? "" : mutableData.province
                 }
 
                 const volunteerResult = await updateVolunteerData(volunteerData, volunteer.volunteer_id);
                 console.log("Successfully updated volunteer.", volunteerResult);
+                notyf.success("Data Updated! Please refresh the page to see changes.");
             }
 
             // only send request if there are changes
@@ -126,6 +143,23 @@ function VolunteerDetailsCard({ volunteer }) {
             pronouns: option === "None" ? null : option
         });
         setIsComponentVisible(false);
+    }
+
+    function handleProvinceClick(option) {
+        setSelectedProvince(option.isoCode);
+        setMutableData({
+            ...mutableData,
+            province: option === "None" ? null : option.isoCode
+        });
+        setisProvinceVisible(false);
+    }
+
+    function handleCityClick(option) {
+        setMutableData({
+            ...mutableData,
+            city: option === "None" ? null : option.name
+        });
+        setisCityVisible(false);
     }
 
     return (
@@ -256,9 +290,82 @@ function VolunteerDetailsCard({ volunteer }) {
                                     <td>Joined</td>
                                     <td>{formatDate(volunteer.created_at)}</td>
                                 </tr>
-                                <tr className="view volunteer-location" hidden={isEditing}>
+                                <tr className="view volunteer-location">
                                     <td>Location</td>
-                                    <td>{volunteer.city && volunteer.province ? `${volunteer.city}, ${volunteer.province}` : 'not yet set'}</td>
+                                    <td hidden={isEditing}>{volunteer.city && volunteer.province ? `${volunteer.city}, ${volunteer.province}` : 'No Location Set'}</td>
+                                    {isEditing && (
+                                        <>
+                                            <td 
+                                                className="pronouns-editor" 
+                                                ref={provinceRef}
+                                            >
+                                                <button 
+                                                    className="pronouns-button"
+                                                    style={{
+                                                        'color': mutableData.province ? '':'#808080',
+                                                        'borderColor': isProvinceVisible ? '#4385AC':''
+                                                    }}
+                                                    onClick={() => {
+                                                        setisProvinceVisible(!isProvinceVisible)
+                                                    }}
+                                                >
+                                                    {mutableData.province ? mutableData.province : "None"}
+                                                    <CgSelect className="select-icon"/>
+                                                </button>
+                                                {isProvinceVisible && (
+                                                    <div 
+                                                        className="pronouns-menu"
+                                                    >
+                                                        {provinces.map((option, index) => (
+                                                            <div
+                                                                className="pronouns-item"
+                                                                key={index}
+                                                                onClick={() => handleProvinceClick(option)}
+                                                                style={index === 0 ? {'color': '#808080'} : {}}
+                                                            >
+                                                                {option.isoCode}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </td>
+
+                                            <td 
+                                            className="pronouns-editor" 
+                                            ref={cityRef}
+                                            >
+                                            <button 
+                                                className="pronouns-button"
+                                                style={{
+                                                    'color': mutableData.city ? '':'#808080',
+                                                    'borderColor': isCityVisible ? '#4385AC':''
+                                                }}
+                                                onClick={() => {
+                                                    setisCityVisible(!isCityVisible)
+                                                }}
+                                            >
+                                                {mutableData.city ? mutableData.city : "None"}
+                                                <CgSelect className="select-icon"/>
+                                            </button>
+                                            {isCityVisible && (
+                                                <div 
+                                                    className="pronouns-menu cities-menu"
+                                                >
+                                                    {cities.map((option, index) => (
+                                                        <div
+                                                            className="pronouns-item"
+                                                            key={index}
+                                                            onClick={() => handleCityClick(option)}
+                                                            style={index === 0 ? {'color': '#808080'} : {}}
+                                                        >
+                                                            {option.name}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            </td>
+                                        </>
+                                    )}
                                 </tr>
                             </tbody>
                         </table>

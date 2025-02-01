@@ -1,7 +1,7 @@
 import "./index.css";
 import React, {useEffect, useState} from 'react';
 import edit_icon from "../../assets/edit-icon.png"
-import { fetchUserPreferredClases } from "../../api/volunteerService";
+import { fetchUserPreferredClasses } from "../../api/volunteerService";
 import ClassPreferencesCard from "../../components/ClassPreferencesCard";
 
 function ClassPreferences() {
@@ -9,10 +9,12 @@ function ClassPreferences() {
      const [allClasses, setAllClasses] = useState(null);
 
      useEffect(() => {
-          const getCurrentUSerPrefferedClasses = async () => {
+          const getCurrentUserPrefferedClasses = async () => {
               const volunteerID = localStorage.getItem('volunteerID');
+              console.log("Volunteer id: " + volunteerID);
+
           //     setUserId(user_id);
-              const classes_p = await fetchUserPreferredClases(volunteerID);
+              const classes_p = await fetchUserPreferredClasses(volunteerID);
               if (classes_p!=null && classes_p.length > 0) {
                     let res = {};
                     let rank1 = [];
@@ -33,7 +35,7 @@ function ClassPreferences() {
                     setPreferredClasses(res);
                }
           }; 
-          getCurrentUSerPrefferedClasses();
+          getCurrentUserPrefferedClasses();
           
      }, []);
 

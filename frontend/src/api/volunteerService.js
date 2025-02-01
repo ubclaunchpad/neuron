@@ -72,9 +72,9 @@ export const updateVolunteerAvailability = async (volunteer_id, availability) =>
   }
 };
 
-export const fetchUserPreferredClases = async (volunteer_id) => {
+export const fetchUserPreferredClasses = async (volunteer_id) => {
   try {
-    const response = await api.get(`/volunteer/class_preferences/${volunteer_id}`);
+    const response = await api.get(`/volunteer/class-preferences/${volunteer_id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching volunteer class preferences data:', error);

@@ -111,14 +111,14 @@ export const VolunteerRoutes: RouteDefinition = {
             ]
         },
         {
-            path: '/class_preferences',
+            path: '/class-preferences',
             children: [
                 {
                     path: '/:volunteer_id',
+                    method: 'get',
                     validation: [
                         param('volunteer_id').isUUID('4')
                     ],
-                    method: 'get',
                     action: getPreferredClassesById
                 }
             ]

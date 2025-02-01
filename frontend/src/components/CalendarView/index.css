@@ -28,13 +28,15 @@
     color: var(--dark-grey);
 }
 
-.calendar-grid {
-    overflow: hidden;
-}
-
 .grid-container {
     display: grid;
     grid-template-columns: 6vw repeat(6, 1fr);
+}
+
+.stick {
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 /* alternatively make 12 children grey */
@@ -81,24 +83,19 @@
     position: absolute;
     left: 4px;
     right: 4px;
-    padding: 0.5rem;
+    padding: 0.5vw;
     border-radius: 0.25rem;
     font-size: 0.875rem;
-}
-
-.event-interval {
-    background-color: #dcfce7;
-    color: #166534;
-}
-
-.event-chair {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: white;
+    border: 1px solid var(--grey);
+    cursor: pointer;
 }
 
 .event-title {
     font-weight: 500;
-    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .event-time {

@@ -73,3 +73,44 @@ button {
     background-color: #1976d2;
     border-radius: 50%;
 }
+
+/* Select button to toggle between list and calendar view */
+.view-mode-select {
+    width: 10vw;
+}
+
+.viewMode__control {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.viewMode__indicator-separator {
+    display: none;
+}
+
+.viewMode__value-container {
+    text-align: right;
+}
+
+.viewMode__menu {
+    box-shadow: none !important;
+    width: 10vw !important;
+}
+
+.viewMode__menu-list {
+    padding: 1vw !important;
+    border: 1px solid var(--primary-blue) !important;
+    border-radius: 8px !important;
+}
+
+.viewMode__option {
+    border-radius: 3px;
+    color: var(--dark) !important;
+    cursor: pointer;
+    margin-top: 0.5vw !important;
+}
+
+.viewMode__option--is-selected {
+    border: 1px solid var(--primary-blue) !important;
+    background-color: var(--light-grey) !important;
+}

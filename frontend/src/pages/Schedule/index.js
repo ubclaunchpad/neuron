@@ -1,5 +1,5 @@
-import dayjs from 'dayjs';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import dayjs from "dayjs";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
@@ -7,34 +7,36 @@ import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import CalendarView from "../../components/CalendarView";
 import "./index.css";
+import { useWeekView } from "react-weekview";
 
 function VolunteerSchedule() {
-    const volunteerID = localStorage.getItem('volunteerID');
+    const volunteerID = localStorage.getItem("volunteerID");
     const currentDate = dayjs();
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [shifts, setShifts] = useState([]);
-    const [filter, setFilter] = useState('all-shifts');
+    const [filter, setFilter] = useState("all-shifts");
     const [selectedClassId, setSelectedClassId] = useState(null);
     const [selectedShiftButtons, setSelectedShiftButtons] = useState([]);
     const [selectedShiftDetails, setShiftDetails] = useState(null);
-    const [viewMode, setViewMode] = useState('week');
+    const [viewMode, setViewMode] = useState("list");
+    const { days, initialDate, nextWeek, previousWeek, goToToday } = useWeekView();
 
     // Create a ref object to store references to each shifts-container for scrolling
     const shiftRefs = useRef({});
-    const scheduleContainerRef = useRef(null); 
+    const scheduleContainerRef = useRef(null);
 
     // Fetch shifts for the selected date and filter
     useEffect(() => {
         const fetchShifts = async () => {
             const body = {
                 volunteer_id: volunteerID,
-                shiftDate: selectedDate.format('YYYY-MM-DD')
+                shiftDate: selectedDate.format("YYYY-MM-DD"),
             };
             const response = await getVolunteerShiftsForMonth(body);
-            
+
             // Filter shifts based on selected filter type
             const filteredShifts = response.filter((shift) => {
-                if (filter === 'all-shifts') {
+                if (filter === "all-shifts") {
                     return true; // No filtering for 'all-shifts'
                 }
                 return shift.shift_type === filter;
@@ -46,7 +48,7 @@ function VolunteerSchedule() {
 
     // map of shifts grouped by date { date: [shift1, shift2, ...] }
     const groupedShifts = shifts.reduce((acc, shift) => {
-        const date = shift.shift_date; 
+        const date = shift.shift_date;
         if (!acc[date]) {
             acc[date] = [];
         }
@@ -59,11 +61,11 @@ function VolunteerSchedule() {
         const fetchShifts = async () => {
             const body = {
                 volunteer_id: volunteerID,
-                shiftDate: selectedDate.format('YYYY-MM-DD')
+                shiftDate: selectedDate.format("YYYY-MM-DD"),
             };
             const response = await getVolunteerShiftsForMonth(body);
             const filteredShifts = response.filter((shift) => {
-                if (filter === 'all-shifts') {
+                if (filter === "all-shifts") {
                     return true;
                 }
                 return shift.shift_type === filter;
@@ -74,23 +76,23 @@ function VolunteerSchedule() {
     };
 
     const scrollToTop = useCallback(() => {
-        const targetDate = selectedDate.format('YYYY-MM-DD');
+        const targetDate = selectedDate.format("YYYY-MM-DD");
         const scheduleContainer = scheduleContainerRef.current;
         const targetElement = shiftRefs.current[targetDate];
-    
+
         if (scheduleContainer && targetElement) {
             // Calculate the offset of the target element within scheduleContainerRef
             const offsetTop = targetElement.offsetTop - scheduleContainer.offsetTop;
             scheduleContainer.scrollTo({
                 top: offsetTop,
-                behavior: 'smooth'
+                behavior: "smooth",
             });
         }
     }, [selectedDate]); // Scroll to top when selectedDate changes
-    
+
     useEffect(() => {
         scrollToTop();
-    }, [scrollToTop, groupedShifts]); 
+    }, [scrollToTop, groupedShifts]);
 
     // side panel shift details
     const handleShiftSelection = (classData) => {
@@ -104,53 +106,54 @@ function VolunteerSchedule() {
             <div className="content-heading">
                 <h2 className="content-title">Schedule</h2>
             </div>
-            <DetailsPanel
-                classId={selectedClassId}
-                classList={shifts}
-                setClassId={setSelectedClassId}
-                shiftDetails={selectedShiftDetails}
-                dynamicShiftbuttons={selectedShiftButtons}>
+            <DetailsPanel classId={selectedClassId} classList={shifts} setClassId={setSelectedClassId} shiftDetails={selectedShiftDetails} dynamicShiftbuttons={selectedShiftButtons}>
                 <div className="schedule-page">
-                    <DateToolbar selectedDate={selectedDate} setSelectedDate={setSelectedDate} setViewMode={setViewMode} />
+                    <DateToolbar
+                        selectedDate={selectedDate}
+                        setSelectedDate={setSelectedDate}
+                        viewMode={viewMode}
+                        setViewMode={setViewMode}
+                        nextWeek={nextWeek}
+                        previousWeek={previousWeek}
+                        goToToday={goToToday}
+                    />
                     <hr />
                     <ShiftStatusToolbar setFilter={setFilter} filter={filter} />
-                    <hr />  
-                    {viewMode === "list" ? <>
-                        <div ref={scheduleContainerRef} className="schedule-container">
-                            {Object.keys(groupedShifts).length > 0 ? (
-                                Object.keys(groupedShifts).map((date) => (
-                                <div 
-                                    key={date} 
-                                    className="shifts-container"
-                                    ref={(el) => shiftRefs.current[dayjs(date).format('YYYY-MM-DD')] = el}  
-                                >
-                                    {/* Date Header */}
-                                    <h2
-                                        className={`date-header ${dayjs(date).isSame(selectedDate, 'day') ? 'selected-date' : 'non-selected-date'}`}
-                                    >
-                                        {dayjs(date).format('ddd, D')}
-                                        {dayjs(date).isSame(currentDate, 'day') && ' | Today'}
-                                    </h2>
+                    <hr />
+                    {viewMode === "list" ? (
+                        <>
+                            <div ref={scheduleContainerRef} className="schedule-container">
+                                {Object.keys(groupedShifts).length > 0 ? (
+                                    Object.keys(groupedShifts).map((date) => (
+                                        <div key={date} className="shifts-container" ref={(el) => (shiftRefs.current[dayjs(date).format("YYYY-MM-DD")] = el)}>
+                                            {/* Date Header */}
+                                            <h2 className={`date-header ${dayjs(date).isSame(selectedDate, "day") ? "selected-date" : "non-selected-date"}`}>
+                                                {dayjs(date).format("ddd, D")}
+                                                {dayjs(date).isSame(currentDate, "day") && " | Today"}
+                                            </h2>
 
-                                    {/* Shift List for this date */}
-                                    <div className="shift-list">
-                                        {groupedShifts[date].map((shift) => (
-                                            <ShiftCard 
-                                                key={shift.fk_schedule_id} 
-                                                shift={shift} 
-                                                shiftType={shift.shift_type} 
-                                                onUpdate={handleShiftUpdate} 
-                                                onShiftSelect={handleShiftSelection}
-                                            />
-                                        ))}
-                                    </div> 
-                                </div>
-                                ))
-                            ) : (
-                                <p>No shifts to display for this month.</p>
-                            )}
-                        </div> 
-                    </> : <CalendarView />}
+                                            {/* Shift List for this date */}
+                                            <div className="shift-list">
+                                                {groupedShifts[date].map((shift) => (
+                                                    <ShiftCard
+                                                        key={shift.fk_schedule_id}
+                                                        shift={shift}
+                                                        shiftType={shift.shift_type}
+                                                        onUpdate={handleShiftUpdate}
+                                                        onShiftSelect={handleShiftSelection}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p>No shifts to display for this month.</p>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <CalendarView days={days} shifts={shifts} initialDate={initialDate} onUpdate={handleShiftUpdate} onShiftSelect={handleShiftSelection} />
+                    )}
                 </div>
             </DetailsPanel>
         </main>

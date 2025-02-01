@@ -11,7 +11,6 @@ function ClassPreferences() {
      useEffect(() => {
           const getCurrentUserPrefferedClasses = async () => {
               const volunteerID = localStorage.getItem('volunteerID');
-              console.log("Volunteer id: " + volunteerID);
 
           //     setUserId(user_id);
               const classes_p = await fetchUserPreferredClasses(volunteerID);

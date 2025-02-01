@@ -82,6 +82,19 @@ export const VolunteerRoutes: RouteDefinition = {
             ]
         },
         {
+            path: '/class-preferences',
+            children: [
+                {
+                    path: '/:volunteer_id',
+                    method: 'get',
+                    validation: [
+                        param('volunteer_id').isUUID('4')
+                    ],
+                    action: getPreferredClassesById
+                }
+            ]
+        },
+        {
             path: '/:volunteer_id',
             validation: [
                 param('volunteer_id').isUUID('4')
@@ -110,18 +123,5 @@ export const VolunteerRoutes: RouteDefinition = {
                 },
             ]
         },
-        {
-            path: '/class-preferences',
-            children: [
-                {
-                    path: '/:volunteer_id',
-                    method: 'get',
-                    validation: [
-                        param('volunteer_id').isUUID('4')
-                    ],
-                    action: getPreferredClassesById
-                }
-            ]
-        }
     ]
 };

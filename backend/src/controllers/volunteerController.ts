@@ -49,10 +49,9 @@ async function getPreferredClassesById(req: Request, res: Response) {
     }
 
     try {
-        // const preferred_classes = await volunteerModel.getPreferredClassesById(volunteer_id);
-        res.status(200).json({gay: "gay"});
+        const preferred_classes = await volunteerModel.getPreferredClassesById(volunteer_id);
 
-        // res.status(200).json(preferred_classes);
+        res.status(200).json(preferred_classes);
     } catch (error: any) {
         return res.status(error.status ?? 500).json({
 			error: error.message

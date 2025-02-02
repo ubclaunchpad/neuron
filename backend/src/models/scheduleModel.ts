@@ -66,17 +66,20 @@ export default class ScheduleModel {
         })
         valuesClause2 = valuesClause2.slice(0, -1);
 
-        const query2 = `INSERT INTO volunteer_schedule (fk_volunteer_id, fk_schedule_id) VALUES ${valuesClause2}`;
-        const values2: any[][] = [];
-        scheduleItems.forEach((schedule, index) => {
-            if (schedule.volunteer_ids) {
-                schedule.volunteer_ids.forEach((volunteerId: string) => {
-                    values2.push([volunteerId, ids[index]]);
-                })
-            }
-        })
-
-        await transaction.query<ResultSetHeader>(query2, values2);
+        // if there is at least one volunteer assigned to a schedule
+        if (valuesClause2.length > 0) {
+            const query2 = `INSERT INTO volunteer_schedule (fk_volunteer_id, fk_schedule_id) VALUES ${valuesClause2}`;
+            const values2: any[][] = [];
+            scheduleItems.forEach((schedule, index) => {
+                if (schedule.volunteer_ids) {
+                    schedule.volunteer_ids.forEach((volunteerId: string) => {
+                        values2.push([volunteerId, ids[index]]);
+                    })
+                }
+            })
+            await transaction.query<ResultSetHeader>(query2, values2);
+        }
+        
         const createdSchedules = ids.map((schedule_id, index) => {
             const schedule = scheduleItems[index];
             return {
@@ -89,8 +92,10 @@ export default class ScheduleModel {
             }
         });
 
-        // create shifts for new schedules with assigned volunteers
-        await shiftModel.addShiftsForSchedules(classId, createdSchedules, transaction);
+        // if there are any assignments, create shifts for new schedules with assigned volunteers
+        if (valuesClause2.length > 0) {
+            await shiftModel.addShiftsForSchedules(classId, createdSchedules, transaction);
+        }
 
         return createdSchedules;
     }

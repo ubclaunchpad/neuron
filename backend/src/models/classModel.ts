@@ -48,14 +48,16 @@ export default class ClassesModel {
                ),
                volunteer_info AS (
                     SELECT 
-                         vc.fk_class_id AS class_id,
+                         s.fk_class_id AS class_id,
                          GROUP_CONCAT(v.l_name) AS volunteer_l_names,
                          GROUP_CONCAT(v.f_name) AS volunteer_f_names,
                          GROUP_CONCAT(v.fk_user_id) AS volunteer_user_ids
-                    FROM volunteer_class vc
+                    FROM volunteer_schedule vc
                     LEFT JOIN volunteers v ON vc.fk_volunteer_id = v.volunteer_id
-                    WHERE vc.fk_class_id = (SELECT id FROM params)
-                    GROUP BY vc.fk_class_id
+                    LEFT JOIN schedule s ON vc.fk_schedule_id = s.schedule_id
+                    WHERE vc.fk_schedule_id = s.schedule_id 
+                    AND s.fk_class_id = (SELECT id FROM params)
+                    GROUP BY s.fk_class_id
                ),
                schedule_info AS (
                     SELECT 

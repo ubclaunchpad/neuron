@@ -1,5 +1,5 @@
-import { ResultSetHeader } from 'mysql2/promise';
-import { ShiftDB } from '../common/generated.js';
+import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
+import { ScheduleDB, ShiftDB } from '../common/generated.js';
 import connectionPool from '../config/database.js';
 
 export default class ShiftModel {
@@ -82,6 +82,70 @@ export default class ShiftModel {
           const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 
           return results;
+     }
+
+     getRecurringDates(date: any, day: number): string[] {
+          const result: string[] = [];
+      
+          let start = new Date(date.start_date);
+          const end = new Date(date.end_date);
+     
+          // find the first occurrence of the given day
+          while (start.getUTCDay() !== day) {
+               start.setUTCDate(start.getUTCDate() + 1);
+          }
+     
+          // collect all occurrences of the given day until the end date
+          while (start <= end) {
+               result.push(start.toISOString().split('T')[0]); // store as YYYY-MM-DD
+               start.setUTCDate(start.getUTCDate() + 7);
+          }
+      
+          return result;
+     }
+
+     getDurationInMinutes(startTime: string, endTime: string): number {
+          const start = new Date(`1970-01-01T${startTime}:00Z`);
+          const end = new Date(`1970-01-01T${endTime}:00Z`);
+      
+          const durationMs = end.getTime() - start.getTime();
+          const durationMinutes = durationMs / (1000 * 60);
+      
+          return Math.round(durationMinutes);
+     }
+
+     async addShiftsForSchedules(classId: number, createdSchedules: any[], transaction: PoolConnection): Promise<void> {
+
+          // get class start date and end date
+          const query1 = `SELECT start_date, end_date FROM class WHERE class_id = ?`;
+          const values1 = [classId];
+          const [results1, _] = await transaction.query<ScheduleDB[]>(query1, values1);
+
+          // for every schedule, for every assigned volunteer, for every date in between the class's 
+          // time line - we create a new shift
+          let valuesClause2 = "";
+          const values2: any[][] = [];
+          createdSchedules.forEach(schedule => {
+
+               if (!schedule.volunteer_ids) {
+                    return;
+               }
+
+               schedule.volunteer_ids.forEach((volunteer_id: any) => {
+
+                    const dates = this.getRecurringDates(results1[0], schedule.day);
+                    const duration = this.getDurationInMinutes(schedule.start_time, schedule.end_time);
+
+                    dates.forEach(date => {
+                         valuesClause2 = valuesClause2.concat("(?),");
+                         values2.push([volunteer_id, schedule.schedule_id, date, duration]);
+                    })
+               })
+          })
+          valuesClause2 = valuesClause2.slice(0, -1);
+
+          const query2 = `INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES ${valuesClause2}`;
+          await transaction.query<ResultSetHeader>(query2, values2);
      }
 
      // create a new shift. having fk_volunteer_id = null indicates an unassigned shift

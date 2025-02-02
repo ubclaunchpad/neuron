@@ -29,6 +29,7 @@ export const ScheduleRoutes: RouteDefinition = {
                         body('*.day').isInt({ min: 1, max: 7 }),
                         body('*.start_time').isTime({ hourFormat: 'hour24' }),
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
+                        body('*.volunteer_ids').isArray({ min: 1 }).optional(),
                     ],
                     action: setSchedulesByClassId
                 },
@@ -40,6 +41,7 @@ export const ScheduleRoutes: RouteDefinition = {
                         body('*.day').isInt({ min: 1, max: 7 }),
                         body('*.start_time').isTime({ hourFormat: 'hour24' }),
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
+                        body('*.volunteer_ids').isArray({ min: 1 }).optional(),
                     ],
                     action: updateSchedulesByClassId
                 },

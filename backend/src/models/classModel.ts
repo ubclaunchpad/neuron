@@ -1,10 +1,12 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import sharp from 'sharp';
-import { ClassDB } from '../common/generated.js';
+import { ClassDB, ScheduleDB } from '../common/generated.js';
 import connectionPool from '../config/database.js';
 import ImageModel from './imageModel.js';
+import ScheduleModel from './scheduleModel.js';
 
 const imageModel = new ImageModel();
+const scheduleModel = new ScheduleModel();
 
 export default class ClassesModel {
      async getClasses(): Promise<ClassDB[]> {
@@ -99,32 +101,84 @@ export default class ClassesModel {
           return results[0];
      }
 
-     async addClass(newClass: ClassDB): Promise<ResultSetHeader> {
-          const query = `INSERT INTO class 
+     async addClass(newClass: ClassDB, schedules?: ScheduleDB[]): Promise<any> {
+          const transaction = await connectionPool.getConnection();
+
+          try {
+               await transaction.beginTransaction();
+
+               const query = `INSERT INTO class 
                          (fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
-          const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = newClass;
-          const values = [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory];
+               const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = newClass;
+               const values = [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory];
 
-          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
-          
-          return results;
+               const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+               const classId = results.insertId;
+
+               let results2;
+               if (schedules) {
+                    results2 = await scheduleModel.setSchedulesByClassId(classId, schedules, transaction);
+               }
+               
+               const finalResults = {
+                    class_id: classId,
+                    ...newClass,
+                    schedules: results2
+               };
+
+               await transaction.commit();
+
+               return finalResults;
+          } catch (error) {
+               await transaction.rollback();
+               throw error;
+          }
      }
 
-     async updateClass(class_id: number, classData: Partial<ClassDB>, transaction?: PoolConnection): Promise<ResultSetHeader> {
+     async updateClassDetails(class_id: number, classData: Partial<ClassDB>, transaction?: PoolConnection): Promise<void> {
           const connection = transaction ?? connectionPool;
 
           // Construct the SET clause dynamically
           const setClause = Object.keys(classData)
-               .map((key) => `${key} = ?`)
-               .join(", ");
+          .map((key) => `${key} = ?`)
+          .join(", ");
           const query = `UPDATE class SET ${setClause} WHERE class_id = ?`;
           const values = [...Object.values(classData), class_id];
 
-          const [results, _] = await connection.query<ResultSetHeader>(query, values);
-          
-          return results;
+          if (setClause.length > 0) {
+               await connection.query<ResultSetHeader>(query, values);
+          }
+     }
+
+     async updateClass(class_id: number, classData: Partial<ClassDB>, schedules?: ScheduleDB[]): Promise<any> {
+          const transaction = await connectionPool.getConnection();
+          try {
+               await transaction.beginTransaction();
+
+               await this.updateClassDetails(class_id, classData, transaction)
+
+               // if not null, update all schedules for the class. an empty schedules array will just delete all current schedules
+               // if schedules is null, then we essentially just leave the current schedules as they are
+               let results2;
+               if (schedules) {
+                    results2 = await scheduleModel.updateSchedulesByClassId(class_id, schedules, transaction);
+               }
+               
+               const finalResults = {
+                    class_id: class_id,
+                    ...classData,
+                    schedules: results2
+               };
+
+               await transaction.commit();
+
+               return finalResults;
+          } catch (error) {
+               await transaction.rollback();
+               throw error;
+          }
      }
 
      async upsertClassImage(class_id: number, image: Buffer): Promise<string> {
@@ -158,7 +212,7 @@ export default class ClassesModel {
                     imageId = classData.fk_image_id;
                } else {
                     imageId = await imageModel.uploadImage(processedImage, transaction);
-                    await this.updateClass(class_id, { fk_image_id: imageId } as ClassDB, transaction);
+                    await this.updateClassDetails(class_id, { fk_image_id: imageId } as ClassDB, transaction);
                }
 
                await transaction.commit();
@@ -171,7 +225,7 @@ export default class ClassesModel {
           }
      }
 
-     async deleteClass(class_id: number): Promise<void> {
+     async deleteClass(class_id: number): Promise<ClassDB> {
           const transaction = await connectionPool.getConnection();
      
           try {
@@ -199,6 +253,8 @@ export default class ClassesModel {
                await transaction.query<ResultSetHeader>(query, values);
      
                await transaction.commit();
+
+               return classData;
           } catch (error) {
                // Rollback
                await transaction.rollback();

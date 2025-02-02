@@ -39,7 +39,7 @@ export default class ScheduleModel {
         return results;
     }
 
-    async setSchedulesWithTransaction(classId: number, scheduleItems: ScheduleDB[], transaction: PoolConnection) {
+    async setSchedulesWithTransaction(classId: number, scheduleItems: ScheduleDB[], transaction: PoolConnection): Promise<any> {
         const valuesClause1 = scheduleItems
             .map(() => '(?)')
             .join(", ");
@@ -130,25 +130,33 @@ export default class ScheduleModel {
         return results;
     }
 
-    async updateSchedulesByClassId(classId: number, newSchedules: ScheduleDB[]): Promise<void> {
-        const transaction = await connectionPool.getConnection();
+    async updateSchedulesWithTransaction(classId: number, newSchedules: ScheduleDB[], transaction: PoolConnection): Promise<any> {
+        // get existing schedules to delete
+        const scheduleIdsToDelete: number[] = (await this.getSchedulesByClassId(classId))
+            .map((schedule: ScheduleDB) => schedule.schedule_id as number);
 
+        if (scheduleIdsToDelete.length > 0) {
+            await this.deleteSchedulesByScheduleId(classId, scheduleIdsToDelete, transaction);
+        }
+
+        let results;
+        if (newSchedules.length > 0) {
+            results = await this.setSchedulesByClassId(classId, newSchedules, transaction);
+        }
+    
+        return results;
+    }
+
+    async updateSchedulesByClassId(classId: number, newSchedules: ScheduleDB[], transaction?: PoolConnection): Promise<any> {
+        if (transaction) {
+            return await this.updateSchedulesWithTransaction(classId, newSchedules, transaction);
+        }
+        transaction = await connectionPool.getConnection();
         try {
             await transaction.beginTransaction();
 
-            // get existing schedules to delete
-            const scheduleIdsToDelete: number[] = (await this.getSchedulesByClassId(classId))
-                .map((schedule: ScheduleDB) => schedule.schedule_id as number);
+            const results = await this.updateSchedulesWithTransaction(classId, newSchedules, transaction);
 
-            if (scheduleIdsToDelete.length > 0) {
-                await this.deleteSchedulesByScheduleId(classId, scheduleIdsToDelete, transaction);
-            }
-
-            let results;
-            if (newSchedules.length > 0) {
-                results = await this.setSchedulesByClassId(classId, newSchedules, transaction);
-            }
-        
             await transaction.commit();
             return results;
         } catch (error) {

@@ -19,9 +19,15 @@ export const ClassRoutes: RouteDefinition = {
                 body('class_name').isString(),
                 body('instructions').isString().optional(),
                 body('zoom_link').isURL().optional(),
-                body('start_date').isTime({ hourFormat: 'hour24'}),
-                body('end_date').isTime({ hourFormat: 'hour24'}),
+                body('start_date').isDate({ format: 'YYYY-MM-DD' }),
+                body('end_date').isDate({ format: 'YYYY-MM-DD' }),
                 body('category').isString().optional(),
+                body('subcategory').isString().optional(),
+                body('schedules').isArray({ min: 1 }).optional(),
+                body('schedules.*.day').isInt({ min: 1, max: 7 }),
+                body('schedules.*.start_time').isTime({ hourFormat: 'hour24' }),
+                body('schedules.*.end_time').isTime({ hourFormat: 'hour24' }),
+                body('schedules.*.volunteer_ids').isArray({ min: 1 }).optional()
             ],
             action: addClass
         },
@@ -44,9 +50,15 @@ export const ClassRoutes: RouteDefinition = {
                         body('class_name').isString().optional(),
                         body('instructions').isString().optional(),
                         body('zoom_link').isURL().optional(),
-                        body('start_date').isTime({ hourFormat: 'hour24'}).optional(),
-                        body('end_date').isTime({ hourFormat: 'hour24'}).optional(),
+                        body('start_date').isDate({ format: 'YYYY-MM-DD' }).optional(),
+                        body('end_date').isDate({ format: 'YYYY-MM-DD' }).optional(),
                         body('category').isString().optional(),
+                        body('subcategory').isString().optional(),
+                        body('schedules').isArray({ min: 0 }).optional(), // empty schedules array deletes all schedules
+                        body('schedules.*.day').isInt({ min: 1, max: 7 }),
+                        body('schedules.*.start_time').isTime({ hourFormat: 'hour24' }),
+                        body('schedules.*.end_time').isTime({ hourFormat: 'hour24' }),
+                        body('schedules.*.volunteer_ids').isArray({ min: 1 }).optional()
                     ],
                     action: updateClass
                 },

@@ -37,11 +37,11 @@ function VolunteerDetailsCard({ volunteer }) {
     const pronouns = ["None", "He/Him", "She/Her", "They/Them"];
 
     function sendTcNotif() {
-        notyf.error("Please update your preferred time commitment.");
+        notyf.error("You may want to update your preferred time commitment.");
     }
 
     useEffect(() => {
-        if (!mutableData.timeCommitment && !isEditing) {
+        if (Number(mutableData.timeCommitment) <= 0 && !isEditing) {
             sendTcNotif();
         }
     }, [
@@ -127,8 +127,8 @@ function VolunteerDetailsCard({ volunteer }) {
     async function handleCheck(e) {
         e.preventDefault();
 
-        if (Number(mutableData.timeCommitment) <= 0) {
-            sendTcNotif();
+        if (Number(mutableData.timeCommitment) < 0) {
+            notyf.error("Time commitment cannot be negative");
             return;
         }
 
@@ -286,9 +286,6 @@ function VolunteerDetailsCard({ volunteer }) {
                                     <td hidden={!isEditing}>
                                         <div className="time-commitment-input">
                                             <input 
-                                                style={Number(mutableData.timeCommitment) <= 0 ? {
-                                                    'border-color': 'red'
-                                                } : {}} 
                                                 type="number" 
                                                 min={0} 
                                                 max={40} 

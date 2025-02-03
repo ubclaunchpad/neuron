@@ -89,6 +89,11 @@ export default class ShiftModel {
       
           let start = new Date(date.start_date);
           const end = new Date(date.end_date);
+
+          const now = new Date();
+          if (start < now) {
+               start = now;
+          }
      
           // find the first occurrence of the given day
           while (start.getUTCDay() !== day) {
@@ -145,6 +150,25 @@ export default class ShiftModel {
           valuesClause2 = valuesClause2.slice(0, -1);
 
           const query2 = `INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES ${valuesClause2}`;
+          await transaction.query<ResultSetHeader>(query2, values2);
+     }
+
+     async deleteFutureShifts(scheduleId: number, transaction: PoolConnection): Promise<any> {
+
+          const query1 = `
+               SELECT shift_id 
+               FROM shifts sh
+               LEFT JOIN schedule sc 
+               ON sh.fk_schedule_id = sc.schedule_id
+               WHERE sh.fk_schedule_id = ?
+               AND STR_TO_DATE(CONCAT(sh.shift_date, ' ', sc.end_time), '%Y-%m-%d %H:%i:%s') > NOW()
+          `;
+          const values1 = [scheduleId];
+          const [results1, _] = await transaction.query<ShiftDB[]>(query1, values1);
+
+          const shiftIds = results1.map(result => result.shift_id);
+          const query2 = `DELETE FROM shifts WHERE shift_id IN (?)`;
+          const values2 = [shiftIds];
           await transaction.query<ResultSetHeader>(query2, values2);
      }
 

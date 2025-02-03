@@ -166,52 +166,111 @@ export default class ScheduleModel {
         }
     }
 
-    async assignVolunteersToSchedule(classId: number, scheduleId: number, volunteerIds: any[]): Promise<any> {
+    async assignVolunteersWithTransaction(classId: number, scheduleId: number, volunteerIds: any[], transaction: PoolConnection): Promise<any> {
+        let valuesClause = "";
+        const values: any[][] = [];
+        volunteerIds.forEach((volunteerId) => {
+            valuesClause = valuesClause.concat("(?),");
+            values.push([volunteerId, scheduleId]);
+        });
+        valuesClause = valuesClause.slice(0, -1);
 
-        const transaction = await connectionPool.getConnection();
+        // assign volunteers to schedule
+        const query = `INSERT INTO volunteer_schedule (fk_volunteer_id, fk_schedule_id) VALUES ${valuesClause}`;
+        await transaction.query<ResultSetHeader>(query, values);
 
+        // get schedule object
+        const query2 = `
+            SELECT 
+                schedule_id,
+                day,
+                TIME_FORMAT(start_time, '%H:%i') AS start_time,
+                TIME_FORMAT(end_time, '%H:%i') AS end_time
+            FROM schedule 
+            WHERE schedule_id = ?
+        `;
+        const values2 = [scheduleId];
+        const [result, _] = await transaction.query<ScheduleDB[]>(query2, values2);
+
+        const schedule = {
+            volunteer_ids: volunteerIds,
+            ...result[0]
+        }
+
+        // create shifts for all assigned volunteers
+        await shiftModel.addShiftsForSchedules(classId, [schedule], transaction);
+
+        return schedule;
+    }
+
+    async assignVolunteersToSchedule(classId: number, scheduleId: number, volunteerIds: any[], transaction?: PoolConnection): Promise<any> {
+        if (transaction) {
+            return await this.assignVolunteersWithTransaction(classId, scheduleId, volunteerIds, transaction);
+        }
+
+        transaction = await connectionPool.getConnection();
         try {
             await transaction.beginTransaction();
 
-            let valuesClause = "";
-            const values: any[][] = [];
-            volunteerIds.forEach((volunteerId) => {
-                valuesClause = valuesClause.concat("(?),");
-                values.push([volunteerId, scheduleId]);
-            });
-            valuesClause = valuesClause.slice(0, -1);
-
-            // assign volunteers to schedule
-            const query = `INSERT INTO volunteer_schedule (fk_volunteer_id, fk_schedule_id) VALUES ${valuesClause}`;
-            await transaction.query<ResultSetHeader>(query, values);
-
-            // get schedule object
-            const query2 = `
-                SELECT 
-                    schedule_id,
-                    day,
-                    TIME_FORMAT(start_time, '%H:%i') AS start_time,
-                    TIME_FORMAT(end_time, '%H:%i') AS end_time
-                FROM schedule 
-                WHERE schedule_id = ?
-            `;
-            const values2 = [scheduleId];
-            const [result, _] = await transaction.query<ScheduleDB[]>(query2, values2);
-
-            const schedule = {
-                volunteer_ids: volunteerIds,
-                ...result[0]
-            }
-
-            // create shifts for all assigned volunteers
-            await shiftModel.addShiftsForSchedules(classId, [schedule], transaction);
+            const result = await this.assignVolunteersWithTransaction(classId, scheduleId, volunteerIds, transaction);
 
             await transaction.commit();
+
+            return result;
         } catch (error) {
             await transaction.rollback();
             throw error;
         }
-        
-        
+    }
+
+    async unassignVolunteersFromSchedule(scheduleId: number, transaction: PoolConnection): Promise<void> {
+        const query = `DELETE FROM volunteer_schedule WHERE fk_schedule_id = ?`;
+        const values = [scheduleId];
+        await transaction.query<ResultSetHeader>(query, values);
+    }
+
+    async updateSchedule(classId: number, scheduleId: number, schedule: ScheduleDB, volunteerIds: any[]): Promise<any> {
+        const transaction = await connectionPool.getConnection();
+        try {
+            await transaction.beginTransaction();
+
+            // update schedule details if needed
+            await this.updateScheduleDetails(schedule, scheduleId, transaction);
+
+            if (volunteerIds) {
+                // unassign current volunteers from schedule
+                await this.unassignVolunteersFromSchedule(scheduleId, transaction);
+
+                // delete all future shifts for this schedule
+                await shiftModel.deleteFutureShifts(scheduleId, transaction);
+
+                // assign new volunteer(s)
+                await this.assignVolunteersToSchedule(classId, scheduleId, volunteerIds, transaction);
+            }
+
+            await transaction.commit();
+
+            return {
+                ...schedule,
+                volunteerIds
+            }
+        } catch (error) {
+            // Rollback
+            await transaction.rollback();
+            throw error;
+        }
+    }
+
+    private async updateScheduleDetails(schedule: ScheduleDB, scheduleId: number, transaction: PoolConnection): Promise<void> {
+        // Construct the SET clause dynamically
+        const setClause = Object.keys(schedule)
+            .map((key) => `${key} = ?`)
+            .join(", ");
+        const query = `UPDATE schedule SET ${setClause} WHERE schedule_id = ?`;
+        const values = [...Object.values(schedule), scheduleId];
+
+        if (setClause.length > 0) {
+            await transaction.query<ResultSetHeader>(query, values);
+        }
     }
 }

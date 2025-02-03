@@ -55,11 +55,22 @@ async function assignVolunteersToSchedule(req: Request, res: Response) {
     res.status(200).json(result);
 }
 
+async function updateSchedule(req: Request, res: Response) {
+    const class_id = Number(req.params.class_id);
+    const schedule_id = Number(req.params.schedule_id);
+    const {volunteer_ids, ...schedule} = req.body;
+
+    const result = await scheduleModel.updateSchedule(class_id, schedule_id, schedule, volunteer_ids);
+
+    res.status(200).json(result);
+}
+
 export {
     deleteSchedules, getSchedules,
     getSchedulesByClassId,
     setSchedulesByClassId,
     updateSchedulesByClassId,
-    assignVolunteersToSchedule
+    assignVolunteersToSchedule,
+    updateSchedule
 };
 

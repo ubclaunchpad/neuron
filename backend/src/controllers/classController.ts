@@ -21,10 +21,9 @@ async function addClass(req: Request, res: Response) {
 
 async function updateClass(req: Request, res: Response) {
 	const class_id = Number(req.params.class_id);
+	const partialClass: Partial<ClassDB> = req.body;
 
-	const {schedules, ...partialClass} = req.body;
-
-	const result = await classesModel.updateClass(class_id, partialClass, schedules);
+	const result = await classesModel.updateClass(class_id, partialClass);
 	
 	return res.status(200).json(result);
 }

@@ -54,11 +54,6 @@ export const ClassRoutes: RouteDefinition = {
                         body('end_date').isDate({ format: 'YYYY-MM-DD' }).optional(),
                         body('category').isString().optional(),
                         body('subcategory').isString().optional(),
-                        body('schedules').isArray({ min: 0 }).optional(), // empty schedules array deletes all schedules
-                        body('schedules.*.day').isInt({ min: 1, max: 7 }),
-                        body('schedules.*.start_time').isTime({ hourFormat: 'hour24' }),
-                        body('schedules.*.end_time').isTime({ hourFormat: 'hour24' }),
-                        body('schedules.*.volunteer_ids').isArray({ min: 1 }).optional()
                     ],
                     action: updateClass
                 },

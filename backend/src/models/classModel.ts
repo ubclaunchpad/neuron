@@ -137,48 +137,24 @@ export default class ClassesModel {
           }
      }
 
-     async updateClassDetails(class_id: number, classData: Partial<ClassDB>, transaction?: PoolConnection): Promise<void> {
+     async updateClass(class_id: number, classData: Partial<ClassDB>, transaction?: PoolConnection): Promise<any> {
           const connection = transaction ?? connectionPool;
 
           // Construct the SET clause dynamically
           const setClause = Object.keys(classData)
-          .map((key) => `${key} = ?`)
-          .join(", ");
+               .map((key) => `${key} = ?`)
+               .join(", ");
           const query = `UPDATE class SET ${setClause} WHERE class_id = ?`;
           const values = [...Object.values(classData), class_id];
 
           if (setClause.length > 0) {
                await connection.query<ResultSetHeader>(query, values);
           }
-     }
 
-     async updateClass(class_id: number, classData: Partial<ClassDB>, schedules?: ScheduleDB[]): Promise<any> {
-          const transaction = await connectionPool.getConnection();
-          try {
-               await transaction.beginTransaction();
-
-               await this.updateClassDetails(class_id, classData, transaction)
-
-               // if not null, update all schedules for the class. an empty schedules array will just delete all current schedules
-               // if schedules is null, then we essentially just leave the current schedules as they are
-               let results2;
-               if (schedules) {
-                    results2 = await scheduleModel.updateSchedulesByClassId(class_id, schedules, transaction);
-               }
-               
-               const finalResults = {
-                    class_id: class_id,
-                    ...classData,
-                    schedules: results2
-               };
-
-               await transaction.commit();
-
-               return finalResults;
-          } catch (error) {
-               await transaction.rollback();
-               throw error;
-          }
+          return {
+               class_id: class_id,
+               ...classData
+          };
      }
 
      async upsertClassImage(class_id: number, image: Buffer): Promise<string> {
@@ -212,7 +188,7 @@ export default class ClassesModel {
                     imageId = classData.fk_image_id;
                } else {
                     imageId = await imageModel.uploadImage(processedImage, transaction);
-                    await this.updateClassDetails(class_id, { fk_image_id: imageId } as ClassDB, transaction);
+                    await this.updateClass(class_id, { fk_image_id: imageId } as ClassDB, transaction);
                }
 
                await transaction.commit();

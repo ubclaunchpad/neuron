@@ -84,11 +84,11 @@ export default class ShiftModel {
           return results;
      }
 
-     getRecurringDates(date: any, day: number): string[] {
+     getRecurringDates(classTimeline: any, day: number): string[] {
           const result: string[] = [];
       
-          let start = new Date(date.start_date);
-          const end = new Date(date.end_date);
+          let start = new Date(classTimeline.start_date);
+          const end = new Date(classTimeline.end_date);
 
           const now = new Date();
           if (start < now) {
@@ -127,7 +127,8 @@ export default class ShiftModel {
           // get class start date and end date
           const query1 = `SELECT start_date, end_date FROM class WHERE class_id = ?`;
           const values1 = [classId];
-          const [results1, _] = await transaction.query<ScheduleDB[]>(query1, values1);
+          const [results, _] = await transaction.query<ScheduleDB[]>(query1, values1);
+          const classTimeline = results[0];
 
           // for every schedule, for every assigned volunteer, for every date in between the class's 
           // time line - we create a new shift
@@ -139,7 +140,7 @@ export default class ShiftModel {
                     return;
                }
 
-               const dates = this.getRecurringDates(results1[0], schedule.day);
+               const dates = this.getRecurringDates(classTimeline, schedule.day);
                const duration = this.getDurationInMinutes(schedule.start_time, schedule.end_time);
 
                schedule.volunteer_ids.forEach((volunteer_id: any) => {
@@ -156,6 +157,7 @@ export default class ShiftModel {
           await transaction.query<ResultSetHeader>(query2, values2);
      }
 
+     // delete all shifts that have not happened yet
      async deleteFutureShifts(scheduleIds: number[], transaction: PoolConnection): Promise<any> {
 
           const query1 = `
@@ -164,7 +166,7 @@ export default class ShiftModel {
                LEFT JOIN schedule sc 
                ON sh.fk_schedule_id = sc.schedule_id
                WHERE sh.fk_schedule_id IN (?)
-               AND STR_TO_DATE(CONCAT(sh.shift_date, ' ', sc.end_time), '%Y-%m-%d %H:%i:%s') > NOW()
+               AND STR_TO_DATE(CONCAT(sh.shift_date, ' ', sc.start_time), '%Y-%m-%d %H:%i:%s') > NOW()
           `;
           const values1 = [scheduleIds];
           const [results1, _] = await transaction.query<ShiftDB[]>(query1, values1);

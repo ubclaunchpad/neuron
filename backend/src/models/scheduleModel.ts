@@ -223,9 +223,9 @@ export default class ScheduleModel {
         }
     }
 
-    async unassignVolunteersFromSchedule(scheduleId: number, transaction: PoolConnection): Promise<void> {
-        const query = `DELETE FROM volunteer_schedule WHERE fk_schedule_id = ?`;
-        const values = [scheduleId];
+    async unassignVolunteersFromSchedules(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
+        const query = `DELETE FROM volunteer_schedule WHERE fk_schedule_id IN (?)`;
+        const values = [scheduleIds];
         await transaction.query<ResultSetHeader>(query, values);
     }
 
@@ -239,10 +239,10 @@ export default class ScheduleModel {
 
             if (volunteerIds) {
                 // unassign current volunteers from schedule
-                await this.unassignVolunteersFromSchedule(scheduleId, transaction);
+                await this.unassignVolunteersFromSchedules([scheduleId], transaction);
 
                 // delete all future shifts for this schedule
-                await shiftModel.deleteFutureShifts(scheduleId, transaction);
+                await shiftModel.deleteFutureShifts([scheduleId], transaction);
 
                 // assign new volunteer(s)
                 await this.assignVolunteersToSchedule(classId, scheduleId, volunteerIds, transaction);
@@ -272,5 +272,95 @@ export default class ScheduleModel {
         if (setClause.length > 0) {
             await transaction.query<ResultSetHeader>(query, values);
         }
+    }
+
+    async updateBundle(classId: number, schedules: ScheduleDB[]): Promise<any> {
+        const transaction = await connectionPool.getConnection();
+        try {
+            await transaction.beginTransaction();
+
+            await this.updateMultipleScheduleDetails(schedules, transaction);
+
+            // we only make reassignments for schedule objects with the 'volunteer_ids' field
+            const filteredSchedules = schedules.filter(schedule => schedule.volunteer_ids !== undefined);
+            const scheduleIds = filteredSchedules.map(schedule => schedule.schedule_id as number);
+
+            if (scheduleIds.length > 0) {
+                // unassign current volunteers from schedules
+                await this.unassignVolunteersFromSchedules(scheduleIds, transaction);
+
+                // delete all future shifts for these schedules
+                await shiftModel.deleteFutureShifts(scheduleIds, transaction);
+
+                // assign new volunteers to each schedule with 'volunteer_ids'
+                await this.assignVolunteersToSchedules(classId, filteredSchedules, transaction);
+            }
+
+            await transaction.commit();
+
+            return schedules;
+        } catch (error) {
+            // Rollback
+            await transaction.rollback();
+            throw error;
+        }
+    }
+
+    private async assignVolunteersToSchedules(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<void> {
+        let valuesClause = "";
+        const values: any[][] = [];
+        schedules.forEach((schedule) => {
+            schedule.volunteer_ids.forEach((volunteerId: any) => {
+                valuesClause = valuesClause.concat("(?),");
+                values.push([volunteerId, schedule.schedule_id]);
+            })
+        });
+        valuesClause = valuesClause.slice(0, -1);
+
+        // if there are any volunteer assignments
+        if (valuesClause.length > 0) {
+            // assign volunteers to schedule
+            const query = `INSERT INTO volunteer_schedule (fk_volunteer_id, fk_schedule_id) VALUES ${valuesClause}`;
+            await transaction.query<ResultSetHeader>(query, values);
+
+            // create shifts for all schedules with assigned volunteers
+            await shiftModel.addShiftsForSchedules(classId, schedules, transaction);
+        }
+    }
+
+    private async updateMultipleScheduleDetails(schedules: ScheduleDB[], transaction: PoolConnection): Promise<void> {
+        if (schedules.length === 0) {
+            return;
+        }
+
+        let dayCase = '';
+        let startTimeCase = '';
+        let endTimeCase = '';
+        const scheduleIds: any[] = [];
+
+        // build the CASE statements for each field and collect the schedule_ids
+        schedules.forEach(schedule => {
+            scheduleIds.push(schedule.schedule_id);
+            dayCase += `WHEN schedule_id = ${schedule.schedule_id} THEN ${schedule.day} `;
+            startTimeCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.start_time}' `;
+            endTimeCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.end_time}' `;
+        });
+
+        const query = `
+            UPDATE schedule 
+            SET 
+                day = CASE 
+                    ${dayCase}
+                    ELSE day END, 
+                start_time = CASE
+                    ${startTimeCase}
+                    ELSE start_time END, 
+                end_time = CASE
+                    ${endTimeCase}
+                    ELSE end_time END
+            WHERE schedule_id IN (?)
+        `;
+        const values = [scheduleIds];
+        await transaction.query<ResultSetHeader>(query, values);
     }
 }

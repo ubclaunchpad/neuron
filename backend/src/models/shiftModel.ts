@@ -109,14 +109,17 @@ export default class ShiftModel {
           return result;
      }
 
+     // convert time in HH:MM format to minutes
      getDurationInMinutes(startTime: string, endTime: string): number {
-          const start = new Date(`1970-01-01T${startTime}:00Z`);
-          const end = new Date(`1970-01-01T${endTime}:00Z`);
-      
-          const durationMs = end.getTime() - start.getTime();
-          const durationMinutes = durationMs / (1000 * 60);
-      
-          return Math.round(durationMinutes);
+          
+          const timeToMinutes = (time: string): number => {
+               const [hours, minutes] = time.split(':').map(Number);
+               return hours * 60 + minutes;
+          };
+          const startTimeInMinutes = timeToMinutes(startTime);
+          const endTimeInMinutes = timeToMinutes(endTime);
+
+          return Math.round(endTimeInMinutes - startTimeInMinutes);
      }
 
      async addShiftsForSchedules(classId: number, createdSchedules: any[], transaction: PoolConnection): Promise<void> {
@@ -136,10 +139,10 @@ export default class ShiftModel {
                     return;
                }
 
-               schedule.volunteer_ids.forEach((volunteer_id: any) => {
+               const dates = this.getRecurringDates(results1[0], schedule.day);
+               const duration = this.getDurationInMinutes(schedule.start_time, schedule.end_time);
 
-                    const dates = this.getRecurringDates(results1[0], schedule.day);
-                    const duration = this.getDurationInMinutes(schedule.start_time, schedule.end_time);
+               schedule.volunteer_ids.forEach((volunteer_id: any) => {
 
                     dates.forEach(date => {
                          valuesClause2 = valuesClause2.concat("(?),");
@@ -153,23 +156,25 @@ export default class ShiftModel {
           await transaction.query<ResultSetHeader>(query2, values2);
      }
 
-     async deleteFutureShifts(scheduleId: number, transaction: PoolConnection): Promise<any> {
+     async deleteFutureShifts(scheduleIds: number[], transaction: PoolConnection): Promise<any> {
 
           const query1 = `
                SELECT shift_id 
                FROM shifts sh
                LEFT JOIN schedule sc 
                ON sh.fk_schedule_id = sc.schedule_id
-               WHERE sh.fk_schedule_id = ?
+               WHERE sh.fk_schedule_id IN (?)
                AND STR_TO_DATE(CONCAT(sh.shift_date, ' ', sc.end_time), '%Y-%m-%d %H:%i:%s') > NOW()
           `;
-          const values1 = [scheduleId];
+          const values1 = [scheduleIds];
           const [results1, _] = await transaction.query<ShiftDB[]>(query1, values1);
 
           const shiftIds = results1.map(result => result.shift_id);
-          const query2 = `DELETE FROM shifts WHERE shift_id IN (?)`;
-          const values2 = [shiftIds];
-          await transaction.query<ResultSetHeader>(query2, values2);
+          if (shiftIds.length > 0) {
+               const query2 = `DELETE FROM shifts WHERE shift_id IN (?)`;
+               const values2 = [shiftIds];
+               await transaction.query<ResultSetHeader>(query2, values2);
+          }
      }
 
      // create a new shift. having fk_volunteer_id = null indicates an unassigned shift

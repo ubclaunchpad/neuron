@@ -1,6 +1,6 @@
 import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
-import { assignVolunteersToSchedule, deleteSchedules, getSchedules, getSchedulesByClassId, setSchedulesByClassId, updateSchedule, updateSchedulesByClassId } from '../controllers/scheduleController.js';
+import { assignVolunteersToSchedule, deleteSchedules, getSchedules, getSchedulesByClassId, setSchedulesByClassId, updateSchedule, updateSchedulesByClassId, updateBundle } from '../controllers/scheduleController.js';
 
 export const ScheduleRoutes: RouteDefinition = {
     path: '/schedules',
@@ -32,6 +32,19 @@ export const ScheduleRoutes: RouteDefinition = {
                         body('*.volunteer_ids').isArray({ min: 1 }).optional(),
                     ],
                     action: setSchedulesByClassId
+                },
+                {
+                    path: '/bundle',
+                    method: 'put',
+                    validation: [
+                        body().isArray({ min: 2 }),
+                        body('*.schedule_id').isInt({ min: 1 }),
+                        body('*.day').isInt({ min: 1, max: 7 }),
+                        body('*.start_time').isTime({ hourFormat: 'hour24' }),
+                        body('*.end_time').isTime({ hourFormat: 'hour24' }),
+                        body('*.volunteer_ids').isArray({ min: 0 }).optional(),
+                    ],
+                    action: updateBundle
                 },
                 {
                     path: '/',

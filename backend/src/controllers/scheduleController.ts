@@ -4,53 +4,44 @@ import ScheduleModel from '../models/scheduleModel.js';
 
 const scheduleModel = new ScheduleModel();
 
-async function getSchedules(req: Request, res: Response) {
-    const schedules = await scheduleModel.getSchedules();
+async function getAllSchedules(req: Request, res: Response) {
+    const schedules = await scheduleModel.getAllSchedules();
     
     res.status(200).json(schedules);
 }
 
-async function getSchedulesByClassId(req: Request, res: Response) {
+async function getBundleFromClass(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
 
-    const schedules = await scheduleModel.getSchedulesByClassId(class_id);
+    const schedules = await scheduleModel.getBundleFromClass(class_id);
 
     res.status(200).json(schedules);
 }
 
-async function setSchedulesByClassId(req: Request, res: Response) {
+async function addBundle(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
     const schedules: ScheduleDB[] = req.body;
 
-    const result = await scheduleModel.setSchedulesByClassId(class_id, schedules);
+    const result = await scheduleModel.addBundle(class_id, schedules);
 
     res.status(200).json(result);
 }
 
-async function updateSchedulesByClassId(req: Request, res: Response) {
-    const class_id = Number(req.params.class_id);
-    const schedules: ScheduleDB[] = req.body;
-
-    const result = await scheduleModel.updateSchedulesByClassId(class_id, schedules);
-
-    res.status(200).json(result);
-}
-
-async function deleteSchedules(req: Request, res: Response) {
+async function deleteBundle(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
     const { schedule_ids } = req.body;
 
-    const result = await scheduleModel.deleteSchedulesByScheduleId(class_id, schedule_ids);
+    const result = await scheduleModel.deleteBundle(class_id, schedule_ids);
 
     res.status(200).json(result);
 }
 
-async function assignVolunteersToSchedule(req: Request, res: Response) {
+async function assignVolunteers(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
     const schedule_id = Number(req.params.schedule_id);
     const { volunteer_ids } = req.body;
 
-    const result = await scheduleModel.assignVolunteersToSchedule(class_id, schedule_id, volunteer_ids);
+    const result = await scheduleModel.assignVolunteers(class_id, schedule_id, volunteer_ids);
 
     res.status(200).json(result);
 }
@@ -75,11 +66,11 @@ async function updateBundle(req: Request, res: Response) {
 }
 
 export {
-    deleteSchedules, getSchedules,
-    getSchedulesByClassId,
-    setSchedulesByClassId,
-    updateSchedulesByClassId,
-    assignVolunteersToSchedule,
+    getAllSchedules,
+    getBundleFromClass,
+    deleteBundle,
+    addBundle,
+    assignVolunteers,
     updateSchedule,
     updateBundle
 };

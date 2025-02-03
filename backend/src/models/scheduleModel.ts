@@ -7,7 +7,7 @@ import ShiftModel from '../models/shiftModel.js';
 const shiftModel = new ShiftModel();
 
 export default class ScheduleModel {
-    async getSchedules(): Promise<ScheduleDB[]> {
+    async getAllSchedules(): Promise<ScheduleDB[]> {
         const query = `
             SELECT 
                 s.*,
@@ -22,7 +22,7 @@ export default class ScheduleModel {
         return results;
     }
 
-    async getSchedulesByClassId(classId: number): Promise<ScheduleDB[]> {
+    async getBundleFromClass(classId: number): Promise<ScheduleDB[]> {
         const query = `
             SELECT 
                 s.*,
@@ -39,7 +39,7 @@ export default class ScheduleModel {
         return results;
     }
 
-    async setSchedulesWithTransaction(classId: number, scheduleItems: ScheduleDB[], transaction: PoolConnection): Promise<any> {
+    async addBundleWithTransaction(classId: number, scheduleItems: ScheduleDB[], transaction: PoolConnection): Promise<any> {
         const valuesClause1 = scheduleItems
             .map(() => '(?)')
             .join(", ");
@@ -100,15 +100,15 @@ export default class ScheduleModel {
         return createdSchedules;
     }
 
-    async setSchedulesByClassId(classId: number, scheduleItems: ScheduleDB[], transaction?: PoolConnection): Promise<any> {
+    async addBundle(classId: number, scheduleItems: ScheduleDB[], transaction?: PoolConnection): Promise<any> {
         if (transaction) {
-            return await this.setSchedulesWithTransaction(classId, scheduleItems, transaction);
+            return await this.addBundleWithTransaction(classId, scheduleItems, transaction);
         }
 
         transaction = await connectionPool.getConnection();
         try {
             await transaction.beginTransaction();
-            const results = await this.setSchedulesWithTransaction(classId, scheduleItems, transaction);
+            const results = await this.addBundleWithTransaction(classId, scheduleItems, transaction);
             await transaction.commit();
 
             return results;
@@ -119,7 +119,7 @@ export default class ScheduleModel {
         }
     }
   
-    async deleteSchedulesByScheduleId(classId: number, scheduleIds: number[], transaction?: PoolConnection): Promise<any> {
+    async deleteBundle(classId: number, scheduleIds: number[], transaction?: PoolConnection): Promise<any> {
         const connection = transaction ?? connectionPool;
 
         const query = `DELETE FROM schedule WHERE fk_class_id = ? AND schedule_id IN (?)`;
@@ -128,42 +128,6 @@ export default class ScheduleModel {
         const [results, _] = await connection.query<ResultSetHeader>(query, values);
 
         return results;
-    }
-
-    async updateSchedulesWithTransaction(classId: number, newSchedules: ScheduleDB[], transaction: PoolConnection): Promise<any> {
-        // get existing schedules to delete
-        const scheduleIdsToDelete: number[] = (await this.getSchedulesByClassId(classId))
-            .map((schedule: ScheduleDB) => schedule.schedule_id as number);
-
-        if (scheduleIdsToDelete.length > 0) {
-            await this.deleteSchedulesByScheduleId(classId, scheduleIdsToDelete, transaction);
-        }
-
-        let results;
-        if (newSchedules.length > 0) {
-            results = await this.setSchedulesByClassId(classId, newSchedules, transaction);
-        }
-    
-        return results;
-    }
-
-    async updateSchedulesByClassId(classId: number, newSchedules: ScheduleDB[], transaction?: PoolConnection): Promise<any> {
-        if (transaction) {
-            return await this.updateSchedulesWithTransaction(classId, newSchedules, transaction);
-        }
-        transaction = await connectionPool.getConnection();
-        try {
-            await transaction.beginTransaction();
-
-            const results = await this.updateSchedulesWithTransaction(classId, newSchedules, transaction);
-
-            await transaction.commit();
-            return results;
-        } catch (error) {
-            // Rollback
-            await transaction.rollback();
-            throw error;
-        }
     }
 
     async assignVolunteersWithTransaction(classId: number, scheduleId: number, volunteerIds: any[], transaction: PoolConnection): Promise<any> {
@@ -203,7 +167,7 @@ export default class ScheduleModel {
         return schedule;
     }
 
-    async assignVolunteersToSchedule(classId: number, scheduleId: number, volunteerIds: any[], transaction?: PoolConnection): Promise<any> {
+    async assignVolunteers(classId: number, scheduleId: number, volunteerIds: any[], transaction?: PoolConnection): Promise<any> {
         if (transaction) {
             return await this.assignVolunteersWithTransaction(classId, scheduleId, volunteerIds, transaction);
         }
@@ -223,7 +187,7 @@ export default class ScheduleModel {
         }
     }
 
-    async unassignVolunteersFromSchedules(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
+    async unassignVolunteersFromBundle(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
         const query = `DELETE FROM volunteer_schedule WHERE fk_schedule_id IN (?)`;
         const values = [scheduleIds];
         await transaction.query<ResultSetHeader>(query, values);
@@ -239,13 +203,13 @@ export default class ScheduleModel {
 
             if (volunteerIds) {
                 // unassign current volunteers from schedule
-                await this.unassignVolunteersFromSchedules([scheduleId], transaction);
+                await this.unassignVolunteersFromBundle([scheduleId], transaction);
 
                 // delete all future shifts for this schedule
                 await shiftModel.deleteFutureShifts([scheduleId], transaction);
 
                 // assign new volunteer(s)
-                await this.assignVolunteersToSchedule(classId, scheduleId, volunteerIds, transaction);
+                await this.assignVolunteers(classId, scheduleId, volunteerIds, transaction);
             }
 
             await transaction.commit();
@@ -279,7 +243,7 @@ export default class ScheduleModel {
         try {
             await transaction.beginTransaction();
 
-            await this.updateMultipleScheduleDetails(schedules, transaction);
+            await this.updateBundleDetails(schedules, transaction);
 
             // we only make reassignments for schedule objects with the 'volunteer_ids' field
             const filteredSchedules = schedules.filter(schedule => schedule.volunteer_ids !== undefined);
@@ -287,13 +251,13 @@ export default class ScheduleModel {
 
             if (scheduleIds.length > 0) {
                 // unassign current volunteers from schedules
-                await this.unassignVolunteersFromSchedules(scheduleIds, transaction);
+                await this.unassignVolunteersFromBundle(scheduleIds, transaction);
 
                 // delete all future shifts for these schedules
                 await shiftModel.deleteFutureShifts(scheduleIds, transaction);
 
                 // assign new volunteers to each schedule with 'volunteer_ids'
-                await this.assignVolunteersToSchedules(classId, filteredSchedules, transaction);
+                await this.assignVolunteersInBundle(classId, filteredSchedules, transaction);
             }
 
             await transaction.commit();
@@ -306,7 +270,7 @@ export default class ScheduleModel {
         }
     }
 
-    private async assignVolunteersToSchedules(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<void> {
+    private async assignVolunteersInBundle(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<void> {
         let valuesClause = "";
         const values: any[][] = [];
         schedules.forEach((schedule) => {
@@ -328,7 +292,7 @@ export default class ScheduleModel {
         }
     }
 
-    private async updateMultipleScheduleDetails(schedules: ScheduleDB[], transaction: PoolConnection): Promise<void> {
+    private async updateBundleDetails(schedules: ScheduleDB[], transaction: PoolConnection): Promise<void> {
         if (schedules.length === 0) {
             return;
         }

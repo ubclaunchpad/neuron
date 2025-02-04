@@ -10,68 +10,78 @@ async function getAllSchedules(req: Request, res: Response) {
     res.status(200).json(schedules);
 }
 
-async function getBundleFromClass(req: Request, res: Response) {
+async function getActiveSchedulesForClass(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
 
-    const schedules = await scheduleModel.getBundleFromClass(class_id);
+    const schedules = await scheduleModel.getActiveSchedulesForClass(class_id);
 
     res.status(200).json(schedules);
 }
 
-async function addBundle(req: Request, res: Response) {
+async function addSchedulesToClass(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
     const schedules: ScheduleDB[] = req.body;
 
-    const result = await scheduleModel.addBundle(class_id, schedules);
+    const result = await scheduleModel.addSchedulesToClass(class_id, schedules);
 
     res.status(200).json(result);
 }
 
-async function deleteBundle(req: Request, res: Response) {
+async function deleteOrSoftDeleteSchedules(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
     const { schedule_ids } = req.body;
 
-    const result = await scheduleModel.deleteBundle(class_id, schedule_ids);
+    const result = await scheduleModel.deleteOrSoftDeleteSchedules(class_id, schedule_ids);
 
     res.status(200).json(result);
 }
 
-async function assignVolunteers(req: Request, res: Response) {
+async function deleteSchedules(req: Request, res: Response) {
+    const class_id = Number(req.params.class_id);
+    const { schedule_ids } = req.body;
+
+    const result = await scheduleModel.deleteSchedulesFromClass(class_id, schedule_ids);
+
+    res.status(200).json(result);
+}
+
+async function assignVolunteersToSchedule(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
     const schedule_id = Number(req.params.schedule_id);
     const { volunteer_ids } = req.body;
 
-    const result = await scheduleModel.assignVolunteers(class_id, schedule_id, volunteer_ids);
+    const result = await scheduleModel.assignVolunteersByScheduleId(class_id, schedule_id, volunteer_ids);
 
     res.status(200).json(result);
 }
 
-async function updateSchedule(req: Request, res: Response) {
+async function updateScheduleById(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
     const schedule_id = Number(req.params.schedule_id);
-    const {volunteer_ids, ...schedule} = req.body;
+    const schedule: ScheduleDB = req.body;
 
-    const result = await scheduleModel.updateSchedule(class_id, schedule_id, schedule, volunteer_ids);
+    const result = await scheduleModel.updateScheduleById(class_id, schedule_id, schedule);
 
     res.status(200).json(result);
 }
 
-async function updateBundle(req: Request, res: Response) {
+async function updateSchedulesForClass(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
     const schedules: ScheduleDB[] = req.body;
 
-    const result = await scheduleModel.updateBundle(class_id, schedules);
+    const result = await scheduleModel.updateSchedulesForClass(class_id, schedules);
 
     res.status(200).json(result);
 }
 
 export {
     getAllSchedules,
-    getBundleFromClass,
-    deleteBundle,
-    addBundle,
-    assignVolunteers,
-    updateSchedule,
-    updateBundle
+    getActiveSchedulesForClass,
+    deleteOrSoftDeleteSchedules,
+    deleteSchedules,
+    addSchedulesToClass,
+    assignVolunteersToSchedule,
+    updateScheduleById,
+    updateSchedulesForClass
 };
 

@@ -114,12 +114,12 @@ export default class ClassesModel {
                const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = newClass;
                const values = [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory];
 
-               const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+               const [results, _] = await transaction.query<ResultSetHeader>(query, values);
                const classId = results.insertId;
 
                let results2;
                if (schedules) {
-                    results2 = await scheduleModel.setSchedulesByClassId(classId, schedules, transaction);
+                    results2 = await scheduleModel.addSchedulesToClass(classId, schedules, transaction);
                }
                
                const finalResults = {

@@ -95,7 +95,7 @@ export default class ShiftModel {
           startDateAndTime.setHours(hours, minutes);
 
           const now = new Date();
-
+          
           // if start is earlier than right now
           if (startDateAndTime < now) {
                start = now;
@@ -105,15 +105,10 @@ export default class ShiftModel {
                     startDateAndTime.getHours() <= now.getHours() && 
                     startDateAndTime.getMinutes() <= now.getMinutes()) {
 
-                         console.log("start time is earlier than now");
-                         console.log(startDateAndTime.getHours(), now.getHours());
-                         console.log(startDateAndTime.getMinutes(), now.getMinutes());
-
                     start.setDate(start.getDate() + 7);
                }
                // NOTE: if the schedule starts today at a later time than now, all the shifts today will still be scheduled
           }
-          console.log(start.getDate());
      
           // find the first occurrence of the given day
           while (start.getDay() !== dayNumber) {
@@ -192,7 +187,6 @@ export default class ShiftModel {
           const [results1, _] = await transaction.query<ShiftDB[]>(query1, values1);
 
           const shiftIds = results1.map(result => result.shift_id);
-          console.log(shiftIds);
 
           if (shiftIds.length > 0) {
                const query2 = `DELETE FROM shifts WHERE shift_id IN (?)`;

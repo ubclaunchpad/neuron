@@ -8,7 +8,9 @@ import {
     getShiftsByVolunteerId,
     getShiftsByVolunteerIdAndMonth,
     requestToCoverShift,
+    addShiftCoverage,
     cancelCoverShift,
+    deleteShiftCoverage,
     checkInShift,
     updateShift
 } from '../controllers/shiftController.js';
@@ -78,6 +80,14 @@ export const ShiftRoutes: RouteDefinition = {
             action: requestToCoverShift
         },
         {
+            path: '/request-shift-coverage/:shift_id',
+            method: 'put',
+            validation: [
+                param('shift_id').isInt({ min: 0 }),
+            ],
+            action: addShiftCoverage
+        },
+        {
             path: '/check-in/:shift_id',
             method: 'patch',
             validation: [
@@ -94,6 +104,15 @@ export const ShiftRoutes: RouteDefinition = {
             ],
             action: cancelCoverShift
 
+        },
+        {
+            path: '/cancel-coverage-request',
+            method: 'delete',
+            validation: [
+                body('request_id').isInt({ min: 0 }),
+                body('shift_id').isInt({ min: 0 }),
+            ],
+            action: deleteShiftCoverage
         },
         {
             path: '/:shift_id',

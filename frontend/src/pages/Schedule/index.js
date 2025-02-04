@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
-import { requestToCoverShift, cancelCoverShift, checkInShift } from '../../api/shiftService';
+import { requestToCoverShift, requestShiftCoverage, cancelCoverShift, cancelCoverRequest, checkInShift } from '../../api/shiftService';
 import { SHIFT_TYPES, COVERAGE_STATUSES } from '../../data/constants';
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
@@ -108,10 +108,16 @@ function VolunteerSchedule() {
         }
     };
 
-    // TODO: Implement this function
-    const handleRequestCoverageClick = (shift) => {
-        console.log(`Requesting coverage for shift ${shift.shift_id}`);
-        // Add logic for requesting coverage
+    const handleRequestCoverageClick = async (shift) => {
+        try {
+            console.log(`Requesting coverage for shift ${shift.shift_id}`);
+            let data = await requestShiftCoverage(shift.shift_id);
+
+            handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_COVERAGE_REQUESTS, request_id: data.insertId });
+             
+        } catch (error) {
+            console.error('Error requesting for shift coverage: ', error);
+        }
     };
 
     const handleCancelClick = async (shift) => {
@@ -130,11 +136,20 @@ function VolunteerSchedule() {
             } catch (error) {
                 console.error('Error canceling coverage:', error);
             }
-
         
         } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
 
-            // TODO: Implement canceling coverage request for OWN shift
+            try {
+                console.log("Canceling coverage request for shift ID: ", shift.shift_id);
+                const body = {
+                    request_id: shift.request_id,
+                    shift_id: shift.shift_id,
+                };
+                await cancelCoverRequest(body);
+                handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_SHIFTS, request_id: null });
+            } catch (error) {
+                console.error('Error canceling coverage request:', error);
+            }
 
         }
 
@@ -223,10 +238,12 @@ function VolunteerSchedule() {
             buttons.push(buttonConfig.REQUEST_COVERAGE);
         } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.PENDING) {
             buttons.push(buttonConfig.CANCEL);
+
+        // TODO: Should it be for any of my own coverage requests? there is no coverage status associated them
+        } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
+            buttons.push(buttonConfig.CANCEL);
         }
 
-        // TODO: Add button for canceling OWN coverage requests when it's still OPEN
-    
         return buttons;
     };
 

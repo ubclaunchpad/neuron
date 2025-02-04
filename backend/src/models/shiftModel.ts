@@ -5,7 +5,7 @@ import connectionPool from '../config/database.js';
 export default class ShiftModel {
 
      // get all the details of a shift
-     async getShiftInfo(fk_volunteer_id:string, fk_schedule_id:number, shift_date:string): Promise<ShiftDB> {
+     async getShiftInfo(fk_volunteer_id: string, fk_schedule_id: number, shift_date: string): Promise<ShiftDB> {
           const query = `
                SELECT 
                     s.duration,
@@ -32,7 +32,7 @@ export default class ShiftModel {
                     AND s.shift_date = ?;               
           `;
           const values = [fk_volunteer_id, fk_schedule_id, shift_date];
-          
+
           const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results[0];
@@ -42,7 +42,7 @@ export default class ShiftModel {
      async getShiftsByVolunteerId(volunteer_id: string): Promise<ShiftDB[]> {
           const query = "SELECT * FROM shifts WHERE fk_volunteer_id = ?";
           const values = [volunteer_id];
-          
+
           const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results;
@@ -52,7 +52,7 @@ export default class ShiftModel {
      async getShiftsByDate(date: string): Promise<ShiftDB[]> {
           const query = "SELECT * FROM shifts WHERE shift_date = ?";
           const values = [date];
-          
+
           const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results;
@@ -63,15 +63,15 @@ export default class ShiftModel {
           const query = `
                CALL GetShiftsByVolunteerIdAndMonth(?, ?, ?);
           `;
-          
+
           const values = [volunteer_id, month, year];
-          
+
           const [results, _] = await connectionPool.query<any>(query, values);
 
           return results[0]; // Value from procedure stored in the first value of the array
-      }
+     }
 
-      // create a new entry in the pending_shift_coverage table
+     // create a new entry in the pending_shift_coverage table
      async requestToCoverShift(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
           const query = `
                INSERT INTO pending_shift_coverage (request_id, pending_volunteer)
@@ -84,12 +84,37 @@ export default class ShiftModel {
           return results;
      }
 
-     // delete a pending shift coverage request
-     async cancelCoverShift(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
+     // create a new entry in the shift_coverage_request table
+     async addShiftCoverageRequest(shift_id: number): Promise<ResultSetHeader> {
           const query = `
-               DELETE FROM pending_shift_coverage WHERE request_id = ? AND pending_volunteer = ?
+               INSERT INTO shift_coverage_request (fk_shift_id)
+               VALUES (?)
           `;
-          const values = [request_id, volunteer_id];
+          const values = [shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
+     // delete corresponding entry in pending_shift_coverage table
+     async cancelCoverShift(request_id: number, shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               DELETE FROM pending_shift_coverage WHERE request_id = ? AND fk_shift_id = ?
+          `;
+          const values = [request_id, shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
+     // delete corresponding entry in shift_coverage_request table
+     async deleteShiftCoverageRequest(request_id: number, shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               DELETE FROM shift_coverage_request WHERE request_id = ? AND fk_shift_id = ?
+          `;
+          const values = [request_id, shift_id];
 
           const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 

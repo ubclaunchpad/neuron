@@ -52,11 +52,29 @@ async function requestToCoverShift(req: Request, res: Response) {
     res.status(200).json(request);
 }
 
+// volunteer requests coverage for their own shift
+async function requestShiftCoverage(req: Request, res: Response) {
+    const shift_id = Number(req.params.shift_id);
+
+    const request = await shiftModel.addShiftCoverageRequest(shift_id);
+
+    res.status(200).json(request);
+}
+
 // volunteer cancels on covering a shift
 async function cancelCoverShift(req: Request, res: Response) {
     const { request_id, volunteer_id } = req.body;
 
     const request = await shiftModel.cancelCoverShift(request_id, volunteer_id);
+
+    res.status(200).json(request);
+}
+
+// volunteers cancels their request for shift coverage
+async function cancelShiftCoverageRequest(req: Request, res: Response) {
+    const { request_id, shift_id } = req.body;
+
+    const request = await shiftModel.deleteShiftCoverageRequest(request_id, shift_id);
 
     res.status(200).json(request);
 }
@@ -105,6 +123,6 @@ async function deleteShift(req: Request, res: Response) {
 
 export {
     addShift, deleteShift, getShiftInfo, getShiftsByDate, getShiftsByVolunteerId, getShiftsByVolunteerIdAndMonth,
-    requestToCoverShift, cancelCoverShift, updateShift, checkInShift
+    requestToCoverShift, requestShiftCoverage as addShiftCoverage, cancelCoverShift, updateShift, checkInShift, cancelShiftCoverageRequest as deleteShiftCoverage
 };
 

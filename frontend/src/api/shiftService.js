@@ -66,6 +66,20 @@ const checkInShift = async (shift_id) => {
   }
 };
 
+// Creates a request for shift coverage
+const requestShiftCoverage = async (shift_id) => {
+  try {
+    console.log("requestShiftCoverage shift_id param:", shift_id);
+    const response = await api.put(`/shifts/request-shift-coverage/${shift_id}`);
+
+    return response.data;
+  } catch (error) {
+    console.error("Error requesting coverage for shift: ", error);
+    throw error;
+  }
+}
+
+// Cancels a request to cover a shift from another volunteer
 const cancelCoverShift = async (body) => {
   try {
     console.log("cancelCoverShift body:", body);
@@ -83,10 +97,30 @@ const cancelCoverShift = async (body) => {
   }
 };
 
+// Cancels a shift coverage request
+const cancelCoverRequest = async (body) => {
+  try {
+    console.log("cancelCoverRequest body:", body);
+    const response = await api.delete("/shifts/cancel-coverage-request", {
+      data: {
+        request_id: body.request_id,
+        shift_id: body.shift_id,
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error cancelling shift coverage request:", error);
+    throw error;
+  }
+}
+
 export {
   getShiftInfo,
   getVolunteerShiftsForMonth,
   requestToCoverShift,
+  requestShiftCoverage,
   cancelCoverShift,
+  cancelCoverRequest,
   checkInShift,
 };

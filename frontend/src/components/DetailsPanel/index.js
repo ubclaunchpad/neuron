@@ -177,7 +177,10 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
       <div className="panel-container" style={{ width: panelWidth }}>
         <div className="panel-header">
           {shiftDetails ? (
-              <span>{dayjs(shiftDetails.shift_date).format('YYYY-MM-DD')}</span>
+              <span>
+                <div>{dayjs(shiftDetails.start_time, 'HH:mm').format('h:mm A')} - {dayjs(shiftDetails.end_time, 'HH:mm').format('h:mm A')}</div>
+                <div>{dayjs(shiftDetails.shift_date).format('dddd, MMMM D')}</div>
+              </span>
           ) : (
               renderSchedules()
           )}

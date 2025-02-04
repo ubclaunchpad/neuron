@@ -2,11 +2,21 @@ import "./index.css";
 import React, {useEffect, useState} from 'react';
 import edit_icon from "../../assets/edit-icon.png"
 import { fetchUserPreferredClasses } from "../../api/volunteerService";
+import { getAllClasses } from "../../api/classesPageService";
 import ClassPreferencesCard from "../../components/ClassPreferencesCard";
+import Modal from "../../components/Modal";
 
 function ClassPreferences() {
      const [preferredClasses, setPreferredClasses] = useState(null);
      const [allClasses, setAllClasses] = useState(null);
+     const [modalOpen, setModalOpen] = useState(false);
+     
+     const openModal = () => {
+          setModalOpen(true);
+     };
+     const closeModal = () => {
+          setModalOpen(false);
+     };
 
      useEffect(() => {
           const getCurrentUserPrefferedClasses = async () => {
@@ -38,24 +48,26 @@ function ClassPreferences() {
           
      }, []);
 
-     useEffect(()=> {
-          console.log(preferredClasses);
-     }, [preferredClasses]);
 
      function renderClasses (rank) {
-          if (preferredClasses == null || preferredClasses[rank].length == 0) {
+          if (preferredClasses == null || preferredClasses[rank].length === 0) {
             return <>You have not chosen class preferences...</>;
           }
      
           return (
                <>
                     {preferredClasses[rank].map((class_, index) => (
-                              <ClassPreferencesCard classData={class_}></ClassPreferencesCard>
+                              <ClassPreferencesCard classData={class_} fullWith={false}></ClassPreferencesCard>
                     ))}
                </>
           );
      };
 
+     
+     function handleEditClass(rank) {
+          console.log(rank);
+          openModal();
+     }
 
 
      return (
@@ -81,7 +93,7 @@ function ClassPreferences() {
                                    <div className="rank-name">
                                    Most Preferred 
                                    </div>
-                                   <button type="button" className="edit-rank-button">
+                                   <button type="button" className="edit-rank-button" onClick={()=> handleEditClass(1)}>
                                         <img src={edit_icon} alt="Edit Classes" height={20}/>{"  "}
                                         <div>Edit Classes</div>
                                    </button>
@@ -99,7 +111,7 @@ function ClassPreferences() {
                                    <div className="rank-name">
                                    More Preferred 
                                    </div>
-                                   <button type="button" className="edit-rank-button">
+                                   <button type="button" className="edit-rank-button" onClick={() => handleEditClass(2)}>
                                         <img src={edit_icon} alt="Edit Classes" height={20}/>{"  "}
                                         <div>Edit Classes</div>
                                    </button>
@@ -116,7 +128,7 @@ function ClassPreferences() {
                                    <div className="rank-name">
                                    Preferred 
                                    </div>
-                                   <button type="button" className="edit-rank-button">
+                                   <button type="button" className="edit-rank-button" onClick={ () => handleEditClass(3)}>
                                         <img src={edit_icon} alt="Edit Classes" height={20}/>{"  "}
                                         <div>Edit Classes</div>
                                    </button>
@@ -128,7 +140,11 @@ function ClassPreferences() {
                     </div>
 
                </div>
+               <Modal isOpen={modalOpen} onClose={closeModal} title={"Most Preferred Classes"} width={"600px"} height={"90%"}>
+                    
+               </Modal>
                </main>
+               
      );
 };
 

@@ -1,6 +1,12 @@
 import './index.css'; 
 
-function ClassPreferencesCard({ classData }) {
+function ClassPreferencesCard({ classData, fullWith }) {
+    let card_width;
+    if (fullWith) {
+        card_width = "90%";
+    } else {
+        card_width = "45%";
+    }
 
     const RANK1_COLOR = "rgba(67, 133, 172, 1)";
     const RANK2_COLOR = "rgba(67, 133, 172, 0.7)";
@@ -42,7 +48,7 @@ function ClassPreferencesCard({ classData }) {
     };
 
     return (
-        <div className="class-pref-card" >
+        <div className="class-pref-card" style={{width: card_width}} >
             <div className="vertical-line" style={{ backgroundColor: lineColor }} />
             <div className="card-content">
                 <div className="column segment-1">

@@ -192,13 +192,6 @@ export default class VolunteerModel {
 
         const [results, _] = await connectionPool.query<any>(query, values);
 
-        if (results.length === 0) {
-            throw {
-                status: 400,
-                message: `No preferred classes found for given voluntter or volunteer not found`,
-            };
-        }
-
         return results;
     }
 }

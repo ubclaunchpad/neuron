@@ -5,6 +5,7 @@ import { fetchUserData, fetchVolunteerData } from "../../api/volunteerService";
 import AvailabilityGrid from "../../components/volunteerProfile/availabilityGrid";
 import ChangePasswordCard from "../../components/volunteerProfile/changePasswordCard";
 import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
+import ClassPreferencesCardMP from "../../components/volunteerProfile/classPreferencesCard";
 import "./index.css";
 
 function VolunteerProfile() {
@@ -59,6 +60,9 @@ function VolunteerProfile() {
           <div className="column-2">
             <div className="password-card">
               <ChangePasswordCard volunteer={volunteer} />
+            </div>
+            <div >
+              <ClassPreferencesCardMP volunteer={volunteer} />
             </div>
           </div>
         </div>

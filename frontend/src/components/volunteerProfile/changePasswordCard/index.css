@@ -84,3 +84,13 @@ input {
 .change-password-btn:hover {
     background-color: #1a98e1;
 }
+
+.my-profile-title {
+    font-family: "Montserrat";
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 27px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;    
+}

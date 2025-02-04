@@ -118,3 +118,13 @@
   grid-column: 1; /* First column */
   background-color: #fff; /* Match grid background */
 }
+
+.my-profile-title {
+  font-family: "Montserrat";
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 27px;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;    
+}

@@ -3,7 +3,7 @@
 /* General Card Styles */
 .class-pref-card {
     display: flex;
-    width: 45%;
+    /* width: 45%; */
     margin: .5rem;
     padding: .5rem .8rem;
     border: 1px solid #ccc;

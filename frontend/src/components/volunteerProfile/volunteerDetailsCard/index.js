@@ -167,7 +167,7 @@ function VolunteerDetailsCard({ volunteer }) {
                     </div>
                     <div className="profile-info">
                         <div className="header">
-                            <h2>{volunteer.f_name} {volunteer.l_name}</h2>
+                            <h2 className="my-profile-title">{volunteer.f_name} {volunteer.l_name}</h2>
                         </div>
                         <table className="profile-table">
                             <tbody>

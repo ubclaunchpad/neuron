@@ -143,6 +143,8 @@
      font-family: 'Roboto';
      font-weight: 400;
      font-size: 16px;
+     display: flex; 
+     align-items: center;
 }
 
 .volunteer-profile {
@@ -221,6 +223,10 @@
      height: 1.5rem;
      width: 1.5rem;
      margin-right: 0.5rem; 
+ }
+
+ .email-icon {
+     margin-left: 0.5rem;
  }
  
  .join-class-button {

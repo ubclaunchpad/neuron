@@ -84,33 +84,53 @@ export default class ShiftModel {
           return results;
      }
 
-     getRecurringDates(classTimeline: any, day: number): string[] {
+     private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number): string[] {
           const result: string[] = [];
       
           let start = new Date(classTimeline.start_date);
           const end = new Date(classTimeline.end_date);
 
+          const [hours, minutes] = startTime.split(':').map(Number);
+          const startDateAndTime = new Date(classTimeline.start_date);
+          startDateAndTime.setHours(hours, minutes);
+
           const now = new Date();
-          if (start < now) {
+
+          // if start is earlier than right now
+          if (startDateAndTime < now) {
                start = now;
+
+               // if schedule starts today at exactly now or at an earlier time than now, we need to skip this week
+               if (dayNumber === now.getDay() && 
+                    startDateAndTime.getHours() <= now.getHours() && 
+                    startDateAndTime.getMinutes() <= now.getMinutes()) {
+
+                         console.log("start time is earlier than now");
+                         console.log(startDateAndTime.getHours(), now.getHours());
+                         console.log(startDateAndTime.getMinutes(), now.getMinutes());
+
+                    start.setDate(start.getDate() + 7);
+               }
+               // NOTE: if the schedule starts today at a later time than now, all the shifts today will still be scheduled
           }
+          console.log(start.getDate());
      
           // find the first occurrence of the given day
-          while (start.getUTCDay() !== day) {
-               start.setUTCDate(start.getUTCDate() + 1);
+          while (start.getDay() !== dayNumber) {
+               start.setDate(start.getDate() + 1);
           }
      
           // collect all occurrences of the given day until the end date
           while (start <= end) {
-               result.push(start.toISOString().split('T')[0]); // store as YYYY-MM-DD
-               start.setUTCDate(start.getUTCDate() + 7);
+               result.push(start.toLocaleDateString().split('T')[0]); // store as YYYY-MM-DD
+               start.setDate(start.getDate() + 7);
           }
       
           return result;
      }
 
      // convert time in HH:MM format to minutes
-     getDurationInMinutes(startTime: string, endTime: string): number {
+     private getDurationInMinutes(startTime: string, endTime: string): number {
           
           const timeToMinutes = (time: string): number => {
                const [hours, minutes] = time.split(':').map(Number);
@@ -140,7 +160,7 @@ export default class ShiftModel {
                     return;
                }
 
-               const dates = this.getRecurringDates(classTimeline, schedule.day);
+               const dates = this.getRecurringDates(classTimeline, schedule.start_time, schedule.day);
                const duration = this.getDurationInMinutes(schedule.start_time, schedule.end_time);
 
                schedule.volunteer_ids.forEach((volunteer_id: any) => {
@@ -166,12 +186,14 @@ export default class ShiftModel {
                LEFT JOIN schedule sc 
                ON sh.fk_schedule_id = sc.schedule_id
                WHERE sh.fk_schedule_id IN (?)
-               AND STR_TO_DATE(CONCAT(sh.shift_date, ' ', sc.start_time), '%Y-%m-%d %H:%i:%s') > NOW()
+               AND STR_TO_DATE(CONCAT(sh.shift_date, ' ', sc.start_time), '%Y-%m-%d %H:%i:%s') > CONVERT_TZ(NOW(), 'UTC', 'America/Vancouver')
           `;
           const values1 = [scheduleIds];
           const [results1, _] = await transaction.query<ShiftDB[]>(query1, values1);
 
           const shiftIds = results1.map(result => result.shift_id);
+          console.log(shiftIds);
+
           if (shiftIds.length > 0) {
                const query2 = `DELETE FROM shifts WHERE shift_id IN (?)`;
                const values2 = [shiftIds];

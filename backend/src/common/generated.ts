@@ -91,7 +91,7 @@ export interface VolunteerProfilePicDB extends RowDataPacket {
   'profile_pic': Buffer;
 }
 export interface VolunteerDB extends RowDataPacket {
-  'active'?: any | null;
+  'active': any;
   'bio'?: string | null;
   'city'?: string | null;
   'email': string;
@@ -99,9 +99,10 @@ export interface VolunteerDB extends RowDataPacket {
   'fk_user_id'?: string | null;
   'l_name': string;
   'p_name'?: string | null;
+  'p_time_ctmt': number;
   'phone_number'?: string | null;
   'pronouns'?: string | null;
   'province'?: string | null;
-  'total_hours'?: number;
+  'total_hours': number;
   'volunteer_id': string;
 }

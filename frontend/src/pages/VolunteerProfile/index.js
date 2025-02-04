@@ -62,7 +62,7 @@ function VolunteerProfile() {
             </div>
           </div>
         </div>
-        : <div>Loading...</div> 
+        : <></> 
         }
       </main>
     );

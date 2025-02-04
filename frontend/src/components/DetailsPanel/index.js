@@ -1,11 +1,13 @@
 import dayjs from "dayjs";
-import React, { useEffect, useState } from "react";
+import { default as React, default as React, useEffect, useState } from "react";
 import { isAuthenticated } from "../../api/authService";
 import { getClassById } from "../../api/classesPageService";
+import email from "../../assets/email.png";
 import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import zoom_icon from "../../assets/zoom.png";
+import { SHIFT_TYPES } from "../../data/constants";
 import "./index.css";
 
 function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbuttons = [], shiftDetails }) {
@@ -18,6 +20,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     if (classId) {
       getClassById(classId)
         .then((data) => {
+          console.log(data)
           setPanelInfo(data);
           setPanelWidth("35vw");
           myClassCheck(data);
@@ -115,6 +118,34 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     }
   };
 
+  const renderInstructorInfo = () => {
+    if (!shiftDetails || !shiftDetails.shift_type || !panelInfo?.instructor_email) return;
+  
+    return (
+      <>
+        {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
+          ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
+          : "No instructor available"}
+        {shiftDetails.shift_type === SHIFT_TYPES.MY_SHIFTS || shiftDetails.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS 
+          ?
+          <button
+            className="email-icon panel-button-icon"
+            onClick={() => {
+              window.open(`mailto:${panelInfo.instructor_email}`);
+            }}
+          >
+            <img
+              alt="Email"
+              style={{ width: 16, height: 16 }}
+              src={email}
+            />
+          </button>
+          : null}
+      </>
+    );
+  };
+  
+  
   return (
     <>
       <div
@@ -172,9 +203,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
             <div className="panel-details-shift-row">
               <div className="panel-titles">Instructor</div>
               <div className="panel-details-shift-right">
-                {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
-                  ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
-                  : "No instructor available"}
+                {renderInstructorInfo()}
               </div>
             </div>
             <div className="panel-details-shift-row">

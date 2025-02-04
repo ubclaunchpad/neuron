@@ -3,7 +3,7 @@ import api from './api';
 
 const getShiftInfo = async (volunteerID, scheduleID, shiftDate) => {
     try {
-        const response = await api.post('/classes/shifts', { 
+        const response = await api.post('/shifts', { 
             volunteerID, 
             scheduleID, 
             shiftDate 
@@ -26,7 +26,7 @@ const getShiftInfo = async (volunteerID, scheduleID, shiftDate) => {
 // -- Returns shift details such as date, time, class, duration, and coverage status.
 const getVolunteerShiftsForMonth = async (body) => {
     try {
-        const response = await api.post('/classes/shifts/volunteer-month', { 
+        const response = await api.post('/shifts/volunteer-month', { 
             fk_volunteer_id: body.volunteer_id,
             shift_date: body.shiftDate 
         });
@@ -42,7 +42,7 @@ const getVolunteerShiftsForMonth = async (body) => {
 const requestToCoverShift = async (body) => {
     try {
         console.log('requestToCoverShift body:', body);
-        const response = await api.post('/classes/shifts/request-to-cover-shift', { 
+        const response = await api.post('/shifts/request-to-cover-shift', { 
             request_id: body.request_id, 
             volunteer_id: body.volunteer_id
         });
@@ -54,7 +54,8 @@ const requestToCoverShift = async (body) => {
     }
 }
 
-export { getShiftInfo,
-         getVolunteerShiftsForMonth,
-         requestToCoverShift
-        };
+export {
+    getShiftInfo,
+    getVolunteerShiftsForMonth,
+    requestToCoverShift
+};

@@ -23,13 +23,7 @@ function VolunteerDetailsCard({ volunteer }) {
         phoneNumber: volunteer.phone_number,
         timeCommitment: volunteer.p_time_ctmt
     });
-    const [prevMutableData, setPrevMutableData] = React.useState({
-        profilePicture: null,
-        preferredName: null,
-        pronouns: null,
-        phoneNumber: null,
-        timeCommitment: null
-    });
+    const [prevMutableData, setPrevMutableData] = React.useState({});
     const [tempImage, setTempImage] = React.useState(null);
     const [prevTempImage, setPrevTempImage] = React.useState(null);
 
@@ -92,18 +86,14 @@ function VolunteerDetailsCard({ volunteer }) {
             mutableData.timeCommitment !== prevMutableData.timeCommitment) {
                 
             // store empty strings as null
-            const userData = {
-                ...volunteer,
+            const volunteerData = {
                 p_name: mutableData.preferredName ?? null,
                 pronouns: mutableData.pronouns ?? null,
                 phone_number: mutableData.phoneNumber ?? null,
                 p_time_ctmt: mutableData.timeCommitment
             }
 
-            // NOTE: created_at and profile_picture are not fields in volunteers table, need to be separated
-            const {created_at, profile_picture, ...volunteerData} = userData;
-
-            const volunteerResult = await updateVolunteerData(volunteerData);
+            const volunteerResult = await updateVolunteerData(volunteerData, volunteer.volunteer_id);
             console.log("Successfully updated volunteer.", volunteerResult);
         }
     }

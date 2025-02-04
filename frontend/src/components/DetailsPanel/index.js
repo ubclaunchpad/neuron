@@ -4,19 +4,23 @@ import button_icon_close from "../../assets/images/button-icons/button-icon-clos
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import zoom_icon from "../../assets/zoom.png";
+import email from "../../assets/email.png"
 import { getClassById } from "../../api/classesPageService";
 import { isAuthenticated } from "../../api/authService";
+import {SHIFT_TYPES} from "../../data/constants";
 import dayjs from "dayjs";
 
 function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbuttons = [], shiftDetails }) {
   const [panelWidth, setPanelWidth] = useState("0px");
   const [panelInfo, setPanelInfo] = useState(null);
   const [myClass, setMyClass] = useState(false);
+  const [classTaken, setClassTaken] = useState(false);
 
   useEffect(() => {
     if (classId) {
       getClassById(classId)
         .then((data) => {
+          console.log(data)
           setPanelInfo(data);
           setPanelWidth("35vw");
           myClassCheck(data);
@@ -35,13 +39,16 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     return data.then((result) => result.user.user_id).catch(() => null);
   };
 
-  const myClassCheck = (data) => {
+  const myClassCheck = async (data) => {
+
     if (data.volunteer_user_ids) {
-      const userIds = data.volunteer_user_ids.split(",");
-      const currentUserId = getCurrentUserId();
+      const userIds = data.volunteer_user_ids.split(",").map(id => id.trim());
+      const currentUserId = (await getCurrentUserId()).trim();
       setMyClass(userIds.includes(currentUserId));
+      setClassTaken(true);
     } else {
       setMyClass(false);
+      setClassTaken(false);
     }
   };
 
@@ -131,6 +138,34 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     }
   };
 
+  const renderInstructorInfo = () => {
+    if (!shiftDetails || !shiftDetails.shift_type || !panelInfo?.instructor_email) return;
+  
+    return (
+      <>
+        {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
+          ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
+          : "No instructor available"}
+        {shiftDetails.shift_type === SHIFT_TYPES.MY_SHIFTS || shiftDetails.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS 
+          ?
+          <button
+            className="email-icon panel-button-icon"
+            onClick={() => {
+              window.open(`mailto:${panelInfo.instructor_email}`);
+            }}
+          >
+            <img
+              alt="Email"
+              style={{ width: 16, height: 16 }}
+              src={email}
+            />
+          </button>
+          : null}
+      </>
+    );
+  };
+  
+  
   return (
     <>
       <div
@@ -142,7 +177,10 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
       <div className="panel-container" style={{ width: panelWidth }}>
         <div className="panel-header">
           {shiftDetails ? (
-              <span>{dayjs(shiftDetails.shift_date).format('YYYY-MM-DD')}</span>
+              <span>
+                <div>{dayjs(shiftDetails.start_time, 'HH:mm').format('h:mm A')} - {dayjs(shiftDetails.end_time, 'HH:mm').format('h:mm A')}</div>
+                <div>{dayjs(shiftDetails.shift_date).format('dddd, MMMM D')}</div>
+              </span>
           ) : (
               renderSchedules()
           )}
@@ -179,16 +217,16 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
                 </div>
               ) : myClass ? (
                 <div className="my-shifts">My Class</div> 
-              ) : (
+              ) : classTaken ? (
                 <div className="classTaken">Class Taken</div> 
+              ) : (
+                <div className="volunteersNeeded">Volunteers Needed</div> 
               )}
             </div>
             <div className="panel-details-shift-row">
               <div className="panel-titles">Instructor</div>
               <div className="panel-details-shift-right">
-                {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
-                  ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
-                  : "No instructor available"}
+                {renderInstructorInfo()}
               </div>
             </div>
             <div className="panel-details-shift-row">

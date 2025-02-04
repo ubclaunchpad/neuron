@@ -40,11 +40,13 @@ export default class UserModel {
         return results[0];
     }
 
-    async insertUser(user: Partial<UserDB>): Promise<ResultSetHeader> {
+    async insertUser(user: Partial<UserDB>, transaction?: PoolConnection): Promise<ResultSetHeader> {
+        const connection = transaction ?? connectionPool;
+
         const query = `INSERT INTO users (user_id, email, password, role) VALUES (?, ?, ?, ?)`;
         const values = [user.user_id, user.email, user.password, user.role];
 
-        const [results, _] = await connectionPool.query<ResultSetHeader>(query, values).catch(error => {
+        const [results, _] = await connection.query<ResultSetHeader>(query, values).catch(error => {
             if (error.code === "ER_DUP_ENTRY") {
                 throw {
                     status: 400,

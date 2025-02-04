@@ -7,6 +7,7 @@ import zoom_icon from "../../assets/zoom.png";
 import { getClassById } from "../../api/classesPageService";
 import { isAuthenticated } from "../../api/authService";
 import dayjs from "dayjs";
+import { COVERAGE_STATUSES } from "../../data/constants";
 
 function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbuttons = [], shiftDetails }) {
   const [panelWidth, setPanelWidth] = useState("0px");
@@ -177,8 +178,10 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
                     ? "My Class"
                     : shiftDetails.shift_type === "my-coverage-requests"
                     ? "Requested Coverage"
-                    : shiftDetails.shift_type === "coverage"
+                    : shiftDetails.shift_type === "coverage" && shiftDetails.coverage_status === COVERAGE_STATUSES.OPEN
                     ? "Needs Coverage"
+                    : shiftDetails.shift_type === "coverage" && shiftDetails.coverage_status === COVERAGE_STATUSES.PENDING
+                    ? "Requested to Cover"
                     : ""}
                 </div>
               ) : myClass ? (

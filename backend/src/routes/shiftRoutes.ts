@@ -8,6 +8,7 @@ import {
     getShiftsByVolunteerId,
     getShiftsByVolunteerIdAndMonth,
     requestToCoverShift,
+    cancelCoverShift,
     checkInShift,
     updateShift
 } from '../controllers/shiftController.js';
@@ -83,6 +84,16 @@ export const ShiftRoutes: RouteDefinition = {
                 param('shift_id').isInt({ min: 0 })
             ],
             action: checkInShift
+        },
+        {
+            path: '/cancel-cover-shift',
+            method: 'delete',
+            validation: [
+                body('request_id').isInt({ min: 0 }),
+                body('volunteer_id').isUUID('4')
+            ],
+            action: cancelCoverShift
+
         },
         {
             path: '/:shift_id',

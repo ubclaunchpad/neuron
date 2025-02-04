@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
-import { requestToCoverShift, checkInShift } from '../../api/shiftService';
+import { requestToCoverShift, cancelCoverShift, checkInShift } from '../../api/shiftService';
 import { SHIFT_TYPES, COVERAGE_STATUSES } from '../../data/constants';
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
@@ -11,6 +11,7 @@ import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import CheckInIcon from '../../assets/check-in-icon.png'
 import Plus from '../../assets/plus.png'
 import RequestCoverageIcon from '../../assets/request-coverage.png'
+import CancelIcon from "../../assets/images/button-icons/white-cancel-icon.svg";
 import "./index.css";
 
 function VolunteerSchedule() {
@@ -113,6 +114,32 @@ function VolunteerSchedule() {
         // Add logic for requesting coverage
     };
 
+    const handleCancelClick = async (shift) => {
+        console.log("Cancel button pressed for shift ID: ", shift.shift_id);
+
+        if (shift.shift_type === SHIFT_TYPES.COVERAGE) {
+
+            try {
+                console.log("Canceling coverage for shift ID: ", shift.shift_id);
+                const body = {
+                    request_id: shift.request_id,
+                    volunteer_id: volunteerID
+                };
+                await cancelCoverShift(body);
+                handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.OPEN });
+            } catch (error) {
+                console.error('Error canceling coverage:', error);
+            }
+
+        
+        } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
+
+            // TODO: Implement canceling coverage request for OWN shift
+
+        }
+
+    }
+
     // Returns the button configuration for the shift based on the shift type
     const getButtonConfig = (shift) => {
 
@@ -125,7 +152,7 @@ function VolunteerSchedule() {
 
         return {
             [SHIFT_TYPES.MY_SHIFTS]: {
-                lineColor: 'var(--green)',
+                lineColor: 'var(--green)',  // Line color for the shift card
                 label: shift.checked_in 
                     ? 'Checked In' 
                         : currentShift 
@@ -169,6 +196,13 @@ function VolunteerSchedule() {
                 disabled: false,
                 onClick: handleRequestCoverageClick,
             },
+            CANCEL: {
+                label: 'Cancel',
+                icon: CancelIcon,
+                disabled: false,
+                buttonClass: 'cancel',
+                onClick: handleCancelClick,
+            }
         };
     }
 
@@ -185,10 +219,14 @@ function VolunteerSchedule() {
         const primaryButton = buttonConfig[shift.shift_type] || buttonConfig[SHIFT_TYPES.DEFAULT];
 
         buttons.push(primaryButton);
-        if (shift.shiftType === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
+        if (shift.shift_type === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
             buttons.push(buttonConfig.REQUEST_COVERAGE);
+        } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.PENDING) {
+            buttons.push(buttonConfig.CANCEL);
         }
 
+        // TODO: Add button for canceling OWN coverage requests when it's still OPEN
+    
         return buttons;
     };
 

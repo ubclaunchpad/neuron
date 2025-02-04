@@ -209,6 +209,12 @@
      border: 1px solid #d3d3d3;
      box-shadow: none;
  }
+
+ .dynamic-button.cancel {
+     background-color: var(--red);
+     color: var(--white);
+     border: var(--red);
+ }
  
  /* Icon within Button */
  .card-button-icon {

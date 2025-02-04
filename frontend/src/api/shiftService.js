@@ -66,9 +66,27 @@ const checkInShift = async (shift_id) => {
   }
 };
 
+const cancelCoverShift = async (body) => {
+  try {
+    console.log("cancelCoverShift body:", body);
+    const response = await api.delete("/shifts/cancel-cover-shift", { 
+      data: {
+        request_id: body.request_id,
+        volunteer_id: body.volunteer_id,
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error cancelling shift coverage:", error);
+    throw error;
+  }
+};
+
 export {
   getShiftInfo,
   getVolunteerShiftsForMonth,
   requestToCoverShift,
+  cancelCoverShift,
   checkInShift,
 };

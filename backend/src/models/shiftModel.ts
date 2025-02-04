@@ -84,6 +84,18 @@ export default class ShiftModel {
           return results;
      }
 
+     // delete a pending shift coverage request
+     async cancelCoverShift(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
+          const query = `
+               DELETE FROM pending_shift_coverage WHERE request_id = ? AND pending_volunteer = ?
+          `;
+          const values = [request_id, volunteer_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
      // modify a shift to indicate that a volunteer has checked in
      async checkInShift(shift_id: number): Promise<ResultSetHeader> {
           const query = `

@@ -1,66 +1,111 @@
-import { Router, Request, Response } from 'express';
-import { 
+import { body, param } from 'express-validator';
+import { RouteDefinition } from "../common/types.js";
+import {
+    addShift,
+    deleteShift,
     getShiftInfo,
-    getShiftsByVolunteerId, 
     getShiftsByDate,
+    getShiftsByVolunteerId,
     getShiftsByVolunteerIdAndMonth,
     requestToCoverShift,
     checkInShift,
-    addShift,
-    updateShift,
-    deleteShift
+    updateShift
 } from '../controllers/shiftController.js';
 
-const router = Router();
-
-// gets all info associated with a shift
-router.post('/info', (req: Request, res: Response) => { 
-    getShiftInfo(req, res); 
- });
-
- // get shifts assigned to a volunteer by their volunteer id
-router.get('/:volunteer_id', (req: Request, res: Response) => { 
-    getShiftsByVolunteerId(req, res) 
-});
-
-// get shifts on a given date
-router.post('/on-date', (req: Request, res: Response) => { 
-    getShiftsByDate(req, res)
-});
-
-// Retrieves all shifts viewable to a specific volunteer in a given month and year.
-// -- The shifts include:
-// -- 1. 'my-shifts' - shifts assigned to the volunteer.
-// -- 2. 'coverage' - shifts available for coverage by other volunteers.
-// -- 3. 'my-coverage-requests' - coverage requests made by the volunteer.
-// -- Returns shift details such as date, time, class, duration, and coverage status.
-router.post('/volunteer-month', (req: Request, res: Response) => {
-    getShiftsByVolunteerIdAndMonth(req, res);
-});
-
-// volunteer requesting to cover someone else’s open shift
-router.post('/request-to-cover-shift', (req: Request, res: Response) => {
-    requestToCoverShift(req, res);
-});
-
-// volunteer checks into their shift
-router.patch('/check-in/:shift_id', (req: Request, res: Response) => {
-    checkInShift(req, res);
-});
-
-// create a new shift, either unassigned or assigned to a volunteer by id
-router.post('/', (req: Request, res: Response) => {
-    addShift(req, res);
-})
-
-// update a shift by id
-router.put('/:shift_id', (req: Request, res: Response) => {
-    updateShift(req, res);
-})
-
-// delete a shift by id
-router.delete('/:shift_id', (req: Request, res: Response) => {
-    deleteShift(req, res);
-})
-
-export default router;
+export const ShiftRoutes: RouteDefinition = {
+    path: '/shifts',
+    children: [
+        {
+            path: '/',
+            method: 'post',
+            validation: [
+                body('fk_volunteer_id').isUUID('4'),
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' }),
+                body('fk_schedule_id').isInt({ min: 0 }),
+                body('duration').isInt({ min: 0 }),
+            ],
+            action: addShift
+        },
+        {
+            path: '/info',
+            method: 'post',
+            validation: [
+                body('fk_volunteer_id').isUUID('4'),
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' }),
+                body('fk_schedule_id').isInt({ min: 0 }),
+            ],
+            action: getShiftInfo
+        },
+        {
+            path: '/:volunteer_id',
+            method: 'get',
+            validation: [
+                param('volunteer_id').isUUID('4')
+            ],
+            action: getShiftsByVolunteerId
+        },
+        {
+            path: '/on-date',
+            method: 'post',
+            validation: [
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' })
+            ],
+            action: getShiftsByDate
+        },
+        {
+            // Retrieves all shifts viewable to a specific volunteer in a given month and year.
+            // -- The shifts include:
+            // -- 1. 'my-shifts' - shifts assigned to the volunteer.
+            // -- 2. 'coverage' - shifts available for coverage by other volunteers.
+            // -- 3. 'my-coverage-requests' - coverage requests made by the volunteer.
+            // -- Returns shift details such as date, time, class, duration, and coverage status.
+            path: '/volunteer-month',
+            method: 'post',
+            validation: [
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' }),
+                body('fk_volunteer_id').isUUID('4')
+            ],
+            action: getShiftsByVolunteerIdAndMonth
+        },
+        {
+            path: '/request-to-cover-shift',
+            method: 'post',
+            validation: [
+                body('request_id').isInt({ min: 0 }),
+                body('volunteer_id').isUUID('4')
+            ],
+            action: requestToCoverShift
+        },
+        {
+            path: '/check-in/:shift_id',
+            method: 'patch',
+            validation: [
+                param('shift_id').isInt({ min: 0 })
+            ],
+            action: checkInShift
+        },
+        {
+            path: '/:shift_id',
+            validation: [
+                param('shift_id').isInt({ min: 0 })
+            ],
+            children: [
+                {
+                    path: '/',
+                    method: 'put',
+                    validation: [
+                        body('fk_volunteer_id').isUUID('4').optional(),
+                        body('shift_date').isDate({ format: 'YYYY-MM-DD' }).optional(),
+                        body('duration').isInt({ min: 0 }).optional(),
+                    ],
+                    action: updateShift
+                },
+                {
+                    path: '/',
+                    method: 'put',
+                    action: deleteShift
+                },
+            ]
+        }
+    ]
+};

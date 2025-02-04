@@ -12,6 +12,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
   const [panelWidth, setPanelWidth] = useState("0px");
   const [panelInfo, setPanelInfo] = useState(null);
   const [myClass, setMyClass] = useState(false);
+  const [classTaken, setClassTaken] = useState(false);
 
   useEffect(() => {
     if (classId) {
@@ -35,13 +36,16 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     return data.then((result) => result.user.user_id).catch(() => null);
   };
 
-  const myClassCheck = (data) => {
+  const myClassCheck = async (data) => {
+
     if (data.volunteer_user_ids) {
-      const userIds = data.volunteer_user_ids.split(",");
-      const currentUserId = getCurrentUserId();
+      const userIds = data.volunteer_user_ids.split(",").map(id => id.trim());
+      const currentUserId = (await getCurrentUserId()).trim();
       setMyClass(userIds.includes(currentUserId));
+      setClassTaken(true);
     } else {
       setMyClass(false);
+      setClassTaken(false);
     }
   };
 
@@ -179,8 +183,10 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
                 </div>
               ) : myClass ? (
                 <div className="my-shifts">My Class</div> 
-              ) : (
+              ) : classTaken ? (
                 <div className="classTaken">Class Taken</div> 
+              ) : (
+                <div className="volunteersNeeded">Volunteers Needed</div> 
               )}
             </div>
             <div className="panel-details-shift-row">

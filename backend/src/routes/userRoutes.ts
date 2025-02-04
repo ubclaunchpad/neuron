@@ -1,17 +1,24 @@
-import { Request, Response, Router } from "express";
+import { param } from "express-validator";
+import { RouteDefinition } from "../common/types.js";
 import { imageUploadMiddleware } from "../config/fileUpload.js";
 import { getUserById, insertProfilePicture } from "../controllers/userController.js";
 
-const router = Router();
-
-// create profile picture for a user
-router.post("/:user_id/upload", imageUploadMiddleware, (req: Request, res: Response) => {
-    insertProfilePicture(req, res);
-});
-
-// get user profile by id
-router.get("/:user_id", (req: Request, res: Response) => {
-    getUserById(req, res);
-});
-
-export default router;
+export const UserRoutes: RouteDefinition = {
+    path: '/user/:user_id',
+    validation: [
+        param('user_id').isUUID('4')
+    ],
+    children: [
+        {
+            path: '/',
+            method: 'get',
+            action: getUserById
+        },
+        {
+            path: '/upload',
+            method: 'post',
+            middleware: [imageUploadMiddleware],
+            action: insertProfilePicture
+        },
+    ]
+};

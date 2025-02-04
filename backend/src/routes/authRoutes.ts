@@ -1,48 +1,81 @@
-import { Router, Request, Response } from "express";
-import {
-    registerUser,
-    loginUser,
-    sendVolunteerData,
-    resetPassword,
-    verifyAndRedirect,
-    sendResetPasswordEmail,
-    updatePassword,
-} from "../controllers/userController.js";
+import { body, param } from "express-validator";
+import { RouteDefinition } from "../common/types.js";
 import { isAuthorized } from "../config/authCheck.js";
-import { AuthenticatedUserRequest } from "../common/types.js";
+import {
+    loginUser,
+    registerUser,
+    resetPassword,
+    sendResetPasswordEmail,
+    sendVolunteerData,
+    updatePassword,
+    verifyAndRedirect,
+} from "../controllers/userController.js";
 
-const authRouter = Router();
-
-authRouter.post(
-    "/is-authenticated",
-    isAuthorized,
-    (req: AuthenticatedUserRequest, res: Response) => {
-        sendVolunteerData(req, res);
-    }
-);
-
-authRouter.post("/register", (req: Request, res: Response) =>
-    registerUser(req, res)
-);
-
-authRouter.post("/login", (req: Request, res: Response) => loginUser(req, res));
-
-authRouter.post("/send-reset-password-email", (req: Request, res: Response) =>
-    sendResetPasswordEmail(req, res)
-);
-
-authRouter.get("/forgot-password/:id/:token", (req: Request, res: Response) =>
-    verifyAndRedirect(req, res)
-);
-
-authRouter.post("/reset-password", (req: Request, res: Response) =>
-    resetPassword(req, res)
-);
-
-authRouter.post(
-    "/update-password",
-    isAuthorized,
-    (req: AuthenticatedUserRequest, res: Response) => updatePassword(req, res)
-);
-
-export default authRouter;
+export const AuthRoutes: RouteDefinition = {
+    path: '/auth',
+    children: [
+        {
+            path: '/register',
+            method: 'post',
+            validation: [
+                body('firstName').isString(),
+                body('lastName').isString(),
+                body('email').isEmail(),
+                body('password').isString(),
+                body('role').isIn([ "admin", "volun", "instr" ]),
+            ],
+            action: registerUser
+        },
+        {
+            path: '/login',
+            method: 'post',
+            validation: [
+                body('email').isEmail(),
+                body('password').isString(),
+            ],
+            action: loginUser
+        },
+        {
+            path: '/send-reset-password-email',
+            method: 'post',
+            validation: [
+                body('email').isEmail(),
+            ],
+            action: sendResetPasswordEmail
+        },
+        {
+            path: '/forgot-password/:id/:token',
+            method: 'get',
+            validation: [
+                param('id').isUUID('4'),
+                param('token').isJWT(),
+            ],
+            action: verifyAndRedirect
+        },
+        {
+            path: '/reset-password',
+            method: 'post',
+            validation: [
+                body('password').isString(),
+                param('id').isUUID('4'),
+                param('token').isJWT(),
+            ],
+            action: resetPassword
+        },
+        {
+            path: '/update-password',
+            method: 'post',
+            middleware: [isAuthorized],
+            validation: [
+                body('password').isString(),
+            ],
+            action: updatePassword
+        },
+        {
+            path: '/is-authenticated',
+            method: 'post',
+            middleware: [isAuthorized],
+            action: sendVolunteerData
+        },
+    ]
+};

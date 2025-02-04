@@ -21,7 +21,7 @@ async function isAuthorized(
     next: NextFunction
 ): Promise<any> {
     // Get the token from the request body
-    const token = req.body.token;
+    const { token } = req.body;
 
     // If the token is not provided, return an error message
     if (!token) {
@@ -39,19 +39,14 @@ async function isAuthorized(
     try {
         // Verify the token
         const decoded = jwt.verify(token, TOKEN_SECRET) as DecodedJwtPayload;
+        
+        const result = await userModel.getUserById(decoded.user_id);
 
-        try {
-            const result = await userModel.getUserById(decoded.user_id);
+        // Attach the user to the request
+        req.user = result;
 
-            // Attach the user to the request
-            req.user = result;
-            // Call the next function
-            next();
-        } catch (error: any) {
-            return res.status(error.status).json({
-                error: error.message,
-            });
-        }
+        // Call the next function
+        next();
     } catch (err) {
         return res.status(401).json({
             error: "The token is either invalid or has expired",
@@ -64,13 +59,7 @@ async function isAdmin(
     res: Response,
     next: NextFunction
 ): Promise<any> {
-    if (!req.user) {
-        return res.status(401).json({
-            error: "Unauthorized",
-        });
-    }
-
-    if (req.user.role !== "ADMIN") {
+    if (req.user!.role !== "ADMIN") {
         return res.status(403).json({
             error: "Forbidden",
         });

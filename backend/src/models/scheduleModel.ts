@@ -179,7 +179,7 @@ export default class ScheduleModel {
         return schedulesToSetInactive;
     }
 
-    async getSchedulesWithChanges(schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
+    async getModifiedSchedules(schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
         const scheduleIds = schedules.map(schedule => schedule.schedule_id);
         const query = `
             SELECT
@@ -236,7 +236,7 @@ export default class ScheduleModel {
         return schedulesWithVolunteers;
     }
 
-    async updateSchedulesHistoricWithChanges(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<any> {
+    async updateModifiedHistoric(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<any> {
         if (schedules.length === 0) {
             return {
                 addedSchedules: [],
@@ -253,10 +253,10 @@ export default class ScheduleModel {
         await this.setSchedulesInactive(scheduleIds, transaction);
 
         // add new schedules to db with their assignments
-        const result = await this.addSchedulesToClass(classId, schedulesWithVolunteers, transaction);
+        const addedSchedules = await this.addSchedulesToClass(classId, schedulesWithVolunteers, transaction);
 
         return {
-            addedSchedules: result,
+            addedSchedules: addedSchedules,
             inactiveSchedules: scheduleIds
         }
     }
@@ -277,7 +277,7 @@ export default class ScheduleModel {
         return schedulesWithVolunteers;
     }
 
-    async updateSchedulesHistoric(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<any> {
+    async updateHistoric(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<any> {
         if (schedules.length === 0) {
             return {
                 addedSchedules: [],
@@ -285,11 +285,11 @@ export default class ScheduleModel {
                 inactiveSchedules: []
             }
         }
-        const schedulesWithChanges = await this.getSchedulesWithChanges(schedules, transaction);
-        const schedulesWithoutChanges = schedules.filter(schedule => !schedulesWithChanges.includes(schedule));
+        const modifiedSchedules = await this.getModifiedSchedules(schedules, transaction);
+        const unmodifiedSchedules = schedules.filter(schedule => !modifiedSchedules.includes(schedule));
 
-        const { addedSchedules, inactiveSchedules } = await this.updateSchedulesHistoricWithChanges(classId, schedulesWithChanges, transaction);
-        const updatedSchedules = await this.updateAssignments(classId, schedulesWithoutChanges, transaction);
+        const { addedSchedules, inactiveSchedules } = await this.updateModifiedHistoric(classId, modifiedSchedules, transaction);
+        const updatedSchedules = await this.updateAssignments(classId, unmodifiedSchedules, transaction);
 
         return {
             addedSchedules: addedSchedules,
@@ -298,7 +298,7 @@ export default class ScheduleModel {
         }
     }
 
-    async updateSchedulesNonHistoricWithChanges(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
+    async updateModifiedNonHistoric(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
         if (schedules.length === 0) {
             return [];
         }
@@ -318,15 +318,15 @@ export default class ScheduleModel {
     }
 
 
-    async updateSchedulesNonHistoric(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
+    async updateNonHistoric(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
         if (schedules.length === 0) {
             return [];
         }
-        const schedulesWithChanges = await this.getSchedulesWithChanges(schedules, transaction);
-        const schedulesWithoutChanges = schedules.filter(schedule => !schedulesWithChanges.includes(schedule));
+        const modifiedSchedules = await this.getModifiedSchedules(schedules, transaction);
+        const unmodifiedSchedules = schedules.filter(schedule => !modifiedSchedules.includes(schedule));
 
-        const updatedSchedules1 = await this.updateSchedulesNonHistoricWithChanges(classId, schedulesWithChanges, transaction);
-        const updatedSchedules2 = await this.updateAssignments(classId, schedulesWithoutChanges, transaction);
+        const updatedSchedules1 = await this.updateModifiedNonHistoric(classId, modifiedSchedules, transaction);
+        const updatedSchedules2 = await this.updateAssignments(classId, unmodifiedSchedules, transaction);
 
         return updatedSchedules1.concat(updatedSchedules2);
     }
@@ -362,8 +362,8 @@ export default class ScheduleModel {
             const schedulesHistoric = await shiftModel.getSchedulesWithHistoricShifts(schedules, transaction);
             const schedulesNonHistoric = schedules.filter(schedule => !schedulesHistoric.includes(schedule));
 
-            const result = await this.updateSchedulesHistoric(classId, schedulesHistoric, transaction);
-            const updatedSchedules = await this.updateSchedulesNonHistoric(classId, schedulesNonHistoric, transaction);
+            const result = await this.updateHistoric(classId, schedulesHistoric, transaction);
+            const updatedSchedules = await this.updateNonHistoric(classId, schedulesNonHistoric, transaction);
 
             await transaction.commit();
 

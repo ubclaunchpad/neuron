@@ -33,7 +33,7 @@ export const ScheduleRoutes: RouteDefinition = {
                     path: '/',
                     method: 'post',
                     validation: [
-                        body().isArray({ min: 0 }),
+                        body().isArray({ min: 1 }),
                         body('*.day').isInt({ min: 1, max: 7 }),
                         body('*.start_time').isTime({ hourFormat: 'hour24' }),
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
@@ -57,22 +57,22 @@ export const ScheduleRoutes: RouteDefinition = {
                     action: updateSchedulesForClass
                 },
                 {
-                    path: '/soft-option',
-                    method: 'delete',
-                    validation: [
-                        body('schedule_ids').isArray({ min: 0}),
-                        body('schedule_ids.*').isInt({ min: 0}),
-                    ],
-                    action: deleteOrSoftDeleteSchedules
-                },
-                {
                     path: '/',
                     method: 'delete',
                     validation: [
-                        body('schedule_ids').isArray({ min: 0}),
-                        body('schedule_ids.*').isInt({ min: 0}),
+                        body('schedule_ids').isArray({ min: 1 }),
+                        body('schedule_ids.*').isInt({ min: 1 }),
                     ],
                     action: deleteSchedulesFromClass
+                },
+                {
+                    path: '/soft-option',
+                    method: 'delete',
+                    validation: [
+                        body('schedule_ids').isArray({ min: 1 }),
+                        body('schedule_ids.*').isInt({ min: 1 }),
+                    ],
+                    action: deleteOrSoftDeleteSchedules
                 },
                 {
                     path: '/:schedule_id',

@@ -27,7 +27,8 @@ export const ClassRoutes: RouteDefinition = {
                 body('schedules.*.day').isInt({ min: 1, max: 7 }),
                 body('schedules.*.start_time').isTime({ hourFormat: 'hour24' }),
                 body('schedules.*.end_time').isTime({ hourFormat: 'hour24' }),
-                body('schedules.*.volunteer_ids').isArray({ min: 1 }).optional()
+                body('schedules.*.volunteer_ids').isArray({ min: 1 }).optional(),
+                body('schedules.*.volunteer_ids.*').isUUID('4')
             ],
             action: addClass
         },

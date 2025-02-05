@@ -246,7 +246,7 @@ export default class ScheduleModel {
         const schedulesWithVolunteers = await this.buildSchedulesWithVolunteers(schedules, transaction);
         const scheduleIds = schedulesWithVolunteers.map(schedule => schedule.schedule_id as number);
 
-        // unassign volunteers from schedulese going inactive
+        // unassign volunteers from schedules going inactive
         await this.unassignVolunteers(scheduleIds, transaction);
 
         // set schedules inactive
@@ -268,7 +268,7 @@ export default class ScheduleModel {
         const schedulesWithVolunteers = schedules.filter(schedule => schedule.volunteer_ids !== undefined);
         const scheduleIds = schedulesWithVolunteers.map(schedule => schedule.schedule_id as number);
 
-        // unassign volunteers from schedulese going inactive
+        // unassign volunteers from schedules
         await this.unassignVolunteers(scheduleIds, transaction);
 
         // make new assignments to the schedules
@@ -305,13 +305,13 @@ export default class ScheduleModel {
         const schedulesWithVolunteers = await this.buildSchedulesWithVolunteers(schedules, transaction);
         const scheduleIds = schedulesWithVolunteers.map(schedule => schedule.schedule_id as number);
 
-        // unassign volunteers from schedulese going inactive
+        // unassign volunteers from schedules
         await this.unassignVolunteers(scheduleIds, transaction);
 
         // safely update the schedules
         await this.updateSchedules(schedulesWithVolunteers, transaction);
 
-        // add new schedules to db with their assignments
+        // assign volunteers to updated schedules
         await this.assignVolunteers(classId, schedulesWithVolunteers, transaction);
 
         return schedulesWithVolunteers;
@@ -331,6 +331,21 @@ export default class ScheduleModel {
         return updatedSchedules1.concat(updatedSchedules2);
     }
 
+    /*
+    Schedules with historic shifts need to be handled differently than schedules with no historic
+    shifts. For example, if a schedule with historic shifts has its day of the week changed, then 
+    we can not just update that schedule's 'day' field. This is because all the shifts that have 
+    already happened will then also have their dependent 'shift_date' changed, which doesn't make 
+    any sense.
+
+    To preserve historic shift schedules, we need to instead set each updated schedule as inactive and 
+    create a new active schedule as the updated version.
+
+    If a schedule does not have any shifts in the past, then we can just update its fields as normal. 
+    However, we still need to make sure all the shifts under that schedule still align correctly with
+    the updated schedule (since shifts have a 'shift_date' field that depends on its schedule's 'day' 
+    field and a 'duration' field that depends on its schedule's 'start_time' and 'end_time').
+    */
     async updateSchedulesForClass(classId: number, schedules: ScheduleDB[]): Promise<any> {
         const transaction = await connectionPool.getConnection();
         try {
@@ -343,7 +358,7 @@ export default class ScheduleModel {
                 throw new Error('All schedules must contain a valid schedule_id.');
             }
 
-            // divide schedules into historic and non-historic
+            // divide into historic and non-historic schedules
             const schedulesHistoric = await shiftModel.getSchedulesWithHistoricShifts(schedules, transaction);
             const schedulesNonHistoric = schedules.filter(schedule => !schedulesHistoric.includes(schedule));
 

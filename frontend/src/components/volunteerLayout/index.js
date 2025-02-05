@@ -8,14 +8,13 @@ import nav_item_settings from "../../assets/nav-item-settings.png";
 import sidebar_toggle from "../../assets/sidebar-toggle.png";
 import "./index.css";
 
-import { isAuthenticated } from "../../api/authService";
 import { formatImageUrl } from "../../api/imageService";
+import { useAuth } from "../../contexts/authContext";
 import NavProfileCard from "../NavProfileCard";
 
 function VolunteerLayout() {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
-  const [volunteer, setVolunteer] = useState(null);
-  const [profilePic, setProfilePic] = useState(null);
+  const { user } = useAuth();
 
   // Toggle function for displaying/hiding sidebar
   const toggleSidebar = () => {
@@ -34,28 +33,6 @@ function VolunteerLayout() {
     handleResize();
 
     return () => mediaQuery.removeEventListener('change', handleResize);
-  }, []);
-  
-  // Fetch user info
-  useEffect(() => {
-    const fetchVolunteerData = async () => {
-      try {
-        const authData = await isAuthenticated();
-        if (authData.isAuthenticated && authData.volunteer) {
-          setVolunteer(authData.volunteer);
-
-          const imageUrl = authData.user.fk_image_id ? formatImageUrl(authData.user.fk_image_id) : undefined;
-
-          setProfilePic(imageUrl);
-        } else {
-          setVolunteer(null);
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        setVolunteer(null);
-      }
-    };
-    fetchVolunteerData();
   }, []);
 
   return (
@@ -118,15 +95,15 @@ function VolunteerLayout() {
         </div>
         <div className="nav-profile-card-container">
           <NavProfileCard
-            avatar={profilePic}
-            name={volunteer?.p_name ?? volunteer?.f_name}
-            email={volunteer?.email}
+            avatar={user?.fk_image_id ? formatImageUrl(user?.fk_image_id) : undefined}
+            name={user?.volunteer?.p_name ?? user?.volunteer?.f_name}
+            email={user?.volunteer?.email}
             collapse={collapsed}
             link="/volunteer/my-profile"
           />
         </div>
       </aside>
-      <Outlet /> {/* Render page content here */}
+      <Outlet />
     </div>
   );
 }

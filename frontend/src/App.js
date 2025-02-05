@@ -1,9 +1,8 @@
 // src/App.js
 import "notyf/notyf.min.css";
-import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { isAuthenticated } from "./api/authService";
 import VolunteerLayout from "./components/volunteerLayout";
+import { useAuth } from "./contexts/authContext";
 import AdminVerify from "./pages/AdminVerify";
 import Classes from "./pages/Classes";
 import VolunteerSchedule from "./pages/Schedule";
@@ -15,30 +14,7 @@ import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import VolunteerSignup from "./pages/VolunteerSignup";
 
 function App() {
-  const [isVolunteer, setIsVolunteer] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const authResponse = await isAuthenticated();
-        if (
-          authResponse &&
-          authResponse.volunteer &&
-          authResponse.volunteer.volunteer_id
-        ) {
-          setIsVolunteer(true);
-          localStorage.setItem("volunteerID", authResponse.volunteer.volunteer_id);
-        } else {
-          setIsVolunteer(false);
-        }
-        localStorage.setItem("userID", authResponse.user.user_id);
-      } catch (error) {
-        console.error("Authentication as volunteer failed:", error);
-        setIsVolunteer(false);
-      }
-    };
-    checkAuth();
-  }, []);
+  const { isVolunteer, isAdmin } = useAuth();
 
   return (
     <div className="App">
@@ -65,7 +41,12 @@ function App() {
           </Route>
 
           {/* Admin Route */}
-          <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
+          <Route
+            path="/"
+            element={isAdmin ? <></> : <Navigate to="/auth/login" replace />}
+          >
+            <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
+          </Route>
 
           {/* Catch-all Route for Undefined Paths */}
           <Route path="*" element={<Navigate to="/" replace />} />

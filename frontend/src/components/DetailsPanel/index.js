@@ -1,16 +1,16 @@
-import "./index.css";
-import React, { useEffect, useState } from "react";
-import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
-import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
-import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
-import zoom_icon from "../../assets/zoom.png";
-import email from "../../assets/email.png"
-import { getClassById } from "../../api/classesPageService";
-import { isAuthenticated } from "../../api/authService";
-import {SHIFT_TYPES} from "../../data/constants";
 import dayjs from "dayjs";
+import React, { useEffect, useState } from "react";
+import { isAuthenticated } from "../../api/authService";
+import { getClassById } from "../../api/classesPageService";
+import email from "../../assets/email.png";
+import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
+import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
+import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
+import zoom_icon from "../../assets/zoom.png";
+import { SHIFT_TYPES } from "../../data/constants";
+import "./index.css";
 
-function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbuttons = [], shiftDetails }) {
+function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftButtons = [], shiftDetails }) {
   const [panelWidth, setPanelWidth] = useState("0px");
   const [panelInfo, setPanelInfo] = useState(null);
   const [myClass, setMyClass] = useState(false);
@@ -20,7 +20,6 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     if (classId) {
       getClassById(classId)
         .then((data) => {
-          console.log(data)
           setPanelInfo(data);
           setPanelWidth("35vw");
           myClassCheck(data);
@@ -139,14 +138,12 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
   };
 
   const renderInstructorInfo = () => {
-    if (!shiftDetails || !shiftDetails.shift_type || !panelInfo?.instructor_email) return;
-  
     return (
       <>
         {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
           ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
           : "No instructor available"}
-        {shiftDetails.shift_type === SHIFT_TYPES.MY_SHIFTS || shiftDetails.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS 
+        {shiftDetails?.shift_type === SHIFT_TYPES.MY_SHIFTS || shiftDetails?.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS 
           ?
           <button
             className="email-icon panel-button-icon"
@@ -264,7 +261,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
           </div>
           { /* Conditionally render buttons based on Shift Card Type*/}
           <div className="panel-buttons">
-              {dynamicShiftbuttons.map((button, index) => (
+              {dynamicShiftButtons.map((button, index) => (
                   <button
                       key={index}
                       className={`dynamic-button ${button.buttonClass || ''}`}

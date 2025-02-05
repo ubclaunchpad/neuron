@@ -164,8 +164,6 @@ export default class ScheduleModel {
         const values = [scheduleIds, schedulesToSetInactive];
         const [results, _] = await transaction.query<ScheduleDB[]>(query, values);
         const schedulesToDelete = results.map((result) => result.schedule_id as number);
-
-        console.log(schedulesToDelete)
         return schedulesToDelete;
     }
 

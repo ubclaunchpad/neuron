@@ -4,11 +4,10 @@ import {
     addSchedulesToClass, 
     assignVolunteersToSchedule, 
     deleteOrSoftDeleteSchedules, 
-    deleteSchedules,
+    deleteSchedulesFromClass,
     getAllSchedules, 
     getActiveSchedulesForClass, 
-    updateSchedulesForClass, 
-    updateScheduleById 
+    updateSchedulesForClass
 } from '../controllers/scheduleController.js';
 
 export const ScheduleRoutes: RouteDefinition = {
@@ -39,6 +38,7 @@ export const ScheduleRoutes: RouteDefinition = {
                         body('*.start_time').isTime({ hourFormat: 'hour24' }),
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
                         body('*.volunteer_ids').isArray({ min: 1 }).optional(),
+                        body('*.volunteer_ids.*').isUUID('4')
                     ],
                     action: addSchedulesToClass
                 },
@@ -46,26 +46,15 @@ export const ScheduleRoutes: RouteDefinition = {
                     path: '/',
                     method: 'put',
                     validation: [
-                        body().isArray({ min: 2 }), // if less than 1, just use updateSchedule
+                        body().isArray({ min: 1 }),
                         body('*.schedule_id').isInt({ min: 1 }),
                         body('*.day').isInt({ min: 1, max: 7 }),
                         body('*.start_time').isTime({ hourFormat: 'hour24' }),
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
                         body('*.volunteer_ids').isArray({ min: 0 }).optional(),
+                        body('*.volunteer_ids.*').isUUID('4')
                     ],
                     action: updateSchedulesForClass
-                },
-                {
-                    path: '/:schedule_id',
-                    method: 'put',
-                    validation: [
-                        param('schedule_id').isInt({ min: 1 }),
-                        body('day').isInt({ min: 1, max: 7 }),
-                        body('start_time').isTime({ hourFormat: 'hour24' }),
-                        body('end_time').isTime({ hourFormat: 'hour24' }),
-                        body('volunteer_ids').isArray({ min: 1 }).optional(),
-                    ],
-                    action: updateScheduleById
                 },
                 {
                     path: '/soft-option',
@@ -83,7 +72,7 @@ export const ScheduleRoutes: RouteDefinition = {
                         body('schedule_ids').isArray({ min: 0}),
                         body('schedule_ids.*').isInt({ min: 0}),
                     ],
-                    action: deleteSchedules
+                    action: deleteSchedulesFromClass
                 },
                 {
                     path: '/:schedule_id',
@@ -91,6 +80,7 @@ export const ScheduleRoutes: RouteDefinition = {
                     validation: [
                         param('schedule_id').isInt({ min: 1}),
                         body('volunteer_ids').isArray({ min: 1 }),
+                        body('volunteer_ids.*').isUUID('4')
                     ],
                     action: assignVolunteersToSchedule
                 }

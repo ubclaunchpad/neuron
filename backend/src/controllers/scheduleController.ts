@@ -36,7 +36,7 @@ async function deleteOrSoftDeleteSchedules(req: Request, res: Response) {
     res.status(200).json(result);
 }
 
-async function deleteSchedules(req: Request, res: Response) {
+async function deleteSchedulesFromClass(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
     const { schedule_ids } = req.body;
 
@@ -55,16 +55,6 @@ async function assignVolunteersToSchedule(req: Request, res: Response) {
     res.status(200).json(result);
 }
 
-async function updateScheduleById(req: Request, res: Response) {
-    const class_id = Number(req.params.class_id);
-    const schedule_id = Number(req.params.schedule_id);
-    const schedule: ScheduleDB = req.body;
-
-    const result = await scheduleModel.updateScheduleById(class_id, schedule_id, schedule);
-
-    res.status(200).json(result);
-}
-
 async function updateSchedulesForClass(req: Request, res: Response) {
     const class_id = Number(req.params.class_id);
     const schedules: ScheduleDB[] = req.body;
@@ -78,10 +68,9 @@ export {
     getAllSchedules,
     getActiveSchedulesForClass,
     deleteOrSoftDeleteSchedules,
-    deleteSchedules,
+    deleteSchedulesFromClass,
     addSchedulesToClass,
     assignVolunteersToSchedule,
-    updateScheduleById,
     updateSchedulesForClass
 };
 

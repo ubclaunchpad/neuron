@@ -54,34 +54,12 @@ export default class ScheduleModel {
         
         const [results1, _] = await transaction.query<ResultSetHeader>(query1, values1);
 
-        const ids: number[] = [];
-        for (let id = results1.insertId; id < results1.insertId + results1.affectedRows; id++) {
-            ids.push(id);
-        }
-
-        let valuesClause2 = "";
-        scheduleItems.forEach((schedule) => {
-            if (schedule.volunteer_ids) {
-                schedule.volunteer_ids.forEach(() => valuesClause2 = valuesClause2.concat("(?),"));
-            }
-        })
-        valuesClause2 = valuesClause2.slice(0, -1);
-
-        // if there is at least one volunteer assigned to a schedule
-        if (valuesClause2.length > 0) {
-            const query2 = `INSERT INTO volunteer_schedule (fk_volunteer_id, fk_schedule_id) VALUES ${valuesClause2}`;
-            const values2: any[][] = [];
-            scheduleItems.forEach((schedule, index) => {
-                if (schedule.volunteer_ids) {
-                    schedule.volunteer_ids.forEach((volunteerId: string) => {
-                        values2.push([volunteerId, ids[index]]);
-                    })
-                }
-            })
-            await transaction.query<ResultSetHeader>(query2, values2);
+        const scheduleIds: number[] = [];
+        for (let scheduleId = results1.insertId; scheduleId < results1.insertId + results1.affectedRows; scheduleId++) {
+            scheduleIds.push(scheduleId);
         }
         
-        const createdSchedules = ids.map((schedule_id, index) => {
+        const createdSchedules = scheduleIds.map((schedule_id, index) => {
             const schedule = scheduleItems[index];
             return {
                 schedule_id: schedule_id,
@@ -93,10 +71,7 @@ export default class ScheduleModel {
             }
         });
 
-        // if there are any assignments, create shifts for new schedules with assigned volunteers
-        if (valuesClause2.length > 0) {
-            await shiftModel.addShiftsForSchedules(classId, createdSchedules, transaction);
-        }
+        this.assignVolunteers(classId, createdSchedules, transaction);
 
         return createdSchedules;
     }
@@ -131,140 +106,264 @@ export default class ScheduleModel {
         return results;
     }
 
-    private async assignVolunteersWithTransaction(classId: number, scheduleId: number, volunteerIds: any[], transaction: PoolConnection): Promise<any> {
-        let valuesClause = "";
-        const values: any[][] = [];
-        volunteerIds.forEach((volunteerId) => {
-            valuesClause = valuesClause.concat("(?),");
-            values.push([volunteerId, scheduleId]);
-        });
-        valuesClause = valuesClause.slice(0, -1);
-
-        // assign volunteers to schedule
-        const query = `INSERT INTO volunteer_schedule (fk_volunteer_id, fk_schedule_id) VALUES ${valuesClause}`;
-        await transaction.query<ResultSetHeader>(query, values);
-
-        // get schedule object
-        const query2 = `
-            SELECT 
-                schedule_id,
-                day,
-                TIME_FORMAT(start_time, '%H:%i') AS start_time,
-                TIME_FORMAT(end_time, '%H:%i') AS end_time
-            FROM schedule 
-            WHERE schedule_id = ?
-        `;
-        const values2 = [scheduleId];
-        const [result, _] = await transaction.query<ScheduleDB[]>(query2, values2);
-
-        const schedule = {
-            volunteer_ids: volunteerIds,
-            ...result[0]
-        }
-
-        // create shifts for all assigned volunteers
-        await shiftModel.addShiftsForSchedules(classId, [schedule], transaction);
-
-        return schedule;
-    }
-
-    async assignVolunteersByScheduleId(classId: number, scheduleId: number, volunteerIds: any[], transaction?: PoolConnection): Promise<any> {
-        if (transaction) {
-            return await this.assignVolunteersWithTransaction(classId, scheduleId, volunteerIds, transaction);
-        }
-
-        transaction = await connectionPool.getConnection();
-        try {
-            await transaction.beginTransaction();
-
-            const result = await this.assignVolunteersWithTransaction(classId, scheduleId, volunteerIds, transaction);
-
-            await transaction.commit();
-
-            return result;
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
-        }
-    }
-
-    private async unassignVolunteers(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
-        const query = `DELETE FROM volunteer_schedule WHERE fk_schedule_id IN (?)`;
-        const values = [scheduleIds];
-        await transaction.query<ResultSetHeader>(query, values);
-    }
-
     private async setSchedulesInactive(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
         const query = `UPDATE schedule SET active = false WHERE schedule_id IN (?)`;
         const values = [scheduleIds];
         await transaction.query<ResultSetHeader>(query, values);
     }
 
-    async deleteOrSoftDeleteSchedules(classId: number, scheduleIds: number[], transaction?: PoolConnection): Promise<void> {
-        if (transaction) {
-            return await this.deleteOrSoftDeleteWithTransaction(classId, scheduleIds, transaction);
-        }
-
-        transaction = await connectionPool.getConnection();
+    async deleteOrSoftDeleteSchedules(classId: number, scheduleIds: number[]): Promise<any> {
+        const transaction = await connectionPool.getConnection();
         try {
             await transaction.beginTransaction();
 
-            const result = await this.deleteOrSoftDeleteWithTransaction(classId, scheduleIds, transaction);
+            // make sure schedules exist
+            const schedulesExist = await this.verifySchedulesExist(classId, scheduleIds, transaction);
+            if (!schedulesExist) {
+                throw new Error('All schedules must contain a valid schedule_id.');
+            }
+
+            // unassign current volunteers from schedule
+            await this.unassignVolunteers(scheduleIds, transaction);
+
+            // check if there are any shifts still remaining (historic shifts)
+            const schedulesToSetInactive = await this.getSchedulesToSetInactive(scheduleIds, transaction);
+
+            // get schedules to delete completely
+            const schedulesToDelete = await this.getSchedulesToDelete(schedulesToSetInactive, scheduleIds, transaction);
+
+            // set these schedules as inactive
+            if (schedulesToSetInactive.length > 0) {
+                await this.setSchedulesInactive(schedulesToSetInactive, transaction);
+            }
+
+            // delete these schedules
+            if (schedulesToDelete.length > 0) {
+                await this.deleteSchedulesFromClass(classId, schedulesToDelete, transaction);
+            }
 
             await transaction.commit();
 
-            return result;
+            return {
+                inactiveSchedules: schedulesToSetInactive,
+                deletedSchedules: schedulesToDelete
+            }
         } catch (error) {
             await transaction.rollback();
             throw error;
         }
     }
 
-    async deleteOrSoftDeleteWithTransaction(classId: number, scheduleIds: number[], transaction: PoolConnection): Promise<any> {
-        // unassign current volunteers from schedule
-        await this.unassignVolunteers(scheduleIds, transaction);
-
-        // delete all future shifts for this schedule
-        await shiftModel.deleteFutureShifts(scheduleIds, transaction);
-
+    private async getSchedulesToDelete(schedulesToSetInactive: number[], scheduleIds: number[], transaction: PoolConnection) {
         const query = `
-            SELECT DISTINCT fk_schedule_id
-            FROM shifts
-            WHERE fk_schedule_id IN (?)
-        `
+                SELECT schedule_id
+                FROM schedule
+                WHERE schedule_id IN (?) 
+                ${schedulesToSetInactive.length > 0 ? "AND schedule_id NOT IN (?)" : ""}
+            `;
+        const values = [scheduleIds, schedulesToSetInactive];
+        const [results, _] = await transaction.query<ScheduleDB[]>(query, values);
+        const schedulesToDelete = results.map((result) => result.schedule_id as number);
+
+        console.log(schedulesToDelete)
+        return schedulesToDelete;
+    }
+
+    private async getSchedulesToSetInactive(scheduleIds: number[], transaction: PoolConnection) {
+        const query = `
+                SELECT DISTINCT fk_schedule_id
+                FROM shifts
+                WHERE fk_schedule_id IN (?)
+            `;
         const values = [scheduleIds];
         const [results, _] = await transaction.query<ShiftDB[]>(query, values);
-
         const schedulesToSetInactive = results.map((result) => result.fk_schedule_id);
+        return schedulesToSetInactive;
+    }
 
-        const query2 = `
-            SELECT schedule_id
-            FROM schedule
-            WHERE schedule_id IN (?) 
-            ${schedulesToSetInactive.length > 0 ? "AND schedule_id NOT IN (?)" : ""}
-        `
-        const values2 = [scheduleIds, schedulesToSetInactive];
-        const [results2, _2] = await transaction.query<ScheduleDB[]>(query2, values2);
+    async getSchedulesWithChanges(schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
+        const scheduleIds = schedules.map(schedule => schedule.schedule_id);
+        const query = `
+            SELECT
+                schedule_id,
+                day,
+                TIME_FORMAT(start_time, '%H:%i') AS start_time,
+                TIME_FORMAT(end_time, '%H:%i') AS end_time 
+            FROM schedule 
+            WHERE schedule_id IN (?)
+        `;
+        const values = [scheduleIds];
+        const [results, _] = await transaction.query<ScheduleDB[]>(query, values);
 
-        const schedulesToDelete = results2.map((result) => result.schedule_id as number);
-
-        // set these schedules as inactive
-        if (schedulesToSetInactive.length > 0) {
-            await this.setSchedulesInactive(schedulesToSetInactive, transaction);
+        // get rid of leading zeros
+        const formatTime = (time: string): string => {
+            return time.replace(/^0/, '');
         }
 
-        // delete these schedules
-        if (schedulesToDelete.length > 0) {
-            await this.deleteSchedulesFromClass(classId, schedulesToDelete, transaction);
-        }
+        return schedules.filter((schedule) => {
+            const scheduleInDb = results.find(result => result.schedule_id === schedule.schedule_id);
+            return scheduleInDb && 
+                (scheduleInDb.day != schedule.day ||
+                formatTime(scheduleInDb.start_time) != formatTime(schedule.start_time) ||
+                formatTime(scheduleInDb.end_time) != formatTime(schedule.end_time));
+        })
+    }
 
-        if (schedulesToDelete.length > 0 || schedulesToSetInactive.length > 0) {
+    async verifySchedulesExist(classId: number, scheduleIds: number[], transaction: PoolConnection): Promise<boolean> {
+        const query = `SELECT * FROM schedule WHERE fk_class_id = ? AND schedule_id IN (?) AND active = true`;
+        const values = [classId, scheduleIds];
+        const [results, _] = await transaction.query<ScheduleDB[]>(query, values);
+        return results.length === scheduleIds.length;
+    }
+
+    private async buildSchedulesWithVolunteers(schedules: ScheduleDB[], transaction: PoolConnection) {
+        const schedulesWithVolunteers = schedules.filter(schedule => schedule.volunteer_ids !== undefined);
+        const schedulesWithoutVolunteers = schedules.filter(schedule => schedule.volunteer_ids === undefined);
+
+        // for schedules with no volunteers given, get current volunteers from db
+        if (schedulesWithoutVolunteers.length > 0) {
+            const scheduleIds = schedulesWithoutVolunteers.map(schedule => schedule.schedule_id as number);
+
+            // get the currently assigned volunteers
+            const assignments = await this.getCurrentAssignments(scheduleIds, transaction);
+
+            schedulesWithoutVolunteers.forEach((schedule) => {
+                const assignedVolunteers = assignments.get(schedule.schedule_id as number);
+                schedulesWithVolunteers.push({
+                    ...schedule,
+                    volunteer_ids: assignedVolunteers ?? []
+                });
+            });
+        }
+        return schedulesWithVolunteers;
+    }
+
+    async updateSchedulesHistoricWithChanges(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<any> {
+        if (schedules.length === 0) {
             return {
-                inactiveSchedules: schedulesToSetInactive,
-                deletedSchedules: schedulesToDelete
+                addedSchedules: [],
+                inactiveSchedules: []
             }
-        } 
-        throw new Error("No schedules found under the given ids.");
+        }
+        const schedulesWithVolunteers = await this.buildSchedulesWithVolunteers(schedules, transaction);
+        const scheduleIds = schedulesWithVolunteers.map(schedule => schedule.schedule_id as number);
+
+        // unassign volunteers from schedulese going inactive
+        await this.unassignVolunteers(scheduleIds, transaction);
+
+        // set schedules inactive
+        await this.setSchedulesInactive(scheduleIds, transaction);
+
+        // add new schedules to db with their assignments
+        const result = await this.addSchedulesToClass(classId, schedulesWithVolunteers, transaction);
+
+        return {
+            addedSchedules: result,
+            inactiveSchedules: scheduleIds
+        }
+    }
+
+    async updateAssignments(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
+        if (schedules.length === 0) {
+            return [];
+        }
+        const schedulesWithVolunteers = schedules.filter(schedule => schedule.volunteer_ids !== undefined);
+        const scheduleIds = schedulesWithVolunteers.map(schedule => schedule.schedule_id as number);
+
+        // unassign volunteers from schedulese going inactive
+        await this.unassignVolunteers(scheduleIds, transaction);
+
+        // make new assignments to the schedules
+        await this.assignVolunteers(classId, schedulesWithVolunteers, transaction);
+
+        return schedulesWithVolunteers;
+    }
+
+    async updateSchedulesHistoric(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<any> {
+        if (schedules.length === 0) {
+            return {
+                addedSchedules: [],
+                updatedSchedules: [],
+                inactiveSchedules: []
+            }
+        }
+        const schedulesWithChanges = await this.getSchedulesWithChanges(schedules, transaction);
+        const schedulesWithoutChanges = schedules.filter(schedule => !schedulesWithChanges.includes(schedule));
+
+        const { addedSchedules, inactiveSchedules } = await this.updateSchedulesHistoricWithChanges(classId, schedulesWithChanges, transaction);
+        const updatedSchedules = await this.updateAssignments(classId, schedulesWithoutChanges, transaction);
+
+        return {
+            addedSchedules: addedSchedules,
+            updatedSchedules: updatedSchedules,
+            inactiveSchedules: inactiveSchedules
+        }
+    }
+
+    async updateSchedulesNonHistoricWithChanges(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
+        if (schedules.length === 0) {
+            return [];
+        }
+        const schedulesWithVolunteers = await this.buildSchedulesWithVolunteers(schedules, transaction);
+        const scheduleIds = schedulesWithVolunteers.map(schedule => schedule.schedule_id as number);
+
+        // unassign volunteers from schedulese going inactive
+        await this.unassignVolunteers(scheduleIds, transaction);
+
+        // safely update the schedules
+        await this.updateSchedules(schedulesWithVolunteers, transaction);
+
+        // add new schedules to db with their assignments
+        await this.assignVolunteers(classId, schedulesWithVolunteers, transaction);
+
+        return schedulesWithVolunteers;
+    }
+
+
+    async updateSchedulesNonHistoric(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
+        if (schedules.length === 0) {
+            return [];
+        }
+        const schedulesWithChanges = await this.getSchedulesWithChanges(schedules, transaction);
+        const schedulesWithoutChanges = schedules.filter(schedule => !schedulesWithChanges.includes(schedule));
+
+        const updatedSchedules1 = await this.updateSchedulesNonHistoricWithChanges(classId, schedulesWithChanges, transaction);
+        const updatedSchedules2 = await this.updateAssignments(classId, schedulesWithoutChanges, transaction);
+
+        return updatedSchedules1.concat(updatedSchedules2);
+    }
+
+    async updateSchedulesForClass(classId: number, schedules: ScheduleDB[]): Promise<any> {
+        const transaction = await connectionPool.getConnection();
+        try {
+            await transaction.beginTransaction();
+
+            // verify all schedules exist in db
+            const scheduleIds = schedules.map(schedule => schedule.schedule_id as number);
+            const schedulesExist = await this.verifySchedulesExist(classId, scheduleIds, transaction);
+            if (!schedulesExist) {
+                throw new Error('All schedules must contain a valid schedule_id.');
+            }
+
+            // divide schedules into historic and non-historic
+            const schedulesHistoric = await shiftModel.getSchedulesWithHistoricShifts(schedules, transaction);
+            const schedulesNonHistoric = schedules.filter(schedule => !schedulesHistoric.includes(schedule));
+
+            const result = await this.updateSchedulesHistoric(classId, schedulesHistoric, transaction);
+            const updatedSchedules = await this.updateSchedulesNonHistoric(classId, schedulesNonHistoric, transaction);
+
+            await transaction.commit();
+
+            return {
+                addedSchedules: result.addedSchedules,
+                updatedSchedules: result.updatedSchedules.concat(updatedSchedules),
+                inactiveSchedules: result.inactiveSchedules
+            };
+        } catch (error) {
+            // Rollback
+            await transaction.rollback();
+            throw error;
+        }
     }
 
     async getCurrentAssignments(scheduleIds: number[], transaction: PoolConnection): Promise<Map<number, string[]>> {
@@ -281,96 +380,54 @@ export default class ScheduleModel {
         return assignments;
     }
 
-    async updateScheduleById(classId: number, scheduleId: number, schedule: ScheduleDB): Promise<any> {
+    async assignVolunteersByScheduleId(classId: number, scheduleId: number, volunteerIds: any[]): Promise<any> {
         const transaction = await connectionPool.getConnection();
         try {
             await transaction.beginTransaction();
 
-            if (!schedule.volunteer_ids) {
-                // need to get the currently assigned volunteers
-                const assignments = await this.getCurrentAssignments([scheduleId], transaction);
+            let valuesClause = "";
+            const values: any[][] = [];
+            volunteerIds.forEach((volunteerId) => {
+                valuesClause = valuesClause.concat("(?),");
+                values.push([volunteerId, scheduleId]);
+            });
+            valuesClause = valuesClause.slice(0, -1);
 
-                schedule = { 
-                    ...schedule, 
-                    volunteer_ids: assignments.get(scheduleId) ?? []
-                };
-                console.log(schedule);
-            }
-
-            const deletionResults = await this.deleteOrSoftDeleteSchedules(classId, [scheduleId], transaction);
-            
-            // add new schedule with future shifts
-            const additionResults = await this.addSchedulesToClass(classId, [schedule], transaction);
-            
-            await transaction.commit();
-
-            return {
-                deletionResults: deletionResults,
-                additionResults: additionResults
-            };
-        } catch (error) {
-            // Rollback
-            await transaction.rollback();
-            throw error;
-        }
-    }
-
-    private async updateScheduleDetails(schedule: ScheduleDB, scheduleId: number, transaction: PoolConnection): Promise<void> {
-        // Construct the SET clause dynamically
-        const setClause = Object.keys(schedule)
-            .map((key) => `${key} = ?`)
-            .join(", ");
-        const query = `UPDATE schedule SET ${setClause} WHERE schedule_id = ?`;
-        const values = [...Object.values(schedule), scheduleId];
-
-        if (setClause.length > 0) {
+            // assign volunteers to schedule
+            const query = `INSERT INTO volunteer_schedule (fk_volunteer_id, fk_schedule_id) VALUES ${valuesClause}`;
             await transaction.query<ResultSetHeader>(query, values);
-        }
-    }
 
-    async updateSchedulesForClass(classId: number, schedules: ScheduleDB[]): Promise<any> {
-        const transaction = await connectionPool.getConnection();
-        try {
-            await transaction.beginTransaction();
+            // get schedule object
+            const query2 = `
+                SELECT 
+                    schedule_id,
+                    day,
+                    TIME_FORMAT(start_time, '%H:%i') AS start_time,
+                    TIME_FORMAT(end_time, '%H:%i') AS end_time
+                FROM schedule 
+                WHERE schedule_id = ?
+            `;
+            const values2 = [scheduleId];
+            const [result, _] = await transaction.query<ScheduleDB[]>(query2, values2);
 
-            // get volunteer ids for schedules without
-            const schedulesWithoutReassignments = schedules.filter(schedule => schedule.volunteer_ids === undefined);
-            if (schedulesWithoutReassignments.length > 0) {
-                const scheduleIds = schedulesWithoutReassignments.map(schedule => schedule.schedule_id as number);
-
-                // need to get the currently assigned volunteers
-                const assignments = await this.getCurrentAssignments(scheduleIds, transaction);
-
-                schedules.map((schedule) => {
-                    return schedule.volunteer_ids ? 
-                        schedule : { 
-                            ...schedule, 
-                            volunteer_ids: assignments.get(schedule.schedule_id as number) ?? []
-                        }
-                })
+            const schedule = {
+                volunteer_ids: volunteerIds,
+                ...result[0]
             }
-            const scheduleIds = schedules.map(schedule => schedule.schedule_id as number);
 
-            // if the schedule still exists (meaning that there are historic shifts), set the schedule to inactive
-            const deletionResults = await this.deleteOrSoftDeleteSchedules(classId, scheduleIds, transaction);
-
-            // assign new volunteers to each schedule with 'volunteer_ids'
-            const additionResults = await this.addSchedulesToClass(classId, schedules, transaction);
+            // create shifts for all assigned volunteers
+            await shiftModel.addShiftsForSchedules(classId, [schedule], transaction);
 
             await transaction.commit();
 
-            return {
-                deletionResults: deletionResults,
-                additionResults: additionResults
-            };
+            return result;
         } catch (error) {
-            // Rollback
             await transaction.rollback();
             throw error;
         }
     }
 
-    private async assignVolunteers(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<void> {
+    private async assignVolunteers(classId: number, schedules: any[], transaction: PoolConnection): Promise<void> {
         let valuesClause = "";
         const values: any[][] = [];
         schedules.forEach((schedule) => {
@@ -392,11 +449,16 @@ export default class ScheduleModel {
         }
     }
 
-    private async updateMultipleSchedules(schedules: ScheduleDB[], transaction: PoolConnection): Promise<void> {
-        if (schedules.length === 0) {
-            return;
-        }
+    private async unassignVolunteers(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
+        const query = `DELETE FROM volunteer_schedule WHERE fk_schedule_id IN (?)`;
+        const values = [scheduleIds];
+        await transaction.query<ResultSetHeader>(query, values);
 
+        // delete all future shifts for the schedules going inactive
+        await shiftModel.deleteFutureShifts(scheduleIds, transaction);
+    }
+
+    private async updateSchedules(schedules: any[], transaction: PoolConnection): Promise<void> {
         let dayCase = '';
         let startTimeCase = '';
         let endTimeCase = '';

@@ -172,6 +172,22 @@ export default class ShiftModel {
           await transaction.query<ResultSetHeader>(query2, values2);
      }
 
+     async getSchedulesWithHistoricShifts(schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
+          const scheduleIds = schedules.map(schedule => schedule.schedule_id);
+          const query = `
+               SELECT DISTINCT sh.fk_schedule_id
+               FROM shifts sh
+               LEFT JOIN schedule sc 
+               ON sh.fk_schedule_id = sc.schedule_id
+               WHERE sh.fk_schedule_id IN (?)
+               AND STR_TO_DATE(CONCAT(sh.shift_date, ' ', sc.start_time), '%Y-%m-%d %H:%i:%s') <= CONVERT_TZ(NOW(), 'UTC', 'America/Vancouver')
+          `;
+          const values = [scheduleIds];
+          const [results, _] = await transaction.query<ShiftDB[]>(query, values);
+          const scheduleIdsWithHistoricShifts = results.map(result => result.fk_schedule_id);
+          return schedules.filter(schedule => scheduleIdsWithHistoricShifts.includes(schedule.schedule_id as number));
+     }
+
      // delete all shifts that have not happened yet
      async deleteFutureShifts(scheduleIds: number[], transaction: PoolConnection): Promise<any> {
 
@@ -184,9 +200,9 @@ export default class ShiftModel {
                AND STR_TO_DATE(CONCAT(sh.shift_date, ' ', sc.start_time), '%Y-%m-%d %H:%i:%s') > CONVERT_TZ(NOW(), 'UTC', 'America/Vancouver')
           `;
           const values1 = [scheduleIds];
-          const [results1, _] = await transaction.query<ShiftDB[]>(query1, values1);
+          const [results, _] = await transaction.query<ShiftDB[]>(query1, values1);
 
-          const shiftIds = results1.map(result => result.shift_id);
+          const shiftIds = results.map(result => result.shift_id);
 
           if (shiftIds.length > 0) {
                const query2 = `DELETE FROM shifts WHERE shift_id IN (?)`;

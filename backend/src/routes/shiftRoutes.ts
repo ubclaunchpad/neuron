@@ -3,16 +3,16 @@ import { RouteDefinition } from "../common/types.js";
 import {
     addShift,
     deleteShift,
+    updateShift,
     getShiftInfo,
-    getShiftsByDate,
     getShiftsByVolunteerId,
+    getShiftsByDate,
     getShiftsByVolunteerIdAndMonth,
-    requestToCoverShift,
-    addShiftCoverage,
-    cancelCoverShift,
-    deleteShiftCoverage,
-    checkInShift,
-    updateShift
+    checkInShift, 
+    requestCoverShift, 
+    withdrawCoverShift, 
+    requestShiftCoverage, 
+    withdrawShiftCoverage
 } from '../controllers/shiftController.js';
 
 export const ShiftRoutes: RouteDefinition = {
@@ -71,23 +71,6 @@ export const ShiftRoutes: RouteDefinition = {
             action: getShiftsByVolunteerIdAndMonth
         },
         {
-            path: '/request-to-cover-shift',
-            method: 'post',
-            validation: [
-                body('request_id').isInt({ min: 0 }),
-                body('volunteer_id').isUUID('4')
-            ],
-            action: requestToCoverShift
-        },
-        {
-            path: '/request-shift-coverage/:shift_id',
-            method: 'put',
-            validation: [
-                param('shift_id').isInt({ min: 0 }),
-            ],
-            action: addShiftCoverage
-        },
-        {
             path: '/check-in/:shift_id',
             method: 'patch',
             validation: [
@@ -96,23 +79,39 @@ export const ShiftRoutes: RouteDefinition = {
             action: checkInShift
         },
         {
-            path: '/cancel-cover-shift',
+            path: '/cover-shift',
+            method: 'post',
+            validation: [
+                body('request_id').isInt({ min: 0 }),
+                body('volunteer_id').isUUID('4')
+            ],
+            action: requestCoverShift
+        },
+        {
+            path: '/cover-shift',
             method: 'delete',
             validation: [
                 body('request_id').isInt({ min: 0 }),
                 body('volunteer_id').isUUID('4')
             ],
-            action: cancelCoverShift
-
+            action: withdrawCoverShift
         },
         {
-            path: '/cancel-coverage-request',
+            path: '/shift-coverage-request',
+            method: 'put',
+            validation: [
+                body('shift_id').isInt({ min: 0 }),
+            ],
+            action: requestShiftCoverage
+        },
+        {
+            path: '/shift-coverage-request',
             method: 'delete',
             validation: [
                 body('request_id').isInt({ min: 0 }),
                 body('shift_id').isInt({ min: 0 }),
             ],
-            action: deleteShiftCoverage
+            action: withdrawShiftCoverage
         },
         {
             path: '/:shift_id',

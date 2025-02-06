@@ -37,22 +37,6 @@ const getVolunteerShiftsForMonth = async (body) => {
   }
 };
 
-// Creates a request to cover a shift by a volunteer.
-const requestToCoverShift = async (body) => {
-  try {
-    console.log("requestToCoverShift body:", body);
-    const response = await api.post("/shifts/request-to-cover-shift", {
-      request_id: body.request_id,
-      volunteer_id: body.volunteer_id,
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error("Error generating request to cover shift:", error);
-    throw error;
-  }
-};
-
 // Creates a request to check in for a shift
 const checkInShift = async (shift_id) => {
   try {
@@ -66,24 +50,27 @@ const checkInShift = async (shift_id) => {
   }
 };
 
-// Creates a request for shift coverage
-const requestShiftCoverage = async (shift_id) => {
+// Creates a request to cover a shift by a volunteer.
+const requestToCoverShift = async (body) => {
   try {
-    console.log("requestShiftCoverage shift_id param:", shift_id);
-    const response = await api.put(`/shifts/request-shift-coverage/${shift_id}`);
+    console.log("requestToCoverShift body:", body);
+    const response = await api.post("/shifts/cover-shift", {
+      request_id: body.request_id,
+      volunteer_id: body.volunteer_id,
+    });
 
     return response.data;
   } catch (error) {
-    console.error("Error requesting coverage for shift: ", error);
+    console.error("Error generating request to cover shift:", error);
     throw error;
   }
-}
+};
 
 // Cancels a request to cover a shift from another volunteer
 const cancelCoverShift = async (body) => {
   try {
     console.log("cancelCoverShift body:", body);
-    const response = await api.delete("/shifts/cancel-cover-shift", { 
+    const response = await api.delete("/shifts/cover-shift", { 
       data: {
         request_id: body.request_id,
         volunteer_id: body.volunteer_id,
@@ -97,11 +84,26 @@ const cancelCoverShift = async (body) => {
   }
 };
 
+// Creates a request for shift coverage
+const requestShiftCoverage = async (body) => {
+  try {
+    console.log("requestShiftCoverage body:", body);
+    const response = await api.put(`/shifts/shift-coverage-request`, {
+      shift_id: body.shift_id
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error requesting coverage for shift: ", error);
+    throw error;
+  }
+}
+
 // Cancels a shift coverage request
 const cancelCoverRequest = async (body) => {
   try {
     console.log("cancelCoverRequest body:", body);
-    const response = await api.delete("/shifts/cancel-coverage-request", {
+    const response = await api.delete("/shifts/shift-coverage-request", {
       data: {
         request_id: body.request_id,
         shift_id: body.shift_id,

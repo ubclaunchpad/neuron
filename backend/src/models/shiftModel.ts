@@ -71,8 +71,20 @@ export default class ShiftModel {
           return results[0]; // Value from procedure stored in the first value of the array
      }
 
+     // modify a shift to indicate that a volunteer has checked in
+     async updateShiftCheckIn(shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               UPDATE shifts SET checked_in = 1 WHERE shift_id = ?
+          `;
+          const values = [shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
      // create a new entry in the pending_shift_coverage table
-     async requestToCoverShift(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
+     async insertCoverShift(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
           const query = `
                INSERT INTO pending_shift_coverage (request_id, pending_volunteer)
                VALUES (?, ?)
@@ -84,25 +96,25 @@ export default class ShiftModel {
           return results;
      }
 
-     // create a new entry in the shift_coverage_request table
-     async addShiftCoverageRequest(shift_id: number): Promise<ResultSetHeader> {
+     // delete corresponding entry in pending_shift_coverage table
+     async deleteCoverShift(request_id: number, volunteer_id: number): Promise<ResultSetHeader> {
           const query = `
-               INSERT INTO shift_coverage_request (fk_shift_id)
-               VALUES (?)
+               DELETE FROM pending_shift_coverage WHERE request_id = ? AND pending_volunteer = ?
           `;
-          const values = [shift_id];
+          const values = [request_id, volunteer_id];
 
           const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 
           return results;
      }
 
-     // delete corresponding entry in pending_shift_coverage table
-     async cancelCoverShift(request_id: number, shift_id: number): Promise<ResultSetHeader> {
+     // create a new entry in the shift_coverage_request table
+     async insertShiftCoverageRequest(shift_id: number): Promise<ResultSetHeader> {
           const query = `
-               DELETE FROM pending_shift_coverage WHERE request_id = ? AND fk_shift_id = ?
+               INSERT INTO shift_coverage_request (fk_shift_id)
+               VALUES (?)
           `;
-          const values = [request_id, shift_id];
+          const values = [shift_id];
 
           const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 
@@ -115,18 +127,6 @@ export default class ShiftModel {
                DELETE FROM shift_coverage_request WHERE request_id = ? AND fk_shift_id = ?
           `;
           const values = [request_id, shift_id];
-
-          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
-
-          return results;
-     }
-
-     // modify a shift to indicate that a volunteer has checked in
-     async checkInShift(shift_id: number): Promise<ResultSetHeader> {
-          const query = `
-               UPDATE shifts SET checked_in = 1 WHERE shift_id = ?
-          `;
-          const values = [shift_id];
 
           const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 

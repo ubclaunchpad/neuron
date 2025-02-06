@@ -80,6 +80,19 @@ function VolunteerSchedule() {
         return acc;
     }, {});
 
+    const handleCheckInClick = async (shift) => {
+        try {
+            if (!shift.checked_in) {
+                console.log(`Checking in for shift ${shift.shift_id}`);
+                await checkInShift(shift.shift_id);
+                handleShiftUpdate({ ...shift, checked_in: 1 });
+            } 
+            
+        } catch (error) {
+            console.error('Error checking in for shift:', error);
+        }
+    };
+
     const handleCoverShiftClick = async (shift) => {
         try {
             const body = {
@@ -88,31 +101,20 @@ function VolunteerSchedule() {
             };
             console.log(`Requesting to cover shift ${shift.shift_id}`);
             await requestToCoverShift(body);
-            // notify parent
-
             handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.PENDING });
+
         } catch (error) {
             console.error('Error generating request to cover shift:', error);
         }
     };
 
-    const handleCheckInClick = async (shift) => {
-        try {
-            if (!shift.checked_in) {
-                console.log(`Checking in for shift ${shift.shift_id}`);
-                await checkInShift(shift.shift_id);
-                handleShiftUpdate({ ...shift, checked_in: 1 });
-            } 
-        } catch (error) {
-            console.error('Error checking in for shift:', error);
-        }
-    };
-
     const handleRequestCoverageClick = async (shift) => {
         try {
+            const body = {
+                shift_id: shift.shift_id,
+            }
             console.log(`Requesting coverage for shift ${shift.shift_id}`);
-            let data = await requestShiftCoverage(shift.shift_id);
-
+            let data = await requestShiftCoverage(body);
             handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_COVERAGE_REQUESTS, request_id: data.insertId });
              
         } catch (error) {
@@ -133,6 +135,7 @@ function VolunteerSchedule() {
                 };
                 await cancelCoverShift(body);
                 handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.OPEN });
+
             } catch (error) {
                 console.error('Error canceling coverage:', error);
             }
@@ -147,12 +150,11 @@ function VolunteerSchedule() {
                 };
                 await cancelCoverRequest(body);
                 handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_SHIFTS, request_id: null });
+
             } catch (error) {
                 console.error('Error canceling coverage request:', error);
             }
-
         }
-
     }
 
     // Returns the button configuration for the shift based on the shift type

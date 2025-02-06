@@ -116,20 +116,20 @@ function VolunteerDash() {
   return (
     <main className="content-container">
       <div className="content-heading">
-          <h2 className="content-title">Dashboard</h2>
-      </div>
-      <div className="dash-date-picker">
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            views={["month", "year"]}
-            sx={{
-              fontSize: "16px",
-              color: "var(--primary-blue)",
-            }}
-            value={selectedDate}
-            onChange={(newValue) => setSelectedDate(newValue.day(2))}
-          />
-        </LocalizationProvider>
+        <h2 className="content-title">Dashboard</h2>
+        <div className="dash-date-picker">
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              views={["month", "year"]}
+              sx={{
+                fontSize: "16px",
+                color: "var(--primary-blue)",
+              }}
+              value={selectedDate}
+              onChange={(newValue) => setSelectedDate(newValue.day(2))}
+            />
+          </LocalizationProvider>
+        </div>
       </div>
 
       <div className="dash-container">

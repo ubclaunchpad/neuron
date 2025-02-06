@@ -33,6 +33,14 @@ export const ClassRoutes: RouteDefinition = {
             action: addClass
         },
         {
+            path: '/schedule/:day',
+            method: 'get',
+            validation: [
+                param('day').isDate({ format: 'YYYY-MM-DD' }),
+            ],
+            action: getClassesByDay
+        },
+        {
             path: '/:class_id',
             validation: [
                 param('class_id').isInt({ min: 0 })
@@ -70,14 +78,6 @@ export const ClassRoutes: RouteDefinition = {
                     action: uploadClassImage
                 }
             ]
-        },
-        {
-            path: '/schedule/:day',
-            method: 'get',
-            validation: [
-                param('day').isDate({ format: 'YYYY-MM-DD' }),
-            ],
-            action: getClassesByDay
         },
     ]
 };

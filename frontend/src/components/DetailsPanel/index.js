@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { default as React, default as React, useEffect, useState } from "react";
+import React, { default as React, default as React, useEffect, useState } from "react";
 import { isAuthenticated } from "../../api/authService";
 import { getClassById } from "../../api/classesPageService";
 import email from "../../assets/email.png";

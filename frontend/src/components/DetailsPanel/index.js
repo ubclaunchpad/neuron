@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import React, { default as React, default as React, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { isAuthenticated } from "../../api/authService";
 import { getClassById } from "../../api/classesPageService";
 import email from "../../assets/email.png";
@@ -77,13 +77,23 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
 
   const renderVolunteers = () => {
     const volunteers = panelInfo?.schedules.flatMap(schedule => schedule.volunteers || []);
-    if (!volunteers || volunteers.length === 0) {
+
+    // same volunteer may be assigned to multiple schedules within a class
+    const uniqueIds = [], uniqueVolunteers = [];
+    volunteers?.forEach((volunteer) => {
+      if (!uniqueIds.includes(volunteer.volunteer_id)) {
+        uniqueIds.push(volunteer.volunteer_id);
+        uniqueVolunteers.push(volunteer);
+      }
+    })
+    
+    if (!uniqueVolunteers || uniqueVolunteers.length === 0) {
       return <>No volunteer for this class</>;
     }
 
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        {volunteers.map((volunteer, idx) => (
+        {uniqueVolunteers.map((volunteer, idx) => (
           <div
             key={idx}
             style={{

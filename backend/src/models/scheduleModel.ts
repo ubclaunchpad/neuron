@@ -11,15 +11,21 @@ export default class ScheduleModel {
         const query = `
             SELECT 
                 s.*,
-                GROUP_CONCAT(vs.fk_volunteer_id) as volunteer_ids
+                GROUP_CONCAT(v.fk_user_id) AS volunteer_user_ids,
+                GROUP_CONCAT(vs.fk_volunteer_id) as volunteer_ids,
+                GROUP_CONCAT(v.f_name) as volunteer_f_names,
+                GROUP_CONCAT(v.l_name) as volunteer_l_names
             FROM schedule s 
             LEFT JOIN volunteer_schedule vs
             ON s.schedule_id = vs.fk_schedule_id
+            LEFT JOIN volunteers v
+            ON vs.fk_volunteer_id = v.volunteer_id
+            WHERE s.active = true
             GROUP BY s.schedule_id`;
 
         const [results, _] = await connectionPool.query<ScheduleDB[]>(query, []);
 
-        return results;
+        return this.formatResults(results);
     }
 
     async getActiveSchedulesForClass(classId: number): Promise<ScheduleDB[]> {
@@ -41,11 +47,15 @@ export default class ScheduleModel {
         const values = [classId];
 
         const [results, _] = await connectionPool.query<ScheduleDB[]>(query, values);
+        
+        return this.formatResults(results);
+    }
 
+    private formatResults(results: ScheduleDB[]): any[] {
         const toArray = (value: string | null): any[] => {
             return value ? value.split(',') : [];
         }
-        
+
         return results.map((schedule) => {
             const user_ids = toArray(schedule.volunteer_user_ids);
             const v_ids = toArray(schedule.volunteer_ids);
@@ -61,11 +71,11 @@ export default class ScheduleModel {
                     l_name: last_names[i],
                 });
             }
-            const {volunteer_user_ids, volunteer_ids, volunteer_f_names, volunteer_l_names, ...rest} = schedule;
+            const { volunteer_user_ids, volunteer_ids, volunteer_f_names, volunteer_l_names, ...rest } = schedule;
             return {
                 ...rest,
                 volunteers: volunteers
-            }
+            };
         });
     }
 

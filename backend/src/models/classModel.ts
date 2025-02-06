@@ -19,7 +19,7 @@ export default class ClassesModel {
      async getClassesByDay(day: string): Promise<ClassDB[]> {
           const query =
                `SELECT * FROM class INNER JOIN schedule ON class.class_id = schedule.fk_class_id 
-          WHERE ? BETWEEN CAST(start_date as date) AND CAST(end_date as date)
+          WHERE ? BETWEEN CAST(start_date as date) AND CAST(end_date as date) AND schedule.active = true
           AND WEEKDAY(?) = day`;
           const values = [day, day];
 

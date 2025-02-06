@@ -1,12 +1,12 @@
-import "./index.css";
-import React, { useEffect, useState } from "react";
-import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
-import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
-import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
-import zoom_icon from "../../assets/zoom.png";
-import { getClassById } from "../../api/classesPageService";
-import { isAuthenticated } from "../../api/authService";
 import dayjs from "dayjs";
+import React, { useEffect, useState } from "react";
+import { isAuthenticated } from "../../api/authService";
+import { getClassById } from "../../api/classesPageService";
+import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
+import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
+import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
+import zoom_icon from "../../assets/zoom.png";
+import "./index.css";
 
 function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbuttons = [], shiftDetails }) {
   const [panelWidth, setPanelWidth] = useState("0px");
@@ -37,16 +37,9 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
   };
 
   const myClassCheck = async (data) => {
-
-    if (data.volunteer_user_ids) {
-      const userIds = data.volunteer_user_ids.split(",").map(id => id.trim());
-      const currentUserId = (await getCurrentUserId()).trim();
-      setMyClass(userIds.includes(currentUserId));
-      setClassTaken(true);
-    } else {
-      setMyClass(false);
-      setClassTaken(false);
-    }
+    const volunteers = data.schedules.flatMap(schedule => schedule.volunteers || []);
+    setMyClass(volunteers.some(volunteer => volunteer.user_id === getCurrentUserId));
+    setClassTaken(volunteers.length !== 0);
   };
 
   const formatTime = (time) => {
@@ -57,11 +50,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
   };
 
   const renderSchedules = () => {
-    if (
-      !panelInfo?.days_of_week ||
-      !panelInfo?.start_times ||
-      !panelInfo?.end_times
-    ) {
+    if (!panelInfo?.schedules) {
       return <div className="panel-header-dow panel-titles">Not Scheduled</div>;
     }
 
@@ -75,34 +64,25 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
       "Sunday",
     ];
 
-    const days = panelInfo.days_of_week.split(",");
-    const startTimes = panelInfo.start_times.split(",");
-    const endTimes = panelInfo.end_times.split(",");
-
-    return days.map((day, index) => (
-      <div key={index} className="panel-header-dow panel-titles">
-        {dow[day - 1]}, {formatTime(startTimes[index])} -{" "}
-        {formatTime(endTimes[index])}
+    return panelInfo.schedules.map((schedule, idx) => (
+      <div key={idx} className="panel-header-dow panel-titles">
+        {dow[schedule.day]}, {formatTime(schedule.start_time)} -{" "}
+        {formatTime(schedule.end_time)}
       </div>
-    ));
+    ))
   };
 
   const renderVolunteers = () => {
-    if (!panelInfo?.volunteer_f_names || !panelInfo?.volunteer_l_names) {
+    const volunteers = panelInfo?.schedules.flatMap(schedule => schedule.volunteers || []);
+    if (!volunteers || volunteers.length === 0) {
       return <>No volunteer for this class</>;
     }
 
-    const fNames = panelInfo.volunteer_f_names.split(",");
-    const lNames = panelInfo.volunteer_l_names.split(",");
-    const volunteers = fNames.map(
-      (fName, index) => `${fName} ${lNames[index]}`
-    );
-
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        {volunteers.map((vol, index) => (
+        {volunteers.map((volunteer, idx) => (
           <div
-            key={index}
+            key={idx}
             style={{
               display: "flex",
               flexDirection: "row",
@@ -110,7 +90,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
             }}
           >
             <div className="volunteer-profile"></div>
-            <div>{vol}</div>
+            <div>{volunteer.f_name} {volunteer.l_name}</div>
           </div>
         ))}
       </div>

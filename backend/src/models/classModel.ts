@@ -28,8 +28,6 @@ export default class ClassesModel {
      }
 
      async getClassById(class_id: number): Promise<any> {
-          // All class information is in one entry. Volunteer names, days of week, start times and end times can have multiple 
-          // values and seperated by commas. Days of week, start times and end times should have the same length. 
           const query = `  
                SELECT 
                     c.*, 
@@ -42,7 +40,7 @@ export default class ClassesModel {
           const values = [class_id];
 
           const [results, _] = await connectionPool.query<ClassDB[]>(query, values);
-          if (results.length == 0) {
+          if (results.length === 0) {
                throw {
                     status: 400,
                     message: `No class found under the given ID: ${class_id}`,

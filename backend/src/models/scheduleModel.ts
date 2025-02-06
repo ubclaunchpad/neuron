@@ -1,6 +1,6 @@
 import { ResultSetHeader } from 'mysql2';
 import { PoolConnection } from 'mysql2/promise';
-import { ScheduleDB, ShiftDB, VolunteerDB, VolunteerScheduleDB } from '../common/generated.js';
+import { ScheduleDB, ShiftDB, VolunteerScheduleDB } from '../common/generated.js';
 import connectionPool from '../config/database.js';
 import ShiftModel from '../models/shiftModel.js';
 
@@ -57,8 +57,8 @@ export default class ScheduleModel {
                 volunteers.push({
                     user_id: user_ids[i],
                     volunteer_id: v_ids[i],
-                    volunteer_f_name: first_names[i],
-                    volunteer_l_name: last_names[i],
+                    f_name: first_names[i],
+                    l_name: last_names[i],
                 });
             }
             const {volunteer_user_ids, volunteer_ids, volunteer_f_names, volunteer_l_names, ...rest} = schedule;

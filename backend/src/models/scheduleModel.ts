@@ -36,8 +36,12 @@ export default class ScheduleModel {
         const values = [classId];
 
         const [results, _] = await connectionPool.query<ScheduleDB[]>(query, values);
-
-        return results;
+        return results.map((schedule) => {
+            return {
+                ...schedule,
+                volunteer_ids: schedule.volunteer_ids ? schedule.volunteer_ids.split(',') : [],
+            }
+        });
     }
 
     private async addSchedulesWithTransaction(classId: number, scheduleItems: ScheduleDB[], transaction: PoolConnection): Promise<any> {

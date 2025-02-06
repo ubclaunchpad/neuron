@@ -34,7 +34,7 @@ export const ScheduleRoutes: RouteDefinition = {
                     method: 'post',
                     validation: [
                         body().isArray({ min: 1 }),
-                        body('*.day').isInt({ min: 1, max: 7 }),
+                        body('*.day').isInt({ min: 0, max: 6 }),
                         body('*.start_time').isTime({ hourFormat: 'hour24' }),
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
                         body('*.volunteer_ids').isArray({ min: 1 }).optional(),
@@ -48,7 +48,7 @@ export const ScheduleRoutes: RouteDefinition = {
                     validation: [
                         body().isArray({ min: 1 }),
                         body('*.schedule_id').isInt({ min: 1 }),
-                        body('*.day').isInt({ min: 1, max: 7 }),
+                        body('*.day').isInt({ min: 0, max: 6 }),
                         body('*.start_time').isTime({ hourFormat: 'hour24' }),
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
                         body('*.volunteer_ids').isArray({ min: 0 }).optional(),

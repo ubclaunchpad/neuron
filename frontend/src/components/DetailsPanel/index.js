@@ -57,14 +57,15 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
       return <div className="panel-header-dow panel-titles">Not Scheduled</div>;
     }
 
+    // to stay consistent with the javascript Date getDay() function, we start at 0 for Sunday
     const dow = [
+      "Sunday",
       "Monday",
       "Tuesday",
       "Wednesday",
       "Thursday",
       "Friday",
       "Saturday",
-      "Sunday",
     ];
 
     return panelInfo.schedules.map((schedule, idx) => (

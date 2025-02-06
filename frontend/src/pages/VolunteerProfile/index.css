@@ -4,6 +4,7 @@
     display: flex;
     font-family: var(--font-secondary);
     margin-bottom: 4vh;
+    padding: 0 36px;
     gap: 20px;
 }
 

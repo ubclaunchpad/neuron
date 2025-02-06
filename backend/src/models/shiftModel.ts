@@ -117,7 +117,7 @@ export default class ShiftModel {
      
           // collect all occurrences of the given day until the end date
           while (start <= end) {
-               result.push(start.toLocaleDateString().split('T')[0]); // store as YYYY-MM-DD
+               result.push(start.toISOString().split('T')[0]); // store as YYYY-MM-DD
                start.setDate(start.getDate() + 7);
           }
       

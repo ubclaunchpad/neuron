@@ -30,63 +30,14 @@ export default class ClassesModel {
      async getClassById(class_id: number): Promise<any> {
           // All class information is in one entry. Volunteer names, days of week, start times and end times can have multiple 
           // values and seperated by commas. Days of week, start times and end times should have the same length. 
-          const query =
-               `  
-          WITH 
-               params AS (
-                    SELECT ? AS id
-               ),
-               class_info AS (
-                    SELECT 
-                         c.class_id,
-                         c.class_name,
-                         c.instructions,
-                         c.zoom_link, 
-                         i.l_name AS instructor_l_name,
-                         i.f_name AS instructor_f_name
-                    FROM class c
-                    LEFT JOIN instructors i ON c.fk_instructor_id = i.instructor_id
-                    WHERE c.class_id = (SELECT id FROM params)
-               ),
-               volunteer_info AS (
-                    SELECT 
-                         s.fk_class_id AS class_id,
-                         GROUP_CONCAT(v.l_name) AS volunteer_l_names,
-                         GROUP_CONCAT(v.f_name) AS volunteer_f_names,
-                         GROUP_CONCAT(v.fk_user_id) AS volunteer_user_ids
-                    FROM volunteer_schedule vc
-                    LEFT JOIN volunteers v ON vc.fk_volunteer_id = v.volunteer_id
-                    LEFT JOIN schedule s ON vc.fk_schedule_id = s.schedule_id
-                    WHERE vc.fk_schedule_id = s.schedule_id 
-                    AND s.fk_class_id = (SELECT id FROM params)
-                    GROUP BY s.fk_class_id
-               ),
-               schedule_info AS (
-                    SELECT 
-                         s.fk_class_id AS class_id,
-                         GROUP_CONCAT(s.start_time) AS start_times,
-                         GROUP_CONCAT(s.end_time) AS end_times,
-                         GROUP_CONCAT(s.day) AS days_of_week
-                    FROM schedule s
-                    WHERE s.fk_class_id = (SELECT id FROM params)
-                    GROUP BY s.fk_class_id
-               )
-
-          SELECT 
-               ci.class_name,
-               ci.instructions,
-               ci.zoom_link,
-               ci.instructor_l_name,
-               ci.instructor_f_name,
-               COALESCE(vi.volunteer_l_names, null) AS volunteer_l_names,
-               COALESCE(vi.volunteer_f_names, null) AS volunteer_f_names,
-               COALESCE(vi.volunteer_user_ids, null) AS volunteer_user_ids,
-               COALESCE(si.start_times, null) AS start_times,
-               COALESCE(si.end_times, null) AS end_times,
-               COALESCE(si.days_of_week, null) AS days_of_week
-          FROM class_info ci
-          LEFT JOIN volunteer_info vi ON ci.class_id = vi.class_id
-          LEFT JOIN schedule_info si ON ci.class_id = si.class_id;
+          const query = `  
+               SELECT 
+                    c.*, 
+                    i.l_name AS instructor_l_name,
+                    i.f_name AS instructor_f_name
+               FROM class c
+               LEFT JOIN instructors i ON c.fk_instructor_id = i.instructor_id
+               WHERE c.class_id = ?
           `;
           const values = [class_id];
 
@@ -98,7 +49,13 @@ export default class ClassesModel {
                };
           }
 
-          return results[0];
+          const result = results[0];
+          const schedules = await scheduleModel.getActiveSchedulesForClass(class_id);
+
+          return {
+               ...result,
+               schedules: schedules
+          };
      }
 
      async addClass(newClass: ClassDB, schedules?: ScheduleDB[]): Promise<any> {

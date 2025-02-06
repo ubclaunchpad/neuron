@@ -1,6 +1,6 @@
 import { ResultSetHeader } from 'mysql2';
 import { PoolConnection } from 'mysql2/promise';
-import { ScheduleDB, ShiftDB, VolunteerScheduleDB } from '../common/generated.js';
+import { ScheduleDB, ShiftDB, VolunteerDB, VolunteerScheduleDB } from '../common/generated.js';
 import connectionPool from '../config/database.js';
 import ShiftModel from '../models/shiftModel.js';
 
@@ -26,20 +26,45 @@ export default class ScheduleModel {
         const query = `
             SELECT 
                 s.*,
-                GROUP_CONCAT(vs.fk_volunteer_id) as volunteer_ids
+                GROUP_CONCAT(v.fk_user_id) AS volunteer_user_ids,
+                GROUP_CONCAT(vs.fk_volunteer_id) as volunteer_ids,
+                GROUP_CONCAT(v.f_name) as volunteer_f_names,
+                GROUP_CONCAT(v.l_name) as volunteer_l_names
             FROM schedule s 
             LEFT JOIN volunteer_schedule vs
             ON s.schedule_id = vs.fk_schedule_id
+            LEFT JOIN volunteers v
+            ON vs.fk_volunteer_id = v.volunteer_id
             WHERE fk_class_id = ?
             AND s.active = true
             GROUP BY s.schedule_id`;
         const values = [classId];
 
         const [results, _] = await connectionPool.query<ScheduleDB[]>(query, values);
+
+        const toArray = (value: string | null): any[] => {
+            return value ? value.split(',') : [];
+        }
+        
         return results.map((schedule) => {
+            const user_ids = toArray(schedule.volunteer_user_ids);
+            const v_ids = toArray(schedule.volunteer_ids);
+            const first_names = toArray(schedule.volunteer_f_names);
+            const last_names = toArray(schedule.volunteer_l_names);
+
+            const volunteers = [];
+            for (let i = 0; i < v_ids.length; i++) {
+                volunteers.push({
+                    user_id: user_ids[i],
+                    volunteer_id: v_ids[i],
+                    volunteer_f_name: first_names[i],
+                    volunteer_l_name: last_names[i],
+                });
+            }
+            const {volunteer_user_ids, volunteer_ids, volunteer_f_names, volunteer_l_names, ...rest} = schedule;
             return {
-                ...schedule,
-                volunteer_ids: schedule.volunteer_ids ? schedule.volunteer_ids.split(',') : [],
+                ...rest,
+                volunteers: volunteers
             }
         });
     }

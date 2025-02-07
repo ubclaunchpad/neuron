@@ -82,8 +82,8 @@ export interface UserDB extends RowDataPacket {
   'role': string;
   'user_id': string;
 }
-export interface VolunteerClassDB extends RowDataPacket {
-  'fk_class_id': number;
+export interface VolunteerScheduleDB extends RowDataPacket {
+  'fk_schedule_id': number;
   'fk_volunteer_id': string;
 }
 export interface VolunteerProfilePicDB extends RowDataPacket {

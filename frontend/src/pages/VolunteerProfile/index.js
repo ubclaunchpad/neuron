@@ -28,7 +28,7 @@ function VolunteerProfile() {
             <div className="volunteer-card">
               <VolunteerDetailsCard volunteer={{
                   ...user.volunteer,
-                  profile_picture: user?.fk_image_id ? formatImageUrl(user?.fk_image_id) : undefined
+                  profile_picture: formatImageUrl(user?.fk_image_id)
                 }} />
             </div>
             <div className="availability-card">

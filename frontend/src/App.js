@@ -25,30 +25,29 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
-          <Route element={<RouteGuard fallback={"/"} valid={!isAuthenticated} />}>
-            <Route path="/auth/signup" element={<VolunteerSignup />} />
-            <Route path="/auth/login" element={<VolunteerLogin />} />
-            <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />} />
-            <Route path="/auth/reset-password" element={<VolunteerResetPassword />} />
+          <Route path="auth" element={<RouteGuard fallback={"/"} valid={!isAuthenticated} />}>
+            <Route path="signup" element={<VolunteerSignup />} />
+            <Route path="login" element={<VolunteerLogin />} />
+            <Route path="forgot-password" element={<VolunteerForgotPassword />} />
+            <Route path="reset-password" element={<VolunteerResetPassword />} />
           </Route>
 
-          {/* Volunteer Routes */}
-          <Route
-            path="/"
-            element={(isAuthenticated) ? <VolunteerLayout /> : <Navigate to="/auth/login" replace />}
-          >
+          {/* Auth Protected Routes */}
+          <Route element={<RouteGuard fallback="/auth/login" valid={isAuthenticated} />}>
+
             {/* Nested Routes within VolunteerLayout */}
-            <Route index element={<VolunteerDash />} />
-            <Route path="volunteer">
-              <Route path="classes" element={<Classes />} />
-              <Route path="schedule" element={<VolunteerSchedule />} />
-              <Route path="my-profile" element={<VolunteerProfile />} />
+            <Route element={<VolunteerLayout />}>
+              <Route index element={<VolunteerDash />} />
+              <Route path="volunteer">
+                <Route path="classes" element={<Classes />} />
+                <Route path="schedule" element={<VolunteerSchedule />} />
+                <Route path="my-profile" element={<VolunteerProfile />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* Admin Route */}
-          <Route element={<RouteGuard fallback="/" valid={isAuthenticated} />}>
-            <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
+            <Route element={<RouteGuard fallback="/auth/login" valid={isAuthenticated} />}>
+              <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
+            </Route>
           </Route>
 
           {/* Catch-all Route for Undefined Paths */}

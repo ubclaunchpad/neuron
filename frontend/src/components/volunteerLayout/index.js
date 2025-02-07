@@ -1,18 +1,18 @@
-import "./index.css";
-import { NavLink } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { React, useEffect, useState } from "react";
+import { NavLink, Outlet } from "react-router-dom";
 import BC_brain from "../../assets/bwp-logo-text.png";
-import sidebar_toggle from "../../assets/sidebar-toggle.png";
+import nav_item_classes from "../../assets/nav-item-classes.png";
 import nav_item_dash from "../../assets/nav-item-dash.png";
 import nav_item_schedule from "../../assets/nav-item-sched.png";
-import nav_item_classes from "../../assets/nav-item-classes.png";
 import nav_item_settings from "../../assets/nav-item-settings.png";
+import sidebar_toggle from "../../assets/sidebar-toggle.png";
+import "./index.css";
 
-import NavProfileCard from "../NavProfileCard";
 import { isAuthenticated } from "../../api/authService";
-import { getProfilePicture } from "../../api/volunteerService";
+import { formatImageUrl } from "../../api/imageService";
+import NavProfileCard from "../NavProfileCard";
 
-function VolunteerLayout({ pageTitle, children, pageStyle }) {
+function VolunteerLayout() {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
   const [volunteer, setVolunteer] = useState(null);
   const [profilePic, setProfilePic] = useState(null);
@@ -27,9 +27,13 @@ function VolunteerLayout({ pageTitle, children, pageStyle }) {
     const handleResize = () => {
       setCollapsed(window.innerWidth <= 800);
     };
-    window.addEventListener("resize", handleResize);
+
+    // Handle with media query, only overwrite the user's choice when switching over/under 800px
+    const mediaQuery = window.matchMedia('(min-width: 800px)')
+    mediaQuery.addEventListener('change', handleResize);
     handleResize();
-    return () => window.removeEventListener("resize", handleResize);
+
+    return () => mediaQuery.removeEventListener('change', handleResize);
   }, []);
   
   // Fetch user info
@@ -39,10 +43,10 @@ function VolunteerLayout({ pageTitle, children, pageStyle }) {
         const authData = await isAuthenticated();
         if (authData.isAuthenticated && authData.volunteer) {
           setVolunteer(authData.volunteer);
-          const picture = await getProfilePicture(
-            authData.volunteer?.volunteer_id
-          );
-          setProfilePic(picture);
+
+          const imageUrl = authData.user.fk_image_id ? formatImageUrl(authData.user.fk_image_id) : undefined;
+
+          setProfilePic(imageUrl);
         } else {
           setVolunteer(null);
         }
@@ -115,27 +119,14 @@ function VolunteerLayout({ pageTitle, children, pageStyle }) {
         <div className="nav-profile-card-container">
           <NavProfileCard
             avatar={profilePic}
-            name={volunteer?.f_name}
+            name={volunteer?.p_name ?? volunteer?.f_name}
             email={volunteer?.email}
             collapse={collapsed}
-            link={"/volunteer/my-profile"}
+            link="/volunteer/my-profile"
           />
         </div>
       </aside>
-      <main className="content-container" style={pageStyle}>
-        <div className="content-heading">
-          <h2 className="content-title">{pageTitle}</h2>
-          {pageTitle === "My Profile" && (
-            <button className="logout-button" onClick={() => {
-                localStorage.removeItem("neuronAuthToken");
-                window.location.href = "/auth/login";
-            }}>
-              <i className="fa-solid fa-arrow-right-from-bracket"></i>&nbsp;&nbsp;Log Out
-            </button>
-          )}
-        </div>
-        {children} {/* Render page content here */}
-      </main>
+      <Outlet /> {/* Render page content here */}
     </div>
   );
 }

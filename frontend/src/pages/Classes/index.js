@@ -1,13 +1,12 @@
-import "./index.css";
-import React, { useEffect, useState, useRef } from "react";
-import VolunteerLayout from "../../components/volunteerLayout";
-import DetailsPanel from "../../components/DetailsPanel";
+import React, { useEffect, useRef, useState } from "react";
 import {
   getAllClasses,
-  getAllClassImages,
-  getAllClassSchedules,
+  getAllClassSchedules
 } from "../../api/classesPageService";
+import { formatImageUrl } from "../../api/imageService";
 import ClassCategoryContainer from "../../components/ClassCategoryContainer";
+import DetailsPanel from "../../components/DetailsPanel";
+import "./index.css";
 
 function Classes() {
   const [completeClassData, setCompleteClassData] = useState(null);
@@ -21,24 +20,13 @@ function Classes() {
   useEffect(() => {
     const fetchClassesImagesAndSchedules = async () => {
       try {
-        const [classData, classImages, classSchedules] = await Promise.all([
+        const [classData, classSchedules] = await Promise.all([
           getAllClasses(),
-          getAllClassImages(),
           getAllClassSchedules(),
         ]);
 
         const classesWithImagesAndSchedules = classData.map((classItem) => {
-          const matchedImage = classImages.data.find(
-            (imageItem) => imageItem.fk_class_id === classItem.class_id
-          );
-          const imageUrl = matchedImage
-            ? URL.createObjectURL(
-                new Blob([new Uint8Array(matchedImage.image.data)], {
-                  type: "image/png",
-                })
-              )
-            : null;
-
+          const imageUrl = classItem.fk_image_id ? formatImageUrl(classItem.fk_image_id) : null;
           const matchedSchedules = classSchedules.filter((schedule) => {
             return schedule.fk_class_id === classItem.class_id;
           });
@@ -81,8 +69,6 @@ function Classes() {
     "Online Exercise",
     "Creative & Expressive",
     "Care Partner Workshops",
-    "In-Person Exercise",
-    "One-on-One Exercise",
     "Food & Nutrition",
     "Other Opportunities"
   ];
@@ -141,30 +127,33 @@ function Classes() {
   };
 
   return (
-    <VolunteerLayout pageTitle="Classes">
+    <main className="content-container">
+      <div className="content-heading">
+        <h2 className="content-title">Classes</h2>
+      </div>
+      <div className="main-category-header">
+        {categories.map((category) => {
+          const isSelected = selectedCategory === category;
+          return (
+            <button
+              key={category}
+              className={`category-button ${isSelected ? "selected" : ""}`}
+              onClick={() => {
+                setSelectedCategory(category);
+                scrollToSection(category);
+              }}
+            >
+              {category}
+            </button>
+          );
+        })}
+      </div>
       <DetailsPanel
         classId={selectedClassId}
         classList={completeClassData}
         setClassId={setSelectedClassId}
       >
         <div className="classes-page">
-          <div className="main-category-header">
-            {categories.map((category) => {
-              const isSelected = selectedCategory === category;
-              return (
-                <button
-                  key={category}
-                  className={`category-button ${isSelected ? "selected" : ""}`}
-                  onClick={() => {
-                    setSelectedCategory(category);
-                    scrollToSection(category);
-                  }}
-                >
-                  {category}
-                </button>
-              );
-            })}
-          </div>
           {/* ----- */}
           <div className="class-catalog">
             {Object.entries(groupedByCategory).map(([category, classData]) => {
@@ -183,7 +172,7 @@ function Classes() {
           </div>
         </div>
       </DetailsPanel>
-    </VolunteerLayout>
+    </main>
   );
 }
 

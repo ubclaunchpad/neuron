@@ -20,8 +20,6 @@ export const AuthProvider = ({ children }) => {
       try {
         const authResponse = await checkAuth();
 
-        console.log(authResponse)
-
         // Check if the user is a volunteer and update state accordingly
         switch (authResponse.user.role) {
           case "VOLUN":

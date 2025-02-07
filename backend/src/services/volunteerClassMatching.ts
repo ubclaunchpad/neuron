@@ -37,7 +37,6 @@ export class VolunteerClassMatcher {
 
         // For each class in the system, try to assign exactly 1 volunteer.
         // If you need more than one volunteer per class, you can adjust.
-
         for (const cls of this.classes) {
             if (!cls.class_id) {
                 throw new Error(`Class is missing class_id: ${JSON.stringify(cls)}`);
@@ -52,7 +51,6 @@ export class VolunteerClassMatcher {
             // Gather potential volunteers who meet constraints:
             // 1) Are available for that day/time.
             // 2) Have indicated a preference for that class.
-
             const potentialVolunteers = this.volunteers.filter((v) =>
                 this.isVolunteerAvailableForClass(v.volunteer_id, timeInfo) &&
                 this.isVolunteerPrefersClass(v.volunteer_id, cls.class_id!)
@@ -88,8 +86,6 @@ export class VolunteerClassMatcher {
             const start = new Date(cls.start_date);
             const end = new Date(cls.end_date);
 
-            // Convert Sunday=0..Saturday=6 => 1..7 with Monday=1
-            // This is just an example, you can adapt as needed.
             let weekday = start.getDay(); // 0=Sunday..6=Saturday
             if (weekday === 0) weekday = 7;
 

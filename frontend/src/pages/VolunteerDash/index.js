@@ -53,7 +53,7 @@ function VolunteerDash() {
       const response = await getVolunteerShiftsForMonth(body);
       setShifts(response);
     };
-    fetchShifts();
+    // fetchShifts();
   }, [selectedDate, volunteerID]);
 
   const allShifts = shifts.reduce((acc, shift) => {

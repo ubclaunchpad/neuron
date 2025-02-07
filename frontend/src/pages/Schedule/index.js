@@ -8,10 +8,10 @@ import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
-import CheckInIcon from '../../assets/check-in-icon.png'
-import Plus from '../../assets/plus.png'
+import CheckInIcon from '../../assets/images/button-icons/clock-icon.svg';
+import PlusIcon from '../../assets/images/button-icons/plus-icon.svg';
 import RequestCoverageIcon from '../../assets/request-coverage.png'
-import CancelIcon from "../../assets/images/button-icons/white-cancel-icon.svg";
+import CancelIcon from "../../assets/images/button-icons/x-icon.svg";
 import "./index.css";
 
 function VolunteerSchedule() {
@@ -184,8 +184,9 @@ function VolunteerSchedule() {
                             ? 'Missed Shift'
                                 : 'Upcoming',
                 icon: shift.checked_in ? null : currentShift ? CheckInIcon : null,
+                iconColourClass: shift.checked_in ? null : currentShift ? 'icon-white' : null, // Icon colour classes defined in styles.css
                 disabled: shift.checked_in || !currentShift,
-                buttonClass: shift.checked_in ? 'checked-in' : '',
+                buttonClass: shift.checked_in ? 'checked-in' : 'primary-action',
                 onClick: handleCheckInClick,
             },
             [SHIFT_TYPES.COVERAGE]: {
@@ -193,8 +194,10 @@ function VolunteerSchedule() {
                 label: shift.coverage_status === COVERAGE_STATUSES.PENDING
                     ? 'Pending Approval'
                     : 'Cover',
-                icon: shift.coverage_status === COVERAGE_STATUSES.OPEN ? Plus : null,
+                icon: shift.coverage_status === COVERAGE_STATUSES.OPEN ? PlusIcon : null,
+                iconColourClass: shift.coverage_status === COVERAGE_STATUSES.OPEN ? 'icon-white' : null,
                 disabled: shift.coverage_status === COVERAGE_STATUSES.PENDING,
+                buttonClass: shift.coverage_status === COVERAGE_STATUSES.OPEN ? 'primary-action' : '',
                 onClick: handleCoverShiftClick,
             },
             [SHIFT_TYPES.MY_COVERAGE_REQUESTS]: {
@@ -222,8 +225,9 @@ function VolunteerSchedule() {
             CANCEL: {
                 label: 'Cancel',
                 icon: CancelIcon,
+                iconColourClass: 'icon-white',
                 disabled: false,
-                buttonClass: 'cancel',
+                buttonClass: 'cancel-action',
                 onClick: handleCancelClick,
             }
         };

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { isAuthenticated } from "../../api/authService";
 import { getClassById } from "../../api/classesPageService";
 import email from "../../assets/email.png";
-import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
+import button_icon_close from "../../assets/images/button-icons/x-icon.svg";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import zoom_icon from "../../assets/zoom.png";
@@ -180,12 +180,12 @@ function DetailsPanel({
       <div className="panel-container" style={{ width: panelWidth }}>
         <div className="panel-header">
           {shiftDetails ? (
-            <span>
+            <span className="panel-header-date-details">
+              <div>{dayjs(shiftDetails.shift_date).format("dddd, MMMM D")}</div>
               <div>
                 {dayjs(shiftDetails.start_time, "HH:mm").format("h:mm A")} -{" "}
                 {dayjs(shiftDetails.end_time, "HH:mm").format("h:mm A")}
               </div>
-              <div>{dayjs(shiftDetails.shift_date).format("dddd, MMMM D")}</div>
             </span>
           ) : (
             renderSchedules()
@@ -283,7 +283,7 @@ function DetailsPanel({
                 onClick={() => button.onClick(shiftDetails)}
               >
                 {button.icon && (
-                  <img src={button.icon} className="card-button-icon" />
+                  <img src={button.icon} className={`card-button-icon ${button.iconColourClass || ""}`} />
                 )}
                 {button.label}
               </button>

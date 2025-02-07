@@ -37,19 +37,6 @@ function VolunteerDetailsCard({ volunteer }) {
     const { ref: cityRef, isComponentVisible: isCityVisible, setIsComponentVisible: setisCityVisible } = useComponentVisible(false);
     const pronouns = ["None", "He/Him", "She/Her", "They/Them"];
 
-    function sendTcNotif() {
-        notyf.error("You may want to update your preferred time commitment.");
-    }
-
-    useEffect(() => {
-        if (Number(mutableData.timeCommitment) <= 0 && !isEditing) {
-            sendTcNotif();
-        }
-    }, [
-        mutableData.timeCommitment,
-        isEditing
-    ]);
-
     const handleImageUpload = (event) => {
         const image = event.target.files[0];
         setMutableData({
@@ -115,19 +102,24 @@ function VolunteerDetailsCard({ volunteer }) {
                 notyf.success("Data Updated! Please refresh the page to see changes.");
             }
 
-    async function updateProfilePicture() {
-        // only send request if there are changes
-        if (mutableData.profilePicture !== prevMutableData.profilePicture) {
-            // insert profile picture
-            const profilePicData = new FormData();
-            profilePicData.append('image', mutableData.profilePicture);
+            // only send request if there are changes
+            if (mutableData.profilePicture !== prevMutableData.profilePicture) {
+                // insert profile picture
+                const profilePicData = new FormData();
+                profilePicData.append('image', mutableData.profilePicture);
 
-            // attach id to req body
-            profilePicData.append('volunteer_id', volunteer.volunteer_id);
+                // attach id to req body
+                profilePicData.append('volunteer_id', volunteer.volunteer_id);
 
-            const uploadedImageId = await uploadProfilePicture(volunteer.fk_user_id, profilePicData);
+                const uploadedImageId = await uploadProfilePicture(volunteer.fk_user_id, profilePicData);
 
-            setTempImage(formatImageUrl(uploadedImageId));
+                setTempImage(formatImageUrl(uploadedImageId));
+            }
+            
+        } catch (error) {
+            console.log(error)
+            setMutableData(prevMutableData);
+            setTempImage(prevTempImage);
         }
     }
 
@@ -280,10 +272,9 @@ function VolunteerDetailsCard({ volunteer }) {
                                             {mutableData.preferredName ?? "not yet set"}
                                     </td>
                                     <td hidden={!isEditing}>
-                                        <input type="text" className="text-input" name="preferredName" value={mutableData.preferredName} onChange={handleInputChange}></input>
+                                        <input type="text" className="text-input" placeholder="Enter your preferred name" name="preferredName" value={mutableData.preferredName} onChange={handleInputChange}></input>
                                     </td>
                                 </tr>
-                                <tr className="row-gap"/>
                                 <tr className="view volunteer-pronouns">
                                     <td>Pronouns</td>
                                     <td 
@@ -303,7 +294,6 @@ function VolunteerDetailsCard({ volunteer }) {
                                             <button 
                                                 className="pronouns-button"
                                                 style={{
-                                                    'fontFamily': 'var(--font-secondary)',
                                                     'color': mutableData.pronouns ? '':'#808080',
                                                     'borderColor': isComponentVisible ? '#4385AC':''
                                                 }}
@@ -332,30 +322,6 @@ function VolunteerDetailsCard({ volunteer }) {
                                             )}
                                         </td>)}
                                 </tr>
-                                <tr className="row-gap"/>
-                                <tr className="view volunteer-time-commitment">
-                                    <td>Preferred Time Commitment</td>
-                                    <td 
-                                        className="mutable-value" 
-                                        hidden={isEditing}>
-                                            <span className="bold">{mutableData.timeCommitment}</span> hr{mutableData.timeCommitment === 1 ? '':'s'}/week 
-                                    </td>
-                                    <td hidden={!isEditing}>
-                                        <div className="time-commitment-input">
-                                            <input 
-                                                type="number" 
-                                                min={0} 
-                                                max={40} 
-                                                className="text-input"
-                                                name="timeCommitment" 
-                                                value={mutableData.timeCommitment} 
-                                                onChange={handleInputChange}
-                                            />
-                                            <div className="time-commitment-units">hrs/week</div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr className="row-gap"/>
                                 <tr className="view volunteer-phone">
                                     <td>Phone</td>
                                     <td 
@@ -368,15 +334,13 @@ function VolunteerDetailsCard({ volunteer }) {
                                             {mutableData.phoneNumber ? formatPhone(mutableData.phoneNumber) : "not yet set"}
                                     </td>
                                     <td hidden={!isEditing}>
-                                        <input type="number" className="text-input" name="phoneNumber" value={mutableData.phoneNumber} onChange={handleInputChange}></input>
+                                        <input type="number" className="text-input" placeholder="Enter your phone number" name="phoneNumber" value={mutableData.phoneNumber} onChange={handleInputChange}></input>
                                     </td>
                                 </tr>
-                                <tr className="row-gap"/>
                                 <tr className="view volunteer-email" hidden={isEditing}>
                                     <td>Email</td>
                                     <td>{volunteer.email}</td>
                                 </tr>
-                                <tr className="row-gap"/>
                                 <tr className="view volunteer-joined-date" hidden={isEditing}>
                                     <td>Joined</td>
                                     <td>{formatDate(volunteer.created_at)}</td>

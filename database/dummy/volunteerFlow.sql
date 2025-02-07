@@ -62,8 +62,8 @@ INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUE
 INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (11, 9, 3, '15:00:00', '16:00:00');
 
--- Assign volunteer to class
-INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
+-- Assign volunteer to schedule
+INSERT INTO volunteer_schedule (fk_volunteer_id, fk_schedule_id) VALUES
 ('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 1);
 
 -- For volunteer schedule viewing, monthly view for volunteer_id 1230545b-0505-4909-826c-59359503dae6

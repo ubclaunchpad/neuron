@@ -2,8 +2,12 @@
 
 .date-toolbar {
     display: flex;
-    align-items: left;
+    justify-content: space-between;
     padding: 0 36px;
+}
+
+.date-toolbar .left-nav {
+    display: flex;
 }
 
 /* Override default button styles */

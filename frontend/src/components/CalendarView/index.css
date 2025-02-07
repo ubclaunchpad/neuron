@@ -53,6 +53,14 @@
     min-width: 1vw;
 }
 
+.day-column:nth-child(2n) .day-header {
+    background-color: #d9d9d926;
+}
+
+.day-column:nth-child(2n + 1) .day-header {
+    background-color: var(--white);
+}
+
 .day-header {
     padding: 0.5rem;
     border-bottom: 1px solid var(--grey);

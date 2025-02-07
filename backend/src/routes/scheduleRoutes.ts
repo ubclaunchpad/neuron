@@ -1,6 +1,14 @@
 import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
-import { deleteSchedules, getSchedules, getSchedulesByClassId, setSchedulesByClassId, updateSchedulesByClassId } from '../controllers/scheduleController.js';
+import { 
+    addSchedulesToClass, 
+    assignVolunteersToSchedule, 
+    deleteOrSoftDeleteSchedules, 
+    deleteSchedulesFromClass,
+    getAllSchedules, 
+    getActiveSchedulesForClass, 
+    updateSchedulesForClass
+} from '../controllers/scheduleController.js';
 
 export const ScheduleRoutes: RouteDefinition = {
     path: '/schedules',
@@ -8,7 +16,7 @@ export const ScheduleRoutes: RouteDefinition = {
         {
             path: '/',
             method: 'get',
-            action: getSchedules
+            action: getAllSchedules
         },
         {
             path: '/:class_id',
@@ -19,39 +27,63 @@ export const ScheduleRoutes: RouteDefinition = {
                 {
                     path: '/',
                     method: 'get',
-                    action: getSchedulesByClassId
+                    action: getActiveSchedulesForClass
                 },
                 {
                     path: '/',
                     method: 'post',
                     validation: [
-                        body().isArray({ min: 0 }),
-                        body('*.day').isInt({ min: 1, max: 7 }),
+                        body().isArray({ min: 1 }),
+                        body('*.day').isInt({ min: 0, max: 6 }),
                         body('*.start_time').isTime({ hourFormat: 'hour24' }),
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
+                        body('*.volunteer_ids').isArray({ min: 1 }).optional(),
+                        body('*.volunteer_ids.*').isUUID('4')
                     ],
-                    action: setSchedulesByClassId
+                    action: addSchedulesToClass
                 },
                 {
                     path: '/',
                     method: 'put',
                     validation: [
-                        body().isArray({ min: 0 }),
-                        body('*.day').isInt({ min: 1, max: 7 }),
+                        body().isArray({ min: 1 }),
+                        body('*.schedule_id').isInt({ min: 1 }),
+                        body('*.day').isInt({ min: 0, max: 6 }),
                         body('*.start_time').isTime({ hourFormat: 'hour24' }),
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
+                        body('*.volunteer_ids').isArray({ min: 0 }).optional(),
+                        body('*.volunteer_ids.*').isUUID('4')
                     ],
-                    action: updateSchedulesByClassId
+                    action: updateSchedulesForClass
                 },
                 {
                     path: '/',
                     method: 'delete',
                     validation: [
-                        body('schedule_ids').isArray({ min: 0}),
-                        body('schedule_ids.*').isInt({ min: 0}),
+                        body('schedule_ids').isArray({ min: 1 }),
+                        body('schedule_ids.*').isInt({ min: 1 }),
                     ],
-                    action: deleteSchedules
+                    action: deleteSchedulesFromClass
                 },
+                {
+                    path: '/soft-option',
+                    method: 'delete',
+                    validation: [
+                        body('schedule_ids').isArray({ min: 1 }),
+                        body('schedule_ids.*').isInt({ min: 1 }),
+                    ],
+                    action: deleteOrSoftDeleteSchedules
+                },
+                {
+                    path: '/:schedule_id',
+                    method: 'post',
+                    validation: [
+                        param('schedule_id').isInt({ min: 1}),
+                        body('volunteer_ids').isArray({ min: 1 }),
+                        body('volunteer_ids.*').isUUID('4')
+                    ],
+                    action: assignVolunteersToSchedule
+                }
             ]
         },
     ]

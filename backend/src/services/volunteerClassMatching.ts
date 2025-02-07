@@ -1,97 +1,146 @@
-import { Class, Volunteer, ClassPreference, Availability } from "../common/generated.js";
+import { Class, Volunteer, ClassPreference, Availability, VolunteerClass } from "../common/generated.js";
 
-/**
- * Represents an assignment of a volunteer to a class.
- */
-interface VolunteerAssignment {
-    classId: number;
-    volunteerId: string;
+
+interface ClassTimeInfo {
+    dayNumber: number; // 1=Monday, 2=Tuesday, ..., 7=Sunday
+    startTime: string; // "HH:mm" extracted from start_date
+    endTime: string;   // "HH:mm" extracted from end_date
 }
 
-/**
- * Matches volunteers to classes based on their preferences and availabilities.
- * 
- * @param classes - An array of classes.
- * @param preferences - An array of class preferences.
- * @param availabilities - An array of volunteer availabilities.
- * @returns An array of volunteer assignments.
- */
-function matchVolunteers(
-    classes: Class[],
-    preferences: ClassPreference[],
-    availabilities: Availability[]
-): VolunteerAssignment[] {
-    const assignments: VolunteerAssignment[] = [];
+export class VolunteerClassMatcher {
+    private volunteers: Volunteer[];
+    private availabilities: Availability[];
+    private preferences: ClassPreference[];
+    private classes: Class[];
 
-    // Create a map of volunteer availabilities
-    const availabilityMap = new Map<string, Availability[]>();
-    availabilities.forEach((availability) => {
-        if (!availabilityMap.has(availability.fk_volunteer_id)) {
-            availabilityMap.set(availability.fk_volunteer_id, []);
-        }
-        availabilityMap.get(availability.fk_volunteer_id)?.push(availability);
-    });
+    // Final volunteer->class assignments.
+    private assignments: VolunteerClass[] = [];
 
-    // Create a map of class preferences
-    const preferenceMap = new Map<number, string[]>();
-    preferences.forEach((pref) => {
-        if (pref.fk_class_id && pref.fk_volunter_id) {
-            if (!preferenceMap.has(pref.fk_class_id)) {
-                preferenceMap.set(pref.fk_class_id, []);
-            }
-            preferenceMap.get(pref.fk_class_id)?.push(pref.fk_volunter_id);
-        }
-    });
-
-    // Create a map of preferred volunteers for each class
-    const domains: Map<number, string[]> = new Map();
-    classes.forEach((cls) => {
-        const classId = cls.class_id!;
-        const preferredVolunteers = preferenceMap.get(classId) || [];
-        domains.set(classId, preferredVolunteers);
-    });
-
-    /**
-     * Backtracks to find a valid assignment of volunteers to classes.
-     * 
-     * @param assignments - An array of current assignments.
-     * @returns A boolean indicating if a valid assignment was found.
-     */
-    function backtrack(assignments: VolunteerAssignment[]): boolean {
-        if (assignments.length === classes.length) return true;
-
-        const unassignedClasses = classes.filter(
-            (cls) => !assignments.some((a) => a.classId === cls.class_id)
-        );
-
-        if (unassignedClasses.length === 0) return true;
-
-        const currentClass = unassignedClasses[0];
-        const domain = domains.get(currentClass.class_id!) || [];
-
-        for (const volunteerId of domain) {
-            const isAvailable = availabilityMap
-                .get(volunteerId)
-                ?.some((avail) => avail.fk_volunteer_id === volunteerId);
-
-            const hasConflict = assignments.some(
-                (a) => a.volunteerId === volunteerId
-            );
-
-            if (isAvailable && !hasConflict) {
-                assignments.push({ classId: currentClass.class_id!, volunteerId });
-                if (backtrack(assignments)) return true;
-                assignments.pop();
-            }
-        }
-
-        return false;
+    constructor(
+        volunteers: Volunteer[],
+        availabilities: Availability[],
+        preferences: ClassPreference[],
+        classes: Class[]
+    ) {
+        this.volunteers = volunteers;
+        this.availabilities = availabilities;
+        this.preferences = preferences;
+        this.classes = classes;
     }
 
-    // Start the backtracking algorithm
-    backtrack(assignments);
+    /**
+     * Entry point to run the matching process.
+     * Returns an array of volunteer->class assignments.
+     */
+    public matchVolunteers(): VolunteerClass[] {
+        this.assignments = [];
 
-    return assignments;
+        // For each class in the system, try to assign exactly 1 volunteer.
+        // If you need more than one volunteer per class, you can adjust.
+
+        for (const cls of this.classes) {
+            if (!cls.class_id) {
+                throw new Error(`Class is missing class_id: ${JSON.stringify(cls)}`);
+            }
+
+            // Extract day/time from the Class's start_date/end_date.
+            const timeInfo = this.parseClassDateTime(cls);
+            if (!timeInfo) {
+                throw new Error(`Failed to parse class date/time for class_id=${cls.class_id}`);
+            }
+
+            // Gather potential volunteers who meet constraints:
+            // 1) Are available for that day/time.
+            // 2) Have indicated a preference for that class.
+
+            const potentialVolunteers = this.volunteers.filter((v) =>
+                this.isVolunteerAvailableForClass(v.volunteer_id, timeInfo) &&
+                this.isVolunteerPrefersClass(v.volunteer_id, cls.class_id!)
+            );
+
+            // Sort by rank if provided (lower rank => higher preference)
+            potentialVolunteers.sort((a, b) => {
+                const rankA = this.getClassRank(a.volunteer_id, cls.class_id!) ?? 9999;
+                const rankB = this.getClassRank(b.volunteer_id, cls.class_id!) ?? 9999;
+                return rankA - rankB;
+            });
+
+            // Simple: assign the top candidate if available.
+            if (potentialVolunteers.length > 0) {
+                const chosen = potentialVolunteers[0];
+                this.assignments.push({
+                    fk_volunteer_id: chosen.volunteer_id,
+                    fk_class_id: cls.class_id,
+                });
+            }
+        }
+
+        return this.assignments;
+    }
+
+    /**
+     * Attempt to parse day/time from start_date/end_date.
+     * Returns dayNumber (1=Monday..7=Sunday), startTime, endTime.
+     * If the class crosses days, we only handle the start_date's day.
+     */
+    private parseClassDateTime(cls: Class): ClassTimeInfo | null {
+        try {
+            const start = new Date(cls.start_date);
+            const end = new Date(cls.end_date);
+
+            // Convert Sunday=0..Saturday=6 => 1..7 with Monday=1
+            // This is just an example, you can adapt as needed.
+            let weekday = start.getDay(); // 0=Sunday..6=Saturday
+            if (weekday === 0) weekday = 7;
+
+            const startHour = String(start.getHours()).padStart(2, "0");
+            const startMin = String(start.getMinutes()).padStart(2, "0");
+            const endHour = String(end.getHours()).padStart(2, "0");
+            const endMin = String(end.getMinutes()).padStart(2, "0");
+
+            return {
+                dayNumber: weekday,
+                startTime: `${startHour}:${startMin}`,
+                endTime: `${endHour}:${endMin}`,
+            };
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Check if volunteer has availability covering the specified day/time range.
+     */
+    private isVolunteerAvailableForClass(volunteerId: string, timeInfo: ClassTimeInfo): boolean {
+        const volunteerAvail = this.availabilities.filter((av) => av.fk_volunteer_id === volunteerId);
+
+        // We require an availability slot with the same dayNumber that covers start->end time.
+        return volunteerAvail.some((av) => {
+            if (av.day !== timeInfo.dayNumber) return false;
+            // Compare times as strings: "HH:mm"
+            return av.start_time <= timeInfo.startTime && av.end_time >= timeInfo.endTime;
+        });
+    }
+
+    /**
+     * Check if volunteer's ClassPreference includes this class.
+     */
+    private isVolunteerPrefersClass(volunteerId: string, classId: number): boolean {
+        return this.preferences.some((pref) => {
+            return (
+                pref.fk_volunter_id === volunteerId &&
+                pref.fk_class_id === classId
+            );
+        });
+    }
+
+    /**
+     * Retrieve the preference rank from ClassPreference, if available.
+     */
+    private getClassRank(volunteerId: string, classId: number): number | null {
+        const pref = this.preferences.find(
+            (p) => p.fk_volunter_id === volunteerId && p.fk_class_id === classId
+        );
+        return pref?.class_rank ?? null;
+    }
 }
-
-export { matchVolunteers };

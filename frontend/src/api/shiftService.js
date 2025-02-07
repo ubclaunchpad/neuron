@@ -99,7 +99,7 @@ const requestShiftCoverage = async (body) => {
   }
 }
 
-// Cancels a shift coverage request
+// Cancels a shift coverage request. An error is thrown if we try to cancel a request that has already been fulfilled or isn't found
 const cancelCoverRequest = async (body) => {
   try {
     console.log("cancelCoverRequest body:", body);

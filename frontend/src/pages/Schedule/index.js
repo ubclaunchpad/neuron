@@ -34,15 +34,23 @@ function VolunteerSchedule() {
             shiftDate: selectedDate.format('YYYY-MM-DD')
         };
         const response = await getVolunteerShiftsForMonth(body);
-        
-        // Filter out duplicate shifts
+
+        // Filter out duplicated shifts and past coverage requests
         const shiftMap = new Map();
         response.forEach((shift) => {
             const existingShift = shiftMap.get(shift.shift_id);
+            const shiftDay = dayjs(shift.shift_date).format('YYYY-MM-DD');
+            const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
+            const pastShift = currentDate.isAfter(shiftEnd);
 
             // Prioritize showing coverage shifts over my shifts
-            if (existingShift && existingShift.shift_type === 'my-shifts' && shift.shift_type === 'my-coverage-requests') {
+            if (existingShift && existingShift.shift_type === SHIFT_TYPES.MY_SHIFTS && shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
                 shiftMap.set(shift.shift_id, shift);
+
+            // Don't show past shifts that are open for coverage
+            } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.OPEN && pastShift) {
+                // skip shift
+
             } else if (!existingShift) {
                 shiftMap.set(shift.shift_id, shift);
             }
@@ -87,7 +95,7 @@ function VolunteerSchedule() {
                 await checkInShift(shift.shift_id);
                 handleShiftUpdate({ ...shift, checked_in: 1 });
             } 
-            
+
         } catch (error) {
             console.error('Error checking in for shift:', error);
         }
@@ -195,7 +203,9 @@ function VolunteerSchedule() {
             },
             [SHIFT_TYPES.MY_COVERAGE_REQUESTS]: {
                 lineColor: 'var(--yellow)',
-                label: 'Requested Coverage',
+                label: shift.coverage_status === COVERAGE_STATUSES.OPEN
+                    ? 'Requested Coverage'
+                    : 'Shift Filled',
                 icon: null,
                 disabled: true,
                 onClick: () => {}, // No action for this state
@@ -236,13 +246,12 @@ function VolunteerSchedule() {
         const primaryButton = buttonConfig[shift.shift_type] || buttonConfig[SHIFT_TYPES.DEFAULT];
 
         buttons.push(primaryButton);
+        
         if (shift.shift_type === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
             buttons.push(buttonConfig.REQUEST_COVERAGE);
         } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.PENDING) {
             buttons.push(buttonConfig.CANCEL);
-
-        // TODO: Should it be for any of my own coverage requests? there is no coverage status associated them
-        } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
+        } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS && shift.coverage_status === COVERAGE_STATUSES.OPEN) {
             buttons.push(buttonConfig.CANCEL);
         }
 

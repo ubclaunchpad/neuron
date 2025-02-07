@@ -176,8 +176,10 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
                 <div className={shiftDetails.shift_type}>
                   {shiftDetails.shift_type === "my-shifts"
                     ? "My Class"
-                    : shiftDetails.shift_type === "my-coverage-requests"
+                    : shiftDetails.shift_type === "my-coverage-requests" && shiftDetails.coverage_status === COVERAGE_STATUSES.OPEN
                     ? "Requested Coverage"
+                    : shiftDetails.shift_type === "my-coverage-requests" && shiftDetails.coverage_status === COVERAGE_STATUSES.RESOLVED
+                    ? "Shift Filled"
                     : shiftDetails.shift_type === "coverage" && shiftDetails.coverage_status === COVERAGE_STATUSES.OPEN
                     ? "Needs Coverage"
                     : shiftDetails.shift_type === "coverage" && shiftDetails.coverage_status === COVERAGE_STATUSES.PENDING

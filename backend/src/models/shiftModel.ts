@@ -124,11 +124,16 @@ export default class ShiftModel {
      // delete corresponding entry in shift_coverage_request table
      async deleteShiftCoverageRequest(request_id: number, shift_id: number): Promise<ResultSetHeader> {
           const query = `
-               DELETE FROM shift_coverage_request WHERE request_id = ? AND fk_shift_id = ?
+               DELETE FROM shift_coverage_request WHERE request_id = ? AND fk_shift_id = ? AND covered_by IS NULL
           `;
           const values = [request_id, shift_id];
 
           const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          // Check if it was successfully deleted or not
+          if (results.affectedRows === 0) {
+               throw new Error("Shift coverage request not found or already fulfilled");
+          }
 
           return results;
      }

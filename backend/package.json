@@ -8,7 +8,8 @@
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "generate-schema": "node generate-types.js"
+    "generate-schema": "node generate-types.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -33,13 +34,16 @@
     "@types/body-parser": "^1.19.5",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/multer": "^1.4.12",
     "@types/mysql": "^2.15.26",
     "@types/node": "^22.7.4",
     "@types/nodemailer": "^6.4.16",
     "@types/uuid": "^10.0.0",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.7",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2"

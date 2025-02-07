@@ -12,7 +12,7 @@
 }
 
 .profile-card {
-    padding: 72px 32px;
+    padding: 48px 32px;
 }
 
 .edit-icon {
@@ -114,6 +114,11 @@
     margin-bottom: 10px;
 }
 
+.header h2 {
+    font-size: var(--title-text);
+    font-weight: var(--semi-bold);
+}
+
 .profile-info h2 {
     margin: 0 0 10px 0;
     font-size: 20px;
@@ -143,6 +148,7 @@
     padding: 6px;
     font-size: 13px;
     border-radius: 4px;
+    font-family: var(--font-secondary)
 }
 
 .text-input:focus {
@@ -215,5 +221,26 @@ input[type=number] {
     border: 1px solid #4385AC;
     border-radius: 5px;
     background-color: #F0FAFF;
+}
+
+.bold {
+    font-weight: var(--semi-bold);
+}
+
+.time-commitment-input {
+    display: flex;
+    align-items: baseline;
+}
+
+.time-commitment-units {
+    margin-left: 8px;
+    color: #808080;
+    font-style: italic;
+}
+
+.row-gap {
+    margin-top: 14px;
+    border: red;
+    border-radius: 5px;
 }
   

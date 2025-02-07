@@ -105,6 +105,11 @@ export default class ShiftModel {
 
           const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 
+          // Check if it was successfully deleted or not
+          if (results.affectedRows === 0) {
+               throw new Error("Cover shift request not found or already approved");
+          }
+
           return results;
      }
 

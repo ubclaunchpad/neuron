@@ -81,6 +81,7 @@ BEGIN
         MONTH(shifts.shift_date) = month 
         AND YEAR(shifts.shift_date) = year 
         AND shifts.fk_volunteer_id <> volunteer_id
+        AND shift_coverage_request.covered_by IS NULL
 
     UNION ALL
 

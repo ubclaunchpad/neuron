@@ -40,7 +40,7 @@ const getVolunteerShiftsForMonth = async (body) => {
 // Creates a request to check in for a shift
 const checkInShift = async (shift_id) => {
   try {
-    console.log("checkInShift shift_id param:", shift_id);
+    // console.log("checkInShift shift_id param:", shift_id);
     const response = await api.patch(`/shifts/check-in/${shift_id}`);
 
     return response.data;
@@ -53,7 +53,7 @@ const checkInShift = async (shift_id) => {
 // Creates a request to cover a shift by a volunteer.
 const requestToCoverShift = async (body) => {
   try {
-    console.log("requestToCoverShift body:", body);
+    // console.log("requestToCoverShift body:", body);
     const response = await api.post("/shifts/cover-shift", {
       request_id: body.request_id,
       volunteer_id: body.volunteer_id,
@@ -66,10 +66,10 @@ const requestToCoverShift = async (body) => {
   }
 };
 
-// Cancels a request to cover a shift from another volunteer
+// Cancels a request to cover a shift from another volunteer. An error is thrown if the request is not found or already approved
 const cancelCoverShift = async (body) => {
   try {
-    console.log("cancelCoverShift body:", body);
+    // console.log("cancelCoverShift body:", body);
     const response = await api.delete("/shifts/cover-shift", { 
       data: {
         request_id: body.request_id,
@@ -87,7 +87,7 @@ const cancelCoverShift = async (body) => {
 // Creates a request for shift coverage
 const requestShiftCoverage = async (body) => {
   try {
-    console.log("requestShiftCoverage body:", body);
+    // console.log("requestShiftCoverage body:", body);
     const response = await api.put(`/shifts/shift-coverage-request`, {
       shift_id: body.shift_id
     });
@@ -102,7 +102,7 @@ const requestShiftCoverage = async (body) => {
 // Cancels a shift coverage request. An error is thrown if we try to cancel a request that has already been fulfilled or isn't found
 const cancelCoverRequest = async (body) => {
   try {
-    console.log("cancelCoverRequest body:", body);
+    // console.log("cancelCoverRequest body:", body);
     const response = await api.delete("/shifts/shift-coverage-request", {
       data: {
         request_id: body.request_id,

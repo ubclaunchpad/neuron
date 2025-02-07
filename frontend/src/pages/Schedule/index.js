@@ -48,7 +48,7 @@ function VolunteerSchedule() {
                 shiftMap.set(shift.shift_id, shift);
 
             // Don't show past shifts that are open for coverage
-            } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.OPEN && pastShift) {
+            } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && pastShift) {
                 // skip shift
 
             } else if (!existingShift) {
@@ -91,7 +91,7 @@ function VolunteerSchedule() {
     const handleCheckInClick = async (shift) => {
         try {
             if (!shift.checked_in) {
-                console.log(`Checking in for shift ${shift.shift_id}`);
+                // console.log(`Checking in for shift ${shift.shift_id}`);
                 await checkInShift(shift.shift_id);
                 handleShiftUpdate({ ...shift, checked_in: 1 });
             } 
@@ -107,7 +107,7 @@ function VolunteerSchedule() {
                 request_id: shift.request_id,
                 volunteer_id: volunteerID,
             };
-            console.log(`Requesting to cover shift ${shift.shift_id}`);
+            // console.log(`Requesting to cover shift ${shift.shift_id}`);
             await requestToCoverShift(body);
             handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.PENDING });
 
@@ -121,7 +121,7 @@ function VolunteerSchedule() {
             const body = {
                 shift_id: shift.shift_id,
             }
-            console.log(`Requesting coverage for shift ${shift.shift_id}`);
+            // console.log(`Requesting coverage for shift ${shift.shift_id}`);
             let data = await requestShiftCoverage(body);
             handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_COVERAGE_REQUESTS, request_id: data.insertId });
              
@@ -131,12 +131,10 @@ function VolunteerSchedule() {
     };
 
     const handleCancelClick = async (shift) => {
-        console.log("Cancel button pressed for shift ID: ", shift.shift_id);
-
         if (shift.shift_type === SHIFT_TYPES.COVERAGE) {
 
             try {
-                console.log("Canceling coverage for shift ID: ", shift.shift_id);
+                // console.log("Canceling coverage for shift ID: ", shift.shift_id);
                 const body = {
                     request_id: shift.request_id,
                     volunteer_id: volunteerID
@@ -151,7 +149,7 @@ function VolunteerSchedule() {
         } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
 
             try {
-                console.log("Canceling coverage request for shift ID: ", shift.shift_id);
+                // console.log("Canceling coverage request for shift ID: ", shift.shift_id);
                 const body = {
                     request_id: shift.request_id,
                     shift_id: shift.shift_id,
@@ -192,13 +190,11 @@ function VolunteerSchedule() {
             },
             [SHIFT_TYPES.COVERAGE]: {
                 lineColor: 'var(--red)',
-                label: shift.coverage_status === COVERAGE_STATUSES.RESOLVED
-                    ? 'Resolved'
-                    : shift.coverage_status === COVERAGE_STATUSES.PENDING
+                label: shift.coverage_status === COVERAGE_STATUSES.PENDING
                     ? 'Pending Approval'
                     : 'Cover',
                 icon: shift.coverage_status === COVERAGE_STATUSES.OPEN ? Plus : null,
-                disabled: shift.coverage_status === COVERAGE_STATUSES.RESOLVED || shift.coverage_status === COVERAGE_STATUSES.PENDING,
+                disabled: shift.coverage_status === COVERAGE_STATUSES.PENDING,
                 onClick: handleCoverShiftClick,
             },
             [SHIFT_TYPES.MY_COVERAGE_REQUESTS]: {
@@ -275,7 +271,7 @@ function VolunteerSchedule() {
 
     // Update details panel when a shift is selected
     const handleShiftSelection = (classData) => {
-        console.log("Selected shift ID: ", classData);
+        console.log("Selected shift: ", classData);
         setSelectedClassId(classData._class_id);
         setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
         setShiftDetails(classData);

@@ -77,6 +77,7 @@ button {
 /* Select button to toggle between list and calendar view */
 .view-mode-select {
     width: 10vw;
+    z-index: 3;
 }
 
 .viewMode__control {

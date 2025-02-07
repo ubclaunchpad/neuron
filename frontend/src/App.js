@@ -1,6 +1,6 @@
 // src/App.js
 import "notyf/notyf.min.css";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import VolunteerLayout from "./components/volunteerLayout";
 import { useAuth } from "./contexts/authContext";
 import AdminVerify from "./pages/AdminVerify";
@@ -14,22 +14,28 @@ import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import VolunteerSignup from "./pages/VolunteerSignup";
 
 function App() {
-  const { isVolunteer, isAdmin } = useAuth();
+  const { isAuthenticated } = useAuth();
+
+  const RouteGuard = ({ fallback, valid }) => {
+    return valid ? <Outlet /> : <Navigate to={fallback} replace />;
+  };
 
   return (
     <div className="App">
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
-          <Route path="/auth/signup" element={<VolunteerSignup />} />
-          <Route path="/auth/login" element={<VolunteerLogin />} />
-          <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />} />
-          <Route path="/auth/reset-password" element={<VolunteerResetPassword />} />
+          <Route element={<RouteGuard fallback={"/"} valid={!isAuthenticated} />}>
+            <Route path="/auth/signup" element={<VolunteerSignup />} />
+            <Route path="/auth/login" element={<VolunteerLogin />} />
+            <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />} />
+            <Route path="/auth/reset-password" element={<VolunteerResetPassword />} />
+          </Route>
 
           {/* Volunteer Routes */}
           <Route
             path="/"
-            element={isVolunteer ? <VolunteerLayout /> : <Navigate to="/auth/login" replace />}
+            element={(isAuthenticated) ? <VolunteerLayout /> : <Navigate to="/auth/login" replace />}
           >
             {/* Nested Routes within VolunteerLayout */}
             <Route index element={<VolunteerDash />} />
@@ -41,10 +47,7 @@ function App() {
           </Route>
 
           {/* Admin Route */}
-          <Route
-            path="/"
-            element={isAdmin ? <></> : <Navigate to="/auth/login" replace />}
-          >
+          <Route element={<RouteGuard fallback="/" valid={isAuthenticated} />}>
             <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
           </Route>
 

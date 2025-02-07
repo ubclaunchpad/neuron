@@ -1,12 +1,12 @@
 import dayjs from "dayjs";
 import React, { useEffect, useState } from "react";
-import { isAuthenticated } from "../../api/authService";
 import { getClassById } from "../../api/classesPageService";
 import email from "../../assets/email.png";
 import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import zoom_icon from "../../assets/zoom.png";
+import { useAuth } from "../../contexts/authContext";
 import { SHIFT_TYPES } from "../../data/constants";
 import "./index.css";
 
@@ -15,6 +15,8 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftBu
   const [panelInfo, setPanelInfo] = useState(null);
   const [myClass, setMyClass] = useState(false);
   const [classTaken, setClassTaken] = useState(false);
+
+  const { user } = useAuth();
 
   useEffect(() => {
     if (classId) {
@@ -33,14 +35,9 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftBu
     }
   }, [classId]);
 
-  const getCurrentUserId = () => {
-    const data = isAuthenticated();
-    return data.then((result) => result.user.user_id).catch(() => null);
-  };
-
   const myClassCheck = async (data) => {
     const volunteers = data.schedules.flatMap(schedule => schedule.volunteers || []);
-    setMyClass(volunteers.some(volunteer => volunteer.user_id === getCurrentUserId));
+    setMyClass(volunteers.some(volunteer => volunteer.user_id === user.user_id));
     setClassTaken(volunteers.length !== 0);
   };
 

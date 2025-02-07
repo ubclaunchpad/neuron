@@ -1,50 +1,76 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { isAuthenticated } from "../api/authService";
+import api from "../api/api";
+import { checkAuth } from "../api/authService";
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isVolunteer, setIsVolunteer] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(undefined);
+  
+  // Local state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const doCheckAuth = async () => {
       try {
-        const authResponse = await isAuthenticated();
+        const authResponse = await checkAuth();
+
+        console.log(authResponse)
 
         // Check if the user is a volunteer and update state accordingly
         switch (authResponse.user.role) {
-            case "VOLUN":
-                setIsVolunteer(true)
-                break;
-            case "ADMIN":
-                setIsAdmin(true)
-                break;
+          case "VOLUN":
+            setIsVolunteer(true)
+            break;
+          case "ADMIN":
+            setIsAdmin(true)
+            break;
         }
 
-        // Optionally, store the general user data
         setUser(authResponse.user);
+        setIsAuthenticated(true);
       } catch (error) {
-        console.error("Authentication as volunteer failed:", error);
-        setUser(null);
+        setUser(undefined);
+        setIsVolunteer(false);
+        setIsAdmin(false);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
       }
     };
 
-    checkAuth();
+    doCheckAuth();
   }, []);
 
-  // Function to update the user info globally.
-  const updateUser = (updatedUser) => {
-    setUser(updatedUser);
-    console.log(user)
-  }
+  const login = async (credentials) => {
+    const response = await api.post("/auth/login", credentials)
+      .catch(err => {
+        setIsAuthenticated(false);
+        throw err;
+      });
+  
+    localStorage.setItem("neuronAuthToken", response.data.token);
+    setTimeout(() => {
+      setIsAuthenticated(true);
+    }, 1500);
+  };
+
+  const logout = () => {
+    localStorage.clear("neuronAuthToken");
+    setIsAuthenticated(false);
+  };
+
+  const updateUser = updatedUser => setUser(updatedUser);
 
   return (
-    <AuthContext.Provider value={{ isVolunteer, isAdmin, user, updateUser }}>
-        {children}
+    <AuthContext.Provider value={{ isVolunteer, isAdmin, user, updateUser, isAuthenticated, login, logout }}>
+      {/* Loading state as to not lose url, TODO: make it prettier, use gmail as an example of a full page loader */}
+      {loading ? <></> : children}
     </AuthContext.Provider>
   );
 };

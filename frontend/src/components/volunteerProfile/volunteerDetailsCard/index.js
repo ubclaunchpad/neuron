@@ -12,6 +12,7 @@ import { formatImageUrl } from "../../../api/imageService";
 import { updateVolunteerData, uploadProfilePicture } from "../../../api/volunteerService";
 import useComponentVisible from "../../../hooks/useComponentVisible";
 import {State, City} from 'country-state-city';
+import Select from 'react-select';
 import notyf from "../../../utils/notyf";
 
 function VolunteerDetailsCard({ volunteer }) {
@@ -28,13 +29,17 @@ function VolunteerDetailsCard({ volunteer }) {
     const [prevMutableData, setPrevMutableData] = useState({});
     const [tempImage, setTempImage] = useState(null);
     const [prevTempImage, setPrevTempImage] = useState(null);
-    const provinces = [{isoCode: "None"}].concat(State.getStatesOfCountry('CA'));
+    const provinces = [{value: "None", label: "None"}].concat(State.getStatesOfCountry('CA').map((state) => {
+        return {value: state.isoCode, label: state.isoCode};
+    }));
     const [selectedProvince, setSelectedProvince] = useState("BC");
-    const [cities, setCities] = useState(City.getCitiesOfState('CA', selectedProvince));
+    const [cities, setCities] = useState([{value: "None", label: "None"}].concat(City.getCitiesOfState('CA', selectedProvince).map((city) => {
+        return {value: city.name, label: city.name};
+    })));
 
     const { ref, isComponentVisible, setIsComponentVisible } = useComponentVisible(false);
-    const { ref: provinceRef, isComponentVisible: isProvinceVisible, setIsComponentVisible: setisProvinceVisible } = useComponentVisible(false);
-    const { ref: cityRef, isComponentVisible: isCityVisible, setIsComponentVisible: setisCityVisible } = useComponentVisible(false);
+    // const { ref: provinceRef, isComponentVisible: isProvinceVisible, setIsComponentVisible: setisProvinceVisible } = useComponentVisible(false);
+    // const { ref: cityRef, isComponentVisible: isCityVisible, setIsComponentVisible: setisCityVisible } = useComponentVisible(false);
     const pronouns = ["None", "He/Him", "She/Her", "They/Them"];
 
     function sendTcNotif() {
@@ -64,7 +69,9 @@ function VolunteerDetailsCard({ volunteer }) {
     };
 
     useEffect(() => {
-        setCities([{name: "None"}].concat(City.getCitiesOfState('CA', selectedProvince)));
+        setCities([{value: "None", label: "None"}].concat(City.getCitiesOfState('CA', selectedProvince).map((city) => {
+            return {value: city.name, label: city.name};
+        })));
     }, [selectedProvince]);
 
 
@@ -103,13 +110,14 @@ function VolunteerDetailsCard({ volunteer }) {
                 p_name: mutableData.preferredName ?? null,
                 pronouns: mutableData.pronouns ?? null,
                 phone_number: mutableData.phoneNumber ?? null,
-                city: mutableData.city === "None" ? null : mutableData.city,
-                province: mutableData.province === "None" ? null : mutableData.province,
+                city: mutableData.city ? mutableData.city : "",
+                province: mutableData.province ?? "",
                 p_time_ctmt: mutableData.timeCommitment
             }
 
             const volunteerResult = await updateVolunteerData(volunteerData, volunteer.volunteer_id);
             console.log("Successfully updated volunteer.", volunteerResult);
+            notyf.success("Successfully updated data. Please refresh the page to see changes.");
         }
     }
 
@@ -174,20 +182,18 @@ function VolunteerDetailsCard({ volunteer }) {
     }
 
     function handleProvinceClick(option) {
-        setSelectedProvince(option.isoCode);
+        setSelectedProvince(option.value);
         setMutableData({
             ...mutableData,
-            province: option === "None" ? null : option.isoCode
+            province: option.value === "None" ? null : option.value
         });
-        setisProvinceVisible(false);
     }
 
     function handleCityClick(option) {
         setMutableData({
             ...mutableData,
-            city: option === "None" ? null : option.name
+            city: option.value === "None" ? null : option.value
         });
-        setisCityVisible(false);
     }
 
     return (
@@ -354,79 +360,79 @@ function VolunteerDetailsCard({ volunteer }) {
                                             <td style={{
                                                 'color': '#808080'
                                             }}>Province</td>
-                                            <td 
-                                                className="pronouns-editor" 
-                                                ref={provinceRef}
-                                            >
-                                                <button 
-                                                    className="pronouns-button"
-                                                    style={{
-                                                        'color': mutableData.province ? '':'#808080',
-                                                        'borderColor': isProvinceVisible ? '#4385AC':''
-                                                    }}
-                                                    onClick={() => {
-                                                        setisProvinceVisible(!isProvinceVisible)
-                                                    }}
-                                                >
-                                                    {mutableData.province ? mutableData.province : "None"}
-                                                    <CgSelect className="select-icon"/>
-                                                </button>
-                                                {isProvinceVisible && (
-                                                    <div 
-                                                        className="pronouns-menu"
-                                                    >
-                                                        {provinces.map((option, index) => (
-                                                            <div
-                                                                className="pronouns-item"
-                                                                key={index}
-                                                                onClick={() => handleProvinceClick(option)}
-                                                                style={index === 0 ? {'color': '#808080'} : {}}
-                                                            >
-                                                                {option.isoCode}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </td>
+                                            <Select
+                                                className="basic-single"
+                                                classNamePrefix="select"
+                                                defaultValue={mutableData.province ? {value: mutableData.province, label: mutableData.province} : null}
+                                                options={provinces}
+                                                isSearchable={true}
+                                                components={
+                                                    {
+                                                        DropdownIndicator: () => 
+                                                            <CgSelect className="select-icon"/>,
+                                                        IndicatorSeparator: () => null,
+                                                        Option: (props) => {
+                                                            const {innerProps, innerRef} = props;
+                                                            return (
+                                                                <div {...innerProps} ref={innerRef} className="pronouns-item">
+                                                                    {props.data.value}
+                                                                </div>
+                                                            )
+                                                        },
+                                                        Menu: (props) => {
+                                                            const {innerProps, innerRef} = props;
+                                                            return (
+                                                                <div {...innerProps} ref={innerRef}
+                                                                className="pronouns-menu">
+                                                                    {props.children}
+                                                                </div>
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                                onChange={(option) => {
+                                                    handleProvinceClick(option);
+                                                }}
+                                            />
                                         </>
                                     )}
                                 </tr>
                                 <tr hidden={!isEditing}>
                                     <td>City</td>
-                                    <td 
-                                    className="pronouns-editor" 
-                                    ref={cityRef}
-                                    >
-                                    <button 
-                                        className="pronouns-button"
-                                        style={{
-                                            'color': mutableData.city ? '':'#808080',
-                                            'borderColor': isCityVisible ? '#4385AC':''
+                                    <Select
+                                        className="basic-single"
+                                        classNamePrefix="select"
+                                        defaultValue={mutableData.city ? {value: mutableData.city, label: mutableData.city} : null}
+                                        options={cities}
+                                        isSearchable={true}
+                                        components={
+                                            {
+                                                DropdownIndicator: () => 
+                                                    <CgSelect className="select-icon"/>,
+                                                IndicatorSeparator: () => null,
+                                                Option: (props) => {
+                                                    const {innerProps, innerRef} = props;
+                                                    return (
+                                                        <div {...innerProps} ref={innerRef} className="pronouns-item">
+                                                            {props.data.value}
+                                                        </div>
+                                                    )
+                                                },
+                                                Menu: (props) => {
+                                                    const {innerProps, innerRef} = props;
+                                                    return (
+                                                        <div {...innerProps} ref={innerRef}
+                                                        className="pronouns-menu">
+                                                            {props.children}
+                                                        </div>
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        onChange={(option) => {
+                                            handleCityClick(option);
                                         }}
-                                        onClick={() => {
-                                            setisCityVisible(!isCityVisible)
-                                        }}
-                                    >
-                                        {mutableData.city ? mutableData.city : "None"}
-                                        <CgSelect className="select-icon"/>
-                                    </button>
-                                    {isCityVisible && (
-                                        <div 
-                                            className="pronouns-menu cities-menu"
-                                        >
-                                            {cities.map((option, index) => (
-                                                <div
-                                                    className="pronouns-item"
-                                                    key={index}
-                                                    onClick={() => handleCityClick(option)}
-                                                    style={index === 0 ? {'color': '#808080'} : {}}
-                                                >
-                                                    {option.name}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    </td>
+                                    />
                                 </tr>
                             </tbody>
                         </table>

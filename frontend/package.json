@@ -25,6 +25,7 @@
     "react-router-dom": "^6.26.1",
     "react-schedule-selector": "^3.0.2",
     "react-scripts": "5.0.1",
+    "react-select": "^5.10.0",
     "react-timer-hook": "^3.0.8",
     "web-vitals": "^2.1.4",
     "yup": "^1.4.0"

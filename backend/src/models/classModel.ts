@@ -32,7 +32,8 @@ export default class ClassesModel {
                SELECT 
                     c.*, 
                     i.l_name AS instructor_l_name,
-                    i.f_name AS instructor_f_name
+                    i.f_name AS instructor_f_name,
+                    i.email AS instructor_email
                FROM class c
                LEFT JOIN instructors i ON c.fk_instructor_id = i.instructor_id
                WHERE c.class_id = ?

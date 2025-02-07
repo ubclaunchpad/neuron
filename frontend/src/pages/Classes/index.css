@@ -12,7 +12,7 @@
   overflow-x: auto;
   background-color: transparent;
   border-bottom: 1px solid var(--grey);
-  padding-left: 2.5vw;
+  padding-left: 36px;
 }
 
 .category-button {
@@ -64,7 +64,7 @@
 /* ----- */
 
 .class-catalog {
-  margin: 0 0 2vh 2vw; 
+  padding: 0 36px; 
   overflow-y: auto;
   height: 100%;
 }

@@ -20,7 +20,6 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     if (classId) {
       getClassById(classId)
         .then((data) => {
-          console.log(data)
           setPanelInfo(data);
           setPanelWidth("35vw");
           myClassCheck(data);
@@ -130,14 +129,14 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
   };
 
   const renderInstructorInfo = () => {
-    if (!shiftDetails || !shiftDetails.shift_type || !panelInfo?.instructor_email) return;
+    if (!panelInfo?.instructor_email) return;
   
     return (
       <>
         {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
           ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
           : "No instructor available"}
-        {shiftDetails.shift_type === SHIFT_TYPES.MY_SHIFTS || shiftDetails.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS 
+        {shiftDetails && shiftDetails.shift_type && (shiftDetails.shift_type === SHIFT_TYPES.MY_SHIFTS || shiftDetails.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) 
           ?
           <button
             className="email-icon panel-button-icon"

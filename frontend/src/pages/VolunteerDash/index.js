@@ -48,14 +48,14 @@ function VolunteerDash() {
   useEffect(() => {
     const fetchShifts = async () => {
       const body = {
-        volunteer_id: user.volunteer.volunteer_id,
+        volunteer_id: user?.volunteer.volunteer_id,
         shiftDate: selectedDate.format("YYYY-MM-DD"),
       };
       const response = await getVolunteerShiftsForMonth(body);
       setShifts(response);
     };
     fetchShifts();
-  }, [selectedDate, user.volunteer.volunteer_id]);
+  }, [selectedDate, user?.volunteer.volunteer_id]);
 
   const allShifts = shifts.reduce((acc, shift) => {
     const date = shift.shift_date;
@@ -100,7 +100,7 @@ function VolunteerDash() {
   const handleShiftUpdate = () => {
     const fetchShifts = async () => {
       const body = {
-        volunteer_id: user.volunteer.volunteer_id,
+        volunteer_id: user?.volunteer.volunteer_id,
         shiftDate: selectedDate.format("YYYY-MM-DD"),
       };
       const response = await getVolunteerShiftsForMonth(body);

@@ -15,33 +15,35 @@ export const AuthProvider = ({ children }) => {
   // Local state
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const doCheckAuth = async () => {
-      try {
-        const authResponse = await checkAuth();
+  // Function to check authentication and update state
+  const doCheckAuth = async () => {
+    try {
+      const authResponse = await checkAuth();
 
-        // Check if the user is a volunteer and update state accordingly
-        switch (authResponse.user.role) {
-          case "VOLUN":
-            setIsVolunteer(true)
-            break;
-          case "ADMIN":
-            setIsAdmin(true)
-            break;
-        }
-
-        setUser(authResponse.user);
-        setIsAuthenticated(true);
-      } catch (error) {
-        setUser(undefined);
-        setIsVolunteer(false);
-        setIsAdmin(false);
-        setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
+      switch (authResponse.user.role) {
+        case "VOLUN":
+          setIsVolunteer(true);
+          break;
+        case "ADMIN":
+          setIsAdmin(true);
+          break;
+        default:
+          break;
       }
-    };
 
+      setUser(authResponse.user);
+      setIsAuthenticated(true);
+    } catch (error) {
+      setUser(undefined);
+      setIsVolunteer(false);
+      setIsAdmin(false);
+      setIsAuthenticated(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     doCheckAuth();
   }, []);
 
@@ -54,7 +56,7 @@ export const AuthProvider = ({ children }) => {
   
     localStorage.setItem("neuronAuthToken", response.data.token);
     setTimeout(() => {
-      setIsAuthenticated(true);
+      doCheckAuth();
     }, 1500);
   };
 

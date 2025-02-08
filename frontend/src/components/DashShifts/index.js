@@ -1,9 +1,9 @@
-import "./index.css";
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForwardIos";
 import dayjs from "dayjs";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import ShiftCard from "../ShiftCard";
+import "./index.css";
 
 export default function DashShifts({
   groupedShifts,
@@ -13,6 +13,7 @@ export default function DashShifts({
   const currentDate = dayjs();
   const navigate = useNavigate();
 
+  console.log(groupedShifts)
   return (
     <div className="dash-shifts-container">
       <div
@@ -42,7 +43,7 @@ export default function DashShifts({
               <div className="dash-shift-list">
                 {groupedShifts[date].map((shift) => (
                   <ShiftCard
-                    key={shift.fk_schedule_id}
+                    key={shift.shift_id}
                     shift={shift}
                     shiftType={shift.shift_type}
                     onUpdate={handleShiftUpdate} // Pass the handler

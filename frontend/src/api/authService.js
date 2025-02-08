@@ -31,17 +31,6 @@ const signUp = (data) =>
             throw error;
         });
 
-// Login a user
-const login = (data) =>
-    api
-        .post("/auth/login", data)
-        .then((response) => {
-            return response.data;
-        })
-        .catch((error) => {
-            throw error;
-        });
-
 // Send reset password instructions
 const sendResetPasswordInstructions = (data) =>
     api
@@ -65,7 +54,7 @@ const resetPassword = (data) =>
         });
 
 // Check if the user is logged in with a valid token
-const isAuthenticated = async () => {
+const checkAuth = async () => {
     const authToken = localStorage.getItem("neuronAuthToken");
 
     if (!authToken) {
@@ -79,11 +68,7 @@ const isAuthenticated = async () => {
                 token: authToken,
             });
             if (response.status === 200) {
-                return {
-                    isAuthenticated: true,
-                    user: response.data.user,
-                    volunteer: response.data.volunteer,
-                };
+                return response.data;
             }
         } catch (error) {
             return {
@@ -95,9 +80,5 @@ const isAuthenticated = async () => {
 };
 
 export {
-    signUp,
-    login,
-    sendResetPasswordInstructions,
-    resetPassword,
-    isAuthenticated,
+    checkAuth, resetPassword, sendResetPasswordInstructions, signUp
 };

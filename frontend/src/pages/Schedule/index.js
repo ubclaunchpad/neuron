@@ -5,10 +5,11 @@ import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
+import { useAuth } from '../../contexts/authContext';
 import "./index.css";
 
 function VolunteerSchedule() {
-    const volunteerID = localStorage.getItem('volunteerID');
+    const { user } = useAuth();
     const currentDate = dayjs();
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [shifts, setShifts] = useState([]);
@@ -25,7 +26,7 @@ function VolunteerSchedule() {
     useEffect(() => {
         const fetchShifts = async () => {
             const body = {
-                volunteer_id: volunteerID,
+                volunteer_id: user.volunteer.volunteer_id,
                 shiftDate: selectedDate.format('YYYY-MM-DD')
             };
             const response = await getVolunteerShiftsForMonth(body);
@@ -40,7 +41,7 @@ function VolunteerSchedule() {
             setShifts(filteredShifts);
         };
         fetchShifts();
-    }, [selectedDate, filter, volunteerID]);
+    }, [selectedDate, filter, user.volunteer.volunteer_id]);
 
     // map of shifts grouped by date { date: [shift1, shift2, ...] }
     const groupedShifts = shifts.reduce((acc, shift) => {
@@ -56,7 +57,7 @@ function VolunteerSchedule() {
     const handleShiftUpdate = () => {
         const fetchShifts = async () => {
             const body = {
-                volunteer_id: volunteerID,
+                volunteer_id: user.volunteer.volunteer_id,
                 shiftDate: selectedDate.format('YYYY-MM-DD')
             };
             const response = await getVolunteerShiftsForMonth(body);

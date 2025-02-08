@@ -1,11 +1,11 @@
 import dayjs from 'dayjs';
-import isBetween from 'dayjs/plugin/isBetween';
-import CheckInIcon from '../../assets/check-in-icon.png'
-import Plus from '../../assets/plus.png'
-import RequestCoverageIcon from '../../assets/request-coverage.png'
-import './index.css'; 
 import { requestToCoverShift } from '../../api/shiftService';
-import { SHIFT_TYPES, COVERAGE_STATUSES } from '../../data/constants';
+import CheckInIcon from '../../assets/check-in-icon.png';
+import Plus from '../../assets/plus.png';
+import RequestCoverageIcon from '../../assets/request-coverage.png';
+import { useAuth } from '../../contexts/authContext';
+import { COVERAGE_STATUSES, SHIFT_TYPES } from '../../data/constants';
+import './index.css';
 
 function ShiftCard({ shift, shiftType, onUpdate, onShiftSelect }) {
     const currentDate = dayjs();
@@ -16,13 +16,13 @@ function ShiftCard({ shift, shiftType, onUpdate, onShiftSelect }) {
     const pastShift = currentDate.isAfter(shiftEnd);
     const currentShift = currentDate.isBetween(shiftStart, shiftEnd, 'minute', '[]');
 
-    const volunteerID = localStorage.getItem('volunteerID');
+    const { user } = useAuth();
 
     const handleCoverShiftClick = async () => {
         try {
             const body = {
                 request_id: shift.request_id,
-                volunteer_id: volunteerID,
+                volunteer_id: user.volunteer.volunteer_id,
             };
             await requestToCoverShift(body);
             // notify parent

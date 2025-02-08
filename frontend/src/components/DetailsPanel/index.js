@@ -126,7 +126,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftBu
   };
 
   const renderInstructorInfo = () => {
-    if (!shiftDetails || !shiftDetails.shift_type || !panelInfo?.instructor_email) return;
+    if (!panelInfo?.instructor_email) return;
   
     return (
       <>

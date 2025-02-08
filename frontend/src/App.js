@@ -13,6 +13,7 @@ import VolunteerLogin from "./pages/VolunteerLogin";
 import VolunteerProfile from "./pages/VolunteerProfile";
 import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import VolunteerSignup from "./pages/VolunteerSignup";
+import Settings from "./pages/AdminSettings";
 
 function App() {
   const [isVolunteer, setIsVolunteer] = useState(false);
@@ -66,6 +67,9 @@ function App() {
 
           {/* Admin Route */}
           <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
+          <Route path="/admin" element={<VolunteerLayout />}>
+          <Route path="/admin/settings" element={<Settings />} />
+          </Route>
 
           {/* Catch-all Route for Undefined Paths */}
           <Route path="*" element={<Navigate to="/" replace />} />

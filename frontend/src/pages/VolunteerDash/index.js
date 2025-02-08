@@ -1,5 +1,4 @@
 // home/ is the landing page of the application.
-import ArrowForwardIcon from "@mui/icons-material/ArrowForwardIos";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -12,37 +11,16 @@ import DashCoverShifts from "../../components/DashCoverShifts";
 import DashShifts from "../../components/DashShifts";
 import { SHIFT_TYPES } from "../../data/constants";
 import "./index.css";
+import CheckInCard from "../../components/CheckInCard";
 
 function VolunteerDash() {
   const volunteerID = localStorage.getItem("volunteerID");
-  const [checkIn, setCheckIn] = useState(false);
   const [shifts, setShifts] = useState([]);
   const monthDate = dayjs().date(1).hour(0).minute(0);
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [future, setFuture] = useState(false);
-
-  const checkInItem = () => {
-    return checkIn ? (
-      <div className="dash-check-in">
-        <div className="dash-check-in-content">
-          <div className="dash-check-in-title">Check In</div>
-          <div className="dash-check-in-content">
-            Strength & Balance Level 2 • 12:30 PM - 01:00 PM
-          </div>
-        </div>
-        <ArrowForwardIcon sx={{ fontSize: 30 }} />
-      </div>
-    ) : (
-      <div className="dash-next-check-in">
-        <div className="dash-next-title">Next Check-In in</div>
-        <div className="dash-next-time">
-          <span className="dash-next-time-num">0</span> days{" "}
-          <span className="dash-next-time-num">1</span> hours{" "}
-          <span className="dash-next-time-num">30</span> minutes
-        </div>
-      </div>
-    );
-  };
+  var upcomingHours = 0;
+  var coverageHours = 0;
 
   useEffect(() => {
     const fetchShifts = async () => {
@@ -65,23 +43,24 @@ function VolunteerDash() {
     return acc;
   }, {});
 
-  const groupedUpcomingShifts = shifts
-    .filter((shift) => {
-      return (
-        shift.shift_type ===
-          (SHIFT_TYPES.MY_SHIFTS || SHIFT_TYPES.MY_COVERAGE_REQUESTS) &&
-        dayjs(shift.shift_date).isAfter(monthDate) &&
-        dayjs(shift.shift_date).isAfter(dayjs())
-      );
-    })
-    .reduce((acc, shift) => {
-      const date = shift.shift_date;
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(shift);
-      return acc;
-    }, {});
+  const upcomingShifts = shifts.filter((shift) => {
+    return (
+      shift.shift_type ===
+        (SHIFT_TYPES.MY_SHIFTS || SHIFT_TYPES.MY_COVERAGE_REQUESTS) &&
+      dayjs(shift.shift_date).isAfter(monthDate) &&
+      dayjs(shift.shift_date).isAfter(dayjs())
+    );
+  });
+
+  const groupedUpcomingShifts = upcomingShifts.reduce((acc, shift) => {
+    const date = shift.shift_date;
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(shift);
+    upcomingHours += shift.duration;
+    return acc;
+  }, {});
 
   const groupedCoverShifts = shifts
     .filter((shift) => {
@@ -93,8 +72,22 @@ function VolunteerDash() {
         acc[date] = [];
       }
       acc[date].push(shift);
+      coverageHours += shift.duration;
       return acc;
     }, {});
+
+  const completedHours = shifts
+    .filter((shift) => {
+      return (
+        shift.shift_type === SHIFT_TYPES.MY_SHIFTS &&
+        dayjs(shift.shift_date).isBefore(dayjs()) &&
+        shift.checked_in
+      );
+    })
+    .reduce((acc, shift) => {
+      acc += shift.duration;
+      return acc;
+    }, 0);
 
   const handleShiftUpdate = () => {
     const fetchShifts = async () => {
@@ -115,7 +108,7 @@ function VolunteerDash() {
   return (
     <main className="content-container">
       <div className="content-heading">
-          <h2 className="content-title">Dashboard</h2>
+        <h2 className="content-title">Dashboard</h2>
       </div>
       <div className="dash-date-picker">
         <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -136,12 +129,12 @@ function VolunteerDash() {
           <div className="dash-card-title">Volunteer Hours </div>
           <div className="dash-hours-container">
             <div className="dash-hours">
-              <h1 className="dash-completed-hours">20</h1>
+              <h1 className="dash-completed-hours">{completedHours}</h1>
               <p>Completed</p>
             </div>
             {future && (
               <div className="dash-hours">
-                <h1 className="dash-upcoming-hours">3</h1>
+                <h1 className="dash-upcoming-hours">{upcomingHours}</h1>
                 <p>Upcoming</p>
               </div>
             )}
@@ -170,7 +163,9 @@ function VolunteerDash() {
               handleShiftUpdate={handleShiftUpdate}
             />
           </div>
-          {checkInItem()}
+          {upcomingShifts.length > 0 && (
+            <CheckInCard shift={upcomingShifts[0]} />
+          )}
         </div>
       </div>
     </main>

@@ -25,6 +25,7 @@ export interface Class {
   'start_date': string;
   'subcategory'?: string | null;
   'zoom_link': string;
+  'number_volunteers'?: number | null;
 }
 export interface ClassImage {
   'fk_class_id'?: number | null;

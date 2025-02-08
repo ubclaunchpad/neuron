@@ -63,16 +63,19 @@ export class VolunteerClassMatcher {
                 return rankA - rankB;
             });
 
-            // Simple: assign the top candidate if available.
-            if (potentialVolunteers.length > 0) {
-                const chosen = potentialVolunteers[0];
-                this.assignments.push({
-                    fk_volunteer_id: chosen.volunteer_id,
-                    fk_class_id: cls.class_id,
-                });
+            const maxVolunteers = cls.number_volunteers ?? 1;
+            let assignedVolunteers = 0;
+
+            for (const v of potentialVolunteers) {
+                if (assignedVolunteers < maxVolunteers) {
+                    this.assignments.push({
+                        fk_volunteer_id: v.volunteer_id,
+                        fk_class_id: cls.class_id,
+                    });
+                    assignedVolunteers++;
+                }
             }
         }
-
         return this.assignments;
     }
 

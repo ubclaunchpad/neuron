@@ -1,5 +1,5 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
-import { ShiftDB, VolunteerDB } from "../common/generated.js";
+import { ShiftDB, VolunteerDB, ClassPreferenceDB } from "../common/generated.js";
 import connectionPool from "../config/database.js";
 
 export default class VolunteerModel {
@@ -194,4 +194,29 @@ export default class VolunteerModel {
 
         return results;
     }
+
+    async updatePreferredClassesById(volunteer_id: string, data: { class_id: number, class_rank: number }[] ): Promise<void> {
+        const transaction = await connectionPool.getConnection();
+   
+        try {
+            await transaction.beginTransaction();
+            const query_del = `DELETE FROM class_preferences WHERE fk_volunteer_id = ?`;
+            const values_del = [volunteer_id];
+            await transaction.query<ResultSetHeader>(query_del, values_del);
+            const query_insert = `INSERT INTO class_preferences VALUES (?, ?, ?);`;
+
+            for (let i = 0; i < data.length; i++) {
+                const value_insert = [volunteer_id, data[i] .class_id, data[i] .class_rank];
+                await transaction.query<ResultSetHeader>(query_insert, value_insert);
+            }
+
+            await transaction.commit();
+        } catch (error) {
+             // Rollback
+            await transaction.rollback();
+            throw error;
+        } finally {
+            transaction.release(); 
+        }
+   }
 }

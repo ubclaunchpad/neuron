@@ -5,7 +5,7 @@ function ClassPreferencesCard({ classData, fullWith }) {
     if (fullWith) {
         card_width = "90%";
     } else {
-        card_width = "45%";
+        card_width = "40%";
     }
 
     const RANK1_COLOR = "rgba(67, 133, 172, 1)";
@@ -15,11 +15,13 @@ function ClassPreferencesCard({ classData, fullWith }) {
     const rank = classData.class_rank;
     const name = classData.class_name;
     const instruction = classData.instructions;
-    const start_time = classData.start_times.split(",")[0];
-    const end_time = classData.end_times.split(",")[0];
+    const start_time = classData.start_times ? classData.start_times.split(",")[0] : "";
+    const end_time = classData.end_times ? classData.end_times.split(",")[0] : "";
 
     const timeDifference = (end, start) => {
         // Assume classes are done within one day, end time > start time 
+        if (end === null || end === undefined || end ==="" || start === null || start === undefined || start === "") return "";
+
         const e = end.split(":");
         const s = start.split(":");
         if (e[1] < s[1]) {
@@ -41,6 +43,8 @@ function ClassPreferencesCard({ classData, fullWith }) {
     }
 
     const formatTime = (time) => {
+        if (time === null || time === undefined || time === "") return "";
+
         const [hour, minute] = time.split(":").map(Number);
         const period = hour >= 12 ? "PM" : "AM";
         const formattedHour = hour % 12 || 12;

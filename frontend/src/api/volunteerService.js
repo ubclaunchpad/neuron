@@ -75,9 +75,19 @@ export const updateVolunteerAvailability = async (volunteer_id, availability) =>
 export const fetchUserPreferredClasses = async (volunteer_id) => {
   try {
     const response = await api.get(`/volunteer/class-preferences/${volunteer_id}`);
-    return response.data;
+    return response.data; // Assuming API returns success or updated data
   } catch (error) {
     console.error('Error fetching volunteer class preferences data:', error);
+    throw error;
+  }
+};
+
+export const updateUserPreferredClasses = async (volunteer_id, preferredClasses) => {
+  try {
+    const response = await api.put(`/volunteer/class-preferences/${volunteer_id}`, preferredClasses);
+    return response.data; // Assuming API returns success or updated data
+  } catch (error) {
+    console.error('Error updating volunteer class preferences data:', error);
     throw error;
   }
 };

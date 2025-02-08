@@ -3,7 +3,6 @@
 /* General Card Styles */
 .class-pref-card {
     display: flex;
-    /* width: 45%; */
     margin: .5rem;
     padding: .5rem .8rem;
     border: 1px solid #ccc;
@@ -38,13 +37,18 @@
 }
 
 
-.segment-1 {
+.card-content .segment-1 {
     flex: 1;
     display: flex;
     flex-direction: column;
+    margin-right: 8px;
 }
 
-.segment-2 {
+.class-pref-time {
+    width: 70px;
+}
+
+.card-content .segment-2 {
     flex: 4;
     display: flex;
     flex-direction: row;
@@ -76,44 +80,6 @@
 }
 
 
-/* Button Layout */
-.button-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.check-in-button {
-    position: relative;
-    height: 100%;
-    border-radius: 8px;
-    border: 1px solid var(--primary-blue);
-    background: #FFF;
-    box-shadow: 0px 4px 16px 0px rgba(15, 17, 17, 0.05);
-    padding: 0 1rem;
-    display: flex;
-    align-items: center;
-}
-
-/* Button Interactions */
-.check-in-button:not(:disabled):hover {
-    cursor: pointer;
-    background: var(--grey);
-    border: none;
-}
-
-.check-in-button:disabled {
-    background-color: #d3d3d3;
-    border: 1px solid #d3d3d3;
-    box-shadow: none;
-}
-
-/* Icon within Button */
-.card-button-icon {
-    width: 1rem;
-    height: 1rem;
-    margin-right: .5rem;
-}
 
 /* Responsive Adjustments */
 @media (max-width: 1000px) {

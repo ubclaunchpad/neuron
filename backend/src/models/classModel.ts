@@ -69,6 +69,7 @@ export default class ClassesModel {
                )
 
           SELECT 
+               ci.class_id,
                ci.class_name,
                ci.instructions,
                ci.zoom_link,

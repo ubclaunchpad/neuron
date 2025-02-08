@@ -59,11 +59,50 @@ async function getPreferredClassesById(req: Request, res: Response) {
     }
 }
 
+async function updatePreferredClassesById (req: Request, res: Response) {
+    const { volunteer_id } = req.params;
+    const data = req.body;
+
+    console.log(data);
+
+        // const newClass = {
+        //     fk_instructor_id,
+        //     class_name,
+        //     instructions: instructions,
+        //     zoom_link: zoom_link,
+        //     start_date: start_date,
+        //     end_date: end_date,
+        //     category: category,
+        //     subcategory: subcategory
+        // } as ClassDB;
+
+    if (!volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'volunteer_id'",
+        });
+    } else if (!data) {
+        return res.status(400).json({
+            error: "Missing required body for class preferences: 'data'",
+        });
+    }
+
+    try {
+        await volunteerModel.updatePreferredClassesById(volunteer_id, data);
+
+        res.status(200).json({msg: "Successfully updated class Preferences"});
+    } catch (error: any) {
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+    }
+}
+
 export {
     getVolunteerById,
     getVolunteers, 
     shiftCheckIn, 
     updateVolunteer,
-    getPreferredClassesById
+    getPreferredClassesById,
+    updatePreferredClassesById
 };
 

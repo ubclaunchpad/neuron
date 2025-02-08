@@ -6,7 +6,8 @@ import {
     getVolunteers,
     shiftCheckIn,
     updateVolunteer,
-    getPreferredClassesById
+    getPreferredClassesById,
+    updatePreferredClassesById
 } from "../controllers/volunteerController.js";
 
 import { body, param } from "express-validator";
@@ -86,11 +87,21 @@ export const VolunteerRoutes: RouteDefinition = {
             children: [
                 {
                     path: '/:volunteer_id',
-                    method: 'get',
                     validation: [
                         param('volunteer_id').isUUID('4')
                     ],
-                    action: getPreferredClassesById
+                    children: [
+                        {
+                            path: '/',
+                            method: 'get',
+                            action: getPreferredClassesById
+                        }, 
+                        {
+                            path: '/',
+                            method: 'put',
+                            action: updatePreferredClassesById
+                        }
+                    ]
                 }
             ]
         },

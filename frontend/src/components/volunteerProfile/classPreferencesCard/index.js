@@ -50,7 +50,7 @@ function ClassPreferencesCardMP({ volunteer }) {
         return <>
             <h3 className="rank-title">{rankTitle}</h3>
             <>
-                {item.map((class_, index) => (
+                {item.length===0 ? <p style={{textAlign: "center"}}>No preferences</p> : item.map((class_, index) => (
                             <ClassPreferencesCard classData={class_} fullWith={true}/>
                 ))}
             </>

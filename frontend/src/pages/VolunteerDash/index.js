@@ -20,7 +20,6 @@ function VolunteerDash() {
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [future, setFuture] = useState(false);
   var upcomingHours = 0;
-  var coverageHours = 0;
 
   useEffect(() => {
     const fetchShifts = async () => {
@@ -72,7 +71,6 @@ function VolunteerDash() {
         acc[date] = [];
       }
       acc[date].push(shift);
-      coverageHours += shift.duration;
       return acc;
     }, {});
 
@@ -83,6 +81,15 @@ function VolunteerDash() {
         dayjs(shift.shift_date).isBefore(dayjs()) &&
         shift.checked_in
       );
+    })
+    .reduce((acc, shift) => {
+      acc += shift.duration;
+      return acc;
+    }, 0);
+
+  const coverageHours = shifts
+    .filter((shift) => {
+      return shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS;
     })
     .reduce((acc, shift) => {
       acc += shift.duration;
@@ -109,21 +116,20 @@ function VolunteerDash() {
     <main className="content-container">
       <div className="content-heading">
         <h2 className="content-title">Dashboard</h2>
+        <div className="dash-date-picker">
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              views={["month", "year"]}
+              sx={{
+                fontSize: "16px",
+                color: "var(--primary-blue)",
+              }}
+              value={selectedDate}
+              onChange={(newValue) => setSelectedDate(newValue.day(2))}
+            />
+          </LocalizationProvider>
+        </div>
       </div>
-      <div className="dash-date-picker">
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            views={["month", "year"]}
-            sx={{
-              fontSize: "16px",
-              color: "var(--primary-blue)",
-            }}
-            value={selectedDate}
-            onChange={(newValue) => setSelectedDate(newValue.day(2))}
-          />
-        </LocalizationProvider>
-      </div>
-
       <div className="dash-container">
         <div className="dash-col-card dash-grid-item">
           <div className="dash-card-title">Volunteer Hours </div>
@@ -145,7 +151,12 @@ function VolunteerDash() {
             <div className="dash-card-title">Coverage Hours </div>
             <HelpOutlineIcon sx={{ color: "var(--primary-blue)" }} />
           </div>
-          <DashboardCoverage shifts={shifts} future={future} />
+          <DashboardCoverage
+            completed={completedHours}
+            upcoming={upcomingHours}
+            requested={coverageHours}
+            future={future}
+          />
         </div>
         <div className="dash-col-card dash-grid-item">
           <DashShifts

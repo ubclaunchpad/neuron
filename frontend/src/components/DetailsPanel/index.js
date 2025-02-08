@@ -1,12 +1,14 @@
-import "./index.css";
-import React, { useEffect, useState } from "react";
-import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
-import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
-import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
-import zoom_icon from "../../assets/zoom.png";
-import { getClassById } from "../../api/classesPageService";
-import { isAuthenticated } from "../../api/authService";
 import dayjs from "dayjs";
+import React, { useEffect, useState } from "react";
+import { isAuthenticated } from "../../api/authService";
+import { getClassById } from "../../api/classesPageService";
+import email from "../../assets/email.png";
+import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
+import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
+import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
+import zoom_icon from "../../assets/zoom.png";
+import { SHIFT_TYPES } from "../../data/constants";
+import "./index.css";
 
 function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbuttons = [], shiftDetails }) {
   const [panelWidth, setPanelWidth] = useState("0px");
@@ -37,16 +39,9 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
   };
 
   const myClassCheck = async (data) => {
-
-    if (data.volunteer_user_ids) {
-      const userIds = data.volunteer_user_ids.split(",").map(id => id.trim());
-      const currentUserId = (await getCurrentUserId()).trim();
-      setMyClass(userIds.includes(currentUserId));
-      setClassTaken(true);
-    } else {
-      setMyClass(false);
-      setClassTaken(false);
-    }
+    const volunteers = data.schedules.flatMap(schedule => schedule.volunteers || []);
+    setMyClass(volunteers.some(volunteer => volunteer.user_id === getCurrentUserId));
+    setClassTaken(volunteers.length !== 0);
   };
 
   const formatTime = (time) => {
@@ -58,52 +53,50 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
   };
 
   const renderSchedules = () => {
-    if (
-      !panelInfo?.days_of_week ||
-      !panelInfo?.start_times ||
-      !panelInfo?.end_times
-    ) {
+    if (!panelInfo?.schedules) {
       return <div className="panel-header-dow panel-titles">Not Scheduled</div>;
     }
 
+    // to stay consistent with the javascript Date getDay() function, we start at 0 for Sunday
     const dow = [
+      "Sunday",
       "Monday",
       "Tuesday",
       "Wednesday",
       "Thursday",
       "Friday",
       "Saturday",
-      "Sunday",
     ];
 
-    const days = panelInfo.days_of_week.split(",");
-    const startTimes = panelInfo.start_times.split(",");
-    const endTimes = panelInfo.end_times.split(",");
-
-    return days.map((day, index) => (
-      <div key={index} className="panel-header-dow panel-titles">
-        {dow[day - 1]}, {formatTime(startTimes[index])} -{" "}
-        {formatTime(endTimes[index])}
+    return panelInfo.schedules.map((schedule, idx) => (
+      <div key={idx} className="panel-header-dow panel-titles">
+        {dow[schedule.day]}, {formatTime(schedule.start_time)} -{" "}
+        {formatTime(schedule.end_time)}
       </div>
-    ));
+    ))
   };
 
   const renderVolunteers = () => {
-    if (!panelInfo?.volunteer_f_names || !panelInfo?.volunteer_l_names) {
+    const volunteers = panelInfo?.schedules.flatMap(schedule => schedule.volunteers || []);
+
+    // same volunteer may be assigned to multiple schedules within a class
+    const uniqueIds = [], uniqueVolunteers = [];
+    volunteers?.forEach((volunteer) => {
+      if (!uniqueIds.includes(volunteer.volunteer_id)) {
+        uniqueIds.push(volunteer.volunteer_id);
+        uniqueVolunteers.push(volunteer);
+      }
+    })
+    
+    if (!uniqueVolunteers || uniqueVolunteers.length === 0) {
       return <>No volunteer for this class</>;
     }
 
-    const fNames = panelInfo.volunteer_f_names.split(",");
-    const lNames = panelInfo.volunteer_l_names.split(",");
-    const volunteers = fNames.map(
-      (fName, index) => `${fName} ${lNames[index]}`
-    );
-
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        {volunteers.map((vol, index) => (
+        {uniqueVolunteers.map((volunteer, idx) => (
           <div
-            key={index}
+            key={idx}
             style={{
               display: "flex",
               flexDirection: "row",
@@ -111,7 +104,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
             }}
           >
             <div className="volunteer-profile"></div>
-            <div>{vol}</div>
+            <div>{volunteer.f_name} {volunteer.l_name}</div>
           </div>
         ))}
       </div>
@@ -136,6 +129,34 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
     }
   };
 
+  const renderInstructorInfo = () => {
+    if (!panelInfo?.instructor_email) return;
+  
+    return (
+      <>
+        {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
+          ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
+          : "No instructor available"}
+        {shiftDetails && shiftDetails.shift_type && (shiftDetails.shift_type === SHIFT_TYPES.MY_SHIFTS || shiftDetails.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) 
+          ?
+          <button
+            className="email-icon panel-button-icon"
+            onClick={() => {
+              window.open(`mailto:${panelInfo.instructor_email}`);
+            }}
+          >
+            <img
+              alt="Email"
+              style={{ width: 16, height: 16 }}
+              src={email}
+            />
+          </button>
+          : null}
+      </>
+    );
+  };
+  
+  
   return (
     <>
       <div
@@ -147,7 +168,10 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
       <div className="panel-container" style={{ width: panelWidth }}>
         <div className="panel-header">
           {shiftDetails ? (
-              <span>{dayjs(shiftDetails.shift_date).format('YYYY-MM-DD')}</span>
+              <span>
+                <div>{dayjs(shiftDetails.start_time, 'HH:mm').format('h:mm A')} - {dayjs(shiftDetails.end_time, 'HH:mm').format('h:mm A')}</div>
+                <div>{dayjs(shiftDetails.shift_date).format('dddd, MMMM D')}</div>
+              </span>
           ) : (
               renderSchedules()
           )}
@@ -193,9 +217,7 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftbu
             <div className="panel-details-shift-row">
               <div className="panel-titles">Instructor</div>
               <div className="panel-details-shift-right">
-                {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
-                  ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
-                  : "No instructor available"}
+                {renderInstructorInfo()}
               </div>
             </div>
             <div className="panel-details-shift-row">

@@ -114,6 +114,17 @@ function ShiftCard({ shift, shiftType, onUpdate, onShiftSelect }) {
     const { lineColor, label, icon, disabled, buttonClass, onClick } =
         buttonConfig[shiftType] || buttonConfig[SHIFT_TYPES.DEFAULT];
 
+    const parseShiftDuration = (duration) => {
+        const hours = Math.round((duration / 60) * 10) / 10;
+        if (hours === 1) {
+            return `${hours} hour`;
+        }
+        if (hours > 1) {
+            return `${hours} hours`;
+        }
+        return `${duration} minutes`;
+    }
+
     return (
         <div className="shift-card" onClick={handleShiftSelection}>
             <div className="vertical-line" style={{ backgroundColor: lineColor }} />
@@ -121,7 +132,7 @@ function ShiftCard({ shift, shiftType, onUpdate, onShiftSelect }) {
                 <div className="column segment-1">
                     <div className="card-text">
                         <h2 className="shift-time">{shift.start_time}</h2>
-                        <p>{shift.duration} hour</p>
+                        <p>{parseShiftDuration(shift.duration)}</p>
                     </div>
                 </div>
                 <div className="column segment-2">

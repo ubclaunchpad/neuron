@@ -98,4 +98,5 @@ export interface Volunteer {
   'province'?: string | null;
   'total_hours'?: number;
   'volunteer_id': string;
+  'preferred_hours'?: number | null;
 }

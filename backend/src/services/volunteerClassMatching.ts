@@ -16,6 +16,9 @@ export class VolunteerClassMatcher {
     // Final volunteer->class assignments.
     private assignments: VolunteerClass[] = [];
 
+    // Keep track of how many hours each volunteer has been assigned
+    private volunteerHours: Record<string, number> = {};
+
     constructor(
         volunteers: Volunteer[],
         availabilities: Availability[],
@@ -26,6 +29,11 @@ export class VolunteerClassMatcher {
         this.availabilities = availabilities;
         this.preferences = preferences;
         this.classes = classes;
+
+        // Initialize volunteerHours to 0 for each volunteer
+        for (const v of volunteers) {
+            this.volunteerHours[v.volunteer_id] = 0;
+        }
     }
 
     /**
@@ -56,17 +64,21 @@ export class VolunteerClassMatcher {
                 this.isVolunteerPrefersClass(v.volunteer_id, cls.class_id!)
             );
 
-            // Sort by rank if provided (lower rank => higher preference)
+            // Then sort by rank if provided (lower rank => higher preference)
             potentialVolunteers.sort((a, b) => {
                 const rankA = this.getClassRank(a.volunteer_id, cls.class_id!) ?? 9999;
                 const rankB = this.getClassRank(b.volunteer_id, cls.class_id!) ?? 9999;
                 return rankA - rankB;
             });
 
+            // Partition volunteers by if they are over or under their preferred hours
+            const [underCap, overCap] = this.partitionByPreferredHours(potentialVolunteers);
+            const partitionedVolunteers = underCap.concat(overCap);
+
             const maxVolunteers = cls.number_volunteers ?? 1;
             let assignedVolunteers = 0;
 
-            for (const v of potentialVolunteers) {
+            for (const v of partitionedVolunteers) {
                 if (assignedVolunteers < maxVolunteers) {
                     this.assignments.push({
                         fk_volunteer_id: v.volunteer_id,
@@ -141,5 +153,32 @@ export class VolunteerClassMatcher {
             (p) => p.fk_volunter_id === volunteerId && p.fk_class_id === classId
         );
         return pref?.class_rank ?? null;
+    }
+
+    /**
+  * Partition volunteers into two groups:
+  *  1) Under their preferred hour cap
+  *  2) At or above their preferred hour cap
+  *
+  * Then we can assign from group 1 first (priority),
+  * and group 2 next if still needed.
+  */
+    private partitionByPreferredHours(volunteers: Volunteer[]): [Volunteer[], Volunteer[]] {
+        const under: Volunteer[] = [];
+        const over: Volunteer[] = [];
+
+        for (const v of volunteers) {
+            // If no preferred_hours is defined, interpret it as infinite (no cap)
+            const cap = v.preferred_hours ?? Infinity;
+            const currentHours = this.volunteerHours[v.volunteer_id];
+
+            if (currentHours < cap) {
+                under.push(v);
+            } else {
+                over.push(v);
+            }
+        }
+
+        return [under, over];
     }
 }

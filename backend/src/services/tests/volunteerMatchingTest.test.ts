@@ -3,7 +3,7 @@ import { Class, Volunteer, ClassPreference, Availability } from "../../common/ge
 import { describe, expect, test } from '@jest/globals';
 
 describe("VolunteerClassMatcher Tests", () => {
-  test("Basic functionality with one class and one volunteer", () => {
+  test("Test 1: Basic functionality with one class and one volunteer", () => {
     const classes: Class[] = [
       {
         class_id: 1,
@@ -56,7 +56,7 @@ describe("VolunteerClassMatcher Tests", () => {
     ]);
   });
 
-  test("No available volunteers", () => {
+  test("Test 2: No available volunteers", () => {
     const classes: Class[] = [
       {
         class_id: 1,
@@ -107,7 +107,7 @@ describe("VolunteerClassMatcher Tests", () => {
     expect(assignments).toEqual([]);
   });
 
-  test("Multiple volunteers, pick highest preference", () => {
+  test("Test 3: Multiple volunteers, pick highest preference", () => {
     const classes: Class[] = [
       {
         class_id: 1,
@@ -178,7 +178,7 @@ describe("VolunteerClassMatcher Tests", () => {
     ]);
   });
 
-  test("Two classes at same time, two volunteers available", () => {
+  test("Test 4: Two classes at same time, two volunteers available", () => {
     const classes: Class[] = [
       {
         class_id: 1,
@@ -269,7 +269,7 @@ describe("VolunteerClassMatcher Tests", () => {
     ]);
   });
 
-  test("Three classes, three volunteers (each with different top preference)", () => {
+  test("Test 5: Three classes, three volunteers (each with different top preference)", () => {
     const classes: Class[] = [
       {
         class_id: 1,
@@ -425,7 +425,7 @@ describe("VolunteerClassMatcher Tests", () => {
   });
 
   // TODO: is this the expected behaviour?
-  test("Edge case: Volunteer available for a shift but no preferences inputted (no matching?)", () => {
+  test("Test 6: Edge case: Volunteer available for a shift but no preferences inputted (no matching?)", () => {
     const classes: Class[] = [
       {
         class_id: 1,
@@ -470,7 +470,7 @@ describe("VolunteerClassMatcher Tests", () => {
   });
 
   // currently not passing - matching with the wrong class
-  test("Two classes at same time, only one volunteer available", () => {
+  test("Test 7: Two classes at same time, only one volunteer available", () => {
     const classes: Class[] = [
       {
         class_id: 1,
@@ -538,7 +538,7 @@ describe("VolunteerClassMatcher Tests", () => {
   });
 
   // currently not passing - v1 matching with both classes
-  test("Two classes, two volunteers, one is only available for one class", () => {
+  test("Test 8: Two classes, two volunteers, one is only available for one class", () => {
     const classes: Class[] = [
       {
         class_id: 1,
@@ -641,191 +641,193 @@ describe("VolunteerClassMatcher Tests", () => {
     ]);
   });
 
+  test("Test 9: Six volunteers and classes, testing optimal solution finding", () => {
+    const classes: Class[] = [
+      {
+        class_id: 1,
+        class_name: "Class 1",
+        end_date: "2025-02-06T11:00:00",
+        fk_instructor_id: "inst1",
+        instructions: null,
+        start_date: "2025-02-06T10:00:00",
+        subcategory: null,
+        zoom_link: "z-link-1",
+        category: null
+      },
+      {
+        class_id: 2,
+        class_name: "Class 2",
+        end_date: "2025-02-06T11:00:00",
+        fk_instructor_id: "inst2",
+        instructions: null,
+        start_date: "2025-02-06T10:00:00",
+        subcategory: null,
+        zoom_link: "z-link-2",
+        category: null
+      },
+      {
+        class_id: 3,
+        class_name: "Class 3",
+        end_date: "2025-02-06T11:00:00",
+        fk_instructor_id: "inst3",
+        instructions: null,
+        start_date: "2025-02-06T10:00:00",
+        subcategory: null,
+        zoom_link: "z-link-3",
+        category: null
+      },
+      {
+        class_id: 4,
+        class_name: "Class 4",
+        end_date: "2025-02-06T11:00:00",
+        fk_instructor_id: "inst4",
+        instructions: null,
+        start_date: "2025-02-06T10:00:00",
+        subcategory: null,
+        zoom_link: "z-link-4",
+        category: null
+      },
+      {
+        class_id: 5,
+        class_name: "Class 5",
+        end_date: "2025-02-06T11:00:00",
+        fk_instructor_id: "inst5",
+        instructions: null,
+        start_date: "2025-02-06T10:00:00",
+        subcategory: null,
+        zoom_link: "z-link-5",
+        category: null
+      },
+      {
+        class_id: 6,
+        class_name: "Class 6",
+        end_date: "2025-02-06T11:00:00",
+        fk_instructor_id: "inst6",
+        instructions: null,
+        start_date: "2025-02-06T10:00:00",
+        subcategory: null,
+        zoom_link: "z-link-6",
+        category: null
+      }
+    ];
+  
+    const volunteers: Volunteer[] = [
+      {
+        volunteer_id: "v1",
+        email: "v1@example.com",
+        f_name: "Volunteer",
+        l_name: "One"
+      },
+      {
+        volunteer_id: "v2",
+        email: "v2@example.com",
+        f_name: "Volunteer",
+        l_name: "Two"
+      },
+      {
+        volunteer_id: "v3",
+        email: "v3@example.com",
+        f_name: "Volunteer",
+        l_name: "Three"
+      },
+      {
+        volunteer_id: "v4",
+        email: "v4@example.com",
+        f_name: "Volunteer",
+        l_name: "Four"
+      },
+      {
+        volunteer_id: "v5",
+        email: "v5@example.com",
+        f_name: "Volunteer",
+        l_name: "Five"
+      },
+      {
+        volunteer_id: "v6",
+        email: "v6@example.com",
+        f_name: "Volunteer",
+        l_name: "Six"
+      }
+    ];
+  
+    // All volunteers available for all shifts
+    const availabilities: Availability[] = volunteers.map((v, index) => ({
+      availability_id: index + 1,
+      fk_volunteer_id: v.volunteer_id,
+      day: 4, // Thursday
+      start_time: "09:00",
+      end_time: "12:00"
+    }));
+  
+    // Complex preference chain
+    const preferences: ClassPreference[] = [
+      // V1: prefers 1, then 6, then others
+      { fk_class_id: 1, fk_volunter_id: "v1", class_rank: 1 },
+      { fk_class_id: 6, fk_volunter_id: "v1", class_rank: 2 },
+      { fk_class_id: 2, fk_volunter_id: "v1", class_rank: 3 },
+      { fk_class_id: 3, fk_volunter_id: "v1", class_rank: 4 },
+      { fk_class_id: 4, fk_volunter_id: "v1", class_rank: 5 },
+      { fk_class_id: 5, fk_volunter_id: "v1", class_rank: 6 },
+  
+      // V2: prefers 1, then 2, then others
+      { fk_class_id: 1, fk_volunter_id: "v2", class_rank: 1 },
+      { fk_class_id: 2, fk_volunter_id: "v2", class_rank: 2 },
+      { fk_class_id: 3, fk_volunter_id: "v2", class_rank: 3 },
+      { fk_class_id: 4, fk_volunter_id: "v2", class_rank: 4 },
+      { fk_class_id: 5, fk_volunter_id: "v2", class_rank: 5 },
+      { fk_class_id: 6, fk_volunter_id: "v2", class_rank: 6 },
+  
+      // V3: prefers 1, then 3, then others
+      { fk_class_id: 1, fk_volunter_id: "v3", class_rank: 1 },
+      { fk_class_id: 3, fk_volunter_id: "v3", class_rank: 2 },
+      { fk_class_id: 2, fk_volunter_id: "v3", class_rank: 3 },
+      { fk_class_id: 4, fk_volunter_id: "v3", class_rank: 4 },
+      { fk_class_id: 5, fk_volunter_id: "v3", class_rank: 5 },
+      { fk_class_id: 6, fk_volunter_id: "v3", class_rank: 6 },
+  
+      // V4: prefers 1, then 4, then others
+      { fk_class_id: 1, fk_volunter_id: "v4", class_rank: 1 },
+      { fk_class_id: 4, fk_volunter_id: "v4", class_rank: 2 },
+      { fk_class_id: 2, fk_volunter_id: "v4", class_rank: 3 },
+      { fk_class_id: 3, fk_volunter_id: "v4", class_rank: 4 },
+      { fk_class_id: 5, fk_volunter_id: "v4", class_rank: 5 },
+      { fk_class_id: 6, fk_volunter_id: "v4", class_rank: 6 },
+  
+      // V5: prefers 1, then 5, then others
+      { fk_class_id: 1, fk_volunter_id: "v5", class_rank: 1 },
+      { fk_class_id: 5, fk_volunter_id: "v5", class_rank: 2 },
+      { fk_class_id: 2, fk_volunter_id: "v5", class_rank: 3 },
+      { fk_class_id: 3, fk_volunter_id: "v5", class_rank: 4 },
+      { fk_class_id: 4, fk_volunter_id: "v5", class_rank: 5 },
+      { fk_class_id: 6, fk_volunter_id: "v5", class_rank: 6 },
+  
+      // V6: prefers 6, then 1, then others
+      { fk_class_id: 6, fk_volunter_id: "v6", class_rank: 1 },
+      { fk_class_id: 1, fk_volunter_id: "v6", class_rank: 2 },
+      { fk_class_id: 2, fk_volunter_id: "v6", class_rank: 3 },
+      { fk_class_id: 3, fk_volunter_id: "v6", class_rank: 4 },
+      { fk_class_id: 4, fk_volunter_id: "v6", class_rank: 5 },
+      { fk_class_id: 5, fk_volunter_id: "v6", class_rank: 6 }
+    ];
+  
+    const matcher = new VolunteerClassMatcher(volunteers, availabilities, preferences, classes);
+    const assignments = matcher.matchVolunteers();
+  
+    // The optimal matching should give v6 their first choice (class 6),
+    // which frees up class 1 for v1, allowing everyone to get their first or second choice
+    expect(assignments).toEqual([
+      { fk_class_id: 1, fk_volunteer_id: "v1" },
+      { fk_class_id: 2, fk_volunteer_id: "v2" },
+      { fk_class_id: 3, fk_volunteer_id: "v3" },
+      { fk_class_id: 4, fk_volunteer_id: "v4" },
+      { fk_class_id: 5, fk_volunteer_id: "v5" },
+      { fk_class_id: 6, fk_volunteer_id: "v6" }
+    ]);
+  });
+
 });
 
-test("Six volunteers and classes, testing optimal solution finding", () => {
-  const classes: Class[] = [
-    {
-      class_id: 1,
-      class_name: "Class 1",
-      end_date: "2025-02-06T11:00:00",
-      fk_instructor_id: "inst1",
-      instructions: null,
-      start_date: "2025-02-06T10:00:00",
-      subcategory: null,
-      zoom_link: "z-link-1",
-      category: null
-    },
-    {
-      class_id: 2,
-      class_name: "Class 2",
-      end_date: "2025-02-06T11:00:00",
-      fk_instructor_id: "inst2",
-      instructions: null,
-      start_date: "2025-02-06T10:00:00",
-      subcategory: null,
-      zoom_link: "z-link-2",
-      category: null
-    },
-    {
-      class_id: 3,
-      class_name: "Class 3",
-      end_date: "2025-02-06T11:00:00",
-      fk_instructor_id: "inst3",
-      instructions: null,
-      start_date: "2025-02-06T10:00:00",
-      subcategory: null,
-      zoom_link: "z-link-3",
-      category: null
-    },
-    {
-      class_id: 4,
-      class_name: "Class 4",
-      end_date: "2025-02-06T11:00:00",
-      fk_instructor_id: "inst4",
-      instructions: null,
-      start_date: "2025-02-06T10:00:00",
-      subcategory: null,
-      zoom_link: "z-link-4",
-      category: null
-    },
-    {
-      class_id: 5,
-      class_name: "Class 5",
-      end_date: "2025-02-06T11:00:00",
-      fk_instructor_id: "inst5",
-      instructions: null,
-      start_date: "2025-02-06T10:00:00",
-      subcategory: null,
-      zoom_link: "z-link-5",
-      category: null
-    },
-    {
-      class_id: 6,
-      class_name: "Class 6",
-      end_date: "2025-02-06T11:00:00",
-      fk_instructor_id: "inst6",
-      instructions: null,
-      start_date: "2025-02-06T10:00:00",
-      subcategory: null,
-      zoom_link: "z-link-6",
-      category: null
-    }
-  ];
 
-  const volunteers: Volunteer[] = [
-    {
-      volunteer_id: "v1",
-      email: "v1@example.com",
-      f_name: "Volunteer",
-      l_name: "One"
-    },
-    {
-      volunteer_id: "v2",
-      email: "v2@example.com",
-      f_name: "Volunteer",
-      l_name: "Two"
-    },
-    {
-      volunteer_id: "v3",
-      email: "v3@example.com",
-      f_name: "Volunteer",
-      l_name: "Three"
-    },
-    {
-      volunteer_id: "v4",
-      email: "v4@example.com",
-      f_name: "Volunteer",
-      l_name: "Four"
-    },
-    {
-      volunteer_id: "v5",
-      email: "v5@example.com",
-      f_name: "Volunteer",
-      l_name: "Five"
-    },
-    {
-      volunteer_id: "v6",
-      email: "v6@example.com",
-      f_name: "Volunteer",
-      l_name: "Six"
-    }
-  ];
-
-  // All volunteers available for all shifts
-  const availabilities: Availability[] = volunteers.map((v, index) => ({
-    availability_id: index + 1,
-    fk_volunteer_id: v.volunteer_id,
-    day: 4, // Thursday
-    start_time: "09:00",
-    end_time: "12:00"
-  }));
-
-  // Complex preference chain
-  const preferences: ClassPreference[] = [
-    // V1: prefers 1, then 6, then others
-    { fk_class_id: 1, fk_volunter_id: "v1", class_rank: 1 },
-    { fk_class_id: 6, fk_volunter_id: "v1", class_rank: 2 },
-    { fk_class_id: 2, fk_volunter_id: "v1", class_rank: 3 },
-    { fk_class_id: 3, fk_volunter_id: "v1", class_rank: 4 },
-    { fk_class_id: 4, fk_volunter_id: "v1", class_rank: 5 },
-    { fk_class_id: 5, fk_volunter_id: "v1", class_rank: 6 },
-
-    // V2: prefers 1, then 2, then others
-    { fk_class_id: 1, fk_volunter_id: "v2", class_rank: 1 },
-    { fk_class_id: 2, fk_volunter_id: "v2", class_rank: 2 },
-    { fk_class_id: 3, fk_volunter_id: "v2", class_rank: 3 },
-    { fk_class_id: 4, fk_volunter_id: "v2", class_rank: 4 },
-    { fk_class_id: 5, fk_volunter_id: "v2", class_rank: 5 },
-    { fk_class_id: 6, fk_volunter_id: "v2", class_rank: 6 },
-
-    // V3: prefers 1, then 3, then others
-    { fk_class_id: 1, fk_volunter_id: "v3", class_rank: 1 },
-    { fk_class_id: 3, fk_volunter_id: "v3", class_rank: 2 },
-    { fk_class_id: 2, fk_volunter_id: "v3", class_rank: 3 },
-    { fk_class_id: 4, fk_volunter_id: "v3", class_rank: 4 },
-    { fk_class_id: 5, fk_volunter_id: "v3", class_rank: 5 },
-    { fk_class_id: 6, fk_volunter_id: "v3", class_rank: 6 },
-
-    // V4: prefers 1, then 4, then others
-    { fk_class_id: 1, fk_volunter_id: "v4", class_rank: 1 },
-    { fk_class_id: 4, fk_volunter_id: "v4", class_rank: 2 },
-    { fk_class_id: 2, fk_volunter_id: "v4", class_rank: 3 },
-    { fk_class_id: 3, fk_volunter_id: "v4", class_rank: 4 },
-    { fk_class_id: 5, fk_volunter_id: "v4", class_rank: 5 },
-    { fk_class_id: 6, fk_volunter_id: "v4", class_rank: 6 },
-
-    // V5: prefers 1, then 5, then others
-    { fk_class_id: 1, fk_volunter_id: "v5", class_rank: 1 },
-    { fk_class_id: 5, fk_volunter_id: "v5", class_rank: 2 },
-    { fk_class_id: 2, fk_volunter_id: "v5", class_rank: 3 },
-    { fk_class_id: 3, fk_volunter_id: "v5", class_rank: 4 },
-    { fk_class_id: 4, fk_volunter_id: "v5", class_rank: 5 },
-    { fk_class_id: 6, fk_volunter_id: "v5", class_rank: 6 },
-
-    // V6: prefers 6, then 1, then others
-    { fk_class_id: 6, fk_volunter_id: "v6", class_rank: 1 },
-    { fk_class_id: 1, fk_volunter_id: "v6", class_rank: 2 },
-    { fk_class_id: 2, fk_volunter_id: "v6", class_rank: 3 },
-    { fk_class_id: 3, fk_volunter_id: "v6", class_rank: 4 },
-    { fk_class_id: 4, fk_volunter_id: "v6", class_rank: 5 },
-    { fk_class_id: 5, fk_volunter_id: "v6", class_rank: 6 }
-  ];
-
-  const matcher = new VolunteerClassMatcher(volunteers, availabilities, preferences, classes);
-  const assignments = matcher.matchVolunteers();
-
-  // The optimal matching should give v6 their first choice (class 6),
-  // which frees up class 1 for v1, allowing everyone to get their first or second choice
-  expect(assignments).toEqual([
-    { fk_class_id: 1, fk_volunteer_id: "v1" },
-    { fk_class_id: 2, fk_volunteer_id: "v2" },
-    { fk_class_id: 3, fk_volunteer_id: "v3" },
-    { fk_class_id: 4, fk_volunteer_id: "v4" },
-    { fk_class_id: 5, fk_volunteer_id: "v5" },
-    { fk_class_id: 6, fk_volunteer_id: "v6" }
-  ]);
-});
 
 /**
 (will delete later)
@@ -841,18 +843,18 @@ Tests written
 
 Tests to write
 - are there multi-day classes? (e.g. Tuesdays and Thursdays) - should add test cases
-    where volunteers are only free for half
+    where volunteers are only free for one of the two days, if that exists
 - Time boundary cases: volunteer availability covers part of a class time
 - Preference edge cases:
     - Multiple volunteers with exact same preference rank for same class
-    - Volunteer with no preference but is available (done above - would this happen?)
+    - Volunteer with no preference but is available (Test 6 - would this happen?)
 - Availability patterns
     - Volunteers available on wrong day but right time
 - Scale testing
     - Many classes at the same time
     - Many volunteers available for the same slot
     - Large preference lists for any given volunteer
-    - Many volunteers with preference for one class
+    - Many volunteers with preference for one class - Test 9
 - Special cases
     - No classes
     - No volunteers
@@ -865,4 +867,5 @@ Questions
 - is there a requirement that every class be ranked by every volunteer? can you have multiple
     classes have the same rank? (i.e. tied) - I feel like at some point we had an answer to this but
     idk if it changed
+- how do we test situations which have multiple reasonable outcomes?
  */

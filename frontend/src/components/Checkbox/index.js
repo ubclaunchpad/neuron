@@ -1,8 +1,8 @@
 import "./index.css";
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import checkbox from "../../assets/checkbox.png";
 
-function CheckBox({class_, onClicked, active}) {
+function CheckBox({onClicked, active}) {
      const [chosen, setChosen] = useState(active);
 
      const handleBoxClicked = () => {

@@ -1,18 +1,27 @@
 import "./index.css";
 import React, { useState, useEffect, useRef } from "react";
 
-export default function DashboardCoverage({ shifts, future }) {
+export default function DashboardCoverage({
+  completed,
+  upcoming,
+  requested,
+  future,
+}) {
   const progressCompleted = useRef(null);
   const progressUpcoming = useRef(null);
-
+  const totalHours = completed + upcoming + requested;
   useEffect(() => {
     if (progressCompleted.current) {
-      progressCompleted.current.style.width = "35%";
+      progressCompleted.current.style.width = `${
+        (completed / totalHours) * 100
+      }%`;
     }
     if (progressUpcoming.current) {
-      progressUpcoming.current.style.width = "20%";
+      progressUpcoming.current.style.width = `${
+        (upcoming / totalHours) * 100
+      }%`;
     }
-  }, [future]);
+  }, [completed, upcoming, requested, future]);
 
   return (
     <>

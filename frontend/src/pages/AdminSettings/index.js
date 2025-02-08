@@ -24,8 +24,10 @@ function Settings() {
       <div className="settings-header">
         <h2 className="settings-title">Settings</h2>
         <button className="top-right-button">
-          <FaBell className="bell-icon" />
-          <span className="notification-badge"></span>
+          <div className="bell-container">
+            <FaBell className="bell-icon" />
+            <span className="notification-badge"></span>
+          </div>
           Notifications
         </button>
       </div>

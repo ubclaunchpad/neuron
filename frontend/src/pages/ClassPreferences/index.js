@@ -216,7 +216,7 @@ function ClassPreferences() {
                     {classes.map((class_, index) => (
                          <div className="class-container">
                               <div className="class-container-col1">
-                                   <Checkbox classData={class_} onClicked={()=>{handleCheckboxClicked(class_)}} active={ifClassIsPreferred(class_)}/>
+                                   <Checkbox onClicked={()=>{handleCheckboxClicked(class_)}} active={ifClassIsPreferred(class_)}/>
                               </div>
                               <div className="class-container-col2">
                                    <h2>{formatTime(class_.start_times)}</h2>

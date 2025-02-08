@@ -6,6 +6,7 @@ import { useAuth } from "./contexts/authContext";
 import AdminVerify from "./pages/AdminVerify";
 import Classes from "./pages/Classes";
 import VolunteerSchedule from "./pages/Schedule";
+import AdminSchedule from "./pages/AdminSchedule";
 import VolunteerDash from "./pages/VolunteerDash";
 import VolunteerForgotPassword from "./pages/VolunteerForgotPassword";
 import VolunteerLogin from "./pages/VolunteerLogin";
@@ -14,7 +15,7 @@ import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import VolunteerSignup from "./pages/VolunteerSignup";
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isVolunteer } = useAuth();
 
   const RouteGuard = ({ fallback, valid }) => {
     return valid ? <Outlet /> : <Navigate to={fallback} replace />;
@@ -40,7 +41,8 @@ function App() {
               <Route index element={<VolunteerDash />} />
               <Route path="volunteer">
                 <Route path="classes" element={<Classes />} />
-                <Route path="schedule" element={<VolunteerSchedule />} />
+                {/* Testing displaying differnt components – Add Admin Auth */}
+                <Route path="schedule" element={ isVolunteer ? <AdminSchedule/> : <VolunteerSchedule />} /> 
                 <Route path="my-profile" element={<VolunteerProfile />} />
               </Route>
             </Route>

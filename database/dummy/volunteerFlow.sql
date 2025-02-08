@@ -5,8 +5,8 @@ use neuron;
 INSERT INTO users (user_id, email, password, role) VALUES
 ('9bead604-6554-4db2-9b88-552d15695481', 'jessie.shang@gmail.com', 'password123', 'VOLUN');
 
-INSERT INTO volunteers (volunteer_id, fk_user_id, f_name, l_name, p_name, total_hours, bio, active, email, pronouns, phone_number, city, province) VALUES
-('faff8f98-bc68-4fab-a4ca-151b09fc40c1', '9bead604-6554-4db2-9b88-552d15695481', 'Jessie', 'Shang', null, 0, 'I love helping people.', 1, 'jessie.shang@gmail.com', "she/her", "2084248285", "Vancouver", "BC");
+INSERT INTO volunteers (volunteer_id, fk_user_id, f_name, l_name, p_name, total_hours, bio, active, email, pronouns, phone_number, city, province, p_time_ctmt) VALUES
+('faff8f98-bc68-4fab-a4ca-151b09fc40c1', '9bead604-6554-4db2-9b88-552d15695481', 'Jessie', 'Shang', null, 0, 'I love helping people.', 1, 'jessie.shang@gmail.com', "she/her", "2084248285", "Vancouver", "BC", 10);
 
 -- Set volunteer availability
 INSERT INTO availability (fk_volunteer_id, day, start_time, end_time) VALUES
@@ -62,8 +62,8 @@ INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUE
 INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
 (11, 9, 3, '15:00:00', '16:00:00');
 
--- Assign volunteer to class
-INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES
+-- Assign volunteer to schedule
+INSERT INTO volunteer_schedule (fk_volunteer_id, fk_schedule_id) VALUES
 ('faff8f98-bc68-4fab-a4ca-151b09fc40c1', 1);
 
 -- For volunteer schedule viewing, monthly view for volunteer_id 1230545b-0505-4909-826c-59359503dae6

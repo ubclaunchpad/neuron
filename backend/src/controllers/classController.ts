@@ -11,56 +11,19 @@ async function getAllClasses(req: Request, res: Response) {
 }
 
 async function addClass(req: Request, res: Response) {
-	const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = req.body;
+	const newClass: ClassDB = req.body;
+	const schedules = req.body.schedules;
 
-	const newClass = {
-		fk_instructor_id,
-		class_name,
-		instructions: instructions,
-		zoom_link: zoom_link,
-		start_date: start_date,
-		end_date: end_date,
-		category: category,
-		subcategory: subcategory
-	} as ClassDB;
+	const result = await classesModel.addClass(newClass, schedules);
 
-	const result = await classesModel.addClass(newClass);
-	const newClassId = result.insertId;
-	const addedClass = {
-		class_id: newClassId,
-		fk_instructor_id,
-		class_name,
-		instructions,
-		zoom_link,
-		start_date,
-		end_date,
-		category,
-		subcategory
-	};
-
-	return res.status(201).json({
-		message: 'Class added successfully',
-		data: addedClass
-	});
+	res.status(200).json(result);
 }
 
 async function updateClass(req: Request, res: Response) {
 	const class_id = Number(req.params.class_id);
+	const partialClass: Partial<ClassDB> = req.body;
 
-	const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = req.body;
-
-	const updatedClass = {
-		fk_instructor_id,
-		class_name,
-		instructions: instructions,
-		zoom_link: zoom_link,
-		start_date: start_date,
-		end_date: end_date,
-		category: category,
-		subcategory: subcategory
-	} as ClassDB;
-
-	const result = await classesModel.updateClass(class_id, updatedClass);
+	const result = await classesModel.updateClass(class_id, partialClass);
 	
 	return res.status(200).json(result);
 }

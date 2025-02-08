@@ -10,11 +10,12 @@ import { getVolunteerShiftsForMonth } from "../../api/shiftService";
 import DashboardCoverage from "../../components/DashboardCoverage";
 import DashCoverShifts from "../../components/DashCoverShifts";
 import DashShifts from "../../components/DashShifts";
+import { useAuth } from "../../contexts/authContext";
 import { SHIFT_TYPES } from "../../data/constants";
 import "./index.css";
 
 function VolunteerDash() {
-  const volunteerID = localStorage.getItem("volunteerID");
+  const { user } = useAuth();
   const [checkIn, setCheckIn] = useState(false);
   const [shifts, setShifts] = useState([]);
   const monthDate = dayjs().date(1).hour(0).minute(0);
@@ -47,14 +48,14 @@ function VolunteerDash() {
   useEffect(() => {
     const fetchShifts = async () => {
       const body = {
-        volunteer_id: volunteerID,
+        volunteer_id: user?.volunteer.volunteer_id,
         shiftDate: selectedDate.format("YYYY-MM-DD"),
       };
       const response = await getVolunteerShiftsForMonth(body);
       setShifts(response);
     };
     fetchShifts();
-  }, [selectedDate, volunteerID]);
+  }, [selectedDate, user?.volunteer.volunteer_id]);
 
   const allShifts = shifts.reduce((acc, shift) => {
     const date = shift.shift_date;
@@ -99,7 +100,7 @@ function VolunteerDash() {
   const handleShiftUpdate = () => {
     const fetchShifts = async () => {
       const body = {
-        volunteer_id: volunteerID,
+        volunteer_id: user?.volunteer.volunteer_id,
         shiftDate: selectedDate.format("YYYY-MM-DD"),
       };
       const response = await getVolunteerShiftsForMonth(body);

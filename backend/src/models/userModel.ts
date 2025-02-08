@@ -103,6 +103,7 @@ export default class UserModel {
         // Process image
         const processedImage = await sharp(image)
             .resize({ width: 300, fit: 'outside'})
+            .rotate()
             .toFormat('webp')
             .webp({ quality: 80 })
             .toBuffer();

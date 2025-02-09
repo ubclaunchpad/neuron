@@ -68,8 +68,8 @@ async function getShiftsByVolunteerIdAndMonth(req: Request, res: Response) {
     const shift: ShiftDB = req.body;
 
     const date = new Date(shift.shift_date + 'T00:00:00'); // Adding time to avoid timezone issues
-    const month: number = new Date(date).getMonth() + 1;
-    const year: number = new Date(shift.shift_date).getFullYear();
+    const month: number = date.getMonth() + 1;
+    const year: number = date.getFullYear();
 
     const shifts = await shiftModel.getShiftsByVolunteerIdAndMonth(shift.fk_volunteer_id, month, year);
 

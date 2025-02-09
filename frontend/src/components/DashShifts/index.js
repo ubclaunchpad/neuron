@@ -4,11 +4,13 @@ import { useNavigate } from "react-router-dom";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForwardIos";
 import dayjs from "dayjs";
 import ShiftCard from "../ShiftCard";
+import { getButtonConfig } from "../../utils/buttonConfig";
 
 export default function DashShifts({
   groupedShifts,
   future,
   handleShiftUpdate,
+  volunteerID
 }) {
   const currentDate = dayjs();
   const navigate = useNavigate();
@@ -45,7 +47,8 @@ export default function DashShifts({
                     key={shift.fk_schedule_id}
                     shift={shift}
                     shiftType={shift.shift_type}
-                    onUpdate={handleShiftUpdate} // Pass the handler
+                    onShiftSelect={handleShiftUpdate} // Pass the handler
+                    buttonConfig={getButtonConfig(shift, handleShiftUpdate, volunteerID)}
                   />
                 ))}
               </div>

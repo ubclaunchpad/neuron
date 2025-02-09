@@ -2,17 +2,13 @@ import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
-import { requestToCoverShift, requestShiftCoverage, cancelCoverShift, cancelCoverRequest, checkInShift } from '../../api/shiftService';
 import { SHIFT_TYPES, COVERAGE_STATUSES } from '../../data/constants';
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
-import CheckInIcon from '../../assets/images/button-icons/clock-icon.svg';
-import PlusIcon from '../../assets/images/button-icons/plus-icon.svg';
-import RequestCoverageIcon from '../../assets/request-coverage.png'
-import CancelIcon from "../../assets/images/button-icons/x-icon.svg";
 import "./index.css";
+import { getButtonConfig } from '../../utils/buttonConfig';
 
 function VolunteerSchedule() {
     const volunteerID = localStorage.getItem('volunteerID');
@@ -88,152 +84,6 @@ function VolunteerSchedule() {
         return acc;
     }, {});
 
-    const handleCheckInClick = async (shift) => {
-        try {
-            if (!shift.checked_in) {
-                // console.log(`Checking in for shift ${shift.shift_id}`);
-                await checkInShift(shift.shift_id);
-                handleShiftUpdate({ ...shift, checked_in: 1 });
-            } 
-
-        } catch (error) {
-            console.error('Error checking in for shift:', error);
-        }
-    };
-
-    const handleCoverShiftClick = async (shift) => {
-        try {
-            const body = {
-                request_id: shift.request_id,
-                volunteer_id: volunteerID,
-            };
-            // console.log(`Requesting to cover shift ${shift.shift_id}`);
-            await requestToCoverShift(body);
-            handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.PENDING });
-
-        } catch (error) {
-            console.error('Error generating request to cover shift:', error);
-        }
-    };
-
-    const handleRequestCoverageClick = async (shift) => {
-        try {
-            const body = {
-                shift_id: shift.shift_id,
-            }
-            // console.log(`Requesting coverage for shift ${shift.shift_id}`);
-            let data = await requestShiftCoverage(body);
-            handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_COVERAGE_REQUESTS, request_id: data.insertId });
-             
-        } catch (error) {
-            console.error('Error requesting for shift coverage: ', error);
-        }
-    };
-
-    const handleCancelClick = async (shift) => {
-        if (shift.shift_type === SHIFT_TYPES.COVERAGE) {
-
-            try {
-                // console.log("Canceling coverage for shift ID: ", shift.shift_id);
-                const body = {
-                    request_id: shift.request_id,
-                    volunteer_id: volunteerID
-                };
-                await cancelCoverShift(body);
-                handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.OPEN });
-
-            } catch (error) {
-                console.error('Error canceling coverage:', error);
-            }
-        
-        } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
-
-            try {
-                // console.log("Canceling coverage request for shift ID: ", shift.shift_id);
-                const body = {
-                    request_id: shift.request_id,
-                    shift_id: shift.shift_id,
-                };
-                await cancelCoverRequest(body);
-                handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_SHIFTS, request_id: null });
-
-            } catch (error) {
-                console.error('Error canceling coverage request:', error);
-            }
-        }
-    }
-
-    // Returns the button configuration for the shift based on the shift type
-    const getButtonConfig = (shift) => {
-
-        const shiftDay = dayjs(shift.shift_date).format('YYYY-MM-DD');
-        const shiftStart = dayjs(`${shiftDay} ${shift.start_time}`);
-        const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
-    
-        const pastShift = currentDate.isAfter(shiftEnd);
-        const currentShift = currentDate.isBetween(shiftStart, shiftEnd, 'minute', '[]');
-
-        return {
-            [SHIFT_TYPES.MY_SHIFTS]: {
-                lineColor: 'var(--green)',  // Line color for the shift card
-                label: shift.checked_in 
-                    ? 'Checked In' 
-                        : currentShift 
-                        ? 'Check In' 
-                            : pastShift
-                            ? 'Missed Shift'
-                                : 'Upcoming',
-                icon: shift.checked_in ? null : currentShift ? CheckInIcon : null,
-                iconColourClass: shift.checked_in ? null : currentShift ? 'icon-white' : null, // Icon colour classes defined in styles.css
-                disabled: shift.checked_in || !currentShift,
-                buttonClass: shift.checked_in ? 'checked-in' : 'primary-action',
-                onClick: handleCheckInClick,
-            },
-            [SHIFT_TYPES.COVERAGE]: {
-                lineColor: 'var(--red)',
-                label: shift.coverage_status === COVERAGE_STATUSES.PENDING
-                    ? 'Pending Approval'
-                    : 'Cover',
-                icon: shift.coverage_status === COVERAGE_STATUSES.OPEN ? PlusIcon : null,
-                iconColourClass: shift.coverage_status === COVERAGE_STATUSES.OPEN ? 'icon-white' : null,
-                disabled: shift.coverage_status === COVERAGE_STATUSES.PENDING,
-                buttonClass: shift.coverage_status === COVERAGE_STATUSES.OPEN ? 'primary-action' : '',
-                onClick: handleCoverShiftClick,
-            },
-            [SHIFT_TYPES.MY_COVERAGE_REQUESTS]: {
-                lineColor: 'var(--yellow)',
-                label: shift.coverage_status === COVERAGE_STATUSES.OPEN
-                    ? 'Requested Coverage'
-                    : 'Shift Filled',
-                icon: null,
-                disabled: true,
-                onClick: () => {}, // No action for this state
-            },
-            [SHIFT_TYPES.DEFAULT]: {
-                lineColor: 'var(--grey)',
-                label: 'View Details',
-                icon: null,
-                disabled: false,
-            },
-            REQUEST_COVERAGE: {
-                lineColor: 'var(--yellow)',
-                label: 'Request Coverage',
-                icon: RequestCoverageIcon,
-                disabled: false,
-                onClick: handleRequestCoverageClick,
-            },
-            CANCEL: {
-                label: 'Cancel',
-                icon: CancelIcon,
-                iconColourClass: 'icon-white',
-                disabled: false,
-                buttonClass: 'cancel-action',
-                onClick: handleCancelClick,
-            }
-        };
-    }
-
-
     // Creates the buttons for the details panel based on the shift type
     const generateButtonsForDetailsPanel = (shift) => {
 
@@ -242,7 +92,7 @@ function VolunteerSchedule() {
         const pastShift = currentDate.isAfter(shiftEnd);
 
         const buttons = [];
-        const buttonConfig = getButtonConfig(shift);
+        const buttonConfig = getButtonConfig(shift, handleShiftUpdate, volunteerID);
         const primaryButton = buttonConfig[shift.shift_type] || buttonConfig[SHIFT_TYPES.DEFAULT];
 
         buttons.push(primaryButton);
@@ -340,7 +190,7 @@ function VolunteerSchedule() {
                                             shift={shift} 
                                             shiftType={shift.shift_type} 
                                             onShiftSelect={handleShiftSelection}
-                                            buttonConfig={getButtonConfig(shift)}
+                                            buttonConfig={getButtonConfig(shift, handleShiftUpdate, volunteerID)}
                                         />
                                     ))}
                                 </div> 

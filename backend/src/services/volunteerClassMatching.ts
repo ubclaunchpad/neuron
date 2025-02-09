@@ -56,12 +56,9 @@ export class VolunteerClassMatcher {
                 throw new Error(`Failed to parse class date/time for class_id=${cls.class_id}`);
             }
 
-            // Gather potential volunteers who meet constraints:
-            // 1) Are available for that day/time.
-            // 2) Have indicated a preference for that class.
+            // Gather potential volunteers who are available for the date/time of class.
             const potentialVolunteers = this.volunteers.filter((v) =>
-                this.isVolunteerAvailableForClass(v.volunteer_id, timeInfo) &&
-                this.isVolunteerPrefersClass(v.volunteer_id, cls.class_id!)
+                this.isVolunteerAvailableForClass(v.volunteer_id, timeInfo)
             );
 
             // Then sort by rank if provided (lower rank => higher preference)
@@ -71,14 +68,18 @@ export class VolunteerClassMatcher {
                 return rankA - rankB;
             });
 
-            // Partition volunteers by if they are over or under their preferred hours
-            const [underCap, overCap] = this.partitionByPreferredHours(potentialVolunteers);
-            const partitionedVolunteers = underCap.concat(overCap);
+            // Partition volunteers by if they prefer this class
+            const [prefersClass, notPrefersClass] = this.partitionByPreferrence(potentialVolunteers, cls.class_id);
+            const partitionedByPreference = prefersClass.concat(notPrefersClass);
 
+            // Partition volunteers by if they are over or under their preferred hours
+            const [underCap, overCap] = this.partitionByPreferredHours(partitionedByPreference);
+            const partitionedByHours = underCap.concat(overCap);
+
+            // Assign volunteers to this class, up to the maxVolunteers limit.
             const maxVolunteers = cls.number_volunteers ?? 1;
             let assignedVolunteers = 0;
-
-            for (const v of partitionedVolunteers) {
+            for (const v of partitionedByHours) {
                 if (assignedVolunteers < maxVolunteers) {
                     this.assignments.push({
                         fk_volunteer_id: v.volunteer_id,
@@ -88,6 +89,7 @@ export class VolunteerClassMatcher {
                 }
             }
         }
+        
         return this.assignments;
     }
 
@@ -143,6 +145,25 @@ export class VolunteerClassMatcher {
                 pref.fk_class_id === classId
             );
         });
+    }
+
+    /**
+     * Partition volunteers into two groups:
+     *  1) Those who prefer this class
+     *  2) Those who do not prefer this class
+     */
+    private partitionByPreferrence(volunteers: Volunteer[], classId: number): [Volunteer[], Volunteer[]] {
+        const prefers: Volunteer[] = [];
+        const notPrefers: Volunteer[] = [];
+
+        volunteers.forEach((v) => {
+            if (this.isVolunteerPrefersClass(v.volunteer_id, classId)) {
+                prefers.push(v);
+            } else {
+                notPrefers.push(v);
+            }
+        });
+        return [prefers, notPrefers];
     }
 
     /**

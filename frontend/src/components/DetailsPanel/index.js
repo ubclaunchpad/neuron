@@ -1,13 +1,13 @@
 import "./index.css";
 import dayjs from "dayjs";
 import React, { useEffect, useState } from "react";
-import { isAuthenticated } from "../../api/authService";
 import { getClassById } from "../../api/classesPageService";
 import email from "../../assets/email.png";
 import button_icon_close from "../../assets/images/button-icons/x-icon.svg";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import zoom_icon from "../../assets/zoom.png";
+import { useAuth } from "../../contexts/authContext";
 import { SHIFT_TYPES, COVERAGE_STATUSES } from "../../data/constants";
 
 function DetailsPanel({
@@ -15,13 +15,15 @@ function DetailsPanel({
   classList,
   setClassId,
   children,
-  dynamicShiftbuttons = [],
+  dynamicShiftButtons = [],
   shiftDetails,
 }) {
   const [panelWidth, setPanelWidth] = useState("0px");
   const [panelInfo, setPanelInfo] = useState(null);
   const [myClass, setMyClass] = useState(false);
   const [classTaken, setClassTaken] = useState(false);
+
+  const { user } = useAuth();
 
   useEffect(() => {
     if (classId) {
@@ -40,17 +42,12 @@ function DetailsPanel({
     }
   }, [classId]);
 
-  const getCurrentUserId = () => {
-    const data = isAuthenticated();
-    return data.then((result) => result.user.user_id).catch(() => null);
-  };
-
   const myClassCheck = async (data) => {
     const volunteers = data.schedules.flatMap(
       (schedule) => schedule.volunteers || []
     );
     setMyClass(
-      volunteers.some((volunteer) => volunteer.user_id === getCurrentUserId)
+      volunteers.some((volunteer) => volunteer.user_id === user?.volunteer.volunteer_id)
     );
     setClassTaken(volunteers.length !== 0);
   };
@@ -275,7 +272,7 @@ function DetailsPanel({
           </div>
           {/* Conditionally render buttons based on Shift Card Type*/}
           <div className="panel-buttons">
-            {dynamicShiftbuttons.map((button, index) => (
+            {dynamicShiftButtons.map((button, index) => (
               <button
                 key={index}
                 className={`dynamic-button ${button.buttonClass || ""}`}
@@ -283,7 +280,12 @@ function DetailsPanel({
                 onClick={() => button.onClick(shiftDetails)}
               >
                 {button.icon && (
-                  <img src={button.icon} className={`card-button-icon ${button.iconColourClass || ""}`} />
+                  <img
+                    src={button.icon}
+                    className={`card-button-icon ${
+                      button.iconColourClass || ""
+                    }`}
+                  />
                 )}
                 {button.label}
               </button>

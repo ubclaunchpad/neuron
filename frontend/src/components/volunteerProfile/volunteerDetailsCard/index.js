@@ -10,10 +10,12 @@ import ProfileImg from "../../ImgFallback";
 import { CgSelect } from "react-icons/cg";
 import { formatImageUrl } from "../../../api/imageService";
 import { updateVolunteerData, uploadProfilePicture } from "../../../api/volunteerService";
+import { useAuth } from "../../../contexts/authContext";
 import useComponentVisible from "../../../hooks/useComponentVisible";
 import notyf from "../../../utils/notyf";
 
 function VolunteerDetailsCard({ volunteer }) {
+    const { user, updateUser } = useAuth();
 
     const [isEditing, setIsEditing] = React.useState(false);
     const [mutableData, setMutableData] = React.useState({
@@ -45,13 +47,13 @@ function VolunteerDetailsCard({ volunteer }) {
 
     const handleImageUpload = (event) => {
         const image = event.target.files[0];
-        setMutableData({
-            ...mutableData,
-            profilePicture: image
-        });
         const reader = new FileReader();
         reader.onload = () => {
             setTempImage(reader.result);
+            setMutableData({
+                ...mutableData,
+                profilePicture: image
+            });
         };
         reader.readAsDataURL(image);
     };
@@ -77,8 +79,7 @@ function VolunteerDetailsCard({ volunteer }) {
         setPrevTempImage(tempImage);
     }
 
-    async function updateVoluteerData() {
-
+    async function handleSaveVolunteer() {
         // only send request if there are changes
         if (mutableData.preferredName !== prevMutableData.preferredName ||
             mutableData.pronouns !== prevMutableData.pronouns ||
@@ -87,9 +88,9 @@ function VolunteerDetailsCard({ volunteer }) {
                 
             // store empty strings as null
             const volunteerData = {
-                p_name: mutableData.preferredName ?? null,
-                pronouns: mutableData.pronouns ?? null,
-                phone_number: mutableData.phoneNumber ?? null,
+                p_name: mutableData.preferredName ?? undefined,
+                pronouns: mutableData.pronouns ?? undefined,
+                phone_number: mutableData.phoneNumber ?? undefined,
                 p_time_ctmt: mutableData.timeCommitment
             }
 
@@ -98,19 +99,24 @@ function VolunteerDetailsCard({ volunteer }) {
         }
     }
 
-    async function updateProfilePicture() {
+    async function handleSavePicture() {
         // only send request if there are changes
         if (mutableData.profilePicture !== prevMutableData.profilePicture) {
             // insert profile picture
             const profilePicData = new FormData();
             profilePicData.append('image', mutableData.profilePicture);
 
-            // attach id to req body
-            profilePicData.append('volunteer_id', volunteer.volunteer_id);
-
             const uploadedImageId = await uploadProfilePicture(volunteer.fk_user_id, profilePicData);
 
-            setTempImage(formatImageUrl(uploadedImageId));
+            mutableData.profilePicture = formatImageUrl(uploadedImageId);
+            setTempImage(null);
+
+            if (user.volunteer.volunteer_id === volunteer.volunteer_id) {
+                updateUser({
+                    ...user,
+                    fk_image_id: uploadedImageId
+                });
+            }
         }
     }
 
@@ -126,8 +132,8 @@ function VolunteerDetailsCard({ volunteer }) {
         mutableData.timeCommitment = Number(mutableData.timeCommitment);
         // update volunteer
         try {
-            await updateVoluteerData();
-            await updateProfilePicture();
+            await handleSaveVolunteer();
+            await handleSavePicture();
         } catch (error) {
             console.log(error)
             setMutableData(prevMutableData);
@@ -207,7 +213,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                         className="mutable-value" 
                                         style={mutableData.preferredName ? {} : {
                                             'color': '#808080',
-                                            'font-style': 'italic'
+                                            'fontStyle': 'italic'
                                         }}
                                         hidden={isEditing}>
                                             {mutableData.preferredName ?? "not yet set"}
@@ -223,7 +229,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                         className="mutable-value" 
                                         style={mutableData.pronouns ? {} : {
                                             'color': '#808080',
-                                            'font-style': 'italic'
+                                            'fontStyle': 'italic'
                                         }}
                                         hidden={isEditing}>
                                             {mutableData.pronouns ?? "not yet set"}
@@ -295,7 +301,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                         className="mutable-value" 
                                         style={mutableData.phoneNumber ? {} : {
                                             'color': '#808080',
-                                            'font-style': 'italic'
+                                            'fontStyle': 'italic'
                                         }}
                                         hidden={isEditing}>
                                             {mutableData.phoneNumber ? formatPhone(mutableData.phoneNumber) : "not yet set"}
@@ -320,7 +326,7 @@ function VolunteerDetailsCard({ volunteer }) {
                                     <td
                                         style={volunteer.city && volunteer.province ? {} : {
                                             'color': '#808080',
-                                            'font-style': 'italic'
+                                            'fontStyle': 'italic'
                                         }}
                                     >
                                         {volunteer.city && volunteer.province ? `${volunteer.city}, ${volunteer.province}` : 'not yet set'}

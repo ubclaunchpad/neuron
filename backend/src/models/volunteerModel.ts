@@ -29,7 +29,16 @@ export default class VolunteerModel {
     }
 
     async getVolunteerByUserId(user_id: string): Promise<VolunteerDB> {
-        const query = "SELECT * FROM volunteers WHERE fk_user_id = ?";
+        const query = `
+            SELECT 
+                v.*, u.created_at 
+            FROM 
+                volunteers v
+            JOIN 
+                users u ON v.fk_user_id = u.user_id
+            WHERE 
+                u.user_id = ?
+            `;
         const values = [user_id];
 
         const [results, _] = await connectionPool.query<VolunteerDB[]>(query, values);

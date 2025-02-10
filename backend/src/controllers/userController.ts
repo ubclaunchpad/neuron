@@ -59,8 +59,10 @@ async function sendVolunteerData(
     delete (user as any).password;
 
     return res.status(200).json({
-        user: user,
-        volunteer: volunteer,
+        user: {
+            ...user,
+            volunteer: volunteer,
+        },
     });
 }
 

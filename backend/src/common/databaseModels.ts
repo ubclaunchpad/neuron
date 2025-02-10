@@ -29,15 +29,10 @@ export interface ClassDB extends RowDataPacket {
   'subcategory'?: string | null;
   'zoom_link': string;
 }
-export interface ClassImageDB extends RowDataPacket {
-  'fk_class_id'?: number | null;
-  'image'?: Buffer | null;
-  'image_id'?: number;
-}
 export interface ClassPreferenceDB extends RowDataPacket {
   'class_rank'?: number | null;
   'fk_class_id'?: number | null;
-  'fk_volunter_id'?: string | null;
+  'fk_volunteer_id'?: string | null;
 }
 export interface ImageDB extends RowDataPacket {
   'image': Buffer;
@@ -55,6 +50,7 @@ export interface PendingShiftCoverageDB extends RowDataPacket {
   'request_id': number;
 }
 export interface ScheduleDB extends RowDataPacket {
+  'active'?: any;
   'day': number;
   'end_time': string;
   'fk_class_id': number;
@@ -67,12 +63,12 @@ export interface ShiftCoverageRequestDB extends RowDataPacket {
   'request_id'?: number;
 }
 export interface ShiftDB extends RowDataPacket {
-  'checked_in'?: any | null;
+  'checked_in'?: any;
   'duration': number;
   'fk_schedule_id': number;
   'fk_volunteer_id': string;
   'shift_date': string;
-  'shift_id': number;
+  'shift_id'?: number;
 }
 export interface UserDB extends RowDataPacket {
   'created_at'?: Date | null;
@@ -82,16 +78,16 @@ export interface UserDB extends RowDataPacket {
   'role': string;
   'user_id': string;
 }
+export interface VolunteerClassDB extends RowDataPacket {
+  'fk_class_id': number;
+  'fk_volunteer_id': string;
+}
 export interface VolunteerScheduleDB extends RowDataPacket {
   'fk_schedule_id': number;
   'fk_volunteer_id': string;
 }
-export interface VolunteerProfilePicDB extends RowDataPacket {
-  'fk_volunteer_id': string;
-  'profile_pic': Buffer;
-}
 export interface VolunteerDB extends RowDataPacket {
-  'active': any;
+  'active'?: any;
   'bio'?: string | null;
   'city'?: string | null;
   'email': string;
@@ -99,10 +95,10 @@ export interface VolunteerDB extends RowDataPacket {
   'fk_user_id'?: string | null;
   'l_name': string;
   'p_name'?: string | null;
-  'p_time_ctmt': number;
+  'p_time_ctmt'?: number;
   'phone_number'?: string | null;
   'pronouns'?: string | null;
   'province'?: string | null;
-  'total_hours': number;
+  'total_hours'?: number;
   'volunteer_id': string;
 }

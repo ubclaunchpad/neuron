@@ -4,7 +4,8 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { v4 as uuidv4 } from "uuid";
-import { UserDB, VolunteerDB } from "../common/generated.js";
+import { UserDB, VolunteerDB } from "../common/databaseModels.js";
+import { Role } from "../common/interfaces.js";
 import { AuthenticatedUserRequest } from "../common/types.js";
 import connectionPool from "../config/database.js";
 import UserModel from "../models/userModel.js";
@@ -87,47 +88,53 @@ async function registerUser(req: Request, res: Response): Promise<any> {
         // Create User
         await userModel.insertUser({
             user_id: user_id,
+            f_name: firstName,
+            l_name: lastName,
             email: email,
             password: hashedPassword,
             role: role.toUpperCase(),
         } as UserDB, transaction);
 
-        if (role == "volun") {
-            await volunteerModel.insertVolunteer({
-                volunteer_id: uuidv4(),
-                fk_user_id: user_id,
-                f_name: firstName,
-                l_name: lastName,
-                email: email,
-                active: false,
-            } as VolunteerDB, transaction);
+        switch (role) {
+            case Role.volunteer:
+                await volunteerModel.insertVolunteer({
+                    volunteer_id: uuidv4(),
+                    fk_user_id: user_id,
+                    active: false,
+                } as VolunteerDB, transaction);
+        
+                // Send a confirmation email
+                const mailOptions = {
+                    from: '"Team Neuron" <neuronbc@gmail.com>',
+                    to: email,
+                    subject: "Neuron - Account Created",
+                    html: `Hello ${firstName} ${lastName},<br><br>
+                            Your Neuron account has been created successfully.<br>
+                            Please wait for the team to verify your account. This usually takes around 3-4 hours.<br><br>
+                            Thank you!<br>
+                            Best,<br>
+                            Team Neuron`,
+                };
     
-            // Send a confirmation email
-            const mailOptions = {
-                from: '"Team Neuron" <neuronbc@gmail.com>',
-                to: email,
-                subject: "Neuron - Account Created",
-                html: `Hello ${firstName} ${lastName},<br><br>
-                        Your Neuron account has been created successfully.<br>
-                        Please wait for the team to verify your account. This usually takes around 3-4 hours.<br><br>
-                        Thank you!<br>
-                        Best,<br>
-                        Team Neuron`,
-            };
-    
-            // Send the mail
-            transporter.sendMail(
-                mailOptions,
-                function (mailError) {
-                    throw mailError;
-                }
-            );
+                // Send the mail
+                transporter.sendMail(
+                    mailOptions,
+                    function (mailError) {
+                        throw mailError;
+                    }
+                );
+                break;
+
+            default: // Cant create admin/instructor currently
+                return res.status(401).json({
+                    message: "Unauthorized",
+                });
         }
 
         transaction.commit();
 
         return res.status(200).json({
-            message: "User created successfully",
+            message: "User created successfully"
         });
     } catch (error) {
         // Rollback
@@ -150,12 +157,12 @@ async function loginUser(req: Request, res: Response): Promise<any> {
     // If the password is incorrect, return an error
     if (!(await bcrypt.compare(password, user.password))) {
         return res.status(400).json({
-            error: "Incorrect password",
+            error: "Incorrect username or password",
         });
     }
 
     // If the volunteer is not verified, return an error
-    if (user.role === 'VOLUN') {
+    if (user.role === Role.volunteer) {
         const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
         if (!volunteer.active) {
             return res.status(400).json({
@@ -192,7 +199,6 @@ async function sendResetPasswordEmail(
     let { email } = req.body;
 
     const user = await userModel.getUserByEmail(email);
-    const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
 
     if (!TOKEN_SECRET) {
         return res.status(500).json({
@@ -221,7 +227,7 @@ async function sendResetPasswordEmail(
         from: '"Team Neuron" <neuronbc@gmail.com>',
         to: email,
         subject: "Neuron - Reset Password",
-        html: `Hello ${volunteer.f_name} ${volunteer.l_name},<br><br>
+        html: `Hello ${user.f_name} ${user.l_name},<br><br>
             Please use the following link to reset your account's password:<br>
             <a href="${forgotPasswordLink}">${forgotPasswordLink}</a><br><br>
             Please note that this link will expire in 2 hours.<br><br>

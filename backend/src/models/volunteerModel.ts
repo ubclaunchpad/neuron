@@ -1,37 +1,38 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
-import { ShiftDB, VolunteerDB } from "../common/generated.js";
+import { ShiftDB, VolunteerDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
 
 export default class VolunteerModel {
-    async getVolunteerById(volunteer_id: string): Promise<VolunteerDB> {
+    async getVolunteersByIds(volunteer_ids: string | string[]): Promise<VolunteerDB[]> {
+        if (typeof volunteer_ids === 'string') {
+            volunteer_ids = [volunteer_ids];
+        }
+
+        if (volunteer_ids.length === 0) {
+            return [];
+        }
+
         const query = `
             SELECT 
-                v.*, u.created_at 
+                v.*, u.created_at, u.f_name, u.l_name, u.email, u.fk_image_id
             FROM 
                 volunteers v
             JOIN 
                 users u ON v.fk_user_id = u.user_id
             WHERE 
-                volunteer_id = ?
+                volunteer_id IN (?)
             `;
-        const values = [volunteer_id];
+        const values = [volunteer_ids];
 
-        const [results, _] = await connectionPool.query<VolunteerDB[]>(query, values);
+        const [results] = await connectionPool.query<VolunteerDB[]>(query, values);
 
-        if (results.length === 0) {
-            throw {
-                status: 400,
-                message: `No volunteer found under the given ID`,
-            };
-        }
-
-        return results[0];
+        return results;
     }
 
     async getVolunteerByUserId(user_id: string): Promise<VolunteerDB> {
         const query = `
             SELECT 
-                v.*, u.created_at 
+                v.*, u.created_at, u.f_name, u.l_name, u.email, u.fk_image_id
             FROM 
                 volunteers v
             JOIN 
@@ -53,8 +54,15 @@ export default class VolunteerModel {
         return results[0];
     }
 
-    async getVolunteers(): Promise<VolunteerDB[]> {
-        const query = "SELECT * FROM volunteers";
+    async getAllVolunteers(): Promise<VolunteerDB[]> {
+        const query = `
+            SELECT 
+                v.*, u.created_at, u.f_name, u.l_name, u.email, u.fk_image_id
+            FROM 
+                volunteers v
+            JOIN 
+                users u ON v.fk_user_id = u.user_id
+            `;
 
         const [results, _] = await connectionPool.query<VolunteerDB[]>(query, []);
 
@@ -62,7 +70,16 @@ export default class VolunteerModel {
     }
 
     async getUnverifiedVolunteers(): Promise<VolunteerDB[]> {
-        const query = "SELECT * FROM volunteers WHERE active = false";
+        const query = `
+            SELECT 
+                v.*, u.created_at, u.f_name, u.l_name, u.email, u.fk_image_id
+            FROM 
+                volunteers v
+            JOIN 
+                users u ON v.fk_user_id = u.user_id
+            WHERE
+                active = false
+            `;
 
         const [results, _] = await connectionPool.query<VolunteerDB[]>(query, []);
 

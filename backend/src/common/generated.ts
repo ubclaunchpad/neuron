@@ -36,7 +36,7 @@ export interface ClassImageDB extends RowDataPacket {
 }
 export interface ClassPreferenceDB extends RowDataPacket {
   'class_rank'?: number | null;
-  'fk_class_id'?: number | null;
+  'fk_schedule_id'?: number | null;
   'fk_volunter_id'?: string | null;
 }
 export interface ImageDB extends RowDataPacket {

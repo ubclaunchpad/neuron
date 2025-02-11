@@ -47,9 +47,6 @@ function VolunteerProfile() {
             <div >
               <ClassPreferencesCardMP volunteer={user.volunteer} />
             </div>
-            <div >
-              <ClassPreferencesCardMP volunteer={user.volunteer} />
-            </div>
           </div>
         </div>
         : <></> 

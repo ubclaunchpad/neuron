@@ -92,6 +92,7 @@ function VolunteerLayout() {
             <img src={nav_item_settings} alt="Settings" />
             {!collapsed && "Settings"}
           </NavLink>
+
         </div>
         <div className="nav-profile-card-container">
           <NavProfileCard

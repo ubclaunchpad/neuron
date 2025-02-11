@@ -1,5 +1,6 @@
 import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
+import { isAuthorized } from '../config/authCheck.js';
 import {
     addShift,
     deleteShift,
@@ -13,6 +14,9 @@ import {
 
 export const ShiftRoutes: RouteDefinition = {
     path: '/shifts',
+    middleware: [
+        isAuthorized,
+    ],
     children: [
         {
             path: '/',

@@ -44,7 +44,7 @@ export function registerRoutes(app: Express | Router, routes: RouteDefinition[])
 
                     if (err.status && err.message) {
                         return res.status(err.status).json({
-                            message: err.message
+                            error: err.message
                         });
                     }
 

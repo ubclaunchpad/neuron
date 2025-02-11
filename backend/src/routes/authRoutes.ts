@@ -2,14 +2,14 @@ import { body, param } from "express-validator";
 import { RouteDefinition } from "../common/types.js";
 import { isAuthorized } from "../config/authCheck.js";
 import {
+    checkAuthorization,
     loginUser,
     registerUser,
     resetPassword,
     sendResetPasswordEmail,
-    sendVolunteerData,
     updatePassword,
     verifyAndRedirect
-} from "../controllers/userController.js";
+} from "../controllers/authController.js";
 
 export const AuthRoutes: RouteDefinition = {
     path: '/auth',
@@ -80,7 +80,7 @@ export const AuthRoutes: RouteDefinition = {
             validation: [
                 body('token').isJWT(),
             ],
-            action: sendVolunteerData
+            action: checkAuthorization
         },
     ]
 };

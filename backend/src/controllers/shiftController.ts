@@ -1,10 +1,11 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { ShiftDB } from '../common/generated.js';
+import { AuthenticatedRequest } from '../common/types.js';
 import ShiftModel from '../models/shiftModel.js';
 
 const shiftModel = new ShiftModel();
 
-async function getShiftInfo(req: Request, res: Response){
+async function getShiftInfo(req: AuthenticatedRequest, res: Response){
     const shift: ShiftDB = req.body;
     
     const shift_info = await shiftModel.getShiftInfo(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
@@ -13,7 +14,7 @@ async function getShiftInfo(req: Request, res: Response){
 }
 
 // get all the shifts assigned to a volunteer, using the volunteer's ID
-async function getShiftsByVolunteerId(req: Request, res: Response) {
+async function getShiftsByVolunteerId(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
 
     const shifts = await shiftModel.getShiftsByVolunteerId(volunteer_id);
@@ -22,7 +23,7 @@ async function getShiftsByVolunteerId(req: Request, res: Response) {
 } 
 
 // get all the shifts on a given date
-async function getShiftsByDate(req: Request, res: Response) {
+async function getShiftsByDate(req: AuthenticatedRequest, res: Response) {
     const shift: ShiftDB = req.body;
 
     const shifts = await shiftModel.getShiftsByDate(shift.shift_date);
@@ -31,7 +32,7 @@ async function getShiftsByDate(req: Request, res: Response) {
 }
 
 // get all the shifts viewable for a volunteer for the month around a given date
-async function getShiftsByVolunteerIdAndMonth(req: Request, res: Response) {
+async function getShiftsByVolunteerIdAndMonth(req: AuthenticatedRequest, res: Response) {
     const shift: ShiftDB = req.body;
 
     const date = new Date(shift.shift_date + 'T00:00:00'); // Adding time to avoid timezone issues
@@ -44,7 +45,7 @@ async function getShiftsByVolunteerIdAndMonth(req: Request, res: Response) {
 }
 
 // volunteer requesting to cover someone else’s open shift
-async function requestToCoverShift(req: Request, res: Response) {
+async function requestToCoverShift(req: AuthenticatedRequest, res: Response) {
     const { request_id, volunteer_id } = req.body;
 
     const request = await shiftModel.requestToCoverShift(request_id, volunteer_id);
@@ -52,7 +53,7 @@ async function requestToCoverShift(req: Request, res: Response) {
     res.status(200).json(request);
 }
 
-async function addShift(req: Request, res: Response) {
+async function addShift(req: AuthenticatedRequest, res: Response) {
     const shift: ShiftDB = req.body;
 
     const request = await shiftModel.addShift(shift);
@@ -68,7 +69,7 @@ async function addShift(req: Request, res: Response) {
     res.status(200).json(addedShift);
 }
 
-async function updateShift(req: Request, res: Response) {
+async function updateShift(req: AuthenticatedRequest, res: Response) {
     const shift_id = Number(req.params.shift_id);
     const shift: ShiftDB = req.body;
 
@@ -77,7 +78,7 @@ async function updateShift(req: Request, res: Response) {
     res.status(200).json(request);
 }
 
-async function deleteShift(req: Request, res: Response) {
+async function deleteShift(req: AuthenticatedRequest, res: Response) {
     const shift_id = Number(req.params.shift_id);
 
     const request = await shiftModel.deleteShift(shift_id);

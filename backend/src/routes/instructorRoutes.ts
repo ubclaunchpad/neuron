@@ -1,5 +1,6 @@
 import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
+import { isAuthorized } from '../config/authCheck.js';
 import {
     getInstructorById,
     getInstructors,
@@ -8,6 +9,9 @@ import {
 
 export const InstructorRoutes: RouteDefinition = {
     path: '/instructors',
+    middleware: [
+        isAuthorized,
+    ],
     children: [
         {
             path: '/',

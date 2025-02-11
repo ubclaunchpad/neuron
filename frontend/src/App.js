@@ -1,6 +1,8 @@
 // src/App.js
 import "notyf/notyf.min.css";
+import { useEffect } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import api from "./api/api";
 import VolunteerLayout from "./components/volunteerLayout";
 import { useAuth } from "./contexts/authContext";
 import AdminVerify from "./pages/AdminVerify";
@@ -14,11 +16,24 @@ import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import VolunteerSignup from "./pages/VolunteerSignup";
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
 
   const RouteGuard = ({ fallback, valid }) => {
     return valid ? <Outlet /> : <Navigate to={fallback} replace />;
   };
+
+  // Register logout handler on api error
+  useEffect(() => {
+    api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+          if (error?.response && error.response.status === 401) {
+              logout();
+          }
+          return Promise.reject(error);
+      }
+    );
+  })
 
   return (
     <div className="App">

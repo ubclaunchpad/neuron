@@ -10,7 +10,6 @@ api.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem('neuronAuthToken');
 
-      console.log(token)
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

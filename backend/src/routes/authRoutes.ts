@@ -67,7 +67,6 @@ export const AuthRoutes: RouteDefinition = {
             method: 'post',
             middleware: [isAuthorized],
             validation: [
-                body('token').isJWT(),
                 body('currentPassword').isString(),
                 body('newPassword').isString(),
             ],
@@ -75,11 +74,8 @@ export const AuthRoutes: RouteDefinition = {
         },
         {
             path: '/is-authenticated',
-            method: 'post',
+            method: 'get',
             middleware: [isAuthorized],
-            validation: [
-                body('token').isJWT(),
-            ],
             action: checkAuthorization
         },
     ]

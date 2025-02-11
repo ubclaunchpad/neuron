@@ -8,7 +8,7 @@ import {
     sendResetPasswordEmail,
     sendVolunteerData,
     updatePassword,
-    verifyAndRedirect,
+    verifyAndRedirect
 } from "../controllers/userController.js";
 
 export const AuthRoutes: RouteDefinition = {
@@ -56,9 +56,9 @@ export const AuthRoutes: RouteDefinition = {
             path: '/reset-password',
             method: 'post',
             validation: [
+                body('token').isJWT(),
+                body('id').isUUID('4'),
                 body('password').isString(),
-                param('id').isUUID('4'),
-                param('token').isJWT(),
             ],
             action: resetPassword
         },
@@ -67,7 +67,9 @@ export const AuthRoutes: RouteDefinition = {
             method: 'post',
             middleware: [isAuthorized],
             validation: [
-                body('password').isString(),
+                body('token').isJWT(),
+                body('currentPassword').isString(),
+                body('newPassword').isString(),
             ],
             action: updatePassword
         },
@@ -75,6 +77,9 @@ export const AuthRoutes: RouteDefinition = {
             path: '/is-authenticated',
             method: 'post',
             middleware: [isAuthorized],
+            validation: [
+                body('token').isJWT(),
+            ],
             action: sendVolunteerData
         },
     ]

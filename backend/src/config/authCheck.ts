@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import {
     AuthenticatedUserRequest,
     DecodedJwtPayload,
+    User,
 } from "../common/types.js";
 import UserModel from "../models/userModel.js";
 
@@ -43,7 +44,7 @@ async function isAuthorized(
         const result = await userModel.getUserById(decoded.user_id);
 
         // Attach the user to the request
-        req.user = result;
+        req.user = result as User;
 
         // Call the next function
         next();

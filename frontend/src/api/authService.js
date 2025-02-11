@@ -1,17 +1,19 @@
 import api from "./api";
 
 // Update a user's password
-export const changePassword = async (volunteerData) => {
+export const changePassword = async (passwordUpdateData) => {
+    const { currentPassword, newPassword } = passwordUpdateData
+    const token = localStorage.getItem("neuronAuthToken");
+
+    if (!token) {
+        return "No token found"; //TODO: update with bearer
+    }
+
     try {
-        const loginResponse = await api.post("/auth/login", {
-            email: volunteerData.email,
-            password: volunteerData.currentPassword
-        });
-        const data = loginResponse.data;
-        const token = data.token;
         const resetResponse = await api.post("/auth/update-password", {
             token: token,
-            password: volunteerData.newPassword
+            currentPassword: currentPassword,
+            newPassword: newPassword
         });
         return resetResponse.data;
     } catch (error) {

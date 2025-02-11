@@ -26,7 +26,7 @@ create table users (
     user_id VARCHAR(255) PRIMARY KEY,
     fk_image_id VARCHAR(36),
     email VARCHAR(45) NOT NULL,
-    password VARCHAR(60) NOT NULL,
+    digest CHAR(60) BINARY NOT NULL,
     role VARCHAR(5) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)

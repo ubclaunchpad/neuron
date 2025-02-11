@@ -39,8 +39,15 @@ export function registerRoutes(app: Express | Router, routes: RouteDefinition[])
                         res,
                         next,
                     );
-                } catch (err) {
+                } catch (err: any) {
                     console.error(err);
+
+                    if (err.status && err.message) {
+                        return res.status(err.status).json({
+                            message: err.message
+                        });
+                    }
+
                     return res.sendStatus(500); // Don't expose internal server workings
                 }
             });

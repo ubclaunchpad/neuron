@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { v4 as uuidv4 } from "uuid";
 import { UserDB, VolunteerDB } from "../common/generated.js";
-import { AuthenticatedUserRequest } from "../common/types.js";
+import { AuthenticatedUserRequest, User } from "../common/types.js";
 import connectionPool from "../config/database.js";
 import UserModel from "../models/userModel.js";
 import VolunteerModel from "../models/volunteerModel.js";
@@ -55,9 +55,6 @@ async function sendVolunteerData(
     
     const volunteer = await volunteerModel.getVolunteerByUserId(user!.user_id);
 
-    // remove password from user
-    delete (user as any).password;
-
     return res.status(200).json({
         user: {
             ...user,
@@ -76,8 +73,8 @@ async function registerUser(req: Request, res: Response): Promise<any> {
     email = email.trim();
     role = role.trim();
 
-    // Hash Password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash Password with salt
+    const digest = bcrypt.hashSync(password, 10);
 
     // User Id
     const user_id = uuidv4();
@@ -88,7 +85,7 @@ async function registerUser(req: Request, res: Response): Promise<any> {
         await userModel.insertUser({
             user_id: user_id,
             email: email,
-            password: hashedPassword,
+            password: digest,
             role: role.toUpperCase(),
         } as UserDB, transaction);
 
@@ -145,10 +142,10 @@ async function loginUser(req: Request, res: Response): Promise<any> {
     password = password.trim();
 
     // Get the user from the database
-    const user = await userModel.getUserByEmail(email);
+    const user = await userModel.getUserByEmail(email, true);
 
     // If the password is incorrect, return an error
-    if (!(await bcrypt.compare(password, user.password))) {
+    if (!bcrypt.compareSync(password, user.password)) {
         return res.status(400).json({
             error: "Incorrect password",
         });
@@ -191,7 +188,7 @@ async function sendResetPasswordEmail(
     // Get the email from the request body
     let { email } = req.body;
 
-    const user = await userModel.getUserByEmail(email);
+    const user = await userModel.getUserByEmail(email, true);
     const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
 
     if (!TOKEN_SECRET) {
@@ -246,7 +243,7 @@ async function verifyUserWithIdAndToken(
     id: string,
     token: string
 ): Promise<any> {
-    const user = await userModel.getUserById(id);
+    const user = await userModel.getUserById(id, true);
 
     if (!TOKEN_SECRET || !FRONTEND_HOST) {
         throw {
@@ -257,7 +254,14 @@ async function verifyUserWithIdAndToken(
     // Verify if token is valid
     const secret = TOKEN_SECRET + user.password;
 
-    jwt.verify(token, secret);
+    try {   
+        jwt.verify(token, secret);
+    } catch {
+        throw {
+            status: 401,
+            message: "Unauthorized"
+        }
+    }
 
     return "Verified";
 }
@@ -280,11 +284,9 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
     await verifyUserWithIdAndToken(id, token);
 
     // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = bcrypt.hashSync(password, 10);
 
-    await userModel.updateUser(id, {
-        password: hashedPassword,
-    } as UserDB);
+    await userModel.updateUserPassword(id, hashedPassword);
 
     return res.status(200).json({
         message: "Password updated successfully",
@@ -295,18 +297,24 @@ async function updatePassword(
     req: AuthenticatedUserRequest,
     res: Response
 ): Promise<any> {
-    // Get the user and password from the request
-    const { password } = req.body;
+    // Get the current and new password from the request
+    const { currentPassword, newPassword } = req.body;
 
-    // User coming from the isAuthorized middleware
-    const user = req.user;
+    // User coming from the isAuthorized middleware, query auth info
+    const user = req.user as User;
+    console.log(user)
+    const authInfo = await userModel.getUserByEmail(user.email, true);
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // If the password is incorrect, return an error
+    if (!bcrypt.compareSync(currentPassword, authInfo.password)) {
+        return res.status(400).json({
+            error: "Incorrect password",
+        });
+    }
 
-    await userModel.updateUser(user!.user_id, {
-        password: hashedPassword,
-    } as UserDB);
+    // Hash the new password and update
+    const hashedPassword = bcrypt.hashSync(newPassword, 10);
+    await userModel.updateUserPassword(user.user_id, hashedPassword);
 
     return res.status(200).json({
         message: "Password updated successfully",
@@ -314,6 +322,7 @@ async function updatePassword(
 }
 
 export {
-    getUserById, insertProfilePicture, loginUser, registerUser, resetPassword, sendResetPasswordEmail, sendVolunteerData, updatePassword, verifyAndRedirect
+    getUserById, insertProfilePicture, loginUser, registerUser, resetPassword,
+    sendResetPasswordEmail, sendVolunteerData, updatePassword, verifyAndRedirect
 };
 

@@ -1,6 +1,6 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import sharp from 'sharp';
-import { ClassDB, ScheduleDB } from '../common/generated.js';
+import { ClassDB, ScheduleDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
 import ImageModel from './imageModel.js';
 import ScheduleModel from './scheduleModel.js';
@@ -17,10 +17,13 @@ export default class ClassesModel {
      }
 
      async getClassesByDay(day: string): Promise<ClassDB[]> {
-          const query =
-               `SELECT * FROM class INNER JOIN schedule ON class.class_id = schedule.fk_class_id 
-          WHERE ? BETWEEN CAST(start_date as date) AND CAST(end_date as date) AND schedule.active = true
-          AND WEEKDAY(?) = day`;
+          const query =`
+          SELECT * FROM class 
+               INNER JOIN schedule ON class.class_id = schedule.fk_class_id 
+          WHERE 
+               ? BETWEEN CAST(start_date as date) AND CAST(end_date as date) 
+               AND schedule.active = true
+               AND WEEKDAY(?) = day`;
           const values = [day, day];
 
           const [results, _] = await connectionPool.query<ClassDB[]>(query, values);
@@ -118,6 +121,7 @@ export default class ClassesModel {
           // Process image
           const processedImage = await sharp(image)
                .resize({ width: 300, fit: 'outside'})
+               .rotate()
                .toFormat('webp')
                .webp({ quality: 80 })
                .toBuffer();

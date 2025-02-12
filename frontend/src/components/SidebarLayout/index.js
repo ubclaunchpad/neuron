@@ -11,10 +11,11 @@ import "./index.css";
 import { formatImageUrl } from "../../api/imageService";
 import { useAuth } from "../../contexts/authContext";
 import NavProfileCard from "../NavProfileCard";
+import Permission from "../utils/Permission";
 
-function VolunteerLayout() {
+function SidebarLayout() {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
-  const { user } = useAuth();
+  const { user, isAdmin, isVolunteer } = useAuth();
 
   // Toggle function for displaying/hiding sidebar
   const toggleSidebar = () => {
@@ -65,8 +66,9 @@ function VolunteerLayout() {
             <img src={nav_item_dash} alt="Dashboard" />
             {!collapsed && "Overview"}
           </NavLink>
+
           <NavLink
-            to="/volunteer/schedule"
+            to="/schedule"
             className={({ isActive }) =>
               isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
             }
@@ -74,8 +76,9 @@ function VolunteerLayout() {
             <img src={nav_item_schedule} alt="Schedule" />
             {!collapsed && "Schedule"}
           </NavLink>
+
           <NavLink
-            to="/volunteer/classes"
+            to="/classes"
             className={({ isActive }) =>
               isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
             }
@@ -83,6 +86,7 @@ function VolunteerLayout() {
             <img src={nav_item_classes} alt="Classes" />
             {!collapsed && "Classes"}
           </NavLink>
+<<<<<<< HEAD:frontend/src/components/volunteerLayout/index.js
           <NavLink
             to="/volunteer/my-profile"
             className={({ isActive }) =>
@@ -93,14 +97,27 @@ function VolunteerLayout() {
             {!collapsed && "Settings"}
           </NavLink>
 
+=======
+          <Permission permissions={isVolunteer}>
+            <NavLink
+              to="/my-profile"
+              className={({ isActive }) =>
+                isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
+              }
+            >
+              <img src={nav_item_settings} alt="Settings" />
+              {!collapsed && "Settings"}
+            </NavLink>
+          </Permission>
+>>>>>>> main:frontend/src/components/SidebarLayout/index.js
         </div>
         <div className="nav-profile-card-container">
           <NavProfileCard
             image={formatImageUrl(user?.fk_image_id)}
-            name={user?.volunteer?.p_name ?? user?.volunteer?.f_name}
-            email={user?.volunteer?.email}
+            name={user?.volunteer?.p_name ?? user?.f_name}
+            email={user?.email}
             collapse={collapsed}
-            link="/volunteer/my-profile"
+            link="/my-profile"
           />
         </div>
       </aside>
@@ -109,4 +126,4 @@ function VolunteerLayout() {
   );
 }
 
-export default VolunteerLayout;
+export default SidebarLayout;

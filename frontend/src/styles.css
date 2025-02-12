@@ -25,7 +25,9 @@
   --green: #28a745;
   --yellow: #cb8324;
   --red: #952018;
+  --red-hover: #7a1a14;
   --button-blue: #1687ca;
+  --button-blue-hover: #0f6e9c;
   --error-red: #dc3545;
 }
 
@@ -52,6 +54,9 @@ body {
   font-family: var(--font-primary);
 }
 
+.icon-white {
+  filter: brightness(0) saturate(100%) invert(100%) sepia(4%) saturate(550%) hue-rotate(258deg) brightness(119%) contrast(100%);
+}
 .save-button {
   background: #1687CA;
   padding: 10px 16px;

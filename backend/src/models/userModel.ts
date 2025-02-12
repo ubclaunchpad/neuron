@@ -43,8 +43,8 @@ export default class UserModel {
     async insertUser(user: Partial<UserDB>, transaction?: PoolConnection): Promise<ResultSetHeader> {
         const connection = transaction ?? connectionPool;
 
-        const query = `INSERT INTO users (user_id, email, password, role) VALUES (?, ?, ?, ?)`;
-        const values = [user.user_id, user.email, user.password, user.role];
+        const query = `INSERT INTO users (user_id, f_name, l_name, email, password, role2) VALUES (?, ?, ?, ?, ?, ?)`;
+        const values = [user.user_id, user.f_name, user.l_name, user.email, user.password, user.role2];
 
         const [results, _] = await connection.query<ResultSetHeader>(query, values).catch(error => {
             if (error.code === "ER_DUP_ENTRY") {

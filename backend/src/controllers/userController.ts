@@ -54,7 +54,17 @@ async function sendVolunteerData(
 ): Promise<any> {
     const user = req.user;
     
-    const volunteer = await volunteerModel.getVolunteerByUserId(user!.user_id);
+
+    // If the volunteer is not verified, return an error
+    let volunteer;
+    if (user && user.role2 === Role.volunteer) {
+        volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
+        if (!volunteer.active) {
+            return res.status(401).json({
+                error: "Unauthorized",
+            });
+        }
+    }
 
     // remove password from user
     delete (user as any).password;
@@ -92,7 +102,7 @@ async function registerUser(req: Request, res: Response): Promise<any> {
             l_name: lastName,
             email: email,
             password: hashedPassword,
-            role: role.toUpperCase(),
+            role2: role,
         } as UserDB, transaction);
 
         switch (role) {
@@ -116,18 +126,13 @@ async function registerUser(req: Request, res: Response): Promise<any> {
                             Team Neuron`,
                 };
     
-                // Send the mail
-                transporter.sendMail(
-                    mailOptions,
-                    function (mailError) {
-                        throw mailError;
-                    }
-                );
+                // Send the mail, ignore errors, not an important email
+                await transporter.sendMail(mailOptions).catch();
                 break;
 
             default: // Cant create admin/instructor currently
                 return res.status(401).json({
-                    message: "Unauthorized",
+                    error: "Unauthorized",
                 });
         }
 
@@ -162,7 +167,7 @@ async function loginUser(req: Request, res: Response): Promise<any> {
     }
 
     // If the volunteer is not verified, return an error
-    if (user.role === Role.volunteer) {
+    if (user.role2 === Role.volunteer) {
         const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
         if (!volunteer.active) {
             return res.status(400).json({
@@ -237,14 +242,10 @@ async function sendResetPasswordEmail(
     };
 
     // Send the mail
-    transporter.sendMail(mailOptions, async function (mailError, info) {
-        if (mailError) {
-            throw mailError;
-        }
+    await transporter.sendMail(mailOptions);
 
-        return res.status(200).json({
-            message: `Mail sent successfully`,
-        });
+    return res.status(200).json({
+        message: `Mail sent successfully`,
     });
 }
 

@@ -31,7 +31,7 @@ export interface ClassDB extends RowDataPacket {
 }
 export interface ClassPreferenceDB extends RowDataPacket {
   'class_rank'?: number | null;
-  'fk_class_id'?: number | null;
+  'fk_schedule_id'?: number | null;
   'fk_volunteer_id'?: string | null;
 }
 export interface ImageDB extends RowDataPacket {
@@ -73,9 +73,12 @@ export interface ShiftDB extends RowDataPacket {
 export interface UserDB extends RowDataPacket {
   'created_at'?: Date | null;
   'email': string;
+  'f_name': string;
   'fk_image_id'?: string | null;
+  'l_name': string;
   'password': string;
   'role': string;
+  'role2': 'volunteer' | 'admin' | 'instructor';
   'user_id': string;
 }
 export interface VolunteerClassDB extends RowDataPacket {

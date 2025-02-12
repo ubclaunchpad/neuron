@@ -1,18 +1,18 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
-import { ScheduleDB, ShiftDB } from '../common/generated.js';
+import { ScheduleDB, ShiftDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
 
 export default class ShiftModel {
 
      // get all the details of a shift
-     async getShiftInfo(fk_volunteer_id:string, fk_schedule_id:number, shift_date:string): Promise<ShiftDB> {
+     async getShiftInfo(fk_volunteer_id: string, fk_schedule_id: number, shift_date: string): Promise<ShiftDB> {
           const query = `
                SELECT 
                     s.duration,
                     sc.start_time,
                     sc.end_time,
-                    v.l_name AS volunteer_l_name,
-                    v.f_name AS volunteer_f_name,
+                    u.l_name AS volunteer_l_name,
+                    u.f_name AS volunteer_f_name,
                     intrs.l_name AS instructor_l_name,
                     intrs.f_name AS instructor_f_name, 
                     cl.class_name
@@ -22,6 +22,8 @@ export default class ShiftModel {
                     neuron.schedule sc ON s.fk_schedule_id = sc.schedule_id
                JOIN 
                     neuron.volunteers v ON s.fk_volunteer_id = v.volunteer_id
+               JOIN 
+                    neuron.users u ON u.user_id = v.fk_user_id
                JOIN 
                     neuron.class cl ON sc.fk_class_id = cl.class_id
                JOIN

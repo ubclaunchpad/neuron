@@ -20,11 +20,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const authResponse = await checkAuth();
 
-      switch (authResponse.user.role) {
-        case "VOLUN":
+      switch (authResponse.user.role2) {
+        case "volunteer":
           setIsVolunteer(true);
           break;
-        case "ADMIN":
+        case "admin":
           setIsAdmin(true);
           break;
         default:
@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     doCheckAuth();
+    console.log(isVolunteer)
   }, []);
 
   const login = async (credentials) => {

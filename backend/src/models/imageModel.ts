@@ -1,6 +1,6 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import { v4 as uuidv4 } from "uuid";
-import { ImageDB } from '../common/generated.js';
+import { ImageDB } from '../common/databaseModels.js';
 import poolConnection from '../config/database.js';
 
 export default class ImageModel {

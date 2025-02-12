@@ -1,7 +1,7 @@
 // src/App.js
 import "notyf/notyf.min.css";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
-import VolunteerLayout from "./components/volunteerLayout";
+import SidebarLayout from "./components/SidebarLayout";
 import { useAuth } from "./contexts/authContext";
 import AdminVerify from "./pages/AdminVerify";
 import Classes from "./pages/Classes";
@@ -14,7 +14,7 @@ import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import VolunteerSignup from "./pages/VolunteerSignup";
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin, isVolunteer } = useAuth();
 
   const RouteGuard = ({ fallback, valid }) => {
     return valid ? <Outlet /> : <Navigate to={fallback} replace />;
@@ -36,17 +36,18 @@ function App() {
           <Route element={<RouteGuard fallback="/auth/login" valid={isAuthenticated} />}>
 
             {/* Nested Routes within VolunteerLayout */}
-            <Route element={<VolunteerLayout />}>
+            <Route element={<SidebarLayout />}>
               <Route index element={<VolunteerDash />} />
-              <Route path="volunteer">
-                <Route path="classes" element={<Classes />} />
-                <Route path="schedule" element={<VolunteerSchedule />} />
+              <Route path="classes" element={<Classes />} />
+              <Route path="schedule" element={<VolunteerSchedule />} />
+
+              <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
                 <Route path="my-profile" element={<VolunteerProfile />} />
               </Route>
             </Route>
 
-            <Route element={<RouteGuard fallback="/auth/login" valid={isAuthenticated} />}>
-              <Route path="/admin/verify-volunteers" element={<AdminVerify />} />
+            <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>
+              <Route path="verify-volunteers" element={<AdminVerify />} />
             </Route>
           </Route>
 

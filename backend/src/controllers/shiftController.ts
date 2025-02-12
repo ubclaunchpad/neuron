@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ShiftDB } from '../common/generated.js';
+import { ShiftDB } from '../common/databaseModels.js';
 import ShiftModel from '../models/shiftModel.js';
 
 const shiftModel = new ShiftModel();

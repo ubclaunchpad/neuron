@@ -1,1 +1,5 @@
-export type Role = "ADMIN" | "VOLUN" | "INSTR";
+export enum Role {
+    admin = 'admin',
+    volunteer = 'volunteer',
+    instructor = 'instructor'
+};

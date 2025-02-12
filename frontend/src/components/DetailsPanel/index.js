@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import React, { useEffect, useState } from "react";
 import { getClassById } from "../../api/classesPageService";
+import { formatImageUrl } from "../../api/imageService";
 import email from "../../assets/email.png";
 import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
@@ -8,6 +9,7 @@ import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.
 import zoom_icon from "../../assets/zoom.png";
 import { useAuth } from "../../contexts/authContext";
 import { SHIFT_TYPES } from "../../data/constants";
+import ProfileImg from "../ImgFallback";
 import "./index.css";
 
 function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftButtons = [], shiftDetails }) {
@@ -90,7 +92,10 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftBu
 
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        {uniqueVolunteers.map((volunteer, idx) => (
+        {uniqueVolunteers.map((volunteer, idx) => {
+          const name = volunteer.p_name ?? `${volunteer.f_name} ${volunteer.l_name}`
+          
+          return (
           <div
             key={idx}
             style={{
@@ -99,10 +104,15 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftBu
               alignItems: "center",
             }}
           >
-            <div className="volunteer-profile"></div>
-            <div>{volunteer.f_name} {volunteer.l_name}</div>
+            <ProfileImg
+              src={formatImageUrl(volunteer?.fk_image_id)}
+              name={name}
+              className="volunteer-profile"
+            ></ProfileImg>
+            <div>{name}</div>
           </div>
-        ))}
+        );
+      })}
       </div>
     );
   };

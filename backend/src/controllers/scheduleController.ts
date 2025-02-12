@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ScheduleDB } from '../common/generated.js';
+import { ScheduleDB } from '../common/databaseModels.js';
 import ScheduleModel from '../models/scheduleModel.js';
 
 const scheduleModel = new ScheduleModel();
@@ -65,12 +65,8 @@ async function updateSchedulesForClass(req: Request, res: Response) {
 }
 
 export {
-    getAllSchedules,
-    getActiveSchedulesForClass,
-    deleteOrSoftDeleteSchedules,
-    deleteSchedulesFromClass,
     addSchedulesToClass,
-    assignVolunteersToSchedule,
-    updateSchedulesForClass
+    assignVolunteersToSchedule, deleteOrSoftDeleteSchedules,
+    deleteSchedulesFromClass, getActiveSchedulesForClass, getAllSchedules, updateSchedulesForClass
 };
 

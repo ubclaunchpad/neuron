@@ -1,8 +1,7 @@
 import { ResultSetHeader } from 'mysql2';
-import { InstructorDB } from '../common/generated.js';
+import { InstructorDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
 
-// Instructor model
 export default class InstructorModel {
   async getInstructors(): Promise<InstructorDB[]> {
     const query = `SELECT * FROM instructors`;
@@ -29,8 +28,9 @@ export default class InstructorModel {
   };
 
   async insertInstructor(instructor: InstructorDB): Promise<ResultSetHeader> {
-    const query =
-      "INSERT INTO instructors (instructor_id, f_name, l_name, email) VALUES (?, ?, ?, ?)";
+    const query = `INSERT INTO 
+      instructors (instructor_id, f_name, l_name, email)
+      VALUES (?, ?, ?, ?)`;
 
     const { instructor_id, f_name, l_name, email } = instructor;
     const values = [instructor_id, f_name, l_name, email];

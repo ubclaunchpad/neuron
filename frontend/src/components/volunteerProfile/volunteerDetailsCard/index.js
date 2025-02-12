@@ -110,7 +110,7 @@ function VolunteerDetailsCard({ volunteer }) {
                 p_name: mutableData.preferredName ?? null,
                 pronouns: mutableData.pronouns ?? null,
                 phone_number: mutableData.phoneNumber ?? null,
-                city: mutableData.city ? mutableData.city : "",
+                city: mutableData.city ?? "",
                 province: mutableData.province ?? "",
                 p_time_ctmt: mutableData.timeCommitment
             }

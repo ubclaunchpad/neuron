@@ -57,7 +57,7 @@ async function sendVolunteerData(
 
     // If the volunteer is not verified, return an error
     let volunteer;
-    if (user && user.role2 === Role.volunteer) {
+    if (user && user.role === Role.volunteer) {
         volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
         if (!volunteer.active) {
             return res.status(401).json({
@@ -102,7 +102,7 @@ async function registerUser(req: Request, res: Response): Promise<any> {
             l_name: lastName,
             email: email,
             password: hashedPassword,
-            role2: role,
+            role: role,
         } as UserDB, transaction);
 
         switch (role) {
@@ -167,7 +167,7 @@ async function loginUser(req: Request, res: Response): Promise<any> {
     }
 
     // If the volunteer is not verified, return an error
-    if (user.role2 === Role.volunteer) {
+    if (user.role === Role.volunteer) {
         const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
         if (!volunteer.active) {
             return res.status(400).json({

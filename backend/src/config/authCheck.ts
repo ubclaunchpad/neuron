@@ -60,7 +60,7 @@ async function isAdmin(
     res: Response,
     next: NextFunction
 ): Promise<any> {
-    if (req.user!.role2 !== Role.admin) {
+    if (req.user!.role !== Role.admin) {
         return res.status(403).json({
             error: "Forbidden",
         });

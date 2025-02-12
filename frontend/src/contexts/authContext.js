@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const authResponse = await checkAuth();
 
-      switch (authResponse.user.role2) {
+      switch (authResponse.user.role) {
         case "volunteer":
           setIsVolunteer(true);
           break;

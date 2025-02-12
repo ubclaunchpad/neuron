@@ -165,42 +165,20 @@ export default class VolunteerModel {
     async getPreferredClassesById(volunteer_id: string): Promise<any> {
 
         const query = `
-            WITH 
-                class_info AS (
-                    SELECT 
-                        c.class_id,
-                        c.class_name,
-                        c.instructions
-                    FROM class c
-                ),
-                schedule_info AS (
-                    SELECT 
-                        s.fk_class_id AS class_id,
-                        GROUP_CONCAT(s.start_time ORDER BY s.start_time) AS start_times,
-                        GROUP_CONCAT(s.end_time ORDER BY s.start_time) AS end_times,
-                        GROUP_CONCAT(s.day ORDER BY s.start_time) AS days_of_week
-                    FROM schedule s
-                    GROUP BY s.fk_class_id
-                )
-
             SELECT 
-                ci.class_id,
-                ci.class_name,
-                cp.class_rank,
-                COALESCE(si.start_times, NULL) AS start_times,
-                COALESCE(si.end_times, NULL) AS end_times,
-                COALESCE(si.days_of_week, NULL) AS day_of_week,
-                ci.instructions
-            FROM volunteers v
-            JOIN class_preferences cp ON v.volunteer_id = cp.fk_volunteer_id
-            JOIN class_info ci ON ci.class_id = cp.fk_class_id
-            LEFT JOIN schedule_info si ON ci.class_id = si.class_id
-            WHERE v.volunteer_id = ?;
+                class_preferences.fk_volunteer_id AS volunteer_id,
+                class_preferences.fk_schedule_id AS schedule_id,
+                class_preferences.class_rank,
+                schedule.fk_class_id AS class_id,
+                schedule.day, schedule.start_time, schedule.end_time,
+                class.class_name, class.instructions, class.category, class.subcategory
+            FROM class_preferences
+            JOIN schedule ON class_preferences.fk_schedule_id = schedule.schedule_id
+            JOIN class ON schedule.fk_class_id = class.class_id
+            WHERE class_preferences.fk_volunteer_id = "51c75917-1cab-4c58-9150-b3c7a1e09b2c"; 
         `;
         const values = [volunteer_id];
-
         const [results, _] = await connectionPool.query<any>(query, values);
-
         return results;
     }
 

@@ -5,40 +5,38 @@ import { fetchUserPreferredClasses } from "../../../api/volunteerService";
 import ClassPreferencesCard from "../../ClassPreferencesCard";
 import { NavLink } from "react-router-dom";
 import empty_img from "../../../assets/no-class-preferences.png";
-import plus from "../../../assets/plus.png"
+import plus from "../../../assets/plus.png";
 
+function ClassPreferencesCardMP({volunteer}) {
 
-function ClassPreferencesCardMP({ volunteer }) {
-
-    const [preferredClasses, setPreferredClasses] = useState(null)
+    const [preferredClasses, setPreferredClasses] = useState(null);
 
     useEffect(() => {
         const getCurrentUserPrefferedClasses = async () => {
-            const volunteerID = localStorage.getItem('volunteerID');
+            const volunteerID = volunteer.volunteer_id;
 
             const classes_p = await fetchUserPreferredClasses(volunteerID);
             if (classes_p!=null && classes_p.length > 0) {
-                    let res = {};
-                    let rank1 = [];
-                    let rank2 = [];
-                    let rank3 = [];
-                    for (let i = 0; i < classes_p.length; i++) {
-                         if (classes_p[i].class_rank === 1) {
-                              rank1.push(classes_p[i]);
-                         } else if (classes_p[i].class_rank === 2) {
-                              rank2.push(classes_p[i]);
-                         } else {
-                              rank3.push(classes_p[i]);
-                         }
+                let res = {};
+                let rank1 = [];
+                let rank2 = [];
+                let rank3 = [];
+                for (let i = 0; i < classes_p.length; i++) {
+                    if (classes_p[i].class_rank === 1) {
+                        rank1.push(classes_p[i]);
+                    } else if (classes_p[i].class_rank === 2) {
+                        rank2.push(classes_p[i]);
+                    } else {
+                        rank3.push(classes_p[i]);
                     }
-                    res[1] = rank1;
-                    res[2] = rank2;
-                    res[3] = rank3;
-                    setPreferredClasses(res);
-               }
-          }; 
-          getCurrentUserPrefferedClasses();
-          
+                }
+                res[1] = rank1;
+                res[2] = rank2;
+                res[3] = rank3;
+                setPreferredClasses(res);
+            }
+        }; 
+        getCurrentUserPrefferedClasses();  
     }, []);
 
     function renderClassRank(rank, item) {

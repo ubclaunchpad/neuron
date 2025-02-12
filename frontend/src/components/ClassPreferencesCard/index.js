@@ -15,8 +15,8 @@ function ClassPreferencesCard({ classData, fullWith }) {
     const rank = classData.class_rank;
     const name = classData.class_name;
     const instruction = classData.instructions;
-    const start_time = classData.start_times ? classData.start_times.split(",")[0] : "";
-    const end_time = classData.end_times ? classData.end_times.split(",")[0] : "";
+    const start_time = classData.start_time;
+    const end_time = classData.end_time;
 
     const timeDifference = (end, start) => {
         // Assume classes are done within one day, end time > start time 

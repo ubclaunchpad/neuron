@@ -3,8 +3,7 @@ import React, {useEffect, useState} from 'react';
 import edit_icon from "../../assets/edit-icon.png";
 import filter_icon from "../../assets/filter-icon.png";
 import search_icon from "../../assets/search-icon.png";
-
-
+import { useAuth } from "../../contexts/authContext";
 import { fetchUserPreferredClasses, updateUserPreferredClasses} from "../../api/volunteerService";
 import { getAllClasses, getAllClassSchedules, getClassById} from "../../api/classesPageService";
 import ClassPreferencesCard from "../../components/ClassPreferencesCard";
@@ -16,6 +15,7 @@ function ClassPreferences() {
      const [volunteerId, setVolunteerId] = useState(null);
      const [preferredClasses, setPreferredClasses] = useState({1: [], 2: [], 3: []});
      const [allClasses, setAllClasses] = useState(null);
+     const { user } = useAuth();
 
      // Modal hooks
      const [modalOpen, setModalOpen] = useState(false);
@@ -65,7 +65,7 @@ function ClassPreferences() {
      }, [chosenNumClasses, chosenRank])
 
      const getCurrentUserPrefferedClasses = async () => {
-          const volunteerID = localStorage.getItem('volunteerID');
+          const volunteerID = user.volunteer.volunteer_id;
           setVolunteerId(volunteerID);
 
           const classes_p = await fetchUserPreferredClasses(volunteerID);

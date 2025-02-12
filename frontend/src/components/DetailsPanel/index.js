@@ -4,8 +4,10 @@ import { getClassById } from "../../api/classesPageService";
 import button_icon_close from "../../assets/images/button-icons/button-icon-close.png";
 import { useAuth } from "../../contexts/authContext";
 import "./index.css";
-import VolunteerDetailsPanel from "../VolunteerDetailsPage";
+import VolunteerDetailsPanel from "../VolunteerDetailsPanel";
 import AdminDetailsPanel from "../AdminDetailsPanel";
+import email from "../../assets/email.png";
+import { SHIFT_TYPES } from "../../data/constants";
 
 function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftButtons = [], shiftDetails }) {
   const [panelWidth, setPanelWidth] = useState("0px");
@@ -68,6 +70,33 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftBu
       </div>
     ))
   };
+
+  const renderInstructorInfo = () => {
+    if (!panelInfo?.instructor_email) return;
+
+    return (
+    <>
+        {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
+        ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
+        : "No instructor available"}
+        {shiftDetails && shiftDetails.shift_type && (shiftDetails.shift_type === SHIFT_TYPES.MY_SHIFTS || shiftDetails.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) 
+        ?
+        <button
+            className="email-icon panel-button-icon"
+            onClick={() => {
+            window.open(`mailto:${panelInfo.instructor_email}`);
+            }}
+        >
+            <img
+            alt="Email"
+            style={{ width: 16, height: 16 }}
+            src={email}
+            />
+        </button>
+        : null}
+    </>
+    );
+};
   
   return (
     <>
@@ -78,46 +107,54 @@ function DetailsPanel({ classId, classList, setClassId, children, dynamicShiftBu
         {children}
       </div>
       <div className="panel-container" style={{ width: panelWidth }}>
-        <div className="panel-header">
-          {shiftDetails ? (
-              <span>
-                <div>{dayjs(shiftDetails.start_time, 'HH:mm').format('h:mm A')} - {dayjs(shiftDetails.end_time, 'HH:mm').format('h:mm A')}</div>
-                <div>{dayjs(shiftDetails.shift_date).format('dddd, MMMM D')}</div>
-              </span>
-          ) : (
-              renderSchedules()
-          )}
-          <div className="panel-header-class-name">
-            {panelInfo?.class_name || "N/A"}
+        <div className="panel-content">
+          
+          <div className="panel-header">
+            {shiftDetails ? (
+                <span>
+                  <div>{dayjs(shiftDetails.start_time, 'HH:mm').format('h:mm A')} - {dayjs(shiftDetails.end_time, 'HH:mm').format('h:mm A')}</div>
+                  <div>{dayjs(shiftDetails.shift_date).format('dddd, MMMM D')}</div>
+                </span>
+            ) : (
+              // if admin, then full schedules are shown in the panel content
+                !isAdmin && renderSchedules()
+            )}
+            <div className="panel-header-class-name">
+              {panelInfo?.class_name || "N/A"}
+            </div>
+            <button
+              className="panel-button-icon panel-button-icon-close"
+              onClick={() => {
+                setPanelWidth("0px");
+                setClassId(null);
+              }}
+            >
+              <img
+                alt="Close"
+                style={{ width: 16, height: 16 }}
+                src={button_icon_close}
+              />
+            </button>
           </div>
-          <button
-            className="panel-button-icon panel-button-icon-close"
-            onClick={() => {
-              setPanelWidth("0px");
-              setClassId(null);
-            }}
-          >
-            <img
-              alt="Close"
-              style={{ width: 16, height: 16 }}
-              src={button_icon_close}
+          {
+            isAdmin ? 
+            <AdminDetailsPanel 
+              panelInfo={panelInfo}
+              renderInstructorInfo={renderInstructorInfo}
+            /> :
+            <VolunteerDetailsPanel
+              classId={classId}
+              classList={classList}
+              setClassId={setClassId}
+              dynamicShiftButtons={dynamicShiftButtons}
+              shiftDetails={shiftDetails}
+              panelInfo={panelInfo}
+              myClass={myClass}
+              classTaken={classTaken}
+              renderInstructorInfo={renderInstructorInfo}
             />
-          </button>
+          }
         </div>
-        {
-          isAdmin ? 
-          <AdminDetailsPanel /> :
-          <VolunteerDetailsPanel
-            classId={classId}
-            classList={classList}
-            setClassId={setClassId}
-            dynamicShiftButtons={dynamicShiftButtons}
-            shiftDetails={shiftDetails}
-            panelInfo={panelInfo}
-            myClass={myClass}
-            classTaken={classTaken}
-          />
-        }
       </div>
     </>
   );

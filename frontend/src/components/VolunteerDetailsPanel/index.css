@@ -11,21 +11,6 @@
      filter:brightness(0.6);
 }
 
-.panel-details {
-     margin-right: 36px; 
-     margin-left: 20px;
-     padding: 32px 0px;
-}
-
-.panel-titles {
-     min-width: 120px;
-     font-family: 'Roboto';
-     font-weight: 400;
-     font-size: 16px;
-     line-height: 21.6px;
-     color: #808080;
-}
-
 .my-shifts {
      padding: 4px 12px;
      width: fit-content;
@@ -74,27 +59,6 @@
      color: var(--primary-blue);
      font-weight: bold;
      text-align: center;
-}
-
-.panel-details-shift {
-     display: flex;
-     flex-direction: column;
-     gap: 12px;
-}
-
-.panel-details-shift-row {
-     display: flex;
-     flex-direction: row;
-     align-items: center;
-}
-
-.panel-details-shift-right {
-     width: 264px;
-     font-family: 'Roboto';
-     font-weight: 400;
-     font-size: 16px;
-     display: flex; 
-     align-items: center;
 }
 
 .volunteer-profile {
@@ -177,32 +141,4 @@
 
  .email-icon {
      margin-left: 0.5rem;
- }
- 
- .join-class-button {
-     display: flex; 
-     flex-direction: row; 
-     align-items: center; 
-     padding: 0.5rem 1rem;
-     margin-top: 1rem;
-     text-decoration: none;
-     border-radius: 8px;
-     border: 1px solid var(--primary-blue);
-     background: #FFF;
-     cursor: pointer;
-     transition: background-color 0.3s ease;
- }
- 
- .join-class-button a {
-     text-decoration: none;
-     color: var(--dark);
-     display: flex; 
-     flex-direction: row;
-     align-items: center; 
- }
- 
- .join-class-button:hover {
-     cursor: pointer;
-     background: var(--button-blue);
-     border: none;
  }

@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import isBetween from 'dayjs/plugin/isBetween';
 import { COVERAGE_STATUSES, SHIFT_TYPES } from '../data/constants';
 import { requestToCoverShift, requestShiftCoverage, cancelCoverShift, cancelCoverRequest, checkInShift } from '../api/shiftService';
 import CheckInIcon from '../assets/images/button-icons/clock-icon.svg';
@@ -89,10 +88,16 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID) => {
     const shiftDay = dayjs(shift.shift_date).format('YYYY-MM-DD');
     const shiftStart = dayjs(`${shiftDay} ${shift.start_time}`);
     const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
-
     const currentDate = dayjs();
-    const pastShift = currentDate.isAfter(shiftEnd);
-    const currentShift = currentDate.isBetween(shiftStart, shiftEnd, 'minute', '[]');
+    
+    // Accounts for a 30 minute window before and after the shift
+    const pastShift = currentDate.isAfter(shiftEnd.add(30, 'minutes'));
+    const currentShift = currentDate.isBetween(
+        shiftStart.subtract(30, 'minutes'),
+        shiftEnd.add(30, 'minutes'),
+        'minute',
+        '[]'
+    );
 
     return {
         [SHIFT_TYPES.MY_SHIFTS]: {

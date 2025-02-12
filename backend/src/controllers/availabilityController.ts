@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { AvailabilityDB } from '../common/generated.js';
+import { AvailabilityDB } from '../common/databaseModels.js';
 import { AuthenticatedRequest } from '../common/types.js';
 import AvailabilityModel from '../models/availabilityModel.js';
 

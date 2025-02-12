@@ -7,13 +7,20 @@ const volunteerModel = new VolunteerModel();
 async function getVolunteerById(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
 
-    const volunteer = await volunteerModel.getVolunteerById(volunteer_id);
+    const volunteers = await volunteerModel.getVolunteersByIds(volunteer_id);
 
-    res.status(200).json(volunteer);
+    if (volunteers.length === 0) {
+        throw {
+            status: 400,
+            message: `No volunteer found under the given ID`,
+        };
+    }
+
+    res.status(200).json(volunteers[0]);
 }
 
-async function getVolunteers(req: AuthenticatedRequest, res: Response) {
-    const volunteers = await volunteerModel.getVolunteers();
+async function getVolunteers(req: Request, res: Response) {
+    const volunteers = await volunteerModel.getAllVolunteers();
 
     res.status(200).json(volunteers);
 }

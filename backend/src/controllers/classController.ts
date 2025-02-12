@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { ClassDB } from '../common/generated.js';
+import { ClassDB } from '../common/databaseModels.js';
 import { AuthenticatedRequest } from '../common/types.js';
 import ClassesModel from '../models/classModel.js';
 

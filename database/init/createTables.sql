@@ -11,23 +11,21 @@ DROP TABLE IF EXISTS volunteers;
 DROP TABLE IF EXISTS schedule;
 DROP TABLE IF EXISTS images;
 DROP TABLE IF EXISTS class;
-DROP TABLE IF EXISTS admins;
+-- DROP TABLE IF EXISTS admins;
 DROP TABLE IF EXISTS instructors;
 DROP TABLE IF EXISTS user_session;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS images;
 
-create table images (
-    image_id VARCHAR(36) PRIMARY KEY,
-    image MEDIUMBLOB NOT NULL
-);
-
 create table users (
     user_id VARCHAR(255) PRIMARY KEY,
+    f_name VARCHAR(60) NOT NULL,
+    l_name VARCHAR(60) NOT NULL,
+    email VARCHAR(45) NOT NULL UNIQUE,
     fk_image_id VARCHAR(36),
     email VARCHAR(45) NOT NULL,
-    digest CHAR(60) BINARY NOT NULL,
-    role VARCHAR(5) NOT NULL,
+    password CHAR(60) BINARY NOT NULL,
+    role ENUM('volunteer', 'admin', 'instructor') NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)
         ON DELETE SET NULL
@@ -35,12 +33,22 @@ create table users (
 
 create table instructors (
 	instructor_id VARCHAR(255) PRIMARY KEY, 
-    fk_user_id VARCHAR(255),         
+    -- fk_user_id VARCHAR(255),  -- If instructors can login the the future they will need this     
     f_name VARCHAR(15) NOT NULL,
     l_name VARCHAR(15) NOT NULL,
     email VARCHAR(45) NOT NULL,
-    FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
+    -- FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
 );
+
+-- Re-create if we need it in the future
+-- create table admins (
+-- 	admin_id VARCHAR(255) PRIMARY KEY, 
+--     fk_user_id VARCHAR(255),         
+--     f_name VARCHAR(15) NOT NULL,
+--     l_name VARCHAR(15) NOT NULL,
+--     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
+--         ON DELETE CASCADE
+-- );
 
 create table class (
 	class_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -61,27 +69,15 @@ create table class (
 create table volunteers (
 	volunteer_id VARCHAR(255) PRIMARY KEY, 
     fk_user_id VARCHAR(255),         
-    f_name VARCHAR(15) NOT NULL,
-    l_name VARCHAR(15) NOT NULL,
     p_name VARCHAR(45),
     total_hours INT NOT NULL DEFAULT 0,
     bio VARCHAR(150),
     active BOOLEAN NOT NULL DEFAULT FALSE,
-    email VARCHAR(45) NOT NULL,
     pronouns VARCHAR(15),
     phone_number VARCHAR(15),
     city VARCHAR(15),
     province VARCHAR(15),
     p_time_ctmt INT NOT NULL DEFAULT 0,
-    FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
-        ON DELETE CASCADE
-);
-
-create table admins (
-	admin_id VARCHAR(255) PRIMARY KEY, 
-    fk_user_id VARCHAR(255),         
-    f_name VARCHAR(15) NOT NULL,
-    l_name VARCHAR(15) NOT NULL,
     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
         ON DELETE CASCADE
 );
@@ -159,4 +155,9 @@ CREATE TABLE class_preferences (
         ON DELETE CASCADE,
     FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
         ON DELETE CASCADE
+);
+
+create table images (
+    image_id VARCHAR(36) PRIMARY KEY,
+    image MEDIUMBLOB NOT NULL
 );

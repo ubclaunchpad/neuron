@@ -4,12 +4,16 @@ import { isAuthorized } from '../config/authCheck.js';
 import {
     addShift,
     deleteShift,
+    updateShift,
     getShiftInfo,
-    getShiftsByDate,
     getShiftsByVolunteerId,
+    getShiftsByDate,
     getShiftsByVolunteerIdAndMonth,
-    requestToCoverShift,
-    updateShift
+    checkInShift, 
+    requestCoverShift, 
+    withdrawCoverShift, 
+    requestShiftCoverage, 
+    withdrawShiftCoverage
 } from '../controllers/shiftController.js';
 
 export const ShiftRoutes: RouteDefinition = {
@@ -71,13 +75,47 @@ export const ShiftRoutes: RouteDefinition = {
             action: getShiftsByVolunteerIdAndMonth
         },
         {
-            path: '/request-to-cover-shift',
+            path: '/check-in/:shift_id',
+            method: 'patch',
+            validation: [
+                param('shift_id').isInt({ min: 0 })
+            ],
+            action: checkInShift
+        },
+        {
+            path: '/cover-shift',
             method: 'post',
             validation: [
                 body('request_id').isInt({ min: 0 }),
                 body('volunteer_id').isUUID('4')
             ],
-            action: requestToCoverShift
+            action: requestCoverShift
+        },
+        {
+            path: '/cover-shift',
+            method: 'delete',
+            validation: [
+                body('request_id').isInt({ min: 0 }),
+                body('volunteer_id').isUUID('4')
+            ],
+            action: withdrawCoverShift
+        },
+        {
+            path: '/shift-coverage-request',
+            method: 'put',
+            validation: [
+                body('shift_id').isInt({ min: 0 }),
+            ],
+            action: requestShiftCoverage
+        },
+        {
+            path: '/shift-coverage-request',
+            method: 'delete',
+            validation: [
+                body('request_id').isInt({ min: 0 }),
+                body('shift_id').isInt({ min: 0 }),
+            ],
+            action: withdrawShiftCoverage
         },
         {
             path: '/:shift_id',

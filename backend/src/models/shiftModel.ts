@@ -34,7 +34,7 @@ export default class ShiftModel {
                     AND s.shift_date = ?;               
           `;
           const values = [fk_volunteer_id, fk_schedule_id, shift_date];
-          
+
           const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results[0];
@@ -44,7 +44,7 @@ export default class ShiftModel {
      async getShiftsByVolunteerId(volunteer_id: string): Promise<ShiftDB[]> {
           const query = "SELECT * FROM shifts WHERE fk_volunteer_id = ?";
           const values = [volunteer_id];
-          
+
           const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results;
@@ -54,7 +54,7 @@ export default class ShiftModel {
      async getShiftsByDate(date: string): Promise<ShiftDB[]> {
           const query = "SELECT * FROM shifts WHERE shift_date = ?";
           const values = [date];
-          
+
           const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results;
@@ -65,16 +65,28 @@ export default class ShiftModel {
           const query = `
                CALL GetShiftsByVolunteerIdAndMonth(?, ?, ?);
           `;
-          
+
           const values = [volunteer_id, month, year];
-          
+
           const [results, _] = await connectionPool.query<any>(query, values);
 
           return results[0]; // Value from procedure stored in the first value of the array
-      }
+     }
 
-      // create a new entry in the pending_shift_coverage table
-     async requestToCoverShift(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
+     // modify a shift to indicate that a volunteer has checked in
+     async updateShiftCheckIn(shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               UPDATE shifts SET checked_in = 1 WHERE shift_id = ?
+          `;
+          const values = [shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
+     // create a new entry in the pending_shift_coverage table
+     async insertCoverShift(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
           const query = `
                INSERT INTO pending_shift_coverage (request_id, pending_volunteer)
                VALUES (?, ?)
@@ -86,9 +98,56 @@ export default class ShiftModel {
           return results;
      }
 
+     // delete corresponding entry in pending_shift_coverage table
+     async deleteCoverShift(request_id: number, volunteer_id: number): Promise<ResultSetHeader> {
+          const query = `
+               DELETE FROM pending_shift_coverage WHERE request_id = ? AND pending_volunteer = ?
+          `;
+          const values = [request_id, volunteer_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          // Check if it was successfully deleted or not
+          if (results.affectedRows === 0) {
+               throw new Error("Cover shift request not found or already approved");
+          }
+
+          return results;
+     }
+
+     // create a new entry in the shift_coverage_request table
+     async insertShiftCoverageRequest(shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               INSERT INTO shift_coverage_request (fk_shift_id)
+               VALUES (?)
+          `;
+          const values = [shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
+     // delete corresponding entry in shift_coverage_request table
+     async deleteShiftCoverageRequest(request_id: number, shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               DELETE FROM shift_coverage_request WHERE request_id = ? AND fk_shift_id = ? AND covered_by IS NULL
+          `;
+          const values = [request_id, shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          // Check if it was successfully deleted or not
+          if (results.affectedRows === 0) {
+               throw new Error("Shift coverage request not found or already fulfilled");
+          }
+
+          return results;
+     }
+
      private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number): string[] {
           const result: string[] = [];
-      
+
           let start = new Date(classTimeline.start_date);
           const end = new Date(classTimeline.end_date);
 
@@ -97,38 +156,38 @@ export default class ShiftModel {
           startDateAndTime.setHours(hours, minutes);
 
           const now = new Date();
-          
+
           // if start is earlier than right now
           if (startDateAndTime < now) {
                start = now;
 
                // if schedule starts today at exactly now or at an earlier time than now, we need to skip this week
-               if (dayNumber === now.getDay() && 
-                    startDateAndTime.getHours() <= now.getHours() && 
+               if (dayNumber === now.getDay() &&
+                    startDateAndTime.getHours() <= now.getHours() &&
                     startDateAndTime.getMinutes() <= now.getMinutes()) {
 
                     start.setDate(start.getDate() + 7);
                }
                // NOTE: if the schedule starts today at a later time than now, all the shifts today will still be scheduled
           }
-     
+
           // find the first occurrence of the given day
           while (start.getDay() !== dayNumber) {
                start.setDate(start.getDate() + 1);
           }
-     
+
           // collect all occurrences of the given day until the end date
           while (start <= end) {
                result.push(start.toISOString().split('T')[0]); // store as YYYY-MM-DD
                start.setDate(start.getDate() + 7);
           }
-      
+
           return result;
      }
 
      // convert time in HH:MM format to minutes
      private getDurationInMinutes(startTime: string, endTime: string): number {
-          
+
           const timeToMinutes = (time: string): number => {
                const [hours, minutes] = time.split(':').map(Number);
                return hours * 60 + minutes;

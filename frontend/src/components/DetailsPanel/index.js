@@ -179,7 +179,7 @@ function DetailsPanel({
     <>
       <div
         className="main-container"
-        style={{ width: `calc(100% - ${panelWidth})` }}
+        style={{ width: `calc(100% - ${panelWidth})`, overflowY: "scroll" }}
       >
         {children}
       </div>

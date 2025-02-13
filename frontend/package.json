@@ -27,6 +27,7 @@
     "react-scripts": "5.0.1",
     "react-select": "^5.10.0",
     "react-timer-hook": "^3.0.8",
+    "react-weekview": "^0.0.15",
     "web-vitals": "^2.1.4",
     "yup": "^1.4.0"
   },

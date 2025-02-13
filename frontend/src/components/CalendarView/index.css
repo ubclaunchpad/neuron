@@ -1,0 +1,111 @@
+.calendar-container {
+    font-family: var(--font-secondary);
+}
+
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-group {
+    display: flex;
+    align-items: center;
+    gap: 1vw;
+    margin-right: 0.5vw;
+}
+
+.calendar-btn {
+    border: none;
+    background: white;
+    cursor: pointer;
+    font-size: 1vw;
+    display: flex;
+    align-items: center;
+}
+
+.calendar-btn i {
+    color: var(--dark-grey);
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: 6vw repeat(6, 1fr);
+}
+
+.stick {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+/* alternatively make 12 children grey */
+.day-column:nth-child(2n) {
+    background-color: #d9d9d926;
+}
+
+.time-column,
+.day-column {
+    border-right: 1px solid var(--grey);
+}
+
+.time-column {
+    min-width: 1vw;
+}
+
+.day-column:nth-child(2n) .day-header {
+    background-color: #d9d9d926;
+}
+
+.day-column:nth-child(2n + 1) .day-header {
+    background-color: var(--white);
+}
+
+.day-header {
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--grey);
+    height: 3.5rem;
+}
+
+.day-number {
+    font-size: 1.7vw;
+}
+
+.day-name {
+    margin-top: 0.5vh;
+    font-size: 1vw;
+}
+
+.time-slot {
+    height: 3.5vw;
+    border-bottom: 1px solid var(--grey);
+    padding: 0.5vw;
+    position: relative;
+}
+
+.time-label-calendar {
+    font-size: 1vw;
+}
+
+.event {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    padding: 0.5vw;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    background-color: white;
+    border: 1px solid var(--grey);
+    cursor: pointer;
+}
+
+.event-title {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event-time {
+    font-size: 0.75rem;
+}

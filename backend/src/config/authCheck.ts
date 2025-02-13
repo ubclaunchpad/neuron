@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import { NextFunction, Response } from "express";
 import jwt from "jsonwebtoken";
+import { Role } from "../common/interfaces.js";
 import {
     AuthenticatedUserRequest,
     DecodedJwtPayload,
@@ -59,7 +60,7 @@ async function isAdmin(
     res: Response,
     next: NextFunction
 ): Promise<any> {
-    if (req.user!.role !== "ADMIN") {
+    if (req.user!.role !== Role.admin) {
         return res.status(403).json({
             error: "Forbidden",
         });

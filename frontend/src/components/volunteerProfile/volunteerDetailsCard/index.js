@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "./index.css";
 
 import camera_icon from "../../../assets/camera.png";
@@ -12,24 +12,38 @@ import { formatImageUrl } from "../../../api/imageService";
 import { updateVolunteerData, uploadProfilePicture } from "../../../api/volunteerService";
 import { useAuth } from "../../../contexts/authContext";
 import useComponentVisible from "../../../hooks/useComponentVisible";
+import {State, City} from 'country-state-city';
+import Select from 'react-select';
 import notyf from "../../../utils/notyf";
 
 function VolunteerDetailsCard({ volunteer }) {
+
     const { user, updateUser } = useAuth();
 
-    const [isEditing, setIsEditing] = React.useState(false);
-    const [mutableData, setMutableData] = React.useState({
+    const [isEditing, setIsEditing] = useState(false);
+    const [mutableData, setMutableData] = useState({
         profilePicture: volunteer.profile_picture,
         preferredName: volunteer.p_name,
         pronouns: volunteer.pronouns,
         phoneNumber: volunteer.phone_number,
+        city: volunteer.city,
+        province: volunteer.province,
         timeCommitment: volunteer.p_time_ctmt
     });
-    const [prevMutableData, setPrevMutableData] = React.useState({});
-    const [tempImage, setTempImage] = React.useState(null);
-    const [prevTempImage, setPrevTempImage] = React.useState(null);
+    const [prevMutableData, setPrevMutableData] = useState({});
+    const [tempImage, setTempImage] = useState(null);
+    const [prevTempImage, setPrevTempImage] = useState(null);
+    const provinces = [{value: "None", label: "None"}].concat(State.getStatesOfCountry('CA').map((state) => {
+        return {value: state.isoCode, label: state.isoCode};
+    }));
+    const [selectedProvince, setSelectedProvince] = useState("BC");
+    const [cities, setCities] = useState([{value: "None", label: "None"}].concat(City.getCitiesOfState('CA', selectedProvince).map((city) => {
+        return {value: city.name, label: city.name};
+    })));
 
     const { ref, isComponentVisible, setIsComponentVisible } = useComponentVisible(false);
+    // const { ref: provinceRef, isComponentVisible: isProvinceVisible, setIsComponentVisible: setisProvinceVisible } = useComponentVisible(false);
+    // const { ref: cityRef, isComponentVisible: isCityVisible, setIsComponentVisible: setisCityVisible } = useComponentVisible(false);
     const pronouns = ["None", "He/Him", "She/Her", "They/Them"];
 
     function sendTcNotif() {
@@ -58,6 +72,12 @@ function VolunteerDetailsCard({ volunteer }) {
         reader.readAsDataURL(image);
     };
 
+    useEffect(() => {
+        setCities([{value: "None", label: "None"}].concat(City.getCitiesOfState('CA', selectedProvince).map((city) => {
+            return {value: city.name, label: city.name};
+        })));
+    }, [selectedProvince]);
+
 
     function formatDate(created_at) {
         const date = new Date(created_at);
@@ -84,18 +104,23 @@ function VolunteerDetailsCard({ volunteer }) {
         if (mutableData.preferredName !== prevMutableData.preferredName ||
             mutableData.pronouns !== prevMutableData.pronouns ||
             mutableData.phoneNumber !== prevMutableData.phoneNumber ||
+            mutableData.city !== prevMutableData.city ||
+            mutableData.province !== prevMutableData.province ||
             mutableData.timeCommitment !== prevMutableData.timeCommitment) {
                 
             // store empty strings as null
             const volunteerData = {
-                p_name: mutableData.preferredName ?? undefined,
-                pronouns: mutableData.pronouns ?? undefined,
-                phone_number: mutableData.phoneNumber ?? undefined,
+                p_name: mutableData.preferredName ?? null,
+                pronouns: mutableData.pronouns ?? null,
+                phone_number: mutableData.phoneNumber ?? null,
+                city: mutableData.city ?? "",
+                province: mutableData.province ?? "",
                 p_time_ctmt: mutableData.timeCommitment
             }
 
             const volunteerResult = await updateVolunteerData(volunteerData, volunteer.volunteer_id);
             console.log("Successfully updated volunteer.", volunteerResult);
+            notyf.success("Successfully updated data. Please refresh the page to see changes.");
         }
     }
 
@@ -162,6 +187,21 @@ function VolunteerDetailsCard({ volunteer }) {
             pronouns: option === "None" ? null : option
         });
         setIsComponentVisible(false);
+    }
+
+    function handleProvinceClick(option) {
+        setSelectedProvince(option.value);
+        setMutableData({
+            ...mutableData,
+            province: option.value === "None" ? null : option.value
+        });
+    }
+
+    function handleCityClick(option) {
+        setMutableData({
+            ...mutableData,
+            city: option.value === "None" ? null : option.value
+        });
     }
 
     return (
@@ -320,17 +360,87 @@ function VolunteerDetailsCard({ volunteer }) {
                                     <td>Joined</td>
                                     <td>{formatDate(volunteer.created_at)}</td>
                                 </tr>
-                                <tr className="row-gap"/>
-                                <tr className="view volunteer-location" hidden={isEditing}>
-                                    <td>Location</td>
-                                    <td
-                                        style={volunteer.city && volunteer.province ? {} : {
-                                            'color': '#808080',
-                                            'fontStyle': 'italic'
+                                <tr className="view volunteer-location">
+                                    <td hidden={isEditing}>Location</td>
+                                    <td hidden={isEditing}>{volunteer.city && volunteer.province ? `${volunteer.city}, ${volunteer.province}` : 'No Location Set'}</td>
+                                    {isEditing && (
+                                        <>
+                                            <td style={{
+                                                'color': '#808080'
+                                            }}>Province</td>
+                                            <Select
+                                                className="basic-single"
+                                                classNamePrefix="select"
+                                                defaultValue={mutableData.province ? {value: mutableData.province, label: mutableData.province} : null}
+                                                options={provinces}
+                                                isSearchable={true}
+                                                components={
+                                                    {
+                                                        DropdownIndicator: () => 
+                                                            <CgSelect className="select-icon"/>,
+                                                        IndicatorSeparator: () => null,
+                                                        Option: (props) => {
+                                                            const {innerProps, innerRef} = props;
+                                                            return (
+                                                                <div {...innerProps} ref={innerRef} className="pronouns-item">
+                                                                    {props.data.value}
+                                                                </div>
+                                                            )
+                                                        },
+                                                        Menu: (props) => {
+                                                            const {innerProps, innerRef} = props;
+                                                            return (
+                                                                <div {...innerProps} ref={innerRef}
+                                                                className="pronouns-menu">
+                                                                    {props.children}
+                                                                </div>
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                                onChange={(option) => {
+                                                    handleProvinceClick(option);
+                                                }}
+                                            />
+                                        </>
+                                    )}
+                                </tr>
+                                <tr hidden={!isEditing}>
+                                    <td>City</td>
+                                    <Select
+                                        className="basic-single"
+                                        classNamePrefix="select"
+                                        defaultValue={mutableData.city ? {value: mutableData.city, label: mutableData.city} : null}
+                                        options={cities}
+                                        isSearchable={true}
+                                        components={
+                                            {
+                                                DropdownIndicator: () => 
+                                                    <CgSelect className="select-icon"/>,
+                                                IndicatorSeparator: () => null,
+                                                Option: (props) => {
+                                                    const {innerProps, innerRef} = props;
+                                                    return (
+                                                        <div {...innerProps} ref={innerRef} className="pronouns-item">
+                                                            {props.data.value}
+                                                        </div>
+                                                    )
+                                                },
+                                                Menu: (props) => {
+                                                    const {innerProps, innerRef} = props;
+                                                    return (
+                                                        <div {...innerProps} ref={innerRef}
+                                                        className="pronouns-menu">
+                                                            {props.children}
+                                                        </div>
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        onChange={(option) => {
+                                            handleCityClick(option);
                                         }}
-                                    >
-                                        {volunteer.city && volunteer.province ? `${volunteer.city}, ${volunteer.province}` : 'not yet set'}
-                                    </td>
+                                    />
                                 </tr>
                             </tbody>
                         </table>

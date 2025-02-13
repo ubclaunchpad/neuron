@@ -1,12 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { ValidationChain } from "express-validator";
+import { UserDB } from "./databaseModels.js";
 
 export type AuthenticatedUserRequest = Request & {
-    user?: {
-        password: string;
-        user_id: string;
-        role: string;
-    };
+    user?: UserDB
 }
 
 // Interface for the decoded data from the JWT

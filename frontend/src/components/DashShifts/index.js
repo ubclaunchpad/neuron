@@ -3,17 +3,18 @@ import dayjs from "dayjs";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import ShiftCard from "../ShiftCard";
+import { getButtonConfig } from "../../utils/buttonConfig";
 import "./index.css";
 
 export default function DashShifts({
   groupedShifts,
   future,
   handleShiftUpdate,
+  volunteerID,
 }) {
   const currentDate = dayjs();
   const navigate = useNavigate();
 
-  console.log(groupedShifts)
   return (
     <div className="dash-shifts-container">
       <div
@@ -46,7 +47,12 @@ export default function DashShifts({
                     key={shift.shift_id}
                     shift={shift}
                     shiftType={shift.shift_type}
-                    onUpdate={handleShiftUpdate} // Pass the handler
+                    onShiftSelect={handleShiftUpdate} // Pass the handler
+                    buttonConfig={getButtonConfig(
+                      shift,
+                      handleShiftUpdate,
+                      volunteerID
+                    )}
                   />
                 ))}
               </div>

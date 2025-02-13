@@ -1,7 +1,7 @@
 import { ResultSetHeader } from "mysql2";
 import { PoolConnection } from "mysql2/promise";
 import sharp from "sharp";
-import { UserDB } from "../common/generated.js";
+import { UserDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
 import ImageModel from "./imageModel.js";
 
@@ -43,8 +43,8 @@ export default class UserModel {
     async insertUser(user: Partial<UserDB>, transaction?: PoolConnection): Promise<ResultSetHeader> {
         const connection = transaction ?? connectionPool;
 
-        const query = `INSERT INTO users (user_id, email, password, role) VALUES (?, ?, ?, ?)`;
-        const values = [user.user_id, user.email, user.password, user.role];
+        const query = `INSERT INTO users (user_id, f_name, l_name, email, password, role) VALUES (?, ?, ?, ?, ?, ?)`;
+        const values = [user.user_id, user.f_name, user.l_name, user.email, user.password, user.role];
 
         const [results, _] = await connection.query<ResultSetHeader>(query, values).catch(error => {
             if (error.code === "ER_DUP_ENTRY") {

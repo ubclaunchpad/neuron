@@ -22,8 +22,8 @@ const CalendarView = ({ days, shifts, onUpdate, onShiftSelect }) => {
         _class_id: null,
         checked_in: false,
         coverage_status: "",
-        startTime: "",
-        endTime: "",
+        start_time: "",
+        end_time: "",
         duration: 0,
         date: "",
         dayIndex: 0,
@@ -52,8 +52,8 @@ const CalendarView = ({ days, shifts, onUpdate, onShiftSelect }) => {
                 _class_id: shift._class_id,
                 checked_in: shift.checked_in,
                 coverage_status: shift.coverage_status,
-                startTime: shift.start_time,
-                endTime: shift.end_time,
+                start_time: shift.start_time,
+                end_time: shift.end_time,
                 duration: dayjs(shift.end_time, "HH:mm:ss").diff(dayjs(shift.start_time, "HH:mm:ss"), "hour", true),
                 date: shift.shift_date,
                 dayIndex: shift.day,
@@ -146,6 +146,7 @@ const CalendarView = ({ days, shifts, onUpdate, onShiftSelect }) => {
     };
 
     const handleShiftSelection = (event) => {
+        console.log(event);
         setShift(event);
         const buttons = generateButtonsForDetailsPanel(event);
         onShiftSelect({ ...event, buttons });
@@ -175,7 +176,7 @@ const CalendarView = ({ days, shifts, onUpdate, onShiftSelect }) => {
                             {timeSlots.map((time) => (
                                 <div key={time} className="time-slot">
                                     {events
-                                        .filter((event) => event.date === dayjs(day.date).toISOString() && event.startTime === time)
+                                        .filter((event) => event.date === dayjs(day.date).toISOString() && event.start_time === time)
                                         .map((event) => (
                                             <div
                                                 key={event.id}
@@ -191,7 +192,7 @@ const CalendarView = ({ days, shifts, onUpdate, onShiftSelect }) => {
                                             >
                                                 <div className="event-title">{event.title}</div>
                                                 <div className="event-time">
-                                                    {dayjs(event.startTime, "HH:mm:ss").format("h:mm A")} - {dayjs(event.endTime, "HH:mm:ss").format("h:mm A")}
+                                                    {dayjs(event.start_time, "HH:mm:ss").format("h:mm A")} - {dayjs(event.end_time, "HH:mm:ss").format("h:mm A")}
                                                 </div>
                                             </div>
                                         ))}

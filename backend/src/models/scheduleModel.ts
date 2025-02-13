@@ -1,25 +1,22 @@
 import { ResultSetHeader } from 'mysql2';
 import { PoolConnection } from 'mysql2/promise';
-import { ScheduleDB, ShiftDB, VolunteerScheduleDB } from '../common/generated.js';
+import { ScheduleDB, ShiftDB, VolunteerScheduleDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
 import ShiftModel from '../models/shiftModel.js';
+import VolunteerModel from './volunteerModel.js';
 
 const shiftModel = new ShiftModel();
+const volunteerModel = new VolunteerModel();
 
 export default class ScheduleModel {
     async getAllSchedules(): Promise<ScheduleDB[]> {
         const query = `
             SELECT 
                 s.*,
-                GROUP_CONCAT(v.fk_user_id) AS volunteer_user_ids,
-                GROUP_CONCAT(vs.fk_volunteer_id) as volunteer_ids,
-                GROUP_CONCAT(v.f_name) as volunteer_f_names,
-                GROUP_CONCAT(v.l_name) as volunteer_l_names
+                GROUP_CONCAT(vs.fk_volunteer_id) as volunteer_ids
             FROM schedule s 
             LEFT JOIN volunteer_schedule vs
             ON s.schedule_id = vs.fk_schedule_id
-            LEFT JOIN volunteers v
-            ON vs.fk_volunteer_id = v.volunteer_id
             WHERE s.active = true
             GROUP BY s.schedule_id`;
 
@@ -32,15 +29,10 @@ export default class ScheduleModel {
         const query = `
             SELECT 
                 s.*,
-                GROUP_CONCAT(v.fk_user_id) AS volunteer_user_ids,
-                GROUP_CONCAT(vs.fk_volunteer_id) as volunteer_ids,
-                GROUP_CONCAT(v.f_name) as volunteer_f_names,
-                GROUP_CONCAT(v.l_name) as volunteer_l_names
+                GROUP_CONCAT(vs.fk_volunteer_id) as volunteer_ids
             FROM schedule s 
             LEFT JOIN volunteer_schedule vs
             ON s.schedule_id = vs.fk_schedule_id
-            LEFT JOIN volunteers v
-            ON vs.fk_volunteer_id = v.volunteer_id
             WHERE fk_class_id = ?
             AND s.active = true
             GROUP BY s.schedule_id`;
@@ -51,30 +43,21 @@ export default class ScheduleModel {
         return this.formatResults(results);
     }
 
-    private formatResults(results: ScheduleDB[]): any[] {
-        const toArray = (value: string | null): any[] => {
-            return value ? value.split(',') : [];
-        }
+    private async formatResults(schedules: ScheduleDB[]): Promise<any[]> {
+        const volunteer_ids = schedules.flatMap(s => s.volunteer_ids ? s.volunteer_ids.split(',') : []);
+        const volunteers = (await volunteerModel.getVolunteersByIds(volunteer_ids)).reduce((map: any, volunteer) => {
+            map[volunteer.volunteer_id] = volunteer;
+            return map;
+        }, {});
 
-        return results.map((schedule) => {
-            const user_ids = toArray(schedule.volunteer_user_ids);
-            const v_ids = toArray(schedule.volunteer_ids);
-            const first_names = toArray(schedule.volunteer_f_names);
-            const last_names = toArray(schedule.volunteer_l_names);
+        return schedules.map(schedule => {
+            const schedule_volunteer_ids = schedule.volunteer_ids ? schedule.volunteer_ids.split(',') : []
+            const schedule_volunteers = schedule_volunteer_ids.flatMap((id: string) => volunteers[id]);
 
-            const volunteers = [];
-            for (let i = 0; i < v_ids.length; i++) {
-                volunteers.push({
-                    user_id: user_ids[i],
-                    volunteer_id: v_ids[i],
-                    f_name: first_names[i],
-                    l_name: last_names[i],
-                });
-            }
-            const { volunteer_user_ids, volunteer_ids, volunteer_f_names, volunteer_l_names, ...rest } = schedule;
+            const { volunteer_ids, ...rest } = schedule;
             return {
                 ...rest,
-                volunteers: volunteers
+                volunteers: schedule_volunteers
             };
         });
     }

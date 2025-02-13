@@ -1,10 +1,10 @@
-import TextInput from "../TextInput";
-import CustomButton from "../CustomButton";
+import { Formik } from "formik";
 import { Link } from "react-router-dom";
+import * as Yup from "yup";
 import { signUp } from "../../api/authService";
 import notyf from "../../utils/notyf";
-import { Formik } from "formik";
-import * as Yup from "yup";
+import CustomButton from "../CustomButton";
+import TextInput from "../TextInput";
 import "./index.css";
 
 const SignUpSchema = Yup.object().shape({
@@ -36,9 +36,9 @@ const SignUpForm = () => {
                 onSubmit={(values, { setSubmitting }) => {
                     // remove confirmPassword from the payload
                     delete values.confirmPassword;
-                    values.role = "volun";
+                    values.role = "volunteer";
                     signUp(values)
-                        .then((response) => {
+                        .then(() => {
                             notyf.success("Account created successfully.");
                             setSubmitting(false);
                             setTimeout(() => {

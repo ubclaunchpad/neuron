@@ -8,14 +8,14 @@ import nav_item_settings from "../../assets/nav-item-settings.png";
 import sidebar_toggle from "../../assets/sidebar-toggle.png";
 import "./index.css";
 
-import { isAuthenticated } from "../../api/authService";
 import { formatImageUrl } from "../../api/imageService";
+import { useAuth } from "../../contexts/authContext";
 import NavProfileCard from "../NavProfileCard";
+import Permission from "../utils/Permission";
 
-function VolunteerLayout() {
+function SidebarLayout() {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
-  const [volunteer, setVolunteer] = useState(null);
-  const [profilePic, setProfilePic] = useState(null);
+  const { user, isAdmin, isVolunteer } = useAuth();
 
   // Toggle function for displaying/hiding sidebar
   const toggleSidebar = () => {
@@ -34,28 +34,6 @@ function VolunteerLayout() {
     handleResize();
 
     return () => mediaQuery.removeEventListener('change', handleResize);
-  }, []);
-  
-  // Fetch user info
-  useEffect(() => {
-    const fetchVolunteerData = async () => {
-      try {
-        const authData = await isAuthenticated();
-        if (authData.isAuthenticated && authData.volunteer) {
-          setVolunteer(authData.volunteer);
-
-          const imageUrl = authData.user.fk_image_id ? formatImageUrl(authData.user.fk_image_id) : undefined;
-
-          setProfilePic(imageUrl);
-        } else {
-          setVolunteer(null);
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        setVolunteer(null);
-      }
-    };
-    fetchVolunteerData();
   }, []);
 
   return (
@@ -88,8 +66,9 @@ function VolunteerLayout() {
             <img src={nav_item_dash} alt="Dashboard" />
             {!collapsed && "Overview"}
           </NavLink>
+
           <NavLink
-            to="/volunteer/schedule"
+            to="/schedule"
             className={({ isActive }) =>
               isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
             }
@@ -97,8 +76,9 @@ function VolunteerLayout() {
             <img src={nav_item_schedule} alt="Schedule" />
             {!collapsed && "Schedule"}
           </NavLink>
+
           <NavLink
-            to="/volunteer/classes"
+            to="/classes"
             className={({ isActive }) =>
               isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
             }
@@ -106,29 +86,31 @@ function VolunteerLayout() {
             <img src={nav_item_classes} alt="Classes" />
             {!collapsed && "Classes"}
           </NavLink>
-          <NavLink
-            to="/volunteer/my-profile"
-            className={({ isActive }) =>
-              isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
-            }
-          >
-            <img src={nav_item_settings} alt="Settings" />
-            {!collapsed && "Settings"}
-          </NavLink>
+          <Permission permissions={isVolunteer}>
+            <NavLink
+              to="/my-profile"
+              className={({ isActive }) =>
+                isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
+              }
+            >
+              <img src={nav_item_settings} alt="Settings" />
+              {!collapsed && "Settings"}
+            </NavLink>
+          </Permission>
         </div>
         <div className="nav-profile-card-container">
           <NavProfileCard
-            avatar={profilePic}
-            name={volunteer?.p_name ?? volunteer?.f_name}
-            email={volunteer?.email}
+            image={formatImageUrl(user?.fk_image_id)}
+            name={user?.volunteer?.p_name ?? user?.f_name}
+            email={user?.email}
             collapse={collapsed}
-            link="/volunteer/my-profile"
+            link="/my-profile"
           />
         </div>
       </aside>
-      <Outlet /> {/* Render page content here */}
+      <Outlet />
     </div>
   );
 }
 
-export default VolunteerLayout;
+export default SidebarLayout;

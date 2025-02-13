@@ -105,11 +105,14 @@ button {
     border-radius: 8px !important;
 }
 
+.viewMode__option:nth-child(2) {
+    margin-top: 0.5vw !important;
+}
+
 .viewMode__option {
     border-radius: 3px;
     color: var(--dark) !important;
     cursor: pointer;
-    margin-top: 0.5vw !important;
 }
 
 .viewMode__option--is-selected {

@@ -20,8 +20,8 @@ function VolunteerDetailsCard({ volunteer }) {
 
     const { user, updateUser } = useAuth();
 
-    const [isEditing, setIsEditing] = React.useState(false);
-    const [mutableData, setMutableData] = React.useState({
+    const [isEditing, setIsEditing] = useState(false);
+    const [mutableData, setMutableData] = useState({
         profilePicture: volunteer.profile_picture,
         preferredName: volunteer.p_name,
         pronouns: volunteer.pronouns,

@@ -98,7 +98,7 @@ const AvailabilityGrid = ({ volunteerId }) => {
     <div className="availability-grid-container">
       <div className="availability-grid-content">
         <div className="availability-header">
-          <h2 className="availability-title">My Availability</h2>
+          <h2 className="availability-title my-profile-title">My Availability</h2>
           {isEditing ? (
             <div className="edit-options"> 
               <img className="icon check-icon" src={check_icon} alt="Check" hidden={!isEditing} onClick={handleCheck}/>          

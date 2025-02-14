@@ -56,6 +56,7 @@ function DetailsPanel({
   };
 
   const formatTime = (time) => {
+    if (time === null || time === undefined || time === "") return "";
     const [hour, minute] = time.split(":").map(Number);
     const period = hour >= 12 ? "PM" : "AM";
     const formattedHour = hour % 12 || 12;

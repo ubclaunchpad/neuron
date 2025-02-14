@@ -39,8 +39,7 @@ export default class ClassesModel {
                     i.email AS instructor_email
                FROM class c
                LEFT JOIN instructors i ON c.fk_instructor_id = i.instructor_id
-               WHERE c.class_id = ?
-          `;
+               WHERE c.class_id = ? ;`;
           const values = [class_id];
 
           const [results, _] = await connectionPool.query<ClassDB[]>(query, values);

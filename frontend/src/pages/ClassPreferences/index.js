@@ -4,10 +4,23 @@ import edit_icon from "../../assets/edit-icon.png";
 import filter_icon from "../../assets/filter-icon.png";
 import search_icon from "../../assets/search-icon.png";
 import { useAuth } from "../../contexts/authContext";
-import { fetchUserPreferredClasses, fetchAllClassPreferences, updateUserPreferredClasses} from "../../api/volunteerService";
+import { fetchUserPreferredClasses, fetchAllClassPreferences, updateUserPreferredClasses, fetchVolunteerAvailability} from "../../api/volunteerService";
 import ClassPreferencesCard from "../../components/ClassPreferencesCard";
 import Modal from "../../components/Modal";
 import Checkbox from "../../components/Checkbox";
+
+function ifFitAvailability(class_, availability) {
+     return compareTime(availability.start_time, class_.start_time) && compareTime(class_.end_time, availability.end_time);
+}
+
+function compareTime (time1, time2) {
+     const t1 = time1.split(":");
+     const t2 = time2.split(":");
+     if (Number(t1[0]) < Number(t2[0])) return true;
+     else if (Number(t1[0]) === Number(t2[0]) && Number(t1[1]) <= Number(t2[1])) {
+     return true;
+     } else return false;
+}
 
 function ClassPreferences() {
      // Class Preferences page hooks
@@ -15,6 +28,8 @@ function ClassPreferences() {
      const [preferredClasses, setPreferredClasses] = useState({1: [], 2: [], 3: []});
      const [allClasses, setAllClasses] = useState(null);
      const { user } = useAuth();
+     const [userAvailability, setUserAvailability] = useState(null);
+     const FIT_AVAILABILITY_TITLE = "Classes that Fit My Availability";
 
      // Modal hooks
      const [modalOpen, setModalOpen] = useState(false);
@@ -30,17 +45,20 @@ function ClassPreferences() {
      const filterPanelRef = useRef(null);
      const filterButtonRef = useRef(null);
      const [filterSet, setFilterSet] = useState(new Set());
+     const [ifFitAvailabilityShow, setIfFitAvailabilityShow] = useState(false);
+     const [fitAvailabilityClasses, setFitAvailabilityClasses] = useState(null);
 
      const openModal = () => {
           setModalOpen(true);
      };
 
-     const closeModal = () => {
+     const closeModal = (ifSave) => {
           setConfirmModalOpen(false);
           if (modalOpen) setModalOpen(false);
           else getCurrentUserPrefferedClasses();
           setChosenRank(0);
           resetFilter();
+          if (!ifSave) getCurrentUserPrefferedClasses();
      };
 
      const timeDifference = (end, start) => {
@@ -71,16 +89,35 @@ function ClassPreferences() {
      }, [chosenNumClasses, chosenRank]);
 
      useEffect(()=> {
-          if (numFilters == 0) {
+          setIfFitAvailabilityShow(filterSet.has(FIT_AVAILABILITY_TITLE));
+     }, [filterSet]);
+
+     useEffect(()=> {
+          if (numFilters === 0) {
                setDisplayClassPref(allClasses);
           } else {
+               if (filterSet.has(FIT_AVAILABILITY_TITLE)) return;
                let tempMap = new Map();
                for (let [cat, classes] of allClasses.entries()) {
                     if (filterSet.has(cat)) tempMap.set(cat, classes);
                }
-               setDisplayClassPref(tempMap);
+               setDisplayClassPref(new Map(tempMap));
           }
      }, [numFilters]);
+
+     useEffect(() => {
+          if (fitAvailabilityClasses || !allClasses || !userAvailability) return;
+          let tempMap = new Map();
+          for (let [cat, classes] of allClasses.entries()) {
+               tempMap.set(cat, []);
+               for (let i = 0; i < classes.length; i++) {
+                    for ( let j = 0; j < userAvailability.get(classes[i].day).length; j++ ) {
+                         if (ifFitAvailability(classes[i], userAvailability.get(classes[i].day)[j])) tempMap.get(cat).push(classes[i]);
+                    }
+               }
+          }
+          setFitAvailabilityClasses(new Map(tempMap));
+     }, [allClasses, userAvailability, fitAvailabilityClasses]);
 
      const getCurrentUserPrefferedClasses = async () => {
           const volunteerID = user.volunteer.volunteer_id;
@@ -106,20 +143,37 @@ function ClassPreferences() {
                res[3] = rank3;
                setPreferredClasses(res);
           } 
-          if (allClasses == null) {
-               // const [classData, classSchedules] = await Promise.all([getAllClasses(), getAllClassSchedules()]);
+          if (allClasses === null) {
                const allClassPreferences = await fetchAllClassPreferences();
                const classMap = new Map();
                allClassPreferences.forEach(element => {
-                    if (!classMap.has(element.category)) {
-                         classMap.set(element.category, [element]);
+                    const key = element.category ? element.category : "(Uncategorized Classes)";
+                    if (!classMap.has(key)) {
+                         classMap.set(key, [element]);
                     } else {
-                         classMap.get(element.category).push(element);
+                         classMap.get(key).push(element);
                     }
                });
                setAllClasses(classMap);
                setDisplayClassPref(classMap);
           }
+
+          const availability = await fetchVolunteerAvailability(volunteerID);
+          let availabilityMap = new Map([[1, []], [2, []], [3, []], [4, []], [5, []], [6, []], [7, []]]);
+          availability.sort((a, b) => {return compareTime(b.start_time, a.start_time) ? 1 : -1});
+          
+          for (let i = 0; i < availability.length; i++) {
+               const day = availability[i].day;
+               if (availabilityMap.get(day).length === 0) availabilityMap.get(day).push(availability[i]);
+               else {
+                    if (availabilityMap.get(day)[availabilityMap.get(day).length-1].end_time === availability[i].start_time) {
+                         availabilityMap.get(day)[availabilityMap.get(day).length-1].end_time = availability[i].end_time;
+                    } else {
+                         availabilityMap.get(day).push(availability[i]);
+                    }
+               }
+          }
+          setUserAvailability(availabilityMap);
      }; 
 
      function ifMatch(class_) {
@@ -141,8 +195,21 @@ function ClassPreferences() {
                     }
                }
           }
-          setDisplayClassPref(tempMap);
-          
+          setDisplayClassPref(tempMap);   
+     };
+
+     const onClassesAvailabity = () => {
+          const tempSet = new Set();
+          if (filterSet.has(FIT_AVAILABILITY_TITLE)) {
+               tempSet.delete(FIT_AVAILABILITY_TITLE);
+               setNumFilters(0);
+               setFilterSet(tempSet);
+               return;
+          }
+          tempSet.add(FIT_AVAILABILITY_TITLE);
+          setNumFilters(1);
+          setFilterSet(tempSet);
+          setDisplayClassPref(fitAvailabilityClasses);   
      };
 
      const resetFilter = ()=> {
@@ -151,7 +218,6 @@ function ClassPreferences() {
           setDisplayClassPref(allClasses);
           setSearchText("");
      };
-
 
      useEffect(() => {
           getCurrentUserPrefferedClasses();
@@ -177,14 +243,14 @@ function ClassPreferences() {
      }
 
 
-     function renderClasses (rank) {
-          if (preferredClasses == null || preferredClasses[rank].length === 0) {
+     function renderClasses(rank) {
+          if (preferredClasses === null || preferredClasses[rank].length === 0) {
             return <>You have not chosen class preferences...</>;
           }
           return (
                <>
                     {preferredClasses[rank].map((class_, index) => (
-                              <ClassPreferencesCard classData={class_} fullWith={false}></ClassPreferencesCard>
+                         <ClassPreferencesCard classData={class_} fullWith={false} key={index}></ClassPreferencesCard>
                     ))}
                </>
           );
@@ -203,11 +269,17 @@ function ClassPreferences() {
           return (<h2 className="modal-title">{modalTitle}</h2>);
      }
 
+
      function renderFilterItem(title) {
-          return (<>
-               <div className="filter-item">
+          return (
+               <div className="filter-item" >
                     <Checkbox onClicked={()=> {
                          let tempSet = new Set(filterSet);
+                         
+                         if (filterSet.has(FIT_AVAILABILITY_TITLE)) {
+                              tempSet.delete(FIT_AVAILABILITY_TITLE);
+                         }
+
                          if (tempSet.has(title)) {
                               tempSet.delete(title);
                               setNumFilters(Math.max(0, numFilters-1));
@@ -218,13 +290,18 @@ function ClassPreferences() {
                          setFilterSet(tempSet);
                     }} active={filterSet.has(title)}/> {title}
                </div>
-          </>);
+          );
      }
 
      function renderFilterPanel() {
-          return [...allClasses.keys()].map((key) => {
-               return (<> {renderFilterItem(key)} </>)
-          });
+          return <> 
+               <div className="filter-item">
+                    <Checkbox onClicked={onClassesAvailabity} active={ifFitAvailabilityShow}/> {FIT_AVAILABILITY_TITLE}
+               </div>
+               {([...allClasses.keys()].map((key) => {
+                    return (<div key={key}> {renderFilterItem(key)} </div>)
+               }))}
+          </>
      }
 
      function renderSearchBar() {
@@ -265,6 +342,9 @@ function ClassPreferences() {
      }
 
      const handleCheckboxClicked = async (class_) => {
+          const tempSet = new Set(filterSet)
+          tempSet.delete(FIT_AVAILABILITY_TITLE);
+          setFilterSet(tempSet);
           for (let i = 0; i < preferredClasses[chosenRank].length; i++) {
                if (preferredClasses[chosenRank][i].schedule_id === class_.schedule_id) {
                     preferredClasses[chosenRank].splice(i, 1);
@@ -288,7 +368,7 @@ function ClassPreferences() {
           return (
                <>
                     {classes.map((class_, index) => (
-                         <div className="class-container">
+                         <div className="class-container" key={index}>
                               <div className="class-container-col1">
                                    <Checkbox onClicked={()=>{handleCheckboxClicked(class_)}} active={ifClassIsPreferred(class_)}/>
                               </div>
@@ -306,7 +386,8 @@ function ClassPreferences() {
           );
      }
 
-     function renderSearchClasses() {
+     const renderSearchClasses = () => {
+          if (!displayClassPref) return null;
           return (
                <>
                     {[...displayClassPref.entries()].map(([key, value]) => (
@@ -323,7 +404,7 @@ function ClassPreferences() {
         
 
      function handleOK () {
-          closeModal();
+          closeModal(true);
      }
 
      function renderModal(rank) {
@@ -358,7 +439,7 @@ function ClassPreferences() {
                     res.push({schedule_id: preferredClasses[j][i].schedule_id, class_rank: preferredClasses[j][i].class_rank});
                }
           }
-          const result = await updateUserPreferredClasses(volunteerId, res);
+          await updateUserPreferredClasses(volunteerId, res);
 
           setAlertModalOpen(true);
      };
@@ -441,13 +522,13 @@ function ClassPreferences() {
                     <div className="confirm-modal-container">
                     Your Progress will be lost. Are you sure? 
                     <div >
-                         <button className="save-button" onClick={()=> closeModal()}>Yes</button>
+                         <button className="save-button" onClick={()=> closeModal(false)}>Yes</button>
                          <button className="cancel-button" onClick={()=> setConfirmModalOpen(false)}>No</button>
                     </div>
                     </div>
                </Modal>
 
-               <Modal isOpen={alertModalOpen} width={"fit-content"} height={"fit-content"}>
+               <Modal isOpen={alertModalOpen} width={"fit-content"} height={"fit-content"} onClose={() => {window.location.reload(true)}}>
                     <div className="alert-modal-content">Your preferences have been recorded!
                          <button className="save-button" onClick={()=> {window.location.reload(true)}}>Close</button>
                     </div>

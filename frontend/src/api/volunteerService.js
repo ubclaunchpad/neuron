@@ -85,7 +85,6 @@ export const fetchUserPreferredClasses = async (volunteer_id) => {
 export const fetchAllClassPreferences = async () => {
   try {
     const response = await api.get(`/volunteer/class-preferences/`);
-    console.log(response.data);
     return response.data; // Assuming API returns success or updated data
   } catch (error) {
     console.error('Error fetching all class preferences data:', error);

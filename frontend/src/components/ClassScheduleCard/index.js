@@ -1,5 +1,7 @@
 import "./index.css";
+import ProfileImg from "../ImgFallback";
 import zoom_icon from "../../assets/zoom.png";
+import { formatImageUrl } from "../../api/imageService";
 
 function ClassScheduleCard({ panelInfo, schedule, renderInstructorInfo }) {
 
@@ -11,19 +13,26 @@ function ClassScheduleCard({ panelInfo, schedule, renderInstructorInfo }) {
         }
         return (
         <div className="class-volunteers">
-            {schedule.volunteers.map((volunteer, idx) => (
-            <div
-                key={idx}
-                style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                }}
-            >
-                <div className="volunteer-profile"></div>
-                <div>{volunteer.f_name} {volunteer.l_name}</div>
-            </div>
-            ))}
+            {schedule.volunteers.map((volunteer, idx) => {
+                const name = volunteer.p_name ?? `${volunteer.f_name} ${volunteer.l_name}`
+                    return (
+                        <div
+                            key={idx}
+                            style={{
+                                display: "flex",
+                                flexDirection: "row",
+                                alignItems: "center",
+                            }}
+                            >
+                            <ProfileImg
+                                src={formatImageUrl(volunteer?.fk_image_id)}
+                                name={name}
+                                className="volunteer-profile"
+                            />
+                            <div>{name}</div>
+                        </div>
+                    )
+            })}
         </div>
         );
     };

@@ -1,15 +1,6 @@
 .panel-details-description {
-    margin-top: 0px;
     padding-bottom: 20px;
     border-bottom: 1px solid #e3e3e3;
-}
-
-.panel-description {
-    margin-top: 10px;
-    font-family: 'Roboto';
-    font-weight: 400;
-    font-size: 16px;
-    line-height: 21.6px;
 }
 
 .panel-schedules {

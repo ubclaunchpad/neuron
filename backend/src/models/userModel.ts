@@ -73,8 +73,7 @@ export default class UserModel {
         /* ONLY ALLOW UPDATE PASSWORD FROM UPDATE PASSWORD FUNCTION */
         if (userData.password) {
             throw {
-                status: 401,
-                error: "Unauthorized",
+                error: "Updating password in updateUser",
             };
         }
 

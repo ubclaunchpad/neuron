@@ -6,13 +6,17 @@ import {
 import { formatImageUrl } from "../../api/imageService";
 import ClassCategoryContainer from "../../components/ClassCategoryContainer";
 import DetailsPanel from "../../components/DetailsPanel";
+import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import "./index.css";
+import AdminClassForm from "../../components/AdminClassForm";
 
 function Classes() {
   const [completeClassData, setCompleteClassData] = useState(null);
   const [groupedByCategory, setGroupedByCategory] = useState({});
   const [selectedCategory, setSelectedCategory] = useState("Online Exercise");
   const [selectedClassId, setSelectedClassId] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [updates, setUpdates] = useState(0);
 
   const sectionRefs = useRef({});
   const observer = useRef(null);
@@ -49,7 +53,7 @@ function Classes() {
     };
 
     fetchClassesImagesAndSchedules();
-  }, []);
+  }, [updates]);
 
   useEffect(() => {
     if (completeClassData) {
@@ -128,35 +132,57 @@ function Classes() {
 
   return (
     <main className="content-container">
-      <div className="content-heading">
-        <h2 className="content-title">Classes</h2>
-      </div>
-      <div className="main-category-header">
-        {categories.map((category) => {
-          const isSelected = selectedCategory === category;
-          return (
-            <button
-              key={category}
-              className={`category-button ${isSelected ? "selected" : ""}`}
-              onClick={() => {
-                setSelectedCategory(category);
-                scrollToSection(category);
-              }}
-            >
-              {category}
-            </button>
-          );
-        })}
+      <div>
+        {editing ?
+          <div className="content-heading">
+            <button 
+                className="back-button"
+                onClick={() => setEditing(false)}
+              >
+                <img
+                  alt="Back"
+                  src={button_icon_prev}
+                  style={{ width: 18, height: 18 }}
+                />
+                <h2 className="content-title">Edit Class</h2>
+              </button>
+          </div> :
+          <div>
+          <div className="content-heading">
+            <h2 className="content-title">Classes</h2>
+          </div>
+          <div className="main-category-header">
+            {categories.map((category) => {
+              const isSelected = selectedCategory === category;
+              return (
+                <button
+                  key={category}
+                  className={`category-button ${isSelected ? "selected" : ""}`}
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    scrollToSection(category);
+                  }}
+                >
+                  {category}
+                </button>
+              );
+            })}
+          </div>
+        </div>}
       </div>
       <DetailsPanel
         classId={selectedClassId}
         classList={completeClassData}
+        updates={updates}
         setClassId={setSelectedClassId}
-      >
+        setEditing={setEditing}
+      > 
         <div className="classes-page">
           {/* ----- */}
-          <div className="class-catalog">
-            {Object.entries(groupedByCategory).map(([category, classData]) => {
+          <div className="classes-content">
+            {editing ? 
+            <AdminClassForm classId={selectedClassId} setUpdates={setUpdates} /> :
+            Object.entries(groupedByCategory).map(([category, classData]) => {
               return (
                 <ClassCategoryContainer
                   key={category}

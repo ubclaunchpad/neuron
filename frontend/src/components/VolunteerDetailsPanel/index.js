@@ -79,7 +79,7 @@ function VolunteerDetailsPanel({ classId, classList, setClassId, dynamicShiftBut
                 <div className="panel-details-shift-row">
                     <div className="panel-titles">Status</div>
                     {shiftDetails ? (
-                        <div className={shiftDetails.shift_type}>
+                        <div className={`panel-class-status ${shiftDetails.shift_type}`}>
                             {shiftDetails.shift_type === "my-shifts"
                             ? "My Class"
                             : shiftDetails.shift_type === "my-coverage-requests" &&
@@ -98,11 +98,11 @@ function VolunteerDetailsPanel({ classId, classList, setClassId, dynamicShiftBut
                             : ""}
                         </div>
                     ) : myClass ? (
-                        <div className="my-shifts">My Class</div>
+                        <div className="panel-class-status my-shifts">My Class</div>
                     ) : classTaken ? (
-                        <div className="classTaken">Class Taken</div>
+                        <div className="panel-class-status classTaken">Class Taken</div>
                     ) : (
-                        <div className="volunteersNeeded">Volunteers Needed</div>
+                        <div className="panel-class-status volunteersNeeded">Volunteers Needed</div>
                     )}
                 </div>
                 <div className="panel-details-shift-row">

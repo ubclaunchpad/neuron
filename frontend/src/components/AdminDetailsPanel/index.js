@@ -1,9 +1,17 @@
 import ClassScheduleCard from "../ClassScheduleCard";
 import "./index.css";
 
-function AdminDetailsPanel({ panelInfo, renderInstructorInfo }) {
+function AdminDetailsPanel({ panelInfo, renderInstructorInfo, setEditing }) {
     return (
         <div className="panel-details">
+            <div className="panel-edit-class">
+                <button
+                    className="edit-class-button"
+                    onClick={() => setEditing(true)}
+                >
+                    Edit Class
+                </button>
+            </div>
             <div className="panel-details-description">
                 <div className="panel-titles">Description</div>
                 <div className="panel-description">

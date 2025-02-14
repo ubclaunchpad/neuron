@@ -35,7 +35,7 @@
 
 .panel-header-date-details {
      font-family: var(--font-primary);
-     font-size: var(--medium-text);
+     font-size: 14px;
      color: var(--dark-grey);
      display: flex;
      flex-direction: column;
@@ -85,7 +85,7 @@
      min-width: 120px;
      font-family: 'Roboto';
      font-weight: 400;
-     font-size: 16px;
+     font-size: 14px;
      line-height: 21.6px;
      color: #808080;
 }
@@ -116,7 +116,7 @@
 .panel-details-shift-right {
      font-family: 'Roboto';
      font-weight: 400;
-     font-size: 16px;
+     font-size: 14px;
      display: flex; 
      align-items: center;
 }
@@ -133,7 +133,7 @@
      margin-top: 0.5rem;
      font-family: 'Roboto';
      font-weight: 400;
-     font-size: 16px;
+     font-size: 14px;
      line-height: 21.6px;
 }
 

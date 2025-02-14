@@ -8,7 +8,7 @@
     padding-bottom: 20px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
 .schedule-header-day {
@@ -16,5 +16,4 @@
     font-weight: 600;
     font-size: 18px;
     color: #0f1111;
-    margin-bottom: 6px;
 }

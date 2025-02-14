@@ -1,3 +1,25 @@
+.panel-edit-class {
+    margin-bottom: 20px;
+}
+
+.edit-class-button {
+    display: flex; 
+    flex-direction: row; 
+    align-items: center; 
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    border-radius: 8px;
+    border: 1px solid var(--primary-blue);
+    background: #FFF;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.edit-class-button:hover {
+    cursor: pointer;
+    background: var(--button-blue);
+}
+
 .panel-details-description {
     padding-bottom: 20px;
     border-bottom: 1px solid #e3e3e3;

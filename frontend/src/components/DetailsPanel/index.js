@@ -13,7 +13,9 @@ import VolunteerDetailsPanel from "../VolunteerDetailsPanel";
 function DetailsPanel({
   classId,
   classList,
+  updates,
   setClassId,
+  setEditing,
   children,
   dynamicShiftButtons = [],
   shiftDetails,
@@ -40,7 +42,7 @@ function DetailsPanel({
     } else {
       setPanelWidth("0px");
     }
-  }, [classId]);
+  }, [classId, updates]);
 
   const myClassCheck = async (data) => {
     const volunteers = data.schedules.flatMap(
@@ -158,6 +160,7 @@ function DetailsPanel({
             <AdminDetailsPanel
               panelInfo={panelInfo}
               renderInstructorInfo={renderInstructorInfo} 
+              setEditing={setEditing}
             /> :
             <VolunteerDetailsPanel
               classId={classId}

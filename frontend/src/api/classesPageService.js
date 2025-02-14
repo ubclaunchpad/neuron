@@ -44,4 +44,21 @@ const getClassById = (class_id) =>
       console.error(error);
     });
 
-export { getAllClasses, getClassById, getAllClassImages, getAllClassSchedules };
+const updateClass = (class_id, classData) =>
+  api
+    .put("/classes/" + class_id, classData)
+    .then((response) => {
+      console.log("RESPONSE", response)
+      return response.data;
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+
+export { 
+  getAllClasses, 
+  getClassById, 
+  getAllClassImages, 
+  getAllClassSchedules, 
+  updateClass 
+};

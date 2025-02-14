@@ -4,7 +4,8 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { v4 as uuidv4 } from "uuid";
-import { UserDB, VolunteerDB } from "../common/generated.js";
+import { UserDB, VolunteerDB } from "../common/databaseModels.js";
+import { Role } from "../common/interfaces.js";
 import { AuthenticatedRequest, RequestUser } from "../common/types.js";
 import connectionPool from "../config/database.js";
 import UserModel from "../models/userModel.js";
@@ -36,7 +37,17 @@ async function checkAuthorization(
 ): Promise<any> {
     const user = req.user;
     
-    const volunteer = await volunteerModel.getVolunteerByUserId(user!.user_id);
+    // If the volunteer is not verified, return an error
+    let volunteer;
+    if (user && user.role === Role.volunteer) {
+        volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
+        
+        if (!volunteer.active) {
+            return res.status(401).json({
+                error: "Unauthorized",
+            });
+        }
+    }
 
     return res.status(200).json({
         user: {
@@ -70,41 +81,42 @@ async function registerUser(
         // Create User
         await userModel.insertUser({
             user_id: user_id,
+            f_name: firstName,
+            l_name: lastName,
             email: email,
             password: digest,
-            role: role.toUpperCase(),
+            role: role,
         } as UserDB, transaction);
 
-        if (role == "volun") {
-            await volunteerModel.insertVolunteer({
-                volunteer_id: uuidv4(),
-                fk_user_id: user_id,
-                f_name: firstName,
-                l_name: lastName,
-                email: email,
-                active: false,
-            } as VolunteerDB, transaction);
-    
-            // Send a confirmation email
-            const mailOptions = {
-                from: '"Team Neuron" <neuronbc@gmail.com>',
-                to: email,
-                subject: "Neuron - Account Created",
-                html: `Hello ${firstName} ${lastName},<br><br>
-                        Your Neuron account has been created successfully.<br>
-                        Please wait for the team to verify your account. This usually takes around 3-4 hours.<br><br>
-                        Thank you!<br>
-                        Best,<br>
-                        Team Neuron`,
-            };
-    
-            // Send the mail
-            transporter.sendMail(
-                mailOptions,
-                function (mailError) {
-                    throw mailError;
-                }
-            );
+        switch (role) {
+            case Role.volunteer:
+                await volunteerModel.insertVolunteer({
+                    volunteer_id: uuidv4(),
+                    fk_user_id: user_id,
+                    active: false,
+                } as VolunteerDB, transaction);
+        
+                // Send a confirmation email
+                const mailOptions = {
+                    from: '"Team Neuron" <neuronbc@gmail.com>',
+                    to: email,
+                    subject: "Neuron - Account Created",
+                    html: `Hello ${firstName} ${lastName},<br><br>
+                            Your Neuron account has been created successfully.<br>
+                            Please wait for the team to verify your account. This usually takes around 3-4 hours.<br><br>
+                            Thank you!<br>
+                            Best,<br>
+                            Team Neuron`,
+                };
+        
+                // Send the mail, ignore errors, not an important email
+                await transporter.sendMail(mailOptions).catch();
+                break;
+
+            default: // Cant create admin/instructor currently
+                return res.status(401).json({
+                    error: "Unauthorized",
+                });
         }
 
         transaction.commit();
@@ -132,16 +144,17 @@ async function loginUser(req: Request, res: Response): Promise<any> {
 
     // If the password is incorrect, return an error
     if (!bcrypt.compareSync(password, user.password)) {
-        return res.status(400).json({
+        return res.status(403).json({
             error: "Incorrect password",
         });
     }
 
     // If the volunteer is not verified, return an error
-    if (user.role === 'VOLUN') {
+    if (user.role === Role.volunteer) {
         const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
+
         if (!volunteer.active) {
-            return res.status(400).json({
+            return res.status(403).json({
                 error: "Waiting for an admin to verify your account.\nYou can reach out to us at bwp@gmail.com",
             });
         }
@@ -149,9 +162,7 @@ async function loginUser(req: Request, res: Response): Promise<any> {
 
     // If the TOKEN_SECRET is not defined, return an error
     if (!TOKEN_SECRET) {
-        return res.status(500).json({
-            error: "Server configuration error: TOKEN_SECRET is not defined",
-        });
+        return res.status(500);
     }
 
     const secret = TOKEN_SECRET;
@@ -214,14 +225,10 @@ async function sendResetPasswordEmail(
     };
 
     // Send the mail
-    transporter.sendMail(mailOptions, async function (mailError, info) {
-        if (mailError) {
-            throw mailError;
-        }
+    await transporter.sendMail(mailOptions);
 
-        return res.status(200).json({
-            message: `Mail sent successfully`,
-        });
+    return res.status(200).json({
+        message: `Mail sent successfully`,
     });
 }
 
@@ -232,7 +239,9 @@ async function verifyUserWithIdAndToken(
     const user = await userModel.getUserById(id, true);
 
     if (!TOKEN_SECRET || !FRONTEND_HOST) {
-        throw {};
+        throw {
+            status: 500
+        };
     }
 
     // Verify if token is valid
@@ -294,7 +303,7 @@ async function updatePassword(
 
     // If the password is incorrect, return an error
     if (!bcrypt.compareSync(currentPassword, authInfo.password)) {
-        return res.status(400).json({
+        return res.status(403).json({
             error: "Incorrect password",
         });
     }

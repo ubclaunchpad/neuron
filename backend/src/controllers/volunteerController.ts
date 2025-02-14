@@ -19,7 +19,7 @@ async function getVolunteerById(req: AuthenticatedRequest, res: Response) {
     res.status(200).json(volunteers[0]);
 }
 
-async function getVolunteers(req: Request, res: Response) {
+async function getVolunteers(req: AuthenticatedRequest, res: Response) {
     const volunteers = await volunteerModel.getAllVolunteers();
 
     res.status(200).json(volunteers);

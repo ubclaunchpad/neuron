@@ -30,8 +30,8 @@ async function isAuthorized(
 
     // If the token is not provided, return an error message
     if (!token) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'token'",
+        return res.status(401).json({
+            error: "Unauthorized",
         });
     }
 

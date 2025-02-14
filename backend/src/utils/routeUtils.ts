@@ -41,10 +41,16 @@ export function registerRoutes(app: Express | Router, routes: RouteDefinition[])
                     );
                 } catch (err: any) {
                     /* Send specific errors to the frontend */
-                    if (err.status && err.message) {
-                        return res.status(err.status).json({
-                            error: err.message
-                        });
+                    if (err.status) {
+                        res.status(err.status)
+                        
+                        if (err.message) {
+                            res.json({
+                                error: err.message
+                            });
+                        }
+                        
+                        return res;
                     }
 
                     console.error(err);

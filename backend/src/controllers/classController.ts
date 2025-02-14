@@ -8,11 +8,6 @@ const classesModel = new ClassesModel();
 async function getAllClasses(req: AuthenticatedRequest, res: Response) {
 	const classes = await classesModel.getClasses();
 
-	throw {
-		status: 401,
-		message: 'Unauthorized'
-	};
-
 	res.status(200).json(classes);
 }
 

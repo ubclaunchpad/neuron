@@ -192,14 +192,31 @@ export default class VolunteerModel {
             FROM class_preferences
             JOIN schedule ON class_preferences.fk_schedule_id = schedule.schedule_id
             JOIN class ON schedule.fk_class_id = class.class_id
-            WHERE class_preferences.fk_volunteer_id = "51c75917-1cab-4c58-9150-b3c7a1e09b2c"; 
+            WHERE class_preferences.fk_volunteer_id = ?; 
         `;
         const values = [volunteer_id];
         const [results, _] = await connectionPool.query<any>(query, values);
         return results;
     }
 
-    async updatePreferredClassesById(volunteer_id: string, data: { class_id: number, class_rank: number }[] ): Promise<void> {
+    async getAllClassPreferences(): Promise<any> {
+
+        const query = `
+            SELECT 
+                s.schedule_id, s.fk_class_id, s.day, s.start_time, s.end_time, s.active, 
+                c.class_name, c.instructions, c.category, 
+                i.f_name, i.l_name
+            FROM schedule AS s
+            JOIN class AS c ON s.fk_class_id = c.class_id 
+            JOIN instructors AS i ON c.fk_instructor_id = i.instructor_id
+            WHERE s.active = 1; 
+        `;
+
+        const [results, _] = await connectionPool.query<any>(query, []);
+        return results;
+    }
+
+    async updatePreferredClassesById(volunteer_id: string, data: { schedule_id: number, class_rank: number }[] ): Promise<void> {
         const transaction = await connectionPool.getConnection();
    
         try {
@@ -210,7 +227,7 @@ export default class VolunteerModel {
             const query_insert = `INSERT INTO class_preferences VALUES (?, ?, ?);`;
 
             for (let i = 0; i < data.length; i++) {
-                const value_insert = [volunteer_id, data[i] .class_id, data[i] .class_rank];
+                const value_insert = [volunteer_id, data[i].schedule_id, data[i].class_rank];
                 await transaction.query<ResultSetHeader>(query_insert, value_insert);
             }
 

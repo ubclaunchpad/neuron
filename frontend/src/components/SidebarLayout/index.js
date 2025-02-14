@@ -86,18 +86,6 @@ function SidebarLayout() {
             <img src={nav_item_classes} alt="Classes" />
             {!collapsed && "Classes"}
           </NavLink>
-<<<<<<< HEAD:frontend/src/components/volunteerLayout/index.js
-          <NavLink
-            to="/volunteer/my-profile"
-            className={({ isActive }) =>
-              isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
-            }
-          >
-            <img src={nav_item_settings} alt="Settings" />
-            {!collapsed && "Settings"}
-          </NavLink>
-
-=======
           <Permission permissions={isVolunteer}>
             <NavLink
               to="/my-profile"
@@ -109,7 +97,6 @@ function SidebarLayout() {
               {!collapsed && "Settings"}
             </NavLink>
           </Permission>
->>>>>>> main:frontend/src/components/SidebarLayout/index.js
         </div>
         <div className="nav-profile-card-container">
           <NavProfileCard

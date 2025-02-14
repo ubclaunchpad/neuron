@@ -5,7 +5,7 @@ import { fetchUserPreferredClasses } from "../../../api/volunteerService";
 import ClassPreferencesCard from "../../ClassPreferencesCard";
 import { NavLink } from "react-router-dom";
 import empty_img from "../../../assets/no-class-preferences.png";
-import plus from "../../../assets/plus.png";
+import plus from "../../../assets/plus.jpg";
 
 function ClassPreferencesCardMP({volunteer}) {
 
@@ -83,10 +83,10 @@ function ClassPreferencesCardMP({volunteer}) {
 
     return (
         <div className="class-preferences-card">
-            <NavLink to="/volunteer/class-preferences">
+            <NavLink to="/class-preferences">
                     <img className="icon edit-icon" src={edit_icon} alt="Edit"/>
             </NavLink>
-            <h2 className="my-profile-title">My Class Preferences</h2>
+            <h2 className="my-profile-title">My Preferences</h2>
             <div className="class-preferences-content">
                 {renderPreferredClasses()}
             </div>

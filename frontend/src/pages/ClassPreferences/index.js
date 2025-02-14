@@ -1,11 +1,10 @@
 import "./index.css";
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import edit_icon from "../../assets/edit-icon.png";
 import filter_icon from "../../assets/filter-icon.png";
 import search_icon from "../../assets/search-icon.png";
 import { useAuth } from "../../contexts/authContext";
-import { fetchUserPreferredClasses, updateUserPreferredClasses} from "../../api/volunteerService";
-import { getAllClasses, getAllClassSchedules, getClassById} from "../../api/classesPageService";
+import { fetchUserPreferredClasses, fetchAllClassPreferences, updateUserPreferredClasses} from "../../api/volunteerService";
 import ClassPreferencesCard from "../../components/ClassPreferencesCard";
 import Modal from "../../components/Modal";
 import Checkbox from "../../components/Checkbox";
@@ -25,16 +24,23 @@ function ClassPreferences() {
      const [numFilters, setNumFilters] = useState(0);
      const [confirmModalOpen, setConfirmModalOpen] = useState(false);
      const [alertModalOpen, setAlertModalOpen] = useState(false);
+     const [displayClassPref, setDisplayClassPref] = useState(null);
+     const [searchText, setSearchText] = useState("");
+     const [showFilterPanel, setShowFilterPanel] = useState(false);
+     const filterPanelRef = useRef(null);
+     const filterButtonRef = useRef(null);
+     const [filterSet, setFilterSet] = useState(new Set());
 
-     
      const openModal = () => {
           setModalOpen(true);
      };
+
      const closeModal = () => {
           setConfirmModalOpen(false);
           if (modalOpen) setModalOpen(false);
           else getCurrentUserPrefferedClasses();
           setChosenRank(0);
+          resetFilter();
      };
 
      const timeDifference = (end, start) => {
@@ -62,7 +68,19 @@ function ClassPreferences() {
 
      useEffect(()=> {
           setModalTitle(rankName(chosenRank) + " (" + chosenNumClasses + ")");
-     }, [chosenNumClasses, chosenRank])
+     }, [chosenNumClasses, chosenRank]);
+
+     useEffect(()=> {
+          if (numFilters == 0) {
+               setDisplayClassPref(allClasses);
+          } else {
+               let tempMap = new Map();
+               for (let [cat, classes] of allClasses.entries()) {
+                    if (filterSet.has(cat)) tempMap.set(cat, classes);
+               }
+               setDisplayClassPref(tempMap);
+          }
+     }, [numFilters]);
 
      const getCurrentUserPrefferedClasses = async () => {
           const volunteerID = user.volunteer.volunteer_id;
@@ -89,45 +107,68 @@ function ClassPreferences() {
                setPreferredClasses(res);
           } 
           if (allClasses == null) {
-               const [classData, classSchedules] = await Promise.all([getAllClasses(), getAllClassSchedules()]);
-
+               // const [classData, classSchedules] = await Promise.all([getAllClasses(), getAllClassSchedules()]);
+               const allClassPreferences = await fetchAllClassPreferences();
                const classMap = new Map();
-               for (let i = 0; i < classData.length; i++) {
-                    classMap.set(classData[i].class_id, classData[i]);
-               }
-
-               for (let i = 0; i <  classSchedules.length; i++) {
-                    if (classMap.get(classSchedules[i].fk_class_id)["start_times"] === undefined) {
-                         classMap.get(classSchedules[i].fk_class_id)["start_times"] = (classSchedules[i].start_time);
-                         classMap.get(classSchedules[i].fk_class_id)["end_times"] = (classSchedules[i].end_time);
-                         classMap.get(classSchedules[i].fk_class_id)["duration"] = timeDifference(classSchedules[i].end_time, classSchedules[i].start_time);
+               allClassPreferences.forEach(element => {
+                    if (!classMap.has(element.category)) {
+                         classMap.set(element.category, [element]);
+                    } else {
+                         classMap.get(element.category).push(element);
                     }
-               }
-
-               let classData_ = [];
-               classMap.forEach((value, key) => {
-                    if (value["start_times"] === undefined) {
-                         value["start_times"] = "";
-                         value["end_times"] = "";
-                         value["duration"] = "";
-                    }
-                    classData_.push(value);
                });
-               
-               let res = classData_.reduce((map, obj) => {
-                    if (!map.has(obj.category)) {
-                      map.set(obj.category, []);
-                    }
-                    map.get(obj.category).push(obj);
-                    return map;
-               }, new Map());
-               setAllClasses(res);
+               setAllClasses(classMap);
+               setDisplayClassPref(classMap);
           }
      }; 
 
+     function ifMatch(class_) {
+          if   (class_.class_name.toLowerCase().includes(searchText.toLowerCase().trim()) ||
+               class_.f_name.toLowerCase().includes(searchText.toLowerCase().trim()) ||
+               class_.l_name.toLowerCase().includes(searchText.toLowerCase().trim()) 
+          ) return true;
+          return false;
+     }
+
+     const onSearch = () => {
+          if (searchText.length === 0) return;
+          let tempMap = new Map();
+          for (let [cat, classes] of allClasses.entries()) {
+               tempMap.set(cat, []);
+               for (let i = 0; i < classes.length; i++) {
+                    if (ifMatch(classes[i])) {
+                         tempMap.get(cat).push(classes[i]);
+                    }
+               }
+          }
+          setDisplayClassPref(tempMap);
+          
+     };
+
+     const resetFilter = ()=> {
+          setNumFilters(0);
+          setFilterSet(new Set());
+          setDisplayClassPref(allClasses);
+          setSearchText("");
+     };
+
+
      useEffect(() => {
           getCurrentUserPrefferedClasses();
-     }, [allClasses]);
+     }, []);
+
+     useEffect(() => {
+          const handleClickOutside = (event) => {
+               if ((filterPanelRef.current && !filterPanelRef.current.contains(event.target)) && (filterButtonRef.current && !filterButtonRef.current.contains(event.target))) {
+                    setShowFilterPanel(false);
+               }
+          };
+      
+          document.addEventListener("mousedown", handleClickOutside);
+          return () => {
+               document.removeEventListener("mousedown", handleClickOutside);
+          };
+     }, []);
 
      function rankName(rank) {
           if (rank === 1) return "Most Preferred";
@@ -162,24 +203,58 @@ function ClassPreferences() {
           return (<h2 className="modal-title">{modalTitle}</h2>);
      }
 
+     function renderFilterItem(title) {
+          return (<>
+               <div className="filter-item">
+                    <Checkbox onClicked={()=> {
+                         let tempSet = new Set(filterSet);
+                         if (tempSet.has(title)) {
+                              tempSet.delete(title);
+                              setNumFilters(Math.max(0, numFilters-1));
+                         } else {
+                              tempSet.add(title);
+                              setNumFilters(numFilters+1);
+                         }
+                         setFilterSet(tempSet);
+                    }} active={filterSet.has(title)}/> {title}
+               </div>
+          </>);
+     }
+
+     function renderFilterPanel() {
+          return [...allClasses.keys()].map((key) => {
+               return (<> {renderFilterItem(key)} </>)
+          });
+     }
+
      function renderSearchBar() {
           return (
                <>
                     <div className="search-bar-container">
                          <div className="search-bar">
-                              <button className="search-button">
+                              <button className="search-button" onClick={onSearch}>
                                    <img src={search_icon} alt="Search Icon"/>
                               </button>
-                              <input placeholder="Search by class name or instructor"></input>
+                              <input 
+                                   placeholder="Search by class name or instructor"
+                                   type="text"
+                                   value={searchText}
+                                   onChange={(e) => setSearchText(e.target.value)} 
+                              />
                          </div>
-                         <button className="filter-button">
+                         <button ref={filterButtonRef} className="filter-button" onClick={()=> {setShowFilterPanel(!showFilterPanel)}}>
                               <img src={filter_icon} alt="Filter icon"/>
                          </button>
+                         {showFilterPanel && (
+                              <div className="filter-panel" ref={filterPanelRef}>
+                                   {renderFilterPanel()}
+                              </div>
+                         )}
                     </div>
 
                     <div className="modal-info-bar">
                          <div>Selected ({chosenNumClasses})</div>
-                         <div>Clear Filters ({numFilters})</div>
+                         <button onClick={resetFilter}>Clear Filters ({numFilters})</button>
                     </div>
                </> 
           );
@@ -191,21 +266,20 @@ function ClassPreferences() {
 
      const handleCheckboxClicked = async (class_) => {
           for (let i = 0; i < preferredClasses[chosenRank].length; i++) {
-               if (preferredClasses[chosenRank][i].class_id === class_.class_id) {
+               if (preferredClasses[chosenRank][i].schedule_id === class_.schedule_id) {
                     preferredClasses[chosenRank].splice(i, 1);
                     setChosenNumClasses(preferredClasses[chosenRank].length);
                     return;
                }
           }
-          const classDataById = await getClassById(class_.class_id);
-          classDataById.class_rank = chosenRank;
-          preferredClasses[chosenRank].push(classDataById);
+          class_.class_rank = chosenRank;
+          preferredClasses[chosenRank].push(class_);
           setChosenNumClasses(preferredClasses[chosenRank].length);
      }
 
      function ifClassIsPreferred(class_) {
           for (let i = 0; i < preferredClasses[chosenRank].length; i ++) {
-               if (class_.class_id === preferredClasses[chosenRank][i].class_id) return true;
+               if (class_.schedule_id === preferredClasses[chosenRank][i].schedule_id) return true;
           }
           return false;
      }
@@ -219,8 +293,8 @@ function ClassPreferences() {
                                    <Checkbox onClicked={()=>{handleCheckboxClicked(class_)}} active={ifClassIsPreferred(class_)}/>
                               </div>
                               <div className="class-container-col2">
-                                   <h2>{formatTime(class_.start_times)}</h2>
-                                   <h3>{class_.duration}</h3>
+                                   <h2>{formatTime(class_.start_time)}</h2>
+                                   <h3>{timeDifference(class_.end_time, class_.start_time)}</h3>
                               </div>
                               <div className="class-container-col3">
                                    <div className="class-container-col3-name">{class_.class_name}</div>
@@ -235,17 +309,18 @@ function ClassPreferences() {
      function renderSearchClasses() {
           return (
                <>
-                    {[...allClasses.entries()].map(([key, value]) => (
-                         <>
-                              <div key={key}>{renderClassCategory(key)}</div> 
-                              <div>
-                                   {renderClassesInCat(value)}
-                              </div>
-                         </>
+                    {[...displayClassPref.entries()].map(([key, value]) => (
+                         (value && (Array.isArray(value) ? value.length > 0 : true)) ? (
+                         <div key={key}>
+                              <div>{renderClassCategory(key)}</div>
+                              <div>{renderClassesInCat(value)}</div>
+                         </div>
+                         ) : null
                     ))}
                </>
           );
      }
+        
 
      function handleOK () {
           closeModal();
@@ -280,7 +355,7 @@ function ClassPreferences() {
           let res = [];
           for (let j = 1; j < 4; j++) {
                for (let i = 0; i < preferredClasses[j].length; i++) {
-                    res.push({class_id: preferredClasses[j][i].class_id, class_rank: preferredClasses[j][i].class_rank});
+                    res.push({schedule_id: preferredClasses[j][i].schedule_id, class_rank: preferredClasses[j][i].class_rank});
                }
           }
           const result = await updateUserPreferredClasses(volunteerId, res);
@@ -291,7 +366,7 @@ function ClassPreferences() {
      return (
           <main className="content-container">
                <div className="content-heading">
-                    <h2 className="content-title">Class Preferences</h2>
+                    <h2 className="content-title">Class - Schedule Preferences</h2>
                     <button className="logout-button" onClick={() => {
                          localStorage.removeItem("neuronAuthToken");
                          window.location.href = "/auth/login";

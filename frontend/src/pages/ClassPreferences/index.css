@@ -1,11 +1,17 @@
 @import '../../styles.css';  /*Imports custom fonts*/
 
+.content-container {
+     overflow: scroll;
+}
+
 .parent-container {
      padding: 32px;
      border-radius: 8px;
      border: 1px solid #D9D9D9;
      box-shadow: 0px 4px 16px 0px #0F11110D;
+     margin: 0 32px;
      margin-bottom: 40px;
+     overflow: auto;
 }
 .parent-container-header {
      display: flex;
@@ -109,6 +115,7 @@
      height: 40px;
      padding: 0;
      margin-top: 28px;
+     position: relative;
 }
 
 .search-bar {
@@ -131,7 +138,7 @@
      background: transparent;
 } 
 
-.search-button:hover > img, .filter-button:hover > img {
+.search-button:hover > img {
      transform: scale(1.5);
      filter: brightness(0.5);
 } 
@@ -155,7 +162,7 @@
 
 .filter-button {
      width: 48px;
-     height: 40px;
+     height: 42px;
      cursor: pointer;
      display: flex;
      justify-content: center;
@@ -167,11 +174,13 @@
      margin-right: 0;
      background: var(--white);
 }
+.filter-button:hover {
+     filter: brightness(0.8);
+}
 
 .filter-button > img {
      width: 16px;
      height: 16px;
-     transition: 0.2s ease-in-out transform;
 }
 
 .modal-info-bar {
@@ -180,10 +189,18 @@
      justify-content: space-between;
 }
 
-.modal-info-bar > div {
+.modal-info-bar > div, .modal-info-bar > button {
      font-family: var(--font-primary);
      font-size: 16px;
      font-weight: 400;
+     background: var(--white);
+     border: none;
+}
+
+.modal-info-bar > button:hover {
+     text-decoration: underline;
+     font-weight: 500;
+     cursor: pointer;
 }
 
 .class-cat {
@@ -291,4 +308,27 @@
      flex-direction: column;
      justify-content: center;
      gap: 24px;
+}
+
+.filter-panel {
+     position: absolute;
+     width: auto;
+     height: auto;
+     max-height: 500px;
+     overflow: scroll;
+     top: calc(100% + 2px);
+     right: 0;
+     border-radius: 8px;
+     border: 1px solid var(--primary-blue);
+     padding: 16px;
+     background-color: var(--white);
+     z-index: 10;
+}
+
+.filter-item {
+     display: flex;
+     flex-direction: row;
+     gap: 12px;
+     padding: 16px;
+
 }

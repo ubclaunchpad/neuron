@@ -7,6 +7,7 @@ import {
     shiftCheckIn,
     updateVolunteer,
     getPreferredClassesById,
+    getAllClassPreferences,
     updatePreferredClassesById
 } from "../controllers/volunteerController.js";
 
@@ -85,6 +86,11 @@ export const VolunteerRoutes: RouteDefinition = {
         {
             path: '/class-preferences',
             children: [
+                {
+                    path: '/',
+                    method: 'get',
+                    action: getAllClassPreferences
+                },
                 {
                     path: '/:volunteer_id',
                     validation: [

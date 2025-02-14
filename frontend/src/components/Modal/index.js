@@ -1,7 +1,7 @@
 import "./index.css";
-import React, {useEffect} from "react";
+import React from "react";
 import ReactDOM from "react-dom";
-import close_button from "../../assets/images/button-icons/button-icon-close.png";
+import close_button from "../../assets/images/button-icons/button-close-icon.png";
 
 function Modal ({ isOpen, onClose, children, width, height }) {
 
@@ -12,7 +12,7 @@ function Modal ({ isOpen, onClose, children, width, height }) {
      return ReactDOM.createPortal(
           <div className="modal-overlay" >
                <div className="modal-content" style={{width: width, height: height}}>
-                    <img className="close-button" onClick={onClose} src={close_button}/>
+                    <img alt="Close Icon" className="close-button" onClick={onClose} src={close_button}/>
                     {children}
                </div>
           </div>,

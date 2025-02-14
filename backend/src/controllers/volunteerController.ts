@@ -66,6 +66,17 @@ async function getPreferredClassesById(req: Request, res: Response) {
     }
 }
 
+async function getAllClassPreferences(req: Request, res: Response) {
+    try {
+        const all_preferred_classes = await volunteerModel.getAllClassPreferences();
+        res.status(200).json(all_preferred_classes);
+    } catch (error: any) {
+        return res.status(error.status ?? 500).json({
+			error: error.message
+		});
+    }
+}
+
 async function updatePreferredClassesById (req: Request, res: Response) {
     const { volunteer_id } = req.params;
     const data = req.body;
@@ -83,7 +94,7 @@ async function updatePreferredClassesById (req: Request, res: Response) {
     try {
         await volunteerModel.updatePreferredClassesById(volunteer_id, data);
 
-        res.status(200).json({msg: "Successfully updated class Preferences"});
+        res.status(200).json({msg: "Successfully updated class preferences"});
     } catch (error: any) {
         return res.status(error.status ?? 500).json({
 			error: error.message
@@ -97,6 +108,7 @@ export {
     shiftCheckIn, 
     updateVolunteer,
     getPreferredClassesById,
+    getAllClassPreferences,
     updatePreferredClassesById
 };
 

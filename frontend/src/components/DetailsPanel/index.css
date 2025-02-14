@@ -31,7 +31,6 @@
      border-bottom: 1px solid #e3e3e3;
      display: flex;
      flex-direction: column;
-     gap: 20px;
 }
 
 .panel-header-date-details {
@@ -41,12 +40,14 @@
      display: flex;
      flex-direction: column;
      gap: 4px;
+     margin-bottom: 20px;
 }
 
 .panel-class-schedules {
      display: flex;
      flex-direction: column;
      gap: 6px;
+     margin-bottom: 20px;
 }
 
 .panel-header-class-name {

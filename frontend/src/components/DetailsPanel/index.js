@@ -130,9 +130,11 @@ function DetailsPanel({
                 </div>
               </span>
             ) : (
-              <div className="panel-class-schedules">
-                {renderSchedules()}
-              </div>
+              // admin side shows full schedules in panel details
+              !isAdmin &&
+                <div className="panel-class-schedules">
+                  {renderSchedules()}
+                </div>
             )}
             <div className="panel-header-class-name">
               {panelInfo?.class_name || "N/A"}

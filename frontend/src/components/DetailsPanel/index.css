@@ -99,7 +99,7 @@
 .panel-details-shift {
      display: flex;
      flex-direction: column;
-     gap: 16px;
+     gap: 12px;
 }
 
 .panel-details-shift-row {

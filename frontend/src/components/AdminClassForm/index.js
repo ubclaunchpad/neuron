@@ -9,9 +9,9 @@ import "./index.css";
 
 const ClassSchema = Yup.object().shape({
     class_name: Yup.string().required("Please fill out this field."),
-    category: Yup.string().required("Please fill out this field."),
-    subcategory: Yup.string().required("Please fill out this field."),
-    instructions: Yup.string().required("Please fill out this field."),
+    category: Yup.string(),
+    subcategory: Yup.string(),
+    instructions: Yup.string(),
 });
 
 // Custom styles
@@ -46,6 +46,8 @@ function AdminClassForm({ classId, setUpdates }) {
                 .finally(() => {
                     setLoading(false);
                 });
+        } else {
+            setLoading(false);
         }
     }, [classId]);
 
@@ -102,6 +104,9 @@ function AdminClassForm({ classId, setUpdates }) {
                                     errors={errors}
                                     touched={touched}
                                 />
+                                {errors["class_name"] && touched["class_name"] && (
+                                    <div className="invalid-message">{errors["class_name"]}</div>
+                                )}
                             </div>
 
                             <div className="input-row">
@@ -115,7 +120,7 @@ function AdminClassForm({ classId, setUpdates }) {
                                         defaultValue={{value: values.category, label: values.category}}
                                         styles={{
                                             control: () => ({
-                                                width: 'fill',
+                                                width: 'stretch',
                                                 padding: '12px 32px 12px 16px',
                                                 borderRadius: '8px',
                                                 border: '1px solid #cccccc',

@@ -33,11 +33,18 @@
 
 input {
     width: stretch;
-    min-width: 0px;
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 14px;
     padding: 12px 16px;
+}
+
+.invalid-message {
+    width: stretch;
+    text-align: right;
+    color: #FF0000;
+    margin-top: 4px;
+    font-size: 12px;
 }
 
 input:focus {

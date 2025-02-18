@@ -485,6 +485,9 @@ export default class ScheduleModel {
     }
 
     private async unassignVolunteers(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
+        if (scheduleIds.length === 0) {
+            return;
+        }
         const query = `DELETE FROM volunteer_schedule WHERE fk_schedule_id IN (?)`;
         const values = [scheduleIds];
         await transaction.query<ResultSetHeader>(query, values);

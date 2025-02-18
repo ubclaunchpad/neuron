@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Formik, FieldArray } from "formik";
 import * as Yup from "yup";
 import { CgSelect } from "react-icons/cg";
-import camera_icon from "../../assets/camera.png";
+import camera_icon from "../../assets/upload.png";
 import Select from 'react-select';
 import { getClassById, updateClass, updateSchedules } from "../../api/classesPageService";
 import notyf from "../../utils/notyf";
@@ -282,27 +282,24 @@ function AdminClassForm({ classId, setUpdates }) {
                                 />
                             </div>
                         </div>
-                        <div className="flex-col-input">
-                            <label className="class-form-label">
-                                Description
-                            </label>
-                            <textarea
-                                className="class-form-textarea"
-                                name="instructions"
-                                placeholder="Enter Description Here"
-                                rows="6"
-                                value={values.instructions}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                errors={errors}
-                                touched={touched}
-                                style={{
-                                    maxWidth: '-webkit-fill-available',
-                                    maxHeight: '300px'
-                                }}
-                            />
-                        </div>
+                        
                         <div className="input-row">
+                            <div className="flex-col-input description-input">
+                                <label className="class-form-label">
+                                    Description
+                                </label>
+                                <textarea
+                                    className="class-form-textarea"
+                                    name="instructions"
+                                    placeholder="Enter Description Here"
+                                    rows="6"
+                                    value={values.instructions}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    errors={errors}
+                                    touched={touched}
+                                />
+                            </div>
                             <div className="flex-col-input image-input">
                                 <label className="class-form-label">
                                     Class Image
@@ -317,15 +314,13 @@ function AdminClassForm({ classId, setUpdates }) {
                                         className="class-image"
                                         src={image ?? `https://api.dicebear.com/9.x/initials/svg?seed=Jan-Smailbegovic`}
                                         alt="Class"
-                                        width={40}
-                                        height={40}
                                         onError={(e) => {
                                             console.log(e);
                                         }}
                                     />
                                     <div className="overlay">
-                                        <img src={camera_icon} alt="Edit Profile" className="camera-icon" />
-                                        <p className="edit-text">Edit</p>
+                                        <img src={camera_icon} alt="Edit Profile" className="upload-icon" />
+                                        <p className="edit-text">Browse Images</p>
                                     </div>
                                     <input
                                         className="file-input"
@@ -344,41 +339,40 @@ function AdminClassForm({ classId, setUpdates }) {
                                     
                                 </div>
                             </div>
-                            <div className="dates-input">
-                                <div className="flex-col-input">
-                                    <label className="class-form-label">
-                                        Start Date
-                                    </label>
-                                    <input 
-                                        className="class-form-input"
-                                        type="date"
-                                        label="Start Date"
-                                        name="start_date"
-                                        value={values.start_date}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        errors={errors}
-                                        touched={touched}
-                                    />
-                                </div>
-                                <div className="flex-col-input">
-                                    <label className="class-form-label">
-                                        End Date
-                                    </label>
-                                    <input 
-                                        className="class-form-input"
-                                        type="date"
-                                        label="End Date"
-                                        name="end_date"
-                                        value={values.end_date}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        errors={errors}
-                                        touched={touched}
-                                    />
-                                </div>
+                        </div>
+                        <div className="dates-input">
+                            <div className="flex-input">
+                                <label className="class-form-label">
+                                    Start Date
+                                </label>
+                                <input 
+                                    className="class-form-input"
+                                    type="date"
+                                    label="Start Date"
+                                    name="start_date"
+                                    value={values.start_date}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    errors={errors}
+                                    touched={touched}
+                                />
                             </div>
-                            
+                            <div className="flex-input">
+                                <label className="class-form-label">
+                                    End Date
+                                </label>
+                                <input 
+                                    className="class-form-input"
+                                    type="date"
+                                    label="End Date"
+                                    name="end_date"
+                                    value={values.end_date}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    errors={errors}
+                                    touched={touched}
+                                />
+                            </div>
                         </div>
                     </div>
                     <FieldArray

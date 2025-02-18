@@ -142,17 +142,16 @@
     gap: 8px;
 }
 
-.dates-input {
-    flex: 1;
-    width: stretch;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+.description-input {
+    flex: 2;
 }
 
 .class-form-textarea {
     width: stretch;
-    min-width: 0px;
+    height: stretch;
+    min-height: 18px;
+    max-height: 400px;
+    resize: vertical;
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 14px;
@@ -196,7 +195,7 @@ textarea:focus {
     opacity: 0; /* Hidden by default */
 }
 
-.camera-icon {
+.upload-icon {
     width: 3vw;
     height: 3vw;
     filter: invert(1);
@@ -215,12 +214,17 @@ textarea:focus {
     display: none;
 }
 
+.dates-input {
+    width: stretch;
+    display: flex;
+    gap: 20px;
+}
+
 .schedules-input {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
-
 
 .days-input {
     width: stretch;

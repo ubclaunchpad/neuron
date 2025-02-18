@@ -45,20 +45,16 @@ const getClassById = (class_id) =>
     });
 
 const updateClass = (class_id, classData) =>
-  api
-    .put("/classes/" + class_id, classData)
-    .then((response) => {
-      console.log("RESPONSE", response)
-      return response.data;
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+  api.put("/classes/" + class_id, classData)
+
+const updateSchedules = (class_id, schedules) =>
+  api.put("/schedules/" + class_id, schedules)
 
 export { 
   getAllClasses, 
   getClassById, 
   getAllClassImages, 
   getAllClassSchedules, 
-  updateClass 
+  updateClass,
+  updateSchedules
 };

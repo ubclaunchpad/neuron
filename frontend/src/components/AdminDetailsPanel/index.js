@@ -20,8 +20,9 @@ function AdminDetailsPanel({ panelInfo, renderInstructorInfo, setEditing }) {
             </div>
             <div className="panel-schedules">
                 {panelInfo?.schedules.length > 0 ? 
-                    panelInfo.schedules.map((schedule) => (
+                    panelInfo.schedules.map((schedule, index) => (
                         <ClassScheduleCard 
+                            key={index}
                             panelInfo={panelInfo} 
                             schedule={schedule}
                             renderInstructorInfo={renderInstructorInfo} 

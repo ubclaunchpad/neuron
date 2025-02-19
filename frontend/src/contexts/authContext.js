@@ -1,77 +1,35 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import api from "../api/api";
-import { checkAuth } from "../api/authService";
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { checkAuth } from '../api/authService';
 
 const AuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
-
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isVolunteer, setIsVolunteer] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [user, setUser] = useState(undefined);
-  
-  // Local state
-  const [loading, setLoading] = useState(true);
-
-  // Function to check authentication and update state
-  const doCheckAuth = async () => {
-    try {
-      const authResponse = await checkAuth();
-
-      switch (authResponse.user.role) {
-        case "volunteer":
-          setIsVolunteer(true);
-          break;
-        case "admin":
-          setIsAdmin(true);
-          break;
-        default:
-          break;
-      }
-
-      setUser(authResponse.user);
-      setIsAuthenticated(true);
-    } catch (error) {
-      setUser(undefined);
-      setIsVolunteer(false);
-      setIsAdmin(false);
-      setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [isVolunteer, setIsVolunteer] = useState(false);
 
   useEffect(() => {
-    doCheckAuth();
-    console.log(isVolunteer)
+    const authenticate = async () => {
+      try {
+        const authResponse = await checkAuth();
+        setIsAuthenticated(!!authResponse);
+        setIsAdmin(authResponse?.user?.role === 'admin');
+        setIsVolunteer(!!authResponse?.volunteer?.volunteer_id);
+      } catch (error) {
+        console.error('Authentication failed:', error);
+        setIsAuthenticated(false);
+        setIsAdmin(false);
+        setIsVolunteer(false);
+      }
+    };
+    authenticate();
   }, []);
 
-  const login = async (credentials) => {
-    const response = await api.post("/auth/login", credentials)
-      .catch(err => {
-        setIsAuthenticated(false);
-        throw err;
-      });
-  
-    localStorage.setItem("neuronAuthToken", response.data.token);
-    setTimeout(() => {
-      doCheckAuth();
-    }, 1500);
-  };
-
-  const logout = () => {
-    localStorage.clear("neuronAuthToken");
-    setIsAuthenticated(false);
-  };
-
-  const updateUser = updatedUser => setUser(updatedUser);
-
   return (
-    <AuthContext.Provider value={{ isVolunteer, isAdmin, user, updateUser, isAuthenticated, login, logout }}>
-      {/* Loading state as to not lose url, TODO: make it prettier, use gmail as an example of a full page loader */}
-      {loading ? <></> : children}
-    </AuthContext.Provider>
+      <AuthContext.Provider value={{ isAuthenticated, isAdmin, isVolunteer }}>
+        {children}
+      </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);

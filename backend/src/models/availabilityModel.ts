@@ -54,22 +54,22 @@ export default class AvailabilityModel {
 
       // Get exisitng availabilities and conform them to our Availability type
       const existingAvailabilities = (await this.getAvailabilityByVolunteerId(volunteer_id))
-        .map((availability: AvailabilityDB) => ({
-          day: availability.day,
-          start_time: availability.start_time.slice(0, 5),
-          end_time: availability.end_time.slice(0, 5),
-          availability_id: availability.availability_id,
-          fk_volunteer_id: availability.fk_volunteer_id
-        } as AvailabilityDB));
+          .map((availability: AvailabilityDB) => ({
+            day: availability.day,
+            start_time: availability.start_time.slice(0, 5),
+            end_time: availability.end_time.slice(0, 5),
+            availability_id: availability.availability_id,
+            fk_volunteer_id: availability.fk_volunteer_id
+          } as AvailabilityDB));
 
       const availabilityIdsToDelete: Set<number> = new Set();
       const availabilitiesToSkip: Set<AvailabilityDB> = new Set();
 
       // Helper function to check if two availabilities are an exact match
       const isExactMatch = (a: AvailabilityDB, b: AvailabilityDB) => (
-        a.day === b.day &&
-        a.start_time === b.start_time &&
-        a.end_time === b.end_time
+          a.day === b.day &&
+          a.start_time === b.start_time &&
+          a.end_time === b.end_time
       );
 
       existingAvailabilities.forEach((existing: AvailabilityDB) => {
@@ -100,9 +100,9 @@ export default class AvailabilityModel {
 
       await transaction.commit();
     } catch (error) {
-        // Rollback
-        await transaction.rollback();
-        throw error;
+      // Rollback
+      await transaction.rollback();
+      throw error;
     }
   }
 }

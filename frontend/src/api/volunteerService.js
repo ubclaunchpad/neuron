@@ -1,8 +1,13 @@
-import api from './api';
+import axios from 'axios';
+
+export const getVolunteerShiftsForMonth = async (month) => {
+  const response = await axios.get(`/volunteer/shifts/${month}`);
+  return response.data;
+};
 
 export const fetchVolunteerData = async (volunteer_id) => {
   try {
-    const response = await api.get(`/volunteer/${volunteer_id}`);
+    const response = await axios.get(`/volunteer/${volunteer_id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching volunteer data:', error);
@@ -12,7 +17,7 @@ export const fetchVolunteerData = async (volunteer_id) => {
 
 export const fetchUserData = async (user_id) => {
   try {
-    const response = await api.get(`/user/${user_id}`);
+    const response = await axios.get(`/user/${user_id}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching volunteer data:', error);
@@ -22,7 +27,7 @@ export const fetchUserData = async (user_id) => {
 
 export const updateVolunteerData = async (volunteerData, volunteer_id) => {
   try {
-    const response = await api.put(`/volunteer/${volunteer_id}`, volunteerData);
+    const response = await axios.put(`/volunteer/${volunteer_id}`, volunteerData);
     return response.data;
   } catch (error) {
     console.error('Error updating volunteer data:', error);
@@ -32,7 +37,7 @@ export const updateVolunteerData = async (volunteerData, volunteer_id) => {
 
 export const uploadProfilePicture = async (userId, profilePicData) => {
   try {
-    const response = await api.post(`/user/${userId}/upload`, profilePicData, {
+    const response = await axios.post(`/user/${userId}/upload`, profilePicData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
@@ -44,7 +49,7 @@ export const uploadProfilePicture = async (userId, profilePicData) => {
 
 export const fetchVolunteerAvailability = async (volunteer_id) => {
   try {
-    const response = await api.get(`/volunteer/availability/${volunteer_id}`);
+    const response = await axios.get(`/volunteer/availability/${volunteer_id}`);
     return response.data; // Assuming API returns an array of time slots
   } catch (error) {
     console.error('Error fetching volunteer availability:', error);
@@ -54,7 +59,7 @@ export const fetchVolunteerAvailability = async (volunteer_id) => {
 
 export const setVolunteerAvailability = async (volunteer_id, availability) => {
   try {
-    const response = await api.post(`/volunteer/availability/${volunteer_id}`, availability);
+    const response = await axios.post(`/volunteer/availability/${volunteer_id}`, availability);
     return response.data; // Assuming API returns success or updated data
   } catch (error) {
     console.error('Error setting volunteer availability:', error);
@@ -64,7 +69,7 @@ export const setVolunteerAvailability = async (volunteer_id, availability) => {
 
 export const updateVolunteerAvailability = async (volunteer_id, availability) => {
   try {
-    const response = await api.put(`/volunteer/availability/${volunteer_id}`, availability);
+    const response = await axios.put(`/volunteer/availability/${volunteer_id}`, availability);
     return response.data; // Assuming API returns success or updated data
   } catch (error) {
     console.error('Error updating volunteer availability:', error);

@@ -6,6 +6,7 @@ import { useAuth } from "./contexts/authContext";
 import AdminVerify from "./pages/AdminVerify";
 import Classes from "./pages/Classes";
 import VolunteerSchedule from "./pages/Schedule";
+import AdminSchedule from "./pages/AdminSchedule";
 import VolunteerDash from "./pages/VolunteerDash";
 import VolunteerForgotPassword from "./pages/VolunteerForgotPassword";
 import VolunteerLogin from "./pages/VolunteerLogin";
@@ -39,7 +40,7 @@ function App() {
             <Route element={<SidebarLayout />}>
               <Route index element={<VolunteerDash />} />
               <Route path="classes" element={<Classes />} />
-              <Route path="schedule" element={<VolunteerSchedule />} />
+              <Route path="schedule" element={<AdminSchedule />} />
 
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
                 <Route path="my-profile" element={<VolunteerProfile />} />

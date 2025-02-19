@@ -171,7 +171,7 @@ function VolunteerSchedule() {
             setSelectedDate={setSelectedDate}
           />
           <hr />
-          <ShiftStatusToolbar setFilter={setFilter} filter={filter} />
+          <ShiftStatusToolbar setFilter={setFilter} filter={filter} userType="volunteer" />
           <hr />
           <div ref={scheduleContainerRef} className="schedule-container">
             {Object.keys(groupedShifts).length > 0 ? (

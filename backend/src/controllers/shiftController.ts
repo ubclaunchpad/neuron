@@ -43,6 +43,19 @@ async function getShiftsByVolunteerIdAndMonth(req: Request, res: Response) {
     res.status(200).json(shifts);
 }
 
+// get all shifts available for the month for admin view
+async function getAllShiftsByMonth(req: Request, res: Response) {
+    const shift: ShiftDB = req.body;
+    
+    const date = new Date(shift.shift_date + 'T00:00:00'); // Adding time to avoid timezone issues
+    const month: number = new Date(date).getMonth() + 1;
+    const year: number = new Date(shift.shift_date).getFullYear();
+
+    const shifts = await shiftModel.getAllShiftsByMonth(month, year);
+
+    res.status(200).json(shifts);
+}
+
 // volunteer requesting to cover someone else’s open shift
 async function requestToCoverShift(req: Request, res: Response) {
     const { request_id, volunteer_id } = req.body;
@@ -87,6 +100,6 @@ async function deleteShift(req: Request, res: Response) {
 
 export {
     addShift, deleteShift, getShiftInfo, getShiftsByDate, getShiftsByVolunteerId, getShiftsByVolunteerIdAndMonth,
-    requestToCoverShift, updateShift
+    getAllShiftsByMonth,requestToCoverShift, updateShift
 };
 

@@ -38,6 +38,18 @@ const getVolunteerShiftsForMonth = async (body) => {
     }
 }
 
+const getAllShiftsByMonth = async (body) => {
+    try {
+        const response = await api.post('shifts/admin-shift-month', {
+            shift_date: body.shiftDate 
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching shift info:', error);
+        throw error;  
+    }
+}
+
 // Creates a request to cover a shift by a volunteer.
 const requestToCoverShift = async (body) => {
     try {
@@ -57,5 +69,6 @@ const requestToCoverShift = async (body) => {
 export {
     getShiftInfo,
     getVolunteerShiftsForMonth,
-    requestToCoverShift
+    requestToCoverShift, 
+    getAllShiftsByMonth
 };

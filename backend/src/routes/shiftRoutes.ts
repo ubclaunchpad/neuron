@@ -8,6 +8,7 @@ import {
     getShiftsByVolunteerId,
     getShiftsByDate,
     getShiftsByVolunteerIdAndMonth,
+    getAllShiftsByMonth,
     checkInShift, 
     requestCoverShift, 
     withdrawCoverShift, 
@@ -69,6 +70,19 @@ export const ShiftRoutes: RouteDefinition = {
                 body('fk_volunteer_id').isUUID('4')
             ],
             action: getShiftsByVolunteerIdAndMonth
+        },
+        {
+            // Retrieves all shifts viewable to an admin in a given month and year.
+            // -- The shifts include:
+            // -- 1. 'needs_coverage' - shifts that need coverage
+            // -- 2. 'pending_fulfill' - shifts with pending coverage requests
+            // -- 3. 'requested_coverage' - shifts with requested coverage that have not yet been fulfilled
+            path: '/admin-shift-month',
+            method: 'post',
+            validation: [
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' }) // Added validation
+            ],
+            action: getAllShiftsByMonth
         },
         {
             path: '/check-in/:shift_id',

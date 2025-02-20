@@ -169,13 +169,13 @@ textarea:focus {
 
 .image-content {
     width: stretch;
+    aspect-ratio: 1 / 1;
     position: relative;
 }
 
 .class-image {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    aspect-ratio: 1 / 1;
     border-radius: 8px;
 }
 
@@ -184,7 +184,7 @@ textarea:focus {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    aspect-ratio: 1 / 1;
     border-radius: 8px;
     background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent overlay */
     color: #fff;
@@ -193,17 +193,35 @@ textarea:focus {
     justify-content: center;
     align-items: center;
     opacity: 0; /* Hidden by default */
+    cursor: pointer;
+}
+
+.upload-content {
+    width: stretch;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    border: 2px dashed #D9D9D9;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
 }
 
 .upload-icon {
-    width: 3vw;
-    height: 3vw;
-    filter: invert(1);
+    width: 48px;
+    height: 48px;
 }
 
-.edit-text {
-    margin: 0;
-    font-size: 14px;
+.edit-button {
+    margin-top: 12px;
+    border: none;
+    color: #fff;
+    width: fit-content;
+    border-radius: 8px;
+    padding: 12px 16px;
+    background-color: #1A7DB7;
+    cursor: pointer;
 }
 
 .image-content:hover .overlay {
@@ -212,12 +230,6 @@ textarea:focus {
 
 .file-input {
     display: none;
-}
-
-.dates-input {
-    width: stretch;
-    display: flex;
-    gap: 20px;
 }
 
 .schedules-input {

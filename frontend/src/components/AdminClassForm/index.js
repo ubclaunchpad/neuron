@@ -4,9 +4,10 @@ import * as Yup from "yup";
 import { CgSelect } from "react-icons/cg";
 import camera_icon from "../../assets/upload.png";
 import Select from 'react-select';
-import { getClassById, updateClass, updateSchedules } from "../../api/classesPageService";
+import { getClassById, updateClass, updateSchedules, uploadClassImage } from "../../api/classesPageService";
 import notyf from "../../utils/notyf";
 import "./index.css";
+import { formatImageUrl } from "../../api/imageService";
 
 const inputPrompt = "Please fill out this field.";
 
@@ -113,9 +114,13 @@ function AdminClassForm({ classId, setUpdates }) {
         if (classId) {
             getClassById(classId)
                 .then((data) => {
+                    // format date and times to be valid html inputs
                     formatDates(data)
                     formatTimes(data)
-                    console.log(data)
+
+                    // get class image url
+                    const imageUrl = formatImageUrl(data.fk_image_id);
+                    setImage(imageUrl);
                     
                     setClassData(data);
                 })
@@ -150,6 +155,10 @@ function AdminClassForm({ classId, setUpdates }) {
                     const requests = [];
                     requests.push(updateClass(classId, classData));
                     requests.push(updateSchedules(classId, values.schedules));
+
+                    const imageData = new FormData();
+                    imageData.append('image', image.blob);
+                    requests.push(uploadClassImage(classId, imageData));
 
                     Promise.all(requests)
                         .then(() => {
@@ -310,17 +319,17 @@ function AdminClassForm({ classId, setUpdates }) {
                                         document.getElementById('fileInput').click()
                                     }}
                                 >
-                                    <img
+                                    {image && <img
                                         className="class-image"
-                                        src={image ?? `https://api.dicebear.com/9.x/initials/svg?seed=Jan-Smailbegovic`}
+                                        src={image.src}
                                         alt="Class"
                                         onError={(e) => {
                                             console.log(e);
                                         }}
-                                    />
-                                    <div className="overlay">
+                                    />}
+                                    <div className={image ? "overlay" : "upload-content"}>
                                         <img src={camera_icon} alt="Edit Profile" className="upload-icon" />
-                                        <p className="edit-text">Browse Images</p>
+                                        <button type="button" className="edit-button">Browse Images</button>
                                     </div>
                                     <input
                                         className="file-input"
@@ -328,19 +337,22 @@ function AdminClassForm({ classId, setUpdates }) {
                                         type="file" 
                                         accept="image/*" 
                                         onChange={(event) => {
-                                            const image = event.target.files[0];
+                                            const targetImage = event.target.files[0];
                                             const reader = new FileReader();
                                             reader.onload = () => {
-                                                setImage(reader.result);
+                                                setImage({
+                                                    src: reader.result,
+                                                    blob: targetImage
+                                                });
                                             };
-                                            reader.readAsDataURL(image);
+                                            reader.readAsDataURL(targetImage);
                                         }} 
                                     />
                                     
                                 </div>
                             </div>
                         </div>
-                        <div className="dates-input">
+                        <div className="input-row">
                             <div className="flex-input">
                                 <label className="class-form-label">
                                     Start Date

@@ -1,7 +1,7 @@
 use neuron;
 
 -- Paste all 'create' SQL commands here
-DROP TABLE IF EXISTS volunteer_class;
+DROP TABLE IF EXISTS volunteer_schedule;
 DROP TABLE IF EXISTS availability;
 DROP TABLE IF EXISTS class_preferences;
 DROP TABLE IF EXISTS pending_shift_coverage;
@@ -71,11 +71,12 @@ create table volunteers (
     p_name VARCHAR(45),
     total_hours INT NOT NULL DEFAULT 0,
     bio VARCHAR(150),
-    active BOOLEAN DEFAULT FALSE,
+    active BOOLEAN NOT NULL DEFAULT FALSE,
     pronouns VARCHAR(15),
     phone_number VARCHAR(15),
     city VARCHAR(15),
     province VARCHAR(15),
+    p_time_ctmt INT NOT NULL DEFAULT 0,
     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
         ON DELETE CASCADE
 );
@@ -90,10 +91,10 @@ create table availability (
         ON DELETE CASCADE
 );
 
-CREATE TABLE volunteer_class (
-    fk_volunteer_id VARCHAR(255),
-    fk_class_id INT,
-    PRIMARY KEY (fk_volunteer_id, fk_class_id),
+CREATE TABLE volunteer_schedule (
+    fk_volunteer_id VARCHAR(255) NOT NULL,
+    fk_schedule_id INT NOT NULL,
+    PRIMARY KEY (fk_volunteer_id, fk_schedule_id),
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
         ON DELETE CASCADE,
     FOREIGN KEY (fk_schedule_id) REFERENCES schedule(schedule_id)
@@ -106,20 +107,21 @@ create table schedule (
     day INT NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
         ON DELETE CASCADE
 );
 
 CREATE TABLE shifts (
     shift_id INT PRIMARY KEY AUTO_INCREMENT,
-    fk_volunteer_id VARCHAR(255), -- now nullable to reperesent an unassigned shift
-    fk_schedule_id INT,
+    fk_volunteer_id VARCHAR(255) NOT NULL, -- shifts always belong to a volunteer
+    fk_schedule_id INT NOT NULL, -- shifts always belong to a schedule
     shift_date DATE NOT NULL,
     duration INT NOT NULL,
-    checked_in BOOLEAN DEFAULT FALSE,
+    checked_in BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
         ON DELETE CASCADE,
-    FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
+    FOREIGN KEY (fk_schedule_id) REFERENCES schedule(schedule_id)
         ON DELETE CASCADE
 );
 

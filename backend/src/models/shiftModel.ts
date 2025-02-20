@@ -1,18 +1,18 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
-import { ScheduleDB, ShiftDB } from '../common/generated.js';
+import { ScheduleDB, ShiftDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
 
 export default class ShiftModel {
 
      // get all the details of a shift
-     async getShiftInfo(fk_volunteer_id:string, fk_schedule_id:number, shift_date:string): Promise<ShiftDB> {
+     async getShiftInfo(fk_volunteer_id: string, fk_schedule_id: number, shift_date: string): Promise<ShiftDB> {
           const query = `
                SELECT 
                     s.duration,
                     sc.start_time,
                     sc.end_time,
-                    v.l_name AS volunteer_l_name,
-                    v.f_name AS volunteer_f_name,
+                    u.l_name AS volunteer_l_name,
+                    u.f_name AS volunteer_f_name,
                     intrs.l_name AS instructor_l_name,
                     intrs.f_name AS instructor_f_name, 
                     cl.class_name
@@ -23,6 +23,8 @@ export default class ShiftModel {
                JOIN 
                     neuron.volunteers v ON s.fk_volunteer_id = v.volunteer_id
                JOIN 
+                    neuron.users u ON u.user_id = v.fk_user_id
+               JOIN 
                     neuron.class cl ON sc.fk_class_id = cl.class_id
                JOIN
                     neuron.instructors intrs on intrs.instructor_id = cl.fk_instructor_id
@@ -32,7 +34,7 @@ export default class ShiftModel {
                     AND s.shift_date = ?;               
           `;
           const values = [fk_volunteer_id, fk_schedule_id, shift_date];
-          
+
           const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results[0];
@@ -42,7 +44,7 @@ export default class ShiftModel {
      async getShiftsByVolunteerId(volunteer_id: string): Promise<ShiftDB[]> {
           const query = "SELECT * FROM shifts WHERE fk_volunteer_id = ?";
           const values = [volunteer_id];
-          
+
           const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results;
@@ -52,7 +54,7 @@ export default class ShiftModel {
      async getShiftsByDate(date: string): Promise<ShiftDB[]> {
           const query = "SELECT * FROM shifts WHERE shift_date = ?";
           const values = [date];
-          
+
           const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results;
@@ -63,16 +65,28 @@ export default class ShiftModel {
           const query = `
                CALL GetShiftsByVolunteerIdAndMonth(?, ?, ?);
           `;
-          
+
           const values = [volunteer_id, month, year];
-          
+
           const [results, _] = await connectionPool.query<any>(query, values);
 
           return results[0]; // Value from procedure stored in the first value of the array
-      }
+     }
 
-      // create a new entry in the pending_shift_coverage table
-     async requestToCoverShift(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
+     // modify a shift to indicate that a volunteer has checked in
+     async updateShiftCheckIn(shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               UPDATE shifts SET checked_in = 1 WHERE shift_id = ?
+          `;
+          const values = [shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
+     // create a new entry in the pending_shift_coverage table
+     async insertCoverShift(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
           const query = `
                INSERT INTO pending_shift_coverage (request_id, pending_volunteer)
                VALUES (?, ?)
@@ -84,9 +98,56 @@ export default class ShiftModel {
           return results;
      }
 
+     // delete corresponding entry in pending_shift_coverage table
+     async deleteCoverShift(request_id: number, volunteer_id: number): Promise<ResultSetHeader> {
+          const query = `
+               DELETE FROM pending_shift_coverage WHERE request_id = ? AND pending_volunteer = ?
+          `;
+          const values = [request_id, volunteer_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          // Check if it was successfully deleted or not
+          if (results.affectedRows === 0) {
+               throw new Error("Cover shift request not found or already approved");
+          }
+
+          return results;
+     }
+
+     // create a new entry in the shift_coverage_request table
+     async insertShiftCoverageRequest(shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               INSERT INTO shift_coverage_request (fk_shift_id)
+               VALUES (?)
+          `;
+          const values = [shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
+     // delete corresponding entry in shift_coverage_request table
+     async deleteShiftCoverageRequest(request_id: number, shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               DELETE FROM shift_coverage_request WHERE request_id = ? AND fk_shift_id = ? AND covered_by IS NULL
+          `;
+          const values = [request_id, shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          // Check if it was successfully deleted or not
+          if (results.affectedRows === 0) {
+               throw new Error("Shift coverage request not found or already fulfilled");
+          }
+
+          return results;
+     }
+
      private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number): string[] {
           const result: string[] = [];
-      
+
           let start = new Date(classTimeline.start_date);
           const end = new Date(classTimeline.end_date);
 
@@ -95,38 +156,38 @@ export default class ShiftModel {
           startDateAndTime.setHours(hours, minutes);
 
           const now = new Date();
-          
+
           // if start is earlier than right now
           if (startDateAndTime < now) {
                start = now;
 
                // if schedule starts today at exactly now or at an earlier time than now, we need to skip this week
-               if (dayNumber === now.getDay() && 
-                    startDateAndTime.getHours() <= now.getHours() && 
+               if (dayNumber === now.getDay() &&
+                    startDateAndTime.getHours() <= now.getHours() &&
                     startDateAndTime.getMinutes() <= now.getMinutes()) {
 
                     start.setDate(start.getDate() + 7);
                }
                // NOTE: if the schedule starts today at a later time than now, all the shifts today will still be scheduled
           }
-     
+
           // find the first occurrence of the given day
           while (start.getDay() !== dayNumber) {
                start.setDate(start.getDate() + 1);
           }
-     
+
           // collect all occurrences of the given day until the end date
           while (start <= end) {
                result.push(start.toISOString().split('T')[0]); // store as YYYY-MM-DD
                start.setDate(start.getDate() + 7);
           }
-      
+
           return result;
      }
 
      // convert time in HH:MM format to minutes
      private getDurationInMinutes(startTime: string, endTime: string): number {
-          
+
           const timeToMinutes = (time: string): number => {
                const [hours, minutes] = time.split(':').map(Number);
                return hours * 60 + minutes;

@@ -13,6 +13,7 @@ import VolunteerLogin from "./pages/VolunteerLogin";
 import VolunteerProfile from "./pages/VolunteerProfile";
 import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import VolunteerSignup from "./pages/VolunteerSignup";
+import VolunteerNotVerified from "./pages/VolunteerNotVerified";
 
 function App() {
   const [isVolunteer, setIsVolunteer] = useState(false);
@@ -49,6 +50,7 @@ function App() {
           <Route path="/auth/login" element={<VolunteerLogin />} />
           <Route path="/auth/forgot-password" element={<VolunteerForgotPassword />} />
           <Route path="/auth/reset-password" element={<VolunteerResetPassword />} />
+          <Route path="/auth/not-verified" element={<VolunteerNotVerified />} />
 
           {/* Volunteer Routes */}
           <Route

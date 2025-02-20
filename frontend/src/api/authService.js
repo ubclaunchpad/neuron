@@ -36,9 +36,14 @@ const login = (data) =>
     api
         .post("/auth/login", data)
         .then((response) => {
+            console.log("response obtained to login");
             return response.data;
         })
         .catch((error) => {
+            // Check if error is due to unverified account
+            if (error.response?.data?.error?.includes("Waiting for an admin to verify your account")) {
+                window.location.href = "/auth/not-verified";
+            }
             throw error;
         });
 

@@ -2,11 +2,18 @@ import { NextFunction, Request, Response } from "express";
 import { ValidationChain } from "express-validator";
 import { UserDB } from "./databaseModels.js";
 
-export type AuthenticatedUserRequest = Request & {
-    user?: UserDB
+export type AuthenticatedRequest = Request & {
+    user?: RequestUser
 }
 
-// Interface for the decoded data from the JWT
+/**
+ * UserDB with password excluded
+ */
+export type RequestUser = Pick<UserDB, Exclude<keyof UserDB, "password">>;
+
+/**
+ * Interface for the decoded data from a JWT
+ */
 export interface DecodedJwtPayload {
     user_id: string;
 }

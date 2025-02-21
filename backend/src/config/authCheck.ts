@@ -1,10 +1,11 @@
 import dotenv from "dotenv";
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { Role } from "../common/interfaces.js";
 import {
-    AuthenticatedUserRequest,
+    AuthenticatedRequest,
     DecodedJwtPayload,
+    RequestUser
 } from "../common/types.js";
 import UserModel from "../models/userModel.js";
 
@@ -17,17 +18,20 @@ const TOKEN_SECRET = process.env.TOKEN_SECRET;
 const userModel = new UserModel();
 
 async function isAuthorized(
-    req: AuthenticatedUserRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 ): Promise<any> {
     // Get the token from the request body
-    const { token } = req.body;
+    const bearer = req.headers.authorization;
+
+    // Grab token from "Bearer {token}"
+    const token = bearer?.match(/Bearer (.+)/)?.[1];
 
     // If the token is not provided, return an error message
     if (!token) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'token'",
+        return res.status(401).json({
+            error: "Unauthorized",
         });
     }
 
@@ -44,7 +48,7 @@ async function isAuthorized(
         const result = await userModel.getUserById(decoded.user_id);
 
         // Attach the user to the request
-        req.user = result;
+        (req as AuthenticatedRequest).user = result as RequestUser;
 
         // Call the next function
         next();
@@ -56,7 +60,7 @@ async function isAuthorized(
 }
 
 async function isAdmin(
-    req: AuthenticatedUserRequest,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction
 ): Promise<any> {

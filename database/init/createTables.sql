@@ -23,7 +23,8 @@ create table users (
     l_name VARCHAR(60) NOT NULL,
     email VARCHAR(45) NOT NULL UNIQUE,
     fk_image_id VARCHAR(36),
-    password VARCHAR(60) NOT NULL,
+    email VARCHAR(45) NOT NULL,
+    password CHAR(60) BINARY NOT NULL,
     role ENUM('volunteer', 'admin', 'instructor') NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)

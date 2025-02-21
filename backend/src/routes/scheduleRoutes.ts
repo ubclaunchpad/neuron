@@ -9,6 +9,7 @@ import {
     getActiveSchedulesForClass, 
     updateSchedulesForClass
 } from '../controllers/scheduleController.js';
+import { Frequency } from '../common/interfaces.js';
 
 export const ScheduleRoutes: RouteDefinition = {
     path: '/schedules',
@@ -37,6 +38,7 @@ export const ScheduleRoutes: RouteDefinition = {
                         body('*.day').isInt({ min: 0, max: 6 }),
                         body('*.start_time').isTime({ hourFormat: 'hour24' }),
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
+                        body('*.frequency').isIn(Object.values(Frequency)),
                         body('*.volunteer_ids').isArray({ min: 1 }).optional(),
                         body('*.volunteer_ids.*').isUUID('4')
                     ],
@@ -51,6 +53,7 @@ export const ScheduleRoutes: RouteDefinition = {
                         body('*.day').isInt({ min: 0, max: 6 }),
                         body('*.start_time').isTime({ hourFormat: 'hour24' }),
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
+                        body('*.frequency').isIn(Object.values(Frequency)),
                         body('*.volunteer_ids').isArray({ min: 0 }).optional(),
                         body('*.volunteer_ids.*').isUUID('4')
                     ],

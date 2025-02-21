@@ -1,6 +1,7 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import { ScheduleDB, ShiftDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
+import { Frequency } from '../common/interfaces.js';
 
 export default class ShiftModel {
 
@@ -145,7 +146,18 @@ export default class ShiftModel {
           return results;
      }
 
-     private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number): string[] {
+     private getDaysToAdd(frequency: Frequency) {
+          switch (frequency) {
+               case Frequency.weekly:
+                    return 7;
+               case Frequency.biweekly:
+                    return 14;
+               default:
+                    throw new Error("Invalid frequency.");
+          }
+     }
+
+     private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number, frequency: Frequency): string[] {
           const result: string[] = [];
 
           let start = new Date(classTimeline.start_date);
@@ -176,10 +188,17 @@ export default class ShiftModel {
                start.setDate(start.getDate() + 1);
           }
 
+          // if schedule only occurs once, then only add one date
+          if (frequency === Frequency.once) {
+               result.push(start.toISOString().split('T')[0]);
+               return result;
+          }
+
+          const daysToAdd = this.getDaysToAdd(frequency);
           // collect all occurrences of the given day until the end date
           while (start <= end) {
                result.push(start.toISOString().split('T')[0]); // store as YYYY-MM-DD
-               start.setDate(start.getDate() + 7);
+               start.setDate(start.getDate() + daysToAdd);
           }
 
           return result;
@@ -216,7 +235,7 @@ export default class ShiftModel {
                     return;
                }
 
-               const dates = this.getRecurringDates(classTimeline, schedule.start_time, schedule.day);
+               const dates = this.getRecurringDates(classTimeline, schedule.start_time, schedule.day, schedule.frequency);
                const duration = this.getDurationInMinutes(schedule.start_time, schedule.end_time);
 
                schedule.volunteer_ids.forEach((volunteer_id: any) => {

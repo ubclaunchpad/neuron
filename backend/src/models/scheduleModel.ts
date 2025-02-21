@@ -89,6 +89,7 @@ export default class ScheduleModel {
                 day: schedule.day,
                 start_time: schedule.start_time,
                 end_time: schedule.end_time,
+                frequency: schedule.frequency,
                 volunteer_ids: schedule.volunteer_ids
             }
         });

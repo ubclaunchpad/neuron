@@ -8,6 +8,7 @@ import { getClassById, updateClass, updateSchedules, uploadClassImage } from "..
 import notyf from "../../utils/notyf";
 import "./index.css";
 import { formatImageUrl } from "../../api/imageService";
+import { getAllInstructors } from "../../api/instructorService";
 
 const categories = [
     { value: 'Online Exercise', label: 'Online Exercise' },
@@ -47,6 +48,7 @@ const classFields = [
 const inputPrompt = "Please fill out this field.";
 
 const ClassSchema = Yup.object().shape({
+    fk_instructor_id: Yup.string().required(inputPrompt),
     class_name: Yup.string().required(inputPrompt),
     instructions: Yup.string().optional(),
     zoom_link: Yup.string().url('Invalid URL format').required(inputPrompt),
@@ -94,6 +96,7 @@ function AdminClassForm({ classId, setUpdates }) {
         schedules: [],
     });
     const [image, setImage] = useState(null);
+    const [instructors, setInstructors] = useState([]);
 
     useEffect(() => {
         const formatDates = (data => {
@@ -113,25 +116,32 @@ function AdminClassForm({ classId, setUpdates }) {
             })
         }
 
-        if (classId) {
-            getClassById(classId)
-                .then((data) => {
-                    // format date and times to be valid html inputs
-                    formatDates(data)
-                    formatTimes(data)
+        const fetchData = async () => {
+            const classData = await getClassById(classId);
+            formatDates(classData)
+            formatTimes(classData)
 
-                    // get class image url
-                    const imageUrl = formatImageUrl(data.fk_image_id);
-                    setImage({ src: imageUrl });
-                    
-                    setClassData(data);
-                })
-                .catch((error) => {
-                    console.error(error);
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
+            // get class image url
+            const imageUrl = formatImageUrl(classData.fk_image_id);
+            setImage({ src: imageUrl });
+            
+            setClassData(classData);
+            
+            const instructorData = await getAllInstructors();
+            const instructors = instructorData.map((instructor) => {
+                return {
+                    value: instructor.instructor_id,
+                    label: instructor.f_name + ' ' + instructor.l_name
+                }
+            })
+            console.log(instructorData);
+            console.log(instructors);
+            setInstructors(instructors);
+            setLoading(false);
+        }
+
+        if (classId) {
+            fetchData();
         } else {
             setLoading(false);
         }
@@ -148,7 +158,7 @@ function AdminClassForm({ classId, setUpdates }) {
                 validationSchema={ClassSchema}
                 onSubmit={(values, { setSubmitting }) => {
                     console.log("VALUES:", values)
-                    // remove confirmPassword from the payload
+
                     const classData = Object.fromEntries(
                         Object.entries(values).filter(([key]) => classFields.includes(key))
                     );
@@ -390,6 +400,64 @@ function AdminClassForm({ classId, setUpdates }) {
                                 />
                             </div>
                         </div>
+                        <div className="input-row">
+                            <div className="flex-input">
+                                <label className="class-form-label">
+                                    Instructor
+                                </label>
+                                <Select
+                                    className="select"
+                                    defaultValue={instructors.find(i => i.value === values.fk_instructor_id) || { label: 'Select', value: null }}
+                                    styles={{
+                                        control: () => ({
+                                            width: 'stretch',
+                                            padding: '12px 32px 12px 16px',
+                                            borderRadius: '8px',
+                                            border: '1px solid #cccccc',
+                                            cursor: 'pointer'
+                                        }),
+                                        valueContainer: (styles) => ({
+                                            ...styles,
+                                            padding: '0px'
+                                        }),
+                                        input: (styles) => ({
+                                            ...styles,
+                                            margin: '0px 2px'
+                                        }),
+                                        
+                                    }}
+                                    options={instructors}
+                                    isSearchable={true}
+                                    components={
+                                        {
+                                            DropdownIndicator: () => 
+                                                <CgSelect className="select-icon"/>,
+                                            IndicatorSeparator: () => null,
+                                            Option: (props) => {
+                                                const {innerProps, innerRef} = props;
+                                                return (
+                                                    <div {...innerProps} ref={innerRef} className="select-item">
+                                                        {props.data.label}
+                                                    </div>
+                                                )
+                                            },
+                                            Menu: (props) => {
+                                                const {innerProps, innerRef} = props;
+                                                return (
+                                                    <div {...innerProps} ref={innerRef}
+                                                    className="select-menu">
+                                                        {props.children}
+                                                    </div>
+                                                )
+                                            }
+                                        }
+                                    }
+                                    onChange={(e) => {
+                                        setFieldValue(`fk_instructor_id`, e.value);
+                                    }}
+                                />
+                            </div>
+                        </div>
                     </div>
                     <FieldArray
                         name="schedules"    
@@ -427,7 +495,7 @@ function AdminClassForm({ classId, setUpdates }) {
                                             Frequency
                                         </label>
                                         <Select
-                                            className="frequency"
+                                            className="select"
                                             placeholder="Select"
                                             defaultValue={frequencies.find(f => f.value === schedule.frequency)}
                                             styles={{
@@ -513,7 +581,7 @@ function AdminClassForm({ classId, setUpdates }) {
                             ))
                         )}
                     </FieldArray>
-                    <button type="submit" className="submit-button">
+                    <button type="submit" className="submit-button" disabled={isSubmitting}>
                         Publish Class
                     </button>
                 </form>

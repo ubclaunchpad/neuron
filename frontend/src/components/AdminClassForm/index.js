@@ -120,7 +120,7 @@ function AdminClassForm({ classId, setUpdates }) {
 
                     // get class image url
                     const imageUrl = formatImageUrl(data.fk_image_id);
-                    setImage(imageUrl);
+                    setImage({ src: imageUrl });
                     
                     setClassData(data);
                 })
@@ -156,9 +156,11 @@ function AdminClassForm({ classId, setUpdates }) {
                     requests.push(updateClass(classId, classData));
                     requests.push(updateSchedules(classId, values.schedules));
 
-                    const imageData = new FormData();
-                    imageData.append('image', image.blob);
-                    requests.push(uploadClassImage(classId, imageData));
+                    if (image.blob) {
+                        const imageData = new FormData();
+                        imageData.append('image', image.blob);
+                        requests.push(uploadClassImage(classId, imageData));
+                    }
 
                     Promise.all(requests)
                         .then(() => {

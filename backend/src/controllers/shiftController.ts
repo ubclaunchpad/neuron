@@ -44,15 +44,6 @@ async function getShiftsByVolunteerIdAndMonth(req: AuthenticatedRequest, res: Re
     res.status(200).json(shifts);
 }
 
-// volunteer checks into a shift
-async function checkInShift(req: Request, res: Response) {
-    const shift_id = Number(req.params.shift_id);
-
-    const request = await shiftModel.updateShiftCheckIn(shift_id);
-
-    res.status(200).json(request);
-}
-
 async function addShift(req: AuthenticatedRequest, res: Response) {
     const shift: ShiftDB = req.body;
 
@@ -81,7 +72,7 @@ async function updateShift(req: AuthenticatedRequest, res: Response) {
     const shift_id = Number(req.params.shift_id);
     const shift: ShiftDB = req.body;
 
-    const request = await shiftModel.insertShiftCoverageRequest(shift_id);
+    const request = await shiftModel.updateShift(shift_id, shift);
 
     res.status(200).json(request);
 }

@@ -7,9 +7,9 @@ const shiftModel = new ShiftModel();
 
 async function getShiftInfo(req: AuthenticatedRequest, res: Response){
     const shift: ShiftDB = req.body;
-    
+
     const shift_info = await shiftModel.getShiftInfo(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
-    
+
     res.status(200).json(shift_info);
 }
 
@@ -20,7 +20,7 @@ async function getShiftsByVolunteerId(req: AuthenticatedRequest, res: Response) 
     const shifts = await shiftModel.getShiftsByVolunteerId(volunteer_id);
 
     res.status(200).json(shifts);
-} 
+}
 
 // get all the shifts on a given date
 async function getShiftsByDate(req: AuthenticatedRequest, res: Response) {
@@ -36,11 +36,11 @@ async function getShiftsByVolunteerIdAndMonth(req: AuthenticatedRequest, res: Re
     const shift: ShiftDB = req.body;
 
     const date = new Date(shift.shift_date + 'T00:00:00'); // Adding time to avoid timezone issues
-    const month: number = new Date(date).getMonth() + 1;
-    const year: number = new Date(shift.shift_date).getFullYear();
+    const month: number = date.getMonth() + 1;
+    const year: number = date.getFullYear();
 
     const shifts = await shiftModel.getShiftsByVolunteerIdAndMonth(shift.fk_volunteer_id, month, year);
-        
+
     res.status(200).json(shifts);
 }
 

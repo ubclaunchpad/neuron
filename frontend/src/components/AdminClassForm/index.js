@@ -9,6 +9,41 @@ import notyf from "../../utils/notyf";
 import "./index.css";
 import { formatImageUrl } from "../../api/imageService";
 
+const categories = [
+    { value: 'Online Exercise', label: 'Online Exercise' },
+    { value: 'Creative & Expressive', label: 'Creative & Expressive' },
+    { value: 'Care Partner Workshops', label: 'Care Partner Workshops' },
+    { value: 'Food & Nutrition', label: 'Food & Nutrition' },
+    { value: 'Other Opportunities', label: 'Other Opportunities' },
+]
+
+const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+]
+
+const frequencies = [
+    { value: 'once', label: 'Once' },
+    { value: 'weekly', label: 'Weekly' },
+    { value: 'biweekly', label: 'Bi-Weekly' },
+]
+
+const classFields = [
+    "fk_instructor_id",
+    "class_name",
+    "instructions",
+    "zoom_link",
+    "start_date",
+    "end_date",
+    "category",
+    "subcategory"
+]
+
 const inputPrompt = "Please fill out this field.";
 
 const ClassSchema = Yup.object().shape({
@@ -31,6 +66,9 @@ const ClassSchema = Yup.object().shape({
                 end_time: Yup.string()
                     .matches(/^([0-1]\d|2[0-3]):([0-5]\d)$/, 'Invalid end_time format (HH:mm)')
                     .optional(),
+                frequency: Yup.string()
+                    .oneOf(frequencies.map(f => f.value))
+                    .optional(),
                 // volunteer_ids: Yup.array()
                 //     .of(
                 //         Yup.string().uuid('Invalid UUID format for volunteer_ids')
@@ -41,42 +79,6 @@ const ClassSchema = Yup.object().shape({
         .optional(),
     image: Yup.string().optional(),
 });
-
-// Custom styles
-const categories = [
-    { value: 'Online Exercise', label: 'Online Exercise' },
-    { value: 'Creative & Expressive', label: 'Creative & Expressive' },
-    { value: 'Care Partner Workshops', label: 'Care Partner Workshops' },
-    { value: 'Food & Nutrition', label: 'Food & Nutrition' },
-    { value: 'Other Opportunities', label: 'Other Opportunities' },
-]
-
-const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-]
-
-// const periods = [
-//     { value: 'Once', label: 'Once' },
-//     { value: 'Weekly', label: 'Weekly' },
-//     { value: 'Bi-Weekly', label: 'Bi-Weekly' },
-// ]
-
-const classFields = [
-    "fk_instructor_id",
-    "class_name",
-    "instructions",
-    "zoom_link",
-    "start_date",
-    "end_date",
-    "category",
-    "subcategory"
-]
 
 function AdminClassForm({ classId, setUpdates }) {
 
@@ -417,6 +419,60 @@ function AdminClassForm({ classId, setUpdates }) {
                                                     {day}
                                                 </button>
                                             ))}
+                                        </div>
+                                    </div>
+                                    <div className="input-row">
+                                        <div className="flex-input">
+                                        <label className="class-form-label">
+                                            Frequency
+                                        </label>
+                                        <Select
+                                            className="frequency"
+                                            placeholder="Select"
+                                            defaultValue={frequencies.find(f => f.value === schedule.frequency)}
+                                            styles={{
+                                                control: () => ({
+                                                    width: 'stretch',
+                                                    padding: '12px 32px 12px 16px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #cccccc',
+                                                    cursor: 'pointer'
+                                                }),
+                                                valueContainer: (styles) => ({
+                                                    ...styles,
+                                                    padding: '0px'
+                                                })
+                                            }}
+                                            options={frequencies}
+                                            isSearchable={false}
+                                            components={
+                                                {
+                                                    DropdownIndicator: () => 
+                                                        <CgSelect className="select-icon"/>,
+                                                    IndicatorSeparator: () => null,
+                                                    Option: (props) => {
+                                                        const {innerProps, innerRef} = props;
+                                                        return (
+                                                            <div {...innerProps} ref={innerRef} className="select-item">
+                                                                {props.data.label}
+                                                            </div>
+                                                        )
+                                                    },
+                                                    Menu: (props) => {
+                                                        const {innerProps, innerRef} = props;
+                                                        return (
+                                                            <div {...innerProps} ref={innerRef}
+                                                            className="select-menu">
+                                                                {props.children}
+                                                            </div>
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            onChange={(e) => {
+                                                setFieldValue(`schedules[${index}].frequency`, e.value);
+                                            }}
+                                        />
                                         </div>
                                     </div>
                                     <div className="input-row">

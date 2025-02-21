@@ -248,7 +248,6 @@ textarea:focus {
 .days-row {
     width: stretch;
     display: flex;
-    gap: 2px;
     box-shadow: 0px 4px 16px 0px #0F11110D;
 }
 

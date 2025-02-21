@@ -79,14 +79,14 @@ INSERT INTO class (class_id, fk_instructor_id, class_name, instructions, zoom_li
 (103, 'c4336f49-e4bd-4b9f-baac-450e2433f5c5', 'Higher Intensity Chair Exercise', 'Movement that is easy on the joints', 'https://zoom.example.com/class1', '2024-09-09', '2024-12-13');
 
 -- Set class schedule 
-INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
-(100, 100, 2, '09:30:00', '10:30:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
-(101, 101, 4, '11:00:00', '13:00:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
-(102, 102, 6, '10:00:00', '11:00:00');
-INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time) VALUES
-(103, 103, 6, '14:00:00', '15:00:00');
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time, frequency) VALUES
+(100, 100, 2, '09:30:00', '10:30:00', 'weekly');
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time, frequency) VALUES
+(101, 101, 4, '11:00:00', '13:00:00', 'weekly');
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time, frequency) VALUES
+(102, 102, 6, '10:00:00', '11:00:00', 'weekly');
+INSERT INTO schedule (schedule_id, fk_class_id, day, start_time, end_time, frequency) VALUES
+(103, 103, 6, '14:00:00', '15:00:00', 'weekly');
 
 -- Assign volunteer to class
 -- INSERT INTO volunteer_class (fk_volunteer_id, fk_class_id) VALUES

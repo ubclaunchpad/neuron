@@ -54,6 +54,7 @@ export interface ScheduleDB extends RowDataPacket {
   'day': number;
   'end_time': string;
   'fk_class_id': number;
+  'frequency': string;
   'schedule_id'?: number;
   'start_time': string;
 }

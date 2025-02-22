@@ -4,34 +4,56 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
 import DashboardCoverage from "../../components/DashboardCoverage";
 import DashCoverShifts from "../../components/DashCoverShifts";
 import DashShifts from "../../components/DashShifts";
+import { useAuth } from "../../contexts/authContext";
 import { SHIFT_TYPES } from "../../data/constants";
 import "./index.css";
 import CheckInCard from "../../components/CheckInCard";
 
 function VolunteerDash() {
   const volunteerID = localStorage.getItem("volunteerID");
+  const { user } = useAuth();
   const [shifts, setShifts] = useState([]);
   const monthDate = dayjs().date(1).hour(0).minute(0);
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [future, setFuture] = useState(false);
   var upcomingHours = 0;
 
-  useEffect(() => {
-    const fetchShifts = async () => {
-      const body = {
-        volunteer_id: volunteerID,
-        shiftDate: selectedDate.format("YYYY-MM-DD"),
-      };
-      const response = await getVolunteerShiftsForMonth(body);
-      setShifts(response);
+  const fetchShifts = useCallback(async () => {
+    const body = {
+      volunteer_id: user?.volunteer.volunteer_id,
+      shiftDate: selectedDate.format("YYYY-MM-DD"),
     };
-    fetchShifts();
-  }, [selectedDate, volunteerID]);
+    const response = await getVolunteerShiftsForMonth(body);
+
+    const shiftMap = new Map();
+    response.forEach((shift) => {
+      const existingShift = shiftMap.get(shift.shift_id);
+
+      if (
+        existingShift &&
+        existingShift.shift_type === SHIFT_TYPES.MY_SHIFTS &&
+        shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS
+      ) {
+        shiftMap.set(shift.shift_id, shift);
+      } else if (!existingShift) {
+        shiftMap.set(shift.shift_id, shift);
+      }
+    });
+
+    setShifts(Array.from(shiftMap.values()));
+  }, [selectedDate, user?.volunteer.volunteer_id]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchShifts();
+    };
+    fetchData();
+  }, [fetchShifts]);
 
   const allShifts = shifts.reduce((acc, shift) => {
     const date = shift.shift_date;
@@ -63,7 +85,15 @@ function VolunteerDash() {
 
   const groupedCoverShifts = shifts
     .filter((shift) => {
-      return shift.shift_type === SHIFT_TYPES.COVERAGE;
+      const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
+      const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
+      const pastShift = dayjs().isAfter(shiftEnd);
+
+      return (
+        (shift.shift_type === SHIFT_TYPES.MY_SHIFTS ||
+          shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) &&
+        !pastShift
+      );
     })
     .reduce((acc, shift) => {
       const date = shift.shift_date;
@@ -100,14 +130,6 @@ function VolunteerDash() {
   console.log(completedHours, coverageHours, upcomingHours);
 
   const handleShiftUpdate = () => {
-    const fetchShifts = async () => {
-      const body = {
-        volunteer_id: volunteerID,
-        shiftDate: selectedDate.format("YYYY-MM-DD"),
-      };
-      const response = await getVolunteerShiftsForMonth(body);
-      setShifts(response);
-    };
     fetchShifts();
   };
 
@@ -128,7 +150,7 @@ function VolunteerDash() {
                 color: "var(--primary-blue)",
               }}
               value={selectedDate}
-              onChange={(newValue) => setSelectedDate(newValue.day(2))}
+              onChange={(newValue) => setSelectedDate(newValue.date(1))}
             />
           </LocalizationProvider>
         </div>
@@ -166,6 +188,7 @@ function VolunteerDash() {
             groupedShifts={future ? groupedUpcomingShifts : allShifts}
             future={future}
             handleShiftUpdate={handleShiftUpdate}
+            volunteerID={user?.volunteer.volunteer_id}
           />
         </div>
 
@@ -175,6 +198,7 @@ function VolunteerDash() {
               future={future}
               groupedShifts={groupedCoverShifts}
               handleShiftUpdate={handleShiftUpdate}
+              volunteerID={user?.volunteer.volunteer_id}
             />
           </div>
           {upcomingShifts.length > 0 && (

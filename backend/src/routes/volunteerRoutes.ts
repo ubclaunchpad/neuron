@@ -1,5 +1,6 @@
 import { body, param } from "express-validator";
 import { RouteDefinition } from "../common/types.js";
+import { isAuthorized } from "../config/authCheck.js";
 import {
     getAvailabilities,
     getAvailabilityByVolunteerId,
@@ -15,6 +16,9 @@ import {
 
 export const VolunteerRoutes: RouteDefinition = {
     path: '/volunteer',
+    middleware: [
+        isAuthorized,
+    ],
     children: [
         {
             path: '/',

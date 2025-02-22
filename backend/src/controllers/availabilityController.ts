@@ -1,16 +1,17 @@
-import { Request, Response } from 'express';
-import { AvailabilityDB } from '../common/generated.js';
+import { Response } from 'express';
+import { AvailabilityDB } from '../common/databaseModels.js';
+import { AuthenticatedRequest } from '../common/types.js';
 import AvailabilityModel from '../models/availabilityModel.js';
 
 const availabilityModel = new AvailabilityModel();
 
-async function getAvailabilities(req: Request, res: Response) {
+async function getAvailabilities(req: AuthenticatedRequest, res: Response) {
     const availabilities = await availabilityModel.getAvailabilities();
 
     res.status(200).json(availabilities);
 }
 
-async function getAvailabilityByVolunteerId(req: Request, res: Response) {
+async function getAvailabilityByVolunteerId(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
 
     const availability = await availabilityModel.getAvailabilityByVolunteerId(volunteer_id);
@@ -18,7 +19,7 @@ async function getAvailabilityByVolunteerId(req: Request, res: Response) {
     res.status(200).json(availability);
 }
 
-async function setAvailabilityByVolunteerId(req: Request, res: Response) {
+async function setAvailabilityByVolunteerId(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
     const availabilities: AvailabilityDB[] = req.body;
 
@@ -27,7 +28,7 @@ async function setAvailabilityByVolunteerId(req: Request, res: Response) {
     res.status(200).json(result);
 }
 
-async function updateAvailabilityByVolunteerId(req: Request, res: Response) {
+async function updateAvailabilityByVolunteerId(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
     const availabilities: AvailabilityDB[] = req.body;
 

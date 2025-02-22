@@ -1,16 +1,16 @@
-import "./index.css";
 import React from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { changePassword } from "../../../api/authService";
+import "./index.css";
 
 function ChangePasswordCard({ volunteer }) {
     
-    const [password, setPassword] = React.useState({
+    const [passwordForm, setPassword] = React.useState({
         current: "",
         new: "",
         confirm: ""
     })
-    const [showPassword, setShowPassword] = React.useState({
+    const [showPasswordForm, setShowPasswordForm] = React.useState({
         current: false,
         new: false,
         confirm: false,
@@ -19,7 +19,7 @@ function ChangePasswordCard({ volunteer }) {
 
     
     const togglePasswordVisibility = (field) => {
-        setShowPassword((prevState) => ({
+        setShowPasswordForm((prevState) => ({
             ...prevState,
             [field]: !prevState[field],
         }));
@@ -28,7 +28,7 @@ function ChangePasswordCard({ volunteer }) {
     const handleChange = (e) => {
         const {name, value} = e.target;
         setPassword({
-            ...password,
+            ...passwordForm,
             [name]: value
         })
     }
@@ -36,15 +36,14 @@ function ChangePasswordCard({ volunteer }) {
     const handleSubmit = async (e) => {
         console.log("clicked")
         e.preventDefault();
-        if (password.new !== password.confirm) {
+        if (passwordForm.new !== passwordForm.confirm) {
             console.error("Passwords must match.");
             return;
         }
         try {
             const data = await changePassword({
-                email: volunteer.email,
-                currentPassword: password.current,
-                newPassword: password.new
+                currentPassword: passwordForm.current,
+                newPassword: passwordForm.new
             })
             setSuccess(data.message);
         } catch (error) {
@@ -62,17 +61,17 @@ function ChangePasswordCard({ volunteer }) {
                         <label>Current Password</label>
                         <div className="input-wrapper">
                         <input
-                            type={showPassword.current ? 'text' : 'password'}
+                            type={showPasswordForm.current ? 'text' : 'password'}
                             placeholder="Enter your current password"
                             name="current"
-                            value={password.current}
+                            value={passwordForm.current}
                             onChange={handleChange}
                         />
                         <span
                             className="password-toggle"
                             onClick={() => togglePasswordVisibility('current')}
                         >
-                            {showPassword.current ? <FaEyeSlash /> : <FaEye />}
+                            {showPasswordForm.current ? <FaEyeSlash /> : <FaEye />}
                         </span>
                         </div>
                     </div>
@@ -80,17 +79,17 @@ function ChangePasswordCard({ volunteer }) {
                         <label>New Password</label>
                         <div className="input-wrapper">
                         <input
-                            type={showPassword.new ? 'text' : 'password'}
+                            type={showPasswordForm.new ? 'text' : 'password'}
                             placeholder="Enter your new password"
                             name="new"
-                            value={password.new}
+                            value={passwordForm.new}
                             onChange={handleChange}
                         />
                         <span
                             className="password-toggle"
                             onMouseDown={() => togglePasswordVisibility('new')}
                         >
-                            {showPassword.new ? <FaEyeSlash /> : <FaEye />}
+                            {showPasswordForm.new ? <FaEyeSlash /> : <FaEye />}
                         </span>
                         </div>
                     </div>
@@ -98,17 +97,17 @@ function ChangePasswordCard({ volunteer }) {
                         <label>Confirm New Password</label>
                         <div className="input-wrapper">
                         <input
-                            type={showPassword.confirm ? 'text' : 'password'}
+                            type={showPasswordForm.confirm ? 'text' : 'password'}
                             placeholder="Confirm your new password"
                             name="confirm"
-                            value={password.confirm}
+                            value={passwordForm.confirm}
                             onChange={handleChange}
                         />
                         <span
                             className="password-toggle"
                             onClick={() => togglePasswordVisibility('confirm')}
                         >
-                            {showPassword.confirm ? <FaEyeSlash /> : <FaEye />}
+                            {showPasswordForm.confirm ? <FaEyeSlash /> : <FaEye />}
                         </span>
                         </div>
                     </div>

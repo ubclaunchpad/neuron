@@ -34,12 +34,25 @@ export function registerRoutes(app: Express | Router, routes: RouteDefinition[])
                 }
 
                 try {
-                    await route.action(
+                    return await route.action(
                         req,
                         res,
                         next,
                     );
-                } catch (err) {
+                } catch (err: any) {
+                    /* Send specific errors to the frontend */
+                    if (err.status) {
+                        res.status(err.status)
+                        
+                        if (err.message) {
+                            res.json({
+                                error: err.message
+                            });
+                        }
+                        
+                        return res;
+                    }
+
                     console.error(err);
                     return res.sendStatus(500); // Don't expose internal server workings
                 }

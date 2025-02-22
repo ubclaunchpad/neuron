@@ -7,6 +7,7 @@ export const SHIFT_TYPES = {
     DEFAULT: 'default',
 };
 
+// For 'my-coverage-requests', it'll only be either OPEN or RESOLVED
 export const COVERAGE_STATUSES = {
     RESOLVED: 'resolved',
     PENDING: 'pending',

@@ -26,7 +26,8 @@ export default function DashboardCoverage({
   return (
     <>
       <div>
-        <span className="dash-hours-to-complete">6</span> to be completed
+        <span className="dash-hours-to-complete">{upcoming}</span> to be
+        completed
       </div>
       <div className="dash-progress-bar">
         <div ref={progressCompleted} className="dash-progress-completed"></div>

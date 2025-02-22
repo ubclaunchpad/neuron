@@ -25,11 +25,11 @@ export default function CheckInCard({ shift }) {
         </span>{" "}
         days{" "}
         <span className="dash-next-time-num">
-          {shiftStart.diff(currentDate, "h")}
+          {shiftStart.diff(currentDate, "h") % 24}
         </span>{" "}
         hours{" "}
         <span className="dash-next-time-num">
-          {shiftStart.diff(currentDate, "m")}
+          {shiftStart.diff(currentDate, "m") % 60}
         </span>{" "}
         minutes
       </div>

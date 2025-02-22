@@ -57,7 +57,7 @@ function VolunteerDash() {
       acc[date] = [];
     }
     acc[date].push(shift);
-    upcomingHours += shift.duration;
+    upcomingHours += shift.duration / 60;
     return acc;
   }, {});
 
@@ -87,14 +87,17 @@ function VolunteerDash() {
       return acc;
     }, 0);
 
-  const coverageHours = shifts
-    .filter((shift) => {
-      return shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS;
-    })
-    .reduce((acc, shift) => {
-      acc += shift.duration;
-      return acc;
-    }, 0);
+  const coverageHours =
+    shifts
+      .filter((shift) => {
+        return shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS;
+      })
+      .reduce((acc, shift) => {
+        acc += shift.duration;
+        return acc;
+      }, 0) / 60;
+
+  console.log(completedHours, coverageHours, upcomingHours);
 
   const handleShiftUpdate = () => {
     const fetchShifts = async () => {

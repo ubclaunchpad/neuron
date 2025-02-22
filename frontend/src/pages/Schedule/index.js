@@ -158,14 +158,15 @@ function VolunteerSchedule() {
             </div>
             <DetailsPanel classId={selectedClassId} classList={shifts} setClassId={setSelectedClassId} shiftDetails={selectedShiftDetails} dynamicShiftButtons={selectedShiftButtons}>
                 <div className="schedule-page">
-                    <DateToolbar 
-                        selectedDate={selectedDate} 
-                        setSelectedDate={setSelectedDate} 
+                    <DateToolbar
+                        selectedDate={selectedDate}
+                        setSelectedDate={setSelectedDate}
                         viewMode={viewMode}
                         setViewMode={setViewMode}
                         nextWeek={nextWeek}
                         previousWeek={previousWeek}
-                        goToToday={goToToday} />
+                        goToToday={goToToday}
+                    />
                     <hr />
                     {viewMode === "list" ? (
                         <>
@@ -201,7 +202,7 @@ function VolunteerSchedule() {
                             </div>
                         </>
                     ) : (
-                        <CalendarView days={days} shifts={shifts} initialDate={initialDate} onUpdate={handleShiftUpdate} onShiftSelect={handleShiftSelection} />
+                        <CalendarView days={days} shifts={shifts} initialDate={initialDate} onShiftSelect={handleShiftSelection} />
                     )}
                 </div>
             </DetailsPanel>

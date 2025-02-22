@@ -37,29 +37,31 @@ function DateToolbar({ selectedDate, setSelectedDate, viewMode, setViewMode, nex
                         </div>
                     </div>
                 )}
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <Button onClick={handleDatePickerOpen} endIcon={<ExpandMoreIcon />}>
-                        {selectedDate.format("MMMM YYYY")}
-                    </Button>
-                    <Popover
-                        id={datePickerId}
-                        open={open}
-                        anchorEl={anchorEl}
-                        onClose={handleDatePickerClose}
-                        anchorOrigin={{
-                            vertical: "bottom",
-                            horizontal: "left",
-                        }}
-                    >
-                        <StaticDatePicker
-                            displayStaticWrapperAs="desktop"
-                            value={selectedDate}
-                            onChange={(newDate) => setSelectedDate(newDate)}
-                            minDate={dayjs().subtract(1, "year")}
-                            maxDate={dayjs().add(1, "year")}
-                        />
-                    </Popover>
-                </LocalizationProvider>
+                {viewMode === "list" && (
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <Button onClick={handleDatePickerOpen} endIcon={<ExpandMoreIcon />}>
+                            {selectedDate.format("MMMM YYYY")}
+                        </Button>
+                        <Popover
+                            id={datePickerId}
+                            open={open}
+                            anchorEl={anchorEl}
+                            onClose={handleDatePickerClose}
+                            anchorOrigin={{
+                                vertical: "bottom",
+                                horizontal: "left",
+                            }}
+                        >
+                            <StaticDatePicker
+                                displayStaticWrapperAs="desktop"
+                                value={selectedDate}
+                                onChange={(newDate) => setSelectedDate(newDate)}
+                                minDate={dayjs().subtract(1, "year")}
+                                maxDate={dayjs().add(1, "year")}
+                            />
+                        </Popover>
+                    </LocalizationProvider>
+                )}
             </div>
             <div className="right-nav">
                 <Select

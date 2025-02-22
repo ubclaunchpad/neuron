@@ -138,7 +138,7 @@ function VolunteerDash() {
   }, [selectedDate, shifts]);
 
   return (
-    <main className="content-container">
+    <main className="content-container volunteer-dash">
       <div className="content-heading">
         <h2 className="content-title">Dashboard</h2>
         <div className="dash-date-picker">

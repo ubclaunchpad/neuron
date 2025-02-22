@@ -1,0 +1,41 @@
+@import '../../styles.css';
+
+
+.account-not-verified-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  max-width: 500px;
+  margin: 0 auto;
+  height: 100vh;
+}
+
+
+.account-not-verified-page h2 {
+  font-size: var(--title-text, 24px);
+  font-weight: 500;
+  color: var(--primary-blue);
+  margin-bottom: 15px;
+}
+
+
+.account-not-verified-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: var(--white);
+  color: var(--dark);
+  border: 1px solid var(--primary-blue);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: var(--font-primary, 16px);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.3);
+  width: auto;
+}
+
+
+.account-not-verified-button:hover {
+  background-color: var(--secondary-blue);
+}

@@ -47,7 +47,7 @@ async function shiftCheckIn(req: AuthenticatedRequest, res: Response) {
     res.status(200).json(updatedVolunteer);
 }
 
-async function getPreferredClassesById(req: Request, res: Response) {
+async function getPreferredClassesById(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
 
     if (!volunteer_id) {
@@ -67,7 +67,7 @@ async function getPreferredClassesById(req: Request, res: Response) {
     }
 }
 
-async function getAllClassPreferences(req: Request, res: Response) {
+async function getAllClassPreferences(req: AuthenticatedRequest, res: Response) {
     try {
         const all_preferred_classes = await volunteerModel.getAllClassPreferences();
         res.status(200).json(all_preferred_classes);
@@ -78,7 +78,7 @@ async function getAllClassPreferences(req: Request, res: Response) {
     }
 }
 
-async function updatePreferredClassesById (req: Request, res: Response) {
+async function updatePreferredClassesById (req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
     const data = req.body;
 

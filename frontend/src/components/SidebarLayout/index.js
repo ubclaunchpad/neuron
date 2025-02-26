@@ -79,7 +79,7 @@ function SidebarLayout() {
             {!collapsed && "Schedule"}
           </NavLink>
 
-          <Permission permissions={isAdmin}>
+          <Permission permissions="admin">
             <NavLink
               to="/requests"
               className={({ isActive }) =>
@@ -101,7 +101,7 @@ function SidebarLayout() {
             {!collapsed && "Classes"}
           </NavLink>
 
-          <Permission permissions={isAdmin}>
+          <Permission permissions="admin">
             <NavLink
               to="/management"
               className={({ isActive }) =>

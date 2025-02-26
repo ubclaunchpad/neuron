@@ -16,7 +16,7 @@ import { SHIFT_TYPES } from "../../data/constants";
 import "./index.css";
 
 function Dashboard() {
-  const { user, isVolunteer } = useAuth();
+  const { user } = useAuth();
   const [shifts, setShifts] = useState([]);
   const monthDate = dayjs().date(1).hour(0).minute(0);
   const [selectedDate, setSelectedDate] = useState(dayjs());
@@ -155,7 +155,7 @@ function Dashboard() {
           </LocalizationProvider>
         </div>
       </div>
-      <Permission permissions={isVolunteer}>
+      <Permission permissions="volunteer">
         <div className="dash-container">
           <div className="dash-col-card dash-grid-item">
             <div className="dash-card-title">Volunteer Hours </div>

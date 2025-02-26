@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { formatImageUrl } from '../../api/imageService';
 import AvailabilityGrid from "../../components/volunteerProfile/availabilityGrid";
 import ChangePasswordCard from "../../components/volunteerProfile/changePasswordCard";
+import ClassPreferencesCardMP from "../../components/volunteerProfile/classPreferencesCard";
 import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
 import { useAuth } from '../../contexts/authContext';
-import ClassPreferencesCardMP from "../../components/volunteerProfile/classPreferencesCard";
 import "./index.css";
 
 function VolunteerProfile() {

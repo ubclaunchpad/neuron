@@ -60,7 +60,7 @@ function App() {
 
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
                 <Route path="profile" element={<VolunteerProfile />} />
-                <Route path="class-preferences" element={<ClassPreferences />} />
+                <Route path="profile/preferences" element={<ClassPreferences />} />
               </Route>
 
               <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>

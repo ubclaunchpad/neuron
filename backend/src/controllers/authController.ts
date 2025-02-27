@@ -6,10 +6,9 @@ import nodemailer from "nodemailer";
 import { v4 as uuidv4 } from "uuid";
 import { UserDB, VolunteerDB } from "../common/databaseModels.js";
 import { Role } from "../common/interfaces.js";
-import { AuthenticatedRequest, RequestUser } from "../common/types.js";
+import { AuthenticatedRequest } from "../common/types.js";
 import connectionPool from "../config/database.js";
-import UserModel from "../models/userModel.js";
-import VolunteerModel from "../models/volunteerModel.js";
+import { userModel, volunteerModel } from "../config/models.js";
 
 // Load environment variables
 dotenv.config();
@@ -28,8 +27,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-const userModel = new UserModel();
-const volunteerModel = new VolunteerModel();
 
 async function checkAuthorization(
     req: AuthenticatedRequest,
@@ -298,7 +295,7 @@ async function updatePassword(
     const { currentPassword, newPassword } = req.body;
 
     // User coming from the isAuthorized middleware, query auth info
-    const user = req.user as RequestUser;
+    const user = req.user;
     const authInfo = await userModel.getUserByEmail(user.email, true);
 
     // If the password is incorrect, return an error

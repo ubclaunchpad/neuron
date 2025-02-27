@@ -1,8 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../common/types.js";
-import UserModel from "../models/userModel.js";
-
-const userModel = new UserModel();
+import { userModel } from "../config/models.js";
 
 async function getUserById(req: AuthenticatedRequest, res: Response) {
     const { user_id } = req.params;

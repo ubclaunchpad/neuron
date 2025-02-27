@@ -1,13 +1,9 @@
 import dotenv from "dotenv";
 import { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import { Role } from "../common/interfaces.js";
 import {
-    AuthenticatedRequest,
-    DecodedJwtPayload,
-    RequestUser
+    AuthenticatedRequest
 } from "../common/types.js";
-import UserModel from "../models/userModel.js";
 
 // Load environment variables
 dotenv.config();
@@ -15,48 +11,48 @@ dotenv.config();
 // Define environment variables
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
 
-const userModel = new UserModel();
-
 async function isAuthorized(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<any> {
-    // Get the token from the request body
-    const bearer = req.headers.authorization;
+    return next();
 
-    // Grab token from "Bearer {token}"
-    const token = bearer?.match(/Bearer (.+)/)?.[1];
+    // // Get the token from the request body
+    // const bearer = req.headers.authorization;
 
-    // If the token is not provided, return an error message
-    if (!token) {
-        return res.status(401).json({
-            error: "Unauthorized",
-        });
-    }
+    // // Grab token from "Bearer {token}"
+    // const token = bearer?.match(/Bearer (.+)/)?.[1];
 
-    if (!TOKEN_SECRET) {
-        return res.status(500).json({
-            error: "Server configuration error: TOKEN_SECRET is not defined",
-        });
-    }
+    // // If the token is not provided, return an error message
+    // if (!token) {
+    //     return res.status(401).json({
+    //         error: "Unauthorized",
+    //     });
+    // }
 
-    try {
-        // Verify the token
-        const decoded = jwt.verify(token, TOKEN_SECRET) as DecodedJwtPayload;
+    // if (!TOKEN_SECRET) {
+    //     return res.status(500).json({
+    //         error: "Server configuration error: TOKEN_SECRET is not defined",
+    //     });
+    // }
+
+    // try {
+    //     // Verify the token
+    //     const decoded = jwt.verify(token, TOKEN_SECRET) as DecodedJwtPayload;
         
-        const result = await userModel.getUserById(decoded.user_id);
+    //     const result = await userModel.getUserById(decoded.user_id);
 
-        // Attach the user to the request
-        (req as AuthenticatedRequest).user = result as RequestUser;
+    //     // Attach the user to the request
+    //     (req as AuthenticatedRequest).user = result;
 
-        // Call the next function
-        next();
-    } catch (err) {
-        return res.status(401).json({
-            error: "The token is either invalid or has expired",
-        });
-    }
+    //     // Call the next function
+    //     return next();
+    // } catch (err) {
+    //     return res.status(401).json({
+    //         error: "The token is either invalid or has expired",
+    //     });
+    // }
 }
 
 async function isAdmin(

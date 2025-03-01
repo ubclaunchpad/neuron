@@ -10,6 +10,7 @@ import {
     updateClass, 
     updateSchedules,
     addSchedules, 
+    deleteSchedules,
     uploadClassImage 
 } from "../../api/classesPageService";
 import notyf from "../../utils/notyf";
@@ -63,7 +64,7 @@ const ClassSchema = Yup.object().shape({
     start_date: Yup.date().required(inputPrompt),
     end_date: Yup.date()
         .required(inputPrompt)
-        .min(Yup.ref('start_date'), 'end_date must be after start_date'),
+        .min(Yup.ref('start_date'), 'End date must be after start date.'),
     category: Yup.string().optional(),
     subcategory: Yup.string().optional(),
     schedules: Yup.array()
@@ -72,24 +73,34 @@ const ClassSchema = Yup.object().shape({
                 schedule_id: Yup.number().optional(), // newly added schedules will not yet have an id
                 day: Yup.number().min(0).max(6), // 0 = Sunday, 6 = Saturday
                 start_time: Yup.string()
-                    .matches(/^([0-1]\d|2[0-3]):([0-5]\d)$/, 'Invalid start_time format (HH:mm)')
-                    .optional(),
+                    .matches(/^([0-1]\d|2[0-3]):([0-5]\d)$/, 'Invalid start time format (HH:mm)')
+                    .required(inputPrompt),
                 end_time: Yup.string()
-                    .matches(/^([0-1]\d|2[0-3]):([0-5]\d)$/, 'Invalid end_time format (HH:mm)')
-                    .optional(),
+                    .matches(/^([0-1]\d|2[0-3]):([0-5]\d)$/, 'Invalid end time format (HH:mm)')
+                    .required(inputPrompt)
+                    .test("is-after-start", "End time must be after start time.", function (end_time) {
+                        const { start_time } = this.parent;
+                        if (!start_time || !end_time) return false;
+                  
+                        // Convert HH:MM to total minutes
+                        const toMinutes = (time) => {
+                          const [h, m] = time.split(":").map(Number);
+                          return h * 60 + m;
+                        };
+                  
+                        return toMinutes(end_time) > toMinutes(start_time);
+                    }),
                 frequency: Yup.string()
-                    .oneOf(frequencies.map(f => f.value))
-                    .optional(),
+                    .oneOf(frequencies.map(f => f.value)),
                 volunteers: Yup.array()
                     .of(
                         Yup.object().shape({
-                            volunteer_id: Yup.string().uuid('Invalid UUID format for volunteer_ids'),
+                            volunteer_id: Yup.string().uuid(),
                             p_name: Yup.string().optional(),
                             f_name: Yup.string().optional(),
                             l_name: Yup.string().optional()
                         })
                     )
-                    .optional(),
             })
         )
         .optional(),
@@ -111,6 +122,7 @@ function AdminClassForm({ classId, setUpdates }) {
     const [image, setImage] = useState(null);
     const [instructors, setInstructors] = useState([]);
     const [volunteers, setVolunteers] = useState([]);
+    const [showPopup, setShowPopup] = useState(false);
     const selectRefs = useRef([]);
 
     useEffect(() => {
@@ -188,6 +200,15 @@ function AdminClassForm({ classId, setUpdates }) {
         return volunteers.filter((volunteer) => !assignedVolunteerIds.includes(volunteer.value.volunteer_id));
     }
 
+    function timeErrorExists(errors, touched, index) {
+        return errors.schedules && 
+            errors.schedules[index] && 
+            errors.schedules[index]["end_time"] && 
+            touched.schedules && 
+            touched.schedules[index] && 
+            (touched.schedules[index]["end_time"] || touched.schedules[index]["start_time"])
+    }
+
     if (loading) {
         return <></>;
     }
@@ -200,13 +221,14 @@ function AdminClassForm({ classId, setUpdates }) {
                 onSubmit={(values, { setSubmitting }) => {
                     console.log("VALUES:", values)
 
-                    const classData = Object.fromEntries(
+                    const classDetails = Object.fromEntries(
                         Object.entries(values).filter(([key]) => classFields.includes(key))
                     );
-                    console.log("CLASS DATA:", classData)
+                    console.log("CLASS DATA:", classDetails)
 
                     // seperate added schedules from updated schedules
-                    const addedSchedules = values.schedules.filter((schedule) => !schedule.schedule_id)
+                    const addedSchedules = values.schedules
+                        .filter((schedule) => !schedule.schedule_id)
                         .map((schedule) => ({
                             day: schedule.day,
                             start_time: schedule.start_time,
@@ -215,14 +237,25 @@ function AdminClassForm({ classId, setUpdates }) {
                             volunteer_ids: schedule.volunteers.map((volunteer) => volunteer.volunteer_id)
                         }));
                     const updatedSchedules = values.schedules.filter((schedule) => schedule.schedule_id);
+                    const deletedSchedules = classData.schedules
+                            .filter((schedule) => !values.schedules.find((s) => s.schedule_id === schedule.schedule_id))
+                            .map((schedule) => schedule.schedule_id)
 
                     console.log("ADDED SCHEDULES:", addedSchedules);
                     console.log("UPDATED SCHEDULES:", updatedSchedules);
+                    console.log("DELETED SCHEDULES:", deletedSchedules);
 
                     const requests = [];
-                    requests.push(updateClass(classId, classData));
-                    requests.push(updateSchedules(classId, updatedSchedules));
-                    requests.push(addSchedules(classId, addedSchedules));
+                    requests.push(updateClass(classId, classDetails));
+
+                    if (updatedSchedules.length > 0)
+                        requests.push(updateSchedules(classId, updatedSchedules));
+
+                    if (addedSchedules.length > 0)
+                        requests.push(addSchedules(classId, addedSchedules));
+
+                    if (deletedSchedules.length > 0)
+                        requests.push(deleteSchedules(classId, deletedSchedules));
 
                     if (image.blob) {
                         const imageData = new FormData();
@@ -236,7 +269,8 @@ function AdminClassForm({ classId, setUpdates }) {
                             setSubmitting(false);
                             setUpdates((prev) => prev + 1);
                         })
-                        .catch(() => {
+                        .catch((error) => {
+                            console.log(error);
                             notyf.error("Sorry, an error occurred while updating the class.");
                             setSubmitting(false);
                         });
@@ -422,37 +456,47 @@ function AdminClassForm({ classId, setUpdates }) {
                             </div>
                         </div>
                         <div className="input-row">
-                            <div className="flex-input">
-                                <label className="class-form-label">
-                                    Start Date
-                                </label>
-                                <input 
-                                    className="class-form-input"
-                                    type="date"
-                                    label="Start Date"
-                                    name="start_date"
-                                    value={values.start_date}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    errors={errors}
-                                    touched={touched}
-                                />
+                            <div className="error-wrapper">
+                                <div className="flex-input">
+                                    <label className="class-form-label">
+                                        Start Date
+                                    </label>
+                                    <input 
+                                        className="class-form-input"
+                                        type="date"
+                                        label="Start Date"
+                                        name="start_date"
+                                        value={values.start_date}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        errors={errors}
+                                        touched={touched}
+                                    />
+                                </div>
+                                {errors["start_date"] && touched["start_date"] && (
+                                    <div className="invalid-message">{errors["start_date"]}</div>
+                                )}
                             </div>
-                            <div className="flex-input">
-                                <label className="class-form-label">
-                                    End Date
-                                </label>
-                                <input 
-                                    className="class-form-input"
-                                    type="date"
-                                    label="End Date"
-                                    name="end_date"
-                                    value={values.end_date}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    errors={errors}
-                                    touched={touched}
-                                />
+                            <div className="error-wrapper">
+                                <div className="flex-input">
+                                    <label className="class-form-label">
+                                        End Date
+                                    </label>
+                                    <input 
+                                        className="class-form-input"
+                                        type="date"
+                                        label="End Date"
+                                        name="end_date"
+                                        value={values.end_date}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        errors={errors}
+                                        touched={touched}
+                                    />
+                                </div>
+                                {errors["end_date"] && touched["end_date"] && (
+                                    <div className="invalid-message">{errors["end_date"]}</div>
+                                )}
                             </div>
                         </div>
                         <div className="input-row">
@@ -522,8 +566,11 @@ function AdminClassForm({ classId, setUpdates }) {
                             <div className="schedule-blocks">{
                                 values.schedules.map((schedule, index) => (
                                     <div className="form-block" key={index}>
-                                        <h2 className="section-title">Schedule {index + 1}</h2>
+                                        <h2 className="section-title">Class Schedule {index + 1}</h2>
                                         <div className="days-input">
+                                            <label className="class-form-label">
+                                                Select the day the class will run
+                                            </label>
                                             <div className="days-row">
                                                 {days.map((day, dayIndex) => (
                                                     <button 
@@ -602,37 +649,44 @@ function AdminClassForm({ classId, setUpdates }) {
                                             </div>
                                         </div>
                                         <div className="input-row">
-                                            <div className="flex-input">
-                                                <label className="class-form-label">
-                                                    From
-                                                </label>
-                                                <input 
-                                                    className="class-form-input"
-                                                    type="time"
-                                                    label="From"
-                                                    name={`schedules[${index}].start_time`}
-                                                    value={schedule.start_time}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    errors={errors}
-                                                    touched={touched}
-                                                />
+                                            <div className="error-wrapper">
+                                                <div className="flex-input">
+                                                    <label className="class-form-label">
+                                                        From
+                                                    </label>
+                                                    <input 
+                                                        className="class-form-input"
+                                                        type="time"
+                                                        label="From"
+                                                        name={`schedules[${index}].start_time`}
+                                                        value={schedule.start_time}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        errors={errors}
+                                                        touched={touched}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="flex-input">
-                                                <label className="class-form-label">
-                                                    To
-                                                </label>
-                                                <input 
-                                                    className="class-form-input"
-                                                    type="time"
-                                                    label="To"
-                                                    name={`schedules[${index}].end_time`}
-                                                    value={schedule.end_time}
-                                                    onChange={handleChange}
-                                                    onBlur={handleBlur}
-                                                    errors={errors}
-                                                    touched={touched}
-                                                />
+                                            <div className="error-wrapper">
+                                                <div className="flex-input">
+                                                    <label className="class-form-label">
+                                                        To
+                                                    </label>
+                                                    <input 
+                                                        className="class-form-input"
+                                                        type="time"
+                                                        label="To"
+                                                        name={`schedules[${index}].end_time`}
+                                                        value={schedule.end_time}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        errors={errors}
+                                                        touched={touched}
+                                                    />
+                                                </div>
+                                                {timeErrorExists(errors, touched, index) && (
+                                                    <div className="invalid-message">{errors.schedules[index]["end_time"]}</div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="input-row">
@@ -723,6 +777,39 @@ function AdminClassForm({ classId, setUpdates }) {
                                                 </FieldArray>
                                             </div>
                                         </div>
+                                        <div className="delete-schedule-row">
+                                            <button 
+                                                type="button" 
+                                                className="delete-schedule-button" 
+                                                onClick={() => setShowPopup(true)}
+                                            >
+                                                Delete Schedule
+                                            </button>
+                                            {showPopup && (
+                                                <div className="delete-popup-overlay">
+                                                    <div className="delete-popup">
+                                                        <h2 className="delete-popup-title">Delete Schedule</h2>
+                                                        <p className="delete-popup-prompt">Delete this schedule from the class?</p>
+                                                        <div className="delete-popup-buttons">
+                                                            <button type="button" className="cancel-button" onClick={() => setShowPopup(false)}>
+                                                                Cancel
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="confirm-delete-button"
+                                                                onClick={() => {
+                                                                    console.log("Deleted!"); // Replace with delete logic
+                                                                    remove(index);
+                                                                    setShowPopup(false);
+                                                                }}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                                 <button 
@@ -739,12 +826,16 @@ function AdminClassForm({ classId, setUpdates }) {
                                         setUpdates((prev) => prev + 1);  
                                     }}
                                 >
-                                    <h2 className="section-title">+ Add Class Schedule</h2>
+                                    <h2 className="section-title add-schedule-text">+ Add Class Schedule</h2>
                                 </button>
                             </div>
                         )}
                     </FieldArray>
-                    <button type="submit" className="submit-button" disabled={isSubmitting}>
+                    <button 
+                        type="submit" 
+                        className="submit-button" 
+                        disabled={Object.values(errors).length > 0 || isSubmitting} 
+                    >
                         Publish Class
                     </button>
                 </form>

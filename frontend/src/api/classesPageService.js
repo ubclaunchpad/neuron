@@ -53,6 +53,13 @@ const updateSchedules = (class_id, schedules) =>
 const addSchedules = (class_id, schedules) => 
   api.post("/schedules/" + class_id, schedules)
 
+const deleteSchedules = (class_id, schedules) =>
+  api.delete("/schedules/" + class_id + "/soft-option", {
+    data: {
+      schedule_ids: schedules,
+    }
+  })
+
 const uploadClassImage = (class_id, image) =>
   api.put(`/classes/${class_id}/upload`, image, {
     headers: { 'Content-Type': 'multipart/form-data' }
@@ -65,6 +72,7 @@ export {
   getAllClassSchedules, 
   updateClass,
   addSchedules,
+  deleteSchedules,
   updateSchedules,
   uploadClassImage
 };

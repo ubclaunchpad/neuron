@@ -1,115 +1,73 @@
-import { Request, Response } from 'express';
-import { Schedule } from '../common/generated.js';
+import { Response } from 'express';
+import { ScheduleDB } from '../common/databaseModels.js';
+import { AuthenticatedRequest } from '../common/types.js';
 import ScheduleModel from '../models/scheduleModel.js';
 
 const scheduleModel = new ScheduleModel();
 
-async function getSchedules(req: Request, res: Response) {
-  try {
-    const schedules = await scheduleModel.getSchedules();
+async function getAllSchedules(req: AuthenticatedRequest, res: Response) {
+    const schedules = await scheduleModel.getAllSchedules();
+    
     res.status(200).json(schedules);
-  } catch (error) {
-    return res.status(500).json({
-      error: `Internal server error: ${JSON.stringify(error)}`
-    });
-  }
 }
 
-async function getSchedulesByClassId(req: Request, res: Response) {
-  const { class_id } = req.params;
+async function getActiveSchedulesForClass(req: AuthenticatedRequest, res: Response) {
+    const class_id = Number(req.params.class_id);
 
-  if (!class_id) {
-    return res.status(400).json({
-      error: "Missing required parameter: 'class_id'"
-    });
-  }
+    const schedules = await scheduleModel.getActiveSchedulesForClass(class_id);
 
-  try {
-    const schedules = await scheduleModel.getSchedulesByClassId(class_id);
     res.status(200).json(schedules);
-  } catch (error) {
-    return res.status(500).json({
-      error: `Internal server error: ${JSON.stringify(error)}`
-    });
-  }
 }
 
-function isValidSchedules(data: any): data is Schedule[] {
-  return Array.isArray(data) && data.every((schedule) => {
-    return (
-      // Validate its day is a number between 1 and 7
-      typeof schedule.day === "number" &&
-      (schedule.day >= 1 && schedule.day <= 7) &&
+async function addSchedulesToClass(req: AuthenticatedRequest, res: Response) {
+    const class_id = Number(req.params.class_id);
+    const schedules: ScheduleDB[] = req.body;
 
-      // Validate its start_time is a string between 00:00 and 23:59
-      typeof schedule.start_time === "string" &&
-      schedule.start_time.match(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/) &&
+    const result = await scheduleModel.addSchedulesToClass(class_id, schedules);
 
-      // Validate its end_time is a string between 00:00 and 23:59
-      typeof schedule.end_time === "string" &&
-      schedule.end_time.match(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
-
-      // TODO: May need to validate start_time < end_time
-    )
-  });
-}
-
-async function setSchedulesByClassId(req: Request, res: Response) {
-  const { class_id } = req.params;
-  const schedules: Schedule[] = req.body;
-
-  if (!class_id) {
-    return res.status(400).json({
-      error: "Missing required parameter: 'class_id'"
-    });
-  }
-
-  if (!isValidSchedules(schedules)) {
-    return res.status(400).json({
-      error: "Invalid schedule data"
-    });
-  }
-
-  try {
-    const result = await scheduleModel.setSchedulesByClassId(class_id, schedules);
     res.status(200).json(result);
-  } catch (error) {
-    return res.status(500).json({
-      error: `Internal server error: ${JSON.stringify(error)}`
-    })
-  }
 }
 
+async function deleteOrSoftDeleteSchedules(req: AuthenticatedRequest, res: Response) {
+    const class_id = Number(req.params.class_id);
+    const { schedule_ids } = req.body;
 
-async function updateSchedulesByClassId(req: Request, res: Response) {
-  const { class_id } = req.params;
-  const schedules: Schedule[] = req.body;
+    const result = await scheduleModel.deleteOrSoftDeleteSchedules(class_id, schedule_ids);
 
-  if (!class_id) {
-    return res.status(400).json({
-      error: "Missing required parameter: 'class_id'"
-    });
-  }
-
-  if (!isValidSchedules(schedules)) {
-    return res.status(400).json({
-      error: "Invalid schedule data"
-    });
-  }
-
-  try {
-    const result = await scheduleModel.updateSchedulesByClassId(class_id, schedules);
     res.status(200).json(result);
-  } catch (error) {
-    return res.status(500).json({
-      error: `Internal server error: ${JSON.stringify(error)}`
-    });
-  }
+}
+
+async function deleteSchedulesFromClass(req: AuthenticatedRequest, res: Response) {
+    const class_id = Number(req.params.class_id);
+    const { schedule_ids } = req.body;
+
+    const result = await scheduleModel.deleteSchedulesFromClass(class_id, schedule_ids);
+
+    res.status(200).json(result);
+}
+
+async function assignVolunteersToSchedule(req: AuthenticatedRequest, res: Response) {
+    const class_id = Number(req.params.class_id);
+    const schedule_id = Number(req.params.schedule_id);
+    const { volunteer_ids } = req.body;
+
+    const result = await scheduleModel.assignVolunteersByScheduleId(class_id, schedule_id, volunteer_ids);
+
+    res.status(200).json(result);
+}
+
+async function updateSchedulesForClass(req: AuthenticatedRequest, res: Response) {
+    const class_id = Number(req.params.class_id);
+    const schedules: ScheduleDB[] = req.body;
+
+    const result = await scheduleModel.updateSchedulesForClass(class_id, schedules);
+
+    res.status(200).json(result);
 }
 
 export {
-  getSchedules,
-  getSchedulesByClassId,
-  setSchedulesByClassId,
-  updateSchedulesByClassId
+    addSchedulesToClass,
+    assignVolunteersToSchedule, deleteOrSoftDeleteSchedules,
+    deleteSchedulesFromClass, getActiveSchedulesForClass, getAllSchedules, updateSchedulesForClass
 };
+

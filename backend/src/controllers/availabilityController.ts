@@ -1,117 +1,40 @@
-import { Request, Response } from 'express';
-import { Availability } from '../common/generated.js';
+import { Response } from 'express';
+import { AvailabilityDB } from '../common/databaseModels.js';
+import { AuthenticatedRequest } from '../common/types.js';
 import AvailabilityModel from '../models/availabilityModel.js';
 
 const availabilityModel = new AvailabilityModel();
 
-async function getAvailabilities(req: Request, res: Response) {
-    // console.log("DEBUG: getAvailabilities");
+async function getAvailabilities(req: AuthenticatedRequest, res: Response) {
+    const availabilities = await availabilityModel.getAvailabilities();
 
-    try {
-        const availabilities = await availabilityModel.getAvailabilities();
-        res.status(200).json(availabilities);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error: ${JSON.stringify(error)}`
-        });
-    }
+    res.status(200).json(availabilities);
 }
 
-async function getAvailabilityByVolunteerId(req: Request, res: Response) {
-    // console.log("DEBUG: getAvailabilityByVolunteerId");
-
+async function getAvailabilityByVolunteerId(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
 
-    if (!volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'volunteer_id'"
-        });
-    }
-
-    try {
-        const availability = await availabilityModel.getAvailabilityByVolunteerId(volunteer_id);
-        res.status(200).json(availability);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error: ${JSON.stringify(error)}`
-        });
-    }
+    const availability = await availabilityModel.getAvailabilityByVolunteerId(volunteer_id);
+    
+    res.status(200).json(availability);
 }
 
-function isValidAvailabilities(data: any): data is Availability[] {
-    return Array.isArray(data) && data.every((availability) => {
-        return (
-            // Validate its day is a number between 0 and 6
-            typeof availability.day === "number" &&
-            (availability.day >= 1 && availability.day <= 7) &&
-
-            // Validate its start_time is a string between 00:00 and 23:59
-            typeof availability.start_time === "string" &&
-            availability.start_time.match(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/) &&
-
-            // Validate its end_time is a string between 00:00 and 23:59
-            typeof availability.end_time === "string" &&
-            availability.end_time.match(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
-
-            // TODO: May need to validate start_time < end_time
-        )
-    });
-}
-
-async function setAvailabilityByVolunteerId(req: Request, res: Response) {
-    // console.log("DEBUG: setAvailabilityByVolunteerId");
-
+async function setAvailabilityByVolunteerId(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
-    const availabilities: Availability[] = req.body;
+    const availabilities: AvailabilityDB[] = req.body;
 
-    if (!volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'volunteer_id'"
-        });
-    }
+    const result = await availabilityModel.setAvailabilityByVolunteerId(volunteer_id, availabilities);
 
-    if (!isValidAvailabilities(availabilities)) {
-        return res.status(400).json({
-            error: "Invalid availability data"
-        });
-    }
-
-    try {
-        const result = await availabilityModel.setAvailabilityByVolunteerId(volunteer_id, availabilities);
-        res.status(200).json(result);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error: ${JSON.stringify(error)}`
-        })
-    }
+    res.status(200).json(result);
 }
 
-async function updateAvailabilityByVolunteerId(req: Request, res: Response) {
-    // console.log("DEBUG: updateAvailabilityByVolunteerId");
-
+async function updateAvailabilityByVolunteerId(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
-    const availabilities: Availability[] = req.body;
+    const availabilities: AvailabilityDB[] = req.body;
 
-    if (!volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'volunteer_id'"
-        });
-    }
+    const result = await availabilityModel.updateAvailabilityByVolunteerId(volunteer_id, availabilities);
 
-    if (!isValidAvailabilities(availabilities)) {
-        return res.status(400).json({
-            error: "Invalid availability data"
-        });
-    }
-
-    try {
-        const result = await availabilityModel.updateAvailabilityByVolunteerId(volunteer_id, availabilities);
-        res.status(200).json(result);
-    } catch (error) {
-        return res.status(500).json({
-            error: `Internal server error: ${JSON.stringify(error)}`
-        });
-    }
+    res.status(200).json(result);
 }
 
 export {

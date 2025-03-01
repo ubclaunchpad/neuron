@@ -1,132 +1,108 @@
-import { Availability } from "../common/generated.js";
+import { PoolConnection, ResultSetHeader } from "mysql2/promise";
+import { AvailabilityDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
 
 export default class AvailabilityModel {
-  getAvailabilities(): Promise<Availability[]> {
-    return new Promise((resolve, reject) => {
-      const query = "SELECT * FROM availability";
+  async getAvailabilities(): Promise<AvailabilityDB[]> {
+    const query = "SELECT * FROM availability";
 
-      connectionPool.query(query, [], (error: any, results: any) => {
-        if (error) {
-          return reject(
-            `An error occurred while executing the query: ${error}`
-          );
-        }
-
-        resolve(results);
-      });
-    });
+    const [results, _] = await connectionPool.query<AvailabilityDB[]>(query, []);
+    return results;
   }
 
-  getAvailabilityByVolunteerId(volunteer_id: string): Promise<Availability[]> {
-    return new Promise((resolve, reject) => {
-      const query = "SELECT * FROM availability WHERE fk_volunteer_id = ?";
-      const values = [volunteer_id];
+  async getAvailabilityByVolunteerId(volunteer_id: string): Promise<AvailabilityDB[]> {
+    const query = "SELECT * FROM availability WHERE fk_volunteer_id = ?";
+    const values = [volunteer_id];
 
-      connectionPool.query(query, values, (error: any, results: any) => {
-        if (error) {
-          return reject(
-            `An error occurred while executing the query: ${error}`
-          );
-        }
-
-        resolve(results);
-      });
-    });
+    const [results, _] = await connectionPool.query<AvailabilityDB[]>(query, values);
+    return results;
   }
 
-  setAvailabilityByVolunteerId(volunteer_id: string, availabilities: Availability[]): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const query = `INSERT INTO availability (fk_volunteer_id, day, start_time, end_time) VALUES ?`;
-      const values = availabilities.map((availability) => [
-        volunteer_id,
-        availability.day,
-        availability.start_time,
-        availability.end_time,
-      ]);
+  async setAvailabilityByVolunteerId(volunteer_id: string, availabilities: AvailabilityDB[], transaction?: PoolConnection): Promise<ResultSetHeader> {
+    const connection = transaction ?? connectionPool;
 
-      connectionPool.query(query, [values], (error: any, results: any) => {
-        if (error) {
-          return reject(`An error occurred while executing the query: ${error}`);
-        }
-        resolve(results);
-      });
-    });
+    const valuesCaluse = availabilities
+            .map(() => '(?)')
+            .join(", ");
+    const query = `INSERT INTO availability (fk_volunteer_id, day, start_time, end_time) VALUES ${valuesCaluse}`;
+    const values = availabilities.map((availability) => [
+      volunteer_id,
+      availability.day,
+      availability.start_time,
+      availability.end_time,
+    ]);
+
+    const [results, _] = await connection.query<ResultSetHeader>(query, values);
+    return results;
   }
 
-  deleteAvailabilitiesByAvailabilityId(volunteer_id: string, availabilityIds: number[]): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const query = `DELETE FROM availability WHERE fk_volunteer_id = ? AND availability_id IN (?)`;
-      const values = [volunteer_id, availabilityIds];
+  async deleteAvailabilitiesByAvailabilityId(volunteer_id: string, availabilityIds: number[], transaction?: PoolConnection): Promise<ResultSetHeader> {
+    const connection = transaction ?? connectionPool;
 
-      connectionPool.query(query, values, (error: any, results: any) => {
-        if (error) {
-          return reject(`An error occurred while executing the query: ${error}`);
-        }
-        resolve(results);
-      });
-    });
+    const query = `DELETE FROM availability WHERE fk_volunteer_id = ? AND availability_id IN (?)`;
+    const values = [volunteer_id, availabilityIds];
+
+    const [results, _] = await connection.query<ResultSetHeader>(query, values);
+    return results;
   }
 
-  updateAvailabilityByVolunteerId(volunteer_id: string, newAvailabilities: Availability[]): Promise<Availability[]> {
-    return new Promise(async (resolve, reject) => {
-      try {
+  async updateAvailabilityByVolunteerId(volunteer_id: string, newAvailabilities: AvailabilityDB[]): Promise<void> {
+    const transaction = await connectionPool.getConnection();
 
-        // Get exisitng availabilities and conform them to our Availability type
-        const existingAvailabilities = (await this.getAvailabilityByVolunteerId(volunteer_id))
-          .map((availability: Availability) => ({
-            day: availability.day,
-            start_time: availability.start_time.slice(0, 5),
-            end_time: availability.end_time.slice(0, 5),
-            availability_id: availability.availability_id,
-            fk_volunteer_id: availability.fk_volunteer_id
-          }));
+    try {
+      await transaction.beginTransaction();
 
-        const availabilityIdsToDelete: Set<number> = new Set();
-        const availabilitiesToSkip: Set<Availability> = new Set();
+      // Get exisitng availabilities and conform them to our Availability type
+      const existingAvailabilities = (await this.getAvailabilityByVolunteerId(volunteer_id))
+        .map((availability: AvailabilityDB) => ({
+          day: availability.day,
+          start_time: availability.start_time.slice(0, 5),
+          end_time: availability.end_time.slice(0, 5),
+          availability_id: availability.availability_id,
+          fk_volunteer_id: availability.fk_volunteer_id
+        } as AvailabilityDB));
 
-        // Helper function to check if two availabilities are an exact match
-        const isExactMatch = (a: Availability, b: Availability) => (
-          a.day === b.day &&
-          a.start_time === b.start_time &&
-          a.end_time === b.end_time
-        );
+      const availabilityIdsToDelete: Set<number> = new Set();
+      const availabilitiesToSkip: Set<AvailabilityDB> = new Set();
 
-        existingAvailabilities.forEach((existing: Availability) => {
-          const matchingNewAvailability = newAvailabilities.find((newAvailability: Availability) => isExactMatch(existing, newAvailability));
+      // Helper function to check if two availabilities are an exact match
+      const isExactMatch = (a: AvailabilityDB, b: AvailabilityDB) => (
+        a.day === b.day &&
+        a.start_time === b.start_time &&
+        a.end_time === b.end_time
+      );
 
-          // No new availability matches the existing availability -> Mark existing availability for deletion
-          if (!matchingNewAvailability) {
-            if (existing.availability_id) {
-              availabilityIdsToDelete.add(existing.availability_id);
-            }
+      existingAvailabilities.forEach((existing: AvailabilityDB) => {
+        const matchingNewAvailability = newAvailabilities.find((newAvailability: AvailabilityDB) => isExactMatch(existing, newAvailability));
 
-            // Some new availability matches the existing availability -> We don't need to add the new availability
-          } else {
-            availabilitiesToSkip.add(matchingNewAvailability)
+        // No new availability matches the existing availability -> Mark existing availability for deletion
+        if (!matchingNewAvailability) {
+          if (existing.availability_id) {
+            availabilityIdsToDelete.add(existing.availability_id);
           }
-        });
 
-        // Filter out availabilities that we don't need to add
-        const newAvailabilitiesToAdd = newAvailabilities.filter((newAvailability: Availability) => !availabilitiesToSkip.has(newAvailability));
-
-        if (availabilityIdsToDelete.size > 0) {
-          await this.deleteAvailabilitiesByAvailabilityId(volunteer_id, [...availabilityIdsToDelete]);
+          // Some new availability matches the existing availability -> We don't need to add the new availability
+        } else {
+          availabilitiesToSkip.add(matchingNewAvailability)
         }
+      });
 
-        if (newAvailabilitiesToAdd.length > 0) {
-          const result = await this.setAvailabilityByVolunteerId(volunteer_id, newAvailabilitiesToAdd);
-          resolve(result);
-        }
+      // Filter out availabilities that we don't need to add
+      const newAvailabilitiesToAdd = newAvailabilities.filter((newAvailability: AvailabilityDB) => !availabilitiesToSkip.has(newAvailability));
 
-        resolve([]);
-
-      } catch (error) {
-        return reject({
-          status: 500,
-          message: `An error occurred while executing the query: ${error}`
-        });
+      if (availabilityIdsToDelete.size > 0) {
+        await this.deleteAvailabilitiesByAvailabilityId(volunteer_id, [...availabilityIdsToDelete], transaction);
       }
-    })
+
+      if (newAvailabilitiesToAdd.length > 0) {
+        await this.setAvailabilityByVolunteerId(volunteer_id, newAvailabilitiesToAdd, transaction);
+      }
+
+      await transaction.commit();
+    } catch (error) {
+        // Rollback
+        await transaction.rollback();
+        throw error;
+    }
   }
 }

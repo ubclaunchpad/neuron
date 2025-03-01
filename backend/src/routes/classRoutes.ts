@@ -1,39 +1,87 @@
-import express from 'express';
-import { Request, Response } from 'express';
-import { getAllClasses, getClassById, getClassesByDay, addClass, getAllImages, getImageByClassId, uploadImage } from '../controllers/classController.js';
-import multer from 'multer'; // Used for file uploads
+import { body, param } from 'express-validator';
+import { RouteDefinition } from "../common/types.js";
+import { isAuthorized } from '../config/authCheck.js';
+import { imageUploadMiddleware } from '../config/fileUpload.js';
+import { addClass, deleteClass, getAllClasses, getClassById, getClassesByDay, updateClass, uploadClassImage } from '../controllers/classController.js';
 
-const router = express.Router();
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
-router.get('/', async (req: Request, res: Response) => {
-    await getAllClasses(req, res);
-});
-
-router.get('/images', async (req: Request, res: Response) => {
-    await getAllImages(req, res);
-});
-
-router.get('/images/:class_id', async (req: Request, res: Response) => {
-    await getImageByClassId(req, res);
-});
-
-router.get('/:class_id', async (req: Request, res: Response) => {
-    await getClassById(req, res);
-});
-
-router.get("/schedule/:day", async (req, res) => {
-    await getClassesByDay(req, res);
-});
-
-router.post('/', async (req: Request, res: Response) => {
-    await addClass(req, res);
-});
-
-router.put('/images/:class_id', upload.single('image'), async (req: Request, res: Response) => {
-    await uploadImage(req, res);
-});
-
-
-export default router;
+export const ClassRoutes: RouteDefinition = {
+    path: '/classes',
+    middleware: [
+        isAuthorized,
+    ],
+    children: [
+        {
+            path: '/',
+            method: 'get',
+            action: getAllClasses
+        },
+        {
+            path: '/',
+            method: 'post',
+            validation: [
+                body('fk_instructor_id').isUUID('4'),
+                body('class_name').isString(),
+                body('instructions').isString().optional(),
+                body('zoom_link').isURL().optional(),
+                body('start_date').isDate({ format: 'YYYY-MM-DD' }),
+                body('end_date').isDate({ format: 'YYYY-MM-DD' }),
+                body('category').isString().optional(),
+                body('subcategory').isString().optional(),
+                body('schedules').isArray({ min: 1 }).optional(),
+                body('schedules.*.day').isInt({ min: 0, max: 6 }),
+                body('schedules.*.start_time').isTime({ hourFormat: 'hour24' }),
+                body('schedules.*.end_time').isTime({ hourFormat: 'hour24' }),
+                body('schedules.*.volunteer_ids').isArray({ min: 1 }).optional(),
+                body('schedules.*.volunteer_ids.*').isUUID('4')
+            ],
+            action: addClass
+        },
+        {
+            path: '/schedule/:day',
+            method: 'get',
+            validation: [
+                param('day').isDate({ format: 'YYYY-MM-DD' }),
+            ],
+            action: getClassesByDay
+        },
+        {
+            path: '/:class_id',
+            validation: [
+                param('class_id').isInt({ min: 0 })
+            ],
+            children: [
+                {
+                    path: '/',
+                    method: 'get',
+                    action: getClassById
+                },
+                {
+                    path: '/',
+                    method: 'put',
+                    validation: [
+                        body('fk_instructor_id').isUUID('4').optional(),
+                        body('class_name').isString().optional(),
+                        body('instructions').isString().optional(),
+                        body('zoom_link').isURL().optional(),
+                        body('start_date').isDate({ format: 'YYYY-MM-DD' }).optional(),
+                        body('end_date').isDate({ format: 'YYYY-MM-DD' }).optional(),
+                        body('category').isString().optional(),
+                        body('subcategory').isString().optional(),
+                    ],
+                    action: updateClass
+                },
+                {
+                    path: '/',
+                    method: 'delete',
+                    action: deleteClass
+                },
+                {
+                    path: '/upload',
+                    method: 'put',
+                    middleware: [imageUploadMiddleware],
+                    action: uploadClassImage
+                }
+            ]
+        },
+    ]
+};

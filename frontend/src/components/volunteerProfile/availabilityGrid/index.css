@@ -22,8 +22,8 @@
 
 /* Title */
 .availability-title {
-  font-size: 20px;
-  font-weight: bold;
+  font-size: var(--title-text);
+  font-weight: var(--semi-bold);
   margin: 0;
 }
 
@@ -70,7 +70,7 @@
   /* align-items: center; */
   /* justify-content: center; */
   font-size: 12px; /* Adjust font size to fit smaller cells */
-  font-weight: bold;
+  font-weight: var(--semi-bold);
   text-align: right; /* Align text to the right for time labels */
   padding-right: 5px; /* Space between time label and slots */
 }
@@ -78,7 +78,7 @@
 /* Day Labels */
 .day-label {
   text-align: center;
-  font-weight: bold;
+  font-weight: var(--semi-bold);
   background-color: white; /* Light gray background for headers */
   font-size: 12px; /* Adjust font size */
   color: #333; /* Text color for day labels */
@@ -117,4 +117,14 @@
   grid-row: 1; /* First row */
   grid-column: 1; /* First column */
   background-color: #fff; /* Match grid background */
+}
+
+.my-profile-title {
+  font-family: "Montserrat";
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 27px;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;    
 }

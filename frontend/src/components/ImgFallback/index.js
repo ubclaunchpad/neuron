@@ -18,7 +18,7 @@ export default function ProfileImg({
   if (name)
     return <img
     className={className}
-      src={src}
+      src={src || fallbackUrl}
       alt={name}
       width={40}
       height={40}

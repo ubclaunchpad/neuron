@@ -1,141 +1,128 @@
-import { Request, Response } from 'express';
-import { Shift } from '../common/generated.js';
+import { Response } from 'express';
+import { ShiftDB } from '../common/databaseModels.js';
+import { AuthenticatedRequest } from '../common/types.js';
 import ShiftModel from '../models/shiftModel.js';
 
 const shiftModel = new ShiftModel();
 
-// regular expression to match the SQL DATE format: YYYY-MM-DD
-const sqlDateRegex = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+async function getShiftInfo(req: AuthenticatedRequest, res: Response){
+    const shift: ShiftDB = req.body;
 
-async function getShiftInfo(req: Request, res: Response){
-    const shift: Shift = req.body;
+    const shift_info = await shiftModel.getShiftInfo(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
 
-    if (!shift.fk_volunteer_id || !shift.fk_schedule_id || !shift.shift_date) {
-        return res.status(400).json({
-            error: "Missing required fields. 'fk_volunteer_id', 'fk_schedule_id' and 'shift_date' are required."
-        });
-    }
-
-    // check if the input matches the regex
-    if (!sqlDateRegex.test(shift.shift_date)) {
-        return res.status(400).json({
-            error: "'shiftDate' must be a valid date of the format 'YYYY-MM-DD'"
-        });
-    }
-    
-    try {
-        const shift_info = await shiftModel.getShiftInfoFromDB(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
-        res.status(200).json(shift_info);
-    } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error: ${error.message}`
-        });
-    }
+    res.status(200).json(shift_info);
 }
 
 // get all the shifts assigned to a volunteer, using the volunteer's ID
-async function getShiftsByVolunteerId(req: Request, res: Response) {
+async function getShiftsByVolunteerId(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
 
-    if (!volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'volunteer_id'"
-        });
-    }
+    const shifts = await shiftModel.getShiftsByVolunteerId(volunteer_id);
 
-    try {
-        const shifts = await shiftModel.getShiftsByVolunteerId(volunteer_id);
-        res.status(200).json(shifts);
-    } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
-} 
+    res.status(200).json(shifts);
+}
 
 // get all the shifts on a given date
-async function getShiftsByDate(req: Request, res: Response) {
-    const shift: Shift = req.body;
+async function getShiftsByDate(req: AuthenticatedRequest, res: Response) {
+    const shift: ShiftDB = req.body;
 
-    if (!shift.shift_date) {
-        return res.status(400).json({
-            error: "Missing required field: 'shift_date'"
-        });
-    }
+    const shifts = await shiftModel.getShiftsByDate(shift.shift_date);
 
-    // check if the input matches the regex
-    if (!sqlDateRegex.test(shift.shift_date)) {
-        return res.status(400).json({
-            error: "'shiftDate' must be a valid date of the format 'YYYY-MM-DD'"
-        });
-    }
-
-    try {
-        const shifts = await shiftModel.getShiftsByDate(shift.shift_date);
-        res.status(200).json(shifts);
-    } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
+    res.status(200).json(shifts);
 }
 
 // get all the shifts viewable for a volunteer for the month around a given date
-async function getShiftsByVolunteerIdAndMonth(req: Request, res: Response) {
-    const shift: Shift = req.body;
-
-    if (!shift.shift_date) {
-        return res.status(400).json({
-            error: "Missing required field: 'shift_date'"
-        });
-    } else if (!shift.fk_volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required field: 'fk_volunteer_id'"
-        });
-    }
-
-    // check if the input matches the regex
-    if (!sqlDateRegex.test(shift.shift_date)) {
-        return res.status(400).json({
-            error: "'shiftDate' must be a valid date of the format 'YYYY-MM-DD'"
-        });
-    }
+async function getShiftsByVolunteerIdAndMonth(req: AuthenticatedRequest, res: Response) {
+    const shift: ShiftDB = req.body;
 
     const date = new Date(shift.shift_date + 'T00:00:00'); // Adding time to avoid timezone issues
-    const month: number = new Date(date).getMonth() + 1;
-    const year: number = new Date(shift.shift_date).getFullYear();
+    const month: number = date.getMonth() + 1;
+    const year: number = date.getFullYear();
 
-    try {
-        const shifts = await shiftModel.getShiftsByVolunteerIdAndMonth(shift.fk_volunteer_id, month, year);
-        res.status(200).json(shifts);
-    } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
+    const shifts = await shiftModel.getShiftsByVolunteerIdAndMonth(shift.fk_volunteer_id, month, year);
+
+    res.status(200).json(shifts);
+}
+
+async function addShift(req: AuthenticatedRequest, res: Response) {
+    const shift: ShiftDB = req.body;
+
+    const request = await shiftModel.addShift(shift);
+    const addedShift = {
+        shift_id: request.insertId,
+        fk_volunteer_id: shift.fk_volunteer_id ?? null,
+        fk_schedule_id: shift.fk_schedule_id,
+        shift_date: shift.shift_date,
+        duration: shift.duration,
+        checked_in: shift.checked_in
+    };
+
+    res.status(200).json(addedShift);
+}
+
+async function deleteShift(req: AuthenticatedRequest, res: Response) {
+    const shift_id = Number(req.params.shift_id);
+
+    const request = await shiftModel.deleteShift(shift_id);
+
+    res.status(200).json(request);
+}
+
+async function updateShift(req: AuthenticatedRequest, res: Response) {
+    const shift_id = Number(req.params.shift_id);
+    const shift: ShiftDB = req.body;
+
+    const request = await shiftModel.updateShift(shift_id, shift);
+
+    res.status(200).json(request);
+}
+
+// volunteer checks into a shift
+async function checkInShift(req: AuthenticatedRequest, res: Response) {
+    const shift_id = Number(req.params.shift_id);
+
+    const request = await shiftModel.updateShiftCheckIn(shift_id);
+
+    res.status(200).json(request);
 }
 
 // volunteer requesting to cover someone else’s open shift
-async function requestToCoverShift(req: Request, res: Response) {
+async function requestCoverShift(req: AuthenticatedRequest, res: Response) {
     const { request_id, volunteer_id } = req.body;
 
-    if (!request_id || !volunteer_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'request_id' or 'volunteer_id'",
-        });
-    }
+    const request = await shiftModel.insertCoverShift(request_id, volunteer_id);
 
-    try {
-        const request = await shiftModel.requestToCoverShift(request_id, volunteer_id);
-        res.status(200).json(request);
-    } catch (error: any) {
-        return res.status(500).json({
-            error: `Internal server error. ${error.message}`
-        });
-    }
+    res.status(200).json(request);
+}
+
+// volunteer cancels on covering a shift
+async function withdrawCoverShift(req: AuthenticatedRequest, res: Response) {
+    const { request_id, volunteer_id } = req.body;
+
+    const request = await shiftModel.deleteCoverShift(request_id, volunteer_id);
+
+    res.status(200).json(request);
+}
+
+// volunteer requests coverage for their own shift
+async function requestShiftCoverage(req: AuthenticatedRequest, res: Response) {
+    const { shift_id } = req.body; 
+
+    const request = await shiftModel.insertShiftCoverageRequest(shift_id);
+
+    res.status(200).json(request);
+}
+
+// volunteers cancels their request for shift coverage
+async function withdrawShiftCoverage(req: AuthenticatedRequest, res: Response) {
+    const { request_id, shift_id } = req.body;
+
+    const request = await shiftModel.deleteShiftCoverageRequest(request_id, shift_id);
+
+    res.status(200).json(request);
 }
 
 export {
-    getShiftInfo, getShiftsByDate, getShiftsByVolunteerId, getShiftsByVolunteerIdAndMonth,
-    requestToCoverShift
+    addShift, checkInShift, deleteShift, getShiftInfo, getShiftsByDate, getShiftsByVolunteerId, getShiftsByVolunteerIdAndMonth, requestCoverShift, requestShiftCoverage, updateShift, withdrawCoverShift, withdrawShiftCoverage
 };
+

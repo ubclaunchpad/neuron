@@ -1,0 +1,93 @@
+@import '../../styles.css';
+
+/* General Card Styles */
+.class-pref-card {
+    display: flex;
+    margin: .5rem;
+    padding: .5rem .8rem;
+    border: 1px solid #ccc;
+    border-radius: .8rem;
+    box-shadow: 0px 4px 16px rgba(15, 17, 17, 0.1);
+    min-height: 3.5rem;
+    align-items: center;
+    background-color: white;
+}
+
+.class-pref-card:hover {
+    filter: brightness(0.95);
+}
+
+/* Vertical Line Styles */
+.vertical-line {
+    width: .5rem;
+    background-color: var(--grey);
+    border-radius: 1.5rem;
+    height: 80%;
+    min-height: 3rem;
+    margin-right: 1rem;
+}
+
+/* Card Content Layout */
+.card-content {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    height: 80%;
+}
+
+
+.card-content .segment-1 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-right: 8px;
+}
+
+.class-pref-time {
+    width: 70px;
+}
+
+.card-content .segment-2 {
+    flex: 4;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+/* Text and Typography */
+.card-text {
+    margin: 0;
+    font-family: var(--font-primary);
+}
+
+.card-text h2 {
+    margin: .25rem 0;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-dark, #0F1111);
+}
+
+.card-text p {
+    margin: 0;
+    font-size: var(--small-text);
+    font-weight: 400;
+    color: var(--text-grey, #808080);
+}
+
+.segment-1 > .card-text > h2 {
+    font-weight: 500;
+}
+
+
+
+/* Responsive Adjustments */
+@media (max-width: 1000px) {
+    .segment-1 {
+        display: none;
+    }
+
+    .segment-2 {
+        flex: 1;
+        flex-direction: column;
+    }
+}

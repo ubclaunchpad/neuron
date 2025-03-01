@@ -1,25 +1,41 @@
-import { Router, Request, Response } from 'express';
-import { 
-    getInstructors, 
+import { body, param } from 'express-validator';
+import { RouteDefinition } from "../common/types.js";
+import { isAuthorized } from '../config/authCheck.js';
+import {
     getInstructorById,
+    getInstructors,
     insertInstructor
 } from '../controllers/instructorController.js';
 
-const router = Router();
-
-// get all instructors
-router.get('/', async (req: Request, res: Response) => { 
-    await getInstructors(req, res) 
-});
-
-// get instructor by ID
-router.get('/:instructor_id', async (req: Request, res: Response) => { 
-    await getInstructorById(req, res) 
-});
-
-// insert a new instructor
-router.post('/', async (req: Request, res: Response) => {
-    await insertInstructor(req, res);
-});
-
-export default router;
+export const InstructorRoutes: RouteDefinition = {
+    path: '/instructors',
+    middleware: [
+        isAuthorized,
+    ],
+    children: [
+        {
+            path: '/',
+            method: 'get',
+            action: getInstructors
+        },
+        {
+            path: '/',
+            method: 'post',
+            validation: [
+                body('instructor_id').isUUID('4'),
+                body('f_name').isString(),
+                body('l_name').isString(),
+                body('email').isEmail(),
+            ],
+            action: insertInstructor
+        },
+        {
+            path: '/:instructor_id',
+            method: 'get',
+            validation: [
+                param('instructor_id').isUUID('4')
+            ],
+            action: getInstructorById
+        },
+    ]
+};

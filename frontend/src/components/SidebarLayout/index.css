@@ -24,16 +24,20 @@ body {
 .content-container {
   flex-grow: 1;
   background-color: var(--white);
-  padding: 0 2vw;
   max-height: 100vh;
-  overflow-y: scroll;
+  overflow-y: hidden;
   position: relative;
+}
+
+.volunteer-dash {
+  overflow-y: auto !important;
 }
 
 .content-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0 36px;
 }
 
 .content-title {
@@ -43,7 +47,6 @@ body {
   font-family: var(--font-secondary);
   font-style: normal;
   font-weight: 700;
-  padding-left: 2vw;
   font-size: var(--page-title-text);
 }
 

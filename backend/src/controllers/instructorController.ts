@@ -1,57 +1,30 @@
-import { Request, Response } from 'express';
-import { Instructor } from '../common/generated.js';
+import { Response } from 'express';
+import { InstructorDB } from '../common/databaseModels.js';
+import { AuthenticatedRequest } from '../common/types.js';
 import InstructorModel from '../models/instructorModel.js';
 
 const instructorModel = new InstructorModel();
 
-async function getInstructors(req: Request, res: Response) {
-    try {
-        const instructors = await instructorModel.getInstructors();
-        res.status(200).json(instructors);
-    } catch (error: any) {
-        return res.status(error.status).json({
-            error: `${error.message}`
-        });
-    }
+async function getInstructors(req: AuthenticatedRequest, res: Response) {
+    const instructors = await instructorModel.getInstructors();
+
+    res.status(200).json(instructors);
 }
 
-async function getInstructorById(req: Request, res: Response) {
+async function getInstructorById(req: AuthenticatedRequest, res: Response) {
     const { instructor_id } = req.params;
 
-    if (!instructor_id) {
-        return res.status(400).json({
-            error: "Missing required parameter: 'instructor_id'"
-        });
-    }
-
-    try {
-        const instructor = await instructorModel.getInstructorById(instructor_id);
-        res.status(200).json(instructor);
-    } catch (error: any) {
-        return res.status(error.status).json({
-            error: `${error.message}`
-        });
-    };
+    const instructor = await instructorModel.getInstructorById(instructor_id);
+    
+    res.status(200).json(instructor);
 }
 
-async function insertInstructor(req: Request, res: Response) {
-    const instructor: Instructor = req.body;
+async function insertInstructor(req: AuthenticatedRequest, res: Response) {
+    const instructor: InstructorDB = req.body;
 
-    const { instructor_id, f_name, l_name, email } = instructor;
-    if (!instructor_id || !f_name || !l_name || !email) {
-        return res.status(400).json({
-            error: "Missing required fields. 'instructor_id', 'f_name', 'l_name', and 'email' are required."
-        });
-    }
+    const result = await instructorModel.insertInstructor(instructor);
 
-    try {
-        const result = await instructorModel.insertInstructor(instructor);
-        res.status(200).json(result);
-    } catch (error: any) {
-        return res.status(error.status).json({
-            error: `${error.message}`
-        });
-    }
+    res.status(200).json(result);
 }
 
 export {

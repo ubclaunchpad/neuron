@@ -25,7 +25,9 @@
   --green: #28a745;
   --yellow: #cb8324;
   --red: #952018;
+  --red-hover: #7a1a14;
   --button-blue: #1687ca;
+  --button-blue-hover: #0f6e9c;
   --error-red: #dc3545;
 }
 
@@ -50,4 +52,28 @@ body {
 
 .notyf {
   font-family: var(--font-primary);
+}
+
+.icon-white {
+  filter: brightness(0) saturate(100%) invert(100%) sepia(4%) saturate(550%) hue-rotate(258deg) brightness(119%) contrast(100%);
+}
+.save-button {
+  background: #1687CA;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 400;
+}
+.save-button:hover, .cancel-button:hover {
+  filter: brightness(0.7);
+  cursor: pointer;
+}
+.cancel-button {
+  background-color: white;
+  color: black;
+  padding: 10px 16px;
+  border: 1px solid #1687CA ;
+  border-radius: 8px ;
 }

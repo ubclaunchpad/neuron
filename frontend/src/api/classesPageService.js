@@ -50,6 +50,9 @@ const updateClass = (class_id, classData) =>
 const updateSchedules = (class_id, schedules) =>
   api.put("/schedules/" + class_id, schedules)
 
+const addSchedules = (class_id, schedules) => 
+  api.post("/schedules/" + class_id, schedules)
+
 const uploadClassImage = (class_id, image) =>
   api.put(`/classes/${class_id}/upload`, image, {
     headers: { 'Content-Type': 'multipart/form-data' }
@@ -61,6 +64,7 @@ export {
   getAllClassImages, 
   getAllClassSchedules, 
   updateClass,
+  addSchedules,
   updateSchedules,
   uploadClassImage
 };

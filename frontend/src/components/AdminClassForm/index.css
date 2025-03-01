@@ -16,6 +16,12 @@
     box-shadow: 0px 4px 16px 0px #0F11110D;
 }
 
+.schedule-blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 24px
+}
+
 .section-title {
     margin: 0;
     font-size: var(--title-text);
@@ -33,6 +39,7 @@
 }
 
 .class-form-input {
+    font-family: var(--font-primary);
     width: stretch;
     border: 1px solid #ccc;
     border-radius: 8px;
@@ -291,6 +298,16 @@ textarea:focus {
 
 .add-volunteers {
     width: fit-content;
+}
+
+.add-schedule-button {
+    background-color: #fff;
+    text-align: left;
+}
+
+.add-schedule-button:hover { 
+    cursor: pointer;
+    background-color: #fafafa;
 }
 
 

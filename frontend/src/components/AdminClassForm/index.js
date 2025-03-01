@@ -4,7 +4,13 @@ import * as Yup from "yup";
 import { CgSelect } from "react-icons/cg";
 import camera_icon from "../../assets/upload.png";
 import Select from 'react-select';
-import { getClassById, updateClass, updateSchedules, uploadClassImage } from "../../api/classesPageService";
+import { 
+    getClassById, 
+    updateClass, 
+    updateSchedules,
+    addSchedules, 
+    uploadClassImage 
+} from "../../api/classesPageService";
 import notyf from "../../utils/notyf";
 import "./index.css";
 import { formatImageUrl } from "../../api/imageService";
@@ -62,7 +68,8 @@ const ClassSchema = Yup.object().shape({
     schedules: Yup.array()
         .of(
             Yup.object().shape({
-                day: Yup.number().min(0).max(6).optional(), // 0 = Sunday, 6 = Saturday
+                schedule_id: Yup.number().optional(), // newly added schedules will not yet have an id
+                day: Yup.number().min(0).max(6), // 0 = Sunday, 6 = Saturday
                 start_time: Yup.string()
                     .matches(/^([0-1]\d|2[0-3]):([0-5]\d)$/, 'Invalid start_time format (HH:mm)')
                     .optional(),
@@ -134,17 +141,6 @@ function AdminClassForm({ classId, setUpdates }) {
             
             console.log(classData)
             setClassData(classData);
-            
-            const instructorData = await getAllInstructors();
-            const instructors = instructorData.map((instructor) => {
-                return {
-                    value: instructor.instructor_id,
-                    label: instructor.f_name + ' ' + instructor.l_name
-                }
-            });
-            console.log(instructorData);
-            console.log(instructors);
-            setInstructors(instructors);
 
             const volunteerData = await getAllVolunteers();
             const volunteers = volunteerData.map((volunteer) => {
@@ -169,6 +165,23 @@ function AdminClassForm({ classId, setUpdates }) {
         }
     }, [classId]);
 
+    useEffect(() => {
+        const fetchInstructors = async () => {
+            const instructorData = await getAllInstructors();
+            const instructors = instructorData.map((instructor) => {
+                return {
+                    value: instructor.instructor_id,
+                    label: instructor.f_name + ' ' + instructor.l_name
+                }
+            });
+            console.log(instructorData);
+            console.log(instructors);
+            setInstructors(instructors);
+        }
+        fetchInstructors();
+    }, []);
+
+
     function buildVolunteers(assignedVolunteers) {
         const assignedVolunteerIds = assignedVolunteers.map((volunteer) => volunteer.volunteer_id);
         return volunteers.filter((volunteer) => !assignedVolunteerIds.includes(volunteer.value.volunteer_id));
@@ -191,9 +204,24 @@ function AdminClassForm({ classId, setUpdates }) {
                     );
                     console.log("CLASS DATA:", classData)
 
+                    // seperate added schedules from updated schedules
+                    const addedSchedules = values.schedules.filter((schedule) => !schedule.schedule_id)
+                        .map((schedule) => ({
+                            day: schedule.day,
+                            start_time: schedule.start_time,
+                            end_time: schedule.end_time,
+                            frequency: schedule.frequency,
+                            volunteer_ids: schedule.volunteers.map((volunteer) => volunteer.volunteer_id)
+                        }));
+                    const updatedSchedules = values.schedules.filter((schedule) => schedule.schedule_id);
+
+                    console.log("ADDED SCHEDULES:", addedSchedules);
+                    console.log("UPDATED SCHEDULES:", updatedSchedules);
+
                     const requests = [];
                     requests.push(updateClass(classId, classData));
-                    requests.push(updateSchedules(classId, values.schedules));
+                    requests.push(updateSchedules(classId, updatedSchedules));
+                    requests.push(addSchedules(classId, addedSchedules));
 
                     if (image.blob) {
                         const imageData = new FormData();
@@ -268,7 +296,6 @@ function AdminClassForm({ classId, setUpdates }) {
                                 </label>
                                 <Select
                                     className="select"
-                                    placeholder="Select"
                                     defaultValue={{value: values.category, label: values.category}}
                                     styles={{
                                         control: () => ({
@@ -491,210 +518,229 @@ function AdminClassForm({ classId, setUpdates }) {
                         name="schedules"    
                     >
                         {({ push, remove }) => (
-                            values.schedules.map((schedule, index) => (
-                                <div className="form-block">
-                                    <h2 className="section-title">Schedule {index + 1}</h2>
-                                    <div className="days-input">
-                                        <div className="days-row">
-                                            {days.map((day, dayIndex) => (
-                                                <button 
-                                                    type="button"
-                                                    style={dayIndex === schedule.day ? {
-                                                        background: '#F0FAFF',
-                                                        border: '1px solid #4385AC',
-                                                        color: '#0F1111',
-                                                        fontWeight: '500'
-                                                    } : {}}
-                                                    value={dayIndex}
-                                                    className={`${day.toLowerCase()}-input day-input`}
-                                                    onClick={(e) => {
-                                                        setFieldValue(`schedules[${index}].day`, Number(e.target.value));
-                                                        setUpdates((prev) => prev + 1);
-                                                    }}
-                                                >
-                                                    {day}
-                                                </button>
-                                            ))}
+                            <div className="schedule-blocks">{
+                                values.schedules.map((schedule, index) => (
+                                    <div className="form-block" key={index}>
+                                        <h2 className="section-title">Schedule {index + 1}</h2>
+                                        <div className="days-input">
+                                            <div className="days-row">
+                                                {days.map((day, dayIndex) => (
+                                                    <button 
+                                                        key={dayIndex}
+                                                        type="button"
+                                                        style={dayIndex === schedule.day ? {
+                                                            background: '#F0FAFF',
+                                                            border: '1px solid #4385AC',
+                                                            color: '#0F1111',
+                                                            fontWeight: '500'
+                                                        } : {}}
+                                                        value={dayIndex}
+                                                        className={`${day.toLowerCase()}-input day-input`}
+                                                        onClick={(e) => {
+                                                            setFieldValue(`schedules[${index}].day`, Number(e.target.value));
+                                                            setUpdates((prev) => prev + 1);
+                                                        }}
+                                                    >
+                                                        {day}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="input-row">
-                                        <div className="flex-input">
-                                        <label className="class-form-label">
-                                            Frequency
-                                        </label>
-                                        <Select
-                                            className="select"
-                                            placeholder="Select"
-                                            defaultValue={frequencies.find(f => f.value === schedule.frequency)}
-                                            styles={{
-                                                control: () => ({
-                                                    width: 'stretch',
-                                                    padding: '12px 32px 12px 16px',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #cccccc',
-                                                    cursor: 'pointer'
-                                                }),
-                                                valueContainer: (styles) => ({
-                                                    ...styles,
-                                                    padding: '0px'
-                                                })
-                                            }}
-                                            options={frequencies}
-                                            isSearchable={false}
-                                            components={
-                                                {
-                                                    DropdownIndicator: () => 
-                                                        <CgSelect className="select-icon"/>,
-                                                    IndicatorSeparator: () => null,
-                                                    Option: (props) => {
-                                                        const {innerProps, innerRef} = props;
-                                                        return (
-                                                            <div {...innerProps} ref={innerRef} className="select-item">
-                                                                {props.data.label}
-                                                            </div>
-                                                        )
-                                                    },
-                                                    Menu: (props) => {
-                                                        const {innerProps, innerRef} = props;
-                                                        return (
-                                                            <div {...innerProps} ref={innerRef}
-                                                            className="select-menu">
-                                                                {props.children}
-                                                            </div>
-                                                        )
+                                        <div className="input-row">
+                                            <div className="flex-input">
+                                            <label className="class-form-label">
+                                                Frequency
+                                            </label>
+                                            <Select
+                                                className="select"
+                                                placeholder="Select"
+                                                defaultValue={frequencies.find(f => f.value === schedule.frequency)}
+                                                styles={{
+                                                    control: () => ({
+                                                        width: 'stretch',
+                                                        padding: '12px 32px 12px 16px',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #cccccc',
+                                                        cursor: 'pointer'
+                                                    }),
+                                                    valueContainer: (styles) => ({
+                                                        ...styles,
+                                                        padding: '0px'
+                                                    })
+                                                }}
+                                                options={frequencies}
+                                                isSearchable={false}
+                                                components={
+                                                    {
+                                                        DropdownIndicator: () => 
+                                                            <CgSelect className="select-icon"/>,
+                                                        IndicatorSeparator: () => null,
+                                                        Option: (props) => {
+                                                            const {innerProps, innerRef} = props;
+                                                            return (
+                                                                <div {...innerProps} ref={innerRef} className="select-item">
+                                                                    {props.data.label}
+                                                                </div>
+                                                            )
+                                                        },
+                                                        Menu: (props) => {
+                                                            const {innerProps, innerRef} = props;
+                                                            return (
+                                                                <div {...innerProps} ref={innerRef}
+                                                                className="select-menu">
+                                                                    {props.children}
+                                                                </div>
+                                                            )
+                                                        }
                                                     }
                                                 }
-                                            }
-                                            onChange={(e) => {
-                                                setFieldValue(`schedules[${index}].frequency`, e.value);
-                                            }}
-                                        />
-                                        </div>
-                                    </div>
-                                    <div className="input-row">
-                                        <div className="flex-input">
-                                            <label className="class-form-label">
-                                                From
-                                            </label>
-                                            <input 
-                                                className="class-form-input"
-                                                type="time"
-                                                label="From"
-                                                name={`schedules[${index}].start_time`}
-                                                value={schedule.start_time}
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                errors={errors}
-                                                touched={touched}
+                                                onChange={(e) => {
+                                                    setFieldValue(`schedules[${index}].frequency`, e.value);
+                                                }}
                                             />
+                                            </div>
                                         </div>
-                                        <div className="flex-input">
-                                            <label className="class-form-label">
-                                                To
-                                            </label>
-                                            <input 
-                                                className="class-form-input"
-                                                type="time"
-                                                label="To"
-                                                name={`schedules[${index}].end_time`}
-                                                value={schedule.end_time}
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                errors={errors}
-                                                touched={touched}
-                                            />
+                                        <div className="input-row">
+                                            <div className="flex-input">
+                                                <label className="class-form-label">
+                                                    From
+                                                </label>
+                                                <input 
+                                                    className="class-form-input"
+                                                    type="time"
+                                                    label="From"
+                                                    name={`schedules[${index}].start_time`}
+                                                    value={schedule.start_time}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    errors={errors}
+                                                    touched={touched}
+                                                />
+                                            </div>
+                                            <div className="flex-input">
+                                                <label className="class-form-label">
+                                                    To
+                                                </label>
+                                                <input 
+                                                    className="class-form-input"
+                                                    type="time"
+                                                    label="To"
+                                                    name={`schedules[${index}].end_time`}
+                                                    value={schedule.end_time}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    errors={errors}
+                                                    touched={touched}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="input-row">
-                                        <div className="flex-input">
-                                            <label className="class-form-label">
-                                                Volunteers
-                                            </label>
-                                            <FieldArray
-                                                name={`schedules[${index}].volunteers`}    
-                                            >
-                                                {({ push, remove }) => (
-                                                    <div className="volunteers-row">
-                                                        {schedule.volunteers.map((volunteer, volunteerIndex) => (
-                                                            <div key={volunteerIndex} className="volunteer-item">
-                                                                {volunteer.p_name ?? volunteer.f_name + ' ' + volunteer.l_name}
-                                                            </div>
-                                                        ))}
-                                                        {/* <Select
-                                                            className="select add-volunteers"
-                                                            ref={el => (selectRefs.current[index] = el)}
-                                                            defaultValue={{ value: null, label: 'Add Volunteers' }}
-                                                            styles={{
-                                                                control: () => ({
-                                                                    padding: '12px 32px 12px 16px',
-                                                                    borderRadius: '8px',
-                                                                    border: '1px solid #cccccc',
-                                                                    cursor: 'pointer'
-                                                                }),
-                                                                valueContainer: (styles) => ({
-                                                                    ...styles,
-                                                                    padding: '0px'
-                                                                }),
-                                                                input: (styles) => ({
-                                                                    ...styles,
-                                                                    margin: '0px 2px',
-                                                                    padding: '0px',
-                                                                }),
-                                                            }}
-                                                            options={buildVolunteers(schedule.volunteers)}
-                                                            isSearchable={true}
-                                                            components={
-                                                                {
-                                                                    DropdownIndicator: () => 
-                                                                        <CgSelect className="select-icon"/>,
-                                                                    IndicatorSeparator: () => null,
-                                                                    Option: (props) => {
-                                                                        const {innerProps, innerRef} = props;
-                                                                        return (
-                                                                            <div {...innerProps} ref={innerRef} className="select-item">
-                                                                                {props.data.label}
-                                                                            </div>
-                                                                        )
-                                                                    },
-                                                                    Menu: (props) => {
-                                                                        const {innerProps, innerRef} = props;
-                                                                        return (
-                                                                            <div {...innerProps} ref={innerRef}
-                                                                            className="select-menu">
-                                                                                {props.children}
-                                                                            </div>
-                                                                        )
+                                        <div className="input-row">
+                                            <div className="flex-input">
+                                                <label className="class-form-label">
+                                                    Volunteers
+                                                </label>
+                                                <FieldArray
+                                                    name={`schedules[${index}].volunteers`}    
+                                                >
+                                                    {({ push, remove }) => (
+                                                        <div className="volunteers-row">
+                                                            {schedule.volunteers.map((volunteer, volunteerIndex) => (
+                                                                <div key={volunteerIndex} className="volunteer-item">
+                                                                    {volunteer.p_name ?? volunteer.f_name + ' ' + volunteer.l_name}
+                                                                </div>
+                                                            ))}
+                                                            {/* <Select
+                                                                className="select add-volunteers"
+                                                                ref={el => (selectRefs.current[index] = el)}
+                                                                defaultValue={{ value: null, label: 'Add Volunteers' }}
+                                                                styles={{
+                                                                    control: () => ({
+                                                                        padding: '12px 32px 12px 16px',
+                                                                        borderRadius: '8px',
+                                                                        border: '1px solid #cccccc',
+                                                                        cursor: 'pointer'
+                                                                    }),
+                                                                    valueContainer: (styles) => ({
+                                                                        ...styles,
+                                                                        padding: '0px'
+                                                                    }),
+                                                                    input: (styles) => ({
+                                                                        ...styles,
+                                                                        margin: '0px 2px',
+                                                                        padding: '0px',
+                                                                    }),
+                                                                }}
+                                                                options={buildVolunteers(schedule.volunteers)}
+                                                                isSearchable={true}
+                                                                components={
+                                                                    {
+                                                                        DropdownIndicator: () => 
+                                                                            <CgSelect className="select-icon"/>,
+                                                                        IndicatorSeparator: () => null,
+                                                                        Option: (props) => {
+                                                                            const {innerProps, innerRef} = props;
+                                                                            return (
+                                                                                <div {...innerProps} ref={innerRef} className="select-item">
+                                                                                    {props.data.label}
+                                                                                </div>
+                                                                            )
+                                                                        },
+                                                                        Menu: (props) => {
+                                                                            const {innerProps, innerRef} = props;
+                                                                            return (
+                                                                                <div {...innerProps} ref={innerRef}
+                                                                                className="select-menu">
+                                                                                    {props.children}
+                                                                                </div>
+                                                                            )
+                                                                        }
                                                                     }
                                                                 }
-                                                            }
-                                                            onChange={(e) => {
-                                                                console.log("e:", e)
-                                                                if (e?.value) {
-                                                                    console.log("VALUE:", e.value);
-                                                                    push({
-                                                                        volunteer_id: e.value.volunteer_id,
-                                                                        p_name: e.value.p_name,
-                                                                        f_name: e.value.f_name,
-                                                                        l_name: e.value.l_name,
-                                                                    });
+                                                                onChange={(e) => {
+                                                                    console.log("e:", e)
+                                                                    if (e?.value) {
+                                                                        console.log("VALUE:", e.value);
+                                                                        push({
+                                                                            volunteer_id: e.value.volunteer_id,
+                                                                            p_name: e.value.p_name,
+                                                                            f_name: e.value.f_name,
+                                                                            l_name: e.value.l_name,
+                                                                        });
 
-                                                                    console.log("REF:", selectRefs.current[index])
-                                                                    
-                                                                    // set select to default (placeholder) value
-                                                                    selectRefs.current[index].clearValue();
+                                                                        console.log("REF:", selectRefs.current[index])
+                                                                        
+                                                                        // set select to default (placeholder) value
+                                                                        selectRefs.current[index].clearValue();
 
-                                                                    console.log("REF VALUE:", selectRefs.current[index].getValue())
-                                                                }
-                                                                forceUpdate((prev) => !prev)
-                                                            }}
-                                                        /> */}
-                                                    </div>
-                                                )}
-                                            </FieldArray>
+                                                                        console.log("REF VALUE:", selectRefs.current[index].getValue())
+                                                                    }
+                                                                    forceUpdate((prev) => !prev)
+                                                                }}
+                                                            /> */}
+                                                        </div>
+                                                    )}
+                                                </FieldArray>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                                <button 
+                                    type="button"
+                                    className="form-block add-schedule-button"
+                                    onClick={() => {
+                                        push({
+                                            day: 3,
+                                            start_time: '12:00',
+                                            end_time: '12:00',
+                                            frequency: frequencies[1].value, // weekly
+                                            volunteers: []
+                                        });
+                                        setUpdates((prev) => prev + 1);  
+                                    }}
+                                >
+                                    <h2 className="section-title">+ Add Class Schedule</h2>
+                                </button>
+                            </div>
                         )}
                     </FieldArray>
                     <button type="submit" className="submit-button" disabled={isSubmitting}>

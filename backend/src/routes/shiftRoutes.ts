@@ -39,7 +39,8 @@ export const ShiftRoutes: RouteDefinition = {
                 query('volunteer').isUUID('4').optional(),
                 query('before').isDate().optional(),
                 query('after').isDate().optional(),
-                query('type').isIn(['coverage', 'requesting']).optional()
+                query('type').isIn(['coverage', 'requesting']).optional(),
+                query('status').isIn(['open', 'pending', 'resolved']).optional()
             ],
             action: getShifts
         },

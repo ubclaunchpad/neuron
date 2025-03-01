@@ -65,24 +65,26 @@ export default class ShiftModel {
       * // Get shifts which volunteer '123' for is requesting coverage for
       * getShifts({ volunteer_id: '123', type: 'requesting' });
       */
-     async getShifts(params?: { 
+     async getShifts(params: { 
           volunteer_id?: string, 
           type?: 'coverage' | 'requesting', 
-          before?: Date, 
+          status?: 'open' | 'pending' | 'resolved',
+          before?: Date,
           after?: Date, 
-     }): Promise<any[]> {
-          let query = queryBuilder
+     } = {}): Promise<any[]> {
+          // Construct subquery
+          let subQuery = queryBuilder
                .select([
                     'sh.shift_id AS id',
                     'sh.shift_date AS date',
-                    'sh.duration AS duration',
+                    'sh.duration',
                     'sh.fk_volunteer_id AS volunteer_id',
                     'sc.day AS day',
-                    'sc.start_time AS startTime',
-                    'sc.end_time AS endTime',
-                    'c.class_id AS classId',
-                    'c.class_name AS className',
-                    'c.instructions AS instructions',
+                    'sc.start_time',
+                    'sc.end_time',
+                    'c.class_id',
+                    'c.class_name',
+                    'c.instructions',
                     'cr.request_id AS coverage_request_id',
                     queryBuilder.raw(`CASE 
                          WHEN cr.covered_by IS NOT NULL THEN cr.covered_by
@@ -106,31 +108,37 @@ export default class ShiftModel {
                     { cr: 'shift_coverage_request' }, 'sh.shift_id', 'cr.fk_shift_id'
                ).leftJoin(
                     { pcr: 'pending_shift_coverage' }, 'cr.request_id', 'pcr.request_id'
-               );
+               ).as('sub');
+
+          const query = queryBuilder.select('*').from(subQuery);
 
           // Filter by date
-          if (params?.before) {
-               query.where('sh.shift_date', '<=', params.before);
+          if (params.before) {
+               query.where('date', '<=', params.before);
           }
-          if (params?.after) {
-               query.where('sh.shift_date', '>=', params.after);
+          if (params.after) {
+               query.where('date', '>=', params.after);
           }
 
           // Only want coverage
-          if (params?.type === 'coverage' || params?.type === 'requesting') {
-               query.whereNotNull('cr.request_id');
+          if (params.type === 'coverage' || params.type === 'requesting') {
+               query.whereNotNull('coverage_request_id');
+
+               if (params?.status) {
+                    query.where('coverage_status', params.status);
+               }
           }
 
-          if (params?.volunteer_id && params?.type === 'coverage') {
+          if (params.volunteer_id && params.type === 'coverage') {
                // For coverage we exclude the volunteer instead, we want shifts we can cover
-               query.where('sh.fk_volunteer_id', '<>', params.volunteer_id);
+               query.where('volunteer_id', '<>', params.volunteer_id);
           }
-          else if (params?.volunteer_id) {
-               query.where('sh.fk_volunteer_id', params.volunteer_id);
+          else if (params.volunteer_id) {
+               query.where('volunteer_id', params.volunteer_id);
           }
 
           // Order by date then time
-          query.orderBy('sh.shift_date').orderBy('sc.start_time');
+          query.orderBy('date').orderBy('start_time');
 
           // Construct query and bindings
           const { sql, bindings } = query.toSQL();

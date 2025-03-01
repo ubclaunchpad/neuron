@@ -23,7 +23,7 @@ export const AuthRoutes: RouteDefinition = {
                 body('lastName').isString(),
                 body('email').isEmail(),
                 body('password').isString(),
-                body('role').isIn([Role.admin, Role.volunteer, Role.instructor]),
+                body('role').isIn(Role.values),
             ],
             action: registerUser
         },

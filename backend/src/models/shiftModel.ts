@@ -1,7 +1,9 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import { ScheduleDB, ShiftDB } from '../common/databaseModels.js';
+import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import connectionPool from '../config/database.js';
 import queryBuilder from '../config/queryBuilder.js';
+import { wrap } from '../utils/generalUtils.js';
 
 export default class ShiftModel {
 
@@ -50,6 +52,11 @@ export default class ShiftModel {
       * @param {'coverage'|'requesting'} [params.type] - The type of filtering for coverage requests:
       *   - `'coverage'`: Only include shifts with an associated coverage request and exclude shifts belonging to the specified volunteer.
       *   - `'requesting'`: Only include shifts with an associated coverage request (without excluding the volunteer).
+      * @param {'open'|'pending'|'resolved' or []} [params.status] - The status for coverage requests either as a single string or string array.
+      * This is only checked when params.type is coverage or requesting, and includes all when not set:
+      *   - `'open'`: Include open coverage shifts
+      *   - `'pending'`: Include coverage shifts which have a pending coverage request associated
+      *   - `'resolved'`: Include coverage shifts which have been resolved.
       *
       * @returns {Promise<any[]>} A promise that resolves to an array of shift records.
       *
@@ -67,8 +74,8 @@ export default class ShiftModel {
       */
      async getShifts(params: { 
           volunteer_id?: string, 
-          type?: 'coverage' | 'requesting', 
-          status?: 'open' | 'pending' | 'resolved',
+          type?: ShiftQueryType,
+          status?: ShiftStatus | ShiftStatus[],
           before?: Date,
           after?: Date, 
      } = {}): Promise<any[]> {
@@ -125,7 +132,7 @@ export default class ShiftModel {
                query.whereNotNull('coverage_request_id');
 
                if (params?.status) {
-                    query.where('coverage_status', params.status);
+                    query.whereIn('coverage_status', wrap(params.status));
                }
           }
 

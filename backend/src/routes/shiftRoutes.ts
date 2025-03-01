@@ -1,4 +1,5 @@
 import { body, param, query } from 'express-validator';
+import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import { RouteDefinition } from "../common/types.js";
 import { isAuthorized } from '../config/authCheck.js';
 import {
@@ -39,8 +40,8 @@ export const ShiftRoutes: RouteDefinition = {
                 query('volunteer').isUUID('4').optional(),
                 query('before').isDate().optional(),
                 query('after').isDate().optional(),
-                query('type').isIn(['coverage', 'requesting']).optional(),
-                query('status').isIn(['open', 'pending', 'resolved']).optional()
+                query('type').isIn(ShiftQueryType.values).optional(),
+                query('status').isIn(ShiftStatus.values).optional()
             ],
             action: getShifts
         },

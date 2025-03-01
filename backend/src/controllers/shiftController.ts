@@ -1,7 +1,8 @@
 import { Response } from 'express';
 import { ShiftDB } from '../common/databaseModels.js';
+import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import { AuthenticatedRequest } from '../common/types.js';
-import { shiftModel } from '../config/models.js';
+import { shiftModel, volunteerModel } from '../config/models.js';
 
 async function getShift(req: AuthenticatedRequest, res: Response){
     const { shift_id } = req.body;
@@ -16,23 +17,23 @@ async function getShifts(req: AuthenticatedRequest, res: Response) {
     const { volunteer, before, after, type, status } = req.query as Record<string, string>;
     const volunteer_id = volunteer;
 
-    // if (req.user.role === 'volunteer') {
-    //     const volunteer = await volunteerModel.getVolunteerByUserId(req.user.user_id);
+    if (req.user.role === 'volunteer') {
+        const volunteer = await volunteerModel.getVolunteerByUserId(req.user.user_id);
 
-    //     /* Cannot get shifts for other volunteer */
-    //     if (volunteer.volunteer_id !== volunteer_id) {
-    //         return res.status(403).json({
-    //             error: "Unauthorized",
-    //         });
-    //     }
-    // }
+        /* Cannot get shifts for other volunteer */
+        if (volunteer.volunteer_id !== volunteer_id) {
+            return res.status(403).json({
+                error: "Unauthorized",
+            });
+        }
+    }
 
     const shifts = await shiftModel.getShifts({
         volunteer_id: volunteer_id,
         before: before ? new Date(before) : undefined, 
         after: after ? new Date(after) : undefined,
-        type: type as any,
-        status: status as any,
+        type: type as ShiftQueryType,
+        status: status as ShiftStatus,
     });
 
     res.status(200).json(shifts);

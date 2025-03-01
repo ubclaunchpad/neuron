@@ -24,13 +24,21 @@ const getShift = async (shift_id) => {
  * @param {'coverage'|'requesting'} [params.type] - The type of filtering for coverage requests:
  *   - `'coverage'`: Only include shifts with an associated coverage request and exclude shifts belonging to the specified volunteer.
  *   - `'requesting'`: Only include shifts with an associated coverage request (without excluding the volunteer).
+ * @param {'open'|'pending'|'resolved'} [params.status] - The status for coverage requests either as a single string or string array.
+ * This is only checked when params.type is coverage or requesting, and includes all statuses when not set:
+ *   - `'open'`: Include open coverage shifts
+ *   - `'pending'`: Include coverage shifts which have a pending coverage request associated
+ *   - `'resolved'`: Include coverage shifts which have been resolved.
  * 
  * @returns shift details such as date, time, class, duration, and coverage status.
  */
 const getShifts = async (params) => {
   try {
     const response = await api.get("/shifts", {
-      params: params
+      params: params,
+      paramsSerializer: {
+        indexes: null, // no brackets at all
+      }
     });
 
     return response.data;

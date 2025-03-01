@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   getAllClasses,
   getAllClassSchedules
@@ -15,8 +16,11 @@ function Classes() {
   const [groupedByCategory, setGroupedByCategory] = useState({});
   const [selectedCategory, setSelectedCategory] = useState("Online Exercise");
   const [selectedClassId, setSelectedClassId] = useState(null);
-  const [editing, setEditing] = useState(false);
   const [updates, setUpdates] = useState(0);
+  
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const editing = searchParams.get("edit") === "true";
 
   const sectionRefs = useRef({});
   const observer = useRef(null);
@@ -137,7 +141,7 @@ function Classes() {
           <div className="content-heading">
             <button 
                 className="back-button"
-                onClick={() => setEditing(false)}
+                onClick={() => navigate("/classes")}
               >
                 <img
                   alt="Back"
@@ -175,13 +179,16 @@ function Classes() {
         classList={completeClassData}
         updates={updates}
         setClassId={setSelectedClassId}
-        setEditing={setEditing}
+        navigate={navigate}
       > 
         <div className="classes-page">
           {/* ----- */}
           <div className="classes-content">
             {editing ? 
-            <AdminClassForm classId={selectedClassId} setUpdates={setUpdates} /> :
+            <AdminClassForm 
+              classId={selectedClassId} 
+              setUpdates={setUpdates} 
+            /> :
             Object.entries(groupedByCategory).map(([category, classData]) => {
               return (
                 <ClassCategoryContainer

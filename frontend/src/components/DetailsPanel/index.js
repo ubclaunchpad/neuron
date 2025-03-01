@@ -15,7 +15,7 @@ function DetailsPanel({
   classList,
   updates,
   setClassId,
-  setEditing,
+  navigate,
   children,
   dynamicShiftButtons = [],
   shiftDetails,
@@ -159,8 +159,8 @@ function DetailsPanel({
             isAdmin ? 
             <AdminDetailsPanel
               panelInfo={panelInfo}
-              renderInstructorInfo={renderInstructorInfo} 
-              setEditing={setEditing}
+              renderInstructorInfo={renderInstructorInfo}
+              navigate={navigate}
             /> :
             <VolunteerDetailsPanel
               classId={classId}

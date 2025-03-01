@@ -27,6 +27,7 @@ function AdminSchedule() {
     };
     const response = await getAllShiftsByMonth(body);
 
+    
     // Filter out duplicated shifts and past coverage requests
     const shiftMap = new Map();
     response.forEach((shift) => {
@@ -123,7 +124,7 @@ function AdminSchedule() {
   // Update details panel when a shift is selected
   const handleShiftSelection = (classData) => {
     console.log("Selected shift: ", classData);
-    setSelectedClassId(classData._class_id);
+    setSelectedClassId(classData.class_id);
     setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
     console.log(selectedShiftButtons);
     setShiftDetails(classData);

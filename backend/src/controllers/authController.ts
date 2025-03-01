@@ -68,7 +68,7 @@ async function registerUser(
     role = role.trim();
 
     // Hash Password with salt
-    const digest = bcrypt.hashSync(password, 10);
+    const digest = await bcrypt.hash(password, 10);
 
     // User Id
     const user_id = uuidv4();
@@ -140,7 +140,7 @@ async function loginUser(req: Request, res: Response): Promise<any> {
     const user = await userModel.getUserByEmail(email, true);
 
     // If the password is incorrect, return an error
-    if (!bcrypt.compareSync(password, user.password)) {
+    if (!(await bcrypt.compare(password, user.password))) {
         return res.status(403).json({
             error: "Incorrect password",
         });
@@ -278,7 +278,7 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
     await verifyUserWithIdAndToken(id, token);
 
     // Hash the new password
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     await userModel.updateUserPassword(id, hashedPassword);
 
@@ -299,14 +299,14 @@ async function updatePassword(
     const authInfo = await userModel.getUserByEmail(user.email, true);
 
     // If the password is incorrect, return an error
-    if (!bcrypt.compareSync(currentPassword, authInfo.password)) {
+    if (!(await bcrypt.compare(currentPassword, authInfo.password))) {
         return res.status(403).json({
             error: "Incorrect password",
         });
     }
 
     // Hash the new password and update
-    const hashedPassword = bcrypt.hashSync(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     await userModel.updateUserPassword(user.user_id, hashedPassword);
 
     return res.status(200).json({

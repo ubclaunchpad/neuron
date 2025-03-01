@@ -6,7 +6,7 @@ import "./index.css";
 import { useNavigate } from "react-router-dom";
 
 export default function NavProfileCard({
-  avatar,
+  image,
   name,
   email,
   collapse,
@@ -20,7 +20,7 @@ export default function NavProfileCard({
   return collapse ? (
     <div className="nav-profile-card__avatar-collapse">
       <ProfileImg
-        src={avatar}
+        src={image}
         name={name}
       ></ProfileImg>
     </div>
@@ -29,7 +29,7 @@ export default function NavProfileCard({
       <div className="nav-profile-card__main">
         <div className="nav-profile-card__avatar">
           <ProfileImg
-            src={avatar}
+            src={image}
             name={name}
           ></ProfileImg>
         </div>

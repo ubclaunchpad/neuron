@@ -31,6 +31,15 @@
      gap: 4px;
 }
 
+.panel-header-date-details {
+     font-family: var(--font-primary);
+     font-size: var(--medium-text);
+     color: var(--dark-grey);
+     display: flex;
+     flex-direction: column;
+     gap: 4px;
+}
+
 .panel-header-class-name {
      font-family: 'Montserrat';
      font-weight: 600;
@@ -151,9 +160,7 @@
 .volunteer-profile {
      width: 28px;
      height: 28px;
-     background-color: #808080;
      border-radius: 4px;
-     opacity: 0.3;
      margin-right: 6px;
 }
 
@@ -162,7 +169,7 @@
 }
 
 .panel-description {
-     margin-top: 10px;
+     margin-top: 0.5rem;
      font-family: 'Roboto';
      font-weight: 400;
      font-size: 16px;
@@ -182,8 +189,8 @@
  /* Shift Details Panel */
 /* Dynamic Button Styling based on Shift Type */
 .panel-buttons {
-     padding-top: 2vh;
-     height: 4vh;
+     margin-top: 4vh;
+     height: 4.5vh;
      display: flex;
      flex-direction: row;
      gap: 12px;
@@ -196,7 +203,7 @@
      border: 1px solid var(--primary-blue);
      background: #FFF;
      box-shadow: 0px 4px 16px 0px rgba(15, 17, 17, 0.05);
-     padding: 0 1rem;
+     padding: 0 0.75rem;
      display: flex;
      align-items: center;
  }
@@ -211,6 +218,26 @@
      background-color: #d3d3d3;
      border: 1px solid #d3d3d3;
      box-shadow: none;
+ }
+
+ .dynamic-button.primary-action {
+     background-color: var(--button-blue);
+     color: var(--white);
+     border: var(--button-blue);
+ }
+
+ .dynamic-button.primary-action:hover {
+     background-color: var(--button-blue-hover);
+ }
+
+ .dynamic-button.cancel-action {
+     background-color: var(--red);
+     color: var(--white);
+     border: var(--red);
+ }
+
+ .dynamic-button.cancel-action:hover {
+     background-color: var(--red-hover);
  }
  
  /* Icon within Button */

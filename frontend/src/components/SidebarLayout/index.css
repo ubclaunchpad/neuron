@@ -25,8 +25,12 @@ body {
   flex-grow: 1;
   background-color: var(--white);
   max-height: 100vh;
-  overflow-y: scroll;
+  overflow-y: hidden;
   position: relative;
+}
+
+.volunteer-dash {
+  overflow-y: auto !important;
 }
 
 .content-heading {

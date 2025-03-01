@@ -12,6 +12,8 @@ import VolunteerLogin from "./pages/VolunteerLogin";
 import VolunteerProfile from "./pages/VolunteerProfile";
 import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import VolunteerSignup from "./pages/VolunteerSignup";
+import MemberManagement from "./pages/MemberManagement";
+import AdminVolunteerProfile from "./pages/AdminVolunterProfile";
 
 function App() {
   const { isAuthenticated, isAdmin, isVolunteer } = useAuth();
@@ -44,10 +46,12 @@ function App() {
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
                 <Route path="my-profile" element={<VolunteerProfile />} />
               </Route>
-            </Route>
 
-            <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>
-              <Route path="verify-volunteers" element={<AdminVerify />} />
+              <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>
+                <Route path="verify-volunteers" element={<AdminVerify />} />
+                <Route path="member-management" element={<MemberManagement />} />
+                <Route path="volunteer-profile" element={<AdminVolunteerProfile />} />
+              </Route>
             </Route>
           </Route>
 

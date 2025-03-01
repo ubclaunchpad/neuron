@@ -5,6 +5,7 @@ import camera_icon from "../../../assets/camera.png";
 import cancel_icon from "../../../assets/cancel-icon.png";
 import check_icon from "../../../assets/check-icon.png";
 import edit_icon from "../../../assets/edit-icon.png";
+import settings_icon from "../../../assets/settings-icon.png";
 import ProfileImg from "../../ImgFallback";
 
 import { CgSelect } from "react-icons/cg";
@@ -16,7 +17,7 @@ import {State, City} from 'country-state-city';
 import Select from 'react-select';
 import notyf from "../../../utils/notyf";
 
-function VolunteerDetailsCard({ volunteer }) {
+function VolunteerDetailsCard({ volunteer, type = "" }) {
 
     const { user, updateUser } = useAuth();
 
@@ -40,6 +41,8 @@ function VolunteerDetailsCard({ volunteer }) {
     const [cities, setCities] = useState([{value: "None", label: "None"}].concat(City.getCitiesOfState('CA', selectedProvince).map((city) => {
         return {value: city.name, label: city.name};
     })));
+    const [showAdminMenu, setShowAdminMenu] = useState(false);
+    const [showModal, setShowModal] = useState(false);
 
     const { ref, isComponentVisible, setIsComponentVisible } = useComponentVisible(false);
     // const { ref: provinceRef, isComponentVisible: isProvinceVisible, setIsComponentVisible: setisProvinceVisible } = useComponentVisible(false);
@@ -207,11 +210,26 @@ function VolunteerDetailsCard({ volunteer }) {
     return (
         <div className="profile-card-container">
             <div className="profile-card">
-                <img className="icon edit-icon" src={edit_icon} alt="Edit" hidden={isEditing} onClick={handleEdit}/>
-                <div className="edit-options"> 
-                    <img className="icon check-icon" src={check_icon} alt="Check" hidden={!isEditing} onClick={handleCheck}/>          
-                    <img className="icon cancel-icon" src={cancel_icon} alt="Cancel" hidden={!isEditing} onClick={handleCancel}/>
-                </div>
+                {type !== "admin" && 
+                    <>
+                        <img className="icon edit-icon" src={edit_icon} alt="Edit" hidden={isEditing} onClick={handleEdit}/>
+                        <div className="edit-options"> 
+                            <img className="icon check-icon" src={check_icon} alt="Check" hidden={!isEditing} onClick={handleCheck}/>          
+                            <img className="icon cancel-icon" src={cancel_icon} alt="Cancel" hidden={!isEditing} onClick={handleCancel}/>
+                        </div>
+                    </>
+                }
+                {type === "admin" && <img className="icon edit-icon" src={settings_icon} alt="Settings" onClick={() => {
+                    setShowAdminMenu(!showAdminMenu);
+                }}></img>}
+                {showAdminMenu && 
+                    <div className="admin-menu">
+                        <div className="admin-menu-item" onClick={() => {
+                            setShowModal(true);
+                        }}><div className="deactivate"></div><p>Deactivate account</p></div>
+                        <div className="admin-menu-item"><div className="edit-email"></div><p>Edit volunteer email</p></div>
+                    </div>
+                }
                 <div className="profile-content">
                     <div 
                         className="profile-picture-form"

@@ -5,6 +5,9 @@ import {
     getUnverifiedVolunteers,
     verifyVolunteer,
 } from "../controllers/adminController.js";
+import {
+    getVolunteers
+} from "../controllers/volunteerController.js";
 
 export const AdminRoutes: RouteDefinition = {
     path: '/admin',
@@ -13,6 +16,11 @@ export const AdminRoutes: RouteDefinition = {
         isAdmin,
     ],
     children: [
+        {
+            path: '/all-volunteers',
+            method: 'post',
+            action: getVolunteers
+        },
         {
             path: '/unverified-volunteers',
             method: 'post',

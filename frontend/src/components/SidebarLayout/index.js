@@ -5,6 +5,7 @@ import nav_item_classes from "../../assets/nav-item-classes.png";
 import nav_item_dash from "../../assets/nav-item-dash.png";
 import nav_item_schedule from "../../assets/nav-item-sched.png";
 import nav_item_settings from "../../assets/nav-item-settings.png";
+import nav_item_member from "../../assets/nav-item-member.png";
 import sidebar_toggle from "../../assets/sidebar-toggle.png";
 import "./index.css";
 
@@ -86,6 +87,19 @@ function SidebarLayout() {
             <img src={nav_item_classes} alt="Classes" />
             {!collapsed && "Classes"}
           </NavLink>
+
+          <Permission permissions={isAdmin}>
+            <NavLink
+              to="/member-management"
+              className={({ isActive }) =>
+                isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
+              }
+            >
+              <img src={nav_item_member} alt="Member Management" />
+              {!collapsed && "Member Management"}
+            </NavLink>
+          </Permission>
+
           <Permission permissions={isVolunteer}>
             <NavLink
               to="/my-profile"

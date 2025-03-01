@@ -128,4 +128,11 @@ export default class UserModel {
             throw error;
         }
    }
+
+    async getAllVolunteerUsers(): Promise<UserDB[]> {
+        const query = `SELECT * FROM users WHERE role = 'volunteer'`;
+        const [results, _] = await connectionPool.query<UserDB[]>(query);
+        
+        return results;
+    }
 }

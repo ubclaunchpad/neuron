@@ -29,6 +29,12 @@
   --button-blue: #1687ca;
   --button-blue-hover: #0f6e9c;
   --error-red: #dc3545;
+
+  /* Badge Colors */
+  --active-green: #157F2A;
+  --inactive-red: #952018;
+  --regular-volunteer: #802E9B;
+  --coverage-volunteer: #99631D;
 }
 
 :root {

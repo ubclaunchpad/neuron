@@ -1,0 +1,91 @@
+.volunteer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 71vw;
+    height: 65vh;
+    margin: auto;
+    margin-top: 2vw;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 2vw;
+    overflow-y: scroll;
+}
+
+.member-card {
+    cursor: pointer;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.member-card:hover {
+    background: var(--light-grey);
+}
+
+.member-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-position: center;
+    background-size: cover;
+    font-weight: 500;
+    color: #666;
+}
+
+.member-details {
+    flex: 1;
+}
+
+.member-name {
+    font-weight: 400;
+    margin-bottom: 4px;
+}
+
+.member-email {
+    font-size: 14px;
+    color: #666;
+    font-weight: 300;
+}
+
+.member-badges {
+    display: flex;
+    gap: 8px;
+}
+
+.badge {
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: var(--primary-font);
+    color: white;
+}
+
+.badge-status.active {
+    background-color: var(--active-green);
+}
+
+.badge-status.inactive {
+    background-color: var(--inactive-red);
+}
+
+.badge-role.regular-volunteer {
+    background-color: var(--regular-volunteer);
+}
+  
+.badge-role.coverage-volunteer {
+    background-color: var(--coverage-volunteer);
+}
+
+.right-arrow-icon {
+    width: 2.5vw;
+    height: 2.5vw;
+    background: url('../../assets/right-arrow-icon.png') no-repeat center center/contain;
+}

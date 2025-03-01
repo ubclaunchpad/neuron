@@ -1,5 +1,26 @@
 import api from "./api";
 
+// Get all volunteers
+const getVolunteers = async () => {
+    const authToken = localStorage.getItem("neuronAuthToken");
+
+    if (!authToken) {
+        return {
+            volunteers: null,
+        };
+    } else {
+        try {
+            const response = await api.post("/admin/all-volunteers", {
+                token: authToken,
+            });
+
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    }
+};
+
 // Get all unverified volunteers
 const getUnverifiedVolunteers = async () => {
     const authToken = localStorage.getItem("neuronAuthToken");
@@ -42,4 +63,4 @@ const verifyVolunteer = async (volunteerId) => {
     }
 };
 
-export { getUnverifiedVolunteers, verifyVolunteer };
+export { getVolunteers, getUnverifiedVolunteers, verifyVolunteer };

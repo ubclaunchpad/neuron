@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
 import VolunteerModel from "../models/volunteerModel.js";
+import UserModel from "../models/userModel.js";
 
 const volunteerModel = new VolunteerModel();
+const userModel = new UserModel();
 
 async function getVolunteerById(req: Request, res: Response) {
     const { volunteer_id } = req.params;
@@ -20,8 +22,19 @@ async function getVolunteerById(req: Request, res: Response) {
 
 async function getVolunteers(req: Request, res: Response) {
     const volunteers = await volunteerModel.getAllVolunteers();
+    const users = await userModel.getAllVolunteerUsers();
 
-    res.status(200).json(volunteers);
+    const finalData = volunteers.map((volunteer) => {
+        const user = users.find((user) => user.user_id === volunteer.fk_user_id);
+        // remove password from user object
+
+        return {
+            ...volunteer,
+            image: user?.fk_image_id,
+        };
+    });
+
+    res.status(200).json(finalData);
 }
 
 // Update a volunteer's profile based on the volunteer_id

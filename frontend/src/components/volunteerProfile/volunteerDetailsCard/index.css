@@ -266,4 +266,50 @@ input[type=number] {
     border: red;
     border-radius: 5px;
 }
+
+.admin-menu {
+    position: absolute;
+    top: 4vw;
+    right: 2vw;
+    height: 5.7vw;
+    width: 13vw;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--primary-blue);
+    border-radius: 8px;
+    background-color: white;
+    padding: 0.7vw;
+}
+
+.admin-menu-item {
+    cursor: pointer;
+    border: 1px solid var(--grey);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    height: 2.5vw;
+}
+
+.admin-menu-item:first-child {
+    margin-bottom: 0.4vw;
+}
+
+.admin-menu-item .deactivate {
+    width: 0.7vw;
+    height: 0.7vw;
+    margin-left: 0.5vw;
+    background: url("../../../assets/cancel-icon.png") no-repeat center center/contain;
+}
+
+.admin-menu-item .edit-email {
+    width: 0.7vw;
+    height: 0.7vw;
+    margin-left: 0.5vw;
+    background: url("../../../assets/edit-email-icon.png") no-repeat center center/contain;
+}
+
+.admin-menu-item p {
+    margin-left: 0.5vw;
+    font-size: 15px;
+}
   

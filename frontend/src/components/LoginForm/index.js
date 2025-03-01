@@ -33,6 +33,8 @@ const LoginForm = () => {
                         .catch((error) => {
                             if (error.response?.data?.error?.includes("Waiting for an admin to verify")) {
                                 window.location.href = "/auth/not-verified";
+                            } else if (error.response?.data?.error?.includes("deactivated")) {
+                                window.location.href = "/auth/deactivated";
                             } else {
                                 notyf.error(error.response.data.error);
                             }

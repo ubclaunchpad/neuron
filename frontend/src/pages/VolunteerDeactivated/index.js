@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import './index.css';
 import logoutIcon from "./button-icon.png";
-import notVerifiedImg from "./not-verified-img.png";
+import deactivatedImg from "./acct-deactivated-img.png";
 
 
-function VolunteerNotVerified() {
+function VolunteerDeactivated() {
   //const [data, setData] = useState(null);
 
 
@@ -18,11 +18,11 @@ function VolunteerNotVerified() {
     <div className="account-verification-page">
       <div className="account-verification-content">
         <img
-          src={notVerifiedImg}
-          alt="Account verification pending"
-          className="not-verified-image"
+          src={deactivatedImg}
+          alt="Account deactivated"
+          className="deactivated-image"
         />
-        <h2><b>Waiting for an admin to verify your account.</b></h2>
+        <h2><b>Your account has been deactivated.</b></h2>
         <div className="account-verification-contact-text">You can reach out to us at <b>bwp@gmail.com</b>. </div>
         <button className = "account-verification-button" onClick={logOut}>
           <img
@@ -39,4 +39,4 @@ function VolunteerNotVerified() {
 }
 
 
-export default VolunteerNotVerified;
+export default VolunteerDeactivated;

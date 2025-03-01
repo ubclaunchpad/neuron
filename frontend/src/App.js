@@ -15,6 +15,7 @@ import VolunteerProfile from "./pages/VolunteerProfile";
 import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import VolunteerSignup from "./pages/VolunteerSignup";
 import VolunteerNotVerified from "./pages/VolunteerNotVerified";
+import VolunteerDeactivated from "./pages/VolunteerDeactivated";
 
 function App() {
   const { isAuthenticated, isAdmin, isVolunteer, logout } = useAuth();
@@ -46,7 +47,8 @@ function App() {
             <Route path="login" element={<VolunteerLogin />} />
             <Route path="forgot-password" element={<VolunteerForgotPassword />} />
             <Route path="reset-password" element={<VolunteerResetPassword />} />
-            <Route path="/auth/not-verified" element={<VolunteerNotVerified />} />
+            <Route path="not-verified" element={<VolunteerNotVerified />} />
+            <Route path="deactivated" element={<VolunteerDeactivated />} />
           </Route>
 
           {/* Auth Protected Routes */}

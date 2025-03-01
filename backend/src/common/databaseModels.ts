@@ -28,7 +28,6 @@ export interface ClassDB extends RowDataPacket {
   'start_date': string;
   'subcategory'?: string | null;
   'zoom_link': string;
-  'number_volunteers'?: number | null;
 }
 export interface ClassPreferenceDB extends RowDataPacket {
   'class_rank'?: number | null;
@@ -105,5 +104,4 @@ export interface VolunteerDB extends RowDataPacket {
   'province'?: string | null;
   'total_hours'?: number;
   'volunteer_id': string;
-  'preferred_hours'?: number | null;
 }

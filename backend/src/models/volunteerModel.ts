@@ -178,4 +178,66 @@ export default class VolunteerModel {
             };
         }
     }
+
+    async getPreferredClassesById(volunteer_id: string): Promise<any> {
+
+        const query = `
+            SELECT 
+                class_preferences.fk_volunteer_id AS volunteer_id,
+                class_preferences.fk_schedule_id AS schedule_id,
+                class_preferences.class_rank,
+                schedule.fk_class_id AS class_id,
+                schedule.day, schedule.start_time, schedule.end_time,
+                class.class_name, class.instructions, class.category, class.subcategory
+            FROM class_preferences
+            JOIN schedule ON class_preferences.fk_schedule_id = schedule.schedule_id
+            JOIN class ON schedule.fk_class_id = class.class_id
+            WHERE class_preferences.fk_volunteer_id = ?; 
+        `;
+        const values = [volunteer_id];
+        const [results, _] = await connectionPool.query<any>(query, values);
+        return results;
+    }
+
+    async getAllClassPreferences(): Promise<any> {
+
+        const query = `
+            SELECT 
+                s.schedule_id, s.fk_class_id, s.day, s.start_time, s.end_time, s.active, 
+                c.class_name, c.instructions, c.category, 
+                i.f_name, i.l_name
+            FROM schedule AS s
+            JOIN class AS c ON s.fk_class_id = c.class_id 
+            JOIN instructors AS i ON c.fk_instructor_id = i.instructor_id
+            WHERE s.active = 1; 
+        `;
+
+        const [results, _] = await connectionPool.query<any>(query, []);
+        return results;
+    }
+
+    async updatePreferredClassesById(volunteer_id: string, data: { schedule_id: number, class_rank: number }[] ): Promise<void> {
+        const transaction = await connectionPool.getConnection();
+   
+        try {
+            await transaction.beginTransaction();
+            const query_del = `DELETE FROM class_preferences WHERE fk_volunteer_id = ?`;
+            const values_del = [volunteer_id];
+            await transaction.query<ResultSetHeader>(query_del, values_del);
+            const query_insert = `INSERT INTO class_preferences VALUES (?, ?, ?);`;
+
+            for (let i = 0; i < data.length; i++) {
+                const value_insert = [volunteer_id, data[i].schedule_id, data[i].class_rank];
+                await transaction.query<ResultSetHeader>(query_insert, value_insert);
+            }
+
+            await transaction.commit();
+        } catch (error) {
+             // Rollback
+            await transaction.rollback();
+            throw error;
+        } finally {
+            transaction.release(); 
+        }
+   }
 }

@@ -16,6 +16,7 @@ import VolunteerResetPassword from "./pages/VolunteerResetPassword";
 import VolunteerSignup from "./pages/VolunteerSignup";
 import VolunteerNotVerified from "./pages/VolunteerNotVerified";
 import VolunteerDeactivated from "./pages/VolunteerDeactivated";
+import ClassPreferences from "./pages/ClassPreferences";
 
 function App() {
   const { isAuthenticated, isAdmin, isVolunteer, logout } = useAuth();
@@ -62,7 +63,8 @@ function App() {
 
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
                 <Route path="my-profile" element={<VolunteerProfile />} />
-              </Route>
+                <Route path="class-preferences" element={<ClassPreferences />} />
+            </Route>
             </Route>
 
             <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>

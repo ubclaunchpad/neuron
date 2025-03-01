@@ -29,6 +29,10 @@ body {
   position: relative;
 }
 
+.volunteer-dash {
+  overflow-y: auto !important;
+}
+
 .content-heading {
   display: flex;
   justify-content: space-between;

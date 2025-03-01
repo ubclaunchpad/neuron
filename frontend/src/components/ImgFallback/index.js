@@ -15,8 +15,6 @@ export default function ProfileImg({
     }
   };
 
-  console.log(name, src)
-
   if (name)
     return <img
     className={className}

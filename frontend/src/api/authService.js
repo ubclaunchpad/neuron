@@ -1,17 +1,13 @@
 import api from "./api";
 
 // Update a user's password
-export const changePassword = async (volunteerData) => {
+export const changePassword = async (passwordUpdateData) => {
+    const { currentPassword, newPassword } = passwordUpdateData
+
     try {
-        const loginResponse = await api.post("/auth/login", {
-            email: volunteerData.email,
-            password: volunteerData.currentPassword
-        });
-        const data = loginResponse.data;
-        const token = data.token;
         const resetResponse = await api.post("/auth/update-password", {
-            token: token,
-            password: volunteerData.newPassword
+            currentPassword: currentPassword,
+            newPassword: newPassword
         });
         return resetResponse.data;
     } catch (error) {
@@ -24,17 +20,6 @@ export const changePassword = async (volunteerData) => {
 const signUp = (data) =>
     api
         .post("/auth/register", data)
-        .then((response) => {
-            return response.data;
-        })
-        .catch((error) => {
-            throw error;
-        });
-
-// Login a user
-const login = (data) =>
-    api
-        .post("/auth/login", data)
         .then((response) => {
             return response.data;
         })
@@ -65,39 +50,15 @@ const resetPassword = (data) =>
         });
 
 // Check if the user is logged in with a valid token
-const isAuthenticated = async () => {
-    const authToken = localStorage.getItem("neuronAuthToken");
-
-    if (!authToken) {
-        return {
-            isAuthenticated: false,
-            user: null,
-        };
-    } else {
-        try {
-            const response = await api.post("/auth/is-authenticated", {
-                token: authToken,
+const checkAuth = () => 
+    api.get("/auth/is-authenticated")
+            .then((response) => {
+                return response.data;
+            })
+            .catch((error) => {
+                throw error;
             });
-            if (response.status === 200) {
-                return {
-                    isAuthenticated: true,
-                    user: response.data.user,
-                    volunteer: response.data.volunteer,
-                };
-            }
-        } catch (error) {
-            return {
-                isAuthenticated: false,
-                user: null,
-            };
-        }
-    }
-};
 
 export {
-    signUp,
-    login,
-    sendResetPasswordInstructions,
-    resetPassword,
-    isAuthenticated,
+    checkAuth, resetPassword, sendResetPasswordInstructions, signUp
 };

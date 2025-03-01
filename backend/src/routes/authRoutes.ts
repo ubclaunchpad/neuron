@@ -2,14 +2,14 @@ import { body, param } from "express-validator";
 import { RouteDefinition } from "../common/types.js";
 import { isAuthorized } from "../config/authCheck.js";
 import {
+    checkAuthorization,
     loginUser,
     registerUser,
     resetPassword,
     sendResetPasswordEmail,
-    sendVolunteerData,
     updatePassword,
-    verifyAndRedirect,
-} from "../controllers/userController.js";
+    verifyAndRedirect
+} from "../controllers/authController.js";
 
 export const AuthRoutes: RouteDefinition = {
     path: '/auth',
@@ -22,7 +22,7 @@ export const AuthRoutes: RouteDefinition = {
                 body('lastName').isString(),
                 body('email').isEmail(),
                 body('password').isString(),
-                body('role').isIn([ "admin", "volun", "instr" ]),
+                body('role').isIn([ "admin", "volunteer", "instructor" ]),
             ],
             action: registerUser
         },
@@ -56,9 +56,9 @@ export const AuthRoutes: RouteDefinition = {
             path: '/reset-password',
             method: 'post',
             validation: [
+                body('token').isJWT(),
+                body('id').isUUID('4'),
                 body('password').isString(),
-                param('id').isUUID('4'),
-                param('token').isJWT(),
             ],
             action: resetPassword
         },
@@ -67,15 +67,16 @@ export const AuthRoutes: RouteDefinition = {
             method: 'post',
             middleware: [isAuthorized],
             validation: [
-                body('password').isString(),
+                body('currentPassword').isString(),
+                body('newPassword').isString(),
             ],
             action: updatePassword
         },
         {
             path: '/is-authenticated',
-            method: 'post',
+            method: 'get',
             middleware: [isAuthorized],
-            action: sendVolunteerData
+            action: checkAuthorization
         },
     ]
 };

@@ -1,20 +1,31 @@
+import { Request, Response, Router } from "express";
+import multer from 'multer';
+
+import {
+    getVolunteerById,
+    getVolunteers,
+    shiftCheckIn,
+    updateVolunteer,
+    getPreferredClassesById,
+    getAllClassPreferences,
+    updatePreferredClassesById
+} from "../controllers/volunteerController.js";
+
 import { body, param } from "express-validator";
 import { RouteDefinition } from "../common/types.js";
+import { isAuthorized } from "../config/authCheck.js";
 import {
     getAvailabilities,
     getAvailabilityByVolunteerId,
     setAvailabilityByVolunteerId,
     updateAvailabilityByVolunteerId,
 } from "../controllers/availabilityController.js";
-import {
-    getVolunteerById,
-    getVolunteers,
-    shiftCheckIn,
-    updateVolunteer
-} from "../controllers/volunteerController.js";
 
 export const VolunteerRoutes: RouteDefinition = {
     path: '/volunteer',
+    middleware: [
+        isAuthorized,
+    ],
     children: [
         {
             path: '/',
@@ -74,6 +85,34 @@ export const VolunteerRoutes: RouteDefinition = {
                         },
                     ]
                 },
+            ]
+        },
+        {
+            path: '/class-preferences',
+            children: [
+                {
+                    path: '/',
+                    method: 'get',
+                    action: getAllClassPreferences
+                },
+                {
+                    path: '/:volunteer_id',
+                    validation: [
+                        param('volunteer_id').isUUID('4')
+                    ],
+                    children: [
+                        {
+                            path: '/',
+                            method: 'get',
+                            action: getPreferredClassesById
+                        }, 
+                        {
+                            path: '/',
+                            method: 'put',
+                            action: updatePreferredClassesById
+                        }
+                    ]
+                }
             ]
         },
         {

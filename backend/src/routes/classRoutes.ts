@@ -1,10 +1,14 @@
 import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
+import { isAuthorized } from '../config/authCheck.js';
 import { imageUploadMiddleware } from '../config/fileUpload.js';
 import { addClass, deleteClass, getAllClasses, getClassById, getClassesByDay, updateClass, uploadClassImage } from '../controllers/classController.js';
 
 export const ClassRoutes: RouteDefinition = {
     path: '/classes',
+    middleware: [
+        isAuthorized,
+    ],
     children: [
         {
             path: '/',

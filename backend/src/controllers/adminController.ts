@@ -1,13 +1,12 @@
 import { Response } from "express";
+import { VolunteerDB } from "../common/databaseModels.js";
+import { AuthenticatedRequest } from "../common/types.js";
 import VolunteerModel from "../models/volunteerModel.js";
-
-import { VolunteerDB } from "../common/generated.js";
-import { AuthenticatedUserRequest } from "../common/types.js";
 
 const volunteerModel = new VolunteerModel();
 
 async function getUnverifiedVolunteers(
-    req: AuthenticatedUserRequest,
+    req: AuthenticatedRequest,
     res: Response
 ) {
     const unverifiedVolunteers = await volunteerModel.getUnverifiedVolunteers();
@@ -18,7 +17,7 @@ async function getUnverifiedVolunteers(
 }
 
 async function verifyVolunteer(
-    req: AuthenticatedUserRequest,
+    req: AuthenticatedRequest,
     res: Response
 ): Promise<any> {
     // Get the token from the request parameters

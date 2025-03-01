@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Formik, FieldArray } from "formik";
 import * as Yup from "yup";
 import { CgSelect } from "react-icons/cg";
-import camera_icon from "../../assets/upload.png";
+import upload_light from "../../assets/upload-light.png";
+import upload_dark from "../../assets/upload-dark.png";
 import Select from 'react-select';
 import { 
     getClassById, 
@@ -395,8 +396,8 @@ function AdminClassForm({ classId, setUpdates }) {
                                             console.log(e);
                                         }}
                                     />}
-                                    <div className={image ? "overlay" : "upload-content"}>
-                                        <img src={camera_icon} alt="Edit Profile" className="upload-icon" />
+                                    <div className={image ? "class-image-overlay" : "class-upload-content"}>
+                                        <img src={image ? upload_light : upload_dark} alt="Edit Profile" className="upload-icon" />
                                         <button type="button" className="edit-button">Browse Images</button>
                                     </div>
                                     <input

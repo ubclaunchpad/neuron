@@ -187,7 +187,7 @@ textarea:focus {
     border-radius: 8px;
 }
 
-.overlay {
+.class-image-overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -204,7 +204,7 @@ textarea:focus {
     cursor: pointer;
 }
 
-.upload-content {
+.class-upload-content {
     width: stretch;
     aspect-ratio: 1 / 1;
     border-radius: 8px;
@@ -232,7 +232,7 @@ textarea:focus {
     cursor: pointer;
 }
 
-.image-content:hover .overlay {
+.image-content:hover .class-image-overlay {
     opacity: 1; /* Show overlay on hover */
 }
 

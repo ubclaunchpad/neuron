@@ -2,6 +2,7 @@ import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
 import { imageUploadMiddleware } from '../config/fileUpload.js';
 import { addClass, deleteClass, getAllClasses, getClassById, getClassesByDay, updateClass, uploadClassImage } from '../controllers/classController.js';
+import { Frequency } from '../common/interfaces.js';
 
 export const ClassRoutes: RouteDefinition = {
     path: '/classes',
@@ -27,6 +28,7 @@ export const ClassRoutes: RouteDefinition = {
                 body('schedules.*.day').isInt({ min: 0, max: 6 }),
                 body('schedules.*.start_time').isTime({ hourFormat: 'hour24' }),
                 body('schedules.*.end_time').isTime({ hourFormat: 'hour24' }),
+                body('schedules.*.frequency').isIn(Object.values(Frequency)),
                 body('schedules.*.volunteer_ids').isArray({ min: 1 }).optional(),
                 body('schedules.*.volunteer_ids.*').isUUID('4')
             ],

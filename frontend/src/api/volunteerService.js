@@ -71,3 +71,12 @@ export const updateVolunteerAvailability = async (volunteer_id, availability) =>
     throw error;
   }
 };
+
+export const getAllVolunteers = async () => {
+  try {
+    const response = await api.get("volunteer");
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all volunteers:', error);
+  }
+};

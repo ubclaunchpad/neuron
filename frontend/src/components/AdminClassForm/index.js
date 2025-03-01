@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Formik, FieldArray } from "formik";
 import * as Yup from "yup";
 import { CgSelect } from "react-icons/cg";
@@ -9,6 +9,7 @@ import notyf from "../../utils/notyf";
 import "./index.css";
 import { formatImageUrl } from "../../api/imageService";
 import { getAllInstructors } from "../../api/instructorService";
+import { getAllVolunteers } from "../../api/volunteerService";
 
 const categories = [
     { value: 'Online Exercise', label: 'Online Exercise' },
@@ -71,11 +72,16 @@ const ClassSchema = Yup.object().shape({
                 frequency: Yup.string()
                     .oneOf(frequencies.map(f => f.value))
                     .optional(),
-                // volunteer_ids: Yup.array()
-                //     .of(
-                //         Yup.string().uuid('Invalid UUID format for volunteer_ids')
-                //     )
-                //     .optional(),
+                volunteers: Yup.array()
+                    .of(
+                        Yup.object().shape({
+                            volunteer_id: Yup.string().uuid('Invalid UUID format for volunteer_ids'),
+                            p_name: Yup.string().optional(),
+                            f_name: Yup.string().optional(),
+                            l_name: Yup.string().optional()
+                        })
+                    )
+                    .optional(),
             })
         )
         .optional(),
@@ -85,7 +91,6 @@ const ClassSchema = Yup.object().shape({
 function AdminClassForm({ classId, setUpdates }) {
 
     const [loading, setLoading] = useState(true);
-    const [_, forceUpdate] = useState(0);
     const [classData, setClassData] = useState({
         class_name: '',
         category: '',
@@ -97,6 +102,8 @@ function AdminClassForm({ classId, setUpdates }) {
     });
     const [image, setImage] = useState(null);
     const [instructors, setInstructors] = useState([]);
+    const [volunteers, setVolunteers] = useState([]);
+    const selectRefs = useRef([]);
 
     useEffect(() => {
         const formatDates = (data => {
@@ -125,6 +132,7 @@ function AdminClassForm({ classId, setUpdates }) {
             const imageUrl = formatImageUrl(classData.fk_image_id);
             setImage({ src: imageUrl });
             
+            console.log(classData)
             setClassData(classData);
             
             const instructorData = await getAllInstructors();
@@ -133,10 +141,24 @@ function AdminClassForm({ classId, setUpdates }) {
                     value: instructor.instructor_id,
                     label: instructor.f_name + ' ' + instructor.l_name
                 }
-            })
+            });
             console.log(instructorData);
             console.log(instructors);
             setInstructors(instructors);
+
+            const volunteerData = await getAllVolunteers();
+            const volunteers = volunteerData.map((volunteer) => {
+                return {
+                    value: {
+                        volunteer_id: volunteer.volunteer_id,
+                        p_name: volunteer.p_name,
+                        f_name: volunteer.f_name,
+                        l_name: volunteer.l_name
+                    },
+                    label: volunteer.p_name ?? volunteer.f_name + ' ' + volunteer.l_name
+                }
+            });
+            setVolunteers(volunteers);
             setLoading(false);
         }
 
@@ -146,6 +168,11 @@ function AdminClassForm({ classId, setUpdates }) {
             setLoading(false);
         }
     }, [classId]);
+
+    function buildVolunteers(assignedVolunteers) {
+        const assignedVolunteerIds = assignedVolunteers.map((volunteer) => volunteer.volunteer_id);
+        return volunteers.filter((volunteer) => !assignedVolunteerIds.includes(volunteer.value.volunteer_id));
+    }
 
     if (loading) {
         return <></>;
@@ -422,7 +449,8 @@ function AdminClassForm({ classId, setUpdates }) {
                                         }),
                                         input: (styles) => ({
                                             ...styles,
-                                            margin: '0px 2px'
+                                            margin: '0px 2px',
+                                            padding: '0px',
                                         }),
                                         
                                     }}
@@ -481,7 +509,7 @@ function AdminClassForm({ classId, setUpdates }) {
                                                     className={`${day.toLowerCase()}-input day-input`}
                                                     onClick={(e) => {
                                                         setFieldValue(`schedules[${index}].day`, Number(e.target.value));
-                                                        forceUpdate((prev) => !prev);
+                                                        setUpdates((prev) => prev + 1);
                                                     }}
                                                 >
                                                     {day}
@@ -575,6 +603,94 @@ function AdminClassForm({ classId, setUpdates }) {
                                                 errors={errors}
                                                 touched={touched}
                                             />
+                                        </div>
+                                    </div>
+                                    <div className="input-row">
+                                        <div className="flex-input">
+                                            <label className="class-form-label">
+                                                Volunteers
+                                            </label>
+                                            <FieldArray
+                                                name={`schedules[${index}].volunteers`}    
+                                            >
+                                                {({ push, remove }) => (
+                                                    <div className="volunteers-row">
+                                                        {schedule.volunteers.map((volunteer, volunteerIndex) => (
+                                                            <div key={volunteerIndex} className="volunteer-item">
+                                                                {volunteer.p_name ?? volunteer.f_name + ' ' + volunteer.l_name}
+                                                            </div>
+                                                        ))}
+                                                        {/* <Select
+                                                            className="select add-volunteers"
+                                                            ref={el => (selectRefs.current[index] = el)}
+                                                            defaultValue={{ value: null, label: 'Add Volunteers' }}
+                                                            styles={{
+                                                                control: () => ({
+                                                                    padding: '12px 32px 12px 16px',
+                                                                    borderRadius: '8px',
+                                                                    border: '1px solid #cccccc',
+                                                                    cursor: 'pointer'
+                                                                }),
+                                                                valueContainer: (styles) => ({
+                                                                    ...styles,
+                                                                    padding: '0px'
+                                                                }),
+                                                                input: (styles) => ({
+                                                                    ...styles,
+                                                                    margin: '0px 2px',
+                                                                    padding: '0px',
+                                                                }),
+                                                            }}
+                                                            options={buildVolunteers(schedule.volunteers)}
+                                                            isSearchable={true}
+                                                            components={
+                                                                {
+                                                                    DropdownIndicator: () => 
+                                                                        <CgSelect className="select-icon"/>,
+                                                                    IndicatorSeparator: () => null,
+                                                                    Option: (props) => {
+                                                                        const {innerProps, innerRef} = props;
+                                                                        return (
+                                                                            <div {...innerProps} ref={innerRef} className="select-item">
+                                                                                {props.data.label}
+                                                                            </div>
+                                                                        )
+                                                                    },
+                                                                    Menu: (props) => {
+                                                                        const {innerProps, innerRef} = props;
+                                                                        return (
+                                                                            <div {...innerProps} ref={innerRef}
+                                                                            className="select-menu">
+                                                                                {props.children}
+                                                                            </div>
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                            onChange={(e) => {
+                                                                console.log("e:", e)
+                                                                if (e?.value) {
+                                                                    console.log("VALUE:", e.value);
+                                                                    push({
+                                                                        volunteer_id: e.value.volunteer_id,
+                                                                        p_name: e.value.p_name,
+                                                                        f_name: e.value.f_name,
+                                                                        l_name: e.value.l_name,
+                                                                    });
+
+                                                                    console.log("REF:", selectRefs.current[index])
+                                                                    
+                                                                    // set select to default (placeholder) value
+                                                                    selectRefs.current[index].clearValue();
+
+                                                                    console.log("REF VALUE:", selectRefs.current[index].getValue())
+                                                                }
+                                                                forceUpdate((prev) => !prev)
+                                                            }}
+                                                        /> */}
+                                                    </div>
+                                                )}
+                                            </FieldArray>
                                         </div>
                                     </div>
                                 </div>

@@ -90,6 +90,7 @@
     width: fit-content;
     white-space: nowrap;
     font-size: 14px;
+    margin: 0px;
 }
 
 .select {
@@ -273,6 +274,23 @@ textarea:focus {
 .saturday-input {
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
+}
+
+.volunteers-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.volunteer-item {
+    padding: 12px 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.add-volunteers {
+    width: fit-content;
 }
 
 

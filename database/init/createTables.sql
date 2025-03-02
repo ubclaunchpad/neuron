@@ -23,7 +23,8 @@ create table users (
     l_name VARCHAR(60) NOT NULL,
     email VARCHAR(45) NOT NULL UNIQUE,
     fk_image_id VARCHAR(36),
-    password VARCHAR(60) NOT NULL,
+    email VARCHAR(45) NOT NULL,
+    password CHAR(60) BINARY NOT NULL,
     role ENUM('volunteer', 'admin', 'instructor') NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)
@@ -148,11 +149,11 @@ CREATE TABLE pending_shift_coverage (
 
 CREATE TABLE class_preferences (
     fk_volunteer_id VARCHAR(255), 
-    fk_class_id INT,        
+    fk_schedule_id INT,        
     class_rank INT,     
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)
         ON DELETE CASCADE,
-    FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
+    FOREIGN KEY (fk_schedule_id) REFERENCES schedule(schedule_id)
         ON DELETE CASCADE
 );
 

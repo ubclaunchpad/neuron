@@ -1,17 +1,13 @@
 import api from "./api";
 
 // Update a user's password
-export const changePassword = async (volunteerData) => {
+export const changePassword = async (passwordUpdateData) => {
+    const { currentPassword, newPassword } = passwordUpdateData
+
     try {
-        const loginResponse = await api.post("/auth/login", {
-            email: volunteerData.email,
-            password: volunteerData.currentPassword
-        });
-        const data = loginResponse.data;
-        const token = data.token;
         const resetResponse = await api.post("/auth/update-password", {
-            token: token,
-            password: volunteerData.newPassword
+            currentPassword: currentPassword,
+            newPassword: newPassword
         });
         return resetResponse.data;
     } catch (error) {
@@ -54,30 +50,14 @@ const resetPassword = (data) =>
         });
 
 // Check if the user is logged in with a valid token
-const checkAuth = async () => {
-    const authToken = localStorage.getItem("neuronAuthToken");
-
-    if (!authToken) {
-        return {
-            isAuthenticated: false,
-            user: null,
-        };
-    } else {
-        try {
-            const response = await api.post("/auth/is-authenticated", {
-                token: authToken,
-            });
-            if (response.status === 200) {
+const checkAuth = () => 
+    api.get("/auth/is-authenticated")
+            .then((response) => {
                 return response.data;
-            }
-        } catch (error) {
-            return {
-                isAuthenticated: false,
-                user: null,
-            };
-        }
-    }
-};
+            })
+            .catch((error) => {
+                throw error;
+            });
 
 export {
     checkAuth, resetPassword, sendResetPasswordInstructions, signUp

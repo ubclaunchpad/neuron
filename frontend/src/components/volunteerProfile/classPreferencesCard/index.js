@@ -1,18 +1,17 @@
-import "./index.css";
-import React, {useEffect, useState} from "react";
-import edit_icon from "../../../assets/edit-icon.png"
-import { fetchUserPreferredClasses } from "../../../api/volunteerService";
-import ClassPreferencesCard from "../../ClassPreferencesCard";
+import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
+import { fetchUserPreferredClasses } from "../../../api/volunteerService";
+import edit_icon from "../../../assets/edit-icon.png";
 import empty_img from "../../../assets/no-class-preferences.png";
 import plus from "../../../assets/plus.jpg";
+import ClassPreferencesCard from "../../ClassPreferencesCard";
+import "./index.css";
 
 function ClassPreferencesCardMP({volunteer}) {
-
     const [preferredClasses, setPreferredClasses] = useState(null);
 
     useEffect(() => {
-        const getCurrentUserPrefferedClasses = async () => {
+        const getCurrentUserPreferredClasses = async () => {
             const volunteerID = volunteer.volunteer_id;
 
             const classes_p = await fetchUserPreferredClasses(volunteerID);
@@ -36,7 +35,7 @@ function ClassPreferencesCardMP({volunteer}) {
                 setPreferredClasses(res);
             }
         }; 
-        getCurrentUserPrefferedClasses();  
+        getCurrentUserPreferredClasses();  
     }, []);
 
     function renderClassRank(rank, item) {
@@ -60,11 +59,10 @@ function ClassPreferencesCardMP({volunteer}) {
             <div class="no-class-preferences-container">
                 <img className="no-class-preferences-img" src={empty_img} alt="No Preferred Classes"></img>
                 <p>Not specified yet.</p>
-                <NavLink className="cancel-button edit-rank-button edit-button-empty" to="/volunteer/class-preferences">
+                <NavLink className="cancel-button edit-rank-button edit-button-empty" to="/profile/preferences">
                     <img src={plus} alt="plus icon" className="plus-icon-empty"/>
                     Add My Preferences
                 </NavLink>
-                
             </div> 
         </>);
     }
@@ -83,14 +81,13 @@ function ClassPreferencesCardMP({volunteer}) {
 
     return (
         <div className="class-preferences-card">
-            <NavLink to="/class-preferences">
+            <NavLink to="/profile/preferences">
                     <img className="icon edit-icon" src={edit_icon} alt="Edit"/>
             </NavLink>
             <h2 className="my-profile-title">My Preferences</h2>
             <div className="class-preferences-content">
                 {renderPreferredClasses()}
             </div>
-
         </div>
     )
 }

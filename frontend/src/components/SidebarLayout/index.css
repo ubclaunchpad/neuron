@@ -91,6 +91,11 @@ body {
   padding-right: 10px;
 }
 
+.nav-item svg {
+  width: 30px;
+  padding-right: 10px;
+}
+
 .NavbarText {
   color: var(--dark);
   text-decoration: none;

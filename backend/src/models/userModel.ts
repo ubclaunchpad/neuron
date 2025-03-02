@@ -11,7 +11,7 @@ export default class UserModel {
     async getUserById(user_id: string, password: boolean = false): Promise<UserDB> {
         const query = `
         SELECT 
-            ${password ? "*" : "user_id, fk_image_id, email, role, created_at"}
+            ${password ? "*" : "user_id, f_name, l_name, fk_image_id, email, role, created_at"}
         FROM users
         WHERE user_id = ?`;
         const values = [user_id];
@@ -31,7 +31,7 @@ export default class UserModel {
     async getUserByEmail(email: string, password: boolean = false): Promise<UserDB> {
         const query = `
         SELECT 
-            ${password ? "*" : "user_id, fk_image_id, email, role, created_at"}
+            ${password ? "*" : "user_id, f_name, l_name, fk_image_id email, role, created_at"}
         FROM users
         WHERE email = ?`;
         const values = [email];

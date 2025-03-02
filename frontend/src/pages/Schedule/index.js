@@ -1,14 +1,14 @@
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
-import { SHIFT_TYPES, COVERAGE_STATUSES } from "../../data/constants";
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { useAuth } from "../../contexts/authContext";
-import "./index.css";
+import { COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
 import { getButtonConfig } from "../../utils/buttonConfig";
+import "./index.css";
 import { useWeekView } from "react-weekview";
 import CalendarView from "../../components/CalendarView";
 
@@ -210,4 +210,4 @@ function VolunteerSchedule() {
     );
 }
 
-export default VolunteerSchedule;
+export default Schedule;

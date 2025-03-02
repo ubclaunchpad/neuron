@@ -1,6 +1,8 @@
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useWeekView } from "react-weekview";
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
+import CalendarView from "../../components/CalendarView";
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
@@ -9,10 +11,8 @@ import { useAuth } from "../../contexts/authContext";
 import { COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
 import { getButtonConfig } from "../../utils/buttonConfig";
 import "./index.css";
-import { useWeekView } from "react-weekview";
-import CalendarView from "../../components/CalendarView";
 
-function VolunteerSchedule() {
+function Schedule() {
     const { user } = useAuth();
     const currentDate = dayjs();
     const [selectedDate, setSelectedDate] = useState(dayjs());
@@ -156,18 +156,20 @@ function VolunteerSchedule() {
             <div className="content-heading">
                 <h2 className="content-title">Schedule</h2>
             </div>
+            <div className="content-heading">
+                <DateToolbar
+                    selectedDate={selectedDate}
+                    setSelectedDate={setSelectedDate}
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                    nextWeek={nextWeek}
+                    previousWeek={previousWeek}
+                    goToToday={goToToday}
+                />
+            </div>
+            <hr />
             <DetailsPanel classId={selectedClassId} classList={shifts} setClassId={setSelectedClassId} shiftDetails={selectedShiftDetails} dynamicShiftButtons={selectedShiftButtons}>
                 <div className="schedule-page">
-                    <DateToolbar
-                        selectedDate={selectedDate}
-                        setSelectedDate={setSelectedDate}
-                        viewMode={viewMode}
-                        setViewMode={setViewMode}
-                        nextWeek={nextWeek}
-                        previousWeek={previousWeek}
-                        goToToday={goToToday}
-                    />
-                    <hr />
                     {viewMode === "list" ? (
                         <>
                             <ShiftStatusToolbar setFilter={setFilter} filter={filter} />

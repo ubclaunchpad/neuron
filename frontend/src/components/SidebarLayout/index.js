@@ -1,4 +1,4 @@
-import { React, useEffect, useState } from "react";
+import { React, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import BC_brain from "../../assets/bwp-logo-text.png";
 import nav_item_classes from "../../assets/nav-item-classes.png";
@@ -17,7 +17,22 @@ import Permission from "../utils/Permission";
 
 function SidebarLayout() {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
-  const { user, isAdmin } = useAuth();
+  const sidebarRef = useRef(null);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!sidebarRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const width = entry.contentRect.width;
+        document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
+      }
+    });
+    observer.observe(sidebarRef.current);
+
+    return () => observer.disconnect();
+  }, [sidebarRef]);
 
   // Toggle function for displaying/hiding sidebar
   const toggleSidebar = () => {
@@ -40,7 +55,7 @@ function SidebarLayout() {
 
   return (
     <div className="main-container">
-      <aside className={`navbar ${collapsed ? "collapsed" : ""}`}>
+      <aside ref={sidebarRef} className={`navbar ${collapsed ? 'collapsed' : ''}`}>
         <span className="logo-banner">
           {!collapsed && (
             <a href="https://www.bcbrainwellness.ca/">

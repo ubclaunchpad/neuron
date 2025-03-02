@@ -107,7 +107,7 @@ function Classes() {
 
   const scrollToSection = (category) => {
     const sectionRef = sectionRefs.current[category];
-    const catalog = document.querySelector(".class-catalog");
+    const catalog = document.querySelector(".classes-page");
   
     if (sectionRef && sectionRef.current && catalog) {
       const catalogTop = catalog.getBoundingClientRect().top;
@@ -154,22 +154,19 @@ function Classes() {
         setClassId={setSelectedClassId}
       >
         <div className="classes-page">
-          {/* ----- */}
-          <div className="class-catalog">
-            {Object.entries(groupedByCategory).map(([category, classData]) => {
-              return (
-                <ClassCategoryContainer
-                  key={category}
-                  ref={sectionRefs.current[category]}
-                  category={category}
-                  classData={classData}
-                  data-category={category}
-                  onClassSelect={handleClassSelection}
-                />
-              );
-            })}
-            <div className="spacer"></div>
-          </div>
+          {Object.entries(groupedByCategory).map(([category, classData]) => {
+            return (
+              <ClassCategoryContainer
+                key={category}
+                ref={sectionRefs.current[category]}
+                category={category}
+                classData={classData}
+                data-category={category}
+                onClassSelect={handleClassSelection}
+              />
+            );
+          })}
+          <div className="spacer"></div>
         </div>
       </DetailsPanel>
     </main>

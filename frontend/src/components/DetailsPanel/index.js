@@ -158,6 +158,7 @@ function DetailsPanel({
           {
             isAdmin ? 
             <AdminDetailsPanel
+              classId={classId}
               panelInfo={panelInfo}
               renderInstructorInfo={renderInstructorInfo}
               navigate={navigate}

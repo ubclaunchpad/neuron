@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Formik, FieldArray } from "formik";
 import * as Yup from "yup";
 import { CgSelect } from "react-icons/cg";
@@ -107,7 +108,7 @@ const ClassSchema = Yup.object().shape({
     image: Yup.string().optional(),
 });
 
-function AdminClassForm({ classId, setUpdates }) {
+function AdminClassForm({ setUpdates }) {
 
     const [loading, setLoading] = useState(true);
     const [classData, setClassData] = useState({
@@ -124,6 +125,9 @@ function AdminClassForm({ classId, setUpdates }) {
     const [volunteers, setVolunteers] = useState([]);
     const [showPopup, setShowPopup] = useState(false);
     const selectRefs = useRef([]);
+
+    const location = useLocation();
+    const classId = location.state?.classId;
 
     useEffect(() => {
         const formatDates = (data => {
@@ -152,8 +156,32 @@ function AdminClassForm({ classId, setUpdates }) {
             const imageUrl = formatImageUrl(classData.fk_image_id);
             setImage({ src: imageUrl });
             
-            console.log(classData)
+            console.log(classData);
+
+            // save class in 
             setClassData(classData);
+            setLoading(false);
+        }
+
+        if (classId) {
+            fetchData();
+        } else {
+            setLoading(false);
+        }
+    }, [classId]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const instructorData = await getAllInstructors();
+            const instructors = instructorData.map((instructor) => {
+                return {
+                    value: instructor.instructor_id,
+                    label: instructor.f_name + ' ' + instructor.l_name
+                }
+            });
+            console.log(instructorData);
+            console.log(instructors);
+            setInstructors(instructors);
 
             const volunteerData = await getAllVolunteers();
             const volunteers = volunteerData.map((volunteer) => {
@@ -168,30 +196,8 @@ function AdminClassForm({ classId, setUpdates }) {
                 }
             });
             setVolunteers(volunteers);
-            setLoading(false);
         }
-
-        if (classId) {
-            fetchData();
-        } else {
-            setLoading(false);
-        }
-    }, [classId]);
-
-    useEffect(() => {
-        const fetchInstructors = async () => {
-            const instructorData = await getAllInstructors();
-            const instructors = instructorData.map((instructor) => {
-                return {
-                    value: instructor.instructor_id,
-                    label: instructor.f_name + ' ' + instructor.l_name
-                }
-            });
-            console.log(instructorData);
-            console.log(instructors);
-            setInstructors(instructors);
-        }
-        fetchInstructors();
+        fetchData();
     }, []);
 
 

@@ -84,7 +84,7 @@
 .flex-input {
     display: flex;
     width: stretch;
-    align-items: center;
+    align-items: baseline;
     gap: 16px;
 }
 
@@ -293,6 +293,7 @@ textarea:focus {
 
 .volunteers-row {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     align-items: center;
 }
@@ -302,6 +303,8 @@ textarea:focus {
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 14px;
+    white-space: nowrap;
+    width: fit-content;
 }
 
 .delete-schedule-row {
@@ -396,6 +399,20 @@ textarea:focus {
 
 .add-volunteers {
     width: fit-content;
+}
+
+.add-volunteer-button {
+    all: unset;
+    width: fit-content;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #bcbcbc;
+    background: #FFF;
+    box-sizing: border-box;
+}
+
+.add-volunteer-button:hover {
+    cursor: pointer;
 }
 
 .add-schedule-button {

@@ -118,6 +118,7 @@ function AdminClassForm({ setUpdates }) {
     const [instructors, setInstructors] = useState([]);
     const [volunteers, setVolunteers] = useState([]);
     const [showPopup, setShowPopup] = useState(false);
+    const [showVolunteers, setShowVolunteers] = useState([]);
     const selectRefs = useRef([]);
 
     const location = useLocation();
@@ -163,6 +164,7 @@ function AdminClassForm({ setUpdates }) {
                 setImage({ src: imageUrl });
             }
             
+            setShowVolunteers(classData.schedules.map(() => false));
             console.log(classData);
 
             // save class in 
@@ -208,8 +210,7 @@ function AdminClassForm({ setUpdates }) {
     }, []);
 
 
-    function buildVolunteers(assignedVolunteers) {
-        const assignedVolunteerIds = assignedVolunteers.map((volunteer) => volunteer.volunteer_id);
+    function buildVolunteers(assignedVolunteerIds) {
         return volunteers.filter((volunteer) => !assignedVolunteerIds.includes(volunteer.value.volunteer_id));
     }
 
@@ -746,7 +747,7 @@ function AdminClassForm({ setUpdates }) {
                                                     Volunteers
                                                 </label>
                                                 <FieldArray
-                                                    name={`schedules[${index}].volunteers`}    
+                                                    name={`schedules[${index}].volunteer_ids`}    
                                                 >
                                                     {({ push, remove }) => (
                                                         <div className="volunteers-row">
@@ -759,74 +760,79 @@ function AdminClassForm({ setUpdates }) {
                                                                     </div>
                                                                 )
                                                             })}
-                                                            {/* <Select
-                                                                className="select add-volunteers"
-                                                                ref={el => (selectRefs.current[index] = el)}
-                                                                defaultValue={{ value: null, label: 'Add Volunteers' }}
-                                                                styles={{
-                                                                    control: () => ({
-                                                                        padding: '12px 32px 12px 16px',
-                                                                        borderRadius: '8px',
-                                                                        border: '1px solid #cccccc',
-                                                                        cursor: 'pointer'
-                                                                    }),
-                                                                    valueContainer: (styles) => ({
-                                                                        ...styles,
-                                                                        padding: '0px'
-                                                                    }),
-                                                                    input: (styles) => ({
-                                                                        ...styles,
-                                                                        margin: '0px 2px',
-                                                                        padding: '0px',
-                                                                    }),
-                                                                }}
-                                                                options={buildVolunteers(schedule.volunteers)}
-                                                                isSearchable={true}
-                                                                components={
-                                                                    {
-                                                                        DropdownIndicator: () => 
-                                                                            <CgSelect className="select-icon"/>,
-                                                                        IndicatorSeparator: () => null,
-                                                                        Option: (props) => {
-                                                                            const {innerProps, innerRef} = props;
-                                                                            return (
-                                                                                <div {...innerProps} ref={innerRef} className="select-item">
-                                                                                    {props.data.label}
-                                                                                </div>
-                                                                            )
-                                                                        },
-                                                                        Menu: (props) => {
-                                                                            const {innerProps, innerRef} = props;
-                                                                            return (
-                                                                                <div {...innerProps} ref={innerRef}
-                                                                                className="select-menu">
-                                                                                    {props.children}
-                                                                                </div>
-                                                                            )
+                                                            {showVolunteers[index] ? 
+                                                                <Select
+                                                                    className="select add-volunteers"
+                                                                    ref={el => (selectRefs.current[index] = el)}
+                                                                    defaultValue={{ value: null, label: 'Enter Volunteer Name' }}
+                                                                    styles={{
+                                                                        control: () => ({
+                                                                            padding: '12px 16px',
+                                                                            borderRadius: '8px',
+                                                                            border: '1px solid #cccccc',
+                                                                            cursor: 'pointer'
+                                                                        }),
+                                                                        valueContainer: (styles) => ({
+                                                                            ...styles,
+                                                                            padding: '0px'
+                                                                        }),
+                                                                        input: (styles) => ({
+                                                                            ...styles,
+                                                                            margin: '0px 2px',
+                                                                            padding: '0px',
+                                                                        }),
+                                                                    }}
+                                                                    options={buildVolunteers(schedule.volunteer_ids)}
+                                                                    isSearchable={true}
+                                                                    components={
+                                                                        {
+                                                                            DropdownIndicator: () => null,
+                                                                            IndicatorSeparator: () => null,
+                                                                            Option: (props) => {
+                                                                                const {innerProps, innerRef} = props;
+                                                                                return (
+                                                                                    <div {...innerProps} ref={innerRef} className="select-item">
+                                                                                        {props.data.label}
+                                                                                    </div>
+                                                                                )
+                                                                            },
+                                                                            Menu: (props) => {
+                                                                                const {innerProps, innerRef} = props;
+                                                                                return (
+                                                                                    <div {...innerProps} ref={innerRef}
+                                                                                    className="select-menu">
+                                                                                        {props.children}
+                                                                                    </div>
+                                                                                )
+                                                                            }
                                                                         }
                                                                     }
-                                                                }
-                                                                onChange={(e) => {
-                                                                    console.log("e:", e)
-                                                                    if (e?.value) {
-                                                                        console.log("VALUE:", e.value);
-                                                                        push({
-                                                                            volunteer_id: e.value.volunteer_id,
-                                                                            p_name: e.value.p_name,
-                                                                            f_name: e.value.f_name,
-                                                                            l_name: e.value.l_name,
+                                                                    onChange={(e) => {
+                                                                        console.log(e);
+                                                                        push(e.value.volunteer_id)
+                                                                        setShowVolunteers((prevItems) => {
+                                                                            const newItems = [...prevItems];
+                                                                            newItems[index] = false;
+                                                                            return newItems;
                                                                         });
-
-                                                                        console.log("REF:", selectRefs.current[index])
-                                                                        
-                                                                        // set select to default (placeholder) value
-                                                                        selectRefs.current[index].clearValue();
-
-                                                                        console.log("REF VALUE:", selectRefs.current[index].getValue())
-                                                                    }
-                                                                    forceUpdate((prev) => !prev)
-                                                                }}
-                                                            /> */}
+                                                                    }}
+                                                                /> :
+                                                                <div>
+                                                                <button
+                                                                    type="button"
+                                                                    className="add-volunteer-button"
+                                                                    onClick={() => {
+                                                                        setShowVolunteers((prevItems) => {
+                                                                            const newItems = [...prevItems];
+                                                                            newItems[index] = true;
+                                                                            return newItems;
+                                                                        });
+                                                                    }}
+                                                                >
+                                                                    Add Volunteer +
+                                                                </button>
+                                                                </div>
+                                                            }
                                                         </div>
                                                     )}
                                                 </FieldArray>
@@ -853,7 +859,6 @@ function AdminClassForm({ setUpdates }) {
                                                                 type="button"
                                                                 className="confirm-delete-button"
                                                                 onClick={() => {
-                                                                    console.log("Deleted!"); // Replace with delete logic
                                                                     remove(index);
                                                                     setShowPopup(false);
                                                                 }}

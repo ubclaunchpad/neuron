@@ -62,7 +62,7 @@ function App() {
             <Route element={<SidebarLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="classes" element={<Classes />} />
-              <Route path="schedule" element={<VolunteerSchedule  />} />
+              <Route path="schedule" element={<AdminSchedule  />} />
               <Route path="settings" element={<Settings />} />
 
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>

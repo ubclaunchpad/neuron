@@ -29,7 +29,7 @@ export const ClassRoutes: RouteDefinition = {
                 body('schedules.*.start_time').isTime({ hourFormat: 'hour24' }),
                 body('schedules.*.end_time').isTime({ hourFormat: 'hour24' }),
                 body('schedules.*.frequency').isIn(Object.values(Frequency)),
-                body('schedules.*.volunteer_ids').isArray({ min: 1 }).optional(),
+                body('schedules.*.volunteer_ids').isArray({ min: 0 }).optional(),
                 body('schedules.*.volunteer_ids.*').isUUID('4')
             ],
             action: addClass

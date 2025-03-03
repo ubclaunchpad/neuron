@@ -142,14 +142,13 @@ function AdminClassForm({ setUpdates }) {
         }
 
         const formatVolunteers = (data) => {
-            data.schedules = data.schedules.map((schedule) => ({
-                schedule_id: schedule.schedule_id,
-                start_time: schedule.start_time,
-                end_time: schedule.end_time,
-                frequency: schedule.frequency,
-                day: schedule.day,
-                volunteer_ids: schedule.volunteers.map((volunteer) => volunteer.volunteer_id)
-            }))
+            data.schedules = data.schedules.map((schedule) => {
+                const {volunteers, ...rest} = schedule;
+                return {
+                    ...rest,
+                    volunteer_ids: schedule.volunteers.map((volunteer) => volunteer.volunteer_id)
+                }
+            })
         }
 
         const fetchData = async () => {
@@ -554,7 +553,7 @@ function AdminClassForm({ setUpdates }) {
                                     </label>
                                     <Select
                                         className="select"
-                                        defaultValue={instructors.find(i => i.value === values.fk_instructor_id) || { label: 'Select', value: null }}
+                                        defaultValue={instructors.find(i => i.value === values.fk_instructor_id) || { label: 'Select Instructor', value: null }}
                                         styles={{
                                             control: () => ({
                                                 width: 'stretch',

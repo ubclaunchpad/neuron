@@ -1,7 +1,10 @@
 import React from 'react';
+import { useAuth } from '../../contexts/authContext';
 import './index.css';
 
-function ShiftStatusToolbar({ setFilter, filter, userType }) {
+
+function ShiftStatusToolbar({ setFilter, filter}) {
+  const {isAdmin, isVolunteer} = useAuth();
   return (
     <div className="shift-status-container">
         <div>
@@ -14,7 +17,7 @@ function ShiftStatusToolbar({ setFilter, filter, userType }) {
             >
               <div className="button-icon"></div> All Shifts
             </button>
-            {userType === 'volunteer' && (
+            {isVolunteer && (
               <>
                 <button
                   onClick={() => setFilter('my-shifts')}
@@ -36,7 +39,7 @@ function ShiftStatusToolbar({ setFilter, filter, userType }) {
                 </button>
               </>
             )}
-            {userType === 'admin' && (
+            {isAdmin && (
               <>
                 <button
                   onClick={() => setFilter('needs_coverage')}

@@ -245,6 +245,17 @@ input[type=number] {
     max-height: 20.5vw;
     overflow: scroll;
 }
+  
+.my-profile-title {
+    font-family: "Montserrat";
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 27px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;    
+}
+
 
 .bold {
     font-weight: var(--semi-bold);

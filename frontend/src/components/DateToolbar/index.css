@@ -1,19 +1,30 @@
-@import '../../styles.css';
+@import "../../styles.css";
 
 .date-toolbar {
-    display: flex;             
-    align-items: left; 
-    padding: 0 36px;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.nav-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    /* margin-right: 8px; */
+}
+
+.date-toolbar .left-nav {
+    display: flex;
 }
 
 /* Override default button styles */
 .date-toolbar .MuiButton-root {
-    color: var(--dark); 
+    color: var(--dark);
     text-transform: none;
-} 
+}
 
 .day-navigation {
-    display: flex;           
+    display: flex;
 }
 
 button {
@@ -60,7 +71,7 @@ button {
 }
 
 .MuiPickersDay-root.MuiPickersDay-today::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 4px;
     left: 50%;
@@ -69,4 +80,50 @@ button {
     height: 6px;
     background-color: #1976d2;
     border-radius: 50%;
+}
+
+/* Select button to toggle between list and calendar view */
+.view-mode-select {
+    z-index: 3;
+}
+
+.viewMode__control {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.viewMode__indicator-separator {
+    display: none;
+}
+
+.viewMode__value-container {
+    text-align: right;
+}
+
+.viewMode__menu {
+    border-radius: 8px !important;
+    margin-top: -4px !important;
+    right: 0 !important;
+    min-width: fit-content !important;
+}
+
+.viewMode__menu-list {
+    padding: 8px !important;
+    border: 1px solid var(--primary-blue) !important;
+    border-radius: 8px !important;
+}
+
+.viewMode__option:nth-child(2) {
+    margin-top: 4px !important;
+}
+
+.viewMode__option {
+    border-radius: 3px;
+    color: var(--dark) !important;
+    cursor: pointer;
+}
+
+.viewMode__option--is-selected {
+    border: 1px solid var(--primary-blue) !important;
+    background-color: var(--light-grey) !important;
 }

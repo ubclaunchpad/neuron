@@ -167,7 +167,7 @@ function AdminSchedule() {
             setSelectedDate={setSelectedDate}
           />
           <hr />
-          <ShiftStatusToolbar setFilter={setFilter} filter={filter} userType="admin" />
+          <ShiftStatusToolbar setFilter={setFilter} filter={filter}/>
           <hr />
           <div ref={scheduleContainerRef} className="schedule-container">
             {Object.keys(groupedShifts).length > 0 ? (

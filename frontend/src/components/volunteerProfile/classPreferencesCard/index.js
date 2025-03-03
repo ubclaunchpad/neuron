@@ -1,80 +1,95 @@
+import React, { useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
+import { fetchUserPreferredClasses } from "../../../api/volunteerService";
+import edit_icon from "../../../assets/edit-icon.png";
+import empty_img from "../../../assets/no-class-preferences.png";
+import plus from "../../../assets/plus.jpg";
+import ClassPreferencesCard from "../../ClassPreferencesCard";
 import "./index.css";
-import React from "react";
-import { MdOutlineDragIndicator } from "react-icons/md";
-import edit_icon from "../../../assets/edit-icon.png"
 
-function ClassPreferenceBox({ index, preference, handleDragStart, handleDrop }) {
-    
-    return (
-        <div 
-            className="class-preference-box"
-            draggable 
-            onDragStart={(e) => handleDragStart(e, index)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => handleDrop(e, index)}
-        >
-            <div className="class-preference-index">
-                <div>
-                    {index + 1}
-                </div>
-            </div>
-            <div className="class-preference">
-                <div className="class-preference-icon">
-                    <MdOutlineDragIndicator />
-                </div>
-                <div className="class-preference-text">{preference}</div>
-            </div>
-        </div>
-    )
-}
+function ClassPreferencesCardMP({volunteer}) {
+    const [preferredClasses, setPreferredClasses] = useState(null);
 
-function ClassPreferencesCard({ volunteer }) {
+    useEffect(() => {
+        const getCurrentUserPreferredClasses = async () => {
+            const volunteerID = volunteer.volunteer_id;
 
-    const [boxes, setBoxes] = React.useState([]);
-    const [draggedBoxIndex, setDraggedBoxIndex] = React.useState(null);
-
-    React.useEffect(() => {
-        setBoxes([
-            { id: 1, name: "Online Exercise" },
-            { id: 2, name: "Creative & Expressive" },
-            { id: 3, name: "Care Partner Workshops" },
-            { id: 4, name: "In-Person Exercise" },
-            { id: 5, name: "One-On-One Exercise" },
-            { id: 6, name: "Food & Nutrition" }
-        ])
+            const classes_p = await fetchUserPreferredClasses(volunteerID);
+            if (classes_p!=null && classes_p.length > 0) {
+                let res = {};
+                let rank1 = [];
+                let rank2 = [];
+                let rank3 = [];
+                for (let i = 0; i < classes_p.length; i++) {
+                    if (classes_p[i].class_rank === 1) {
+                        rank1.push(classes_p[i]);
+                    } else if (classes_p[i].class_rank === 2) {
+                        rank2.push(classes_p[i]);
+                    } else {
+                        rank3.push(classes_p[i]);
+                    }
+                }
+                res[1] = rank1;
+                res[2] = rank2;
+                res[3] = rank3;
+                setPreferredClasses(res);
+            }
+        }; 
+        getCurrentUserPreferredClasses();  
     }, []);
 
-    const handleDragStart = (e, index) => {
-        setDraggedBoxIndex(index);
-    };
+    function renderClassRank(rank, item) {
+        let rankTitle;
+        if (rank === 1) rankTitle = "Most Preferred";
+        else if (rank === 2) rankTitle = "More Preferred";
+        else rankTitle = "Preferred";
 
-    const handleDrop = (e, index) => {
-        e.preventDefault();
-        const updatedBoxes = [...boxes];
-        const [movedRectangle] = updatedBoxes.splice(draggedBoxIndex, 1);
-        updatedBoxes.splice(index, 0, movedRectangle);
-        setBoxes(updatedBoxes);
-    };
-    
+        return <>
+            <h3 className="rank-title">{rankTitle}</h3>
+            <>
+                {item.length===0 ? <p style={{textAlign: "center"}}>No preferences</p> : item.map((class_, index) => (
+                            <ClassPreferencesCard classData={class_} fullWith={true}/>
+                ))}
+            </>
+        </>;
+    }
+
+    function renderEmpty() {
+        return (<>
+            <div class="no-class-preferences-container">
+                <img className="no-class-preferences-img" src={empty_img} alt="No Preferred Classes"></img>
+                <p>Not specified yet.</p>
+                <NavLink className="cancel-button edit-rank-button edit-button-empty" to="/profile/preferences">
+                    <img src={plus} alt="plus icon" className="plus-icon-empty"/>
+                    Add My Preferences
+                </NavLink>
+            </div> 
+        </>);
+    }
+
+    function renderPreferredClasses() {
+        if (preferredClasses == null) {
+            return renderEmpty();
+        } else {
+            return <>
+                {renderClassRank(1, preferredClasses[1])}
+                {renderClassRank(2, preferredClasses[2])}
+                {renderClassRank(3, preferredClasses[3])}
+            </>
+        }
+    }
+
     return (
         <div className="class-preferences-card">
-            <img className="icon edit-icon" src={edit_icon} alt="Edit"/>
-            <h2>Class Preferences</h2>
-            <div className="class-preferences-column">
-                {boxes.map((box, index) => {
-                    return (
-                        <ClassPreferenceBox
-                            key={box.id}
-                            index={index} 
-                            preference={box.name}
-                            handleDragStart={handleDragStart}
-                            handleDrop={handleDrop}
-                        />
-                    )
-                })}
+            <NavLink to="/profile/preferences">
+                    <img className="icon edit-icon" src={edit_icon} alt="Edit"/>
+            </NavLink>
+            <h2 className="my-profile-title">My Preferences</h2>
+            <div className="class-preferences-content">
+                {renderPreferredClasses()}
             </div>
         </div>
     )
 }
 
-export default ClassPreferencesCard;
+export default ClassPreferencesCardMP;

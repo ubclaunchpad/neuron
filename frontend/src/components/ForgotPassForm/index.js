@@ -1,12 +1,12 @@
-import TextInput from "../TextInput";
-import CustomButton from "../CustomButton";
-import { Link } from "react-router-dom";
-import { useRef, useState } from "react";
 import { Formik } from "formik";
-import * as Yup from "yup";
+import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useTimer } from "react-timer-hook";
+import * as Yup from "yup";
 import { sendResetPasswordInstructions } from "../../api/authService";
 import notyf from "../../utils/notyf";
+import CustomButton from "../CustomButton";
+import TextInput from "../TextInput";
 import "./index.css";
 
 const ForgotPassSchema = Yup.object().shape({
@@ -35,7 +35,7 @@ const ForgotPassForm = ({ setNewHeading, setNewSubHeading }) => {
                 validationSchema={ForgotPassSchema}
                 onSubmit={(values, { setSubmitting }) => {
                     sendResetPasswordInstructions(values)
-                        .then((response) => {
+                        .then(() => {
                             notyf.success("Instructions sent successfully.");
                             setEmail(values.email);
                             setNewHeading("Check your mail");
@@ -98,7 +98,7 @@ const ForgotPassForm = ({ setNewHeading, setNewSubHeading }) => {
                                             sendResetPasswordInstructions({
                                                 email,
                                             })
-                                                .then((response) => {
+                                                .then(() => {
                                                     notyf.success(
                                                         "Instructions sent successfully."
                                                     );

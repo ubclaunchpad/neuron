@@ -1,25 +1,49 @@
 // src/App.js
 import "notyf/notyf.min.css";
+import { useEffect } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import api from "./api/api";
 import SidebarLayout from "./components/SidebarLayout";
 import { useAuth } from "./contexts/authContext";
-import AdminVerify from "./pages/AdminVerify";
 import Classes from "./pages/Classes";
 import VolunteerSchedule from "./pages/Schedule";
 import AdminSchedule from "./pages/AdminSchedule";
-import VolunteerDash from "./pages/VolunteerDash";
-import VolunteerForgotPassword from "./pages/VolunteerForgotPassword";
-import VolunteerLogin from "./pages/VolunteerLogin";
+
+import ClassPreferences from "./pages/ClassPreferences";
+import CoverageRequests from "./pages/CoverageRequests";
+import Dashboard from "./pages/Dashboard";
+import ForgotPassword from "./pages/ForgotPassword";
+import Login from "./pages/Login";
+import MemberManagement from "./pages/MemberManagement";
+import ResetPassword from "./pages/ResetPassword";
+import Schedule from "./pages/Schedule";
+import Settings from "./pages/Settings";
+import Signup from "./pages/Signup";
 import VolunteerProfile from "./pages/VolunteerProfile";
-import VolunteerResetPassword from "./pages/VolunteerResetPassword";
-import VolunteerSignup from "./pages/VolunteerSignup";
+
+// import VolunteerDash from "./pages/VolunteerDash";
+// import VolunteerForgotPassword from "./pages/VolunteerForgotPassword";
+// import VolunteerLogin from "./pages/VolunteerLogin";
 
 function App() {
-  const { isAuthenticated, isAdmin, isVolunteer } = useAuth();
+  const { isAuthenticated, isAdmin, isVolunteer, logout } = useAuth();
 
   const RouteGuard = ({ fallback, valid }) => {
     return valid ? <Outlet /> : <Navigate to={fallback} replace />;
   };
+
+  // Register logout handler on api error
+  useEffect(() => {
+    api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+          if (error?.response && error.response.status === 401) {
+              logout();
+          }
+          return Promise.reject(error);
+      }
+    );
+  })
 
   return (
     <div className="App">
@@ -27,28 +51,29 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="auth" element={<RouteGuard fallback={"/"} valid={!isAuthenticated} />}>
-            <Route path="signup" element={<VolunteerSignup />} />
-            <Route path="login" element={<VolunteerLogin />} />
-            <Route path="forgot-password" element={<VolunteerForgotPassword />} />
-            <Route path="reset-password" element={<VolunteerResetPassword />} />
+            <Route path="signup" element={<Signup />} />
+            <Route path="login" element={<Login />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="reset-password" element={<ResetPassword />} />
           </Route>
 
           {/* Auth Protected Routes */}
           <Route element={<RouteGuard fallback="/auth/login" valid={isAuthenticated} />}>
-
-            {/* Nested Routes within VolunteerLayout */}
             <Route element={<SidebarLayout />}>
-              <Route index element={<VolunteerDash />} />
+              <Route index element={<Dashboard />} />
               <Route path="classes" element={<Classes />} />
-              <Route path="schedule" element={<AdminSchedule />} />
+              <Route path="schedule" element={<VolunteerSchedule  />} />
+              <Route path="settings" element={<Settings />} />
 
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
-                <Route path="my-profile" element={<VolunteerProfile />} />
+                <Route path="profile" element={<VolunteerProfile />} />
+                <Route path="profile/preferences" element={<ClassPreferences />} />
               </Route>
-            </Route>
 
-            <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>
-              <Route path="verify-volunteers" element={<AdminVerify />} />
+              <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>
+                <Route path="management" element={<MemberManagement />} />
+                <Route path="requests" element={<CoverageRequests />} />
+              </Route>
             </Route>
           </Route>
 

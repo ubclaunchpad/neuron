@@ -1,5 +1,6 @@
 import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
+import { isAuthorized } from '../config/authCheck.js';
 import {
     addShift,
     deleteShift,
@@ -18,6 +19,9 @@ import {
 
 export const ShiftRoutes: RouteDefinition = {
     path: '/shifts',
+    middleware: [
+        isAuthorized,
+    ],
     children: [
         {
             path: '/',
@@ -80,7 +84,7 @@ export const ShiftRoutes: RouteDefinition = {
             path: '/admin-shift-month',
             method: 'post',
             validation: [
-                body('shift_date').isDate({ format: 'YYYY-MM-DD' }) // Added validation
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' }) 
             ],
             action: getAllShiftsByMonth
         },

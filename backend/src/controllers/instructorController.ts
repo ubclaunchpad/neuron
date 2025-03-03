@@ -1,9 +1,7 @@
 import { Response } from 'express';
 import { InstructorDB } from '../common/databaseModels.js';
 import { AuthenticatedRequest } from '../common/types.js';
-import InstructorModel from '../models/instructorModel.js';
-
-const instructorModel = new InstructorModel();
+import { instructorModel } from '../config/models.js';
 
 async function getInstructors(req: AuthenticatedRequest, res: Response) {
     const instructors = await instructorModel.getInstructors();

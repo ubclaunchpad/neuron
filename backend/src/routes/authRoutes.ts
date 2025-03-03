@@ -1,4 +1,5 @@
 import { body, param } from "express-validator";
+import { Role } from "../common/interfaces.js";
 import { RouteDefinition } from "../common/types.js";
 import { isAuthorized } from "../config/authCheck.js";
 import {
@@ -22,7 +23,7 @@ export const AuthRoutes: RouteDefinition = {
                 body('lastName').isString(),
                 body('email').isEmail(),
                 body('password').isString(),
-                body('role').isIn([ "admin", "volunteer", "instructor" ]),
+                body('role').isIn(Role.values),
             ],
             action: registerUser
         },

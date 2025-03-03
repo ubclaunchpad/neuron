@@ -38,6 +38,14 @@ export interface InstructorDB extends RowDataPacket {
   'instructor_id': string;
   'l_name': string;
 }
+export interface LogDB extends RowDataPacket {
+  'created_at'?: Date;
+  'description': string;
+  'fk_class_id'?: number | null;
+  'fk_volunteer_id'?: string | null;
+  'request_id'?: number;
+  'signoff': string;
+}
 export interface PendingShiftCoverageDB extends RowDataPacket {
   'pending_volunteer': string;
   'request_id': number;

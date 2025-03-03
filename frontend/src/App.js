@@ -6,6 +6,9 @@ import api from "./api/api";
 import SidebarLayout from "./components/SidebarLayout";
 import { useAuth } from "./contexts/authContext";
 import Classes from "./pages/Classes";
+import VolunteerSchedule from "./pages/Schedule";
+import AdminSchedule from "./pages/AdminSchedule";
+
 import ClassPreferences from "./pages/ClassPreferences";
 import CoverageRequests from "./pages/CoverageRequests";
 import Dashboard from "./pages/Dashboard";
@@ -17,6 +20,10 @@ import Schedule from "./pages/Schedule";
 import Settings from "./pages/Settings";
 import Signup from "./pages/Signup";
 import VolunteerProfile from "./pages/VolunteerProfile";
+
+// import VolunteerDash from "./pages/VolunteerDash";
+// import VolunteerForgotPassword from "./pages/VolunteerForgotPassword";
+// import VolunteerLogin from "./pages/VolunteerLogin";
 
 function App() {
   const { isAuthenticated, isAdmin, isVolunteer, logout } = useAuth();
@@ -55,7 +62,7 @@ function App() {
             <Route element={<SidebarLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="classes" element={<Classes />} />
-              <Route path="schedule" element={<Schedule />} />
+              <Route path="schedule" element={<AdminSchedule  />} />
               <Route path="settings" element={<Settings />} />
 
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>

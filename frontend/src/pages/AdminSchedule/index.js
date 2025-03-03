@@ -1,19 +1,19 @@
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWeekView } from "react-weekview";
-import { getVolunteerShiftsForMonth } from "../../api/shiftService";
+import { getVolunteerShiftsForMonth, getAllShiftsByMonth } from "../../api/shiftService";
 import CalendarView from "../../components/CalendarView";
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { useAuth } from "../../contexts/authContext";
-import { COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
+import { COVERAGE_STATUSES, SHIFT_TYPES, ADMIN_SHIFT_TYPES } from "../../data/constants";
 import { getButtonConfig } from "../../utils/buttonConfig";
 import "./index.css";
 
 function Schedule() {
-    const { user } = useAuth();
+    const { user, isAdmin, isVolunteer} = useAuth();
     const currentDate = dayjs();
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [shifts, setShifts] = useState([]);
@@ -29,11 +29,12 @@ function Schedule() {
     const scheduleContainerRef = useRef(null);
 
     const fetchShifts = useCallback(async () => {
+        
         const body = {
-            volunteer_id: user?.volunteer.volunteer_id,
             shiftDate: selectedDate.format("YYYY-MM-DD"),
-        };
-        const response = await getVolunteerShiftsForMonth(body);
+        }
+        const response = await getAllShiftsByMonth(body);
+        
 
         // Filter out duplicated shifts and past coverage requests
         const shiftMap = new Map();
@@ -62,10 +63,10 @@ function Schedule() {
             if (filter === "all-shifts") {
                 return true; // No filtering for 'all-shifts'
             }
-            return shift.shift_type === filter;
+            return shift.coverage_status === filter;
         });
         setShifts(filteredShifts);
-    }, [selectedDate, filter, user?.volunteer.volunteer_id]);
+    }, [selectedDate, filter, user]); // Filters on user rather than their id
 
     // Fetch shifts for the selected date and filter
     useEffect(() => {
@@ -92,17 +93,18 @@ function Schedule() {
         const pastShift = currentDate.isAfter(shiftEnd);
 
         const buttons = [];
-        const buttonConfig = getButtonConfig(shift, handleShiftUpdate, user?.volunteer.volunteer_id);
-        const primaryButton = buttonConfig[shift.shift_type] || buttonConfig[SHIFT_TYPES.DEFAULT];
+        const buttonConfig = getButtonConfig(shift, handleShiftUpdate);
+        
+        const primaryButton = buttonConfig[shift.coverage_status] || buttonConfig[SHIFT_TYPES.DEFAULT]; // shift.coverage_status for admin shifts
 
         buttons.push(primaryButton);
 
-        if (shift.shift_type === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
-            buttons.push(buttonConfig.REQUEST_COVERAGE);
-        } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.PENDING) {
-            buttons.push(buttonConfig.CANCEL);
-        } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS && shift.coverage_status === COVERAGE_STATUSES.OPEN) {
-            buttons.push(buttonConfig.CANCEL);
+        if (shift.coverage_status === ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE && !pastShift) {
+          buttons.push(buttonConfig.CANCEL);
+        } else if (shift.coverage_status === ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL) {
+          buttons.push(buttonConfig.CANCEL);
+        } else if (shift.coverage_status === ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE) {
+          buttons.push(buttonConfig.CANCEL);
         }
 
         return buttons;
@@ -126,7 +128,8 @@ function Schedule() {
     // Update details panel when a shift is selected
     const handleShiftSelection = (classData) => {
         console.log("Selected shift: ", classData);
-        setSelectedClassId(classData._class_id);
+        setSelectedClassId(classData.class_id);
+
         setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
         console.log(selectedShiftButtons);
         setShiftDetails(classData);
@@ -190,9 +193,9 @@ function Schedule() {
                                                     <ShiftCard
                                                         key={shift.fk_schedule_id}
                                                         shift={shift}
-                                                        shiftType={shift.shift_type}
+                                                        shiftType={shift.coverage_status}
                                                         onShiftSelect={handleShiftSelection}
-                                                        buttonConfig={getButtonConfig(shift, handleShiftUpdate, user?.volunteer.volunteer_id)}
+                                                        buttonConfig={getButtonConfig(shift, handleShiftUpdate)}
                                                     />
                                                 ))}
                                             </div>

@@ -1,10 +1,11 @@
 import dayjs from 'dayjs';
-import { COVERAGE_STATUSES, SHIFT_TYPES } from '../data/constants';
+import { COVERAGE_STATUSES, SHIFT_TYPES, ADMIN_SHIFT_TYPES } from '../data/constants';
 import { requestToCoverShift, requestShiftCoverage, cancelCoverShift, cancelCoverRequest, checkInShift } from '../api/shiftService';
 import CheckInIcon from '../assets/images/button-icons/clock-icon.svg';
 import PlusIcon from '../assets/images/button-icons/plus-icon.svg';
 import RequestCoverageIcon from '../assets/request-coverage.png'
 import CancelIcon from "../assets/images/button-icons/x-icon.svg";
+import ViewRequestIcon from "../assets/images/button-icons/clipboard.png"
 
 const handleCheckInClick = async (shift, handleShiftUpdate) => {
     try {
@@ -83,7 +84,7 @@ const handleCancelClick = async (shift, handleShiftUpdate, volunteerID) => {
 }
 
 // Returns the button configuration for the shift based on the shift type
-export const getButtonConfig = (shift, handleShiftUpdate, volunteerID) => {
+export const getButtonConfig = (shift, handleShiftUpdate, volunteerID = null) => {
 
     const shiftDay = dayjs(shift.shift_date).format('YYYY-MM-DD');
     const shiftStart = dayjs(`${shiftDay} ${shift.start_time}`);
@@ -155,6 +156,36 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID) => {
             disabled: false,
             buttonClass: 'cancel-action',
             onClick: () => handleCancelClick(shift, handleShiftUpdate, volunteerID),
-        }
+        },
+        [ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE]: {
+            lineColor: "var(--red)",
+            label: "Needs Coverage",
+            icon: null,
+            disabled: false,
+            buttonClass: "needs-coverage-button",
+            onClick: () => {},
+          },
+          [ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE]: {
+            lineColor: "var(--yellow)",
+            label: "View Request",
+            icon: ViewRequestIcon,
+            disabled: false,
+            buttonClass: "requested-coverage-button",
+            onClick: () => {},
+          },
+          [ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL]: {
+            lineColor: "var(--primary-blue)",
+            label: "Pending Fulfill",
+            icon: null,
+            disabled: false,
+            buttonClass: "pending-fulfill-button",
+            onClick: () => {},
+          },
+          [ADMIN_SHIFT_TYPES.ADMIN_COVERED]: {
+            lineColor: "var(--grey)",
+            label: "View Details",
+            icon: null,
+            disabled: false,
+          }
     };
 }

@@ -82,3 +82,12 @@
     border-color: var(--red);
     background-color: var(--red);
 }
+
+.pending-fulfill-button .button-icon {
+    border-color: var(--primary-blue);
+}
+
+.pending-fulfill-button.selected .button-icon {
+    border-color: var(--primary-blue);
+    background-color: var(--primary-blue);
+}

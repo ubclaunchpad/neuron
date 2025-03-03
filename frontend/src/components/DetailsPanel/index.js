@@ -26,7 +26,7 @@ function DetailsPanel({
   const [myClass, setMyClass] = useState(false);
   const [classTaken, setClassTaken] = useState(false);
 
-  const { user } = useAuth();
+  const { user, isVolunteer } = useAuth();
 
   useEffect(() => {
     if (classId) {
@@ -49,9 +49,11 @@ function DetailsPanel({
     const volunteers = data.schedules.flatMap(
       (schedule) => schedule.volunteers || []
     );
-    setMyClass(
-      volunteers.some((volunteer) => volunteer.user_id === user?.volunteer.volunteer_id)
-    );
+    if (isVolunteer) {
+      setMyClass(
+        volunteers.some((volunteer) => volunteer.user_id === user?.volunteer.volunteer_id)
+      );
+    }
     setClassTaken(volunteers.length !== 0);
   };
 

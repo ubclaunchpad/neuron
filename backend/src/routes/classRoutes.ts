@@ -24,7 +24,7 @@ export const ClassRoutes: RouteDefinition = {
                 body('end_date').isDate({ format: 'YYYY-MM-DD' }),
                 body('category').isString().optional(),
                 body('subcategory').isString().optional(),
-                body('schedules').isArray({ min: 1 }).optional(),
+                body('schedules').isArray({ min: 0 }).optional(),
                 body('schedules.*.day').isInt({ min: 0, max: 6 }),
                 body('schedules.*.start_time').isTime({ hourFormat: 'hour24' }),
                 body('schedules.*.end_time').isTime({ hourFormat: 'hour24' }),

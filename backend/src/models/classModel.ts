@@ -77,7 +77,7 @@ export default class ClassesModel {
                const classId = results.insertId;
 
                let results2;
-               if (schedules) {
+               if (schedules && schedules.length > 0) {
                     results2 = await scheduleModel.addSchedulesToClass(classId, schedules, transaction);
                }
                

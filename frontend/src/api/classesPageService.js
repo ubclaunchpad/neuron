@@ -44,6 +44,9 @@ const getClassById = (class_id) =>
       console.error(error);
     });
 
+const addClass = (classData) =>
+  api.post("/classes", classData)
+
 const updateClass = (class_id, classData) =>
   api.put("/classes/" + class_id, classData)
 
@@ -70,6 +73,7 @@ export {
   getClassById, 
   getAllClassImages, 
   getAllClassSchedules, 
+  addClass,
   updateClass,
   addSchedules,
   deleteSchedules,

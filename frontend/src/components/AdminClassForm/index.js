@@ -8,6 +8,7 @@ import upload_dark from "../../assets/upload-dark.png";
 import Select from 'react-select';
 import { 
     getClassById, 
+    addClass,
     updateClass, 
     updateSchedules,
     addSchedules, 
@@ -66,7 +67,7 @@ const ClassSchema = Yup.object().shape({
     end_date: Yup.date()
         .required(inputPrompt)
         .min(Yup.ref('start_date'), 'End date must be after start date.'),
-    category: Yup.string().optional(),
+    category: Yup.string().required(inputPrompt),
     subcategory: Yup.string().optional(),
     schedules: Yup.array()
         .of(
@@ -82,8 +83,7 @@ const ClassSchema = Yup.object().shape({
                     .test("is-after-start", "End time must be after start time.", function (end_time) {
                         const { start_time } = this.parent;
                         if (!start_time || !end_time) return false;
-                  
-                        // Convert HH:MM to total minutes
+
                         const toMinutes = (time) => {
                           const [h, m] = time.split(":").map(Number);
                           return h * 60 + m;
@@ -93,15 +93,8 @@ const ClassSchema = Yup.object().shape({
                     }),
                 frequency: Yup.string()
                     .oneOf(frequencies.map(f => f.value)),
-                volunteers: Yup.array()
-                    .of(
-                        Yup.object().shape({
-                            volunteer_id: Yup.string().uuid(),
-                            p_name: Yup.string().optional(),
-                            f_name: Yup.string().optional(),
-                            l_name: Yup.string().optional()
-                        })
-                    )
+                volunteer_ids: Yup.array()
+                    .of(Yup.string().uuid())
             })
         )
         .optional(),
@@ -112,8 +105,9 @@ function AdminClassForm({ setUpdates }) {
 
     const [loading, setLoading] = useState(true);
     const [classData, setClassData] = useState({
+        fk_instructor_id: '',
         class_name: '',
-        category: '',
+        category: null,
         subcategory: '',
         instructions: '',
         start_date: '',
@@ -147,14 +141,28 @@ function AdminClassForm({ setUpdates }) {
             })
         }
 
+        const formatVolunteers = (data) => {
+            data.schedules = data.schedules.map((schedule) => ({
+                schedule_id: schedule.schedule_id,
+                start_time: schedule.start_time,
+                end_time: schedule.end_time,
+                frequency: schedule.frequency,
+                day: schedule.day,
+                volunteer_ids: schedule.volunteers.map((volunteer) => volunteer.volunteer_id)
+            }))
+        }
+
         const fetchData = async () => {
             const classData = await getClassById(classId);
-            formatDates(classData)
-            formatTimes(classData)
+            formatDates(classData);
+            formatTimes(classData);
+            formatVolunteers(classData);
 
             // get class image url
-            const imageUrl = formatImageUrl(classData.fk_image_id);
-            setImage({ src: imageUrl });
+            if (classData.fk_image_id) {
+                const imageUrl = formatImageUrl(classData.fk_image_id);
+                setImage({ src: imageUrl });
+            }
             
             console.log(classData);
 
@@ -215,6 +223,83 @@ function AdminClassForm({ setUpdates }) {
             (touched.schedules[index]["end_time"] || touched.schedules[index]["start_time"])
     }
 
+    function update(values, setSubmitting) {
+        const classDetails = Object.fromEntries(
+            Object.entries(values).filter(([key]) => classFields.includes(key))
+        );
+        console.log("CLASS DATA:", classDetails)
+
+        // seperate added schedules from updated schedules
+        const addedSchedules = values.schedules.filter((schedule) => !schedule.schedule_id)
+        const updatedSchedules = values.schedules.filter((schedule) => schedule.schedule_id);
+        const deletedSchedules = classData.schedules
+                .filter((schedule) => !values.schedules.find((s) => s.schedule_id === schedule.schedule_id))
+                .map((schedule) => schedule.schedule_id)
+
+        console.log("ADDED SCHEDULES:", addedSchedules);
+        console.log("UPDATED SCHEDULES:", updatedSchedules);
+        console.log("DELETED SCHEDULES:", deletedSchedules);
+
+        const requests = [];
+        requests.push(updateClass(classId, classDetails));
+        if (updatedSchedules.length > 0)
+            requests.push(updateSchedules(classId, updatedSchedules));
+
+        if (addedSchedules.length > 0)
+            requests.push(addSchedules(classId, addedSchedules));
+
+        if (deletedSchedules.length > 0)
+            requests.push(deleteSchedules(classId, deletedSchedules));
+
+        if (image.blob) {
+            const imageData = new FormData();
+            imageData.append('image', image.blob);
+            requests.push(uploadClassImage(classId, imageData));
+        }
+
+        Promise.all(requests)
+            .then(() => {
+                notyf.success("Class updated successfully.");
+                setSubmitting(false);
+                setUpdates((prev) => prev + 1);
+            })
+            .catch((error) => {
+                console.log(error);
+                notyf.error("Sorry, an error occurred while updating the class.");
+                setSubmitting(false);
+            });
+    }
+
+    function add(values, setSubmitting) {
+        const onSuccess = () => {
+            notyf.success("Class created successfully.");
+            setSubmitting(false);
+            setUpdates((prev) => prev + 1);
+        }
+
+        const onFailure = (error) => {
+            console.log(error);
+            notyf.error("Sorry, an error occurred while creating the class.");
+            setSubmitting(false);
+        }
+
+        addClass(values)
+            .then((res) => {
+                // if image was included, send a subsequent request to upload the image
+                if (image.blob) {
+                    const imageData = new FormData();
+                    imageData.append('image', image.blob);
+                    
+                    uploadClassImage(res.data.class_id, imageData)
+                        .then(onSuccess)
+                        .catch(onFailure);
+                } else {
+                    onSuccess();
+                }
+            })
+            .catch(onFailure);
+    }
+
     if (loading) {
         return <></>;
     }
@@ -226,60 +311,11 @@ function AdminClassForm({ setUpdates }) {
                 validationSchema={ClassSchema}
                 onSubmit={(values, { setSubmitting }) => {
                     console.log("VALUES:", values)
-
-                    const classDetails = Object.fromEntries(
-                        Object.entries(values).filter(([key]) => classFields.includes(key))
-                    );
-                    console.log("CLASS DATA:", classDetails)
-
-                    // seperate added schedules from updated schedules
-                    const addedSchedules = values.schedules
-                        .filter((schedule) => !schedule.schedule_id)
-                        .map((schedule) => ({
-                            day: schedule.day,
-                            start_time: schedule.start_time,
-                            end_time: schedule.end_time,
-                            frequency: schedule.frequency,
-                            volunteer_ids: schedule.volunteers.map((volunteer) => volunteer.volunteer_id)
-                        }));
-                    const updatedSchedules = values.schedules.filter((schedule) => schedule.schedule_id);
-                    const deletedSchedules = classData.schedules
-                            .filter((schedule) => !values.schedules.find((s) => s.schedule_id === schedule.schedule_id))
-                            .map((schedule) => schedule.schedule_id)
-
-                    console.log("ADDED SCHEDULES:", addedSchedules);
-                    console.log("UPDATED SCHEDULES:", updatedSchedules);
-                    console.log("DELETED SCHEDULES:", deletedSchedules);
-
-                    const requests = [];
-                    requests.push(updateClass(classId, classDetails));
-
-                    if (updatedSchedules.length > 0)
-                        requests.push(updateSchedules(classId, updatedSchedules));
-
-                    if (addedSchedules.length > 0)
-                        requests.push(addSchedules(classId, addedSchedules));
-
-                    if (deletedSchedules.length > 0)
-                        requests.push(deleteSchedules(classId, deletedSchedules));
-
-                    if (image.blob) {
-                        const imageData = new FormData();
-                        imageData.append('image', image.blob);
-                        requests.push(uploadClassImage(classId, imageData));
+                    if (classId) {
+                        update(values, setSubmitting);
+                    } else {
+                        add(values, setSubmitting);
                     }
-
-                    Promise.all(requests)
-                        .then(() => {
-                            notyf.success("Class updated successfully.");
-                            setSubmitting(false);
-                            setUpdates((prev) => prev + 1);
-                        })
-                        .catch((error) => {
-                            console.log(error);
-                            notyf.error("Sorry, an error occurred while updating the class.");
-                            setSubmitting(false);
-                        });
                 }}
             >
                 {({
@@ -330,57 +366,62 @@ function AdminClassForm({ setUpdates }) {
                                 touched={touched}
                             />
                         </div>
-                        <div className="input-row">
-                            <div className="flex-input">
-                                <label className="class-form-label">
-                                    Category
-                                </label>
-                                <Select
-                                    className="select"
-                                    defaultValue={{value: values.category, label: values.category}}
-                                    styles={{
-                                        control: () => ({
-                                            width: 'stretch',
-                                            padding: '12px 32px 12px 16px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #cccccc',
-                                            cursor: 'pointer'
-                                        }),
-                                        valueContainer: (styles) => ({
-                                            ...styles,
-                                            padding: '0px'
-                                        })
-                                    }}
-                                    options={categories}
-                                    isSearchable={false}
-                                    components={
-                                        {
-                                            DropdownIndicator: () => 
-                                                <CgSelect className="select-icon"/>,
-                                            IndicatorSeparator: () => null,
-                                            Option: (props) => {
-                                                const {innerProps, innerRef} = props;
-                                                return (
-                                                    <div {...innerProps} ref={innerRef} className="select-item">
-                                                        {props.data.label}
-                                                    </div>
-                                                )
-                                            },
-                                            Menu: (props) => {
-                                                const {innerProps, innerRef} = props;
-                                                return (
-                                                    <div {...innerProps} ref={innerRef}
-                                                    className="select-menu">
-                                                        {props.children}
-                                                    </div>
-                                                )
+                        <div className="input-row categories-row">
+                            <div className="error-wrapper">
+                                <div className="flex-input">
+                                    <label className="class-form-label">
+                                        Category
+                                    </label>
+                                    <Select
+                                        className="select"
+                                        defaultValue={{value: values.category, label: values.category ?? "Select Category"}}
+                                        styles={{
+                                            control: () => ({
+                                                width: 'stretch',
+                                                padding: '12px 32px 12px 16px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #cccccc',
+                                                cursor: 'pointer'
+                                            }),
+                                            valueContainer: (styles) => ({
+                                                ...styles,
+                                                padding: '0px'
+                                            })
+                                        }}
+                                        options={categories}
+                                        isSearchable={false}
+                                        components={
+                                            {
+                                                DropdownIndicator: () => 
+                                                    <CgSelect className="select-icon"/>,
+                                                IndicatorSeparator: () => null,
+                                                Option: (props) => {
+                                                    const {innerProps, innerRef} = props;
+                                                    return (
+                                                        <div {...innerProps} ref={innerRef} className="select-item">
+                                                            {props.data.label}
+                                                        </div>
+                                                    )
+                                                },
+                                                Menu: (props) => {
+                                                    const {innerProps, innerRef} = props;
+                                                    return (
+                                                        <div {...innerProps} ref={innerRef}
+                                                        className="select-menu">
+                                                            {props.children}
+                                                        </div>
+                                                    )
+                                                }
                                             }
                                         }
-                                    }
-                                    onChange={(e) => {
-                                        setFieldValue("category", e.value);
-                                    }}
-                                />
+                                        onChange={(e) => {
+                                            setFieldValue("category", e.value);
+                                        }}
+                                    />
+                                </div>
+                                {errors["category"] && touched["category"] && (
+                                    <div className="invalid-message">{errors["category"]}</div>
+                                )}
                             </div>
                             <div className="flex-input">
                                 <label className="class-form-label">
@@ -506,62 +547,67 @@ function AdminClassForm({ setUpdates }) {
                             </div>
                         </div>
                         <div className="input-row">
-                            <div className="flex-input">
-                                <label className="class-form-label">
-                                    Instructor
-                                </label>
-                                <Select
-                                    className="select"
-                                    defaultValue={instructors.find(i => i.value === values.fk_instructor_id) || { label: 'Select', value: null }}
-                                    styles={{
-                                        control: () => ({
-                                            width: 'stretch',
-                                            padding: '12px 32px 12px 16px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #cccccc',
-                                            cursor: 'pointer'
-                                        }),
-                                        valueContainer: (styles) => ({
-                                            ...styles,
-                                            padding: '0px'
-                                        }),
-                                        input: (styles) => ({
-                                            ...styles,
-                                            margin: '0px 2px',
-                                            padding: '0px',
-                                        }),
-                                        
-                                    }}
-                                    options={instructors}
-                                    isSearchable={true}
-                                    components={
-                                        {
-                                            DropdownIndicator: () => 
-                                                <CgSelect className="select-icon"/>,
-                                            IndicatorSeparator: () => null,
-                                            Option: (props) => {
-                                                const {innerProps, innerRef} = props;
-                                                return (
-                                                    <div {...innerProps} ref={innerRef} className="select-item">
-                                                        {props.data.label}
-                                                    </div>
-                                                )
-                                            },
-                                            Menu: (props) => {
-                                                const {innerProps, innerRef} = props;
-                                                return (
-                                                    <div {...innerProps} ref={innerRef}
-                                                    className="select-menu">
-                                                        {props.children}
-                                                    </div>
-                                                )
+                            <div className="error-wrapper">
+                                <div className="flex-input">
+                                    <label className="class-form-label">
+                                        Instructor
+                                    </label>
+                                    <Select
+                                        className="select"
+                                        defaultValue={instructors.find(i => i.value === values.fk_instructor_id) || { label: 'Select', value: null }}
+                                        styles={{
+                                            control: () => ({
+                                                width: 'stretch',
+                                                padding: '12px 32px 12px 16px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #cccccc',
+                                                cursor: 'pointer'
+                                            }),
+                                            valueContainer: (styles) => ({
+                                                ...styles,
+                                                padding: '0px'
+                                            }),
+                                            input: (styles) => ({
+                                                ...styles,
+                                                margin: '0px 2px',
+                                                padding: '0px',
+                                            }),
+                                            
+                                        }}
+                                        options={instructors}
+                                        isSearchable={true}
+                                        components={
+                                            {
+                                                DropdownIndicator: () => 
+                                                    <CgSelect className="select-icon"/>,
+                                                IndicatorSeparator: () => null,
+                                                Option: (props) => {
+                                                    const {innerProps, innerRef} = props;
+                                                    return (
+                                                        <div {...innerProps} ref={innerRef} className="select-item">
+                                                            {props.data.label}
+                                                        </div>
+                                                    )
+                                                },
+                                                Menu: (props) => {
+                                                    const {innerProps, innerRef} = props;
+                                                    return (
+                                                        <div {...innerProps} ref={innerRef}
+                                                        className="select-menu">
+                                                            {props.children}
+                                                        </div>
+                                                    )
+                                                }
                                             }
                                         }
-                                    }
-                                    onChange={(e) => {
-                                        setFieldValue(`fk_instructor_id`, e.value);
-                                    }}
-                                />
+                                        onChange={(e) => {
+                                            setFieldValue(`fk_instructor_id`, e.value);
+                                        }}
+                                    />
+                                </div>
+                                {errors["fk_instructor_id"] && touched["fk_instructor_id"] && (
+                                    <div className="invalid-message">{errors["fk_instructor_id"]}</div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -705,11 +751,15 @@ function AdminClassForm({ setUpdates }) {
                                                 >
                                                     {({ push, remove }) => (
                                                         <div className="volunteers-row">
-                                                            {schedule.volunteers.map((volunteer, volunteerIndex) => (
-                                                                <div key={volunteerIndex} className="volunteer-item">
-                                                                    {volunteer.p_name ?? volunteer.f_name + ' ' + volunteer.l_name}
-                                                                </div>
-                                                            ))}
+                                                            {schedule.volunteer_ids.map((id, volunteerIndex) => {
+                                                                const result = volunteers.find((volunteer) => volunteer.value.volunteer_id === id);
+                                                                const volunteer = result.value;
+                                                                return volunteer && (
+                                                                    <div key={volunteerIndex} className="volunteer-item">
+                                                                        {volunteer.p_name ?? volunteer.f_name + ' ' + volunteer.l_name}
+                                                                    </div>
+                                                                )
+                                                            })}
                                                             {/* <Select
                                                                 className="select add-volunteers"
                                                                 ref={el => (selectRefs.current[index] = el)}
@@ -827,7 +877,7 @@ function AdminClassForm({ setUpdates }) {
                                             start_time: '12:00',
                                             end_time: '12:00',
                                             frequency: frequencies[1].value, // weekly
-                                            volunteers: []
+                                            volunteer_ids: []
                                         });
                                         setUpdates((prev) => prev + 1);  
                                     }}
@@ -840,7 +890,7 @@ function AdminClassForm({ setUpdates }) {
                     <button 
                         type="submit" 
                         className="submit-button" 
-                        disabled={Object.values(errors).length > 0 || isSubmitting} 
+                        disabled={isSubmitting} 
                     >
                         Publish Class
                     </button>

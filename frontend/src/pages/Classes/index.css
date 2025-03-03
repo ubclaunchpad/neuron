@@ -75,6 +75,19 @@
 
 /* ----- */
 
+.add-class-button {
+  width: stretch;
+  background: #fff;
+  border: 2px dashed #D9D9D9;
+  border-radius: 8px;
+  font-family: var(--font-secondary);
+  font-size: 48px;
+  color: #808080;
+  cursor: pointer;
+  margin-top: 36px;
+  box-shadow: 0px 4px 16px 0px #0F11110D;
+}
+
 .classes-content {
   padding: 0 36px; 
   overflow-y: auto;

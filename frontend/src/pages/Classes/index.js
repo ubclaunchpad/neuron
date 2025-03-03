@@ -143,36 +143,37 @@ function Classes() {
                 className="back-button"
                 onClick={() => navigate("/classes")}
               >
-                <img
-                  alt="Back"
-                  src={button_icon_prev}
-                  style={{ width: 18, height: 18 }}
-                />
-                <h2 className="content-title">Edit Class</h2>
-              </button>
+              <img
+                alt="Back"
+                src={button_icon_prev}
+                style={{ width: 18, height: 18 }}
+              />
+              <h2 className="content-title">Edit Class</h2>
+            </button>
           </div> :
           <div>
-          <div className="content-heading">
-            <h2 className="content-title">Classes</h2>
+            <div className="content-heading">
+              <h2 className="content-title">Classes</h2>
+            </div>
+            <div className="main-category-header">
+              {categories.map((category) => {
+                const isSelected = selectedCategory === category;
+                return (
+                  <button
+                    key={category}
+                    className={`category-button ${isSelected ? "selected" : ""}`}
+                    onClick={() => {
+                      setSelectedCategory(category);
+                      scrollToSection(category);
+                    }}
+                  >
+                    {category}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <div className="main-category-header">
-            {categories.map((category) => {
-              const isSelected = selectedCategory === category;
-              return (
-                <button
-                  key={category}
-                  className={`category-button ${isSelected ? "selected" : ""}`}
-                  onClick={() => {
-                    setSelectedCategory(category);
-                    scrollToSection(category);
-                  }}
-                >
-                  {category}
-                </button>
-              );
-            })}
-          </div>
-        </div>}
+        }
       </div>
       <DetailsPanel
         classId={selectedClassId}
@@ -185,22 +186,31 @@ function Classes() {
           {/* ----- */}
           <div className="classes-content">
             {editing ? 
-            <AdminClassForm 
-              classId={selectedClassId} 
-              setUpdates={setUpdates} 
-            /> :
-            Object.entries(groupedByCategory).map(([category, classData]) => {
-              return (
-                <ClassCategoryContainer
-                  key={category}
-                  ref={sectionRefs.current[category]}
-                  category={category}
-                  classData={classData}
-                  data-category={category}
-                  onClassSelect={handleClassSelection}
-                />
-              );
-            })}
+              <AdminClassForm 
+                classId={selectedClassId} 
+                setUpdates={setUpdates} 
+              /> :
+              <div>
+                <button
+                  className="add-class-button"
+                  onClick={() => navigate("/classes?edit=true")}
+                >
+                  +
+                </button>
+                {Object.entries(groupedByCategory).map(([category, classData]) => {
+                  return (
+                    <ClassCategoryContainer
+                      key={category}
+                      ref={sectionRefs.current[category]}
+                      category={category}
+                      classData={classData}
+                      data-category={category}
+                      onClassSelect={handleClassSelection}
+                    />
+                  );
+                })}
+              </div>
+            }
             <div className="spacer"></div>
           </div>
         </div>

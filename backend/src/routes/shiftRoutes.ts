@@ -34,30 +34,16 @@ export const ShiftRoutes: RouteDefinition = {
             action: addShift
         },
         {
-            path: '/info',
-            method: 'post',
-            validation: [
-                body('fk_volunteer_id').isUUID('4'),
-                body('shift_date').isDate({ format: 'YYYY-MM-DD' }),
-                body('fk_schedule_id').isInt({ min: 0 }),
-            ],
-            action: getShiftInfo
-        },
-        {
-            path: '/:volunteer_id',
+            path: '/',
             method: 'get',
             validation: [
-                param('volunteer_id').isUUID('4')
+                query('volunteer').isUUID('4').optional(),
+                query('before').isDate().optional(),
+                query('after').isDate().optional(),
+                query('type').isIn(ShiftQueryType.values).optional(),
+                query('status').isIn(ShiftStatus.values).optional()
             ],
-            action: getShiftsByVolunteerId
-        },
-        {
-            path: '/on-date',
-            method: 'post',
-            validation: [
-                body('shift_date').isDate({ format: 'YYYY-MM-DD' })
-            ],
-            action: getShiftsByDate
+            action: getShifts
         },
         {
             // Retrieves all shifts viewable to a specific volunteer in a given month and year.

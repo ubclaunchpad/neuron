@@ -34,18 +34,31 @@ export const ShiftRoutes: RouteDefinition = {
             action: addShift
         },
         {
-            path: '/',
+            path: '/info',
+            method: 'post',
+            validation: [
+                body('fk_volunteer_id').isUUID('4'),
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' }),
+                body('fk_schedule_id').isInt({ min: 0 }),
+            ],
+            action: getShiftInfo
+        },
+        {
+            path: '/:volunteer_id',
             method: 'get',
             validation: [
-                query('volunteer').isUUID('4').optional(),
-                query('before').isDate().optional(),
-                query('after').isDate().optional(),
-                query('type').isIn(ShiftQueryType.values).optional(),
-                query('status').isIn(ShiftStatus.values).optional()
+                param('volunteer_id').isUUID('4')
             ],
-            action: getShifts
+            action: getShiftsByVolunteerId
         },
-
+        {
+            path: '/on-date',
+            method: 'post',
+            validation: [
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' })
+            ],
+            action: getShiftsByDate
+        },
         {
             // Retrieves all shifts viewable to a specific volunteer in a given month and year.
             // -- The shifts include:
@@ -61,8 +74,6 @@ export const ShiftRoutes: RouteDefinition = {
             ],
             action: getShiftsByVolunteerIdAndMonth
         },
-        //
-
         {
             path: '/check-in/:shift_id',
             method: 'patch',
@@ -112,11 +123,6 @@ export const ShiftRoutes: RouteDefinition = {
                 param('shift_id').isInt({ min: 0 })
             ],
             children: [
-                {
-                    path: '/',
-                    method: 'get',
-                    action: getShift
-                },
                 {
                     path: '/',
                     method: 'put',

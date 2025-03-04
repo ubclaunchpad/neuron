@@ -1,3 +1,4 @@
+// backend/src/routes/routes.ts
 import { RouteDefinition } from "../common/types.js";
 import { AdminRoutes } from './adminRoutes.js';
 import { AuthRoutes } from './authRoutes.js';
@@ -19,4 +20,4 @@ export const Routes: RouteDefinition[] = [
     ShiftRoutes,
     UserRoutes,
     VolunteerRoutes
-]
+];

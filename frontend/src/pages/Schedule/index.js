@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { useWeekView } from "react-weekview";
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
 import CalendarView from "../../components/CalendarView";

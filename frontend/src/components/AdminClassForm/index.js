@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Formik, FieldArray } from "formik";
 import * as Yup from "yup";
@@ -20,6 +20,11 @@ import "./index.css";
 import { formatImageUrl } from "../../api/imageService";
 import { getAllInstructors } from "../../api/instructorService";
 import { getAllVolunteers } from "../../api/volunteerService";
+
+const Mode = {
+    CREATE: "create",
+    EDIT: "edit"
+}
 
 const categories = [
     { value: 'Online Exercise', label: 'Online Exercise' },
@@ -104,6 +109,7 @@ const ClassSchema = Yup.object().shape({
 function AdminClassForm({ setUpdates }) {
 
     const [loading, setLoading] = useState(true);
+    const [mode, setMode] = useState(Mode.CREATE);
     const [classData, setClassData] = useState({
         fk_instructor_id: '',
         class_name: '',
@@ -119,7 +125,6 @@ function AdminClassForm({ setUpdates }) {
     const [volunteers, setVolunteers] = useState([]);
     const [showPopup, setShowPopup] = useState(false);
     const [showVolunteers, setShowVolunteers] = useState([]);
-    const selectRefs = useRef([]);
 
     const location = useLocation();
     const classId = location.state?.classId;
@@ -163,9 +168,7 @@ function AdminClassForm({ setUpdates }) {
                 const imageUrl = formatImageUrl(classData.fk_image_id);
                 setImage({ src: imageUrl });
             }
-            
             setShowVolunteers(classData.schedules.map(() => false));
-            console.log(classData);
 
             // save class in 
             setClassData(classData);
@@ -174,6 +177,7 @@ function AdminClassForm({ setUpdates }) {
 
         if (classId) {
             fetchData();
+            setMode(Mode.EDIT);
         } else {
             setLoading(false);
         }
@@ -188,8 +192,6 @@ function AdminClassForm({ setUpdates }) {
                     label: instructor.f_name + ' ' + instructor.l_name
                 }
             });
-            console.log(instructorData);
-            console.log(instructors);
             setInstructors(instructors);
 
             const volunteerData = await getAllVolunteers();
@@ -227,7 +229,6 @@ function AdminClassForm({ setUpdates }) {
         const classDetails = Object.fromEntries(
             Object.entries(values).filter(([key]) => classFields.includes(key))
         );
-        console.log("CLASS DATA:", classDetails)
 
         // seperate added schedules from updated schedules
         const addedSchedules = values.schedules.filter((schedule) => !schedule.schedule_id)
@@ -236,25 +237,24 @@ function AdminClassForm({ setUpdates }) {
                 .filter((schedule) => !values.schedules.find((s) => s.schedule_id === schedule.schedule_id))
                 .map((schedule) => schedule.schedule_id)
 
-        console.log("ADDED SCHEDULES:", addedSchedules);
-        console.log("UPDATED SCHEDULES:", updatedSchedules);
-        console.log("DELETED SCHEDULES:", deletedSchedules);
+        // if user is sending an update right after a create, class id will be in classData
+        const validClassId = classData.class_id ?? classId;
 
         const requests = [];
-        requests.push(updateClass(classId, classDetails));
+        requests.push(updateClass(validClassId, classDetails));
         if (updatedSchedules.length > 0)
-            requests.push(updateSchedules(classId, updatedSchedules));
+            requests.push(updateSchedules(validClassId, updatedSchedules));
 
         if (addedSchedules.length > 0)
-            requests.push(addSchedules(classId, addedSchedules));
+            requests.push(addSchedules(validClassId, addedSchedules));
 
         if (deletedSchedules.length > 0)
-            requests.push(deleteSchedules(classId, deletedSchedules));
+            requests.push(deleteSchedules(validClassId, deletedSchedules));
 
-        if (image.blob) {
+        if (image && image.blob) {
             const imageData = new FormData();
             imageData.append('image', image.blob);
-            requests.push(uploadClassImage(classId, imageData));
+            requests.push(uploadClassImage(validClassId, imageData));
         }
 
         Promise.all(requests)
@@ -271,10 +271,11 @@ function AdminClassForm({ setUpdates }) {
     }
 
     function add(values, setSubmitting) {
-        const onSuccess = () => {
+        const onSuccess = (data) => {
             notyf.success("Class created successfully.");
             setSubmitting(false);
-            setUpdates((prev) => prev + 1);
+            setMode(Mode.EDIT);
+            setClassData(data);
         }
 
         const onFailure = (error) => {
@@ -286,15 +287,15 @@ function AdminClassForm({ setUpdates }) {
         addClass(values)
             .then((res) => {
                 // if image was included, send a subsequent request to upload the image
-                if (image.blob) {
+                if (image?.blob) {
                     const imageData = new FormData();
                     imageData.append('image', image.blob);
                     
                     uploadClassImage(res.data.class_id, imageData)
-                        .then(onSuccess)
+                        .then(() => onSuccess(res.data))
                         .catch(onFailure);
                 } else {
-                    onSuccess();
+                    onSuccess(res.data);
                 }
             })
             .catch(onFailure);
@@ -310,8 +311,7 @@ function AdminClassForm({ setUpdates }) {
                 initialValues={classData}
                 validationSchema={ClassSchema}
                 onSubmit={(values, { setSubmitting }) => {
-                    console.log("VALUES:", values)
-                    if (classId) {
+                    if (mode === Mode.EDIT) {
                         update(values, setSubmitting);
                     } else {
                         add(values, setSubmitting);
@@ -763,7 +763,6 @@ function AdminClassForm({ setUpdates }) {
                                                             {showVolunteers[index] ? 
                                                                 <Select
                                                                     className="select add-volunteers"
-                                                                    ref={el => (selectRefs.current[index] = el)}
                                                                     defaultValue={{ value: null, label: 'Enter Volunteer Name' }}
                                                                     styles={{
                                                                         control: () => ({
@@ -808,7 +807,6 @@ function AdminClassForm({ setUpdates }) {
                                                                         }
                                                                     }
                                                                     onChange={(e) => {
-                                                                        console.log(e);
                                                                         push(e.value.volunteer_id)
                                                                         setShowVolunteers((prevItems) => {
                                                                             const newItems = [...prevItems];
@@ -817,7 +815,6 @@ function AdminClassForm({ setUpdates }) {
                                                                         });
                                                                     }}
                                                                 /> :
-                                                                <div>
                                                                 <button
                                                                     type="button"
                                                                     className="add-volunteer-button"
@@ -831,7 +828,6 @@ function AdminClassForm({ setUpdates }) {
                                                                 >
                                                                     Add Volunteer +
                                                                 </button>
-                                                                </div>
                                                             }
                                                         </div>
                                                     )}
@@ -896,7 +892,7 @@ function AdminClassForm({ setUpdates }) {
                         className="submit-button" 
                         disabled={isSubmitting} 
                     >
-                        Publish Class
+                        {mode === Mode.EDIT ? "Save Class" : "Create Class"}
                     </button>
                 </form>
                 )}

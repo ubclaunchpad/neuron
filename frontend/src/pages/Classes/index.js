@@ -10,6 +10,7 @@ import DetailsPanel from "../../components/DetailsPanel";
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import "./index.css";
 import AdminClassForm from "../../components/AdminClassForm";
+import { useAuth } from "../../contexts/authContext";
 
 function Classes() {
   const [completeClassData, setCompleteClassData] = useState(null);
@@ -17,6 +18,8 @@ function Classes() {
   const [selectedCategory, setSelectedCategory] = useState("Online Exercise");
   const [selectedClassId, setSelectedClassId] = useState(null);
   const [updates, setUpdates] = useState(0);
+
+  const { isAdmin } = useAuth();
   
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -138,7 +141,7 @@ function Classes() {
     <main className="content-container">
       <div>
         {editing ?
-          <div className="content-heading">
+          <div className="classes-heading">
             <button 
                 className="back-button"
                 onClick={() => navigate("/classes")}
@@ -148,12 +151,12 @@ function Classes() {
                 src={button_icon_prev}
                 style={{ width: 18, height: 18 }}
               />
-              <h2 className="content-title">Edit Class</h2>
+              <h2 className="classes-title">Edit Class</h2>
             </button>
           </div> :
           <div>
-            <div className="content-heading">
-              <h2 className="content-title">Classes</h2>
+            <div className="classes-heading">
+              <h2 className="classes-title">Classes</h2>
             </div>
             <div className="main-category-header">
               {categories.map((category) => {
@@ -191,12 +194,12 @@ function Classes() {
                 setUpdates={setUpdates} 
               /> :
               <div>
-                <button
+                {isAdmin && <button
                   className="add-class-button"
                   onClick={() => navigate("/classes?edit=true")}
                 >
                   +
-                </button>
+                </button>}
                 {Object.entries(groupedByCategory).map(([category, classData]) => {
                   return (
                     <ClassCategoryContainer

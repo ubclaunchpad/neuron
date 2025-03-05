@@ -76,7 +76,7 @@ export default class ClassesModel {
                const [results, _] = await transaction.query<ResultSetHeader>(query, values);
                const classId = results.insertId;
 
-               let results2;
+               let results2 = [];
                if (schedules && schedules.length > 0) {
                     results2 = await scheduleModel.addSchedulesToClass(classId, schedules, transaction);
                }

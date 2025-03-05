@@ -1,9 +1,8 @@
 import { Response } from "express";
 import { VolunteerDB } from "../common/databaseModels.js";
 import { AuthenticatedRequest } from "../common/types.js";
-import VolunteerModel from "../models/volunteerModel.js";
+import { volunteerModel } from "../config/models.js";
 
-const volunteerModel = new VolunteerModel();
 
 async function getUnverifiedVolunteers(
     req: AuthenticatedRequest,

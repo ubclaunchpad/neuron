@@ -32,7 +32,8 @@
 .dash-progress-legend {
     display: flex;
     flex-direction: row;
-    gap: 1.2rem;
+    flex-wrap: wrap;
+    gap: 18px;
 }
 
 .dash-progress-indicator {

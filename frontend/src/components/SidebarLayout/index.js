@@ -2,7 +2,9 @@ import { React, useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import BC_brain from "../../assets/bwp-logo-text.png";
 import nav_item_classes from "../../assets/nav-item-classes.png";
+import nav_item_coverage from "../../assets/nav-item-coverage.png";
 import nav_item_dash from "../../assets/nav-item-dash.png";
+import nav_item_management from "../../assets/nav-item-management.png";
 import nav_item_schedule from "../../assets/nav-item-sched.png";
 import nav_item_settings from "../../assets/nav-item-settings.png";
 import sidebar_toggle from "../../assets/sidebar-toggle.png";
@@ -15,7 +17,7 @@ import Permission from "../utils/Permission";
 
 function SidebarLayout() {
   const [collapsed, setCollapsed] = useState(window.innerWidth <= 800);
-  const { user, isAdmin, isVolunteer } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   // Toggle function for displaying/hiding sidebar
   const toggleSidebar = () => {
@@ -77,6 +79,18 @@ function SidebarLayout() {
             {!collapsed && "Schedule"}
           </NavLink>
 
+          <Permission permissions="admin">
+            <NavLink
+              to="/requests"
+              className={({ isActive }) =>
+                isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
+              }
+            >
+              <img src={nav_item_coverage} alt="Coverage Requests" />
+              {!collapsed && "Coverage Requests"}
+            </NavLink>
+          </Permission>
+
           <NavLink
             to="/classes"
             className={({ isActive }) =>
@@ -86,25 +100,36 @@ function SidebarLayout() {
             <img src={nav_item_classes} alt="Classes" />
             {!collapsed && "Classes"}
           </NavLink>
-          <Permission permissions={isVolunteer}>
+
+          <Permission permissions="admin">
             <NavLink
-              to="/my-profile"
+              to="/management"
               className={({ isActive }) =>
                 isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
               }
             >
-              <img src={nav_item_settings} alt="Settings" />
-              {!collapsed && "Settings"}
+              <img src={nav_item_management} alt="Member Management" />
+              {!collapsed && "Member Management"}
             </NavLink>
           </Permission>
+
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
+            }
+          >
+            <img src={nav_item_settings} alt="Member Management" />
+            {!collapsed && "Settings"}
+          </NavLink>
         </div>
         <div className="nav-profile-card-container">
           <NavProfileCard
             image={formatImageUrl(user?.fk_image_id)}
-            name={user?.volunteer?.p_name ?? user?.f_name}
+            name={user?.volunteer?.p_name || user?.f_name}
             email={user?.email}
             collapse={collapsed}
-            link="/my-profile"
+            link="/profile"
           />
         </div>
       </aside>

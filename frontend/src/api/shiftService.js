@@ -118,11 +118,7 @@ const cancelCoverRequest = async (body) => {
 }
 
 export {
-  getShiftInfo,
-  getVolunteerShiftsForMonth,
-  requestToCoverShift,
-  requestShiftCoverage,
-  cancelCoverShift,
-  cancelCoverRequest,
-  checkInShift,
+  cancelCoverRequest, cancelCoverShift, checkInShift, getShiftInfo,
+  getVolunteerShiftsForMonth, requestShiftCoverage, requestToCoverShift
 };
+

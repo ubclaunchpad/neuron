@@ -2,13 +2,13 @@ import RightSideWithForm from "../../components/AuthenticationFormWrapper";
 import LeftSideBarWithLogo from "../../components/LeftSideBarWithLogo";
 import "./index.css";
 
-const VolunteerLogin = () => {
+const Signup = () => {
     return (
-        <div className="loginPage">
+        <div className="signUpPage">
             <LeftSideBarWithLogo />
-            <RightSideWithForm type={"login"} heading={"Welcome!"} />
+            <RightSideWithForm type={"signup"} heading={"Welcome!"} />
         </div>
     );
 };
 
-export default VolunteerLogin;
+export default Signup;

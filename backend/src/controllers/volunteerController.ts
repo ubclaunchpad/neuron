@@ -104,12 +104,8 @@ async function updatePreferredClassesById (req: AuthenticatedRequest, res: Respo
 }
 
 export {
-    getVolunteerById,
-    getVolunteers, 
-    shiftCheckIn, 
-    updateVolunteer,
-    getPreferredClassesById,
-    getAllClassPreferences,
-    updatePreferredClassesById
+    getAllClassPreferences, getPreferredClassesById, getVolunteerById,
+    getVolunteers,
+    shiftCheckIn, updatePreferredClassesById, updateVolunteer
 };
 

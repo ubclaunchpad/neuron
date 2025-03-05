@@ -1,17 +1,16 @@
 import dayjs from "dayjs";
-import isBetween from "dayjs/plugin/isBetween";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
-import { SHIFT_TYPES, COVERAGE_STATUSES } from "../../data/constants";
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { useAuth } from "../../contexts/authContext";
-import "./index.css";
+import { COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
 import { getButtonConfig } from "../../utils/buttonConfig";
+import "./index.css";
 
-function VolunteerSchedule() {
+function Schedule() {
   const { user } = useAuth();
   const currentDate = dayjs();
   const [selectedDate, setSelectedDate] = useState(dayjs());
@@ -219,4 +218,4 @@ function VolunteerSchedule() {
   );
 }
 
-export default VolunteerSchedule;
+export default Schedule;

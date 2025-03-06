@@ -4,8 +4,8 @@ use neuron;
 DROP TABLE IF EXISTS volunteer_schedule;
 DROP TABLE IF EXISTS availability;
 DROP TABLE IF EXISTS class_preferences;
-DROP TABLE IF EXISTS pending_shift_coverage;
-DROP TABLE IF EXISTS shift_coverage_request;
+DROP TABLE IF EXISTS coverage_request;
+DROP TABLE IF EXISTS absence_request;
 DROP TABLE IF EXISTS shifts;
 DROP TABLE IF EXISTS volunteers;
 DROP TABLE IF EXISTS schedule;
@@ -115,7 +115,7 @@ create table schedule (
 
 CREATE TABLE shifts (
     shift_id INT PRIMARY KEY AUTO_INCREMENT,
-    fk_volunteer_id VARCHAR(36) NOT NULL, -- shifts always belong to a volunteer
+    fk_volunteer_id CHAR(36) NOT NULL, -- shifts always belong to a volunteer
     fk_schedule_id INT NOT NULL, -- shifts always belong to a schedule
     shift_date DATE NOT NULL,
     duration INT NOT NULL,
@@ -126,10 +126,10 @@ CREATE TABLE shifts (
         ON DELETE CASCADE
 );
 
-CREATE TABLE shift_coverage_request (
+CREATE TABLE absence_request (
     request_id INT PRIMARY KEY AUTO_INCREMENT,                     
     fk_shift_id INT NOT NULL,
-    scope ENUM('single', 'recurring') NOT NULL, 
+    approved BOOLEAN NOT NULL DEFAULT FALSE,
     category ENUM('emergency', 'health', 'conflict', 'transportation', 'other') NOT NULL,
     details VARCHAR(250) NOT NULL,
     comments VARCHAR(150),            
@@ -140,12 +140,12 @@ CREATE TABLE shift_coverage_request (
         REFERENCES volunteers(volunteer_id) ON DELETE SET NULL
 );
 
-CREATE TABLE pending_shift_coverage (
+CREATE TABLE coverage_request (
     request_id INT NOT NULL,
     pending_volunteer CHAR(36) NOT NULL,
     
     PRIMARY KEY (request_id, pending_volunteer),
-    FOREIGN KEY (request_id) REFERENCES shift_coverage_request(request_id) 
+    FOREIGN KEY (request_id) REFERENCES coverage_request(request_id) 
         ON DELETE CASCADE,
     FOREIGN KEY (pending_volunteer) REFERENCES volunteers(volunteer_id) 
         ON DELETE CASCADE

@@ -85,10 +85,10 @@ export default class ShiftModel {
           return results;
      }
 
-     // create a new entry in the pending_shift_coverage table
-     async insertCoverShift(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
+     // create a new entry in the coverage_request table
+     async insertCoverageRequest(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
           const query = `
-               INSERT INTO pending_shift_coverage (request_id, pending_volunteer)
+               INSERT INTO coverage_request (request_id, pending_volunteer)
                VALUES (?, ?)
           `;
           const values = [request_id, volunteer_id];
@@ -98,10 +98,10 @@ export default class ShiftModel {
           return results;
      }
 
-     // delete corresponding entry in pending_shift_coverage table
-     async deleteCoverShift(request_id: number, volunteer_id: number): Promise<ResultSetHeader> {
+     // delete corresponding entry in coverage_request table
+     async deleteCoverageRequest(request_id: number, volunteer_id: number): Promise<ResultSetHeader> {
           const query = `
-               DELETE FROM pending_shift_coverage WHERE request_id = ? AND pending_volunteer = ?
+               DELETE FROM coverage_request WHERE request_id = ? AND pending_volunteer = ?
           `;
           const values = [request_id, volunteer_id];
 
@@ -115,10 +115,10 @@ export default class ShiftModel {
           return results;
      }
 
-     // create a new entry in the shift_coverage_request table
-     async insertShiftCoverageRequest(shift_id: number): Promise<ResultSetHeader> {
+     // create a new entry in the absence_request table
+     async insertAbsenceRequest(shift_id: number): Promise<ResultSetHeader> {
           const query = `
-               INSERT INTO shift_coverage_request (fk_shift_id)
+               INSERT INTO absence_request (fk_shift_id)
                VALUES (?)
           `;
           const values = [shift_id];
@@ -128,10 +128,10 @@ export default class ShiftModel {
           return results;
      }
 
-     // delete corresponding entry in shift_coverage_request table
-     async deleteShiftCoverageRequest(request_id: number, shift_id: number): Promise<ResultSetHeader> {
+     // delete corresponding entry in absence_request table
+     async deleteAbsenceRequest(request_id: number, shift_id: number): Promise<ResultSetHeader> {
           const query = `
-               DELETE FROM shift_coverage_request WHERE request_id = ? AND fk_shift_id = ? AND covered_by IS NULL
+               DELETE FROM absence_request WHERE request_id = ? AND fk_shift_id = ? AND covered_by IS NULL
           `;
           const values = [request_id, shift_id];
 

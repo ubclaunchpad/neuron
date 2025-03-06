@@ -1,14 +1,19 @@
 import "./index.css";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import BorderColorRoundedIcon from '@mui/icons-material/BorderColorRounded';
+import Modal from "../Modal";
+import AddEditInstructorModal from "../AddEditInstructorModal";
 
-const MemberList = ({data, type}) => {
+const MemberList = ({data, fetchData, type}) => {
     const navigate = useNavigate();
+    const [editInstructorModal, setEditInstructorModal] = useState(false);
+    const [selectedInstructor, setSelectedInstructor] = useState(null);
 
     return (
         <div className="volunteer-list">
             {data.length > 0 && data.map((member) => (
-                <div key={type === "volunteers" ? member.volunteer_id : member.instructor_id} className="member-card" onClick={() => {
+                <div key={type === "volunteers" ? member.volunteer_id : member.instructor_id} className={type === "volunteers" ? "member-card volunteer-card" : "member-card"} onClick={() => {
                     if (type === "volunteers") {
                         navigate(`/volunteer-profile?volunteer_id=${member.volunteer_id}`);
                     } else if (type === "instructors") {
@@ -30,7 +35,12 @@ const MemberList = ({data, type}) => {
                         )}
                         {type === "volunteers" && (<div className="right-arrow-icon"></div>)}
                         {type === "instructors" && (
-                                <BorderColorRoundedIcon fontSize="small" sx={{color: "#808080", paddingRight: "15px"}} />
+                            <div onClick={() => {
+                                setSelectedInstructor(member)
+                                setEditInstructorModal(true)
+                            }}>
+                                <BorderColorRoundedIcon fontSize="small" sx={{color: "#808080", paddingRight: "15px", cursor: "pointer"}} />
+                            </div>
                         )}
                     </div>
                 </div>
@@ -38,6 +48,13 @@ const MemberList = ({data, type}) => {
             {data.length === 0 && (
                 <div className="no-volunteers">No {type} found</div>
             )}
+
+        <Modal title="Edit instructor details" isOpen={editInstructorModal} onClose={() => setEditInstructorModal(false)} width="500px" height="fit-content">
+            <AddEditInstructorModal closeEvent={() => {
+                setEditInstructorModal(false);
+                fetchData();
+            }} instructor_data={selectedInstructor} />
+        </Modal>
         </div>
     )
 }

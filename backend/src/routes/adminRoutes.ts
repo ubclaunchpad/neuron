@@ -11,7 +11,9 @@ import {
 } from "../controllers/volunteerController.js";
 import {
     getInstructors,
-    insertInstructor
+    insertInstructor,
+    deleteInstructor,
+    editInstructor
 } from "../controllers/instructorController.js"
 
 export const AdminRoutes: RouteDefinition = {
@@ -40,6 +42,25 @@ export const AdminRoutes: RouteDefinition = {
                 body('email').isEmail(),
             ],
             action: insertInstructor
+        },
+        {
+            path: '/edit-instructor',
+            method: 'post',
+            validation: [
+                body('instructor_id').isUUID('4'),
+                body('f_name').isString(),
+                body('l_name').isString(),
+                body('email').isEmail()
+            ],
+            action: editInstructor
+        },
+        {
+            path: '/delete-instructor',
+            method: 'post',
+            validation: [
+                body('instructor_id').isUUID('4')
+            ],
+            action: deleteInstructor
         },
         {
             path: '/unverified-volunteers',

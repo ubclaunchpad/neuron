@@ -39,4 +39,23 @@ export default class InstructorModel {
 
     return results;
   };
+
+  async deleteInstructor(instructor_id: string): Promise<ResultSetHeader> {
+    const query = `DELETE FROM instructors WHERE instructor_id = ?`;
+    const values = [instructor_id];
+
+    const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+    return results;
+  };
+
+  async editInstructor(instructor: InstructorDB): Promise<ResultSetHeader> {
+    const query = `UPDATE instructors SET f_name = ?, l_name = ?, email = ? WHERE instructor_id = ?`;
+    const { instructor_id, f_name, l_name, email } = instructor;
+    const values = [f_name, l_name, email, instructor_id];
+
+    const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+    return results;
+  };
 }

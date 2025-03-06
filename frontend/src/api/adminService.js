@@ -38,6 +38,12 @@ const getInstructors = async () => await request("/admin/all-instructors");
 // Add an instructor
 const addInstructor = async (instructor) => await request("/admin/add-instructor", instructor);
 
+// Edit an instructor
+const editInstructor = async (instructor) => await request("/admin/edit-instructor", instructor);
+
+// Delete an instructor
+const deleteInstructor = async (instructor_id) => await request("/admin/delete-instructor", instructor_id);
+
 // Get all unverified volunteers
 const getUnverifiedVolunteers = async () => await request("/admin/unverified-volunteers");
 
@@ -47,4 +53,4 @@ const verifyVolunteer = async ({volunteer_id: volunteerId}) => await request("/a
 // Deactivate a volunteer
 const deactivateVolunteer = async ({volunteer_id: volunteerId}) => await request("/admin/deactivate-volunteer", volunteerId);
 
-export { getVolunteers, getInstructors, addInstructor, getUnverifiedVolunteers, verifyVolunteer, deactivateVolunteer };
+export { getVolunteers, getInstructors, addInstructor, editInstructor, deleteInstructor, getUnverifiedVolunteers, verifyVolunteer, deactivateVolunteer };

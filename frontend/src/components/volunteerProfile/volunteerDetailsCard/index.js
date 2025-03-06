@@ -226,7 +226,7 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
                         setShowAdminMenu(!showAdminMenu);
                     }}></img>
                     <Modal title={volunteer.active === 1 ? "Deactivate account" : "Reactivate account"} isOpen={showModal} onClose={() => {setShowModal(false)}} children={"hello"} width={"500px"} height={"fit-content"}>
-                        <DeactivateReactivateModal volunteer_id={volunteer.volunteer_id} setShowModal={setShowModal} type={volunteer.active} />
+                        <DeactivateReactivateModal id={volunteer.volunteer_id} type={volunteer.active} />
                     </Modal>
                 </>
                 }

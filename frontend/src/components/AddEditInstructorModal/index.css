@@ -21,3 +21,15 @@
     font-size: 16px;
     cursor: pointer;
 }
+
+.edit-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.delete-button {
+    background: white;
+    color: var(--error-red);
+    border: 1px solid var(--error-red);
+}

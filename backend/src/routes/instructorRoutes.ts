@@ -22,6 +22,7 @@ export const InstructorRoutes: RouteDefinition = {
             path: '/',
             method: 'post',
             validation: [
+                body('instructor_id').isUUID('4'),
                 body('f_name').isString(),
                 body('l_name').isString(),
                 body('email').isEmail(),

@@ -5,7 +5,7 @@ import Notifications from "../../components/Notifications";
 import MemberList from "../../components/MemberList";
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import Modal from "../../components/Modal";
-import AddInstructorModal from "../../components/AddInstructorModal";
+import AddEditInstructorModal from "../../components/AddEditInstructorModal";
 
 const MemberManagement = () => {
     const [data, setData] = useState([]);
@@ -15,30 +15,27 @@ const MemberManagement = () => {
     const [showAddInstructorModal, setShowAddInstructorModal] = useState(false);
 
     useEffect(() => {
-        async function fetchData() {
-            let data = {};
+        fetchData();
+        // eslint-disable-next-line
+    }, [activeTab]);
+
+    async function fetchData() {
+        let data = {};
+        try {
             if (activeTab === "volunteers") {
                 data = await getVolunteers();
             } else if (activeTab === "instructors") {
                 data = await getInstructors();
             }
-            
-            return data;
+
+            setData(data);
+            setMainData(data);
+            setType(activeTab);
         }
-
-        fetchData().then((data) => {
-            console.log(data)
-            if (data) {
-                setData(data);
-                setMainData(data);
-                setType(activeTab);
-            }
-        })
-        .catch((error) => {
+        catch (error) {
             console.error(error);
-        });
-
-    }, [activeTab]);
+        }
+    }
 
     const searchVolunteers = (searchTerm) => {
         if (!searchTerm) {
@@ -95,10 +92,13 @@ const MemberManagement = () => {
             </div>
             
             <Modal title="Add instructor" isOpen={showAddInstructorModal} onClose={() => setShowAddInstructorModal(false)} width="500px" height="fit-content">
-                <AddInstructorModal closeEvent={() => setShowAddInstructorModal(false)} />
+                <AddEditInstructorModal closeEvent={() => {
+                        setShowAddInstructorModal(false)
+                        fetchData();
+                    }} />
             </Modal>
 
-            <MemberList data={data} type={type} />
+            <MemberList data={data} fetchData={fetchData} type={type} />
         </main>
     )
 }

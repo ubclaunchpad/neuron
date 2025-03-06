@@ -28,6 +28,22 @@ async function insertInstructor(req: AuthenticatedRequest, res: Response) {
     res.status(200).json(result);
 }
 
+async function deleteInstructor(req: AuthenticatedRequest, res: Response) {
+    const { instructor_id } = req.body;
+
+    const result = await instructorModel.deleteInstructor(instructor_id);
+
+    res.status(200).json(result);
+}
+
+async function editInstructor(req: AuthenticatedRequest, res: Response) {
+    let instructor: InstructorDB = req.body;
+
+    const result = await instructorModel.editInstructor(instructor);
+
+    res.status(200).json(result);
+}
+
 export {
-    getInstructorById, getInstructors, insertInstructor
+    getInstructorById, getInstructors, insertInstructor, deleteInstructor, editInstructor
 };

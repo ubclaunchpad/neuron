@@ -33,6 +33,7 @@ export interface ImageDB extends RowDataPacket {
   'image_id': string;
 }
 export interface InstructorDB extends RowDataPacket {
+  'instructor_id'?: string;
   'email': string;
   'f_name': string;
   'l_name': string;

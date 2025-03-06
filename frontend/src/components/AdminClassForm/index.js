@@ -774,6 +774,7 @@ function AdminClassForm({ setUpdates }) {
                                                                 <Select
                                                                     className="select add-volunteers"
                                                                     defaultValue={{ value: null, label: 'Enter Volunteer Name' }}
+                                                                    autoFocus={true}
                                                                     styles={{
                                                                         control: () => ({
                                                                             padding: '12px 16px',

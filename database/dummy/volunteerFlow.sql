@@ -151,7 +151,7 @@ INSERT INTO absence_request (request_id, fk_shift_id, covered_by)
 VALUES (9, 17, null);
 
 -- pending coverage table
-INSERT INTO coverage_request (request_id, pending_volunteer)
+INSERT INTO coverage_request (request_id, volunteer_id)
 VALUES (2, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1');
-INSERT INTO coverage_request (request_id, pending_volunteer)
+INSERT INTO coverage_request (request_id, volunteer_id)
 VALUES (6, 'd98889b0-2f2e-4172-b753-14cdccdd359c');

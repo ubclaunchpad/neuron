@@ -49,10 +49,10 @@ export default class ShiftModel {
       *   - When `type` is 'coverage', excludes shifts assigned to the volunteer (i.e., returns shifts available for coverage).
       * @param {Date} [params.before] - Upper bound for the shift date. Shifts with a shift_date less than or equal to this date are included.
       * @param {Date} [params.after] - Lower bound for the shift date. Shifts with a shift_date greater than or equal to this date are included.
-      * @param {'coverage'|'requesting'} [params.type] - The type of filtering for coverage requests:
-      *   - `'coverage'`: Only include shifts with an associated coverage request and exclude shifts belonging to the specified volunteer.
-      *   - `'requesting'`: Only include shifts with an associated coverage request (without excluding the volunteer).
-      * @param {'open'|'pending'|'resolved' or []} [params.status] - The status for coverage requests either as a single string or string array.
+      * @param {'coverage'|'absence'} [params.type] - The type of filtering for coverage requests:
+      *   - `'coverage'`: Only include shifts with an associated absence request not belonging to the specified volunteer.
+      *   - `'absence'`: Only include shifts with an associated absence request belonging to the volunteer.
+      * @param {'absence-pending'|'open'|'coverage-pending'|'resolved' or []} [params.status] - The status for coverage requests either as a single string or string array.
       * This is only checked when params.type is coverage or requesting, and includes all when not set:
       *   - `'open'`: Include open coverage shifts
       *   - `'pending'`: Include coverage shifts which have a pending coverage request associated
@@ -69,8 +69,8 @@ export default class ShiftModel {
       * getShifts({ volunteer_id: '123', type: 'coverage' });
       *
       * @example
-      * // Get shifts which volunteer '123' for is requesting coverage for
-      * getShifts({ volunteer_id: '123', type: 'requesting' });
+      * // Get shifts which volunteer '123' for is requesting absence for
+      * getShifts({ volunteer_id: '123', type: 'absence' });
       */
      async getShifts(params: { 
           volunteer_id?: string, 
@@ -92,18 +92,19 @@ export default class ShiftModel {
                     'c.class_id',
                     'c.class_name',
                     'c.instructions',
-                    'cr.request_id AS coverage_request_id',
+                    'ar.request_id AS absence_request_id',
                     queryBuilder.raw(`CASE 
-                         WHEN cr.covered_by IS NOT NULL THEN cr.covered_by
-                         WHEN pcr.pending_volunteer IS NOT NULL THEN pcr.pending_volunteer
+                         WHEN ar.covered_by IS NOT NULL THEN ar.covered_by
+                         WHEN cr.volunteer_id IS NOT NULL THEN cr.volunteer_id
                          ELSE NULL
-                    END AS coverage_volunteer_id`),
+                    END AS covering_volunteer_id`),
                     queryBuilder.raw(`CASE 
-                         WHEN cr.request_id IS NOT NULL AND cr.covered_by IS NOT NULL THEN 'resolved'
-                         WHEN pcr.request_id IS NOT NULL THEN 'pending'
-                         WHEN cr.request_id IS NOT NULL AND cr.covered_by IS NULL THEN 'open'
+                         WHEN ar.request_id IS NOT NULL AND ar.approved IS NOT TRUE THEN 'absence-pending'
+                         WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NULL THEN 'open'
+                         WHEN cr.request_id IS NOT NULL THEN 'coverage-pending'
+                         WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NOT NULL THEN 'resolved'
                          ELSE NULL
-                    END AS coverage_status`)
+                    END AS request_status`)
                ])
                .from(
                     { sh: 'shifts' }
@@ -112,9 +113,9 @@ export default class ShiftModel {
                ).join(
                     { c: 'class' }, 'sc.fk_class_id', 'c.class_id'
                ).leftJoin(
-                    { cr: 'shift_coverage_request' }, 'sh.shift_id', 'cr.fk_shift_id'
+                    { ar: 'absence_request' }, 'sh.shift_id', 'ar.fk_shift_id'
                ).leftJoin(
-                    { pcr: 'pending_shift_coverage' }, 'cr.request_id', 'pcr.request_id'
+                    { cr: 'coverage_request' }, 'ar.request_id', 'cr.request_id'
                ).as('sub');
 
           const query = queryBuilder.select('*').from(subQuery);
@@ -128,7 +129,7 @@ export default class ShiftModel {
           }
 
           // Only want coverage
-          if (params.type === 'coverage' || params.type === 'requesting') {
+          if (params.type === 'coverage' || params.type === 'absence') {
                query.whereNotNull('coverage_request_id');
 
                if (params?.status) {
@@ -202,7 +203,7 @@ export default class ShiftModel {
      // create a new entry in the coverage_request table
      async insertCoverageRequest(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
           const query = `
-               INSERT INTO coverage_request (request_id, pending_volunteer)
+               INSERT INTO coverage_request (request_id, volunteer_id)
                VALUES (?, ?)
           `;
           const values = [request_id, volunteer_id];
@@ -215,7 +216,7 @@ export default class ShiftModel {
      // delete corresponding entry in coverage_request table
      async deleteCoverageRequest(request_id: number, volunteer_id: number): Promise<ResultSetHeader> {
           const query = `
-               DELETE FROM coverage_request WHERE request_id = ? AND pending_volunteer = ?
+               DELETE FROM coverage_request WHERE request_id = ? AND volunteer_id = ?
           `;
           const values = [request_id, volunteer_id];
 
@@ -253,7 +254,7 @@ export default class ShiftModel {
 
           // Check if it was successfully deleted or not
           if (results.affectedRows === 0) {
-               throw new Error("Shift coverage request not found or already fulfilled");
+               throw new Error("Shift absence request not found or already fulfilled");
           }
 
           return results;

@@ -112,7 +112,7 @@ async function withdrawCoverShift(req: AuthenticatedRequest, res: Response) {
     res.status(200).json(request);
 }
 
-// volunteer requests coverage for their own shift
+// volunteer requests absence for their own shift
 async function requestAbsence(req: AuthenticatedRequest, res: Response) {
     const { shift_id } = req.body; 
 
@@ -121,7 +121,7 @@ async function requestAbsence(req: AuthenticatedRequest, res: Response) {
     res.status(200).json(request);
 }
 
-// volunteers cancels their request for shift coverage
+// volunteers cancels their request for shift absence
 async function withdrawAbsenceRequest(req: AuthenticatedRequest, res: Response) {
     const { request_id, shift_id } = req.body;
 

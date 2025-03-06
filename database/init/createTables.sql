@@ -142,12 +142,12 @@ CREATE TABLE absence_request (
 
 CREATE TABLE coverage_request (
     request_id INT NOT NULL,
-    pending_volunteer CHAR(36) NOT NULL,
+    volunteer_id CHAR(36) NOT NULL,
     
-    PRIMARY KEY (request_id, pending_volunteer),
-    FOREIGN KEY (request_id) REFERENCES coverage_request(request_id) 
+    PRIMARY KEY (request_id, volunteer_id),
+    FOREIGN KEY (request_id) REFERENCES absence_request(request_id) 
         ON DELETE CASCADE,
-    FOREIGN KEY (pending_volunteer) REFERENCES volunteers(volunteer_id) 
+    FOREIGN KEY (volunteer_id) REFERENCES volunteers(volunteer_id) 
         ON DELETE CASCADE
 );
 

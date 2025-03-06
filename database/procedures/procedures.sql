@@ -59,7 +59,7 @@ BEGIN
                 SELECT 1 
                 FROM coverage_request 
                 WHERE coverage_request.request_id = absence_request.request_id 
-                AND coverage_request.pending_volunteer = volunteer_id
+                AND coverage_request.volunteer_id = volunteer_id
             ) THEN 'pending'
             ELSE 'open'
         END AS coverage_status, -- Coverage status indicator

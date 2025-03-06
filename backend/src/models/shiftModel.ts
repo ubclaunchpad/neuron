@@ -83,16 +83,18 @@ export default class ShiftModel {
           // Construct subquery
           let subQuery = queryBuilder
                .select([
-                    'sh.shift_id AS id',
-                    'sh.shift_date AS date',
+                    'sh.shift_id',
+                    'sh.shift_date',
                     'sh.duration',
                     'sh.fk_volunteer_id AS volunteer_id',
-                    'sc.day AS day',
+                    'shifts.checked_in',
+                    'sc.day',
                     'sc.start_time',
                     'sc.end_time',
                     'c.class_id',
                     'c.class_name',
                     'c.instructions',
+                    'c.zoom_link',
                     queryBuilder.raw(`JSON_OBJECT(
                          'request_id', ar.request_id,
                          'category', ar.category,

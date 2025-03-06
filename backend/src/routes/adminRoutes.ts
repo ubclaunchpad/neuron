@@ -4,6 +4,7 @@ import { isAdmin, isAuthorized } from "../config/authCheck.js";
 import {
     getUnverifiedVolunteers,
     verifyVolunteer,
+    deactivateVolunteer
 } from "../controllers/adminController.js";
 import {
     getVolunteers
@@ -34,5 +35,13 @@ export const AdminRoutes: RouteDefinition = {
             ],
             action: verifyVolunteer
         },
+        {
+            path: '/deactivate-volunteer',
+            method: 'post',
+            validation: [
+                body('volunteer_id').isUUID('4')
+            ],
+            action: deactivateVolunteer
+        }
     ]
 };

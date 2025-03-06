@@ -98,7 +98,6 @@ const AvailabilityGrid = ({ volunteerId, type = "" }) => {
     <div className="availability-grid-container">
       <div className="availability-grid-content">
         <div className="availability-header">
-<<<<<<< HEAD
           <h2 className="availability-title">My Availability</h2>
           {type !== "admin" && <>
             {isEditing ? (
@@ -108,16 +107,6 @@ const AvailabilityGrid = ({ volunteerId, type = "" }) => {
               </div>
             ) : (
               <img className="icon edit-icon" src={edit_icon} alt="Edit" hidden={isEditing} onClick={handleEdit}/>
-=======
-          <h2 className="availability-title my-profile-title">My Availability</h2>
-          {isEditing ? (
-            <div className="edit-options"> 
-              <img className="icon check-icon" src={check_icon} alt="Check" hidden={!isEditing} onClick={handleCheck}/>          
-              <img className="icon cancel-icon" src={cancel_icon} alt="Cancel" hidden={!isEditing} onClick={handleCancel}/>
-          </div>
-          ) : (
-            <img className="icon edit-icon" src={edit_icon} alt="Edit" hidden={isEditing} onClick={handleEdit}/>
->>>>>>> main
           )}
           </>}
         </div>

@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../common/types.js";
 import { volunteerModel } from "../config/models.js";
+import { userModel } from "../config/models.js";
 
 async function getVolunteerById(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
@@ -22,7 +23,7 @@ async function getVolunteers(req: AuthenticatedRequest, res: Response) {
     const users = await userModel.getAllVolunteerUsers();
 
     const finalData = volunteers.map((volunteer) => {
-        const user = users.find((user) => user.user_id === volunteer.fk_user_id);
+        const user = users.find((user: any) => user.user_id === volunteer.fk_user_id);
         // remove password from user object
 
         return {

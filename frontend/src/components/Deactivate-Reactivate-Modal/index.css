@@ -1,0 +1,29 @@
+.deactivate-reactivate-modal {
+    font-weight: 300;
+    margin-top: -1vw;
+}
+
+.deactivate-reactivate-modal p {
+    margin-bottom: 2vw;
+}
+
+.inactive-account span {
+    color: var(--inactive-red);
+}
+
+.active-account span {
+    color: var(--active-green);
+}
+
+.act-deact-btn {
+    margin-top: 1vw;
+    width: 100%;
+    height: 2.7vw;
+    border: none;
+    background: var(--red);
+    color: var(--white);
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    /* font-family: var(--font-primary); */
+}

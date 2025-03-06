@@ -32,4 +32,21 @@ async function verifyVolunteer(
     });
 }
 
-export { getUnverifiedVolunteers, verifyVolunteer };
+async function deactivateVolunteer(
+    req: AuthenticatedRequest,
+    res: Response
+): Promise<any> {
+    // Get the token from the request parameters
+    const volunteer_id = req.body.volunteer_id;
+
+    // Update the user's active status
+    await volunteerModel.updateVolunteer(volunteer_id, {
+        active: false,
+    } as VolunteerDB);
+
+    return res.status(200).json({
+        message: "User deactivated successfully",
+    });
+}
+
+export { getUnverifiedVolunteers, verifyVolunteer, deactivateVolunteer };

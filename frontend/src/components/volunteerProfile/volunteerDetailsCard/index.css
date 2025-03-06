@@ -308,14 +308,21 @@ input[type=number] {
 .admin-menu-item .deactivate {
     width: 0.7vw;
     height: 0.7vw;
-    margin-left: 0.5vw;
+    margin-left: 0.6vw;
     background: url("../../../assets/cancel-icon.png") no-repeat center center/contain;
+}
+
+.admin-menu-item .reactivate {
+    width: 0.8vw;
+    height: 0.8vw;
+    margin-left: 0.6vw;
+    background: url("../../../assets/check-icon.png") no-repeat center center/contain;
 }
 
 .admin-menu-item .edit-email {
     width: 0.7vw;
     height: 0.7vw;
-    margin-left: 0.5vw;
+    margin-left: 0.6vw;
     background: url("../../../assets/edit-email-icon.png") no-repeat center center/contain;
 }
 

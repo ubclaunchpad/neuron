@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import VolunteerList from "../../components/VolunteerList";
 import { getVolunteers } from "../../api/adminService";
@@ -44,11 +43,6 @@ const MemberManagement = () => {
         setVolunteers(filteredVolunteers);
     }
 
-=======
-import "./index.css";
-
-const MemberManagement = () => {
->>>>>>> main
     return (
         <main className="content-container">
             <div className="content-heading">

@@ -63,4 +63,25 @@ const verifyVolunteer = async (volunteerId) => {
     }
 };
 
-export { getVolunteers, getUnverifiedVolunteers, verifyVolunteer };
+const deactivateVolunteer = async (volunteerId) => {
+    const authToken = localStorage.getItem("neuronAuthToken");
+
+    if (!authToken) {
+        return {
+            error: "Unauthorized",
+        };
+    } else {
+        try {
+            const response = await api.post("/admin/deactivate-volunteer", {
+                token: authToken,
+                volunteer_id: volunteerId,
+            });
+
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    }
+}
+
+export { getVolunteers, getUnverifiedVolunteers, verifyVolunteer, deactivateVolunteer };

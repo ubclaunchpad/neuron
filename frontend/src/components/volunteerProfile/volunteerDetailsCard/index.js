@@ -16,6 +16,8 @@ import useComponentVisible from "../../../hooks/useComponentVisible";
 import {State, City} from 'country-state-city';
 import Select from 'react-select';
 import notyf from "../../../utils/notyf";
+import Modal from "../../Modal";
+import DeactivateReactivateModal from "../../Deactivate-Reactivate-Modal";
 
 function VolunteerDetailsCard({ volunteer, type = "" }) {
 
@@ -219,14 +221,20 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
                         </div>
                     </>
                 }
-                {type === "admin" && <img className="icon edit-icon" src={settings_icon} alt="Settings" onClick={() => {
-                    setShowAdminMenu(!showAdminMenu);
-                }}></img>}
+                {type === "admin" && <>
+                    <img className="icon edit-icon" src={settings_icon} alt="Settings"      onClick={() => {
+                        setShowAdminMenu(!showAdminMenu);
+                    }}></img>
+                    <Modal title={volunteer.active === 1 ? "Deactivate account" : "Reactivate account"} isOpen={showModal} onClose={() => {setShowModal(false)}} children={"hello"} width={"500px"} height={"fit-content"}>
+                        <DeactivateReactivateModal volunteer_id={volunteer.volunteer_id} setShowModal={setShowModal} type={volunteer.active} />
+                    </Modal>
+                </>
+                }
                 {showAdminMenu && 
                     <div className="admin-menu">
                         <div className="admin-menu-item" onClick={() => {
                             setShowModal(true);
-                        }}><div className="deactivate"></div><p>Deactivate account</p></div>
+                        }}><div className={volunteer.active === 1 ? "deactivate" : "reactivate"}></div><p>{volunteer.active === 1 ? "Deactivate" : "Reactivate"} account</p></div>
                         <div className="admin-menu-item"><div className="edit-email"></div><p>Edit volunteer email</p></div>
                     </div>
                 }

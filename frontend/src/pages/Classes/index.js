@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import {
   getAllClasses,
   getAllClassSchedules
@@ -24,6 +24,8 @@ function Classes() {
   
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const classId = location.state?.classId;
   const editing = searchParams.get("edit") === "true";
 
   const sectionRefs = useRef({});
@@ -61,7 +63,7 @@ function Classes() {
     };
 
     fetchClassesImagesAndSchedules();
-  }, [updates]);
+  }, [updates, searchParams]);
 
   useEffect(() => {
     if (completeClassData) {
@@ -152,7 +154,7 @@ function Classes() {
                 src={button_icon_prev}
                 style={{ width: 18, height: 18 }}
               />
-              <h2 className="classes-title">Edit Class</h2>
+              <h2 className="classes-title">{classId ? "Edit Class" : "Create Class"}</h2>
             </button>
           </div> :
           <div>

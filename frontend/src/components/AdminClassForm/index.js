@@ -762,6 +762,7 @@ function AdminClassForm({ setUpdates }) {
                                                                             {volunteer.p_name ?? volunteer.f_name + ' ' + volunteer.l_name}
                                                                         </span>
                                                                         <button 
+                                                                            type="button"
                                                                             onClick={() => remove(volunteerIndex)} 
                                                                             className="delete-volunteer-button"
                                                                         >
@@ -775,6 +776,7 @@ function AdminClassForm({ setUpdates }) {
                                                                     className="select add-volunteers"
                                                                     defaultValue={{ value: null, label: 'Enter Volunteer Name' }}
                                                                     autoFocus={true}
+                                                                    openMenuOnFocus={true}
                                                                     styles={{
                                                                         control: () => ({
                                                                             padding: '12px 16px',

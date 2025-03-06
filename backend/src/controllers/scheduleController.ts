@@ -1,9 +1,7 @@
 import { Response } from 'express';
 import { ScheduleDB } from '../common/databaseModels.js';
 import { AuthenticatedRequest } from '../common/types.js';
-import ScheduleModel from '../models/scheduleModel.js';
-
-const scheduleModel = new ScheduleModel();
+import { scheduleModel } from '../config/models.js';
 
 async function getAllSchedules(req: AuthenticatedRequest, res: Response) {
     const schedules = await scheduleModel.getAllSchedules();

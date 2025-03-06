@@ -1,8 +1,6 @@
 import { Response } from "express";
 import { AuthenticatedRequest } from "../common/types.js";
-import VolunteerModel from "../models/volunteerModel.js";
-
-const volunteerModel = new VolunteerModel();
+import { volunteerModel } from "../config/models.js";
 
 async function getVolunteerById(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
@@ -104,12 +102,8 @@ async function updatePreferredClassesById (req: AuthenticatedRequest, res: Respo
 }
 
 export {
-    getVolunteerById,
-    getVolunteers, 
-    shiftCheckIn, 
-    updateVolunteer,
-    getPreferredClassesById,
-    getAllClassPreferences,
-    updatePreferredClassesById
+    getAllClassPreferences, getPreferredClassesById, getVolunteerById,
+    getVolunteers,
+    shiftCheckIn, updatePreferredClassesById, updateVolunteer
 };
 

@@ -1,32 +1,40 @@
 import { Response } from 'express';
 import { ShiftDB } from '../common/databaseModels.js';
+import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import { AuthenticatedRequest } from '../common/types.js';
-import ShiftModel from '../models/shiftModel.js';
+import { shiftModel, volunteerModel } from '../config/models.js';
 
-const shiftModel = new ShiftModel();
+async function getShift(req: AuthenticatedRequest, res: Response){
+    const { shift_id } = req.body;
 
-async function getShiftInfo(req: AuthenticatedRequest, res: Response){
-    const shift: ShiftDB = req.body;
-
-    const shift_info = await shiftModel.getShiftInfo(shift.fk_volunteer_id, shift.fk_schedule_id, shift.shift_date);
+    const shift_info = await shiftModel.getShiftInfo(shift_id);
 
     res.status(200).json(shift_info);
 }
 
 // get all the shifts assigned to a volunteer, using the volunteer's ID
-async function getShiftsByVolunteerId(req: AuthenticatedRequest, res: Response) {
-    const { volunteer_id } = req.params;
+async function getShifts(req: AuthenticatedRequest, res: Response) {
+    const { volunteer, before, after, type, status } = req.query as Record<string, string>;
+    const volunteer_id = volunteer;
 
-    const shifts = await shiftModel.getShiftsByVolunteerId(volunteer_id);
+    if (req.user.role === 'volunteer') {
+        const volunteer = await volunteerModel.getVolunteerByUserId(req.user.user_id);
 
-    res.status(200).json(shifts);
-}
+        /* Cannot get shifts for other volunteer */
+        if (volunteer.volunteer_id !== volunteer_id) {
+            return res.status(403).json({
+                error: "Unauthorized",
+            });
+        }
+    }
 
-// get all the shifts on a given date
-async function getShiftsByDate(req: AuthenticatedRequest, res: Response) {
-    const shift: ShiftDB = req.body;
-
-    const shifts = await shiftModel.getShiftsByDate(shift.shift_date);
+    const shifts = await shiftModel.getShifts({
+        volunteer_id: volunteer_id,
+        before: before ? new Date(before) : undefined, 
+        after: after ? new Date(after) : undefined,
+        type: type as ShiftQueryType,
+        status: status as ShiftStatus,
+    });
 
     res.status(200).json(shifts);
 }
@@ -123,6 +131,6 @@ async function withdrawAbsenceRequest(req: AuthenticatedRequest, res: Response) 
 }
 
 export {
-    addShift, checkInShift, deleteShift, getShiftInfo, getShiftsByDate, getShiftsByVolunteerId, getShiftsByVolunteerIdAndMonth, requestAbsence, requestCoverShift, updateShift, withdrawAbsenceRequest, withdrawCoverShift
+    addShift, checkInShift, deleteShift, getShift, getShifts, getShiftsByVolunteerIdAndMonth, requestAbsence, requestCoverShift, updateShift, withdrawAbsenceRequest, withdrawCoverShift
 };
 

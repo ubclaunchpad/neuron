@@ -1,11 +1,14 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import { ScheduleDB, ShiftDB } from '../common/databaseModels.js';
+import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import connectionPool from '../config/database.js';
+import queryBuilder from '../config/queryBuilder.js';
+import { wrap } from '../utils/generalUtils.js';
 
 export default class ShiftModel {
 
      // get all the details of a shift
-     async getShiftInfo(fk_volunteer_id: string, fk_schedule_id: number, shift_date: string): Promise<ShiftDB> {
+     async getShiftInfo(shift_id: number): Promise<ShiftDB> {
           const query = `
                SELECT 
                     s.duration,
@@ -13,8 +16,8 @@ export default class ShiftModel {
                     sc.end_time,
                     u.l_name AS volunteer_l_name,
                     u.f_name AS volunteer_f_name,
-                    intrs.l_name AS instructor_l_name,
-                    intrs.f_name AS instructor_f_name, 
+                    i.l_name AS instructor_l_name,
+                    i.f_name AS instructor_f_name, 
                     cl.class_name
                FROM 
                     neuron.shifts s
@@ -27,20 +30,131 @@ export default class ShiftModel {
                JOIN 
                     neuron.class cl ON sc.fk_class_id = cl.class_id
                JOIN
-                    neuron.instructors intrs on intrs.instructor_id = cl.fk_instructor_id
+                    neuron.instructors i on i.instructor_id = cl.fk_instructor_id
                WHERE 
-                    s.fk_volunteer_id = ?
-                    AND s.fk_schedule_id = ?
-                    AND s.shift_date = ?;               
+                    s.shift_id = ?       
           `;
-          const values = [fk_volunteer_id, fk_schedule_id, shift_date];
+          const values = [shift_id];
 
           const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 
           return results[0];
      }
 
-     // get all the shifts assigned to a single volunteer
+     /**
+      * Retrieves shifts from the database with optional filtering.
+      *
+      * @param {string} [params.volunteer_id] - The ID of the volunteer.
+      *   - When omitted or when `type` is not 'coverage', returns only shifts assigned to the volunteer.
+      *   - When `type` is 'coverage', excludes shifts assigned to the volunteer (i.e., returns shifts available for coverage).
+      * @param {Date} [params.before] - Upper bound for the shift date. Shifts with a shift_date less than or equal to this date are included.
+      * @param {Date} [params.after] - Lower bound for the shift date. Shifts with a shift_date greater than or equal to this date are included.
+      * @param {'coverage'|'requesting'} [params.type] - The type of filtering for coverage requests:
+      *   - `'coverage'`: Only include shifts with an associated coverage request and exclude shifts belonging to the specified volunteer.
+      *   - `'requesting'`: Only include shifts with an associated coverage request (without excluding the volunteer).
+      * @param {'open'|'pending'|'resolved' or []} [params.status] - The status for coverage requests either as a single string or string array.
+      * This is only checked when params.type is coverage or requesting, and includes all when not set:
+      *   - `'open'`: Include open coverage shifts
+      *   - `'pending'`: Include coverage shifts which have a pending coverage request associated
+      *   - `'resolved'`: Include coverage shifts which have been resolved.
+      *
+      * @returns {Promise<any[]>} A promise that resolves to an array of shift records.
+      *
+      * @example
+      * // Get all shifts assigned to volunteer '123'
+      * getShifts({ volunteer_id: '123' });
+      *
+      * @example
+      * // Get shifts available to volunteer '123' for coverage
+      * getShifts({ volunteer_id: '123', type: 'coverage' });
+      *
+      * @example
+      * // Get shifts which volunteer '123' for is requesting coverage for
+      * getShifts({ volunteer_id: '123', type: 'requesting' });
+      */
+     async getShifts(params: { 
+          volunteer_id?: string, 
+          type?: ShiftQueryType,
+          status?: ShiftStatus | ShiftStatus[],
+          before?: Date,
+          after?: Date, 
+     } = {}): Promise<any[]> {
+          // Construct subquery
+          let subQuery = queryBuilder
+               .select([
+                    'sh.shift_id AS id',
+                    'sh.shift_date AS date',
+                    'sh.duration',
+                    'sh.fk_volunteer_id AS volunteer_id',
+                    'sc.day AS day',
+                    'sc.start_time',
+                    'sc.end_time',
+                    'c.class_id',
+                    'c.class_name',
+                    'c.instructions',
+                    'cr.request_id AS coverage_request_id',
+                    queryBuilder.raw(`CASE 
+                         WHEN cr.covered_by IS NOT NULL THEN cr.covered_by
+                         WHEN pcr.pending_volunteer IS NOT NULL THEN pcr.pending_volunteer
+                         ELSE NULL
+                    END AS coverage_volunteer_id`),
+                    queryBuilder.raw(`CASE 
+                         WHEN cr.request_id IS NOT NULL AND cr.covered_by IS NOT NULL THEN 'resolved'
+                         WHEN pcr.request_id IS NOT NULL THEN 'pending'
+                         WHEN cr.request_id IS NOT NULL AND cr.covered_by IS NULL THEN 'open'
+                         ELSE NULL
+                    END AS coverage_status`)
+               ])
+               .from(
+                    { sh: 'shifts' }
+               ).join(
+                    { sc: 'schedule' }, 'sh.fk_schedule_id', 'sc.schedule_id'
+               ).join(
+                    { c: 'class' }, 'sc.fk_class_id', 'c.class_id'
+               ).leftJoin(
+                    { cr: 'shift_coverage_request' }, 'sh.shift_id', 'cr.fk_shift_id'
+               ).leftJoin(
+                    { pcr: 'pending_shift_coverage' }, 'cr.request_id', 'pcr.request_id'
+               ).as('sub');
+
+          const query = queryBuilder.select('*').from(subQuery);
+
+          // Filter by date
+          if (params.before) {
+               query.where('date', '<=', params.before);
+          }
+          if (params.after) {
+               query.where('date', '>=', params.after);
+          }
+
+          // Only want coverage
+          if (params.type === 'coverage' || params.type === 'requesting') {
+               query.whereNotNull('coverage_request_id');
+
+               if (params?.status) {
+                    query.whereIn('coverage_status', wrap(params.status));
+               }
+          }
+
+          if (params.volunteer_id && params.type === 'coverage') {
+               // For coverage we exclude the volunteer instead, we want shifts we can cover
+               query.where('volunteer_id', '<>', params.volunteer_id);
+          }
+          else if (params.volunteer_id) {
+               query.where('volunteer_id', params.volunteer_id);
+          }
+
+          // Order by date then time
+          query.orderBy('date').orderBy('start_time');
+
+          // Construct query and bindings
+          const { sql, bindings } = query.toSQL();
+          const [results, _] = await connectionPool.query<ShiftDB[]>(sql, bindings);
+
+          return results;
+     }
+
+     // use getShifts instead
      async getShiftsByVolunteerId(volunteer_id: string): Promise<ShiftDB[]> {
           const query = "SELECT * FROM shifts WHERE fk_volunteer_id = ?";
           const values = [volunteer_id];
@@ -50,7 +164,7 @@ export default class ShiftModel {
           return results;
      }
 
-     // get all shifts occurring on given date
+     // use getShifts instead
      async getShiftsByDate(date: string): Promise<ShiftDB[]> {
           const query = "SELECT * FROM shifts WHERE shift_date = ?";
           const values = [date];
@@ -60,7 +174,7 @@ export default class ShiftModel {
           return results;
      }
 
-     // get all the shift details viewable to a volunteer for a specified month
+     // use getShifts instead
      async getShiftsByVolunteerIdAndMonth(volunteer_id: string, month: number, year: number): Promise<ShiftDB[]> {
           const query = `
                CALL GetShiftsByVolunteerIdAndMonth(?, ?, ?);

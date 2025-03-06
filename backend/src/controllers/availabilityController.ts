@@ -1,9 +1,7 @@
 import { Response } from 'express';
 import { AvailabilityDB } from '../common/databaseModels.js';
 import { AuthenticatedRequest } from '../common/types.js';
-import AvailabilityModel from '../models/availabilityModel.js';
-
-const availabilityModel = new AvailabilityModel();
+import { availabilityModel } from '../config/models.js';
 
 async function getAvailabilities(req: AuthenticatedRequest, res: Response) {
     const availabilities = await availabilityModel.getAvailabilities();

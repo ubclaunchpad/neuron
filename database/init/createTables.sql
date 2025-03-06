@@ -23,7 +23,6 @@ create table users (
     l_name VARCHAR(60) NOT NULL,
     email VARCHAR(45) NOT NULL UNIQUE,
     fk_image_id CHAR(36),
-    email VARCHAR(45) NOT NULL,
     password CHAR(60) BINARY NOT NULL,
     role ENUM('volunteer', 'admin', 'instructor') NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -93,7 +92,7 @@ create table availability (
 );
 
 CREATE TABLE volunteer_schedule (
-    fk_volunteer_id VARCHAR(36) NOT NULL,
+    fk_volunteer_id CHAR(36) NOT NULL,
     fk_schedule_id INT NOT NULL,
     PRIMARY KEY (fk_volunteer_id, fk_schedule_id),
     FOREIGN KEY (fk_volunteer_id) REFERENCES volunteers(volunteer_id)

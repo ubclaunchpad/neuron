@@ -57,7 +57,6 @@ export default class ShiftModel {
       *   - `'open'`: Include open coverage shifts
       *   - `'pending'`: Include coverage shifts which have a pending coverage request associated
       *   - `'resolved'`: Include coverage shifts which have been resolved.
-      * @param {boolean | undefined} [params.approved] - Filters the status of absence request approval, undefined doesnt filter.
       *
       * @returns {Promise<any[]>} A promise that resolves to an array of shift records.
       *
@@ -96,7 +95,6 @@ export default class ShiftModel {
                     'c.instructions',
                     queryBuilder.raw(`JSON_OBJECT(
                          'request_id', ar.request_id,
-                         'approved', ar.approved,
                          'category', ar.category,
                          'details', ar.details,
                          'comments', ar.comments,
@@ -139,14 +137,6 @@ export default class ShiftModel {
                // Filter by status
                if (params?.status) {
                     query.whereRaw("JSON_EXTRACT(absence_request, '$.status') IN (?)", [wrap(params.status)]);
-               }
-
-               // Filter for approved true or false
-               if (params?.approved === true) {
-                    query.whereRaw("JSON_EXTRACT(absence_request, '$.approved') IN (?)", [params.approved]);
-               }
-               else if (params?.approved === false) {
-                    query.whereRaw("JSON_EXTRACT(absence_request, '$.approved') IN (?)", [params.approved]);
                }
           }
 

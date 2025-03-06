@@ -29,7 +29,6 @@ const getShift = async (shift_id) => {
  *   - `'open'`: Include open coverage shifts
  *   - `'pending'`: Include coverage shifts which have a pending coverage request associated
  *   - `'resolved'`: Include coverage shifts which have been resolved.
- * @param {boolean | undefined} [params.approved] - Filters the status of absence request approval, undefined doesnt filter.
  *
  * @returns {Promise<any[]>} A promise that resolves to an array of shift records.
  */

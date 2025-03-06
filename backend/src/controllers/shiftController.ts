@@ -14,7 +14,7 @@ async function getShift(req: AuthenticatedRequest, res: Response){
 
 // get all the shifts assigned to a volunteer, using the volunteer's ID
 async function getShifts(req: AuthenticatedRequest, res: Response) {
-    const { volunteer, before, after, type, status, approved } = req.query as Record<string, string>;
+    const { volunteer, before, after, type, status } = req.query as Record<string, string>;
     const volunteer_id = volunteer;
 
     if (req.user.role === 'volunteer') {
@@ -33,8 +33,7 @@ async function getShifts(req: AuthenticatedRequest, res: Response) {
         before: before ? new Date(before) : undefined, 
         after: after ? new Date(after) : undefined,
         type: type as ShiftQueryType,
-        status: status as ShiftStatus,
-        approved: approved ? approved === "true" : undefined,
+        status: status as ShiftStatus
     });
 
     res.status(200).json(shifts);

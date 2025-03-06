@@ -1,7 +1,6 @@
 import api from "./api";
 
-// Get all volunteers
-const getVolunteers = async () => {
+const request = async (path, props) => {
     const authToken = localStorage.getItem("neuronAuthToken");
 
     if (!authToken) {
@@ -10,72 +9,18 @@ const getVolunteers = async () => {
         };
     } else {
         try {
-            const response = await api.post("/admin/all-volunteers", {
-                token: authToken,
-            });
-
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
-    }
-};
-
-// Get all unverified volunteers
-const getUnverifiedVolunteers = async () => {
-    const authToken = localStorage.getItem("neuronAuthToken");
-
-    if (!authToken) {
-        return {
-            volunteers: null,
-        };
-    } else {
-        try {
-            const response = await api.post("/admin/unverified-volunteers", {
-                token: authToken,
-            });
-
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
-    }
-};
-
-const verifyVolunteer = async (volunteerId) => {
-    const authToken = localStorage.getItem("neuronAuthToken");
-
-    if (!authToken) {
-        return {
-            error: "Unauthorized",
-        };
-    } else {
-        try {
-            const response = await api.post("/admin/verify-volunteer", {
-                token: authToken,
-                volunteer_id: volunteerId,
-            });
-
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
-    }
-};
-
-const deactivateVolunteer = async (volunteerId) => {
-    const authToken = localStorage.getItem("neuronAuthToken");
-
-    if (!authToken) {
-        return {
-            error: "Unauthorized",
-        };
-    } else {
-        try {
-            const response = await api.post("/admin/deactivate-volunteer", {
-                token: authToken,
-                volunteer_id: volunteerId,
-            });
+            let response = {};
+            if (props) {
+                response = await api.post(path, {
+                    token: authToken,
+                    ...props,
+                });
+            } else {
+                response = await api.post(path, {
+                    token: authToken,
+                });
+            }
+            
 
             return response.data;
         } catch (error) {
@@ -84,4 +29,22 @@ const deactivateVolunteer = async (volunteerId) => {
     }
 }
 
-export { getVolunteers, getUnverifiedVolunteers, verifyVolunteer, deactivateVolunteer };
+// Get all volunteers
+const getVolunteers = async () => await request("/admin/all-volunteers");
+
+// Get all instructors
+const getInstructors = async () => await request("/admin/all-instructors");
+
+// Add an instructor
+const addInstructor = async (instructor) => await request("/admin/add-instructor", instructor);
+
+// Get all unverified volunteers
+const getUnverifiedVolunteers = async () => await request("/admin/unverified-volunteers");
+
+// Verify/Activate a volunteer
+const verifyVolunteer = async ({volunteer_id: volunteerId}) => await request("/admin/verify-volunteer", volunteerId);
+
+// Deactivate a volunteer
+const deactivateVolunteer = async ({volunteer_id: volunteerId}) => await request("/admin/deactivate-volunteer", volunteerId);
+
+export { getVolunteers, getInstructors, addInstructor, getUnverifiedVolunteers, verifyVolunteer, deactivateVolunteer };

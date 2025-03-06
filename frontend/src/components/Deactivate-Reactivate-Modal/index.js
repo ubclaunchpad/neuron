@@ -5,11 +5,12 @@ import "./index.css";
 import { deactivateVolunteer, verifyVolunteer } from "../../api/adminService";
 import { useAuth } from "../../contexts/authContext";
 import notyf from "../../utils/notyf";
+import cleanInitials from "../../utils/cleanInitials";
 
 const VerificationSchema = Yup.object().shape({
-    fullName: Yup.string()
-        .required("Please enter your full name.")
-        .matches(/^[a-zA-Z]+ [a-zA-Z]+$/, "Please enter your full name."),
+    initials: Yup.string()
+                .required("Please enter your admin initials.")
+                .matches(/^[a-zA-Z][^a-zA-Z]*[a-zA-Z][^a-zA-Z]*$/, "Please enter only two letters."),
 });
 
 
@@ -24,11 +25,12 @@ const DeactivateReactivateModal = ({ volunteer_id, setShowModal, type }) => {
 
             <Formik
                 initialValues={{
-                    fullName: "",
+                    initials: "",
                 }}
                 validationSchema={VerificationSchema}
                 onSubmit={(values, { setSubmitting }) => {
-                    if (values.fullName === user.f_name + " " + user.l_name) {
+                    const initials = cleanInitials(values.initials);
+                    if (initials !== user.f_name[0].toUpperCase() + "" + user.l_name[0].toUpperCase()) {
                         if (type === 1) {
                             deactivateVolunteer(volunteer_id)
                                 .then(() => {
@@ -51,7 +53,7 @@ const DeactivateReactivateModal = ({ volunteer_id, setShowModal, type }) => {
                                 });
                         }
                     } else {
-                        notyf.error("Incorrect full name.");
+                        notyf.error("Initials don't match your admin initials.");
                     }
                     setSubmitting(false);
                 }}>
@@ -66,12 +68,12 @@ const DeactivateReactivateModal = ({ volunteer_id, setShowModal, type }) => {
                     }) => (
                         <form onSubmit={handleSubmit}>
                             <TextInput
-                                label="Your full name (for logging purposes)"
+                                label="Your admin initials (for logging purposes)"
                                 hint="(Required)"
-                                name="fullName"
+                                name="initials"
                                 type="text"
-                                placeholder="John Doe"
-                                value={values.fullName}
+                                placeholder="M.U"
+                                value={values.initials}
                                 handleChange={handleChange}
                                 handleBlur={handleBlur}
                                 errors={errors}

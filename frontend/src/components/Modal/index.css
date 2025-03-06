@@ -10,6 +10,7 @@
      display: flex;
      justify-content: center;
      align-items: center;
+     z-index: 2;
 }
    
 .modal-content {
@@ -24,7 +25,6 @@
      display: flex;
      justify-content: space-between;
      align-items: center;
-     margin-bottom: 20px;
      font-family: var(--font-secondary);
 }
 

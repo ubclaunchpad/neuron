@@ -9,6 +9,10 @@ import {
 import {
     getVolunteers
 } from "../controllers/volunteerController.js";
+import {
+    getInstructors,
+    insertInstructor
+} from "../controllers/instructorController.js"
 
 export const AdminRoutes: RouteDefinition = {
     path: '/admin',
@@ -21,6 +25,21 @@ export const AdminRoutes: RouteDefinition = {
             path: '/all-volunteers',
             method: 'post',
             action: getVolunteers
+        },
+        {
+            path: '/all-instructors',
+            method: 'post',
+            action: getInstructors
+        },
+        {
+            path: '/add-instructor',
+            method: 'post',
+            validation: [
+                body('f_name').isString(),
+                body('l_name').isString(),
+                body('email').isEmail(),
+            ],
+            action: insertInstructor
         },
         {
             path: '/unverified-volunteers',

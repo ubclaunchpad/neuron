@@ -35,7 +35,6 @@ export interface ImageDB extends RowDataPacket {
 export interface InstructorDB extends RowDataPacket {
   'email': string;
   'f_name': string;
-  'instructor_id': string;
   'l_name': string;
 }
 export interface PendingShiftCoverageDB extends RowDataPacket {

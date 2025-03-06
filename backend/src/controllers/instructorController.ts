@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { InstructorDB } from '../common/databaseModels.js';
 import { AuthenticatedRequest } from '../common/types.js';
 import { instructorModel } from '../config/models.js';
+import { v4 as uuidv4 } from "uuid";
 
 async function getInstructors(req: AuthenticatedRequest, res: Response) {
     const instructors = await instructorModel.getInstructors();
@@ -18,7 +19,9 @@ async function getInstructorById(req: AuthenticatedRequest, res: Response) {
 }
 
 async function insertInstructor(req: AuthenticatedRequest, res: Response) {
-    const instructor: InstructorDB = req.body;
+    let instructor: InstructorDB = req.body;
+
+    instructor.instructor_id = uuidv4();
 
     const result = await instructorModel.insertInstructor(instructor);
 

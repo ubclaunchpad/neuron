@@ -1,7 +1,7 @@
 import "./index.css";
 import React from "react";
 import ReactDOM from "react-dom";
-import close_button from "../../assets/images/button-icons/button-close-icon.png";
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 function Modal ({ title = "", isOpen, onClose, children, width, height }) {
 
@@ -14,7 +14,7 @@ function Modal ({ title = "", isOpen, onClose, children, width, height }) {
                <div className="modal-content" style={{width: width, height: height}}>
                     <div className="modal-header">
                          <h2>{title}</h2>
-                         <img alt="Close Icon" className="close-button" onClick={onClose} src={close_button}/>
+                         <CloseRoundedIcon sx={{color: "#808080"}} className="close-button" onClick={onClose} />
                     </div>
                     {children}
                </div>

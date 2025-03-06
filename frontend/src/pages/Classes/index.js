@@ -8,6 +8,7 @@ import { formatImageUrl } from "../../api/imageService";
 import ClassCategoryContainer from "../../components/ClassCategoryContainer";
 import DetailsPanel from "../../components/DetailsPanel";
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
+import add_icon from "../../assets/add-icon.png";
 import "./index.css";
 import AdminClassForm from "../../components/AdminClassForm";
 import { useAuth } from "../../contexts/authContext";
@@ -198,7 +199,11 @@ function Classes() {
                   className="add-class-button"
                   onClick={() => navigate("/classes?edit=true")}
                 >
-                  +
+                  <div 
+                    className="add-class-container"
+                  >
+                    <img src={add_icon} alt="Add" className="add-class-icon"/>
+                  </div>
                 </button>}
                 {Object.entries(groupedByCategory).map(([category, classData]) => {
                   return (

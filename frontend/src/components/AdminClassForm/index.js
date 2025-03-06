@@ -5,6 +5,8 @@ import * as Yup from "yup";
 import { CgSelect } from "react-icons/cg";
 import upload_light from "../../assets/upload-light.png";
 import upload_dark from "../../assets/upload-dark.png";
+import delete_icon from "../../assets/delete-icon.png";
+import add_icon from "../../assets/add-icon.png";
 import Select from 'react-select';
 import { 
     getClassById, 
@@ -756,7 +758,15 @@ function AdminClassForm({ setUpdates }) {
                                                                 const volunteer = result.value;
                                                                 return volunteer && (
                                                                     <div key={volunteerIndex} className="volunteer-item">
-                                                                        {volunteer.p_name ?? volunteer.f_name + ' ' + volunteer.l_name}
+                                                                        <span>
+                                                                            {volunteer.p_name ?? volunteer.f_name + ' ' + volunteer.l_name}
+                                                                        </span>
+                                                                        <button 
+                                                                            onClick={() => remove(volunteerIndex)} 
+                                                                            className="delete-volunteer-button"
+                                                                        >
+                                                                            <img src={delete_icon} alt="Delete" className="delete-volunteer-icon"/>
+                                                                        </button>
                                                                     </div>
                                                                 )
                                                             })}
@@ -826,7 +836,14 @@ function AdminClassForm({ setUpdates }) {
                                                                         });
                                                                     }}
                                                                 >
-                                                                    Add Volunteer +
+                                                                    <span>
+                                                                        Add Volunteer
+                                                                    </span>
+                                                                    <div 
+                                                                        className="add-volunteer-container"
+                                                                    >
+                                                                        <img src={add_icon} alt="Add" className="add-volunteer-icon"/>
+                                                                    </div>
                                                                 </button>
                                                             }
                                                         </div>
@@ -882,7 +899,16 @@ function AdminClassForm({ setUpdates }) {
                                         setUpdates((prev) => prev + 1);  
                                     }}
                                 >
-                                    <h2 className="section-title add-schedule-text">+ Add Class Schedule</h2>
+                                    <span>
+                                        <h2 className="section-title add-schedule-text">
+                                            Add Schedule
+                                        </h2>
+                                    </span>
+                                    <div 
+                                        className="add-schedule-container"
+                                    >
+                                        <img src={add_icon} alt="Add" className="add-schedule-icon"/>
+                                    </div>
                                 </button>
                             </div>
                         )}

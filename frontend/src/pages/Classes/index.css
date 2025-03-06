@@ -86,6 +86,18 @@
   cursor: pointer;
   margin-top: 36px;
   box-shadow: 0px 4px 16px 0px #0F11110D;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+.add-class-container {
+  display: flex;
+}
+
+.add-class-icon {
+  width: 24px;
+  aspect-ratio: 1 / 1;
 }
 
 .classes-content {

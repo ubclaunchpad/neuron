@@ -41,7 +41,8 @@ export const ShiftRoutes: RouteDefinition = {
                 query('before').isDate().optional(),
                 query('after').isDate().optional(),
                 query('type').isIn(ShiftQueryType.values).optional(),
-                query('status').isIn(ShiftStatus.values).optional()
+                query('status').isIn(ShiftStatus.values).optional(),
+                query('approved').isBoolean().optional()
             ],
             action: getShifts
         },

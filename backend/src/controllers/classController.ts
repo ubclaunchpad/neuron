@@ -1,9 +1,7 @@
 import { Response } from 'express';
 import { ClassDB } from '../common/databaseModels.js';
 import { AuthenticatedRequest } from '../common/types.js';
-import ClassesModel from '../models/classModel.js';
-
-const classesModel = new ClassesModel();
+import { classesModel } from '../config/models.js';
 
 async function getAllClasses(req: AuthenticatedRequest, res: Response) {
 	const classes = await classesModel.getClasses();

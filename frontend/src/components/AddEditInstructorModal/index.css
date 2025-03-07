@@ -1,0 +1,35 @@
+.add-instructor-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.add-instructor-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.admin-add-instructor-button {
+    margin-top: 2vw;
+    width: 100%;
+    height: 2.7vw !important;
+    border: none;
+    color: var(--white);
+    background-color: var(--button-blue);
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.edit-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.delete-button {
+    background: white;
+    color: var(--error-red);
+    border: 1px solid var(--error-red);
+}

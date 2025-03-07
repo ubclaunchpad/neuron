@@ -1,7 +1,18 @@
+import { useState } from "react";
 import ClassScheduleCard from "../ClassScheduleCard";
 import "./index.css";
+import { deleteClass } from "../../api/classesPageService";
+import notyf from "../../utils/notyf";
 
-function AdminDetailsPanel({ classId, panelInfo, renderInstructorInfo, navigate }) {
+function AdminDetailsPanel({ 
+    classId, 
+    panelInfo, 
+    renderInstructorInfo, 
+    navigate, 
+    setUpdates, 
+    setClassId 
+}) {
+    const [showPopup, setShowPopup] = useState(false);
 
     return (
         <div className="panel-details">
@@ -12,6 +23,47 @@ function AdminDetailsPanel({ classId, panelInfo, renderInstructorInfo, navigate 
                 >
                     Edit Class
                 </button>
+                <button 
+                    className="delete-class-button" 
+                    onClick={() => setShowPopup(true)}
+                >
+                    Delete Class
+                </button>
+                {showPopup && (
+                    <div className="delete-popup-overlay">
+                        <div className="delete-popup">
+                            <h2 className="delete-popup-title">Delete Class</h2>
+                            <p className="delete-popup-prompt">Delete this class permanently?</p>
+                            <div className="delete-popup-buttons">
+                                <button type="button" className="cancel-button" onClick={() => setShowPopup(false)}>
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="confirm-delete-button"
+                                    onClick={() => {
+                                        deleteClass(classId)
+                                            .then(() => {
+                                                notyf.success("Class deleted successfully.");
+
+                                                // collapse the details panel
+                                                setClassId(null);
+
+                                                setUpdates((prev) => prev + 1);
+                                                setShowPopup(false);
+                                            })
+                                            .catch((error) => {
+                                                console.log(error);
+                                                notyf.error("Sorry, an error occurred while deleting the class.");
+                                            });
+                                    }}
+                                >
+                                    Delete Class
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
             <div className="panel-details-description">
                 <div className="panel-titles">Description</div>

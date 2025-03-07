@@ -1,23 +1,34 @@
 .panel-edit-class {
     margin-bottom: 20px;
+    display: flex;
+    gap: 8px;
 }
 
 .edit-class-button {
-    display: flex; 
-    flex-direction: row; 
-    align-items: center; 
+    width: fit-content;
     padding: 0.5rem 1rem;
-    text-decoration: none;
     border-radius: 8px;
-    border: 1px solid var(--primary-blue);
+    border: 1px solid #bcbcbc;
     background: #FFF;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
 .edit-class-button:hover {
     cursor: pointer;
-    background: var(--button-blue);
+    background: #fafafa;
+}
+
+.delete-class-button {
+    width: fit-content;
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    background-color: #952018;
+}
+
+.delete-class-button:hover {
+    cursor: pointer;
+    background-color: #6f1913;
 }
 
 .panel-details-description {

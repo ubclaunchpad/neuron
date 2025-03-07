@@ -185,6 +185,7 @@ function Classes() {
         classId={selectedClassId}
         classList={completeClassData}
         updates={updates}
+        setUpdates={setUpdates}
         setClassId={setSelectedClassId}
         navigate={navigate}
       > 

@@ -14,6 +14,7 @@ function DetailsPanel({
   classId,
   classList,
   updates,
+  setUpdates,
   setClassId,
   navigate,
   children,
@@ -162,6 +163,8 @@ function DetailsPanel({
               panelInfo={panelInfo}
               renderInstructorInfo={renderInstructorInfo}
               navigate={navigate}
+              setUpdates={setUpdates}
+              setClassId={setClassId}
             /> :
             <VolunteerDetailsPanel
               classId={classId}

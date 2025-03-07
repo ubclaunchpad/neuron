@@ -50,6 +50,9 @@ const addClass = (classData) =>
 const updateClass = (class_id, classData) =>
   api.put("/classes/" + class_id, classData)
 
+const deleteClass = (class_id) => 
+  api.delete("/classes/" + class_id);
+
 const updateSchedules = (class_id, schedules) =>
   api.put("/schedules/" + class_id, schedules)
 
@@ -75,6 +78,7 @@ export {
   getAllClassSchedules, 
   addClass,
   updateClass,
+  deleteClass,
   addSchedules,
   deleteSchedules,
   updateSchedules,

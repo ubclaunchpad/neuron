@@ -142,6 +142,17 @@ export default class UserModel {
         }
    }
 
+   async updateUserPassword(user_id: string, password: string, transaction?: PoolConnection): Promise<ResultSetHeader> {
+        const connection = transaction ?? connectionPool;
+
+        const query = `UPDATE users SET password = ? WHERE user_id = ?`;
+        const values = [password, user_id];
+
+        const [results, _] = await connection.query<ResultSetHeader>(query, values);
+
+        return results
+    }
+
     async getAllVolunteerUsers(): Promise<UserDB[]> {
         const query = `SELECT * FROM users WHERE role = 'volunteer'`;
         const [results, _] = await connectionPool.query<UserDB[]>(query);

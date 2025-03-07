@@ -1,0 +1,251 @@
+@import '../../styles.css';
+
+
+.search-bar-container {
+     width: auto;
+     margin: 0 32px;
+     padding: 12px 20px;
+     height: fit-content;
+     border: 1px solid var(--grey);
+     border-radius: 8px;
+     box-shadow: 0px 4px 16px 0px var(--light-grey);
+}
+
+.search-bar-container > button {
+     width: 20px;
+     height: 20px;
+     padding: 0px;
+     margin: 0;
+     display: block;
+     border-radius: 0px;
+     border: none;
+     background-color: transparent;
+}
+.search-bar-container > button > img:hover {
+     transform: scale(1.2);
+}
+
+.search-bar-container > button:hover {
+     cursor: pointer;
+}
+
+.search-bar-container > button > img {
+     width: 20px;
+     height: 20px;
+     margin: 0px;
+     display: block;
+     padding: 0;
+}
+
+.search-bar-container > input {
+     height: 20px;
+     margin: 0px;
+     border: none;
+     border-radius: 0px;
+}
+
+.unv-users-container {
+     margin: 16px 32px;
+     box-shadow: 0px 4px 16px 0px var(--light-grey);
+     border: 1px solid var(--grey);
+     border-radius: 8px;
+     padding: 20px;
+     display: flex;
+     flex-direction: column;
+     gap: 12px;
+}
+
+.unv-users-container > p {
+     text-align: center;
+}
+
+.unv-user-card {
+     border: 1px solid var(--grey);
+     border-radius: 8px;
+     padding: 16px;
+     display: flex;
+     gap: 10px;
+}
+.unv-user-card > button:hover {
+     filter: brightness(0.9);
+     cursor: pointer;
+}
+
+.unv-user-card > .button-verify {
+     background: var(--primary-blue);
+     padding: 12px;
+     border: none;
+     border-radius: 8px;
+     margin-right: 0px;
+     margin-left: auto;
+}
+
+.unv-user-card > .button-verify > div {
+     color: var(--white);
+     display: inline-block;
+     font-family: var(--primary-font);
+     font-weight: 400;
+     font-size: 16px;
+     height: 16px;
+}
+
+.unv-user-card > .button-deny {
+     background: var(--white);
+     padding: 12px;
+     border: 1px solid var(--red);
+     border-radius: 8px;
+     margin: 0px;
+}
+
+.unv-user-card > .button-deny > div {
+     color: var(--red);
+     display: inline-block;
+     font-family: var(--primary-font);
+     font-weight: 400;
+     font-size: 16px;
+     height: 16px;
+}
+
+.unv-user-card > button > img {
+     background: transparent;
+     height: 16px;
+     width: 16px;
+     margin-right: 8px;
+}
+
+.unv-user-card > div > .unv-user-card-name {
+     font-family: var(--primary-font);
+     font-weight: 400;
+     font-size: 16px;
+     height: 21.6px;
+     color: var(--dark);
+}
+.unv-user-card > div {
+     display: flex;
+     flex-direction: column;
+     justify-content: space-between;
+}
+
+.unv-user-card > div > .unv-user-card-email {
+     font-family: var(--primary-font);
+     font-weight: 400;
+     font-size: 12px;
+     height: 16.2px;
+     color: var(--dark-grey);
+}
+
+.modal-title {
+     font-family: var(--font-secondary);
+     font-size: 20px;
+     font-weight: var(--semi-bold);
+}
+
+.initial-required-text {
+     margin: 28px 0;
+     display: flex;
+     flex-direction: column;
+     gap: 4px;
+}
+
+.initial-required-text > div {
+     font-family: var(--primary-font);
+     font-weight: 400;
+     font-size: 16px;
+     line-height: 135%;
+     letter-spacing: 0%;
+}
+
+.initial-required-text > input {
+     padding: 12px 16px;
+     height: 46px;
+     border: 1px solid var(--grey);
+}
+
+.initial-required-text > div > span {
+     font-style: italic;
+     color: var(--dark-grey);
+}
+
+.verify-account-btn {
+     color: var(--white);
+     background-color: var(--button-blue);
+     width: 100%;
+     height: 40px;
+     border-radius: 8px;
+     padding: 12px 16px;
+     text-align: center;
+     font-size: 16px;
+     border: none;
+}
+
+.deny-account-btn {
+     color: var(--white);
+     background-color: var(--red);
+     width: 100%;
+     height: 40px;
+     border-radius: 8px;
+     padding: 12px 16px;
+     text-align: center;
+     font-size: 16px;
+     border: none;
+}
+
+.modal-content {
+     padding: 32px;
+}
+
+.is-confirming .modal-content {
+     display: none;
+}
+
+.verify-account-btn:hover, .deny-account-btn:hover {
+     filter: brightness(0.9);
+     cursor: pointer;
+}
+
+.invalid-initial-warning {
+     font-family: var(--primary-font);
+     font-weight: 400;
+     font-size: 16px;
+     letter-spacing: 0%;
+     color: var(--red);
+     display: flex;
+     align-items: center;
+     flex-direction: row;
+     gap: 5px;
+}
+
+.invalid-initial-warning > img {
+     width: 16px;
+     height: 16px;
+     display: block;
+}
+
+.confirm-content {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+}
+
+.confirm-content > img {
+     width: 30%;
+     height: auto;
+}
+
+.confirm-content > div {
+     margin: 28px 0;
+     display: flex;
+     flex-direction: column;
+     gap: 5px;
+}
+
+.confirm-content > div > div {
+     width: 100%;
+     text-align: center;
+}
+
+.confirm-content > div > h2 {
+     width: 100%;
+     text-align: center;
+     margin: 0px;
+}

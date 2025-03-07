@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { getClassById } from "../../api/classesPageService";
 import email from "../../assets/email.png";
 import button_icon_close from "../../assets/images/button-icons/x-icon.svg";
+import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
+import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import { useAuth } from "../../contexts/authContext";
 import { SHIFT_TYPES } from "../../data/constants";
 import AdminDetailsPanel from "../AdminDetailsPanel"
@@ -113,6 +115,24 @@ function DetailsPanel({
     );
   };
 
+  const handleToPrev = () => {
+      if (!classList || !classId) return;
+      const currentIndex = classList.findIndex((c) => c.class_id === classId);
+      if (currentIndex > 0) {
+          const prevClass = classList[currentIndex - 1];
+          setClassId(prevClass.class_id);
+      }
+  };
+
+  const handleToNext = () => {
+      if (!classList || !classId) return;
+      const currentIndex = classList.findIndex((c) => c.class_id === classId);
+      if (currentIndex < classList.length - 1) {
+          const nextClass = classList[currentIndex + 1];
+          setClassId(nextClass.class_id);
+      }
+  };
+
   return (
     <>
       <div
@@ -178,6 +198,22 @@ function DetailsPanel({
               renderInstructorInfo={renderInstructorInfo}
             />
           }
+          <div className="button-icons">
+            <button className="panel-button-icon" onClick={handleToPrev}>
+                <img
+                alt="Previous"
+                src={button_icon_prev}
+                style={{ width: 16, height: 16 }}
+                />
+            </button>
+            <button className="panel-button-icon" onClick={handleToNext}>
+                <img
+                alt="Next"
+                src={button_icon_next}
+                style={{ width: 16, height: 16 }}
+                />
+            </button>
+          </div>
         </div>
       </div>
     </>

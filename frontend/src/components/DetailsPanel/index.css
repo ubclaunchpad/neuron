@@ -19,6 +19,7 @@
 
 .panel-content {
      padding-top: 50px;
+     padding-bottom: 30px;
 }
 
 .panel-header {
@@ -177,4 +178,24 @@
      display: flex;
      flex-direction: column;
      gap: 8px;
+}
+
+.button-icons {
+     display: flex;
+     flex-direction: row;
+     gap: 4px;
+     width: fit-content;
+     margin-left: auto;
+     margin-right: 36px;
+}
+
+.panel-button-icon {
+     padding: 0px;
+     background-color: transparent;
+     border: none;
+     cursor: pointer;
+}
+
+.panel-button-icon:hover {
+     filter:brightness(0.6);
 }

@@ -45,7 +45,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     doCheckAuth();
-    console.log(isVolunteer)
   }, []);
 
   const login = async (credentials) => {
@@ -64,6 +63,9 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.clear("neuronAuthToken");
     setIsAuthenticated(false);
+    setIsAdmin(false);
+    setIsVolunteer(false);
+    setUser(undefined);
   };
 
   const updateUser = updatedUser => setUser(updatedUser);

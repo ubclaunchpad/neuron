@@ -6,7 +6,7 @@
 }
 
 label {
-    margin-bottom: 0.2vw;
+    margin-bottom: 0.3vw;
     font-weight: light;
     font-size: 1vw;
 }
@@ -34,8 +34,18 @@ input.error {
     cursor: pointer;
 }
 
+.hint {
+    margin-left: 5px;
+    font-style: italic;
+    font-size: 0.9vw;
+    color: var(--dark-grey);
+}
+
 .error-message {
     color: var(--error-red);
-    font-size: 1vw;
+    font-size: 0.9vw;
     margin-top: 0.4vw;
+    display: flex;
+    align-items: center;
+    gap: 3px;
 }

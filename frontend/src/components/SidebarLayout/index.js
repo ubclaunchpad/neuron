@@ -22,15 +22,19 @@ function SidebarLayout() {
 
   useEffect(() => {
     if (!sidebarRef.current) return;
-
+  
+    let prevWidth;
     const observer = new ResizeObserver((entries) => {
       for (let entry of entries) {
         const width = entry.contentRect.width;
-        document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
+        if (prevWidth !== width) {
+          document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
+          prevWidth = width;
+        }
       }
     });
     observer.observe(sidebarRef.current);
-
+  
     return () => observer.disconnect();
   }, [sidebarRef]);
 

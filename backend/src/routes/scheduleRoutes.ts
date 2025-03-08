@@ -40,7 +40,8 @@ export const ScheduleRoutes: RouteDefinition = {
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
                         body('*.frequency').isIn(Object.values(Frequency)),
                         body('*.volunteer_ids').isArray({ min: 0 }),
-                        body('*.volunteer_ids.*').isUUID('4')
+                        body('*.volunteer_ids.*').isUUID('4'),
+                        body('*.fk_instructor_id').isUUID('4'),
                     ],
                     action: addSchedulesToClass
                 },
@@ -55,7 +56,8 @@ export const ScheduleRoutes: RouteDefinition = {
                         body('*.end_time').isTime({ hourFormat: 'hour24' }),
                         body('*.frequency').isIn(Object.values(Frequency)),
                         body('*.volunteer_ids').isArray({ min: 0 }).optional(),
-                        body('*.volunteer_ids.*').isUUID('4')
+                        body('*.volunteer_ids.*').isUUID('4'),
+                        body('*.fk_instructor_id').isUUID('4').optional(),
                     ],
                     action: updateSchedulesForClass
                 },

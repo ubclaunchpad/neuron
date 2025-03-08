@@ -32,14 +32,7 @@ export default class ClassesModel {
 
      async getClassById(class_id: number): Promise<any> {
           const query = `  
-               SELECT 
-                    c.*, 
-                    i.l_name AS instructor_l_name,
-                    i.f_name AS instructor_f_name,
-                    i.email AS instructor_email
-               FROM class c
-               LEFT JOIN instructors i ON c.fk_instructor_id = i.instructor_id
-               WHERE c.class_id = ?
+               SELECT * FROM class WHERE class_id = ?
           `;
           const values = [class_id];
 
@@ -67,11 +60,11 @@ export default class ClassesModel {
                await transaction.beginTransaction();
 
                const query = `INSERT INTO class 
-                         (fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+                         (class_name, instructions, zoom_link, start_date, end_date, category, subcategory)
+                         VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-               const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = newClass;
-               const values = [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory];
+               const { class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = newClass;
+               const values = [class_name, instructions, zoom_link, start_date, end_date, category, subcategory];
 
                const [results, _] = await transaction.query<ResultSetHeader>(query, values);
                const classId = results.insertId;

@@ -23,7 +23,6 @@ export interface ClassDB extends RowDataPacket {
   'class_name': string;
   'end_date': string;
   'fk_image_id'?: string | null;
-  'fk_instructor_id': string;
   'instructions'?: string | null;
   'start_date': string;
   'subcategory'?: string | null;
@@ -57,6 +56,7 @@ export interface ScheduleDB extends RowDataPacket {
   'frequency': string;
   'schedule_id'?: number;
   'start_time': string;
+  'fk_instructor_id'?: string;
 }
 export interface ShiftCoverageRequestDB extends RowDataPacket {
   'covered_by'?: string | null;

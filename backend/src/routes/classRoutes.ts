@@ -16,7 +16,6 @@ export const ClassRoutes: RouteDefinition = {
             path: '/',
             method: 'post',
             validation: [
-                body('fk_instructor_id').isUUID('4'),
                 body('class_name').isString(),
                 body('instructions').isString().optional(),
                 body('zoom_link').isURL().optional(),
@@ -30,7 +29,8 @@ export const ClassRoutes: RouteDefinition = {
                 body('schedules.*.end_time').isTime({ hourFormat: 'hour24' }),
                 body('schedules.*.frequency').isIn(Object.values(Frequency)),
                 body('schedules.*.volunteer_ids').isArray({ min: 0 }).optional(),
-                body('schedules.*.volunteer_ids.*').isUUID('4')
+                body('schedules.*.volunteer_ids.*').isUUID('4'),
+                body('schedules.*.fk_instructor_id').isUUID('4').optional(),
             ],
             action: addClass
         },
@@ -57,7 +57,6 @@ export const ClassRoutes: RouteDefinition = {
                     path: '/',
                     method: 'put',
                     validation: [
-                        body('fk_instructor_id').isUUID('4').optional(),
                         body('class_name').isString().optional(),
                         body('instructions').isString().optional(),
                         body('zoom_link').isURL().optional(),

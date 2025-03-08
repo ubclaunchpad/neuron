@@ -66,13 +66,14 @@ export default class ScheduleModel {
         const valuesClause1 = scheduleItems
             .map(() => '(?)')
             .join(", ");
-        const query1 = `INSERT INTO schedule (fk_class_id, day, start_time, end_time, frequency) VALUES ${valuesClause1}`;
+        const query1 = `INSERT INTO schedule (fk_class_id, day, start_time, end_time, frequency, fk_instructor_id) VALUES ${valuesClause1}`;
         const values1 = scheduleItems.map((schedule) => [
             classId,
             schedule.day,
             schedule.start_time,
             schedule.end_time,
-            schedule.frequency
+            schedule.frequency,
+            schedule.fk_instructor_id
         ]);
         
         const [results1, _] = await transaction.query<ResultSetHeader>(query1, values1);
@@ -91,6 +92,7 @@ export default class ScheduleModel {
                 start_time: schedule.start_time,
                 end_time: schedule.end_time,
                 frequency: schedule.frequency,
+                fk_instructor_id: schedule.fk_instructor_id,
                 volunteer_ids: schedule.volunteer_ids
             }
         });
@@ -211,7 +213,8 @@ export default class ScheduleModel {
                 day,
                 TIME_FORMAT(start_time, '%H:%i') AS start_time,
                 TIME_FORMAT(end_time, '%H:%i') AS end_time,
-                frequency 
+                frequency,
+                fk_instructor_id
             FROM schedule 
             WHERE schedule_id IN (?)
         `;
@@ -229,7 +232,8 @@ export default class ScheduleModel {
                 (scheduleInDb.day != schedule.day ||
                 formatTime(scheduleInDb.start_time) != formatTime(schedule.start_time) ||
                 formatTime(scheduleInDb.end_time) != formatTime(schedule.end_time) ||
-                scheduleInDb.frequency != schedule.frequency);
+                scheduleInDb.frequency != schedule.frequency ||
+                scheduleInDb.fk_instructor_id != schedule.fk_instructor_id);
         })
     }
 
@@ -443,7 +447,8 @@ export default class ScheduleModel {
                     day,
                     TIME_FORMAT(start_time, '%H:%i') AS start_time,
                     TIME_FORMAT(end_time, '%H:%i') AS end_time,
-                    frequency
+                    frequency,
+                    fk_instructor_id
                 FROM schedule 
                 WHERE schedule_id = ?
             `;
@@ -506,6 +511,7 @@ export default class ScheduleModel {
         let startTimeCase = '';
         let endTimeCase = '';
         let frequencyCase = '';
+        let instructorCase = '';
         const scheduleIds: any[] = [];
 
         // build the CASE statements for each field and collect the schedule_ids
@@ -515,6 +521,7 @@ export default class ScheduleModel {
             startTimeCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.start_time}' `;
             endTimeCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.end_time}' `;
             frequencyCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.frequency}' `;
+            instructorCase += `WHEN schedule_id = ${schedule.schedule_id} THEN ${schedule.instructor}' `;
         });
 
         const query = `
@@ -531,7 +538,10 @@ export default class ScheduleModel {
                     ELSE end_time END,
                 frequency = CASE
                     ${frequencyCase}
-                    ELSE frequency END
+                    ELSE frequency END,
+                fk_instructor_id = CASE
+                    ${instructorCase}
+                    ELSE fk_instructor_id END
             WHERE schedule_id IN (?)
         `;
         const values = [scheduleIds];

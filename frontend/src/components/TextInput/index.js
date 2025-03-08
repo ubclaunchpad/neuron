@@ -1,10 +1,12 @@
 import "./index.css";
 import { useRef, useState } from "react";
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 const TextInput = ({
     type,
     placeholder,
     label,
+    hint = "",
     name,
     value,
     handleChange,
@@ -17,7 +19,7 @@ const TextInput = ({
 
     return (
         <div className="inputWithLabel">
-            <label>{label}</label>
+            <label>{label}<span className="hint">{hint}</span></label>
             {type !== "password" && (
                 <>
                     <input
@@ -30,7 +32,7 @@ const TextInput = ({
                         className={errors[name] && touched[name] && "error"}
                     />
                     {errors[name] && touched[name] && (
-                        <div className="error-message">{errors[name]}</div>
+                        <div className="error-message"><ErrorOutlineIcon fontSize="small" /> {errors[name]}</div>
                     )}
                 </>
             )}

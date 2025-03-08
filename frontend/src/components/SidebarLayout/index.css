@@ -18,15 +18,17 @@ body {
   min-height: 100vh;
   background: radial-gradient(circle at bottom left, #9bd6fd 5%, #c3e6ff 15%, #F0FAFF 100%);
   border-right: 2px solid var(--grey);
-  transition: width 0.3s;
+  transition: width 0.3s ease-in-out;
 }
 
 .content-container {
   flex-grow: 1;
   background-color: var(--white);
   max-height: 100vh;
-  overflow-y: hidden;
+  overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .volunteer-dash {
@@ -59,6 +61,7 @@ body {
   padding: 0 15px;
   padding-top: 5px;
   padding-bottom: 30px;
+  height: 90px;
 }
 
 .nav-item {
@@ -104,9 +107,7 @@ body {
 }
 
 .navbar.collapsed {
-  padding-top: 15px;
   width: 70px;
-  /* Adjust width as needed */
 }
 
 .nav-profile-card-container {

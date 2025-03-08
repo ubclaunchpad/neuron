@@ -10,6 +10,7 @@
      display: flex;
      justify-content: center;
      align-items: center;
+     z-index: 2;
 }
    
 .modal-content {
@@ -19,13 +20,21 @@
      position: relative;
      height: 90vh;
 }
+
+.modal-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     font-family: var(--font-secondary);
+}
+
+.modal-header h2 {
+     font-weight: 600;
+}
    
 .close-button {
-     position: absolute;
-     top: 32px;
-     right: 32px;
-     width: 20px;
-     height: 20px;
+     width: 16px;
+     height: 16px;
      border: none;
      background: transparent;
      cursor: pointer;

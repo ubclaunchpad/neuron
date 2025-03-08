@@ -52,11 +52,11 @@ const AddEditInstructorModal = ({ closeEvent, instructor_data = null }) => {
                     validationSchema={AddInstructorSchema}
                     onSubmit={(values, { setSubmitting }) => {
                         const initials = cleanInitials(values.initials);
-                        if (initials !== user.f_name[0].toUpperCase() + "" + user.l_name[0].toUpperCase()) {
-                            notyf.error("Initials don't match your admin initials.");
-                            setSubmitting(false);
-                            return;
-                        }
+                        // if (initials !== user.f_name[0].toUpperCase() + "" + user.l_name[0].toUpperCase()) {
+                        //     notyf.error("Initials don't match your admin initials.");
+                        //     setSubmitting(false);
+                        //     return;
+                        // }
                         const instructor_name = values.instructor_name.split(" ");
                         const data = {
                             f_name: instructor_name[0],

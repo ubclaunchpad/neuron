@@ -32,46 +32,42 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                 validationSchema={VerificationSchema}
                 onSubmit={(values, { setSubmitting }) => {
                     const initials = cleanInitials(values.initials);
-                    if (initials === user.f_name[0].toUpperCase() + "" + user.l_name[0].toUpperCase()) {
-                        if (type === 1) {
-                            deactivateVolunteer(id)
-                                .then(() => {
-                                    notyf.success("Account deactivated.");
-                                    setTimeout(() => {
-                                        window.location.reload();
-                                    }, 2000);
-                                })
-                                .catch((error) => {
-                                    notyf.error("Failed to deactivate volunteer's account.");
-                                    console.error(error);
-                                });
-                        } else if (type === 0) {
-                            verifyVolunteer(id)
-                                .then(() => {
-                                    notyf.success("Account reactivated.");
-                                    setTimeout(() => {
-                                        window.location.reload();
-                                    }, 2000);
-                                })
-                                .catch((error) => {
-                                    notyf.error("Failed to reactivate volunteer's account.");
-                                    console.error(error);
-                                });
-                        } else if (type === 2) {
-                            deleteInstructor({
-                                instructor_id: id
+                    if (type === 1) {
+                        deactivateVolunteer(id)
+                            .then(() => {
+                                notyf.success("Account deactivated.");
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 2000);
                             })
-                                .then(() => {
-                                    notyf.success("Instructor profile deleted.");
-                                    closeEvent();
-                                })
-                                .catch((error) => {
-                                    notyf.error("Failed to delete instructor profile.");
-                                    console.error(error);
-                                });
-                        }
-                    } else {
-                        notyf.error("Initials don't match your admin initials.");
+                            .catch((error) => {
+                                notyf.error("Failed to deactivate volunteer's account.");
+                                console.error(error);
+                            });
+                    } else if (type === 0) {
+                        verifyVolunteer(id)
+                            .then(() => {
+                                notyf.success("Account reactivated.");
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 2000);
+                            })
+                            .catch((error) => {
+                                notyf.error("Failed to reactivate volunteer's account.");
+                                console.error(error);
+                            });
+                    } else if (type === 2) {
+                        deleteInstructor({
+                            instructor_id: id
+                        })
+                            .then(() => {
+                                notyf.success("Instructor profile deleted.");
+                                closeEvent();
+                            })
+                            .catch((error) => {
+                                notyf.error("Failed to delete instructor profile.");
+                                console.error(error);
+                            });
                     }
                     setSubmitting(false);
                 }}>

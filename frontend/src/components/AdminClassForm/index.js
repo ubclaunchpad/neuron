@@ -445,22 +445,6 @@ function AdminClassForm({ setUpdates }) {
                         </div>
                         
                         <div className="input-row">
-                            <div className="flex-col-input description-input">
-                                <label className="class-form-label">
-                                    Description
-                                </label>
-                                <textarea
-                                    className="class-form-textarea"
-                                    name="instructions"
-                                    placeholder="Enter Description Here"
-                                    rows="6"
-                                    value={values.instructions}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    errors={errors}
-                                    touched={touched}
-                                />
-                            </div>
                             <div className="flex-col-input image-input">
                                 <label className="class-form-label">
                                     Class Image
@@ -502,6 +486,22 @@ function AdminClassForm({ setUpdates }) {
                                     />
                                     
                                 </div>
+                            </div>
+                            <div className="flex-col-input description-input">
+                                <label className="class-form-label">
+                                    Description
+                                </label>
+                                <textarea
+                                    className="class-form-textarea"
+                                    name="instructions"
+                                    placeholder="Enter Description Here"
+                                    rows="6"
+                                    value={values.instructions}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    errors={errors}
+                                    touched={touched}
+                                />
                             </div>
                         </div>
                         <div className="input-row">

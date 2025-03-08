@@ -68,6 +68,7 @@ export interface ScheduleDB extends RowDataPacket {
   'day': number;
   'end_time': string;
   'fk_class_id': number;
+  'fk_instructor_id'?: string | null;
   'frequency'?: string;
   'schedule_id'?: number;
   'start_time': string;
@@ -107,6 +108,7 @@ export interface VolunteerDB extends RowDataPacket {
   'active'?: any;
   'bio'?: string | null;
   'city'?: string | null;
+  'existing'?: number;
   'fk_user_id'?: string | null;
   'p_name'?: string | null;
   'p_time_ctmt'?: number;

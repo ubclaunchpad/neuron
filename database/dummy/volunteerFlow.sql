@@ -134,24 +134,24 @@ INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, durat
 INSERT INTO shifts (shift_id, fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in) VALUES
 (17, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1', 103, '2025-01-20', 1, false);
 
--- Create entry in shift_coverage_request table
-INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+-- Create entry in absence_request table
+INSERT INTO absence_request (request_id, fk_shift_id, covered_by)
 VALUES (2, 2, NULL);
-INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+INSERT INTO absence_request (request_id, fk_shift_id, covered_by)
 VALUES (4, 4, NULL);
-INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+INSERT INTO absence_request (request_id, fk_shift_id, covered_by)
 VALUES (5, 5, NULL);
-INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+INSERT INTO absence_request (request_id, fk_shift_id, covered_by)
 VALUES (6, 6, NULL);
-INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+INSERT INTO absence_request (request_id, fk_shift_id, covered_by)
 VALUES (7, 1, 'd98889b0-2f2e-4172-b753-14cdccdd359c');
-INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+INSERT INTO absence_request (request_id, fk_shift_id, covered_by)
 VALUES (8, 10, null);
-INSERT INTO shift_coverage_request (request_id, fk_shift_id, covered_by)
+INSERT INTO absence_request (request_id, fk_shift_id, covered_by)
 VALUES (9, 17, null);
 
 -- pending coverage table
-INSERT INTO pending_shift_coverage (request_id, pending_volunteer)
+INSERT INTO coverage_request (request_id, volunteer_id)
 VALUES (2, 'faff8f98-bc68-4fab-a4ca-151b09fc40c1');
-INSERT INTO pending_shift_coverage (request_id, pending_volunteer)
+INSERT INTO coverage_request (request_id, volunteer_id)
 VALUES (6, 'd98889b0-2f2e-4172-b753-14cdccdd359c');

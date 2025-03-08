@@ -14,23 +14,23 @@ const getShift = async (shift_id) => {
 };
 
 /**
- * Retrieves shifts from the backend with optional filtering.
+ * Retrieves shifts from the database with optional filtering.
  *
  * @param {string} [params.volunteer_id] - The ID of the volunteer.
  *   - When omitted or when `type` is not 'coverage', returns only shifts assigned to the volunteer.
  *   - When `type` is 'coverage', excludes shifts assigned to the volunteer (i.e., returns shifts available for coverage).
  * @param {Date} [params.before] - Upper bound for the shift date. Shifts with a shift_date less than or equal to this date are included.
  * @param {Date} [params.after] - Lower bound for the shift date. Shifts with a shift_date greater than or equal to this date are included.
- * @param {'coverage'|'requesting'} [params.type] - The type of filtering for coverage requests:
- *   - `'coverage'`: Only include shifts with an associated coverage request and exclude shifts belonging to the specified volunteer.
- *   - `'requesting'`: Only include shifts with an associated coverage request (without excluding the volunteer).
- * @param {'open'|'pending'|'resolved'} [params.status] - The status for coverage requests either as a single string or string array.
- * This is only checked when params.type is coverage or requesting, and includes all statuses when not set:
+ * @param {'coverage'|'absence'} [params.type] - The type of filtering for coverage requests:
+ *   - `'coverage'`: Only include shifts with an associated absence request not belonging to the specified volunteer.
+ *   - `'absence'`: Only include shifts with an associated absence request belonging to the volunteer.
+ * @param {'absence-pending'|'open'|'coverage-pending'|'resolved' or []} [params.status] - The status for coverage requests either as a single string  or string array.
+ * This is only checked when params.type is coverage or requesting, and includes all when not set:
  *   - `'open'`: Include open coverage shifts
  *   - `'pending'`: Include coverage shifts which have a pending coverage request associated
  *   - `'resolved'`: Include coverage shifts which have been resolved.
- * 
- * @returns shift details such as date, time, class, duration, and coverage status.
+ *
+ * @returns {Promise<any[]>} A promise that resolves to an array of shift records.
  */
 const getShifts = async (params) => {
   try {

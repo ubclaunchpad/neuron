@@ -9,11 +9,11 @@ import {
     getShift,
     getShifts,
     getShiftsByVolunteerIdAndMonth,
+    requestAbsence,
     requestCoverShift,
-    requestShiftCoverage,
     updateShift,
-    withdrawCoverShift,
-    withdrawShiftCoverage
+    withdrawAbsenceRequest,
+    withdrawCoverShift
 } from '../controllers/shiftController.js';
 
 export const ShiftRoutes: RouteDefinition = {
@@ -91,11 +91,11 @@ export const ShiftRoutes: RouteDefinition = {
         },
         {
             path: '/shift-coverage-request',
-            method: 'put',
+            method: 'post',
             validation: [
                 body('shift_id').isInt({ min: 0 }),
             ],
-            action: requestShiftCoverage
+            action: requestAbsence
         },
         {
             path: '/shift-coverage-request',
@@ -104,7 +104,7 @@ export const ShiftRoutes: RouteDefinition = {
                 body('request_id').isInt({ min: 0 }),
                 body('shift_id').isInt({ min: 0 }),
             ],
-            action: withdrawShiftCoverage
+            action: withdrawAbsenceRequest
         },
         {
             path: '/:shift_id',

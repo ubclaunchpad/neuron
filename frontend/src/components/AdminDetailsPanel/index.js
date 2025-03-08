@@ -7,7 +7,6 @@ import notyf from "../../utils/notyf";
 function AdminDetailsPanel({ 
     classId, 
     panelInfo, 
-    renderInstructorInfo, 
     navigate, 
     setUpdates, 
     setClassId 
@@ -78,7 +77,6 @@ function AdminDetailsPanel({
                             key={index}
                             panelInfo={panelInfo} 
                             schedule={schedule}
-                            renderInstructorInfo={renderInstructorInfo} 
                         />
                     )) :
                     (

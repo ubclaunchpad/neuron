@@ -29,10 +29,15 @@ export default class ScheduleModel {
         const query = `
             SELECT 
                 s.*,
+                i.f_name as instructor_f_name,
+                i.l_name as instructor_l_name,
+                i.email as instructor_email,
                 GROUP_CONCAT(vs.fk_volunteer_id) as volunteer_ids
             FROM schedule s 
             LEFT JOIN volunteer_schedule vs
-            ON s.schedule_id = vs.fk_schedule_id
+                ON s.schedule_id = vs.fk_schedule_id
+            LEFT JOIN instructors i
+                ON s.fk_instructor_id = i.instructor_id
             WHERE fk_class_id = ?
             AND s.active = true
             GROUP BY s.schedule_id`;
@@ -521,7 +526,7 @@ export default class ScheduleModel {
             startTimeCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.start_time}' `;
             endTimeCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.end_time}' `;
             frequencyCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.frequency}' `;
-            instructorCase += `WHEN schedule_id = ${schedule.schedule_id} THEN ${schedule.instructor}' `;
+            instructorCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.fk_instructor_id}' `;
         });
 
         const query = `

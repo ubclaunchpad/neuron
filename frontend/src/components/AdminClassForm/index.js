@@ -53,7 +53,6 @@ const frequencies = [
 ]
 
 const classFields = [
-    "fk_instructor_id",
     "class_name",
     "instructions",
     "zoom_link",
@@ -66,7 +65,6 @@ const classFields = [
 const inputPrompt = "Please fill out this field.";
 
 const ClassSchema = Yup.object().shape({
-    fk_instructor_id: Yup.string().required(inputPrompt),
     class_name: Yup.string().required(inputPrompt),
     instructions: Yup.string().optional(),
     zoom_link: Yup.string().url('Invalid URL format').required(inputPrompt),
@@ -100,6 +98,7 @@ const ClassSchema = Yup.object().shape({
                     }),
                 frequency: Yup.string()
                     .oneOf(frequencies.map(f => f.value)),
+                fk_instructor_id: Yup.string().uuid(),
                 volunteer_ids: Yup.array()
                     .of(Yup.string().uuid())
             })
@@ -113,7 +112,6 @@ function AdminClassForm({ setUpdates }) {
     const [loading, setLoading] = useState(true);
     const [mode, setMode] = useState(Mode.CREATE);
     const [classData, setClassData] = useState({
-        fk_instructor_id: '',
         class_name: '',
         category: null,
         subcategory: '',
@@ -548,70 +546,6 @@ function AdminClassForm({ setUpdates }) {
                                 )}
                             </div>
                         </div>
-                        <div className="input-row">
-                            <div className="error-wrapper">
-                                <div className="flex-input">
-                                    <label className="class-form-label">
-                                        Instructor
-                                    </label>
-                                    <Select
-                                        className="select"
-                                        defaultValue={instructors.find(i => i.value === values.fk_instructor_id) || { label: 'Select Instructor', value: null }}
-                                        styles={{
-                                            control: () => ({
-                                                width: 'stretch',
-                                                padding: '12px 32px 12px 16px',
-                                                borderRadius: '8px',
-                                                border: '1px solid #cccccc',
-                                                cursor: 'pointer'
-                                            }),
-                                            valueContainer: (styles) => ({
-                                                ...styles,
-                                                padding: '0px'
-                                            }),
-                                            input: (styles) => ({
-                                                ...styles,
-                                                margin: '0px 2px',
-                                                padding: '0px',
-                                            }),
-                                            
-                                        }}
-                                        options={instructors}
-                                        isSearchable={true}
-                                        components={
-                                            {
-                                                DropdownIndicator: () => 
-                                                    <CgSelect className="select-icon"/>,
-                                                IndicatorSeparator: () => null,
-                                                Option: (props) => {
-                                                    const {innerProps, innerRef} = props;
-                                                    return (
-                                                        <div {...innerProps} ref={innerRef} className="select-item">
-                                                            {props.data.label}
-                                                        </div>
-                                                    )
-                                                },
-                                                Menu: (props) => {
-                                                    const {innerProps, innerRef} = props;
-                                                    return (
-                                                        <div {...innerProps} ref={innerRef}
-                                                        className="select-menu">
-                                                            {props.children}
-                                                        </div>
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        onChange={(e) => {
-                                            setFieldValue(`fk_instructor_id`, e.value);
-                                        }}
-                                    />
-                                </div>
-                                {errors["fk_instructor_id"] && touched["fk_instructor_id"] && (
-                                    <div className="invalid-message">{errors["fk_instructor_id"]}</div>
-                                )}
-                            </div>
-                        </div>
                     </div>
                     <FieldArray
                         name="schedules"    
@@ -741,6 +675,67 @@ function AdminClassForm({ setUpdates }) {
                                                 {timeErrorExists(errors, touched, index) && (
                                                     <div className="invalid-message">{errors.schedules[index]["end_time"]}</div>
                                                 )}
+                                            </div>
+                                        </div>
+                                        <div className="input-row">
+                                            <div className="error-wrapper">
+                                                <div className="flex-input">
+                                                    <label className="class-form-label">
+                                                        Instructor
+                                                    </label>
+                                                    <Select
+                                                        className="select"
+                                                        defaultValue={instructors.find(i => i.value === schedule.fk_instructor_id) || { label: 'Select Instructor', value: null }}
+                                                        styles={{
+                                                            control: () => ({
+                                                                width: 'stretch',
+                                                                padding: '12px 32px 12px 16px',
+                                                                borderRadius: '8px',
+                                                                border: '1px solid #cccccc',
+                                                                cursor: 'pointer'
+                                                            }),
+                                                            valueContainer: (styles) => ({
+                                                                ...styles,
+                                                                padding: '0px'
+                                                            }),
+                                                            input: (styles) => ({
+                                                                ...styles,
+                                                                margin: '0px 2px',
+                                                                padding: '0px',
+                                                            }),
+                                                            
+                                                        }}
+                                                        options={instructors}
+                                                        isSearchable={true}
+                                                        components={
+                                                            {
+                                                                DropdownIndicator: () => 
+                                                                    <CgSelect className="select-icon"/>,
+                                                                IndicatorSeparator: () => null,
+                                                                Option: (props) => {
+                                                                    const {innerProps, innerRef} = props;
+                                                                    return (
+                                                                        <div {...innerProps} ref={innerRef} className="select-item">
+                                                                            {props.data.label}
+                                                                        </div>
+                                                                    )
+                                                                },
+                                                                Menu: (props) => {
+                                                                    const {innerProps, innerRef} = props;
+                                                                    return (
+                                                                        <div {...innerProps} ref={innerRef}
+                                                                        className="select-menu">
+                                                                            {props.children}
+                                                                        </div>
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                        onChange={(e) => {
+                                                            setFieldValue(`schedules[${index}].fk_instructor_id`, e.value);
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="input-row">

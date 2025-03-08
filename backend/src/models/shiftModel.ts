@@ -28,7 +28,7 @@ export default class ShiftModel {
                JOIN 
                     neuron.class cl ON sc.fk_class_id = cl.class_id
                JOIN
-                    neuron.instructors intrs on intrs.instructor_id = cl.fk_instructor_id
+                    neuron.instructors intrs on intrs.instructor_id = sc.fk_instructor_id
                WHERE 
                     s.fk_volunteer_id = ?
                     AND s.fk_schedule_id = ?
@@ -248,8 +248,10 @@ export default class ShiftModel {
           })
           valuesClause2 = valuesClause2.slice(0, -1);
 
-          const query2 = `INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES ${valuesClause2}`;
-          await transaction.query<ResultSetHeader>(query2, values2);
+          if (valuesClause2.length > 0) {
+               const query2 = `INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES ${valuesClause2}`;
+               await transaction.query<ResultSetHeader>(query2, values2);
+          }
      }
 
      async getSchedulesWithHistoricShifts(schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {

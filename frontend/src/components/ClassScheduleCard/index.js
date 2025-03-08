@@ -68,7 +68,9 @@ function ClassScheduleCard({ panelInfo, schedule, renderInstructorInfo }) {
                 <div className="panel-details-shift-row">
                     <div className="panel-titles">Instructor</div>
                     <div className="panel-details-shift-right">
-                        {renderInstructorInfo()}
+                        {schedule.instructor_f_name && schedule.instructor_l_name ? 
+                            schedule.instructor_f_name + " " + schedule.instructor_l_name : 
+                            "No instructor assigned."}
                     </div>
                 </div>
                 <div className="panel-details-shift-row">

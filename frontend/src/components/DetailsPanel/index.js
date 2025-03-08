@@ -181,7 +181,6 @@ function DetailsPanel({
             <AdminDetailsPanel
               classId={classId}
               panelInfo={panelInfo}
-              renderInstructorInfo={renderInstructorInfo}
               navigate={navigate}
               setUpdates={setUpdates}
               setClassId={setClassId}

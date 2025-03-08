@@ -77,8 +77,7 @@ export default class ShiftModel {
           type?: ShiftQueryType,
           status?: ShiftStatus | ShiftStatus[],
           before?: Date,
-          after?: Date, 
-          approved?: boolean
+          after?: Date
      } = {}): Promise<any[]> {
           // Construct subquery
           let subQuery = queryBuilder

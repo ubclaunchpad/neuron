@@ -7,6 +7,7 @@ import nav_item_dash from "../../assets/nav-item-dash.png";
 import nav_item_management from "../../assets/nav-item-management.png";
 import nav_item_schedule from "../../assets/nav-item-sched.png";
 import nav_item_settings from "../../assets/nav-item-settings.png";
+import nav_item_member from "../../assets/nav-item-member.png";
 import sidebar_toggle from "../../assets/sidebar-toggle.png";
 import "./index.css";
 
@@ -22,15 +23,19 @@ function SidebarLayout() {
 
   useEffect(() => {
     if (!sidebarRef.current) return;
-
+  
+    let prevWidth;
     const observer = new ResizeObserver((entries) => {
       for (let entry of entries) {
         const width = entry.contentRect.width;
-        document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
+        if (prevWidth !== width) {
+          document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
+          prevWidth = width;
+        }
       }
     });
     observer.observe(sidebarRef.current);
-
+  
     return () => observer.disconnect();
   }, [sidebarRef]);
 

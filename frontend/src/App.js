@@ -17,6 +17,7 @@ import Schedule from "./pages/Schedule";
 import Settings from "./pages/Settings";
 import Signup from "./pages/Signup";
 import VolunteerProfile from "./pages/VolunteerProfile";
+import AdminVolunteerProfile from "./pages/AdminVolunterProfile";
 
 function App() {
   const { isAuthenticated, isAdmin, isVolunteer, logout } = useAuth();
@@ -66,6 +67,7 @@ function App() {
               <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>
                 <Route path="management" element={<MemberManagement />} />
                 <Route path="requests" element={<CoverageRequests />} />
+                <Route path="volunteer-profile" element={<AdminVolunteerProfile />} />
               </Route>
             </Route>
           </Route>

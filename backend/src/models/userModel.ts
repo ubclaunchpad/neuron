@@ -3,15 +3,13 @@ import { PoolConnection } from "mysql2/promise";
 import sharp from "sharp";
 import { UserDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
-import ImageModel from "./imageModel.js";
-
-const imageModel = new ImageModel();
+import { imageModel } from "../config/models.js";
 
 export default class UserModel {
     async getUserById(user_id: string, password: boolean = false): Promise<UserDB> {
         const query = `
         SELECT 
-            ${password ? "*" : "user_id, fk_image_id, email, role, created_at"}
+            ${password ? "*" : "user_id, f_name, l_name, fk_image_id, email, role, created_at"}
         FROM users
         WHERE user_id = ?`;
         const values = [user_id];
@@ -31,7 +29,7 @@ export default class UserModel {
     async getUserByEmail(email: string, password: boolean = false): Promise<UserDB> {
         const query = `
         SELECT 
-            ${password ? "*" : "user_id, fk_image_id, email, role, created_at"}
+            ${password ? "*" : "user_id, f_name, l_name, fk_image_id email, role, created_at"}
         FROM users
         WHERE email = ?`;
         const values = [email];
@@ -142,9 +140,9 @@ export default class UserModel {
             await transaction.rollback();
             throw error;
         }
-    }
+   }
 
-    async updateUserPassword(user_id: string, password: string, transaction?: PoolConnection): Promise<ResultSetHeader> {
+   async updateUserPassword(user_id: string, password: string, transaction?: PoolConnection): Promise<ResultSetHeader> {
         const connection = transaction ?? connectionPool;
 
         const query = `UPDATE users SET password = ? WHERE user_id = ?`;
@@ -153,5 +151,12 @@ export default class UserModel {
         const [results, _] = await connection.query<ResultSetHeader>(query, values);
 
         return results
+    }
+
+    async getAllVolunteerUsers(): Promise<UserDB[]> {
+        const query = `SELECT * FROM users WHERE role = 'volunteer'`;
+        const [results, _] = await connectionPool.query<UserDB[]>(query);
+        
+        return results;
     }
 }

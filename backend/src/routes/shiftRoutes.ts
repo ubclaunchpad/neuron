@@ -1,19 +1,19 @@
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
+import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import { RouteDefinition } from "../common/types.js";
 import { isAuthorized } from '../config/authCheck.js';
 import {
     addShift,
+    checkInShift,
     deleteShift,
-    updateShift,
-    getShiftInfo,
-    getShiftsByVolunteerId,
-    getShiftsByDate,
+    getShift,
+    getShifts,
     getShiftsByVolunteerIdAndMonth,
-    checkInShift, 
-    requestCoverShift, 
-    withdrawCoverShift, 
-    requestShiftCoverage, 
-    withdrawShiftCoverage
+    requestAbsence,
+    requestCoverShift,
+    updateShift,
+    withdrawAbsenceRequest,
+    withdrawCoverShift
 } from '../controllers/shiftController.js';
 
 export const ShiftRoutes: RouteDefinition = {
@@ -34,31 +34,18 @@ export const ShiftRoutes: RouteDefinition = {
             action: addShift
         },
         {
-            path: '/info',
-            method: 'post',
-            validation: [
-                body('fk_volunteer_id').isUUID('4'),
-                body('shift_date').isDate({ format: 'YYYY-MM-DD' }),
-                body('fk_schedule_id').isInt({ min: 0 }),
-            ],
-            action: getShiftInfo
-        },
-        {
-            path: '/:volunteer_id',
+            path: '/',
             method: 'get',
             validation: [
-                param('volunteer_id').isUUID('4')
+                query('volunteer').isUUID('4').optional(),
+                query('before').isDate().optional(),
+                query('after').isDate().optional(),
+                query('type').isIn(ShiftQueryType.values).optional(),
+                query('status').isIn(ShiftStatus.values).optional()
             ],
-            action: getShiftsByVolunteerId
+            action: getShifts
         },
-        {
-            path: '/on-date',
-            method: 'post',
-            validation: [
-                body('shift_date').isDate({ format: 'YYYY-MM-DD' })
-            ],
-            action: getShiftsByDate
-        },
+
         {
             // Retrieves all shifts viewable to a specific volunteer in a given month and year.
             // -- The shifts include:
@@ -74,6 +61,8 @@ export const ShiftRoutes: RouteDefinition = {
             ],
             action: getShiftsByVolunteerIdAndMonth
         },
+        //
+
         {
             path: '/check-in/:shift_id',
             method: 'patch',
@@ -102,11 +91,11 @@ export const ShiftRoutes: RouteDefinition = {
         },
         {
             path: '/shift-coverage-request',
-            method: 'put',
+            method: 'post',
             validation: [
                 body('shift_id').isInt({ min: 0 }),
             ],
-            action: requestShiftCoverage
+            action: requestAbsence
         },
         {
             path: '/shift-coverage-request',
@@ -115,7 +104,7 @@ export const ShiftRoutes: RouteDefinition = {
                 body('request_id').isInt({ min: 0 }),
                 body('shift_id').isInt({ min: 0 }),
             ],
-            action: withdrawShiftCoverage
+            action: withdrawAbsenceRequest
         },
         {
             path: '/:shift_id',
@@ -123,6 +112,11 @@ export const ShiftRoutes: RouteDefinition = {
                 param('shift_id').isInt({ min: 0 })
             ],
             children: [
+                {
+                    path: '/',
+                    method: 'get',
+                    action: getShift
+                },
                 {
                     path: '/',
                     method: 'put',

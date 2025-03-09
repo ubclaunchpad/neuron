@@ -20,6 +20,7 @@ import Schedule from "./pages/Schedule";
 import Settings from "./pages/Settings";
 import Signup from "./pages/Signup";
 import VolunteerProfile from "./pages/VolunteerProfile";
+import AdminVolunteerProfile from "./pages/AdminVolunterProfile";
 
 // import VolunteerDash from "./pages/VolunteerDash";
 // import VolunteerForgotPassword from "./pages/VolunteerForgotPassword";
@@ -62,7 +63,7 @@ function App() {
             <Route element={<SidebarLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="classes" element={<Classes />} />
-              <Route path="schedule" element={<AdminSchedule  />} />
+              <Route path="schedule" element={<Schedule/>} />
               <Route path="settings" element={<Settings />} />
 
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
@@ -73,6 +74,7 @@ function App() {
               <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>
                 <Route path="management" element={<MemberManagement />} />
                 <Route path="requests" element={<CoverageRequests />} />
+                <Route path="volunteer-profile" element={<AdminVolunteerProfile />} />
               </Route>
             </Route>
           </Route>

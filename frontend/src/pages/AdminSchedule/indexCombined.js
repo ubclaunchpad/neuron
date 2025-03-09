@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWeekView } from "react-weekview";
-import { getVolunteerShiftsForMonth, getAllShiftsByMonth } from "../../api/shiftService";
+import { getVolunteerShiftsForMonth, getAllShiftsByMonth, getShifts } from "../../api/shiftService";
 import CalendarView from "../../components/CalendarView";
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
@@ -13,7 +13,7 @@ import { getButtonConfig } from "../../utils/buttonConfig";
 import "./index.css";
 
 function Schedule() {
-    const { user, isAdmin, isVolunteer} = useAuth();
+    const { user, isAdmin} = useAuth();
     const currentDate = dayjs();
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [shifts, setShifts] = useState([]);
@@ -29,22 +29,23 @@ function Schedule() {
     const scheduleContainerRef = useRef(null);
 
     const fetchShifts = useCallback(async () => {
-        let body = null;
+        let params = null;
         if (isAdmin) {
-            body = {
+            params = {
               shiftDate: selectedDate.format("YYYY-MM-DD"),
           }
         } else {
-            body = {
-              volunteer_id: user?.volunteer.volunteer_id,
-              shiftDate: selectedDate.format("YYYY-MM-DD"),
+            params = {
+              volunteer_id: user.volunteer_id,
+              after: selectedDate.startOf('month').toDate(),
+              before: selectedDate.endOf('month').toDate()
           }
        }
         let response = null
         if (isAdmin) {
-          response = await getAllShiftsByMonth(body); // Fetch all shifts for the month
+          response = await getShifts(params); // Fetch all shifts for the month
         } else {
-          response = await getVolunteerShiftsForMonth(body);
+          response = await getShifts(params);
         }
         
 

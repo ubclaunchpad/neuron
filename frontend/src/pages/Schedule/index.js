@@ -1,19 +1,19 @@
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWeekView } from "react-weekview";
-import { getVolunteerShiftsForMonth } from "../../api/shiftService";
+import { getShifts } from "../../api/shiftService";
 import CalendarView from "../../components/CalendarView";
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { useAuth } from "../../contexts/authContext";
-import { COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
+import { ADMIN_SHIFT_TYPES, COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
 import { getButtonConfig } from "../../utils/buttonConfig";
 import "./index.css";
 
 function Schedule() {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const currentDate = dayjs();
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [shifts, setShifts] = useState([]);
@@ -29,15 +29,37 @@ function Schedule() {
     const scheduleContainerRef = useRef(null);
 
     const fetchShifts = useCallback(async () => {
-        const body = {
-            volunteer_id: user?.volunteer.volunteer_id,
-            shiftDate: selectedDate.format("YYYY-MM-DD"),
-        };
-        const response = await getVolunteerShiftsForMonth(body);
+      const params = {
+          // volunteer is passed in only for volunteers, not admins
+          volunteer: isAdmin ? null : user?.volunteer?.volunteer_id,
+          before: selectedDate.endOf('month').format("YYYY-MM-DD"),
+          after: selectedDate.startOf('month').format("YYYY-MM-DD"),
+        }
+
+      const response = await getShifts(params);
+
+      // Process shifts to determine shift_type based on absence_request ; case conditions for Admin accounts
+      const processedShifts = response.map(shift => {
+        let shift_type;
+      
+        if (!shift.absence_request || shift.absence_request.status === null) {
+          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_COVERED : SHIFT_TYPES.MY_SHIFTS;
+        } 
+        else if (shift.absence_request.status === 'absence-pending' || shift.absence_request.status === 'resolved') {
+          // The shift has an absence request, seeing if it is pending or resolved
+          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE : SHIFT_TYPES.MY_COVERAGE_REQUESTS;
+        } 
+        else if (shift.absence_request.status === 'open') {
+          // Shift asesence request is approved and is now open
+          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE : SHIFT_TYPES.COVERAGE;
+        }
+      
+        return { ...shift, shift_type };
+      });
 
         // Filter out duplicated shifts and past coverage requests
         const shiftMap = new Map();
-        response.forEach((shift) => {
+        processedShifts.forEach((shift) => {
             const existingShift = shiftMap.get(shift.shift_id);
             const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
             const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
@@ -65,7 +87,7 @@ function Schedule() {
             return shift.shift_type === filter;
         });
         setShifts(filteredShifts);
-    }, [selectedDate, filter, user?.volunteer.volunteer_id]);
+    }, [selectedDate, filter, user]);
 
     // Fetch shifts for the selected date and filter
     useEffect(() => {
@@ -92,7 +114,7 @@ function Schedule() {
         const pastShift = currentDate.isAfter(shiftEnd);
 
         const buttons = [];
-        const buttonConfig = getButtonConfig(shift, handleShiftUpdate, user?.volunteer.volunteer_id);
+        const buttonConfig = getButtonConfig(shift, handleShiftUpdate, isAdmin? null : user?.volunteer.volunteer_id);
         const primaryButton = buttonConfig[shift.shift_type] || buttonConfig[SHIFT_TYPES.DEFAULT];
 
         buttons.push(primaryButton);
@@ -126,7 +148,7 @@ function Schedule() {
     // Update details panel when a shift is selected
     const handleShiftSelection = (classData) => {
         console.log("Selected shift: ", classData);
-        setSelectedClassId(classData._class_id);
+        setSelectedClassId(classData.class_id);
         setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
         console.log(selectedShiftButtons);
         setShiftDetails(classData);
@@ -192,7 +214,8 @@ function Schedule() {
                                                         shift={shift}
                                                         shiftType={shift.shift_type}
                                                         onShiftSelect={handleShiftSelection}
-                                                        buttonConfig={getButtonConfig(shift, handleShiftUpdate, user?.volunteer.volunteer_id)}
+                                                        // getButtonConfig sets volunteerID to null for Admin accounts
+                                                        buttonConfig={getButtonConfig(shift, handleShiftUpdate, isAdmin ? null : user?.volunteer.volunteer_id)}
                                                     />
                                                 ))}
                                             </div>

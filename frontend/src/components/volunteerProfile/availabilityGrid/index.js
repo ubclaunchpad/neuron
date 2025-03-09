@@ -6,7 +6,7 @@ import cancel_icon from "../../../assets/cancel-icon.png";
 import check_icon from "../../../assets/check-icon.png";
 import edit_icon from "../../../assets/edit-icon.png";
 
-const AvailabilityGrid = ({ volunteerId }) => {
+const AvailabilityGrid = ({ volunteerId, type = "" }) => {
   const [unsavedTimes, setUnsavedTimes] = useState([]);
   const [savedTimes, setSavedTimes] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -98,15 +98,17 @@ const AvailabilityGrid = ({ volunteerId }) => {
     <div className="availability-grid-container">
       <div className="availability-grid-content">
         <div className="availability-header">
-          <h2 className="availability-title my-profile-title">My Availability</h2>
-          {isEditing ? (
-            <div className="edit-options"> 
-              <img className="icon check-icon" src={check_icon} alt="Check" hidden={!isEditing} onClick={handleCheck}/>          
-              <img className="icon cancel-icon" src={cancel_icon} alt="Cancel" hidden={!isEditing} onClick={handleCancel}/>
-          </div>
-          ) : (
-            <img className="icon edit-icon" src={edit_icon} alt="Edit" hidden={isEditing} onClick={handleEdit}/>
+          <h2 className="availability-title">My Availability</h2>
+          {type !== "admin" && <>
+            {isEditing ? (
+              <div className="edit-options"> 
+                <img className="icon check-icon" src={check_icon} alt="Check" hidden={!isEditing} onClick={handleCheck}/>          
+                <img className="icon cancel-icon" src={cancel_icon} alt="Cancel" hidden={!isEditing} onClick={handleCancel}/>
+              </div>
+            ) : (
+              <img className="icon edit-icon" src={edit_icon} alt="Edit" hidden={isEditing} onClick={handleEdit}/>
           )}
+          </>}
         </div>
         <div 
           className="availability-grid"

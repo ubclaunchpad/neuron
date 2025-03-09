@@ -21,4 +21,11 @@ export const COVERAGE_STATUSES = {
     OPEN: 'open',
 };
 
+export const SHIFT_STATUS = {
+    ASBENCE_PENDING: 'absence_pending',
+    OPEN: 'open',
+    COVERAGE_PENDING: 'coverage_pending',
+    RESOLVED: 'resolved',
+}
+
 export const appColors = {};

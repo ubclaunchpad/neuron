@@ -121,7 +121,7 @@ function Classes() {
 
   const scrollToSection = (category) => {
     const sectionRef = sectionRefs.current[category];
-    const catalog = document.querySelector(".class-catalog");
+    const catalog = document.querySelector(".classes-page");
   
     if (sectionRef && sectionRef.current && catalog) {
       const catalogTop = catalog.getBoundingClientRect().top;

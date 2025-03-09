@@ -2,6 +2,7 @@ import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import sharp from 'sharp';
 import { ClassDB, ScheduleDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
+import { wrapIfNotArray } from '../utils/generalUtils.js';
 import ImageModel from './imageModel.js';
 import ScheduleModel from './scheduleModel.js';
 
@@ -10,9 +11,10 @@ const scheduleModel = new ScheduleModel();
 
 export default class ClassesModel {
      async getClasses(): Promise<ClassDB[]> {
-          const query = `SELECT * FROM class`;
+          const query = "SELECT * FROM class";
 
           const [results, _] = await connectionPool.query<ClassDB[]>(query, []);
+
           return results;
      }
 
@@ -30,27 +32,42 @@ export default class ClassesModel {
           return results;
      }
 
-     async getClassById(class_id: number): Promise<any> {
+     async getClassesByIds(class_ids: number | number[], schedules: boolean = false): Promise<any> {
+          const single = !Array.isArray(class_ids);
+          class_ids = wrapIfNotArray(class_ids);
+
+          if (class_ids.length === 0) {
+               return [];
+          }
+
           const query = `  
-               SELECT * FROM class WHERE class_id = ?
+               SELECT *
+               FROM class
+               WHERE class_id IN (?);
           `;
-          const values = [class_id];
+          const values = [class_ids];
 
           const [results, _] = await connectionPool.query<ClassDB[]>(query, values);
-          if (results.length === 0) {
+          if (single && results.length === 0) {
                throw {
                     status: 400,
-                    message: `No class found under the given ID: ${class_id}`,
+                    message: `No class found under the given ID: ${class_ids[0]}`,
                };
           }
 
-          const result = results[0];
-          const schedules = await scheduleModel.getActiveSchedulesForClass(class_id);
+          let classes = results;
+          if (schedules) {
+               const classPromises = results.map(classDB => 
+                    scheduleModel.getActiveSchedulesForClass(classDB.class_id as number)
+                         .then(schedules => ({
+                              ...classDB,
+                              schedules: schedules
+                         }))
+               );
+               classes = await Promise.all(classPromises);
+          }
 
-          return {
-               ...result,
-               schedules: schedules
-          };
+          return single ? classes[0] : classes;
      }
 
      async addClass(newClass: ClassDB, schedules?: ScheduleDB[]): Promise<any> {
@@ -75,8 +92,8 @@ export default class ClassesModel {
                }
                
                const finalResults = {
-                    class_id: classId,
                     ...newClass,
+                    class_id: classId,
                     schedules: results2
                };
 

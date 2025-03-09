@@ -1,10 +1,9 @@
-import "./index.css";
 import dayjs from "dayjs";
 import React, { useEffect, useState } from "react";
 import { getClassById } from "../../api/classesPageService";
-import button_icon_close from "../../assets/images/button-icons/x-icon.svg";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
+import button_icon_close from "../../assets/images/button-icons/x-icon.svg";
 import { useAuth } from "../../contexts/authContext";
 import AdminDetailsPanel from "../AdminDetailsPanel"
 import "./index.css";
@@ -21,6 +20,7 @@ function DetailsPanel({
   dynamicShiftButtons = [],
   shiftDetails,
 }) {
+  const openPanelWidth = '448px'
   const [panelWidth, setPanelWidth] = useState("0px");
   const [panelInfo, setPanelInfo] = useState(null);
   const [myClass, setMyClass] = useState(false);
@@ -33,7 +33,7 @@ function DetailsPanel({
       getClassById(classId)
         .then((data) => {
           setPanelInfo(data);
-          setPanelWidth("35vw");
+          setPanelWidth(openPanelWidth);
           myClassCheck(data);
         })
         .catch((error) => {
@@ -58,6 +58,7 @@ function DetailsPanel({
   };
 
   const formatTime = (time) => {
+    if (time === null || time === undefined || time === "") return "";
     const [hour, minute] = time.split(":").map(Number);
     const period = hour >= 12 ? "PM" : "AM";
     const formattedHour = hour % 12 || 12;
@@ -124,11 +125,13 @@ function DetailsPanel({
     <>
       <div
         className="main-container"
-        style={{ width: `calc(100% - ${panelWidth})` }}
+        style={{ width: `calc(100% - ${panelWidth})`, overflow: "hidden" }}
       >
-        {children}
+        <div className="panel-content">
+          {children}
+        </div>
       </div>
-      <div className="panel-container" style={{ width: panelWidth }}>
+      <div className="panel-container" style={{ width: openPanelWidth, right: `calc(-${openPanelWidth} + ${panelWidth})` }}>
         <div className="panel-content">
           <div className="panel-header">
             {shiftDetails ? (

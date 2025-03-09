@@ -2,31 +2,34 @@ import { NextFunction, Request, Response } from "express";
 import { ValidationChain } from "express-validator";
 import { UserDB } from "./databaseModels.js";
 
-export type AuthenticatedUserRequest = Request & {
-    user?: UserDB
+export type AuthenticatedRequest = Request & {
+    user: UserDB
 }
 
-// Interface for the decoded data from the JWT
+/**
+ * Interface for the decoded data from a JWT
+ */
 export interface DecodedJwtPayload {
     user_id: string;
 }
 
 export type HTTPMethod = 'get' | 'post' | 'put' | 'delete' | 'patch' | 'options' | 'head';
 
-export interface RouteGroup {
+export interface RouteGroup<T extends Request = Request> {
     path: string;
     validation?: ValidationChain[];
-    middleware?: Array<(req: Request, res: Response, next: NextFunction) => void>;
+    middleware?: Array<(req: T, res: Response, next: NextFunction) => void>;
     children: RouteDefinition[];
 }
 
-export interface RouteEndpoint {
+export interface RouteEndpoint<T extends Request = Request> {
     path: string;
     validation?: ValidationChain[];
-    middleware?: Array<(req: Request, res: Response, next: NextFunction) => void>;
+    middleware?: Array<(req: T, res: Response, next: NextFunction) => void>;
     method: HTTPMethod;
-    action: (req: Request, res: Response, next: NextFunction) => Promise<any>;
+    action: (req: T, res: Response, next: NextFunction) => Promise<any>;
 }
 
-export type RouteDefinition = RouteGroup | RouteEndpoint;
+/* We know the correct Request subtype, this prevents ts from getting mad */
+export type RouteDefinition = RouteGroup<any> | RouteEndpoint<any>;
 

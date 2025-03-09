@@ -1,16 +1,15 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { ClassDB } from '../common/databaseModels.js';
-import ClassesModel from '../models/classModel.js';
+import { AuthenticatedRequest } from '../common/types.js';
+import { classesModel } from '../config/models.js';
 
-const classesModel = new ClassesModel();
-
-async function getAllClasses(req: Request, res: Response) {
+async function getAllClasses(req: AuthenticatedRequest, res: Response) {
 	const classes = await classesModel.getClasses();
 
 	res.status(200).json(classes);
 }
 
-async function addClass(req: Request, res: Response) {
+async function addClass(req: AuthenticatedRequest, res: Response) {
 	const newClass: ClassDB = req.body;
 	const schedules = req.body.schedules;
 
@@ -19,7 +18,7 @@ async function addClass(req: Request, res: Response) {
 	res.status(200).json(result);
 }
 
-async function updateClass(req: Request, res: Response) {
+async function updateClass(req: AuthenticatedRequest, res: Response) {
 	const class_id = Number(req.params.class_id);
 	const partialClass: Partial<ClassDB> = req.body;
 
@@ -28,7 +27,7 @@ async function updateClass(req: Request, res: Response) {
 	return res.status(200).json(result);
 }
 
-async function deleteClass(req: Request, res: Response) {
+async function deleteClass(req: AuthenticatedRequest, res: Response) {
 	const class_id = Number(req.params.class_id);
 
 	const result = await classesModel.deleteClass(class_id);
@@ -36,7 +35,7 @@ async function deleteClass(req: Request, res: Response) {
 	return res.status(200).json(result);
 }
 
-async function getClassesByDay(req: Request, res: Response) {
+async function getClassesByDay(req: AuthenticatedRequest, res: Response) {
 	const { day } = req.params;
 
 	const classes = await classesModel.getClassesByDay(day);
@@ -45,15 +44,15 @@ async function getClassesByDay(req: Request, res: Response) {
 }
 
 // get class info for a specific shift ID
-async function getClassById(req: Request, res: Response) {
+async function getClassById(req: AuthenticatedRequest, res: Response) {
 	const class_id = Number(req.params.class_id);
 
-	const class_info = await classesModel.getClassById(class_id);
+	const class_info = await classesModel.getClassesByIds(class_id, true);
 
 	res.status(200).json(class_info);
 }
 
-async function uploadClassImage(req: Request, res: Response) {
+async function uploadClassImage(req: AuthenticatedRequest, res: Response) {
 	const class_id = Number(req.params.class_id);
 	const image = req.file!.buffer;
 

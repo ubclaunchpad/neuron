@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { formatImageUrl } from '../../api/imageService';
 import AvailabilityGrid from "../../components/volunteerProfile/availabilityGrid";
 import ChangePasswordCard from "../../components/volunteerProfile/changePasswordCard";
+import ClassPreferencesCardMP from "../../components/volunteerProfile/classPreferencesCard";
 import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
 import { useAuth } from '../../contexts/authContext';
 import "./index.css";
@@ -42,6 +43,9 @@ function VolunteerProfile() {
           <div className="column-2">
             <div className="password-card">
               <ChangePasswordCard volunteer={user.volunteer} />
+            </div>
+            <div >
+              <ClassPreferencesCardMP volunteer={user.volunteer} />
             </div>
           </div>
         </div>

@@ -1,13 +1,11 @@
 import { Response } from "express";
-import VolunteerModel from "../models/volunteerModel.js";
-
 import { VolunteerDB } from "../common/databaseModels.js";
-import { AuthenticatedUserRequest } from "../common/types.js";
+import { AuthenticatedRequest } from "../common/types.js";
+import { volunteerModel } from "../config/models.js";
 
-const volunteerModel = new VolunteerModel();
 
 async function getUnverifiedVolunteers(
-    req: AuthenticatedUserRequest,
+    req: AuthenticatedRequest,
     res: Response
 ) {
     const unverifiedVolunteers = await volunteerModel.getUnverifiedVolunteers();
@@ -18,7 +16,7 @@ async function getUnverifiedVolunteers(
 }
 
 async function verifyVolunteer(
-    req: AuthenticatedUserRequest,
+    req: AuthenticatedRequest,
     res: Response
 ): Promise<any> {
     // Get the token from the request parameters
@@ -34,4 +32,21 @@ async function verifyVolunteer(
     });
 }
 
-export { getUnverifiedVolunteers, verifyVolunteer };
+async function deactivateVolunteer(
+    req: AuthenticatedRequest,
+    res: Response
+): Promise<any> {
+    // Get the token from the request parameters
+    const volunteer_id = req.body.volunteer_id;
+
+    // Update the user's active status
+    await volunteerModel.updateVolunteer(volunteer_id, {
+        active: false,
+    } as VolunteerDB);
+
+    return res.status(200).json({
+        message: "User deactivated successfully",
+    });
+}
+
+export { getUnverifiedVolunteers, verifyVolunteer, deactivateVolunteer };

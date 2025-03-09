@@ -1,18 +1,22 @@
 import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
-import { 
-    addSchedulesToClass, 
-    assignVolunteersToSchedule, 
-    deleteOrSoftDeleteSchedules, 
+import { isAuthorized } from '../config/authCheck.js';
+import {
+    addSchedulesToClass,
+    assignVolunteersToSchedule,
+    deleteOrSoftDeleteSchedules,
     deleteSchedulesFromClass,
-    getAllSchedules, 
-    getActiveSchedulesForClass, 
+    getActiveSchedulesForClass,
+    getAllSchedules,
     updateSchedulesForClass
 } from '../controllers/scheduleController.js';
 import { Frequency } from '../common/interfaces.js';
 
 export const ScheduleRoutes: RouteDefinition = {
     path: '/schedules',
+    middleware: [
+        isAuthorized,
+    ],
     children: [
         {
             path: '/',

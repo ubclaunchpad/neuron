@@ -750,7 +750,7 @@ function AdminClassForm({ setUpdates }) {
                                                         <div className="volunteers-row">
                                                             {schedule.volunteer_ids.map((id, volunteerIndex) => {
                                                                 const result = volunteers.find((volunteer) => volunteer.value.volunteer_id === id);
-                                                                const volunteer = result.value;
+                                                                const volunteer = result?.value;
                                                                 return volunteer && (
                                                                     <div key={volunteerIndex} className="volunteer-item">
                                                                         <span>

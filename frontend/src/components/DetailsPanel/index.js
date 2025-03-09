@@ -127,7 +127,7 @@ function DetailsPanel({
         className="main-container"
         style={{ width: `calc(100% - ${panelWidth})`, overflow: "hidden" }}
       >
-        <div className="panel-content">
+        <div className="main-content">
           {children}
         </div>
       </div>

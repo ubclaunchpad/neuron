@@ -5,6 +5,12 @@
      transition: 0.2s width ease-in-out;
 }
 
+.main-content {
+     min-width: min(calc(100dvw - var(--sidebar-width)), 854px);
+     width: 100%;
+     max-width: 100%;
+}
+
 .panel-container {
      position: fixed;
      height: 100vh;
@@ -19,13 +25,7 @@
 
 .panel-content {
      padding-top: 50px;
-     padding-bottom: 30px;
-}
-
-.panel-content {
-     min-width: min(calc(100dvw - var(--sidebar-width)), 854px);
-     width: 100%;
-     max-width: 100%;
+     padding-bottom: 30px; 
 }
 
 .panel-header {
@@ -58,6 +58,7 @@
 }
 
 .panel-header-class-name {
+     width: 80%;
      font-family: 'Montserrat';
      font-weight: 600;
      font-size: 20px;

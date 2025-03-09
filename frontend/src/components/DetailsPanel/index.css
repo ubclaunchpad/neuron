@@ -100,7 +100,7 @@
 .panel-details-shift {
      display: flex;
      flex-direction: column;
-     gap: 12px;
+     gap: 20px;
 }
 
 .panel-details-shift-row {
@@ -174,10 +174,10 @@
      background: var(--button-blue);
 }
 
-.class-volunteers {
+.class-members {
      display: flex;
      flex-direction: column;
-     gap: 8px;
+     gap: 10px;
 }
 
 .button-icons {

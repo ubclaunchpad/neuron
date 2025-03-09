@@ -5,7 +5,7 @@ import { COVERAGE_STATUSES } from "../../data/constants";
 import ProfileImg from "../ImgFallback";
 import "./index.css";
 
-function VolunteerDetailsPanel({ classId, classList, setClassId, dynamicShiftButtons = [], shiftDetails, panelInfo, myClass, classTaken, renderInstructorInfo }) {
+function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelInfo, myClass, classTaken }) {
 
     const renderVolunteers = () => {
         const volunteers = panelInfo?.schedules.flatMap(
@@ -15,11 +15,11 @@ function VolunteerDetailsPanel({ classId, classList, setClassId, dynamicShiftBut
         // same volunteer may be assigned to multiple schedules within a class
         const uniqueIds = [],
             uniqueVolunteers = [];
-        volunteers?.forEach((volunteer) => {
-            if (!uniqueIds.includes(volunteer.volunteer_id)) {
-            uniqueIds.push(volunteer.volunteer_id);
-            uniqueVolunteers.push(volunteer);
-            }
+            volunteers?.forEach((volunteer) => {
+                if (!uniqueIds.includes(volunteer.volunteer_id)) {
+                    uniqueIds.push(volunteer.volunteer_id);
+                    uniqueVolunteers.push(volunteer);
+                }
         });
 
         if (!uniqueVolunteers || uniqueVolunteers.length === 0) {
@@ -27,7 +27,7 @@ function VolunteerDetailsPanel({ classId, classList, setClassId, dynamicShiftBut
         }
 
         return (
-            <div className="class-volunteers">
+            <div className="class-members">
             {uniqueVolunteers.map((volunteer, idx) => {
                 const name = volunteer.p_name ?? `${volunteer.f_name} ${volunteer.l_name}`
                 
@@ -52,6 +52,47 @@ function VolunteerDetailsPanel({ classId, classList, setClassId, dynamicShiftBut
             </div>
         );
     };
+
+    const renderInstructorInfo = () => {
+        const instructors = panelInfo?.schedules.map((schedule) => ({
+            id: schedule.fk_instructor_id,
+            f_name: schedule.instructor_f_name,
+            l_name: schedule.instructor_l_name,
+            email: schedule.instructor_email
+        }));
+
+        // same volunteer may be assigned to multiple schedules within a class
+        const uniqueIds = [],
+            uniqueInstructors = [];
+            instructors?.forEach((instructor) => {
+                if (!uniqueIds.includes(instructor.id)) {
+                    uniqueIds.push(instructor.id);
+                    uniqueInstructors.push(instructor);
+                }
+        });
+
+        if (!uniqueInstructors || uniqueInstructors.length === 0) {
+            return <>No instructors for this class</>;
+        }
+
+        return (
+            <div className="class-members">
+                {uniqueInstructors.map((instructor, idx) => (
+                    <div className="instructor-item" key={idx}>
+                        <div>{instructor.f_name + " " + instructor.l_name}</div>
+                        <button
+                            className="instructor-email"
+                            onClick={() => {
+                            window.open(`mailto:${instructor.email}`);
+                            }}
+                        >
+                            {instructor.email}
+                        </button>
+                    </div>
+                ))}
+            </div>
+        );
+    };    
 
     return (
         <div className="panel-details">
@@ -86,7 +127,7 @@ function VolunteerDetailsPanel({ classId, classList, setClassId, dynamicShiftBut
                     )}
                 </div>
                 <div className="panel-details-shift-row">
-                    <div className="panel-titles">Instructor</div>
+                    <div className="panel-titles">Instructors</div>
                     <div className="panel-details-shift-right">
                         {renderInstructorInfo()}
                     </div>

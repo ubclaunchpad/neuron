@@ -2,12 +2,10 @@ import "./index.css";
 import dayjs from "dayjs";
 import React, { useEffect, useState } from "react";
 import { getClassById } from "../../api/classesPageService";
-import email from "../../assets/email.png";
 import button_icon_close from "../../assets/images/button-icons/x-icon.svg";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import { useAuth } from "../../contexts/authContext";
-import { SHIFT_TYPES } from "../../data/constants";
 import AdminDetailsPanel from "../AdminDetailsPanel"
 import "./index.css";
 import VolunteerDetailsPanel from "../VolunteerDetailsPanel";
@@ -82,37 +80,26 @@ function DetailsPanel({
       "Saturday",
     ];
 
+    const frequencies = [
+      { value: "once", label: "Once" },
+      { value: "weekly", label: "Weekly" },
+      { value: "biweekly", label: "Bi-Weekly" },
+    ]
+
+    const formatFrequency = (frequency) => {
+      const item = frequencies.find((item) => item.value === frequency);
+      if (item) {
+        return item.label;
+      }
+      return frequency;
+    }
+
     return panelInfo.schedules.map((schedule, idx) => (
       <div key={idx} className="panel-titles">
-        {dow[schedule.day]}, {formatTime(schedule.start_time)} -{" "}
+        {formatFrequency(schedule.frequency)} | {dow[schedule.day]}, {formatTime(schedule.start_time)} -{" "}
         {formatTime(schedule.end_time)}
       </div>
     ));
-  };
-
-  const renderInstructorInfo = () => {
-    if (!panelInfo?.instructor_email) return;
-
-    return (
-    <>
-        {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
-          ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
-          : "No instructor available"}
-        {shiftDetails &&
-        shiftDetails.shift_type &&
-        (shiftDetails.shift_type === SHIFT_TYPES.MY_SHIFTS ||
-          shiftDetails.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) ? (
-          <button
-            className="email-icon panel-button-icon"
-            onClick={() => {
-            window.open(`mailto:${panelInfo.instructor_email}`);
-            }}
-          >
-            <img alt="Email" style={{ width: 16, height: 16 }} src={email} />
-          </button>
-        ) : null}
-      </>
-    );
   };
 
   const handleToPrev = () => {
@@ -186,15 +173,11 @@ function DetailsPanel({
               setClassId={setClassId}
             /> :
             <VolunteerDetailsPanel
-              classId={classId}
-              classList={classList}
-              setClassId={setClassId}
               dynamicShiftButtons={dynamicShiftButtons}
               shiftDetails={shiftDetails}
               panelInfo={panelInfo}
               myClass={myClass}
               classTaken={classTaken}
-              renderInstructorInfo={renderInstructorInfo}
             />
           }
           <div className="button-icons">

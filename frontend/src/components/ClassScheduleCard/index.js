@@ -12,7 +12,7 @@ function ClassScheduleCard({ panelInfo, schedule, renderInstructorInfo }) {
             }}>No volunteers assigned.</div>;
         }
         return (
-        <div className="class-volunteers">
+        <div className="class-members">
             {schedule.volunteers.map((volunteer, idx) => {
                 const name = volunteer.p_name ?? `${volunteer.f_name} ${volunteer.l_name}`
                     return (
@@ -42,7 +42,7 @@ function ClassScheduleCard({ panelInfo, schedule, renderInstructorInfo }) {
         const period = hour >= 12 ? "PM" : "AM";
         const formattedHour = hour % 12 || 12;
         return `${formattedHour}:${minute.toString().padStart(2, "0")} ${period}`;
-      };
+    };
 
     const dow = [
         "Sunday",
@@ -52,7 +52,21 @@ function ClassScheduleCard({ panelInfo, schedule, renderInstructorInfo }) {
         "Thursday",
         "Friday",
         "Saturday",
-      ];
+    ];
+
+    const frequencies = [
+        { value: "once", label: "Once" },
+        { value: "weekly", label: "Weekly" },
+        { value: "biweekly", label: "Bi-Weekly" },
+    ]
+
+    const formatFrequency = (frequency) => {
+        const item = frequencies.find((item) => item.value === frequency);
+        if (item) {
+            return item.label;
+        }
+        return frequency;
+    }
 
     return (
         <div className="class-schedule-card">
@@ -61,7 +75,7 @@ function ClassScheduleCard({ panelInfo, schedule, renderInstructorInfo }) {
                     {dow[schedule.day]}
                 </div>
                 <div className="panel-titles">
-                    {formatTime(schedule.start_time)} -{" "}{formatTime(schedule.end_time)}
+                    {`${formatFrequency(schedule.frequency)} | ${formatTime(schedule.start_time)} - ${formatTime(schedule.end_time)}`}
                 </div>
             </div>
             <div className="panel-details-shift">

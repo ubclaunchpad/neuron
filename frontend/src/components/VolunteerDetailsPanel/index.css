@@ -121,3 +121,23 @@
      height: 1rem;
      margin-right: .5rem;
 }
+
+.instructor-item {
+     display: flex;
+     flex-direction: column;
+     gap: 2px;
+}
+
+.instructor-email {
+     color: var(--primary-blue);
+     background-color: #FFF;
+     font-size: 12px;
+     padding: 0;
+     border: none;
+     cursor: pointer;
+     text-align: left;
+}
+
+.instructor-email:hover {
+     text-decoration: underline;
+}

@@ -26,7 +26,6 @@ export interface ClassDB extends RowDataPacket {
   'class_name': string;
   'end_date': string;
   'fk_image_id'?: string | null;
-  'fk_instructor_id': string;
   'instructions'?: string | null;
   'start_date': string;
   'subcategory'?: string | null;

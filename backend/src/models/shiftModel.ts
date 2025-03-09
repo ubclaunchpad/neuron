@@ -1,6 +1,6 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import { ScheduleDB, ShiftDB } from '../common/databaseModels.js';
-import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
+import { Frequency, ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import connectionPool from '../config/database.js';
 import queryBuilder from '../config/queryBuilder.js';
 import { wrapIfNotArray } from '../utils/generalUtils.js';
@@ -30,7 +30,7 @@ export default class ShiftModel {
                JOIN 
                     neuron.class cl ON sc.fk_class_id = cl.class_id
                JOIN
-                    neuron.instructors i on i.instructor_id = cl.fk_instructor_id
+                    neuron.instructors i on i.instructor_id = sc.fk_instructor_id
                WHERE 
                     s.shift_id = ?       
           `;
@@ -286,7 +286,18 @@ export default class ShiftModel {
           return results;
      }
 
-     private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number): string[] {
+     private getDaysToAdd(frequency: Frequency) {
+          switch (frequency) {
+               case Frequency.weekly:
+                    return 7;
+               case Frequency.biweekly:
+                    return 14;
+               default:
+                    throw new Error("Invalid frequency.");
+          }
+     }
+
+     private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number, frequency: Frequency): string[] {
           const result: string[] = [];
 
           let start = new Date(classTimeline.start_date);
@@ -317,10 +328,17 @@ export default class ShiftModel {
                start.setDate(start.getDate() + 1);
           }
 
+          // if schedule only occurs once, then only add one date
+          if (frequency === Frequency.once) {
+               result.push(start.toISOString().split('T')[0]);
+               return result;
+          }
+
+          const daysToAdd = this.getDaysToAdd(frequency);
           // collect all occurrences of the given day until the end date
           while (start <= end) {
                result.push(start.toISOString().split('T')[0]); // store as YYYY-MM-DD
-               start.setDate(start.getDate() + 7);
+               start.setDate(start.getDate() + daysToAdd);
           }
 
           return result;
@@ -357,7 +375,7 @@ export default class ShiftModel {
                     return;
                }
 
-               const dates = this.getRecurringDates(classTimeline, schedule.start_time, schedule.day);
+               const dates = this.getRecurringDates(classTimeline, schedule.start_time, schedule.day, schedule.frequency);
                const duration = this.getDurationInMinutes(schedule.start_time, schedule.end_time);
 
                schedule.volunteer_ids.forEach((volunteer_id: any) => {
@@ -370,8 +388,10 @@ export default class ShiftModel {
           })
           valuesClause2 = valuesClause2.slice(0, -1);
 
-          const query2 = `INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES ${valuesClause2}`;
-          await transaction.query<ResultSetHeader>(query2, values2);
+          if (valuesClause2.length > 0) {
+               const query2 = `INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES ${valuesClause2}`;
+               await transaction.query<ResultSetHeader>(query2, values2);
+          }
      }
 
      async getSchedulesWithHistoricShifts(schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {

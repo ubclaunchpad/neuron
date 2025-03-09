@@ -44,4 +44,43 @@ const getClassById = (class_id) =>
       console.error(error);
     });
 
-export { getAllClasses, getClassById, getAllClassImages, getAllClassSchedules };
+const addClass = (classData) =>
+  api.post("/classes", classData)
+
+const updateClass = (class_id, classData) =>
+  api.put("/classes/" + class_id, classData)
+
+const deleteClass = (class_id) => 
+  api.delete("/classes/" + class_id);
+
+const updateSchedules = (class_id, schedules) =>
+  api.put("/schedules/" + class_id, schedules)
+
+const addSchedules = (class_id, schedules) => 
+  api.post("/schedules/" + class_id, schedules)
+
+const deleteSchedules = (class_id, schedules) =>
+  api.delete("/schedules/" + class_id + "/soft-option", {
+    data: {
+      schedule_ids: schedules,
+    }
+  })
+
+const uploadClassImage = (class_id, image) =>
+  api.put(`/classes/${class_id}/upload`, image, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+
+export { 
+  getAllClasses, 
+  getClassById, 
+  getAllClassImages, 
+  getAllClassSchedules, 
+  addClass,
+  updateClass,
+  deleteClass,
+  addSchedules,
+  deleteSchedules,
+  updateSchedules,
+  uploadClassImage
+};

@@ -45,9 +45,9 @@ export interface ImageDB extends RowDataPacket {
   'image_id': string;
 }
 export interface InstructorDB extends RowDataPacket {
+  'instructor_id'?: string;
   'email': string;
   'f_name': string;
-  'instructor_id': string;
   'l_name': string;
 }
 export interface LogDB extends RowDataPacket {

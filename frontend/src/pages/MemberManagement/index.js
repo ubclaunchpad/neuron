@@ -1,3 +1,5 @@
+import { getUnverifiedVolunteers } from "../../api/adminService";
+import UnverifiedUsers from "../../components/UnverifiedUsers";
 import { useEffect, useState } from "react";
 import { getVolunteers, getInstructors } from "../../api/adminService";
 import "./index.css";
@@ -13,6 +15,22 @@ const MemberManagement = () => {
     const [activeTab, setActiveTab] = useState("volunteers");
     const [type, setType] = useState("volunteers");
     const [showAddInstructorModal, setShowAddInstructorModal] = useState(false);
+    const [unverifiedUsers, setUnverifiedUsers] = useState(null);
+
+    async function getMemMgtData() {
+        const unverifiedUsers_ = await getUnverifiedVolunteers();
+        setUnverifiedUsers(unverifiedUsers_.volunteers);
+    }
+
+    useEffect(() => {
+        getMemMgtData();
+    }, []);
+
+    function renderNumUsers() {
+        if (!unverifiedUsers || unverifiedUsers.length === 0) return null;
+        const num = unverifiedUsers.length;
+        return (<span className="num-unv-user">{num}</span>);
+    }
 
     useEffect(() => {
         fetchData();
@@ -57,6 +75,7 @@ const MemberManagement = () => {
 
         setData(filteredData);
     }
+
     return (
         <main className="content-container">
             <div className="content-heading">
@@ -74,21 +93,27 @@ const MemberManagement = () => {
                 <button onClick={() => {
                     setActiveTab("unverified")
                 }} className={activeTab === "unverified" ? "tab active unverified" : "tab unverified"}>
-                    Unverified <div className="badge-count">2</div>
+                    Verification Requests 
+                    <div className="num-unv-user-container">
+                        {renderNumUsers()}
+                    </div>
                 </button>
             </nav>
-
-            <div className="member-search-bar">
-                <input type="search" placeholder="Search" className="member-search-input" onChange={(e) => {
-                    searchVolunteers(e.target.value);
-                }} />
-                {type === "volunteers" && (
-                    <button className="filter-button"></button>
-                )}
-                {type === "instructors" && (
-                    <button className="add-instructor-button" onClick={() => setShowAddInstructorModal(true)}><AddRoundedIcon />Add Instructor</button>
-                )}
-            </div>
+            { type === "unverified" ? null :
+                <div className="member-search-bar">
+                    <input type="search" placeholder="Search by name or email" className="member-search-input" onChange={(e) => {
+                        searchVolunteers(e.target.value);
+                    }} />
+                    {type === "volunteers" && (
+                        <button className="filter-button"></button>
+                    )}
+                    {type === "instructors" && (
+                        <button className="add-instructor-button" onClick={() => setShowAddInstructorModal(true)}>
+                            <AddRoundedIcon />Add Instructor
+                        </button>
+                    )}
+                </div>
+            }
             
             <Modal title="Add instructor" isOpen={showAddInstructorModal} onClose={() => setShowAddInstructorModal(false)} width="500px" height="fit-content">
                 <AddEditInstructorModal closeEvent={() => {
@@ -96,8 +121,11 @@ const MemberManagement = () => {
                         fetchData();
                     }} />
             </Modal>
-
+            { activeTab === "unverified" ? 
+            <UnverifiedUsers unverifiedUsers={unverifiedUsers} /> : 
             <MemberList data={data} fetchData={fetchData} type={type} />
+            }
+
         </main>
     )
 }

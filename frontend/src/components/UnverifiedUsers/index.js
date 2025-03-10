@@ -17,6 +17,7 @@ function UnverifiedUsers({ unverifiedUsers }) {
      const [searchText, setSearchText] = useState("");
      const [isVerifying, setIsVerifying] = useState(null);
      const [isConfirming, setIsConfirming] = useState(false);
+     const [modalTitle, setModalTitle] = useState("");
 
      const handleOpenModal = () => {
           setOpenModal(true);
@@ -31,6 +32,15 @@ function UnverifiedUsers({ unverifiedUsers }) {
                setItemsToRender(unverifiedUsers);
           }
      }, [searchText]);
+
+     useEffect(() => {
+          if (isVerifying == null) return;
+          setModalTitle((isVerifying ? "Verifiying" : "Denying") + " " + toBeVerified.f_name + " " + toBeVerified.l_name + "'s account");
+     }, [toBeVerified, isVerifying]);
+
+     useEffect(()=> {
+          setModalTitle("");
+     }, [isConfirming]);
 
      function renderUnvUserCard(data) {
           return (
@@ -60,13 +70,6 @@ function UnverifiedUsers({ unverifiedUsers }) {
                          <div>Deny</div>
                     </button>
                </div>
-          );
-     }
-
-     function renderTitle() {
-          if (!toBeVerified || !toBeVerified.f_name || !toBeVerified.l_name) return null;
-          return (
-               <h2 className="modal-title">{isVerifying ? "Verifiying" : "Denying"} {toBeVerified.f_name} {toBeVerified.l_name}'s account</h2>
           );
      }
 
@@ -102,7 +105,6 @@ function UnverifiedUsers({ unverifiedUsers }) {
           if (!isConfirming){
                return (
                     <>
-                         {renderTitle()}
                          {renderModalUserContent()}
                     </>
                );
@@ -124,46 +126,43 @@ function UnverifiedUsers({ unverifiedUsers }) {
      }
 
      function isInitialValid () {
-          const valid = /^[A-Z]\.?[A-Z]\.?$/.test(adminInitial);
+          const valid = /^[a-zA-Z]\.?[a-zA-Z]\.?$/.test(adminInitial);
           setInitialValid(valid);
           return valid;
      }
 
      function handleVerifyDeny() {
           if (isInitialValid()) {
+               setIsConfirming(true);
                // TODO: 
                // Logging Admin Initial
                console.log("Logging admin initial...");
                if (isVerifying){
-                    verifyVolunteer(toBeVerified.volunteer_id);
+                    verifyVolunteer({volunteer_id: toBeVerified.volunteer_id});
                } 
-               // else {
-               // TODO: 
-               // Handle deny Volunteer (delete from db, send email, etc.)
-               //      denyVolunteer(toBeVerified.volunteer_id);
-               // }
-               setIsConfirming(true);
+               else {
+                    // TODO: 
+                    // Handle deny Volunteer (delete from db, send email, etc.)
+                    //      denyVolunteer(toBeVerified.volunteer_id);
+                    console.log("Denying volunteer...");
+               }
           }
-     }
-
-     const handleSearch = () => {
-          const txt = searchText.trim().toLowerCase();
-          const filteredItems = unverifiedUsers.filter((item) => {
-               return    item.l_name.toLowerCase().includes(txt) ||
-                         item.f_name.toLowerCase().includes(txt) ||
-                         item.email.toLowerCase().includes(txt);
-          })
-          setItemsToRender(filteredItems);
      }
 
      return (
           <>
-               <div className="search-bar-container">
-                    <button className="search-bar-button" onClick={handleSearch}>
-                         <img src={search_icon}/>
-                    </button>
-                    <input className="search-bar-input" placeholder="Search by name or email" onChange={(e)=>setSearchText(e.target.value)}/>
-               </div>
+               <div className="member-search-bar">
+                    <input type="search" placeholder="Search by name or email" className="member-search-input" onChange={(e) => {
+                         setSearchText(e.target.value);
+                         const txt = e.target.value.trim().toLowerCase();
+                         const filteredItems = unverifiedUsers.filter((item) => {
+                              return    item.l_name.toLowerCase().includes(txt) ||
+                                        item.f_name.toLowerCase().includes(txt) ||
+                                        item.email.toLowerCase().includes(txt);
+                         })
+                         setItemsToRender(filteredItems);
+                    }} />
+                </div>
 
                <div className="unv-users-container">
                     {!itemsToRender ? <p>No user to verify</p> : itemsToRender.map(element => {
@@ -173,7 +172,7 @@ function UnverifiedUsers({ unverifiedUsers }) {
                     })}
                </div>
 
-               <Modal isOpen={openModal} onClose={handleCloseModal} width={"33vw"} height={"fit-content"} showCloseBtn={!isConfirming} >
+               <Modal isOpen={openModal} onClose={handleCloseModal} width={"33vw"} height={"fit-content"} showCloseBtn={!isConfirming} title={modalTitle}>
                     {renderModalContent()}
                </Modal>
           </>

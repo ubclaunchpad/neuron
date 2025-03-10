@@ -6,9 +6,6 @@ import api from "./api/api";
 import SidebarLayout from "./components/SidebarLayout";
 import { useAuth } from "./contexts/authContext";
 import Classes from "./pages/Classes";
-import VolunteerSchedule from "./pages/Schedule";
-import AdminSchedule from "./pages/AdminSchedule";
-
 import ClassPreferences from "./pages/ClassPreferences";
 import CoverageRequests from "./pages/CoverageRequests";
 import Dashboard from "./pages/Dashboard";

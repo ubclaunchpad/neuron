@@ -14,18 +14,16 @@ const AdminVolunteerProfile = () => {
 
     const [availability, setAvailability] = useState([]);
     const [volunteer, setVolunteer] = useState(null);
-
-    async function getVolunteerData(volunteer_id) {
-        const volunteerData = await fetchVolunteerData(volunteer_id);
-        setVolunteer(volunteerData);
-    }
-
+  
     useEffect(() => {
         const volunteer_id = searchParams.get("volunteer_id");
         if (!volunteer_id) return;
-        getVolunteerData(volunteer_id);
+        fetchVolunteerData(volunteer_id)
+            .then((data) => {
+                console.log(data);
+                setVolunteer(data);
+            });
     }, [searchParams]);
-
 
     return (
         <main className="content-container" style={{

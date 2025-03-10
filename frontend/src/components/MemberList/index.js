@@ -6,9 +6,9 @@ import Modal from "../Modal";
 import AddEditInstructorModal from "../AddEditInstructorModal";
 
 const MemberList = ({data, fetchData, type}) => {
+    const navigate = useNavigate();
     const [editInstructorModal, setEditInstructorModal] = useState(false);
     const [selectedInstructor, setSelectedInstructor] = useState(null);
-    const navigate = useNavigate();
 
     return (
         <div className="volunteer-list">

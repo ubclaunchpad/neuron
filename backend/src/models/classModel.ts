@@ -2,6 +2,7 @@ import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import sharp from 'sharp';
 import { ClassDB, ScheduleDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
+import { wrapIfNotArray } from '../utils/generalUtils.js';
 import ImageModel from './imageModel.js';
 import ScheduleModel from './scheduleModel.js';
 
@@ -10,9 +11,10 @@ const scheduleModel = new ScheduleModel();
 
 export default class ClassesModel {
      async getClasses(): Promise<ClassDB[]> {
-          const query = `SELECT * FROM class`;
+          const query = "SELECT * FROM class";
 
           const [results, _] = await connectionPool.query<ClassDB[]>(query, []);
+
           return results;
      }
 
@@ -30,33 +32,42 @@ export default class ClassesModel {
           return results;
      }
 
-     async getClassById(class_id: number): Promise<any> {
+     async getClassesByIds(class_ids: number | number[], schedules: boolean = false): Promise<any> {
+          const single = !Array.isArray(class_ids);
+          class_ids = wrapIfNotArray(class_ids);
+
+          if (class_ids.length === 0) {
+               return [];
+          }
+
           const query = `  
-               SELECT 
-                    c.*, 
-                    i.l_name AS instructor_l_name,
-                    i.f_name AS instructor_f_name,
-                    i.email AS instructor_email
-               FROM class c
-               LEFT JOIN instructors i ON c.fk_instructor_id = i.instructor_id
-               WHERE c.class_id = ? ;`;
-          const values = [class_id];
+               SELECT *
+               FROM class
+               WHERE class_id IN (?);
+          `;
+          const values = [class_ids];
 
           const [results, _] = await connectionPool.query<ClassDB[]>(query, values);
-          if (results.length === 0) {
+          if (single && results.length === 0) {
                throw {
                     status: 400,
-                    message: `No class found under the given ID: ${class_id}`,
+                    message: `No class found under the given ID: ${class_ids[0]}`,
                };
           }
 
-          const result = results[0];
-          const schedules = await scheduleModel.getActiveSchedulesForClass(class_id);
+          let classes = results;
+          if (schedules) {
+               const classPromises = results.map(classDB => 
+                    scheduleModel.getActiveSchedulesForClass(classDB.class_id as number)
+                         .then(schedules => ({
+                              ...classDB,
+                              schedules: schedules
+                         }))
+               );
+               classes = await Promise.all(classPromises);
+          }
 
-          return {
-               ...result,
-               schedules: schedules
-          };
+          return single ? classes[0] : classes;
      }
 
      async addClass(newClass: ClassDB, schedules?: ScheduleDB[]): Promise<any> {
@@ -66,23 +77,23 @@ export default class ClassesModel {
                await transaction.beginTransaction();
 
                const query = `INSERT INTO class 
-                         (fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+                         (class_name, instructions, zoom_link, start_date, end_date, category, subcategory)
+                         VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-               const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = newClass;
-               const values = [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory];
+               const { class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = newClass;
+               const values = [class_name, instructions, zoom_link, start_date, end_date, category, subcategory];
 
                const [results, _] = await transaction.query<ResultSetHeader>(query, values);
                const classId = results.insertId;
 
-               let results2;
-               if (schedules) {
+               let results2 = [];
+               if (schedules && schedules.length > 0) {
                     results2 = await scheduleModel.addSchedulesToClass(classId, schedules, transaction);
                }
                
                const finalResults = {
-                    class_id: classId,
                     ...newClass,
+                    class_id: classId,
                     schedules: results2
                };
 

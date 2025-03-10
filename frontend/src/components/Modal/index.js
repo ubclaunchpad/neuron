@@ -4,7 +4,6 @@ import ReactDOM from "react-dom";
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 function Modal ({ title = "", isOpen, onClose, children, width, height, showCloseBtn }) {
-
      if (!isOpen) {
           return null;
      } 
@@ -15,10 +14,6 @@ function Modal ({ title = "", isOpen, onClose, children, width, height, showClos
      return ReactDOM.createPortal(
           <div className="modal-overlay" >
                <div className="modal-content" style={{width: width, height: height}}>
-                    {/* {showCloseBtn && (
-                         <img alt="Close Icon" className="close-button" onClick={onClose} src={close_button}/>
-                         )
-                    } */}
                     <div className="modal-header">
                          <h2>{title}</h2>
                          {showCloseBtn && (

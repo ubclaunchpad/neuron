@@ -125,6 +125,7 @@ const MemberManagement = () => {
             <UnverifiedUsers unverifiedUsers={unverifiedUsers} /> : 
             <MemberList data={data} fetchData={fetchData} type={type} />
             }
+
         </main>
     )
 }

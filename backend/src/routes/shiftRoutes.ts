@@ -11,10 +11,10 @@ import {
     getAllShiftsByMonth,
     getShiftsByVolunteerIdAndMonth,
     requestAbsence,
-    requestCoverShift,
-    updateShift,
     withdrawAbsenceRequest,
-    withdrawCoverShift
+    requestCoverShift, 
+    withdrawCoverShift, 
+    updateShift
 } from '../controllers/shiftController.js';
 
 export const ShiftRoutes: RouteDefinition = {
@@ -38,9 +38,9 @@ export const ShiftRoutes: RouteDefinition = {
             path: '/',
             method: 'get',
             validation: [
-                query('volunteer_id').isUUID('4').optional(),
-                query('before').isDate({ format: 'YYYY-MM-DD' }).optional(),
-                query('after').isDate({ format: 'YYYY-MM-DD' }).optional(),
+                query('volunteer').isUUID('4').optional(),
+                query('before').isDate().optional(),
+                query('after').isDate().optional(),
                 query('type').isIn(ShiftQueryType.values).optional(),
                 query('status').isIn(ShiftStatus.values).optional()
             ],
@@ -73,7 +73,7 @@ export const ShiftRoutes: RouteDefinition = {
             path: '/admin-shift-month',
             method: 'post',
             validation: [
-                body('shift_date').isDate({ format: 'YYYY-MM-DD' }) 
+                body('shift_date').isDate({ format: 'YYYY-MM-DD' }) // Added validation
             ],
             action: getAllShiftsByMonth
         },

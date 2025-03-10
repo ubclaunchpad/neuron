@@ -1,12 +1,11 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { ShiftDB, VolunteerDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
+import { wrapIfNotArray } from "../utils/generalUtils.js";
 
 export default class VolunteerModel {
     async getVolunteersByIds(volunteer_ids: string | string[]): Promise<VolunteerDB[]> {
-        if (typeof volunteer_ids === 'string') {
-            volunteer_ids = [volunteer_ids];
-        }
+        wrapIfNotArray(volunteer_ids)
 
         if (volunteer_ids.length === 0) {
             return [];

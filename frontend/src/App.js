@@ -19,10 +19,6 @@ import Signup from "./pages/Signup";
 import VolunteerProfile from "./pages/VolunteerProfile";
 import AdminVolunteerProfile from "./pages/AdminVolunterProfile";
 
-// import VolunteerDash from "./pages/VolunteerDash";
-// import VolunteerForgotPassword from "./pages/VolunteerForgotPassword";
-// import VolunteerLogin from "./pages/VolunteerLogin";
-
 function App() {
   const { isAuthenticated, isAdmin, isVolunteer, logout } = useAuth();
 

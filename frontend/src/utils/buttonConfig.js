@@ -176,8 +176,8 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID = null) =>
           },
           [ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL]: {
             lineColor: "var(--primary-blue)",
-            label: "Pending Fulfill",
-            icon: null,
+            label: "View Request",
+            icon: ViewRequestIcon,
             disabled: false,
             buttonClass: "pending-fulfill-button",
             onClick: () => {},

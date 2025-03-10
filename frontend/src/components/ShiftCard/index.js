@@ -3,8 +3,6 @@ import { SHIFT_TYPES, COVERAGE_STATUSES, ADMIN_SHIFT_TYPES } from "../../data/co
 
 function ShiftCard({ shift, shiftType, onShiftSelect, buttonConfig }) {
 
-  const isGroupedShift = shift.volunteers && Array.isArray(shift.volunteers);
-
   const handleShiftSelection = () => {
     onShiftSelect(shift);
   };
@@ -47,9 +45,6 @@ function ShiftCard({ shift, shiftType, onShiftSelect, buttonConfig }) {
             <p>
               {shift.instructions ? shift.instructions.substring(0, 50) : ""}
               {shift.instructions && shift.instructions.length > 40 ? "..." : ""}
-              {isGroupedShift && (
-                <span> | {shift.volunteers.length} {shift.volunteers.length === 1 ? 'volunteer assigned' : 'volunteers assigned'}</span>
-              )}
             </p>
           </div>
           <div className="button-container">

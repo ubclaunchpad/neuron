@@ -64,6 +64,7 @@ async function getAllShiftsByMonth(req: AuthenticatedRequest, res: Response) {
 
     res.status(200).json(shifts);
 }
+
 async function addShift(req: AuthenticatedRequest, res: Response) {
     const shift: ShiftDB = req.body;
 

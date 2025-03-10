@@ -65,15 +65,24 @@ const classFields = [
 const inputPrompt = "Please fill out this field.";
 
 const ClassSchema = Yup.object().shape({
-    class_name: Yup.string().required(inputPrompt),
-    instructions: Yup.string().optional(),
-    zoom_link: Yup.string().url('Invalid URL format').required(inputPrompt),
+    class_name: Yup.string()
+        .max(64, 'Class title cannot exceed 64 characters.')
+        .required(inputPrompt),
+    instructions: Yup.string()
+        .max(3000, 'Description cannot exceed 3000 characters.')
+        .optional(),
+    zoom_link: Yup.string()
+        .max(3000, 'Zoom link cannot exceed 3000 characters.')
+        .url('Invalid URL format')
+        .optional(),
     start_date: Yup.date().required(inputPrompt),
     end_date: Yup.date()
         .required(inputPrompt)
         .min(Yup.ref('start_date'), 'End date must be after start date.'),
     category: Yup.string().required(inputPrompt),
-    subcategory: Yup.string().optional(),
+    subcategory: Yup.string()
+        .max(64, 'Class type cannot exceed 64 characters.')
+        .optional(),
     schedules: Yup.array()
         .of(
             Yup.object().shape({
@@ -349,22 +358,27 @@ function AdminClassForm({ setUpdates }) {
                                 <div className="invalid-message">{errors["class_name"]}</div>
                             )}
                         </div>
-                        <div className="flex-input">
-                            <label className="class-form-label">
-                                Zoom Link
-                            </label>
-                            <input 
-                                className="class-form-input"
-                                type="url"
-                                placeholder="Enter Zoom Link"
-                                label="Zoom Link"
-                                name="zoom_link"
-                                value={values.zoom_link}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                errors={errors}
-                                touched={touched}
-                            />
+                        <div className="error-wrapper">
+                            <div className="flex-input">
+                                <label className="class-form-label">
+                                    Zoom Link
+                                </label>
+                                <input 
+                                    className="class-form-input"
+                                    type="url"
+                                    placeholder="Enter Zoom Link"
+                                    label="Zoom Link"
+                                    name="zoom_link"
+                                    value={values.zoom_link}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    errors={errors}
+                                    touched={touched}
+                                />
+                            </div>
+                            {errors["zoom_link"] && touched["zoom_link"] && (
+                                <div className="invalid-message">{errors["zoom_link"]}</div>
+                            )}
                         </div>
                         <div className="input-row categories-row">
                             <div className="error-wrapper">
@@ -423,84 +437,94 @@ function AdminClassForm({ setUpdates }) {
                                     <div className="invalid-message">{errors["category"]}</div>
                                 )}
                             </div>
-                            <div className="flex-input">
-                                <label className="class-form-label">
-                                    Class Type
-                                </label>
-                                <input 
-                                    className="class-form-input"
-                                    type="text"
-                                    placeholder="Enter Class Type"
-                                    label="Type"
-                                    name="subcategory"
-                                    value={values.subcategory}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    errors={errors}
-                                    touched={touched}
-                                />
+                            <div className="error-wrapper">
+                                <div className="flex-input">
+                                    <label className="class-form-label">
+                                        Class Type
+                                    </label>
+                                    <input 
+                                        className="class-form-input"
+                                        type="text"
+                                        placeholder="Enter Class Type"
+                                        label="Type"
+                                        name="subcategory"
+                                        value={values.subcategory}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        errors={errors}
+                                        touched={touched}
+                                    />
+                                </div>
+                                {errors["subcategory"] && touched["subcategory"] && (
+                                    <div className="invalid-message">{errors["subcategory"]}</div>
+                                )}
                             </div>
                         </div>
-                        
-                        <div className="input-row">
-                            <div className="flex-col-input image-input">
-                                <label className="class-form-label">
-                                    Class Image
-                                </label>
-                                <div 
-                                    className="image-content"
-                                    onClick={() => {
-                                        document.getElementById('fileInput').click()
-                                    }}
-                                >
-                                    {image && <img
-                                        className="class-image"
-                                        src={image.src}
-                                        alt="Class"
-                                        onError={(e) => {
-                                            console.log(e);
+                        <div className="error-wrapper">
+                            <div className="input-row">
+                                <div className="flex-col-input image-input">
+                                    <label className="class-form-label">
+                                        Class Image
+                                    </label>
+                                    <div 
+                                        className="image-content"
+                                        onClick={() => {
+                                            document.getElementById('fileInput').click()
                                         }}
-                                    />}
-                                    <div className={image ? "class-image-overlay" : "class-upload-content"}>
-                                        <img src={image ? upload_light : upload_dark} alt="Edit Profile" className="upload-icon" />
-                                        <button type="button" className="edit-button">Browse Images</button>
+                                    >
+                                        {image && <img
+                                            className="class-image"
+                                            src={image.src}
+                                            alt="Class"
+                                            onError={(e) => {
+                                                console.log(e);
+                                            }}
+                                        />}
+                                        <div className={image ? "class-image-overlay" : "class-upload-content"}>
+                                            <img src={image ? upload_light : upload_dark} alt="Edit Profile" className="upload-icon" />
+                                            <button type="button" className="edit-button">Browse Images</button>
+                                        </div>
+                                        <input
+                                            className="file-input"
+                                            id="fileInput" 
+                                            type="file" 
+                                            accept="image/*" 
+                                            onChange={(event) => {
+                                                const targetImage = event.target.files[0];
+                                                const reader = new FileReader();
+                                                reader.onload = () => {
+                                                    setImage({
+                                                        src: reader.result,
+                                                        blob: targetImage
+                                                    });
+                                                };
+                                                reader.readAsDataURL(targetImage);
+                                            }} 
+                                        />
+                                        
                                     </div>
-                                    <input
-                                        className="file-input"
-                                        id="fileInput" 
-                                        type="file" 
-                                        accept="image/*" 
-                                        onChange={(event) => {
-                                            const targetImage = event.target.files[0];
-                                            const reader = new FileReader();
-                                            reader.onload = () => {
-                                                setImage({
-                                                    src: reader.result,
-                                                    blob: targetImage
-                                                });
-                                            };
-                                            reader.readAsDataURL(targetImage);
-                                        }} 
+                                </div>
+                                <div className="flex-col-input description-input">
+                                    <label className="class-form-label">
+                                        Description
+                                    </label>
+                                    <textarea
+                                        className="class-form-textarea"
+                                        name="instructions"
+                                        placeholder="Enter Description Here"
+                                        rows="6"
+                                        value={values.instructions}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        errors={errors}
+                                        touched={touched}
                                     />
                                     
                                 </div>
                             </div>
-                            <div className="flex-col-input description-input">
-                                <label className="class-form-label">
-                                    Description
-                                </label>
-                                <textarea
-                                    className="class-form-textarea"
-                                    name="instructions"
-                                    placeholder="Enter Description Here"
-                                    rows="6"
-                                    value={values.instructions}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    errors={errors}
-                                    touched={touched}
-                                />
-                            </div>
+                            {errors["instructions"] && touched["instructions"] && (
+                                <div className="invalid-message">{errors["instructions"]}</div>
+                            )}
                         </div>
                         <div className="input-row">
                             <div className="error-wrapper">

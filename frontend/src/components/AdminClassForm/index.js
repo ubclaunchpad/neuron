@@ -28,7 +28,7 @@ const Mode = {
     EDIT: "edit"
 }
 
-const categories = [
+const categoryOptions = [
     { value: 'Online Exercise', label: 'Online Exercise' },
     { value: 'Creative & Expressive', label: 'Creative & Expressive' },
     { value: 'Care Partner Workshops', label: 'Care Partner Workshops' },
@@ -46,7 +46,17 @@ const days = [
     "Saturday",
 ]
 
-const frequencies = [
+const dayOptions = [
+    { value: 0, label: "Sunday" },
+    { value: 1, label: "Monday" },
+    { value: 2, label: "Tuesday" },
+    { value: 3, label: "Wednesday" },
+    { value: 4, label: "Thursday" },
+    { value: 5, label: "Friday" },
+    { value: 6, label: "Saturday" },
+]
+
+const frequencyOptions = [
     { value: 'once', label: 'Once' },
     { value: 'weekly', label: 'Weekly' },
     { value: 'biweekly', label: 'Bi-Weekly' },
@@ -106,7 +116,7 @@ const ClassSchema = Yup.object().shape({
                         return toMinutes(end_time) > toMinutes(start_time);
                     }),
                 frequency: Yup.string()
-                    .oneOf(frequencies.map(f => f.value)),
+                    .oneOf(frequencyOptions.map(f => f.value)),
                 fk_instructor_id: Yup.string().uuid(),
                 volunteer_ids: Yup.array()
                     .of(Yup.string().uuid())
@@ -414,13 +424,17 @@ function AdminClassForm({ setUpdates }) {
                                                 ...styles,
                                                 padding: '0px'
                                             }), 
+                                            singleValue: (styles) => ({
+                                                ...styles,
+                                                color: values.category ? 'default' : '#808080' 
+                                            })
                                         }}
-                                        options={categories}
+                                        options={categoryOptions}
                                         isSearchable={false}
                                         components={
                                             {
                                                 DropdownIndicator: () => 
-                                                    <CgSelect className="select-icon"/>,
+                                                    <CgSelect className="select-dropdown-icon"/>,
                                                 IndicatorSeparator: () => null,
                                                 Option: (props) => {
                                                     const {innerProps, innerRef} = props;
@@ -502,17 +516,19 @@ function AdminClassForm({ setUpdates }) {
                                             id="fileInput" 
                                             type="file" 
                                             label="Class Image"
-                                            accept="image/*" 
+                                            accept="image/*"
                                             onChange={(event) => {
                                                 const targetImage = event.target.files[0];
-                                                const reader = new FileReader();
-                                                reader.onload = () => {
-                                                    setImage({
-                                                        src: reader.result,
-                                                        blob: targetImage
-                                                    });
-                                                };
-                                                reader.readAsDataURL(targetImage);
+                                                if (targetImage) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = () => {
+                                                        setImage({
+                                                            src: reader.result,
+                                                            blob: targetImage
+                                                        });
+                                                    };
+                                                    reader.readAsDataURL(targetImage);
+                                                }
                                             }} 
                                         />
                                         
@@ -557,6 +573,9 @@ function AdminClassForm({ setUpdates }) {
                                         onBlur={handleBlur}
                                         errors={errors}
                                         touched={touched}
+                                        style={{
+                                            color: values.start_date ? '#000000' : '#808080'
+                                        }}
                                     />
                                 </div>
                                 {errors["start_date"] && touched["start_date"] && (
@@ -578,6 +597,9 @@ function AdminClassForm({ setUpdates }) {
                                         onBlur={handleBlur}
                                         errors={errors}
                                         touched={touched}
+                                        style={{
+                                            color: values.end_date ? '#000000' : '#808080'
+                                        }}
                                     />
                                 </div>
                                 {errors["end_date"] && touched["end_date"] && (
@@ -587,14 +609,14 @@ function AdminClassForm({ setUpdates }) {
                         </div>
                     </div>
                     <FieldArray
-                        name="schedules"    
+                        name="schedules"
                     >
                         {({ push, remove }) => (
                             <div className="schedule-blocks">{
                                 values.schedules.map((schedule, index) => (
                                     <div className="form-block" key={index}>
                                         <h2 className="section-title">Class Schedule {index + 1}</h2>
-                                        <div className="days-input">
+                                        <div className="days-input-select">
                                             <label className="class-form-label">
                                                 Select the day the class will run
                                             </label>
@@ -622,16 +644,16 @@ function AdminClassForm({ setUpdates }) {
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="input-row">
-                                            <div className="flex-input">
+                                        <div className="input-row days-input-dropdown">
+                                            <div className="flex-col-input">
                                             <label className="class-form-label">
-                                                Frequency
+                                                Select the day the class will run
                                             </label>
                                             <Select
                                                 className="select"
                                                 placeholder="Select"
-                                                label="Frequency"
-                                                defaultValue={frequencies.find(f => f.value === schedule.frequency)}
+                                                label="Day"
+                                                defaultValue={dayOptions.find(d => d.value === schedule.day) || dayOptions[3]}
                                                 styles={{
                                                     control: () => ({
                                                         padding: '12px 32px 12px 16px',
@@ -642,14 +664,18 @@ function AdminClassForm({ setUpdates }) {
                                                     valueContainer: (styles) => ({
                                                         ...styles,
                                                         padding: '0px'
+                                                    }),
+                                                    menuList: (provided) => ({
+                                                        ...provided,
+                                                        maxHeight: '320px'
                                                     })
                                                 }}
-                                                options={frequencies}
+                                                options={dayOptions}
                                                 isSearchable={false}
                                                 components={
                                                     {
                                                         DropdownIndicator: () => 
-                                                            <CgSelect className="select-icon"/>,
+                                                            <CgSelect className="select-dropdown-icon"/>,
                                                         IndicatorSeparator: () => null,
                                                         Option: (props) => {
                                                             const {innerProps, innerRef} = props;
@@ -671,9 +697,63 @@ function AdminClassForm({ setUpdates }) {
                                                     }
                                                 }
                                                 onChange={(e) => {
-                                                    setFieldValue(`schedules[${index}].frequency`, e.value);
+                                                    setFieldValue(`schedules[${index}].day`, e.value);
                                                 }}
                                             />
+                                            </div>
+                                        </div>
+                                        <div className="input-row">
+                                            <div className="flex-input">
+                                                <label className="class-form-label">
+                                                    Frequency
+                                                </label>
+                                                <Select
+                                                    className="select"
+                                                    placeholder="Select"
+                                                    label="Frequency"
+                                                    defaultValue={frequencyOptions.find(f => f.value === schedule.frequency)}
+                                                    styles={{
+                                                        control: () => ({
+                                                            padding: '12px 32px 12px 16px',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid #cccccc',
+                                                            cursor: 'pointer'
+                                                        }),
+                                                        valueContainer: (styles) => ({
+                                                            ...styles,
+                                                            padding: '0px'
+                                                        })
+                                                    }}
+                                                    options={frequencyOptions}
+                                                    isSearchable={false}
+                                                    components={
+                                                        {
+                                                            DropdownIndicator: () => 
+                                                                <CgSelect className="select-dropdown-icon"/>,
+                                                            IndicatorSeparator: () => null,
+                                                            Option: (props) => {
+                                                                const {innerProps, innerRef} = props;
+                                                                return (
+                                                                    <div {...innerProps} ref={innerRef} className="select-item">
+                                                                        {props.data.label}
+                                                                    </div>
+                                                                )
+                                                            },
+                                                            Menu: (props) => {
+                                                                const {innerProps, innerRef} = props;
+                                                                return (
+                                                                    <div {...innerProps} ref={innerRef}
+                                                                    className="select-menu">
+                                                                        {props.children}
+                                                                    </div>
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                    onChange={(e) => {
+                                                        setFieldValue(`schedules[${index}].frequency`, e.value);
+                                                    }}
+                                                />
                                             </div>
                                         </div>
                                         <div className="input-row">
@@ -743,6 +823,10 @@ function AdminClassForm({ setUpdates }) {
                                                                 margin: '0px 2px',
                                                                 padding: '0px',
                                                             }),
+                                                            singleValue: (styles) => ({
+                                                                ...styles,
+                                                                color: schedule.fk_instructor_id ? 'default' : '#808080' 
+                                                            })
                                                             
                                                         }}
                                                         options={instructors}
@@ -750,7 +834,7 @@ function AdminClassForm({ setUpdates }) {
                                                         components={
                                                             {
                                                                 DropdownIndicator: () => 
-                                                                    <CgSelect className="select-icon"/>,
+                                                                    <CgSelect className="select-dropdown-icon"/>,
                                                                 IndicatorSeparator: () => null,
                                                                 Option: (props) => {
                                                                     const {innerProps, innerRef} = props;
@@ -808,7 +892,7 @@ function AdminClassForm({ setUpdates }) {
                                                             })}
                                                             {showVolunteers[index] ? 
                                                                 <Select
-                                                                    className="select add-volunteers"
+                                                                    className="add-volunteers"
                                                                     defaultValue={{ value: null, label: 'Enter Volunteer Name' }}
                                                                     autoFocus={true}
                                                                     label="Volunteer"
@@ -932,7 +1016,7 @@ function AdminClassForm({ setUpdates }) {
                                             day: 3,
                                             start_time: '12:00',
                                             end_time: '12:00',
-                                            frequency: frequencies[1].value, // weekly
+                                            frequency: frequencyOptions[1].value, // weekly
                                             volunteer_ids: []
                                         });
                                         setUpdates((prev) => prev + 1);  

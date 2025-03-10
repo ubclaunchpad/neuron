@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Formik, FieldArray } from "formik";
+import { Formik, FieldArray, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { CgSelect } from "react-icons/cg";
 import upload_light from "../../assets/upload-light.png";
@@ -116,6 +116,16 @@ const ClassSchema = Yup.object().shape({
     image: Yup.string().optional(),
 });
 
+function AutoResetForm({ initialValues }) {
+    const { resetForm } = useFormikContext();
+
+    useEffect(() => {
+        resetForm({ values: initialValues });
+    }, [initialValues, resetForm]);
+
+    return null; // No UI needed, just handling reset
+};
+
 function AdminClassForm({ setUpdates }) {
 
     const [loading, setLoading] = useState(true);
@@ -220,7 +230,6 @@ function AdminClassForm({ setUpdates }) {
         fetchData();
     }, []);
 
-
     function buildVolunteers(assignedVolunteerIds) {
         return volunteers.filter((volunteer) => !assignedVolunteerIds.includes(volunteer.value.volunteer_id));
     }
@@ -317,6 +326,7 @@ function AdminClassForm({ setUpdates }) {
     return (
         <div className="class-form">
             <Formik
+                enableReinitialize={true}
                 initialValues={classData}
                 validationSchema={ClassSchema}
                 onSubmit={(values, { setSubmitting }) => {
@@ -338,6 +348,7 @@ function AdminClassForm({ setUpdates }) {
                     isSubmitting
                 }) => (
                 <form onSubmit={handleSubmit} className="form-body">
+                    <AutoResetForm initialValues={classData} />
                     <div className="form-block">
                         <h2 className="section-title">General</h2>
                         

@@ -73,7 +73,7 @@ const ClassSchema = Yup.object().shape({
         .optional(),
     zoom_link: Yup.string()
         .max(3000, 'Zoom link cannot exceed 3000 characters.')
-        .url('Invalid URL format')
+        .url('Invalid URL format.')
         .optional(),
     start_date: Yup.date().required(inputPrompt),
     end_date: Yup.date()
@@ -352,24 +352,26 @@ function AdminClassForm({ setUpdates }) {
                     <div className="form-block">
                         <h2 className="section-title">General</h2>
                         
-                        <div className="title-input">
-                            <input 
-                                className="class-form-input"
-                                type="text"
-                                placeholder="Enter Title Here"
-                                label="Title"
-                                name="class_name"
-                                value={values.class_name}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                errors={errors}
-                                touched={touched}
-                            />
+                        <div className="row-error-wrapper">
+                            <div className="input-row">
+                                <input 
+                                    className="class-form-input"
+                                    type="text"
+                                    placeholder="Enter Title Here"
+                                    label="Title"
+                                    name="class_name"
+                                    value={values.class_name}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    errors={errors}
+                                    touched={touched}
+                                />
+                            </div>
                             {errors["class_name"] && touched["class_name"] && (
                                 <div className="invalid-message">{errors["class_name"]}</div>
                             )}
                         </div>
-                        <div className="error-wrapper">
+                        <div className="row-error-wrapper">
                             <div className="flex-input">
                                 <label className="class-form-label">
                                     Zoom Link
@@ -391,18 +393,18 @@ function AdminClassForm({ setUpdates }) {
                                 <div className="invalid-message">{errors["zoom_link"]}</div>
                             )}
                         </div>
-                        <div className="input-row categories-row">
-                            <div className="error-wrapper">
+                        <div className="input-row">
+                            <div className="element-error-wrapper">
                                 <div className="flex-input">
                                     <label className="class-form-label">
                                         Category
                                     </label>
                                     <Select
                                         className="select"
+                                        label="Category"
                                         defaultValue={{value: values.category, label: values.category ?? "Select Category"}}
                                         styles={{
                                             control: () => ({
-                                                width: 'stretch',
                                                 padding: '12px 32px 12px 16px',
                                                 borderRadius: '8px',
                                                 border: '1px solid #cccccc',
@@ -411,7 +413,7 @@ function AdminClassForm({ setUpdates }) {
                                             valueContainer: (styles) => ({
                                                 ...styles,
                                                 padding: '0px'
-                                            })
+                                            }), 
                                         }}
                                         options={categories}
                                         isSearchable={false}
@@ -448,7 +450,7 @@ function AdminClassForm({ setUpdates }) {
                                     <div className="invalid-message">{errors["category"]}</div>
                                 )}
                             </div>
-                            <div className="error-wrapper">
+                            <div className="element-error-wrapper">
                                 <div className="flex-input">
                                     <label className="class-form-label">
                                         Class Type
@@ -471,7 +473,7 @@ function AdminClassForm({ setUpdates }) {
                                 )}
                             </div>
                         </div>
-                        <div className="error-wrapper">
+                        <div className="row-error-wrapper">
                             <div className="input-row">
                                 <div className="flex-col-input image-input">
                                     <label className="class-form-label">
@@ -499,6 +501,7 @@ function AdminClassForm({ setUpdates }) {
                                             className="file-input"
                                             id="fileInput" 
                                             type="file" 
+                                            label="Class Image"
                                             accept="image/*" 
                                             onChange={(event) => {
                                                 const targetImage = event.target.files[0];
@@ -524,6 +527,7 @@ function AdminClassForm({ setUpdates }) {
                                         name="instructions"
                                         placeholder="Enter Description Here"
                                         rows="6"
+                                        label="Description"
                                         value={values.instructions}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
@@ -538,7 +542,7 @@ function AdminClassForm({ setUpdates }) {
                             )}
                         </div>
                         <div className="input-row">
-                            <div className="error-wrapper">
+                            <div className="element-error-wrapper">
                                 <div className="flex-input">
                                     <label className="class-form-label">
                                         Start Date
@@ -559,7 +563,7 @@ function AdminClassForm({ setUpdates }) {
                                     <div className="invalid-message">{errors["start_date"]}</div>
                                 )}
                             </div>
-                            <div className="error-wrapper">
+                            <div className="element-error-wrapper">
                                 <div className="flex-input">
                                     <label className="class-form-label">
                                         End Date
@@ -599,6 +603,7 @@ function AdminClassForm({ setUpdates }) {
                                                     <button 
                                                         key={dayIndex}
                                                         type="button"
+                                                        label="Day"
                                                         style={dayIndex === schedule.day ? {
                                                             background: '#F0FAFF',
                                                             border: '1px solid #4385AC',
@@ -625,10 +630,10 @@ function AdminClassForm({ setUpdates }) {
                                             <Select
                                                 className="select"
                                                 placeholder="Select"
+                                                label="Frequency"
                                                 defaultValue={frequencies.find(f => f.value === schedule.frequency)}
                                                 styles={{
                                                     control: () => ({
-                                                        width: 'stretch',
                                                         padding: '12px 32px 12px 16px',
                                                         borderRadius: '8px',
                                                         border: '1px solid #cccccc',
@@ -672,7 +677,7 @@ function AdminClassForm({ setUpdates }) {
                                             </div>
                                         </div>
                                         <div className="input-row">
-                                            <div className="error-wrapper">
+                                            <div className="element-error-wrapper">
                                                 <div className="flex-input">
                                                     <label className="class-form-label">
                                                         From
@@ -690,7 +695,7 @@ function AdminClassForm({ setUpdates }) {
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="error-wrapper">
+                                            <div className="element-error-wrapper">
                                                 <div className="flex-input">
                                                     <label className="class-form-label">
                                                         To
@@ -712,18 +717,18 @@ function AdminClassForm({ setUpdates }) {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="input-row">
-                                            <div className="error-wrapper">
+                                        <div className="row-error-wrapper">
+                                            <div className="input-row">
                                                 <div className="flex-input">
                                                     <label className="class-form-label">
                                                         Instructor
                                                     </label>
                                                     <Select
                                                         className="select"
+                                                        label="Instructor"
                                                         defaultValue={instructors.find(i => i.value === schedule.fk_instructor_id) || { label: 'Select Instructor', value: null }}
                                                         styles={{
                                                             control: () => ({
-                                                                width: 'stretch',
                                                                 padding: '12px 32px 12px 16px',
                                                                 borderRadius: '8px',
                                                                 border: '1px solid #cccccc',
@@ -774,7 +779,7 @@ function AdminClassForm({ setUpdates }) {
                                             </div>
                                         </div>
                                         <div className="input-row">
-                                            <div className="flex-input">
+                                            <div className="flex-input volunteers-input">
                                                 <label className="class-form-label">
                                                     Volunteers
                                                 </label>
@@ -806,6 +811,7 @@ function AdminClassForm({ setUpdates }) {
                                                                     className="select add-volunteers"
                                                                     defaultValue={{ value: null, label: 'Enter Volunteer Name' }}
                                                                     autoFocus={true}
+                                                                    label="Volunteer"
                                                                     openMenuOnFocus={true}
                                                                     styles={{
                                                                         control: () => ({
@@ -898,7 +904,7 @@ function AdminClassForm({ setUpdates }) {
                                                         <h2 className="delete-popup-title">Delete Schedule</h2>
                                                         <p className="delete-popup-prompt">Delete this schedule from the class?</p>
                                                         <div className="delete-popup-buttons">
-                                                            <button type="button" className="cancel-button" onClick={() => setShowPopup(false)}>
+                                                            <button type="button" className="cancel-delete-button" onClick={() => setShowPopup(false)}>
                                                                 Cancel
                                                             </button>
                                                             <button

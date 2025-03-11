@@ -69,6 +69,7 @@
 }
 
 .notification-text {
+    font-size: 14px;
     flex: 1;
     text-align: left;
 }
@@ -141,23 +142,22 @@
 }
 
 .top-right-button-container {
-    min-width: 150px; /* Ensures space remains even if button is hidden */
+    min-width: 150px;
     display: flex;
     justify-content: flex-end;
 }
 
-/* If button is missing, keep container visible */
 .top-right-button-container:empty {
     visibility: hidden;
 }
 
 .notification-container {
     background: white;
-    padding: 20px;
-    border-radius: 8px; /* Same as settings-card */
-    border: 1px solid #D9D9D9; /* Restore missing border */
-    box-shadow: 0px 4px 16px 0px #0F11110D; /* Restore shadow */
+    padding: 20px 20px 20px 30px;
+    border-radius: 8px;
+    border: 1px solid #D9D9D9;
+    box-shadow: 0px 4px 16px 0px #0F11110D;
     width: 100%;
     box-sizing: border-box;
-    margin-bottom: 20px; /* Add spacing before Change Password */
+    margin-bottom: 20px;
 }

@@ -41,7 +41,7 @@ const handleRequestCoverageClick = async (shift, handleShiftUpdate) => {
         const body = {
             shift_id: shift.shift_id,
         }
-        // console.log(`Requesting coverage for shift ${shift.shift_id}`);
+        console.log(`Requesting coverage for shift ${shift.shift_id}`);
         let data = await requestShiftCoverage(body);
         handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_COVERAGE_REQUESTS, coverage_status: COVERAGE_STATUSES.OPEN, request_id: data.insertId });
          

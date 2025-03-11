@@ -61,22 +61,35 @@ function Schedule() {
       // Process shifts to determine shift_type based on absence_request ; case conditions for Admin accounts
       const processedShifts = response.map(shift => {
         let shift_type;
+        let coverage_status;
+        // COVERAGE_STATUSES.PENDING right now is for both pending coverage requests and absence requests – may need to fix
       
         if (!shift.absence_request || shift.absence_request.status === 'resolved') {
           // If the absence request is resolved or there is no absence request, shift is covered
           shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_COVERED : SHIFT_TYPES.MY_SHIFTS;
+          // No coverage status for covered shifts
+          coverage_status = null;
         } else if (shift.absence_request.status === 'absence-pending') {
+          // The shift has an absence request, that is pending
+          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE : SHIFT_TYPES.MY_COVERAGE_REQUESTS;
+          coverage_status = COVERAGE_STATUSES.PENDING;
+        } else if (shift.absence_request.status === 'absence-resolved') {
           // The shift has an absence request, seeing if it is pending or resolved
           shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE : SHIFT_TYPES.MY_COVERAGE_REQUESTS;
+          // Coverage status is resolved
+          coverage_status = COVERAGE_STATUSES.RESOLVED;
         } else if (isAdmin && shift.absence_request.status === 'coverage-pending') {
           // A volunteer has offered to cover this shift 
           shift_type = ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL;
+          coverage_status = null;
         } else if (shift.absence_request.status === 'open') {
           // Shift absence request is approved and is now open
           shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE : SHIFT_TYPES.COVERAGE;
+          coverage_status = COVERAGE_STATUSES.OPEN
         }
+        
       
-        return { ...shift, shift_type };
+        return { ...shift, shift_type, coverage_status };
       });
 /* 
       if (isAdmin) {
@@ -308,6 +321,7 @@ function Schedule() {
         setSelectedClassId(classData.class_id);
         setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
         console.log(selectedShiftButtons);
+        console.log( "HELLO", classData.shift_details);
         setShiftDetails(classData);
     };
 

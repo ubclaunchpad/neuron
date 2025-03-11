@@ -10,7 +10,7 @@ function ShiftCard({ shift, shiftType, onShiftSelect, buttonConfig }) {
   const { lineColor, label, icon, disabled, buttonClass, onClick } =
     buttonConfig?.[shiftType] ||
       buttonConfig?.[SHIFT_TYPES.DEFAULT] || 
-      buttonConfig?.[ADMIN_SHIFT_TYPES.ADMIN_COVERED] ||{
+      buttonConfig?.[ADMIN_SHIFT_TYPES.ADMIN_COVERED] || {
         lineColor: "var(--grey)",
         label: "View Details",
         icon: null,
@@ -47,22 +47,24 @@ function ShiftCard({ shift, shiftType, onShiftSelect, buttonConfig }) {
               {shift.instructions && shift.instructions.length > 40 ? "..." : ""}
             </p>
           </div>
+          {label && (
           <div className="button-container">
             <button
               className={`check-in-button ${buttonClass}`}
               disabled={disabled}
               onClick={() => onClick(shift)}
             >
-              {icon && (
+              {icon && 
                 <img
                   src={icon}
                   alt="Button Icon"
                   className="card-button-icon"
                 />
-              )}
+              }
+
               {label}
             </button>
-          </div>
+          </div> )}
         </div>
       </div>
     </div>

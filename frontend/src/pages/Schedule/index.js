@@ -285,17 +285,23 @@ function Schedule() {
 
         const buttons = [];
         const buttonConfig = getButtonConfig(shift, handleShiftUpdate, isAdmin? null : user?.volunteer.volunteer_id);
-        const primaryButton = buttonConfig[shift.shift_type] || buttonConfig[SHIFT_TYPES.DEFAULT];
+        const primaryButton = buttonConfig[shift.shift_type]
 
-        buttons.push(primaryButton);
+        if (primaryButton.label) {
+          buttons.push(primaryButton);
+          }
 
-        if (shift.shift_type === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
-            buttons.push(buttonConfig.REQUEST_COVERAGE);
-        } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.PENDING) {
-            buttons.push(buttonConfig.CANCEL);
-        } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS && shift.coverage_status === COVERAGE_STATUSES.OPEN) {
-            buttons.push(buttonConfig.CANCEL);
+        if (isAdmin) {
+          buttons.push(buttonConfig.CANCEL);
         }
+        
+        if (shift.shift_type === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
+          buttons.push(buttonConfig.REQUEST_COVERAGE);
+      } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.PENDING) {
+          buttons.push(buttonConfig.CANCEL);
+      } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS && shift.coverage_status === COVERAGE_STATUSES.OPEN) {
+          buttons.push(buttonConfig.CANCEL);
+      } 
 
         return buttons;
     };
@@ -361,7 +367,7 @@ function Schedule() {
                 />
             </div>
             <hr />
-            <DetailsPanel classId={selectedClassId} classList={shifts} setClassId={setSelectedClassId} shiftDetails={selectedShiftDetails} dynamicShiftButtons={selectedShiftButtons}>
+            <DetailsPanel classId={selectedClassId} classList={shifts} setClassId={setSelectedClassId} shiftDetails={selectedShiftDetails} dynamicShiftButtons={selectedShiftButtons} type='schedule'>
                 <div className="schedule-page">
                     {viewMode === "list" ? (
                         <>

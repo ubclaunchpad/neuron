@@ -4,7 +4,7 @@ import { requestToCoverShift, requestShiftCoverage, cancelCoverShift, cancelCove
 import CheckInIcon from '../assets/images/button-icons/clock-icon.svg';
 import PlusIcon from '../assets/images/button-icons/plus-icon.svg';
 import RequestCoverageIcon from '../assets/request-coverage.png'
-import Notify from '../assets/notify.png'
+import Notify from '../assets/notif-icon.png'
 import CancelIcon from "../assets/images/button-icons/x-icon.svg";
 import ViewRequestIcon from "../assets/images/button-icons/clipboard.png"
 
@@ -183,10 +183,7 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID = null) =>
             onClick: () => {},
           },
           [ADMIN_SHIFT_TYPES.ADMIN_COVERED]: {
-            lineColor: "var(--grey)",
-            label: "View Details",
-            icon: null,
-            disabled: false,
+            lineColor: "var(--dark-grey)",
           }
     };
 }

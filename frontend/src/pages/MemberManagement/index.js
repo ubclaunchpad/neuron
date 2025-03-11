@@ -57,7 +57,6 @@ const MemberManagement = () => {
 
         setData(filteredData);
     }
-
     return (
         <main className="content-container">
             <div className="content-heading">

@@ -101,3 +101,12 @@ export const updateUserPreferredClasses = async (volunteer_id, preferredClasses)
     throw error;
   }
 };
+
+export const getAllVolunteers = async () => {
+  try {
+    const response = await api.get("volunteer");
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all volunteers:', error);
+  }
+};

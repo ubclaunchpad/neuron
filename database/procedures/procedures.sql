@@ -54,16 +54,16 @@ BEGIN
         shifts.checked_in AS checked_in,
         'coverage' AS shift_type,
         CASE 
-            WHEN shift_coverage_request.covered_by IS NOT NULL THEN 'resolved'
+            WHEN absence_request.covered_by IS NOT NULL THEN 'resolved'
             WHEN EXISTS (
                 SELECT 1 
-                FROM pending_shift_coverage 
-                WHERE pending_shift_coverage.request_id = shift_coverage_request.request_id 
-                AND pending_shift_coverage.pending_volunteer = volunteer_id
+                FROM coverage_request 
+                WHERE coverage_request.request_id = absence_request.request_id 
+                AND coverage_request.volunteer_id = volunteer_id
             ) THEN 'pending'
             ELSE 'open'
         END AS coverage_status, -- Coverage status indicator
-        shift_coverage_request.request_id AS request_id -- Request ID for coverage
+        absence_request.request_id AS request_id -- Request ID for coverage
     FROM 
         shifts
     JOIN 
@@ -71,17 +71,17 @@ BEGIN
     JOIN 
         class ON schedule.fk_class_id = class.class_id
     JOIN 
-        shift_coverage_request 
-            -- ON shifts.fk_schedule_id = shift_coverage_request.fk_schedule_id
-            -- AND shifts.shift_date = shift_coverage_request.shift_date
-            ON shifts.shift_id = shift_coverage_request.fk_shift_id -- CHANGED FOR UPDATED SHIFTS TABLE
+        absence_request 
+            -- ON shifts.fk_schedule_id = absence_request.fk_schedule_id
+            -- AND shifts.shift_date = absence_request.shift_date
+            ON shifts.shift_id = absence_request.fk_shift_id -- CHANGED FOR UPDATED SHIFTS TABLE
     LEFT JOIN 
-        pending_shift_coverage ON shift_coverage_request.request_id = pending_shift_coverage.request_id
+        coverage_request ON absence_request.request_id = coverage_request.request_id
     WHERE 
         MONTH(shifts.shift_date) = month 
         AND YEAR(shifts.shift_date) = year 
         AND shifts.fk_volunteer_id <> volunteer_id
-        AND shift_coverage_request.covered_by IS NULL
+        AND absence_request.covered_by IS NULL
 
     UNION ALL
 
@@ -101,10 +101,10 @@ BEGIN
         shifts.checked_in AS checked_in,
         'my-coverage-requests' AS shift_type,
         CASE 
-            WHEN shift_coverage_request.covered_by IS NOT NULL THEN 'resolved'
+            WHEN absence_request.covered_by IS NOT NULL THEN 'resolved'
             ELSE 'open'
         END AS coverage_status, -- Coverage status indicator
-        shift_coverage_request.request_id AS request_id -- Request ID for 'my-coverage-request'
+        absence_request.request_id AS request_id -- Request ID for 'my-coverage-request'
     FROM 
         shifts
     JOIN 
@@ -112,11 +112,11 @@ BEGIN
     JOIN 
         class ON schedule.fk_class_id = class.class_id
     JOIN 
-        shift_coverage_request 
-            -- ON shifts.fk_volunteer_id = shift_coverage_request.fk_volunteer_id
-            -- AND shifts.fk_schedule_id = shift_coverage_request.fk_schedule_id
-            -- AND shifts.shift_date = shift_coverage_request.shift_date
-            ON shifts.shift_id = shift_coverage_request.fk_shift_id -- CHANGED FOR UPDATED SHIFTS TABLE
+        absence_request 
+            -- ON shifts.fk_volunteer_id = absence_request.fk_volunteer_id
+            -- AND shifts.fk_schedule_id = absence_request.fk_schedule_id
+            -- AND shifts.shift_date = absence_request.shift_date
+            ON shifts.shift_id = absence_request.fk_shift_id -- CHANGED FOR UPDATED SHIFTS TABLE
     WHERE 
         shifts.fk_volunteer_id = volunteer_id 
         AND MONTH(shifts.shift_date) = month 

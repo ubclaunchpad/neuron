@@ -66,26 +66,14 @@ async function getPreferredClassesById(req: AuthenticatedRequest, res: Response)
         });
     }
 
-    try {
-        const preferred_classes = await volunteerModel.getPreferredClassesById(volunteer_id);
+    const preferred_classes = await volunteerModel.getPreferredClassesById(volunteer_id);
 
-        res.status(200).json(preferred_classes);
-    } catch (error: any) {
-        return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-    }
+    res.status(200).json(preferred_classes);
 }
 
 async function getAllClassPreferences(req: AuthenticatedRequest, res: Response) {
-    try {
-        const all_preferred_classes = await volunteerModel.getAllClassPreferences();
-        res.status(200).json(all_preferred_classes);
-    } catch (error: any) {
-        return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-    }
+    const all_preferred_classes = await volunteerModel.getAllClassPreferences();
+    res.status(200).json(all_preferred_classes);
 }
 
 async function updatePreferredClassesById (req: AuthenticatedRequest, res: Response) {
@@ -102,15 +90,9 @@ async function updatePreferredClassesById (req: AuthenticatedRequest, res: Respo
         });
     }
 
-    try {
-        await volunteerModel.updatePreferredClassesById(volunteer_id, data);
+    await volunteerModel.updatePreferredClassesById(volunteer_id, data);
 
-        res.status(200).json({msg: "Successfully updated class preferences"});
-    } catch (error: any) {
-        return res.status(error.status ?? 500).json({
-			error: error.message
-		});
-    }
+    res.status(200).json({msg: "Successfully updated class preferences"});
 }
 
 export {

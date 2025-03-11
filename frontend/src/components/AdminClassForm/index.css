@@ -1,10 +1,17 @@
 .class-form {
-    width: stretch;
+    width: 100%;
     height: fit-content;
 }
 
+.form-body {
+    font-family: var(--font-primary);
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px
+}
+
 .form-block {
-    width: stretch;
     height: fit-content;
     display: flex;
     flex-direction: column;
@@ -29,32 +36,22 @@
     font-family: var(--font-secondary);
 }
 
-.form-body {
-    width: stretch;
-    font-family: var(--font-primary);
-    font-size: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px
-}
-
 .class-form-input {
     font-family: var(--font-primary);
-    width: stretch;
+    flex: 1;
+    align-self: stretch;
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 14px;
     padding: 12px 16px;
-}
-
-.class-form-input[type="date"], .class-form-input[type="time"] {
-    font-family: var(--font-primary);
-    font-size: 14px;
-    width: stretch;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    height: 42px;
 }
 
 .invalid-message {
-    width: stretch;
+    align-self: stretch;
     text-align: right;
     color: #FF0000;
     margin-top: 4px;
@@ -68,32 +65,15 @@
 .input-row {
     display: flex;
     gap: 20px;
-    width: stretch;
-}
-
-.categories-row {
+    width: 100%;
     align-items: baseline;
-}
-
-@media screen and (max-width: 900px) {
-    .input-row {
-        flex-wrap: wrap;
-    }
 }
 
 .flex-input {
     display: flex;
-    width: stretch;
-    align-items: baseline;
+    width: 100%;
+    align-items: center;
     gap: 16px;
-}
-
-@media screen and (max-width: 600px) {
-    .category-input {
-        flex-direction: column;
-        gap: 8px;
-        align-items: start;
-    }
 }
 
 .class-form-label {
@@ -105,14 +85,18 @@
 }
 
 .select {
-    width: stretch;
+    flex: 1;
+    align-self: stretch;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
 }
 
-.select-icon {
+.select-dropdown-icon {
     margin: 0;
     padding: 0;
     position: absolute;
-    right: 10px;
+    right: 16px;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
@@ -126,8 +110,12 @@
     background-color: white;
     border: 1px solid #ccc;
     border-radius: 8px;
-    width: stretch;
+    width: 100%;
+    height: fit-content;
     min-width: fit-content;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
     padding: 6px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     z-index: 1000;
@@ -148,19 +136,19 @@
 }
 
 .flex-col-input {
-    width: stretch;
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
 .description-input {
-    width: stretch;
+    flex: 1;
+    align-self: stretch;
 }
 
 .class-form-textarea {
-    width: stretch;
-    height: stretch;
+    height: 100%;
     min-height: 18px;
     max-height: 400px;
     resize: vertical;
@@ -176,7 +164,7 @@ textarea:focus {
 }
 
 .image-input {
-    flex: 1;
+    width: fit-content;
 }
 
 .image-content {
@@ -210,7 +198,6 @@ textarea:focus {
 }
 
 .class-upload-content {
-    width: stretch;
     aspect-ratio: 1 / 1;
     border-radius: 8px;
     border: 2px dashed #D9D9D9;
@@ -245,8 +232,13 @@ textarea:focus {
     display: none;
 }
 
-.error-wrapper {
-    width: stretch;
+.row-error-wrapper {
+    width: 100%;
+}
+
+.element-error-wrapper {
+    flex: 1;
+    align-self: stretch;
 }
 
 .schedules-input {
@@ -255,30 +247,28 @@ textarea:focus {
     gap: 20px;
 }
 
-.days-input {
-    width: stretch;
+.days-input-select {
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
 .days-row {
-    width: stretch;
+    width: 100%;
     display: flex;
     box-shadow: 0px 4px 16px 0px #0F11110D;
 }
 
 .day-input {
-    width: stretch;
+    flex: 1;
+    align-self: stretch;
     border: 1px solid #ccc;
     font-size: 14px;
     color: #808080;
     padding: 12px 16px;
     font-family: var(--font-primary);
     background-color: #fff;
-}
-
-.day-input:hover {
     cursor: pointer;
 }
 
@@ -290,6 +280,10 @@ textarea:focus {
 .saturday-input {
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
+}
+
+.volunteers-input {
+    align-items: baseline;
 }
 
 .volunteers-row {
@@ -426,4 +420,46 @@ textarea:focus {
 .submit-button:disabled {
     cursor: default;
     background-color: #808080;
+}
+
+@media screen and (max-width: 900px) {
+    .input-row {
+        flex-direction: column;
+    }
+}
+
+@media screen and (max-width: 1040px) {
+    .days-input-select {
+        display: none;
+    }
+    .days-input-dropdown {
+        display: flex;
+    }
+}
+
+@media screen and (min-width: 1041px) {
+    .days-input-select {
+        display: flex;
+    }
+    .days-input-dropdown {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .category-input {
+        flex-direction: column;
+        gap: 8px;
+        align-items: start;
+    }
+
+    .flex-input {
+        flex-direction: column;
+        gap: 8px;
+        align-items: start;
+    }
+
+    .volunteer-item {
+        white-space: wrap;
+    }
 }

@@ -88,7 +88,7 @@ function Settings() {
           </Permission>
 
           {/* Generic notification options (unchanged) */}
-          {["setting3", "setting4", "setting5", "setting6"].map((setting, index) => (
+          {/* {["setting3", "setting4", "setting5", "setting6"].map((setting, index) => (
             <label key={index} className="notification-item">
               <span className="notification-text">Description</span>
               <div className={`toggle-container ${notifications[setting] ? 'checked' : ''}`}>
@@ -100,7 +100,7 @@ function Settings() {
                 <span className="slider"></span>
               </div>
             </label>
-          ))}
+          ))} */}
         </div>
       </div>
 

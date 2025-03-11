@@ -36,8 +36,27 @@ function Schedule() {
           before: selectedDate.endOf('month').format("YYYY-MM-DD"),
           after: selectedDate.startOf('month').format("YYYY-MM-DD"),
         }
+      
+        let response;
 
-      const response = await getShifts(params);
+        if (isAdmin) {
+          response = await getShifts(params);
+        } else {
+          // For volunteers, fetch shifts associated to volunteer and open shifts for coverage
+          const [myShifts, myCoverageShifts] = await Promise.all([
+            getShifts({
+              ...params,
+            }),
+
+            getShifts({
+              ...params,
+              type: 'coverage',
+            })
+          ])
+          console.log(myCoverageShifts);
+          response = [...myShifts, ...myCoverageShifts];
+        }
+        console.log(response);
 
       // Process shifts to determine shift_type based on absence_request ; case conditions for Admin accounts
       const processedShifts = response.map(shift => {

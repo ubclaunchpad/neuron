@@ -182,26 +182,6 @@ export default class ShiftModel {
      }
 
      // use getShifts instead
-     async getShiftsByVolunteerId(volunteer_id: string): Promise<ShiftDB[]> {
-          const query = "SELECT * FROM shifts WHERE fk_volunteer_id = ?";
-          const values = [volunteer_id];
-
-          const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
-
-          return results;
-     }
-
-     // use getShifts instead
-     async getShiftsByDate(date: string): Promise<ShiftDB[]> {
-          const query = "SELECT * FROM shifts WHERE shift_date = ?";
-          const values = [date];
-
-          const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
-
-          return results;
-     }
-
-     // use getShifts instead
      async getShiftsByVolunteerIdAndMonth(volunteer_id: string, month: number, year: number): Promise<ShiftDB[]> {
           const query = `
                CALL GetShiftsByVolunteerIdAndMonth(?, ?, ?);
@@ -222,66 +202,6 @@ export default class ShiftModel {
           const values = [shift_id];
 
           const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
-
-          return results;
-     }
-
-     // create a new entry in the coverage_request table
-     async insertCoverageRequest(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
-          const query = `
-               INSERT INTO coverage_request (request_id, volunteer_id)
-               VALUES (?, ?)
-          `;
-          const values = [request_id, volunteer_id];
-
-          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
-
-          return results;
-     }
-
-     // delete corresponding entry in coverage_request table
-     async deleteCoverageRequest(request_id: number, volunteer_id: number): Promise<ResultSetHeader> {
-          const query = `
-               DELETE FROM coverage_request WHERE request_id = ? AND volunteer_id = ?
-          `;
-          const values = [request_id, volunteer_id];
-
-          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
-
-          // Check if it was successfully deleted or not
-          if (results.affectedRows === 0) {
-               throw new Error("Cover shift request not found or already approved");
-          }
-
-          return results;
-     }
-
-     // create a new entry in the absence_request table
-     async insertAbsenceRequest(shift_id: number): Promise<ResultSetHeader> {
-          const query = `
-               INSERT INTO absence_request (fk_shift_id)
-               VALUES (?)
-          `;
-          const values = [shift_id];
-
-          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
-
-          return results;
-     }
-
-     // delete corresponding entry in absence_request table
-     async deleteAbsenceRequest(request_id: number, shift_id: number): Promise<ResultSetHeader> {
-          const query = `
-               DELETE FROM absence_request WHERE request_id = ? AND fk_shift_id = ? AND covered_by IS NULL
-          `;
-          const values = [request_id, shift_id];
-
-          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
-
-          // Check if it was successfully deleted or not
-          if (results.affectedRows === 0) {
-               throw new Error("Shift absence request not found or already fulfilled");
-          }
 
           return results;
      }

@@ -1,7 +1,8 @@
 import { body, param, query } from 'express-validator';
-import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
+import { AbsenceRequestCategory, ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import { RouteDefinition } from "../common/types.js";
 import { isAuthorized } from '../config/authCheck.js';
+import { requestAbsence } from '../controllers/coverageController.js';
 import {
     addShift,
     checkInShift,
@@ -9,11 +10,7 @@ import {
     getShift,
     getShifts,
     getShiftsByVolunteerIdAndMonth,
-    requestAbsence,
-    requestCoverShift,
     updateShift,
-    withdrawAbsenceRequest,
-    withdrawCoverShift
 } from '../controllers/shiftController.js';
 
 export const ShiftRoutes: RouteDefinition = {
@@ -61,7 +58,6 @@ export const ShiftRoutes: RouteDefinition = {
             ],
             action: getShiftsByVolunteerIdAndMonth
         },
-        //
 
         {
             path: '/check-in/:shift_id',
@@ -70,41 +66,6 @@ export const ShiftRoutes: RouteDefinition = {
                 param('shift_id').isInt({ min: 0 })
             ],
             action: checkInShift
-        },
-        {
-            path: '/cover-shift',
-            method: 'post',
-            validation: [
-                body('request_id').isInt({ min: 0 }),
-                body('volunteer_id').isUUID('4')
-            ],
-            action: requestCoverShift
-        },
-        {
-            path: '/cover-shift',
-            method: 'delete',
-            validation: [
-                body('request_id').isInt({ min: 0 }),
-                body('volunteer_id').isUUID('4')
-            ],
-            action: withdrawCoverShift
-        },
-        {
-            path: '/shift-coverage-request',
-            method: 'post',
-            validation: [
-                body('shift_id').isInt({ min: 0 }),
-            ],
-            action: requestAbsence
-        },
-        {
-            path: '/shift-coverage-request',
-            method: 'delete',
-            validation: [
-                body('request_id').isInt({ min: 0 }),
-                body('shift_id').isInt({ min: 0 }),
-            ],
-            action: withdrawAbsenceRequest
         },
         {
             path: '/:shift_id',
@@ -131,6 +92,16 @@ export const ShiftRoutes: RouteDefinition = {
                     path: '/',
                     method: 'put',
                     action: deleteShift
+                },
+                {
+                    path: '/request-absence',
+                    method: 'post',
+                    validation: [
+                        body('details').isString(),
+                        body('comments').isString(),
+                        body('category').isIn(AbsenceRequestCategory.values),
+                    ],
+                    action: requestAbsence
                 },
             ]
         }

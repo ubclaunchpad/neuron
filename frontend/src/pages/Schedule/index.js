@@ -74,23 +74,25 @@ function Schedule() {
           shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE : SHIFT_TYPES.MY_COVERAGE_REQUESTS;
           coverage_status = COVERAGE_STATUSES.PENDING;
         } else if (shift.absence_request.status === 'absence-resolved') {
-          // Resolved shift
+          // Resolved
           shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_COVERED : SHIFT_TYPES.MY_SHIFTS;
           // Coverage status is resolved
           coverage_status = COVERAGE_STATUSES.RESOLVED;
-        } else if (isAdmin && shift.absence_request.status === 'open' && shift.absence_request.covering_volunteer_id) {
+        } else if (shift.absence_request.status === 'coverage-pending') {
           // A volunteer has offered to cover this shift 
-          shift_type = ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL;
+          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL : shift.volunteer_id === user.volunteer.volunteer_id ? SHIFT_TYPES.MY_SHIFTS : SHIFT_TYPES.COVERAGE;
           coverage_status = null;
         } else if (shift.absence_request.status === 'open') {
           // Shift absence request is approved and is now open
           shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE : SHIFT_TYPES.COVERAGE;
           coverage_status = COVERAGE_STATUSES.OPEN
-        }
-        
+        } 
       
         return { ...shift, shift_type, coverage_status };
-      });
+      }).sort((a, b) => {
+        return dayjs(a.shift_date).diff(dayjs(b.shift_date));
+      })
+      console.log(processedShifts);
 
         const shiftMap = new Map();
 

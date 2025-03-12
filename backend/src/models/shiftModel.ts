@@ -110,8 +110,8 @@ export default class ShiftModel {
                          END,
                          'status', CASE 
                               WHEN ar.request_id IS NOT NULL AND ar.approved IS NOT TRUE THEN 'absence-pending'
-                              WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NULL THEN 'open'
                               WHEN cr.request_id IS NOT NULL THEN 'coverage-pending'
+                              WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NULL THEN 'open'
                               WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NOT NULL THEN 'resolved'
                               ELSE NULL
                          END

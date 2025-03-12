@@ -108,8 +108,6 @@ function ClassPreferences() {
      useEffect(() => {
           if (fitAvailabilityClasses || !allClasses || !userAvailability) return;
           let tempMap = new Map();
-          console.log(userAvailability);
-          console.log(allClasses);
           for (let [cat, classes] of allClasses.entries()) {
                tempMap.set(cat, []);
                for (let i = 0; i < classes.length; i++) {
@@ -145,7 +143,6 @@ function ClassPreferences() {
                res[3] = rank3;
                setPreferredClasses(res);
           } 
-          console.log(res);
           if (allClasses === null) {
                const allClassPreferences = await fetchAllClassPreferences();
                const classMap = new Map();
@@ -159,8 +156,6 @@ function ClassPreferences() {
                });
                setAllClasses(classMap);
                setDisplayClassPref(classMap);
-               console.log("Class Map");
-               console.log(classMap);
           }
 
           const availability = await fetchVolunteerAvailability(volunteerID);

@@ -106,13 +106,15 @@
 }
 
 .dynamic-button.cancel-action {
-     background-color: var(--red);
-     color: var(--white);
-     border: var(--red);
+     background-color: transparent; 
+     color: var(--red);
+     border: 1px solid var(--red);
 }
 
 .dynamic-button.cancel-action:hover {
-     background-color: var(--red-hover);
+     background-color: transparent;
+     color: var(--red-hover);   
+     border: 1px solid var(--red-hover);  
 }
  
  /* Icon within Button */

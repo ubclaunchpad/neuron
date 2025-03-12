@@ -287,11 +287,11 @@ function Schedule() {
         const buttonConfig = getButtonConfig(shift, handleShiftUpdate, isAdmin? null : user?.volunteer.volunteer_id);
         const primaryButton = buttonConfig[shift.shift_type]
 
-        if (primaryButton.label) {
+        if (primaryButton.label && !pastShift) {
           buttons.push(primaryButton);
           }
 
-        if (isAdmin) {
+        if (isAdmin && !pastShift) {
           buttons.push(buttonConfig.CANCEL);
         }
         

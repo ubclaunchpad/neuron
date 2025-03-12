@@ -5,7 +5,7 @@ import CheckInIcon from '../assets/images/button-icons/clock-icon.svg';
 import PlusIcon from '../assets/images/button-icons/plus-icon.svg';
 import RequestCoverageIcon from '../assets/request-coverage.png'
 import Notify from '../assets/notif-icon.png'
-import CancelIcon from "../assets/images/button-icons/x-icon.svg";
+import CancelIcon from "../assets/cancel-icon.png";
 import ViewRequestIcon from "../assets/images/button-icons/clipboard.png"
 
 const handleCheckInClick = async (shift, handleShiftUpdate) => {
@@ -151,9 +151,9 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID = null) =>
             onClick: () => handleRequestCoverageClick(shift, handleShiftUpdate),
         },
         CANCEL: {
-            label: 'Cancel',
+            label: 'Cancel Class',
             icon: CancelIcon,
-            iconColourClass: 'icon-white',
+            // iconColourClass: 'icon-white',
             disabled: false,
             buttonClass: 'cancel-action',
             onClick: () => handleCancelClick(shift, handleShiftUpdate, volunteerID),
@@ -162,24 +162,27 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID = null) =>
             lineColor: "var(--red)",
             label: "Notify Volunteers",
             icon: Notify,
+            iconColourClass: 'icon-white',
             disabled: false,
-            buttonClass: "needs-coverage-button",
+            buttonClass: "primary-action",
             onClick: () => {},
           },
           [ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE]: {
             lineColor: "var(--yellow)",
             label: "View Request",
             icon: ViewRequestIcon,
+            iconColourClass: 'icon-white',
             disabled: false,
-            buttonClass: "requested-coverage-button",
+            buttonClass: "primary-action",
             onClick: () => {},
           },
           [ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL]: {
             lineColor: "var(--primary-blue)",
             label: "View Request",
             icon: ViewRequestIcon,
+            iconColourClass: 'icon-white',
             disabled: false,
-            buttonClass: "pending-fulfill-button",
+            buttonClass: "primary-action",
             onClick: () => {},
           },
           [ADMIN_SHIFT_TYPES.ADMIN_COVERED]: {

@@ -112,6 +112,7 @@ export default class ShiftModel {
                               WHEN ar.request_id IS NOT NULL AND ar.approved IS NOT TRUE THEN 'absence-pending'
                               WHEN cr.request_id IS NOT NULL THEN 'coverage-pending'
                               WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NULL THEN 'open'
+                              
                               WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NOT NULL THEN 'resolved'
                               ELSE NULL
                          END
@@ -213,50 +214,6 @@ export default class ShiftModel {
 
           return results[0]; // Value from procedure stored in the first value of the array
      }
-
-     // get all shifts for a month for admin view
-     async getAllShiftsByMonth(month: number, year: number): Promise<ShiftDB[]> {
-          const query = `
-              SELECT 
-                  s.shift_id,
-                  s.shift_date,
-                  s.checked_in,
-                  s.duration,
-                  sc.start_time,
-                  sc.end_time,
-                  c.class_name,
-                  c.class_id,
-                  c.instructions,
-                  CASE 
-                      WHEN scr.request_id IS NOT NULL AND scr.covered_by IS NULL THEN 'requested_coverage' 
-                      WHEN psc.pending_volunteer IS NOT NULL THEN 'pending_fulfill'
-                      WHEN s.fk_volunteer_id IS NOT NULL THEN 'covered'
-                      ELSE 'needs_coverage' -- No coverage request made yet
-                  END AS coverage_status,
-                  scr.request_id
-              FROM 
-                  shifts s
-              JOIN 
-                  schedule sc ON s.fk_schedule_id = sc.schedule_id
-              JOIN 
-                  class c ON sc.fk_class_id = c.class_id
-              LEFT JOIN 
-                  shift_coverage_request scr ON s.shift_id = scr.fk_shift_id
-              LEFT JOIN 
-                  pending_shift_coverage psc ON scr.request_id = psc.request_id
-              WHERE 
-                  MONTH(s.shift_date) = ?
-                  AND YEAR(s.shift_date) = ?
-              ORDER BY 
-                  s.shift_date, sc.start_time;
-          `;
-      
-          const values = [month, year];
-      
-          const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
-      
-          return results;
-      }
 
      // modify a shift to indicate that a volunteer has checked in
      async updateShiftCheckIn(shift_id: number): Promise<ResultSetHeader> {

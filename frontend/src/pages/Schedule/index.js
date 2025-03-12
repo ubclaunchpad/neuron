@@ -92,7 +92,7 @@ function Schedule() {
       }).sort((a, b) => {
         return dayjs(a.shift_date).diff(dayjs(b.shift_date));
       })
-      console.log(processedShifts);
+      console.log( 'processed', processedShifts);
 
         const shiftMap = new Map();
 
@@ -155,14 +155,17 @@ function Schedule() {
                 absence_request: shift.absence_request
               });
 
-              // Shifts are updated based on priority: NEEDS_COVERAGE > REQUESTED_COVERAGE > COVERED
-              if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE && 
+              // Shifts are updated based on priority: PENDING_FULFILL > NEEDS_COVERAGE > REQUESTED_COVERAGE > COVERED
+              
+              if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL) {
+                existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL;
+              } else if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE && 
                 existingEntry.shift_type !== ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE) {
                 existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE;
               } else if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE &&
                 existingEntry.shift_type !== ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE) {
                 existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE;
-                }
+              } 
             } else {
                 // Prioritize showing coverage shifts over my shifts
               if (existingEntry && existingEntry.shift_type === SHIFT_TYPES.MY_SHIFTS && shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
@@ -173,8 +176,10 @@ function Schedule() {
             }
           }
       });
+      
 
       const uniqueShifts = Array.from(shiftMap.values());
+      console.log('unique', uniqueShifts)
 
 
         // Filter shifts based on selected filter type

@@ -78,7 +78,7 @@ function Schedule() {
           shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE : SHIFT_TYPES.MY_COVERAGE_REQUESTS;
           // Coverage status is resolved
           coverage_status = COVERAGE_STATUSES.RESOLVED;
-        } else if (isAdmin && shift.absence_request.status === 'coverage-pending') {
+        } else if (isAdmin && shift.absence_request.status === 'open' && shift.absence_request.covering_volunteer_id) {
           // A volunteer has offered to cover this shift 
           shift_type = ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL;
           coverage_status = null;

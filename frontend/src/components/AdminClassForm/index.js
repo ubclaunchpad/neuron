@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Formik, FieldArray } from "formik";
+import { Formik, FieldArray, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { CgSelect } from "react-icons/cg";
 import upload_light from "../../assets/upload-light.png";
@@ -28,7 +28,7 @@ const Mode = {
     EDIT: "edit"
 }
 
-const categories = [
+const categoryOptions = [
     { value: 'Online Exercise', label: 'Online Exercise' },
     { value: 'Creative & Expressive', label: 'Creative & Expressive' },
     { value: 'Care Partner Workshops', label: 'Care Partner Workshops' },
@@ -46,7 +46,17 @@ const days = [
     "Saturday",
 ]
 
-const frequencies = [
+const dayOptions = [
+    { value: 0, label: "Sunday" },
+    { value: 1, label: "Monday" },
+    { value: 2, label: "Tuesday" },
+    { value: 3, label: "Wednesday" },
+    { value: 4, label: "Thursday" },
+    { value: 5, label: "Friday" },
+    { value: 6, label: "Saturday" },
+]
+
+const frequencyOptions = [
     { value: 'once', label: 'Once' },
     { value: 'weekly', label: 'Weekly' },
     { value: 'biweekly', label: 'Bi-Weekly' },
@@ -65,15 +75,24 @@ const classFields = [
 const inputPrompt = "Please fill out this field.";
 
 const ClassSchema = Yup.object().shape({
-    class_name: Yup.string().required(inputPrompt),
-    instructions: Yup.string().optional(),
-    zoom_link: Yup.string().url('Invalid URL format').required(inputPrompt),
+    class_name: Yup.string()
+        .max(64, 'Class title cannot exceed 64 characters.')
+        .required(inputPrompt),
+    instructions: Yup.string()
+        .max(3000, 'Description cannot exceed 3000 characters.')
+        .optional(),
+    zoom_link: Yup.string()
+        .max(3000, 'Zoom link cannot exceed 3000 characters.')
+        .url('Invalid URL format.')
+        .optional(),
     start_date: Yup.date().required(inputPrompt),
     end_date: Yup.date()
         .required(inputPrompt)
         .min(Yup.ref('start_date'), 'End date must be after start date.'),
     category: Yup.string().required(inputPrompt),
-    subcategory: Yup.string().optional(),
+    subcategory: Yup.string()
+        .max(64, 'Class type cannot exceed 64 characters.')
+        .optional(),
     schedules: Yup.array()
         .of(
             Yup.object().shape({
@@ -97,7 +116,7 @@ const ClassSchema = Yup.object().shape({
                         return toMinutes(end_time) > toMinutes(start_time);
                     }),
                 frequency: Yup.string()
-                    .oneOf(frequencies.map(f => f.value)),
+                    .oneOf(frequencyOptions.map(f => f.value)),
                 fk_instructor_id: Yup.string().uuid(),
                 volunteer_ids: Yup.array()
                     .of(Yup.string().uuid())
@@ -106,6 +125,16 @@ const ClassSchema = Yup.object().shape({
         .optional(),
     image: Yup.string().optional(),
 });
+
+function AutoResetForm({ initialValues }) {
+    const { resetForm } = useFormikContext();
+
+    useEffect(() => {
+        resetForm({ values: initialValues });
+    }, [initialValues, resetForm]);
+
+    return null; // No UI needed, just handling reset
+};
 
 function AdminClassForm({ setUpdates }) {
 
@@ -211,7 +240,6 @@ function AdminClassForm({ setUpdates }) {
         fetchData();
     }, []);
 
-
     function buildVolunteers(assignedVolunteerIds) {
         return volunteers.filter((volunteer) => !assignedVolunteerIds.includes(volunteer.value.volunteer_id));
     }
@@ -308,6 +336,7 @@ function AdminClassForm({ setUpdates }) {
     return (
         <div className="class-form">
             <Formik
+                enableReinitialize={true}
                 initialValues={classData}
                 validationSchema={ClassSchema}
                 onSubmit={(values, { setSubmitting }) => {
@@ -329,55 +358,63 @@ function AdminClassForm({ setUpdates }) {
                     isSubmitting
                 }) => (
                 <form onSubmit={handleSubmit} className="form-body">
+                    <AutoResetForm initialValues={classData} />
                     <div className="form-block">
                         <h2 className="section-title">General</h2>
                         
-                        <div className="title-input">
-                            <input 
-                                className="class-form-input"
-                                type="text"
-                                placeholder="Enter Title Here"
-                                label="Title"
-                                name="class_name"
-                                value={values.class_name}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                errors={errors}
-                                touched={touched}
-                            />
+                        <div className="row-error-wrapper">
+                            <div className="input-row">
+                                <input 
+                                    className="class-form-input"
+                                    type="text"
+                                    placeholder="Enter Title Here"
+                                    label="Title"
+                                    name="class_name"
+                                    value={values.class_name}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    errors={errors}
+                                    touched={touched}
+                                />
+                            </div>
                             {errors["class_name"] && touched["class_name"] && (
                                 <div className="invalid-message">{errors["class_name"]}</div>
                             )}
                         </div>
-                        <div className="flex-input">
-                            <label className="class-form-label">
-                                Zoom Link
-                            </label>
-                            <input 
-                                className="class-form-input"
-                                type="url"
-                                placeholder="Enter Zoom Link"
-                                label="Zoom Link"
-                                name="zoom_link"
-                                value={values.zoom_link}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                errors={errors}
-                                touched={touched}
-                            />
+                        <div className="row-error-wrapper">
+                            <div className="flex-input">
+                                <label className="class-form-label">
+                                    Zoom Link
+                                </label>
+                                <input 
+                                    className="class-form-input"
+                                    type="url"
+                                    placeholder="Enter Zoom Link"
+                                    label="Zoom Link"
+                                    name="zoom_link"
+                                    value={values.zoom_link}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    errors={errors}
+                                    touched={touched}
+                                />
+                            </div>
+                            {errors["zoom_link"] && touched["zoom_link"] && (
+                                <div className="invalid-message">{errors["zoom_link"]}</div>
+                            )}
                         </div>
-                        <div className="input-row categories-row">
-                            <div className="error-wrapper">
+                        <div className="input-row">
+                            <div className="element-error-wrapper">
                                 <div className="flex-input">
                                     <label className="class-form-label">
                                         Category
                                     </label>
                                     <Select
                                         className="select"
+                                        label="Category"
                                         defaultValue={{value: values.category, label: values.category ?? "Select Category"}}
                                         styles={{
                                             control: () => ({
-                                                width: 'stretch',
                                                 padding: '12px 32px 12px 16px',
                                                 borderRadius: '8px',
                                                 border: '1px solid #cccccc',
@@ -386,14 +423,18 @@ function AdminClassForm({ setUpdates }) {
                                             valueContainer: (styles) => ({
                                                 ...styles,
                                                 padding: '0px'
+                                            }), 
+                                            singleValue: (styles) => ({
+                                                ...styles,
+                                                color: values.category ? 'default' : '#808080' 
                                             })
                                         }}
-                                        options={categories}
+                                        options={categoryOptions}
                                         isSearchable={false}
                                         components={
                                             {
                                                 DropdownIndicator: () => 
-                                                    <CgSelect className="select-icon"/>,
+                                                    <CgSelect className="select-dropdown-icon"/>,
                                                 IndicatorSeparator: () => null,
                                                 Option: (props) => {
                                                     const {innerProps, innerRef} = props;
@@ -423,87 +464,101 @@ function AdminClassForm({ setUpdates }) {
                                     <div className="invalid-message">{errors["category"]}</div>
                                 )}
                             </div>
-                            <div className="flex-input">
-                                <label className="class-form-label">
-                                    Class Type
-                                </label>
-                                <input 
-                                    className="class-form-input"
-                                    type="text"
-                                    placeholder="Enter Class Type"
-                                    label="Type"
-                                    name="subcategory"
-                                    value={values.subcategory}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    errors={errors}
-                                    touched={touched}
-                                />
+                            <div className="element-error-wrapper">
+                                <div className="flex-input">
+                                    <label className="class-form-label">
+                                        Class Type
+                                    </label>
+                                    <input 
+                                        className="class-form-input"
+                                        type="text"
+                                        placeholder="Enter Class Type"
+                                        label="Type"
+                                        name="subcategory"
+                                        value={values.subcategory}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        errors={errors}
+                                        touched={touched}
+                                    />
+                                </div>
+                                {errors["subcategory"] && touched["subcategory"] && (
+                                    <div className="invalid-message">{errors["subcategory"]}</div>
+                                )}
                             </div>
                         </div>
-                        
-                        <div className="input-row">
-                            <div className="flex-col-input image-input">
-                                <label className="class-form-label">
-                                    Class Image
-                                </label>
-                                <div 
-                                    className="image-content"
-                                    onClick={() => {
-                                        document.getElementById('fileInput').click()
-                                    }}
-                                >
-                                    {image && <img
-                                        className="class-image"
-                                        src={image.src}
-                                        alt="Class"
-                                        onError={(e) => {
-                                            console.log(e);
+                        <div className="row-error-wrapper">
+                            <div className="input-row">
+                                <div className="flex-col-input image-input">
+                                    <label className="class-form-label">
+                                        Class Image
+                                    </label>
+                                    <div 
+                                        className="image-content"
+                                        onClick={() => {
+                                            document.getElementById('fileInput').click()
                                         }}
-                                    />}
-                                    <div className={image ? "class-image-overlay" : "class-upload-content"}>
-                                        <img src={image ? upload_light : upload_dark} alt="Edit Profile" className="upload-icon" />
-                                        <button type="button" className="edit-button">Browse Images</button>
+                                    >
+                                        {image && <img
+                                            className="class-image"
+                                            src={image.src}
+                                            alt="Class"
+                                            onError={(e) => {
+                                                console.log(e);
+                                            }}
+                                        />}
+                                        <div className={image ? "class-image-overlay" : "class-upload-content"}>
+                                            <img src={image ? upload_light : upload_dark} alt="Edit Profile" className="upload-icon" />
+                                            <button type="button" className="edit-button">Browse Images</button>
+                                        </div>
+                                        <input
+                                            className="file-input"
+                                            id="fileInput" 
+                                            type="file" 
+                                            label="Class Image"
+                                            accept="image/*"
+                                            onChange={(event) => {
+                                                const targetImage = event.target.files[0];
+                                                if (targetImage) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = () => {
+                                                        setImage({
+                                                            src: reader.result,
+                                                            blob: targetImage
+                                                        });
+                                                    };
+                                                    reader.readAsDataURL(targetImage);
+                                                }
+                                            }} 
+                                        />
+                                        
                                     </div>
-                                    <input
-                                        className="file-input"
-                                        id="fileInput" 
-                                        type="file" 
-                                        accept="image/*" 
-                                        onChange={(event) => {
-                                            const targetImage = event.target.files[0];
-                                            const reader = new FileReader();
-                                            reader.onload = () => {
-                                                setImage({
-                                                    src: reader.result,
-                                                    blob: targetImage
-                                                });
-                                            };
-                                            reader.readAsDataURL(targetImage);
-                                        }} 
+                                </div>
+                                <div className="flex-col-input description-input">
+                                    <label className="class-form-label">
+                                        Description
+                                    </label>
+                                    <textarea
+                                        className="class-form-textarea"
+                                        name="instructions"
+                                        placeholder="Enter Description Here"
+                                        rows="6"
+                                        label="Description"
+                                        value={values.instructions}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        errors={errors}
+                                        touched={touched}
                                     />
                                     
                                 </div>
                             </div>
-                            <div className="flex-col-input description-input">
-                                <label className="class-form-label">
-                                    Description
-                                </label>
-                                <textarea
-                                    className="class-form-textarea"
-                                    name="instructions"
-                                    placeholder="Enter Description Here"
-                                    rows="6"
-                                    value={values.instructions}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    errors={errors}
-                                    touched={touched}
-                                />
-                            </div>
+                            {errors["instructions"] && touched["instructions"] && (
+                                <div className="invalid-message">{errors["instructions"]}</div>
+                            )}
                         </div>
                         <div className="input-row">
-                            <div className="error-wrapper">
+                            <div className="element-error-wrapper">
                                 <div className="flex-input">
                                     <label className="class-form-label">
                                         Start Date
@@ -518,13 +573,16 @@ function AdminClassForm({ setUpdates }) {
                                         onBlur={handleBlur}
                                         errors={errors}
                                         touched={touched}
+                                        style={{
+                                            color: values.start_date ? '#000000' : '#808080'
+                                        }}
                                     />
                                 </div>
                                 {errors["start_date"] && touched["start_date"] && (
                                     <div className="invalid-message">{errors["start_date"]}</div>
                                 )}
                             </div>
-                            <div className="error-wrapper">
+                            <div className="element-error-wrapper">
                                 <div className="flex-input">
                                     <label className="class-form-label">
                                         End Date
@@ -539,6 +597,9 @@ function AdminClassForm({ setUpdates }) {
                                         onBlur={handleBlur}
                                         errors={errors}
                                         touched={touched}
+                                        style={{
+                                            color: values.end_date ? '#000000' : '#808080'
+                                        }}
                                     />
                                 </div>
                                 {errors["end_date"] && touched["end_date"] && (
@@ -548,14 +609,14 @@ function AdminClassForm({ setUpdates }) {
                         </div>
                     </div>
                     <FieldArray
-                        name="schedules"    
+                        name="schedules"
                     >
                         {({ push, remove }) => (
                             <div className="schedule-blocks">{
                                 values.schedules.map((schedule, index) => (
                                     <div className="form-block" key={index}>
                                         <h2 className="section-title">Class Schedule {index + 1}</h2>
-                                        <div className="days-input">
+                                        <div className="days-input-select">
                                             <label className="class-form-label">
                                                 Select the day the class will run
                                             </label>
@@ -564,6 +625,7 @@ function AdminClassForm({ setUpdates }) {
                                                     <button 
                                                         key={dayIndex}
                                                         type="button"
+                                                        label="Day"
                                                         style={dayIndex === schedule.day ? {
                                                             background: '#F0FAFF',
                                                             border: '1px solid #4385AC',
@@ -582,18 +644,18 @@ function AdminClassForm({ setUpdates }) {
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="input-row">
-                                            <div className="flex-input">
+                                        <div className="input-row days-input-dropdown">
+                                            <div className="flex-col-input">
                                             <label className="class-form-label">
-                                                Frequency
+                                                Select the day the class will run
                                             </label>
                                             <Select
                                                 className="select"
                                                 placeholder="Select"
-                                                defaultValue={frequencies.find(f => f.value === schedule.frequency)}
+                                                label="Day"
+                                                defaultValue={dayOptions.find(d => d.value === schedule.day) || dayOptions[3]}
                                                 styles={{
                                                     control: () => ({
-                                                        width: 'stretch',
                                                         padding: '12px 32px 12px 16px',
                                                         borderRadius: '8px',
                                                         border: '1px solid #cccccc',
@@ -602,14 +664,18 @@ function AdminClassForm({ setUpdates }) {
                                                     valueContainer: (styles) => ({
                                                         ...styles,
                                                         padding: '0px'
+                                                    }),
+                                                    menuList: (provided) => ({
+                                                        ...provided,
+                                                        maxHeight: '320px'
                                                     })
                                                 }}
-                                                options={frequencies}
+                                                options={dayOptions}
                                                 isSearchable={false}
                                                 components={
                                                     {
                                                         DropdownIndicator: () => 
-                                                            <CgSelect className="select-icon"/>,
+                                                            <CgSelect className="select-dropdown-icon"/>,
                                                         IndicatorSeparator: () => null,
                                                         Option: (props) => {
                                                             const {innerProps, innerRef} = props;
@@ -631,13 +697,67 @@ function AdminClassForm({ setUpdates }) {
                                                     }
                                                 }
                                                 onChange={(e) => {
-                                                    setFieldValue(`schedules[${index}].frequency`, e.value);
+                                                    setFieldValue(`schedules[${index}].day`, e.value);
                                                 }}
                                             />
                                             </div>
                                         </div>
                                         <div className="input-row">
-                                            <div className="error-wrapper">
+                                            <div className="flex-input">
+                                                <label className="class-form-label">
+                                                    Frequency
+                                                </label>
+                                                <Select
+                                                    className="select"
+                                                    placeholder="Select"
+                                                    label="Frequency"
+                                                    defaultValue={frequencyOptions.find(f => f.value === schedule.frequency)}
+                                                    styles={{
+                                                        control: () => ({
+                                                            padding: '12px 32px 12px 16px',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid #cccccc',
+                                                            cursor: 'pointer'
+                                                        }),
+                                                        valueContainer: (styles) => ({
+                                                            ...styles,
+                                                            padding: '0px'
+                                                        })
+                                                    }}
+                                                    options={frequencyOptions}
+                                                    isSearchable={false}
+                                                    components={
+                                                        {
+                                                            DropdownIndicator: () => 
+                                                                <CgSelect className="select-dropdown-icon"/>,
+                                                            IndicatorSeparator: () => null,
+                                                            Option: (props) => {
+                                                                const {innerProps, innerRef} = props;
+                                                                return (
+                                                                    <div {...innerProps} ref={innerRef} className="select-item">
+                                                                        {props.data.label}
+                                                                    </div>
+                                                                )
+                                                            },
+                                                            Menu: (props) => {
+                                                                const {innerProps, innerRef} = props;
+                                                                return (
+                                                                    <div {...innerProps} ref={innerRef}
+                                                                    className="select-menu">
+                                                                        {props.children}
+                                                                    </div>
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                    onChange={(e) => {
+                                                        setFieldValue(`schedules[${index}].frequency`, e.value);
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="input-row">
+                                            <div className="element-error-wrapper">
                                                 <div className="flex-input">
                                                     <label className="class-form-label">
                                                         From
@@ -655,7 +775,7 @@ function AdminClassForm({ setUpdates }) {
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="error-wrapper">
+                                            <div className="element-error-wrapper">
                                                 <div className="flex-input">
                                                     <label className="class-form-label">
                                                         To
@@ -677,18 +797,18 @@ function AdminClassForm({ setUpdates }) {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="input-row">
-                                            <div className="error-wrapper">
+                                        <div className="row-error-wrapper">
+                                            <div className="input-row">
                                                 <div className="flex-input">
                                                     <label className="class-form-label">
                                                         Instructor
                                                     </label>
                                                     <Select
                                                         className="select"
+                                                        label="Instructor"
                                                         defaultValue={instructors.find(i => i.value === schedule.fk_instructor_id) || { label: 'Select Instructor', value: null }}
                                                         styles={{
                                                             control: () => ({
-                                                                width: 'stretch',
                                                                 padding: '12px 32px 12px 16px',
                                                                 borderRadius: '8px',
                                                                 border: '1px solid #cccccc',
@@ -703,6 +823,10 @@ function AdminClassForm({ setUpdates }) {
                                                                 margin: '0px 2px',
                                                                 padding: '0px',
                                                             }),
+                                                            singleValue: (styles) => ({
+                                                                ...styles,
+                                                                color: schedule.fk_instructor_id ? 'default' : '#808080' 
+                                                            })
                                                             
                                                         }}
                                                         options={instructors}
@@ -710,7 +834,7 @@ function AdminClassForm({ setUpdates }) {
                                                         components={
                                                             {
                                                                 DropdownIndicator: () => 
-                                                                    <CgSelect className="select-icon"/>,
+                                                                    <CgSelect className="select-dropdown-icon"/>,
                                                                 IndicatorSeparator: () => null,
                                                                 Option: (props) => {
                                                                     const {innerProps, innerRef} = props;
@@ -739,7 +863,7 @@ function AdminClassForm({ setUpdates }) {
                                             </div>
                                         </div>
                                         <div className="input-row">
-                                            <div className="flex-input">
+                                            <div className="flex-input volunteers-input">
                                                 <label className="class-form-label">
                                                     Volunteers
                                                 </label>
@@ -768,9 +892,10 @@ function AdminClassForm({ setUpdates }) {
                                                             })}
                                                             {showVolunteers[index] ? 
                                                                 <Select
-                                                                    className="select add-volunteers"
+                                                                    className="add-volunteers"
                                                                     defaultValue={{ value: null, label: 'Enter Volunteer Name' }}
                                                                     autoFocus={true}
+                                                                    label="Volunteer"
                                                                     openMenuOnFocus={true}
                                                                     styles={{
                                                                         control: () => ({
@@ -863,7 +988,7 @@ function AdminClassForm({ setUpdates }) {
                                                         <h2 className="delete-popup-title">Delete Schedule</h2>
                                                         <p className="delete-popup-prompt">Delete this schedule from the class?</p>
                                                         <div className="delete-popup-buttons">
-                                                            <button type="button" className="cancel-button" onClick={() => setShowPopup(false)}>
+                                                            <button type="button" className="cancel-delete-button" onClick={() => setShowPopup(false)}>
                                                                 Cancel
                                                             </button>
                                                             <button
@@ -891,7 +1016,7 @@ function AdminClassForm({ setUpdates }) {
                                             day: 3,
                                             start_time: '12:00',
                                             end_time: '12:00',
-                                            frequency: frequencies[1].value, // weekly
+                                            frequency: frequencyOptions[1].value, // weekly
                                             volunteer_ids: []
                                         });
                                         setUpdates((prev) => prev + 1);  

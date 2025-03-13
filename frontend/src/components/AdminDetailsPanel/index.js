@@ -34,7 +34,7 @@ function AdminDetailsPanel({
                             <h2 className="delete-popup-title">Delete Class</h2>
                             <p className="delete-popup-prompt">Delete this class permanently?</p>
                             <div className="delete-popup-buttons">
-                                <button type="button" className="cancel-button" onClick={() => setShowPopup(false)}>
+                                <button type="button" className="cancel-delete-button" onClick={() => setShowPopup(false)}>
                                     Cancel
                                 </button>
                                 <button

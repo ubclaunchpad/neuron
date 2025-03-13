@@ -207,7 +207,7 @@ export default class VolunteerModel {
                 i.f_name, i.l_name
             FROM schedule AS s
             JOIN class AS c ON s.fk_class_id = c.class_id 
-            JOIN instructors AS i ON c.fk_instructor_id = i.instructor_id
+            JOIN instructors AS i ON s.fk_instructor_id = i.instructor_id
             WHERE s.active = 1; 
         `;
 

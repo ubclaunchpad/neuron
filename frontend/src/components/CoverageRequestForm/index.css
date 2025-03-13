@@ -1,0 +1,154 @@
+@import '../../styles.css';
+/*Imports custom fonts*/
+
+.coverage-modal-overlay {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    /* Darken the background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    /* Ensure it sits on top of everything */
+}
+
+.custom-modal {
+    max-width: 500px;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+/* Form container */
+.coverage-form-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.coverage-form-title {
+    margin: 0;
+    font-family: var(--font-secondary, sans-serif);
+    font-size: 1.5rem;
+    color: var(--dark, #333);
+}
+
+.coverage-form-intro {
+    margin-top: 0.5rem;
+    color: var(--dark, #333);
+    line-height: 1.4;
+}
+
+/* ------------------ */
+/* Form Layout        */
+/* ------------------ */
+.coverage-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Form Group */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    align-self: stretch;
+}
+
+/* Labels */
+.form-label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    align-self: stretch;
+}
+
+.required {
+    color: var(--text-grey, #808080);
+}
+
+/* Inputs, Select, Textarea */
+.coverage-form input[type="text"],
+.coverage-form input[type="email"],
+.coverage-form select,
+.coverage-form textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--grey, #ccc);
+    border-radius: 4px;
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+/* Radio Group */
+.radio-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 40px;
+    align-self: stretch;
+}
+
+.radio-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+/* Acknowledgment (Checkbox) */
+.acknowledgment-group {
+    margin-top: 0.5rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin-top: 2px;
+}
+
+.acknowledgment-text {
+    line-height: 1.4;
+}
+
+/* ------------------ */
+/* Buttons            */
+/* ------------------ */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.btn {
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: background-color 0.2s ease;
+}
+
+/* Primary Button */
+.btn-primary {
+    background-color: var(--primary-blue, #007bff);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    /* Slightly darker blue */
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background-color: var(--grey, #ccc);
+    color: var(--dark, #333);
+}
+
+.btn-secondary:hover {
+    background-color: #b3b3b3;
+}

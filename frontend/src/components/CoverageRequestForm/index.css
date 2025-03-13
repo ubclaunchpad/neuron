@@ -1,154 +1,168 @@
-@import '../../styles.css';
-/*Imports custom fonts*/
-
-.coverage-modal-overlay {
-    background-color: rgba(0, 0, 0, 0.5) !important;
-    /* Darken the background */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    /* Ensure it sits on top of everything */
-}
-
-.custom-modal {
-    max-width: 500px;
+/* Modal Styles */
+.tile {
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 0px 4px 16px rgba(15, 17, 17, 0.05);
     border-radius: 8px;
-    padding: 20px;
+    background-color: var(--white);
+    border: 1px solid var(--grey);
+    padding: 32px;
+    text-align: left;
+    font-size: var(--medium-text);
+    color: var(--dark);
+    font-family: var(--font-primary);
 }
 
-/* Form container */
-.coverage-form-container {
+/* Header */
+.request-coverage-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: var(--title-text);
+    font-weight: var(--semi-bold);
+}
+
+.request-coverage-title {
+    flex: 1;
+    line-height: 135%;
+}
+
+.close-button-icon {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+
+/* Form Container */
+.form-container {
     display: flex;
     flex-direction: column;
-}
-
-.coverage-form-title {
-    margin: 0;
-    font-family: var(--font-secondary, sans-serif);
-    font-size: 1.5rem;
-    color: var(--dark, #333);
-}
-
-.coverage-form-intro {
-    margin-top: 0.5rem;
-    color: var(--dark, #333);
-    line-height: 1.4;
-}
-
-/* ------------------ */
-/* Form Layout        */
-/* ------------------ */
-.coverage-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    gap: 20px;
 }
 
 /* Form Group */
 .form-group {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    align-self: stretch;
+    gap: 10px;
 }
 
 /* Labels */
 .form-label {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    align-self: stretch;
+    font-size: var(--medium-text);
+    font-weight: var(--semi-bold);
 }
 
 .required {
-    color: var(--text-grey, #808080);
+    color: var(--dark-grey);
+    font-style: italic;
 }
 
-/* Inputs, Select, Textarea */
-.coverage-form input[type="text"],
-.coverage-form input[type="email"],
-.coverage-form select,
-.coverage-form textarea {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--grey, #ccc);
-    border-radius: 4px;
-    font-size: 0.95rem;
-    font-family: inherit;
+.optional {
+    color: var(--dark-grey);
+    font-style: italic;
 }
 
-/* Radio Group */
+/* Radio Button Group */
 .radio-group {
     display: flex;
-    align-items: flex-start;
-    gap: 40px;
+    align-items: center;
+    gap: 20px;
     align-self: stretch;
 }
 
-.radio-label {
+.radio-option {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+/* Dropdown (Category Selection) */
+.category-wrapper {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
 }
 
-/* Acknowledgment (Checkbox) */
+.category-label {
+    font-size: var(--medium-text);
+    font-weight: var(--semi-bold);
+}
+
+.dropdown {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--grey);
+    border-radius: 8px;
+    font-size: var(--medium-text);
+    background-color: var(--white);
+    color: var(--dark-grey);
+    cursor: pointer;
+}
+
+/* Text Areas */
+.textarea {
+    width: 100%;
+    height: 100px;
+    padding: 12px;
+    border: 1px solid var(--grey);
+    border-radius: 8px;
+    font-size: var(--medium-text);
+    background-color: var(--white);
+    color: var(--dark-grey);
+    resize: none;
+    font-family: var(--font-primary);
+    box-sizing: border-box;  /* ✅ Ensures padding doesn't add extra width */
+}
+
+/* Force all inputs (text, select, textarea) to match */
+.form-input, 
+.dropdown, 
+.textarea {
+    max-width: 100%; /* ✅ Prevents exceeding parent width */
+}
+
+/* Acknowledgment Checkbox */
 .acknowledgment-group {
-    margin-top: 0.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
 }
 
 .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 10px;
-}
-
-.checkbox-label input[type="checkbox"] {
-    margin-top: 2px;
+    gap: 8px;
+    cursor: pointer;
 }
 
 .acknowledgment-text {
-    line-height: 1.4;
+    font-size: var(--small-text);
+    color: var(--dark);
+    line-height: 135%;
 }
 
-/* ------------------ */
-/* Buttons            */
-/* ------------------ */
-.form-actions {
+/* Button Wrapper */
+.button-wrapper {
     display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
+    justify-content: center;
+    margin-top: 20px;
 }
 
-.btn {
-    cursor: pointer;
+/* Submit Button */
+.submit-button {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--button-blue);
+    color: var(--white);
     border: none;
-    border-radius: 4px;
-    padding: 0.6rem 1.2rem;
-    font-size: 0.95rem;
-    font-family: inherit;
-    transition: background-color 0.2s ease;
+    border-radius: 8px;
+    font-size: var(--medium-text);
+    font-weight: var(--semi-bold);
+    cursor: pointer;
 }
 
-/* Primary Button */
-.btn-primary {
-    background-color: var(--primary-blue, #007bff);
-    color: #fff;
-}
-
-.btn-primary:hover {
-    background-color: #0056b3;
-    /* Slightly darker blue */
-}
-
-/* Secondary Button */
-.btn-secondary {
-    background-color: var(--grey, #ccc);
-    color: var(--dark, #333);
-}
-
-.btn-secondary:hover {
-    background-color: #b3b3b3;
+.submit-button:hover {
+    background-color: var(--button-blue-hover);
 }

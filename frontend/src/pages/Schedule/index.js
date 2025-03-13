@@ -53,6 +53,7 @@ function Schedule() {
               type: 'coverage',
             })
           ])
+
           const openCoverageShifts = myCoverageShifts.filter(
             shift => shift.absence_request?.status === 'open'
           );
@@ -79,7 +80,7 @@ function Schedule() {
           coverage_status = COVERAGE_STATUSES.PENDING;
         } else if (shift.absence_request.status === 'resolved') {
           // Resolved
-          shift_type = null;
+          shift_type = 'resolved';
           // Coverage status is resolved
           coverage_status = COVERAGE_STATUSES.RESOLVED;
         } else if (shift.absence_request.status === 'coverage-pending') {
@@ -108,6 +109,10 @@ function Schedule() {
           // Don't show past shifts that are open for coverage
           if (pastShift && shift.shift_type === (isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE : SHIFT_TYPES.COVERAGE)) {
             // skip shift
+            return
+          }
+          // Don't show resolved shifts
+          if (shift.shift_type === 'resolved') {
             return
           }
           

@@ -53,8 +53,12 @@ function Schedule() {
               type: 'coverage',
             })
           ])
-          console.log(myCoverageShifts);
-          response = [...myShifts, ...myCoverageShifts];
+          const openCoverageShifts = myCoverageShifts.filter(
+            shift => shift.absence_request?.status === 'open'
+          );
+          console.log('mycoverage', myCoverageShifts);
+          console.log('myopen', openCoverageShifts);
+          response = [...myShifts, ...openCoverageShifts];
         }
         console.log(response);
 
@@ -81,7 +85,7 @@ function Schedule() {
         } else if (shift.absence_request.status === 'coverage-pending') {
           // A volunteer has offered to cover this shift 
           shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL : shift.volunteer_id === user.volunteer.volunteer_id ? SHIFT_TYPES.MY_SHIFTS : SHIFT_TYPES.COVERAGE;
-          coverage_status = null;
+          coverage_status = COVERAGE_STATUSES.PENDING;
         } else if (shift.absence_request.status === 'open') {
           // Shift absence request is approved and is now open
           shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE : SHIFT_TYPES.COVERAGE;

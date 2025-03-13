@@ -17,34 +17,32 @@ import {
 } from '../controllers/shiftController.js';
 
 export const ShiftRoutes: RouteDefinition = {
-    path: '/shifts',
-    middleware: [
-        isAuthorized,
-    ],
-    children: [
-        {
-            path: '/',
-            method: 'post',
-            validation: [
-                body('fk_volunteer_id').isUUID('4'),
-                body('shift_date').isDate({ format: 'YYYY-MM-DD' }),
-                body('fk_schedule_id').isInt({ min: 0 }),
-                body('duration').isInt({ min: 0 }),
-            ],
-            action: addShift
-        },
-        {
-            path: '/',
-            method: 'get',
-            validation: [
-                query('volunteer').isUUID('4').optional(),
-                query('before').isDate().optional(),
-                query('after').isDate().optional(),
-                query('type').isIn(ShiftQueryType.values).optional(),
-                query('status').isIn(ShiftStatus.values).optional()
-            ],
-            action: getShifts
-        },
+  path: "/shifts",
+  middleware: [isAuthorized],
+  children: [
+    {
+      path: "/",
+      method: "post",
+      validation: [
+        body("fk_volunteer_id").isUUID("4"),
+        body("shift_date").isDate({ format: "YYYY-MM-DD" }),
+        body("fk_schedule_id").isInt({ min: 0 }),
+        body("duration").isInt({ min: 0 }),
+      ],
+      action: addShift,
+    },
+    {
+      path: "/",
+      method: "get",
+      validation: [
+        query("volunteer").isUUID("4").optional(),
+        query("before").isDate().optional(),
+        query("after").isDate().optional(),
+        query("type").isIn(ShiftQueryType.values).optional(),
+        query("status").isIn(ShiftStatus.values).optional(),
+      ],
+      action: getShifts,
+    },
 
         {
             // Retrieves all shifts viewable to a specific volunteer in a given month and year.

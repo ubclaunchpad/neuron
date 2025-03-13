@@ -52,64 +52,74 @@ async function getShiftsByVolunteerIdAndMonth(req: AuthenticatedRequest, res: Re
     res.status(200).json(shifts);
 }
 
+async function getShiftsByMonth(req: AuthenticatedRequest, res: Response) {
+  const modifiedDate = new Date(req.query.date + "T00:00:00");
+  const month = modifiedDate.getMonth() + 1;
+  const year = modifiedDate.getFullYear();
+
+  const shifts = await shiftModel.getShiftsByMonth(Number(month), Number(year));
+
+  res.status(200).json(shifts);
+}
+
 async function addShift(req: AuthenticatedRequest, res: Response) {
-    const shift: ShiftDB = req.body;
+  const shift: ShiftDB = req.body;
 
-    const request = await shiftModel.addShift(shift);
-    const addedShift = {
-        shift_id: request.insertId,
-        fk_volunteer_id: shift.fk_volunteer_id ?? null,
-        fk_schedule_id: shift.fk_schedule_id,
-        shift_date: shift.shift_date,
-        duration: shift.duration,
-        checked_in: shift.checked_in
-    };
+  const request = await shiftModel.addShift(shift);
+  const addedShift = {
+    shift_id: request.insertId,
+    fk_volunteer_id: shift.fk_volunteer_id ?? null,
+    fk_schedule_id: shift.fk_schedule_id,
+    shift_date: shift.shift_date,
+    duration: shift.duration,
+    checked_in: shift.checked_in,
+  };
 
-    res.status(200).json(addedShift);
+  res.status(200).json(addedShift);
 }
 
 async function deleteShift(req: AuthenticatedRequest, res: Response) {
-    const shift_id = Number(req.params.shift_id);
+  const shift_id = Number(req.params.shift_id);
 
-    const request = await shiftModel.deleteShift(shift_id);
+  const request = await shiftModel.deleteShift(shift_id);
 
-    res.status(200).json(request);
+  res.status(200).json(request);
 }
 
 async function updateShift(req: AuthenticatedRequest, res: Response) {
-    const shift_id = Number(req.params.shift_id);
-    const shift: ShiftDB = req.body;
+  const shift_id = Number(req.params.shift_id);
+  const shift: ShiftDB = req.body;
 
-    const request = await shiftModel.updateShift(shift_id, shift);
+  const request = await shiftModel.updateShift(shift_id, shift);
 
-    res.status(200).json(request);
+  res.status(200).json(request);
 }
 
 // volunteer checks into a shift
 async function checkInShift(req: AuthenticatedRequest, res: Response) {
-    const shift_id = Number(req.params.shift_id);
+  const shift_id = Number(req.params.shift_id);
 
-    const request = await shiftModel.updateShiftCheckIn(shift_id);
+  const request = await shiftModel.updateShiftCheckIn(shift_id);
 
-    res.status(200).json(request);
+  res.status(200).json(request);
 }
 
 // volunteer requesting to cover someone else’s open shift
 async function requestCoverShift(req: AuthenticatedRequest, res: Response) {
-    const { request_id, volunteer_id } = req.body;
+  const { request_id, volunteer_id } = req.body;
 
     const request = await shiftModel.insertCoverageRequest(request_id, volunteer_id);
 
-    res.status(200).json(request);
+  res.status(200).json(request);
 }
 
 // volunteer cancels on covering a shift
 async function withdrawCoverShift(req: AuthenticatedRequest, res: Response) {
-    const { request_id, volunteer_id } = req.body;
+  const { request_id, volunteer_id } = req.body;
 
     const request = await shiftModel.deleteCoverageRequest(request_id, volunteer_id);
 
-    res.status(200).json(request);
+  res.status(200).json(request);
 }
 
 // volunteer requests absence for their own shift
@@ -118,7 +128,7 @@ async function requestAbsence(req: AuthenticatedRequest, res: Response) {
 
     const request = await shiftModel.insertAbsenceRequest(shift_id);
 
-    res.status(200).json(request);
+  res.status(200).json(request);
 }
 
 // volunteers cancels their request for shift absence
@@ -127,7 +137,7 @@ async function withdrawAbsenceRequest(req: AuthenticatedRequest, res: Response) 
 
     const request = await shiftModel.deleteAbsenceRequest(request_id, shift_id);
 
-    res.status(200).json(request);
+  res.status(200).json(request);
 }
 
 export {

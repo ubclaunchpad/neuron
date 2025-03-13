@@ -19,6 +19,7 @@ function DetailsPanel({
   children,
   dynamicShiftButtons = [],
   shiftDetails,
+  type,
 }) {
   const openPanelWidth = '448px'
   const [panelWidth, setPanelWidth] = useState("0px");
@@ -167,7 +168,7 @@ function DetailsPanel({
             </button>
           </div>
           {
-            isAdmin ? 
+            isAdmin && (type === 'classes') ? 
             <AdminDetailsPanel
               classId={classId}
               panelInfo={panelInfo}

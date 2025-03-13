@@ -6,13 +6,20 @@ import PlusIcon from '../assets/images/button-icons/plus-icon.svg';
 import RequestCoverageIcon from '../assets/request-coverage.png'
 import CancelIcon from "../assets/images/button-icons/x-icon.svg";
 
+let openCoverageRequestHandler = null;
+
+// Setter to allow external modules (like Schedule) to set the handler
+export const setOpenCoverageRequestHandler = (handler) => {
+    openCoverageRequestHandler = handler;
+};
+
 const handleCheckInClick = async (shift, handleShiftUpdate) => {
     try {
         if (!shift.checked_in) {
             // console.log(`Checking in for shift ${shift.shift_id}`);
             await checkInShift(shift.shift_id);
             handleShiftUpdate({ ...shift, checked_in: 1 });
-        } 
+        }
 
     } catch (error) {
         console.error('Error checking in for shift:', error);
@@ -36,13 +43,19 @@ const handleCoverShiftClick = async (shift, handleShiftUpdate, volunteerID) => {
 
 const handleRequestCoverageClick = async (shift, handleShiftUpdate) => {
     try {
-        const body = {
-            shift_id: shift.shift_id,
+        if (openCoverageRequestHandler) {
+            openCoverageRequestHandler(shift);
+        } else {
+            // Otherwise, fallback to calling the API directly.
+            const body = { shift_id: shift.shift_id };
+            let data = await requestShiftCoverage(body);
+            handleShiftUpdate({
+                ...shift,
+                shift_type: SHIFT_TYPES.MY_COVERAGE_REQUESTS,
+                coverage_status: COVERAGE_STATUSES.OPEN,
+                request_id: data.insertId,
+            });
         }
-        // console.log(`Requesting coverage for shift ${shift.shift_id}`);
-        let data = await requestShiftCoverage(body);
-        handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_COVERAGE_REQUESTS, coverage_status: COVERAGE_STATUSES.OPEN, request_id: data.insertId });
-         
     } catch (error) {
         console.error('Error requesting for shift coverage: ', error);
     }
@@ -64,7 +77,6 @@ const handleCancelClick = async (shift, handleShiftUpdate, volunteerID) => {
         } catch (error) {
             console.error('Error canceling coverage:', error);
         }
-    
     } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
 
         try {
@@ -75,8 +87,8 @@ const handleCancelClick = async (shift, handleShiftUpdate, volunteerID) => {
             };
             await cancelCoverRequest(body);
             handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_SHIFTS, coverage_status: null, request_id: null });
-
-        } catch (error) {
+        }
+        catch (error) {
             console.error('Error canceling coverage request:', error);
         }
     }
@@ -89,7 +101,7 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID) => {
     const shiftStart = dayjs(`${shiftDay} ${shift.start_time}`);
     const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
     const currentDate = dayjs();
-    
+
     // Accounts for a 30 minute window before and after the shift
     const pastShift = currentDate.isAfter(shiftEnd.add(30, 'minutes'));
     const currentShift = currentDate.isBetween(
@@ -102,13 +114,13 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID) => {
     return {
         [SHIFT_TYPES.MY_SHIFTS]: {
             lineColor: 'var(--green)',  // Line color for the shift card
-            label: shift.checked_in 
-                ? 'Checked In' 
-                    : currentShift 
-                    ? 'Check In' 
-                        : pastShift
+            label: shift.checked_in
+                ? 'Checked In'
+                : currentShift
+                    ? 'Check In'
+                    : pastShift
                         ? 'Missed Shift'
-                            : 'Upcoming',
+                        : 'Upcoming',
             icon: shift.checked_in ? null : currentShift ? CheckInIcon : null,
             iconColourClass: shift.checked_in ? null : currentShift ? 'icon-white' : null, // Icon colour classes defined in styles.css
             disabled: shift.checked_in || !currentShift || pastShift,
@@ -133,7 +145,7 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID) => {
                 : 'Shift Filled',
             icon: null,
             disabled: true,
-            onClick: () => {}, // No action for this state
+            onClick: () => { }, // No action for this state
         },
         [SHIFT_TYPES.DEFAULT]: {
             lineColor: 'var(--grey)',

@@ -9,7 +9,8 @@ import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { useAuth } from "../../contexts/authContext";
 import { COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
-import { getButtonConfig } from "../../utils/buttonConfig";
+import { getButtonConfig, setOpenCoverageRequestHandler } from "../../utils/buttonConfig";
+import CoverageRequestForm from "../../components/CoverageRequestForm";
 import "./index.css";
 
 function Schedule() {
@@ -23,6 +24,23 @@ function Schedule() {
     const [selectedShiftDetails, setShiftDetails] = useState(null);
     const [viewMode, setViewMode] = useState("list");
     const { days, initialDate, nextWeek, previousWeek, goToToday } = useWeekView();
+
+    const [isCoverageRequestOpen, setIsCoverageRequestOpen] = useState(false);
+    const [coverageRequestShift, setCoverageRequestShift] = useState(null);
+
+    const openCoverageRequest = (shift) => {
+        setCoverageRequestShift(shift);
+        setIsCoverageRequestOpen(true);
+    };
+
+    useEffect(() => {
+        setOpenCoverageRequestHandler(openCoverageRequest);
+    }, []);
+
+    const closeCoverageRequest = () => {
+        setIsCoverageRequestOpen(false);
+        setCoverageRequestShift(null);
+    };
 
     // Create a ref object to store references to each shifts-container for scrolling
     const shiftRefs = useRef({});
@@ -65,7 +83,7 @@ function Schedule() {
             return shift.shift_type === filter;
         });
         setShifts(filteredShifts);
-    }, [selectedDate, filter, user?.volunteer.volunteer_id]);
+    }, [selectedDate, filter, user?.volunteer.volunteer_id, currentDate]);
 
     // Fetch shifts for the selected date and filter
     useEffect(() => {
@@ -208,6 +226,11 @@ function Schedule() {
                     )}
                 </div>
             </DetailsPanel>
+            <CoverageRequestForm
+                open={isCoverageRequestOpen}
+                onClose={closeCoverageRequest}
+                shift={coverageRequestShift}
+            />
         </main>
     );
 }

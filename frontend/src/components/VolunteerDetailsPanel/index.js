@@ -104,7 +104,7 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
                             {shiftDetails.shift_type === "my-shifts"
                             ? "My Class"
                             : shiftDetails.shift_type === "my-coverage-requests" &&
-                                shiftDetails.coverage_status === COVERAGE_STATUSES.PENDING
+                                shiftDetails.coverage_status === COVERAGE_STATUSES.OPEN
                             ? "Requested Coverage"
                             : shiftDetails.shift_type === "my-coverage-requests" &&
                                 shiftDetails.coverage_status ===

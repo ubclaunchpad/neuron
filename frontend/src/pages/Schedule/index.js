@@ -64,7 +64,7 @@ function Schedule() {
         let coverage_status;
         // COVERAGE_STATUSES.PENDING right now is for both pending coverage requests and absence requests – may need to fix
       
-        if (!shift.absence_request || shift.absence_request.status === 'resolved') {
+         if (!shift.absence_request) {
           // If the absence request is resolved or there is no absence request, shift is covered
           shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_COVERED : SHIFT_TYPES.MY_SHIFTS;
           // No coverage status for covered shifts
@@ -73,9 +73,9 @@ function Schedule() {
           // The shift has an absence request, that is pending
           shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE : SHIFT_TYPES.MY_COVERAGE_REQUESTS;
           coverage_status = COVERAGE_STATUSES.PENDING;
-        } else if (shift.absence_request.status === 'absence-resolved') {
+        } else if (shift.absence_request.status === 'resolved') {
           // Resolved
-          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_COVERED : SHIFT_TYPES.MY_SHIFTS;
+          shift_type = null;
           // Coverage status is resolved
           coverage_status = COVERAGE_STATUSES.RESOLVED;
         } else if (shift.absence_request.status === 'coverage-pending') {

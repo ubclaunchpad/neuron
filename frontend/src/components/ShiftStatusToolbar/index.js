@@ -29,7 +29,7 @@ function ShiftStatusToolbar({ setFilter, filter}) {
                   onClick={() => setFilter('my-coverage-requests')}
                   className={`requested-coverage-button ${filter === 'my-coverage-requests' ? 'selected' : ''}`}
                 >
-                  <div className="button-icon"></div> Requested Coverage
+                  <div className="button-icon"></div> My Absence Requests 
                 </button>
                 <button
                   onClick={() => setFilter('coverage')}
@@ -42,22 +42,22 @@ function ShiftStatusToolbar({ setFilter, filter}) {
             {isAdmin && (
               <>
                 <button
+                  onClick={() => setFilter('requested_coverage')}
+                  className={`requested-coverage-button ${filter === 'requested_coverage' ? 'selected' : ''}`}
+                >
+                  <div className="button-icon"></div> Absence Requests
+                </button>
+                <button
                   onClick={() => setFilter('needs_coverage')}
                   className={`needs-coverage-button ${filter === 'needs_coverage' ? 'selected' : ''}`}
                 >
                   <div className="button-icon"></div> Needs Coverage
                 </button>
                 <button
-                  onClick={() => setFilter('requested_coverage')}
-                  className={`requested-coverage-button ${filter === 'requested_coverage' ? 'selected' : ''}`}
-                >
-                  <div className="button-icon"></div> Request for Shift Coverage
-                </button>
-                <button
                   onClick={() => setFilter('pending_fulfill')}
                   className={`pending-fulfill-button ${filter === 'pending_fulfill' ? 'selected' : ''}`}
                 >
-                  <div className="button-icon"></div> Request to Fulfill Coverage
+                  <div className="button-icon"></div> Coverage Pending
                 </button>
                 
               </>

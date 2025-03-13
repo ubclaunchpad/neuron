@@ -130,9 +130,7 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID = null) =>
         },
         [SHIFT_TYPES.MY_COVERAGE_REQUESTS]: {
             lineColor: 'var(--yellow)',
-            label: shift.coverage_status === COVERAGE_STATUSES.OPEN
-                ? 'Requested Coverage'
-                : 'Shift Filled',
+            label: 'Request Pending',
             icon: null,
             disabled: true,
             onClick: () => {}, // No action for this state

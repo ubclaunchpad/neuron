@@ -10,10 +10,10 @@ import {
     getShifts,
     getShiftsByVolunteerIdAndMonth,
     requestAbsence,
-    requestCoverShift,
-    updateShift,
     withdrawAbsenceRequest,
-    withdrawCoverShift
+    requestCoverShift, 
+    withdrawCoverShift, 
+    updateShift
 } from '../controllers/shiftController.js';
 
 export const ShiftRoutes: RouteDefinition = {
@@ -61,8 +61,6 @@ export const ShiftRoutes: RouteDefinition = {
             ],
             action: getShiftsByVolunteerIdAndMonth
         },
-        //
-
         {
             path: '/check-in/:shift_id',
             method: 'patch',

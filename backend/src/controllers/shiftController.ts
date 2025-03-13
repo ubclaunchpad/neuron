@@ -52,6 +52,8 @@ async function getShiftsByVolunteerIdAndMonth(req: AuthenticatedRequest, res: Re
     res.status(200).json(shifts);
 }
 
+
+
 async function addShift(req: AuthenticatedRequest, res: Response) {
     const shift: ShiftDB = req.body;
 

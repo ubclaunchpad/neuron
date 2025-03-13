@@ -70,19 +70,6 @@ const getVolunteerShiftsForMonth = async (body) => {
   }
 };
 
-const getAllShiftsForMonth = async (params) => {
-  try {
-    const response = await api.get("/shifts/month", {
-      params: params,
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching shift info:", error);
-    throw error;
-  }
-};
-
 // Creates a request to check in for a shift
 const checkInShift = async (shift_id) => {
   try {

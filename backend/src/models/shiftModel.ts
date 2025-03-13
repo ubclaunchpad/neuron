@@ -217,15 +217,6 @@ export default class ShiftModel {
     return results[0]; // Value from procedure stored in the first value of the array
   }
 
-  async getShiftsByMonth(month: number, year: number): Promise<ShiftDB[]> {
-    const query = `CALL GetShiftsByMonth(?, ?)`;
-    const values = [month, year];
-
-    const [results, _] = await connectionPool.query<any>(query, values);
-
-    return results[0];
-  }
-
   // modify a shift to indicate that a volunteer has checked in
   async updateShiftCheckIn(shift_id: number): Promise<ResultSetHeader> {
     const query = `

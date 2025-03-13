@@ -52,16 +52,6 @@ async function getShiftsByVolunteerIdAndMonth(req: AuthenticatedRequest, res: Re
     res.status(200).json(shifts);
 }
 
-async function getShiftsByMonth(req: AuthenticatedRequest, res: Response) {
-  const modifiedDate = new Date(req.query.date + "T00:00:00");
-  const month = modifiedDate.getMonth() + 1;
-  const year = modifiedDate.getFullYear();
-
-  const shifts = await shiftModel.getShiftsByMonth(Number(month), Number(year));
-
-  res.status(200).json(shifts);
-}
-
 async function addShift(req: AuthenticatedRequest, res: Response) {
   const shift: ShiftDB = req.body;
 
@@ -141,6 +131,14 @@ async function withdrawAbsenceRequest(req: AuthenticatedRequest, res: Response) 
 }
 
 export {
-    addShift, checkInShift, deleteShift, getShift, getShifts, getShiftsByVolunteerIdAndMonth, requestAbsence, requestCoverShift, updateShift, withdrawAbsenceRequest, withdrawCoverShift
+  addShift,
+  checkInShift,
+  deleteShift,
+  getShift,
+  getShifts,
+  getShiftsByVolunteerIdAndMonth,
+  requestCoverShift,
+  updateShift,
+  withdrawCoverShift
 };
 

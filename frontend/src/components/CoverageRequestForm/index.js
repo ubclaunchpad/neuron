@@ -1,24 +1,63 @@
 import React, { useState } from "react";
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
+import { requestShiftCoverage } from "../../api/shiftService";
 import "./index.css";
 
 function CoverageRequestForm({ open, onClose, shift }) {
     const [whichShifts, setWhichShifts] = useState("single"); // "single" or "recurring"
     const [category, setCategory] = useState("");
     const [comments, setComments] = useState("");
+    const [details, setDetails] = useState("");
     const [acknowledgment, setAcknowledgment] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const categoryOptions = [
-        { value: "personal", label: "Personal emergancy" },
+        { value: "emergency", label: "Personal emergency" },
         { value: "health", label: "Health-related issue" },
-        { value: "scheduling", label: "Scheduling conflict" },
-        { value: "other", label: "Other" }
+        { value: "conflict", label: "Scheduling conflict" },
+        { value: "transportation", label: "Transportation" },
+        { value: "other", label: "Other" },
     ];
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        onClose();
+
+        if (!acknowledgment) {
+            alert("You must acknowledge the request terms before submitting.");
+            return;
+        }
+
+        if (!shift || !shift.shift_id) {
+            console.error("Shift data is missing.");
+            alert("Invalid shift data.");
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const requestData = {
+                fk_shift_id: shift.shift_id,
+                category,
+                details: details,
+                comments: comments || "",
+            };
+
+            console.log("Submitting request with data:", requestData);
+
+            const response = await requestShiftCoverage(requestData);
+
+            console.log("Coverage request submitted successfully:", response);
+            alert("Your coverage request has been submitted successfully.");
+
+            onClose();
+        } catch (error) {
+            console.error("Error submitting coverage request:", error);
+            alert("Failed to submit coverage request. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -77,7 +116,7 @@ function CoverageRequestForm({ open, onClose, shift }) {
                         </select>
                     </div>
 
-                    <textarea className="textarea" placeholder="Enter details about your request"></textarea>
+                    <textarea className="textarea" placeholder="Enter details about your request" value={details} onChange={(e) => setDetails(e.target.value)}></textarea>
                 </div>
 
                 {/* Additional Comments */}
@@ -86,7 +125,7 @@ function CoverageRequestForm({ open, onClose, shift }) {
                         <span>Additional comments </span>
                         <i className="optional">(Optional)</i>
                     </div>
-                    <textarea className="textarea" placeholder="Enter any additional comments here"></textarea>
+                    <textarea className="textarea" placeholder="Enter any additional comments here" value={comments} onChange={(e) => setComments(e.target.value)} />
                 </div>
 
                 {/* Acknowledgment */}
@@ -101,11 +140,9 @@ function CoverageRequestForm({ open, onClose, shift }) {
             </div>
 
             {/* Submit Button */}
-            <div className="button-wrapper">
-                <button className="submit-button" type="submit" onClick={handleSubmit}>
-                    Send Request
+            <button className="submit-button" type="submit" onClick={handleSubmit} disabled={loading}>
+                    {loading ? "Submitting..." : "Send Request"}
                 </button>
-            </div>
         </Modal>
     );
 }

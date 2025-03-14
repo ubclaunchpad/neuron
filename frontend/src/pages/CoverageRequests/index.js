@@ -86,8 +86,9 @@ function CoverageRequests() {
       const pastShift = currentDate.isAfter(shiftEnd);
 
       if (
-        (!pastShift && shift.absence_request.status === "coverage-pending") ||
-        shift.absence_request.status === "resolved"
+        !pastShift &&
+        (shift.absence_request.status === "coverage-pending" ||
+          shift.absence_request.status === "resolved")
       ) {
         coverageShiftMap.set(shift.shift_id, shift);
       }

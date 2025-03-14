@@ -4,7 +4,7 @@ import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import { AuthenticatedRequest } from '../common/types.js';
 import { shiftModel, volunteerModel } from '../config/models.js';
 
-async function getShift(req: AuthenticatedRequest, res: Response){
+async function getShift(req: AuthenticatedRequest, res: Response) {
     const { shift_id } = req.body;
 
     const shift_info = await shiftModel.getShiftInfo(shift_id);
@@ -30,7 +30,7 @@ async function getShifts(req: AuthenticatedRequest, res: Response) {
 
     const shifts = await shiftModel.getShifts({
         volunteer_id: volunteer_id,
-        before: before ? new Date(before) : undefined, 
+        before: before ? new Date(before) : undefined,
         after: after ? new Date(after) : undefined,
         type: type as ShiftQueryType,
         status: status as ShiftStatus
@@ -114,9 +114,13 @@ async function withdrawCoverShift(req: AuthenticatedRequest, res: Response) {
 
 // volunteer requests absence for their own shift
 async function requestAbsence(req: AuthenticatedRequest, res: Response) {
-    const { shift_id } = req.body; 
+    const { shift_id, category, details, comments } = req.body;
 
-    const request = await shiftModel.insertAbsenceRequest(shift_id);
+    if (!shift_id || !category || !details) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const request = await shiftModel.insertAbsenceRequest(shift_id, category, details, comments);
 
     res.status(200).json(request);
 }

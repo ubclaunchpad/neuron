@@ -118,7 +118,10 @@ const cancelCoverShift = async (body) => {
 const requestShiftCoverage = async ({ shift_id, category, details, comments }) => {
   try {
     const response = await api.post("/shifts/shift-coverage-request", {
-      fk_shift_id: shift_id,
+      shift_id: shift_id,
+      category: category,
+      details: details,
+      comments: comments || "",
     });
 
     return response.data;

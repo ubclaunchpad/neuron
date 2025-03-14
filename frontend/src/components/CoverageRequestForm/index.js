@@ -22,6 +22,21 @@ function CoverageRequestForm({ open, onClose, shift }) {
         { value: "other", label: "Other" },
     ];
 
+    const resetForm = () => {
+        setWhichShifts("single");
+        setCategory("");
+        setComments("");
+        setDetails("");
+        setAcknowledgment(false);
+        setLoading(false);
+    };
+
+    const closeModal = () => {
+        resetForm();
+        setShowConfirmation(false);
+        onClose();
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -36,13 +51,12 @@ function CoverageRequestForm({ open, onClose, shift }) {
             return;
         }
 
-        setShowConfirmation(true);
         setLoading(true);
 
         try {
             const requestData = {
-                fk_shift_id: shift.shift_id,
-                category,
+                shift_id: shift.shift_id,
+                category: category,
                 details: details,
                 comments: comments || "",
             };
@@ -52,9 +66,10 @@ function CoverageRequestForm({ open, onClose, shift }) {
             const response = await requestShiftCoverage(requestData);
 
             console.log("Coverage request submitted successfully:", response);
-            alert("Your coverage request has been submitted successfully.");
 
             onClose();
+            resetForm();
+            setShowConfirmation(true);
         } catch (error) {
             console.error("Error submitting coverage request:", error);
             alert("Failed to submit coverage request. Please try again.");
@@ -65,7 +80,7 @@ function CoverageRequestForm({ open, onClose, shift }) {
 
     return (
         <>
-            <Modal open={open} onClose={onClose} center classNames={{ modal: "tile" }}>
+            <Modal open={open} onClose={closeModal} center classNames={{ modal: "tile" }}>
                 <div className="request-coverage-form-header">
                     <div className="request-coverage-title">Request coverage form</div>
                 </div>

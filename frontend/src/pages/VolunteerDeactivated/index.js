@@ -2,16 +2,15 @@ import React, { useState } from 'react';
 import './index.css';
 import logoutIcon from "./button-icon.png";
 import deactivatedImg from "./acct-deactivated-img.png";
-
+import { useAuth } from "../../contexts/authContext";
 
 function VolunteerDeactivated() {
-  //const [data, setData] = useState(null);
-
-
-  const logOut = () => {
-    localStorage.removeItem("neuronAuthToken");
-    window.location.href = "/auth/login";
-  };
+  const { logout } = useAuth();
+  
+    const logoutRedirect = () => {
+      logout();
+      window.location.href = "/auth/login";
+    };
 
 
   return (
@@ -24,7 +23,7 @@ function VolunteerDeactivated() {
         />
         <h2><b>Your account has been deactivated.</b></h2>
         <div className="account-verification-contact-text">You can reach out to us at <b>bwp@gmail.com</b>. </div>
-        <button className = "account-verification-button" onClick={logOut}>
+        <button className = "account-verification-button" onClick={logoutRedirect}>
           <img
             src={logoutIcon}
             alt="Log out icon"

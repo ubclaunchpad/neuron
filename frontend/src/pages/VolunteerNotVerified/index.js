@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import './index.css';
 import logoutIcon from "./button-icon.png";
 import notVerifiedImg from "./not-verified-img.png";
+import { useAuth } from "../../contexts/authContext";
 
 
 function VolunteerNotVerified() {
-  //const [data, setData] = useState(null);
 
+  const { logout } = useAuth();
 
-  const logOut = () => {
-    localStorage.removeItem("neuronAuthToken");
+  const logoutRedirect = () => {
+    logout();
     window.location.href = "/auth/login";
   };
 
@@ -24,7 +25,7 @@ function VolunteerNotVerified() {
         />
         <h2><b>Waiting for an admin to verify your account.</b></h2>
         <div className="account-verification-contact-text">You can reach out to us at <b>bwp@gmail.com</b>. </div>
-        <button className = "account-verification-button" onClick={logOut}>
+        <button className = "account-verification-button" onClick={logoutRedirect}>
           <img
             src={logoutIcon}
             alt="Log out icon"

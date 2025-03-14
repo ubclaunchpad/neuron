@@ -5,7 +5,7 @@
     color: var(--dark-grey);
 }
 
-.decline-coverage {
+.approve-coverage {
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -16,14 +16,14 @@
     padding: 1rem 2.5rem;
 }
 
-.decline-coverage-header {
+.approve-coverage-header {
     display: flex;
     width: 100%;
     justify-content: space-between;
     align-items: center;
 }
 
-.decline-coverage-title {
+.approve-coverage-title {
     color: var(--primary-blue);
     text-decoration: none;
     font-family: var(--font-secondary);
@@ -36,7 +36,7 @@
     cursor: pointer;
   }
 
-  .decline-coverage-options {
+  .approve-coverage-options {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -44,7 +44,7 @@
     
   }
 
-  .decline-coverage-option {
+  .approve-coverage-option {
     display: flex;
     flex-direction: row;
     gap: 0.5rem;
@@ -52,18 +52,18 @@
     width: 50%;
   }
 
-  .decline-coverage-checkbox {
+  .approve-coverage-checkbox {
     width: fit-content;
   }
 
 
-  .decline-coverage-initials-label {
+  .approve-coverage-initials-label {
     margin-top: 0.5rem;
   }
 
-  .decline-coverage-button {
+  .approve-coverage-button {
     margin: 16px 0;
-    background-color: var(--red);
+    background-color: var(--button-blue);
     color: var(--white);
     border: var(--button-blue);
     width: 100%;
@@ -73,4 +73,20 @@
     display: flex;
     justify-content: center;
     cursor: pointer;
+  }
+
+  .approve-coverage-button:disabled {
+    background-color: var(--grey);
+  }
+
+  .approve-coverage-button:disabled:hover {
+    cursor: not-allowed;
+  }
+
+  .decline-coverage-button:disabled {
+    background-color: var(--grey);
+  }
+
+  .decline-coverage-button:disabled:hover {
+    cursor: not-allowed;
   }

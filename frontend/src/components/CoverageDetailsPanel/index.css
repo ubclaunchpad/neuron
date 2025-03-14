@@ -18,11 +18,22 @@
      background: white;
 }
 
-.panel-content {
+.coverage-panel-content {
      min-width: min(calc(100dvw - var(--sidebar-width)), 854px);
      width: 100%;
      max-width: 100%;
+     padding: 1rem 0;
 }
+
+.coverage {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(149, 32, 24, 0.1);
+     color: var(--error-red);
+     font-weight: bold;
+     text-align: center;
+ }
 
 .panel-header {
      width: 87%;
@@ -77,14 +88,24 @@
      filter:brightness(0.6);
 }
 
+.coverage-instructor-email {
+     color: var(--dark-grey);
+     background-color: #FFF;
+     font-size: 12px;
+     padding: 0;
+     border: none;
+     cursor: pointer;
+     text-align: left;
+}
+
 .panel-details {
      margin-right: 36px; 
      margin-left: 20px;
      padding: 32px 0px;
 }
 
-.panel-titles {
-     min-width: 120px;
+.coverage-panel-titles {
+     width: 120px;
      font-family: 'Roboto';
      font-weight: 400;
      font-size: 16px;
@@ -194,55 +215,56 @@
 
  /* Shift Details Panel */
 /* Dynamic Button Styling based on Shift Type */
-.panel-buttons {
+.coverage-panel-buttons {
      margin-top: 4vh;
-     height: 4.5vh;
+     width: fit-content;
      display: flex;
-     flex-direction: row;
+     flex-direction: column;
      gap: 12px;
 }
 
-.dynamic-button {
+.coverage-dynamic-button {
      position: relative;
      height: 100%;
      border-radius: 8px;
-     border: 1px solid var(--primary-blue);
      background: #FFF;
      box-shadow: 0px 4px 16px 0px rgba(15, 17, 17, 0.05);
-     padding: 0 0.75rem;
+     padding: 0.8rem 2rem;
      display: flex;
      align-items: center;
+     gap: 4px;
+     font-size: 14px;
  }
  
- .dynamic-button:not(:disabled):hover {
+ .coverage-dynamic-button:not(:disabled):hover {
      cursor: pointer;
      background: var(--button-blue);
      border: none;
  }
  
- .dynamic-button:disabled {
+ .coverage-dynamic-button:disabled {
      background-color: #d3d3d3;
      border: 1px solid #d3d3d3;
      box-shadow: none;
  }
 
- .dynamic-button.primary-action {
+ .coverage-dynamic-button.primary-action {
      background-color: var(--button-blue);
      color: var(--white);
      border: var(--button-blue);
  }
 
- .dynamic-button.primary-action:hover {
+ .coverage-dynamic-button.primary-action:hover {
      background-color: var(--button-blue-hover);
  }
 
- .dynamic-button.cancel-action {
+ .coverage-dynamic-button.cancel-action {
      background-color: var(--red);
      color: var(--white);
      border: var(--red);
  }
 
- .dynamic-button.cancel-action:hover {
+ .coverage-dynamic-button.cancel-action:hover {
      background-color: var(--red-hover);
  }
  
@@ -262,31 +284,20 @@
  .email-icon {
      margin-left: 0.5rem;
  }
- 
- .join-class-button {
-     display: flex; 
-     flex-direction: row; 
-     align-items: center; 
-     padding: 0.5rem 1rem;
-     margin-top: 1rem;
-     text-decoration: none;
-     border-radius: 8px;
-     border: 1px solid var(--primary-blue);
-     background: #FFF;
-     cursor: pointer;
-     transition: background-color 0.3s ease;
+
+ .coverage-primary-action {
+     background-color: var(--button-blue);
+     color: var(--white);
+     border: var(--button-blue);
  }
  
- .join-class-button a {
-     text-decoration: none;
-     color: var(--dark);
-     display: flex; 
-     flex-direction: row;
-     align-items: center; 
+ .coverage-primary-action:hover {
+     background-color: var(--button-blue-hover);
  }
- 
- .join-class-button:hover {
-     cursor: pointer;
-     background: var(--button-blue);
-     border: none;
+
+ .coverage-decline-action {
+     border: 2px solid var(--red);
+ }
+ .coverage-decline-action:hover {
+     background-color: white;
  }

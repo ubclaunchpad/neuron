@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 
 import dayjs from "dayjs";
 import CheckMarkIcon from "../assets/images/button-icons/check-mark-icon.svg";
-import CancelIcon from "../assets/images/button-icons/x-icon.svg";
+import CancelIcon from "../assets/images/button-icons/button-cancel-icon.svg";
 
 export const getCoverageButtonConfig = (shift, handleShiftUpdate) => {
   const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
@@ -20,15 +20,15 @@ export const getCoverageButtonConfig = (shift, handleShiftUpdate) => {
   );
 
   return {
-    resolved: {
+    approved: {
       lineColor: "var(--grey)",
-      label: "Approved by Admin",
+      label: "Approved",
       icon: null,
       iconColourClass: "icon-white",
       disabled: true,
       onClick: () => {},
     },
-    pending: {
+    available: {
       lineColor: "var(--yellow)",
       label: "Approve",
       icon: CheckMarkIcon,
@@ -37,6 +37,16 @@ export const getCoverageButtonConfig = (shift, handleShiftUpdate) => {
       buttonClass: "coverage-primary-action",
 
       onClick: () => handleShiftUpdate(shift, "approve"),
+    },
+    decline: {
+      lineColor: "var(--red)",
+      label: "Decline",
+      icon: CancelIcon,
+      iconColourClass: "icon-red",
+      disabled: false,
+      buttonClass: "cancel-action",
+
+      onClick: () => handleShiftUpdate(shift, "decline"),
     },
   };
 };

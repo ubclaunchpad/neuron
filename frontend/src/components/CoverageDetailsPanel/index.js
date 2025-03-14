@@ -23,10 +23,6 @@ function CoverageDetailsPanel({
   const openPanelWidth = "448px";
   const [panelWidth, setPanelWidth] = useState("0px");
   const [panelInfo, setPanelInfo] = useState(null);
-  const [myClass, setMyClass] = useState(false);
-  const [classTaken, setClassTaken] = useState(false);
-
-  const { user } = useAuth();
 
   useEffect(() => {
     if (classId) {
@@ -34,7 +30,6 @@ function CoverageDetailsPanel({
         .then((data) => {
           setPanelInfo(data);
           setPanelWidth(openPanelWidth);
-          myClassCheck(data);
         })
         .catch((error) => {
           console.error(error);
@@ -44,18 +39,6 @@ function CoverageDetailsPanel({
       setPanelWidth("0px");
     }
   }, [classId]);
-
-  const myClassCheck = async (data) => {
-    const volunteers = data.schedules.flatMap(
-      (schedule) => schedule.volunteers || []
-    );
-    setMyClass(
-      volunteers.some(
-        (volunteer) => volunteer.user_id === user?.volunteer.volunteer_id
-      )
-    );
-    setClassTaken(volunteers.length !== 0);
-  };
 
   const formatTime = (time) => {
     if (time === null || time === undefined || time === "") return "";
@@ -89,52 +72,52 @@ function CoverageDetailsPanel({
     ));
   };
 
-  const renderVolunteers = () => {
-    const volunteers = panelInfo?.schedules.flatMap(
-      (schedule) => schedule.volunteers || []
-    );
+  // const renderVolunteers = () => {
+  //   const volunteers = panelInfo?.schedules.flatMap(
+  //     (schedule) => schedule.volunteers || []
+  //   );
 
-    // same volunteer may be assigned to multiple schedules within a class
-    const uniqueIds = [],
-      uniqueVolunteers = [];
-    volunteers?.forEach((volunteer) => {
-      if (!uniqueIds.includes(volunteer.volunteer_id)) {
-        uniqueIds.push(volunteer.volunteer_id);
-        uniqueVolunteers.push(volunteer);
-      }
-    });
+  //   // same volunteer may be assigned to multiple schedules within a class
+  //   const uniqueIds = [],
+  //     uniqueVolunteers = [];
+  //   volunteers?.forEach((volunteer) => {
+  //     if (!uniqueIds.includes(volunteer.volunteer_id)) {
+  //       uniqueIds.push(volunteer.volunteer_id);
+  //       uniqueVolunteers.push(volunteer);
+  //     }
+  //   });
 
-    if (!uniqueVolunteers || uniqueVolunteers.length === 0) {
-      return <>No volunteer for this class</>;
-    }
+  //   if (!uniqueVolunteers || uniqueVolunteers.length === 0) {
+  //     return <>No volunteer for this class</>;
+  //   }
 
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        {uniqueVolunteers.map((volunteer, idx) => {
-          const name =
-            volunteer.p_name ?? `${volunteer.f_name} ${volunteer.l_name}`;
+  //   return (
+  //     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+  //       {uniqueVolunteers.map((volunteer, idx) => {
+  //         const name =
+  //           volunteer.p_name ?? `${volunteer.f_name} ${volunteer.l_name}`;
 
-          return (
-            <div
-              key={idx}
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
-              <ProfileImg
-                src={formatImageUrl(volunteer?.fk_image_id)}
-                name={name}
-                className="volunteer-profile"
-              ></ProfileImg>
-              <div>{name}</div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+  //         return (
+  //           <div
+  //             key={idx}
+  //             style={{
+  //               display: "flex",
+  //               flexDirection: "row",
+  //               alignItems: "center",
+  //             }}
+  //           >
+  //             <ProfileImg
+  //               src={formatImageUrl(volunteer?.fk_image_id)}
+  //               name={name}
+  //               className="volunteer-profile"
+  //             ></ProfileImg>
+  //             <div>{name}</div>
+  //           </div>
+  //         );
+  //       })}
+  //     </div>
+  //   );
+  // };
 
   const handleToPrev = () => {
     if (!classList || !classId) return;
@@ -155,26 +138,42 @@ function CoverageDetailsPanel({
   };
 
   const renderInstructorInfo = () => {
-    if (!panelInfo?.instructor_email) return;
+    const instructors = panelInfo?.schedules.map((schedule) => ({
+      id: schedule.fk_instructor_id,
+      f_name: schedule.instructor_f_name,
+      l_name: schedule.instructor_l_name,
+      email: schedule.instructor_email,
+    }));
+
+    // same volunteer may be assigned to multiple schedules within a class
+    const uniqueIds = [],
+      uniqueInstructors = [];
+    instructors?.forEach((instructor) => {
+      if (!uniqueIds.includes(instructor.id)) {
+        uniqueIds.push(instructor.id);
+        uniqueInstructors.push(instructor);
+      }
+    });
+
+    if (!uniqueInstructors || uniqueInstructors.length === 0) {
+      return <>No instructors for this class</>;
+    }
 
     return (
       <>
-        {panelInfo?.instructor_f_name && panelInfo?.instructor_l_name
-          ? `${panelInfo.instructor_f_name} ${panelInfo.instructor_l_name}`
-          : "No instructor available"}
-        {shiftDetails &&
-        shiftDetails.shift_type &&
-        (shiftDetails.shift_type === SHIFT_TYPES.MY_SHIFTS ||
-          shiftDetails.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) ? (
-          <button
-            className="email-icon panel-button-icon"
-            onClick={() => {
-              window.open(`mailto:${panelInfo.instructor_email}`);
-            }}
-          >
-            <img alt="Email" style={{ width: 16, height: 16 }} src={email} />
-          </button>
-        ) : null}
+        {uniqueInstructors.map((instructor, idx) => (
+          <div className="instructor-item" key={idx}>
+            <div>{instructor.f_name + " " + instructor.l_name}</div>
+            <button
+              className="coverage-instructor-email"
+              onClick={() => {
+                window.open(`mailto:${instructor.email}`);
+              }}
+            >
+              {instructor.email}
+            </button>
+          </div>
+        ))}
       </>
     );
   };
@@ -185,7 +184,7 @@ function CoverageDetailsPanel({
         className="main-container"
         style={{ width: `calc(100% - ${panelWidth})`, overflow: "hidden" }}
       >
-        <div className="panel-content">{children}</div>
+        <div className="coverage-panel-content">{children}</div>
       </div>
       <div
         className="panel-container"
@@ -226,35 +225,6 @@ function CoverageDetailsPanel({
         <div className="panel-details">
           <div className="panel-details-shift">
             <div className="panel-details-shift-row">
-              <div className="panel-titles">Status</div>
-              {shiftDetails ? (
-                <div className={shiftDetails.shift_type}>
-                  {shiftDetails.shift_type === "my-shifts"
-                    ? "My Class"
-                    : shiftDetails.shift_type === "my-coverage-requests" &&
-                      shiftDetails.coverage_status === COVERAGE_STATUSES.OPEN
-                    ? "Requested Coverage"
-                    : shiftDetails.shift_type === "my-coverage-requests" &&
-                      shiftDetails.coverage_status ===
-                        COVERAGE_STATUSES.RESOLVED
-                    ? "Shift Filled"
-                    : shiftDetails.shift_type === "coverage" &&
-                      shiftDetails.coverage_status === COVERAGE_STATUSES.OPEN
-                    ? "Needs Coverage"
-                    : shiftDetails.shift_type === "coverage" &&
-                      shiftDetails.coverage_status === COVERAGE_STATUSES.PENDING
-                    ? "Requested to Cover"
-                    : ""}
-                </div>
-              ) : myClass ? (
-                <div className="my-shifts">My Class</div>
-              ) : classTaken ? (
-                <div className="classTaken">Class Taken</div>
-              ) : (
-                <div className="volunteersNeeded">Volunteers Needed</div>
-              )}
-            </div>
-            <div className="panel-details-shift-row">
               <div className="panel-titles">Instructor</div>
               <div className="panel-details-shift-right">
                 {renderInstructorInfo()}
@@ -263,42 +233,49 @@ function CoverageDetailsPanel({
             <div className="panel-details-shift-row">
               <div className="panel-titles">Volunteers</div>
               <div className="panel-details-shift-right">
-                {renderVolunteers()}
+                {shiftDetails?.volunteer_f_name}{" "}
+                {shiftDetails?.volunteer_l_name}
+              </div>
+            </div>
+            <div className="panel-details-shift-row">
+              <div className="panel-titles">Requested By</div>
+              <div className="panel-description">
+                {shiftDetails?.volunteer_f_name}{" "}
+                {shiftDetails?.volunteer_l_name}
+              </div>
+            </div>
+            <div className="panel-details-shift-row">
+              <div className="panel-titles">Requested For</div>
+              <div className="panel-description">This session only</div>
+            </div>
+            <div className="panel-details-shift-row">
+              <div className="panel-titles">Requested On</div>
+              <div className="panel-description">
+                {dayjs(shiftDetails?.shift_date).format("YYYY-MM-DD")}
+              </div>
+            </div>
+            <div className="panel-details-shift-row">
+              <div className="coverage-panel-titles">Reason for Request</div>
+              <div className="panel-description">
+                {shiftDetails?.absence_request.category}
+              </div>
+            </div>
+            <div className="panel-details-shift-row">
+              <div className="panel-titles">Reason Details</div>
+              <div className="panel-description">
+                {shiftDetails?.absence_request.details}
               </div>
             </div>
           </div>
-          <div className="panel-details-description">
-            <div className="panel-titles">Requested By</div>
-            <div className="panel-description">
-              {panelInfo?.instructions || "No instructions available"}
-            </div>
-          </div>
-          <div className="panel-details-description">
-            <div className="panel-titles">Requested For</div>
-            <div className="panel-description">
-              {panelInfo?.instructions || "No instructions available"}
-            </div>
-          </div>
-          <div className="panel-details-description">
-            <div className="panel-titles">Requested On</div>
-            <div className="panel-description">2025-03-05</div>
-          </div>
-          <div className="panel-details-description">
-            <div className="panel-titles">Reason for Request</div>
-            <div className="panel-description">Personal Emergency</div>
-          </div>
-          <div className="panel-details-description">
-            <div className="panel-titles">Reason Details</div>
-            <div className="panel-description">
-              {panelInfo?.instructions || "No instructions available"}
-            </div>
-          </div>
+
           {/* Conditionally render buttons based on Shift Card Type*/}
-          <div className="panel-buttons">
+          <div className="coverage-panel-buttons">
             {dynamicShiftButtons.map((button, index) => (
               <button
                 key={index}
-                className={`dynamic-button ${button.buttonClass || ""}`}
+                className={`coverage-dynamic-button ${
+                  button.buttonClass || ""
+                }`}
                 disabled={button.disabled}
                 onClick={() => button.onClick(shiftDetails)}
               >

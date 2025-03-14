@@ -154,6 +154,5 @@ export {
   getVolunteerShiftsForMonth,
   requestShiftCoverage,
   requestToCoverShift,
-  getAllShiftsForMonth,
 };
 

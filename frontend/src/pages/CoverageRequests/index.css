@@ -63,7 +63,7 @@ hr {
     display: flex;
     flex-direction: row;
     gap: 40px;
-    padding: 16px 36px 0px 36px;
+    padding: 0 36px;
 }
 
 .coverage-tab {

@@ -72,7 +72,20 @@ async function rejectAbsenceRequest(req: AuthenticatedRequest, res: Response) {
     res.sendStatus(200);
 }
 
+async function getAbsenceRequests(req: AuthenticatedRequest, res: Response) {
+  const results = await coverageModel.getAbsenceRequests();
+  res.json(results);
+}
+
 export {
-    approveAbsenceRequest, approveCoverShift, rejectAbsenceRequest, rejectCoverShift, requestAbsence, requestCoverShift, withdrawAbsenceRequest, withdrawCoverShift
+  getAbsenceRequests,
+  approveAbsenceRequest,
+  approveCoverShift,
+  rejectAbsenceRequest,
+  rejectCoverShift,
+  requestAbsence,
+  requestCoverShift,
+  withdrawAbsenceRequest,
+  withdrawCoverShift,
 };
 

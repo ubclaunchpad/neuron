@@ -13,23 +13,30 @@ import { getButtonConfig } from "../../utils/buttonConfig";
 import { getCoverageButtonConfig } from "../../utils/coverageButtonConfig";
 import "./index.css";
 import CoverageRequestCard from "../../components/CoverageRequestCard";
-import ApproveCoverage from "../../components/ApproveCoverage";
-import DeclineCoverage from "../../components/DeclineCoverage";
+import AbsenceRequestCard from "../../components/AbsenceRequestCard";
+import {
+  approveAbsenceRequest,
+  declineAbsenceRequest,
+  approveCoverageRequest,
+  declineCoverageRequest,
+} from "../../api/coverageService";
+import AbsenceModal from "../../components/AbsenceModal";
+import CoverageModal from "../../components/CoverageModal";
 
 function CoverageRequests() {
-  const { user } = useAuth();
   const currentDate = dayjs();
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [shifts, setShifts] = useState([]);
+  const [coverageShifts, setCoverageShifts] = useState([]);
   const [selectedShift, setSelectedShift] = useState(null);
   const [selectedClassId, setSelectedClassId] = useState(null);
   const [selectedShiftButtons, setSelectedShiftButtons] = useState([]);
   const [selectedShiftDetails, setShiftDetails] = useState(null);
   const [viewMode, setViewMode] = useState("list");
   const [tab, setTab] = useState(1);
+  const [showModal, setShowModal] = useState(false);
   const [approve, setApprove] = useState(false);
   const [selectedCoverage, setSelectedCoverage] = useState(null);
-  const [decline, setDecline] = useState(false);
   const { days, initialDate, nextWeek, previousWeek, goToToday } =
     useWeekView();
 
@@ -37,43 +44,82 @@ function CoverageRequests() {
   const shiftRefs = useRef({});
   const scheduleContainerRef = useRef(null);
 
-  const fetchShifts = useCallback(async () => {
+  const fetchAbsenceShifts = useCallback(async () => {
     const params = {
       after: selectedDate.startOf("month").format("YYYY-MM-DD"),
       before: selectedDate.endOf("month").format("YYYY-MM-DD"),
-      // type: "requesting",
+      type: "absence",
+      // status: ["absence-pending"],
     };
     const response = await getShifts(params);
 
     // Filter out duplicated shifts and past coverage requests
-    const shiftMap = new Map();
+    const coverageShiftMap = new Map();
     response.forEach((shift) => {
-      const shiftDay = dayjs(shift.date).format("YYYY-MM-DD");
+      const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
       const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
       const pastShift = currentDate.isAfter(shiftEnd);
       if (!pastShift) {
-        shiftMap.set(shift.id, shift);
+        coverageShiftMap.set(shift.shift_id, shift);
       }
     });
-
-    const uniqueShifts = Array.from(shiftMap.values());
+    const uniqueShifts = Array.from(coverageShiftMap.values());
 
     // Filter shifts based on selected filter type
     setShifts(uniqueShifts);
     console.log(uniqueShifts);
-  }, [selectedDate]);
+  }, [selectedDate, showModal]);
+
+  const fetchCoverageShifts = useCallback(async () => {
+    const params = {
+      after: selectedDate.startOf("month").format("YYYY-MM-DD"),
+      before: selectedDate.endOf("month").format("YYYY-MM-DD"),
+      type: "coverage",
+    };
+    const response = await getShifts(params);
+
+    // Filter out duplicated shifts and past coverage requests
+    const coverageShiftMap = new Map();
+    response.forEach((shift) => {
+      const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
+      const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
+      const pastShift = currentDate.isAfter(shiftEnd);
+
+      if (
+        (!pastShift && shift.absence_request.status === "coverage-pending") ||
+        shift.absence_request.status === "resolved"
+      ) {
+        coverageShiftMap.set(shift.shift_id, shift);
+      }
+    });
+    const uniqueShifts = Array.from(coverageShiftMap.values());
+
+    // Filter shifts based on selected filter type
+    setCoverageShifts(uniqueShifts);
+    console.log(uniqueShifts);
+  }, [selectedDate, showModal]);
 
   // Fetch shifts for the selected date
   useEffect(() => {
     const fetchData = async () => {
-      await fetchShifts();
+      await fetchAbsenceShifts();
+      await fetchCoverageShifts();
     };
     fetchData();
-  }, [fetchShifts]);
+  }, [fetchAbsenceShifts, fetchCoverageShifts]);
 
   // map of shifts grouped by date { date: [shift1, shift2, ...] }
-  const groupedShifts = shifts.reduce((acc, shift) => {
-    const date = shift.date;
+  const groupedAbsenceShifts = shifts.reduce((acc, shift) => {
+    const date = shift.shift_date;
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(shift);
+    return acc;
+  }, {});
+
+  const groupedCoverageShifts = coverageShifts.reduce((acc, shift) => {
+    const date = shift.shift_date;
     if (!acc[date]) {
       acc[date] = [];
     }
@@ -83,16 +129,15 @@ function CoverageRequests() {
 
   // Creates the buttons for the details panel based on the shift type
   const generateButtonsForDetailsPanel = (shift) => {
-    const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
-    const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
-    const pastShift = currentDate.isAfter(shiftEnd);
-
-    const buttons = [];
-    const buttonConfig = getButtonConfig(shift, handleShiftUpdate);
-    const primaryButton =
-      buttonConfig[shift.shift_type] || buttonConfig[SHIFT_TYPES.DEFAULT];
-
-    buttons.push(primaryButton);
+    const buttonConfig = getCoverageButtonConfig(shift, handleShiftUpdate);
+    const buttons =
+      tab === 1
+        ? shift.absence_request.status === "absence-pending"
+          ? [buttonConfig.available, buttonConfig.decline]
+          : [buttonConfig.approved]
+        : shift.absence_request.status === "coverage-pending"
+        ? [buttonConfig.available, buttonConfig.decline]
+        : [buttonConfig.approved];
 
     return buttons;
   };
@@ -100,10 +145,11 @@ function CoverageRequests() {
   // Update state when we update a shift
   const handleShiftUpdate = (shift, action) => {
     setSelectedShift(shift);
+    setShowModal(true);
     if (action === "approve") {
-      handleApproveModal(shift);
+      setApprove(true);
     } else if (action === "decline") {
-      handleDeclineModal(shift);
+      setApprove(false);
     }
     setShifts((staleShifts) => {
       return staleShifts.map((shift) => {
@@ -142,27 +188,58 @@ function CoverageRequests() {
     }
   }, [selectedDate]); // Scroll to top when selectedDate changes
 
-  const handleApproveModal = (shift) => {
-    setApprove(true);
-    setSelectedCoverage(shift);
-  };
-
-  const handleApprove = (shift) => {
+  const handleAbsenceApprove = (shift) => {
     setApprove(false);
+    console.log("absence approve");
+    approveAbsenceRequest(shift.absence_request.request_id)
+      .then(() => {
+        console.log("Absence request approved successfully");
+      })
+      .catch((error) => {
+        console.error("Error approving absence request:", error);
+      });
   };
 
-  const handleDeclineModal = (shift) => {
-    setDecline(true);
-    setSelectedCoverage(shift);
+  const handleCoverageApprove = (shift) => {
+    setApprove(false);
+    approveCoverageRequest(
+      shift.absence_request.request_id,
+      shift.absence_request.covering_volunteer_id
+    )
+      .then(() => {
+        console.log("Coverage request approved successfully");
+      })
+      .catch((error) => {
+        console.error("Error approving coverage request:", error);
+      });
   };
 
-  const handleDecline = (shift) => {
-    setDecline(false);
+  const handleAbsenceDecline = (shift) => {
+    declineAbsenceRequest(shift.absence_request.request_id)
+      .then(() => {
+        console.log("Absence request declined successfully");
+      })
+      .catch((error) => {
+        console.error("Error declining absence request:", error);
+      });
+  };
+
+  const handleCoverageDecline = (shift) => {
+    declineCoverageRequest(
+      shift.absence_request.request_id,
+      shift.absence_request.covering_volunteer_id
+    )
+      .then(() => {
+        console.log("Coverage request declined successfully");
+      })
+      .catch((error) => {
+        console.error("Error declining coverage request:", error);
+      });
   };
 
   useEffect(() => {
     scrollToTop();
-  }, [scrollToTop, groupedShifts]);
+  }, [scrollToTop, groupedAbsenceShifts, groupedCoverageShifts]);
 
   return (
     <main className="content-container">
@@ -203,7 +280,9 @@ function CoverageRequests() {
                   className={"coverage-tab".concat(
                     tab == 1 ? " coverage-active-tab" : ""
                   )}
-                  onClick={() => setTab(1)}
+                  onClick={() => {
+                    setTab(1);
+                  }}
                 >
                   Request for Shift Coverage
                 </div>
@@ -211,15 +290,62 @@ function CoverageRequests() {
                   className={"coverage-tab".concat(
                     tab == 2 ? " coverage-active-tab" : ""
                   )}
-                  onClick={() => setTab(2)}
+                  onClick={() => {
+                    setTab(2);
+                    // setSelectedClassId(null);
+                    // setSelectedShiftButtons(null);
+                    // setShiftDetails(null);
+                  }}
                 >
                   Request to Fulfill Coverage
                 </div>
               </div>
               <hr />
               <div ref={scheduleContainerRef} className="schedule-container">
-                {Object.keys(groupedShifts).length > 0 ? (
-                  Object.keys(groupedShifts).map((date) => (
+                {tab === 1 ? (
+                  Object.keys(groupedAbsenceShifts).length > 0 ? (
+                    Object.keys(groupedAbsenceShifts).map((date) => (
+                      <div
+                        key={date}
+                        className="shifts-container"
+                        ref={(el) =>
+                          (shiftRefs.current[dayjs(date).format("YYYY-MM-DD")] =
+                            el)
+                        }
+                      >
+                        {/* Date Header */}
+                        <h2
+                          className={`date-header ${
+                            dayjs(date).isSame(selectedDate, "day")
+                              ? "selected-date"
+                              : "non-selected-date"
+                          }`}
+                        >
+                          {dayjs(date).format("ddd, D")}
+                          {dayjs(date).isSame(currentDate, "day") && " | Today"}
+                        </h2>
+
+                        {/* Shift List for this date */}
+                        <div className="shift-list">
+                          {groupedAbsenceShifts[date].map((shift) => (
+                            <AbsenceRequestCard
+                              key={shift.fk_schedule_id}
+                              shift={shift}
+                              onShiftSelect={handleShiftSelection}
+                              buttonConfig={getCoverageButtonConfig(
+                                shift,
+                                handleShiftUpdate
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No shifts to display for this month.</p>
+                  )
+                ) : Object.keys(groupedCoverageShifts).length > 0 ? (
+                  Object.keys(groupedCoverageShifts).map((date) => (
                     <div
                       key={date}
                       className="shifts-container"
@@ -242,11 +368,10 @@ function CoverageRequests() {
 
                       {/* Shift List for this date */}
                       <div className="shift-list">
-                        {groupedShifts[date].map((shift) => (
+                        {groupedCoverageShifts[date].map((shift) => (
                           <CoverageRequestCard
                             key={shift.fk_schedule_id}
                             shift={shift}
-                            shiftType={shift.shift_type}
                             onShiftSelect={handleShiftSelection}
                             buttonConfig={getCoverageButtonConfig(
                               shift,
@@ -272,22 +397,26 @@ function CoverageRequests() {
           )}
         </div>
       </CoverageDetailsPanel>
-      {approve && (
+      {showModal && (
         <div className="coverage-modal-container">
-          <ApproveCoverage
-            shift={selectedShift}
-            setApprove={setApprove}
-            handleApprove={handleApprove}
-          />
-        </div>
-      )}
-      {decline && (
-        <div className="coverage-modal-container">
-          <DeclineCoverage
-            shift={selectedShift}
-            setDecline={setDecline}
-            handleDecline={handleDecline}
-          />
+          {tab === 1 ? (
+            <AbsenceModal
+              approve={approve}
+              setShowModal={setShowModal}
+              shift={selectedShift}
+              selectedCoverage={selectedCoverage}
+              handleApprove={handleAbsenceApprove}
+              handleDecline={handleAbsenceDecline}
+            />
+          ) : (
+            <CoverageModal
+              approve={approve}
+              setShowModal={setShowModal}
+              shift={selectedShift}
+              handleApprove={handleCoverageApprove}
+              handleDecline={handleCoverageDecline}
+            />
+          )}
         </div>
       )}
     </main>

@@ -2,20 +2,12 @@ import "./index.css";
 import { SHIFT_TYPES, COVERAGE_STATUSES } from "../../data/constants";
 import dayjs from "dayjs";
 
-function CoverageRequestCard({
-  shift,
-  shiftType,
-  onShiftSelect,
-  buttonConfig,
-}) {
+function AbsenceRequestCard({ shift, onShiftSelect, buttonConfig }) {
   const handleShiftSelection = () => {
     onShiftSelect(shift);
   };
 
-  const approved =
-    shift.absence_request.status === "coverage-pending"
-      ? "available"
-      : "approved";
+  const approved = shift.absence_request.status === "absence-pending" ? "available" : "approved";
 
   const { lineColor, label, icon, disabled, buttonClass, onClick } =
     buttonConfig?.[approved] ||
@@ -60,18 +52,14 @@ function CoverageRequestCard({
             <p>
               Instructor: {shift.instructor_f_name} {shift.instructor_l_name}{" "}
             </p>
-            <p>
-              Volunteer(s): {shift.volunteer_f_name} {shift.volunteer_l_name}{" "}
-            </p>
+            <p>Volunteer(s): {shift.volunteer_f_name} {shift.volunteer_l_name} </p>
           </div>
         </div>
         <div className="column coverage-segment-3">
           <div className="card-text coverage-card-text">
-            <h2>
-              Requested By: {shift.volunteer_f_name} {shift.volunteer_l_name}
-            </h2>
+            <h2>Requested By: {shift.volunteer_f_name} {shift.volunteer_l_name}</h2>
             <p>Requested For: This Session Only</p>
-            <p>Requested On: {dayjs().format("YYYY-MM-DD").toString()}</p>
+            <p>Requested On: {dayjs(shift.shift_date).format("YYYY-MM-DD").toString()}</p>
           </div>
           <div className="coverage-button-container">
             <button
@@ -95,4 +83,4 @@ function CoverageRequestCard({
   );
 }
 
-export default CoverageRequestCard;
+export default AbsenceRequestCard;

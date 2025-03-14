@@ -9,7 +9,13 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
 
     const renderVolunteers = () => {
         const volunteers = panelInfo?.schedules.flatMap(
-            (schedule) => schedule.volunteers || []
+            (schedule) => {
+                if (schedule.start_time === shiftDetails.start_time && schedule.end_time === shiftDetails.end_time) {
+                    return schedule.volunteers
+                  } else {
+                    return []
+                  }
+            }     
         );
 
         // same volunteer may be assigned to multiple schedules within a class

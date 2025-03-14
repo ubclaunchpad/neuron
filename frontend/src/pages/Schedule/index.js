@@ -11,7 +11,6 @@ import { useAuth } from "../../contexts/authContext";
 import { ADMIN_SHIFT_TYPES, COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
 import { getButtonConfig } from "../../utils/buttonConfig";
 import "./index.css";
-import { duration } from "@mui/material";
 
 function Schedule() {
     const { user, isAdmin } = useAuth();
@@ -265,11 +264,11 @@ function Schedule() {
 
     // Update details panel when a shift is selected
     const handleShiftSelection = (classData) => {
-        console.log("Selected shift: ", classData);
+        // console.log("Selected shift: ", classData);
         setSelectedClassId(classData.class_id);
         setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
         console.log(selectedShiftButtons);
-        console.log( "HELLO", classData.shift_details);
+        // console.log( "HELLO", classData.shift_details);
         setShiftDetails(classData);
     };
 
@@ -309,7 +308,7 @@ function Schedule() {
                 />
             </div>
             <hr />
-            <DetailsPanel classId={selectedClassId} classList={shifts} setClassId={setSelectedClassId} shiftDetails={selectedShiftDetails} dynamicShiftButtons={selectedShiftButtons} type='schedule'>
+            <DetailsPanel classId={selectedClassId} classList={shifts} setClassId={setSelectedClassId} shiftDetails={selectedShiftDetails} shifts={shifts} handleShiftSelection={handleShiftSelection} dynamicShiftButtons={selectedShiftButtons} type='schedule'>
                 <div className="schedule-page">
                     {viewMode === "list" ? (
                         <>
@@ -329,7 +328,7 @@ function Schedule() {
                                             <div className="shift-list">
                                                 {groupedShifts[date].map((shift) => (
                                                     <ShiftCard
-                                                        key={shift.fk_schedule_id}
+                                                        key={shift.shift_id}
                                                         shift={shift}
                                                         shiftType={shift.shift_type}
                                                         onShiftSelect={handleShiftSelection}

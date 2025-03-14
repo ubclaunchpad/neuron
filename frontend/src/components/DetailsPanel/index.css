@@ -16,7 +16,7 @@
      height: 100vh;
      top: 0px;
      right: 0px;
-     z-index: 1;
+     z-index: 4;
      transition: 0.2s all ease-in-out;
      border-left: 1px solid #e3e3e3;
      background: white;

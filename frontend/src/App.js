@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import Signup from "./pages/Signup";
 import VolunteerProfile from "./pages/VolunteerProfile";
 import AdminVolunteerProfile from "./pages/AdminVolunterProfile";
+import AdminProfile from "./pages/AdminProfile";
 
 function App() {
   const { isAuthenticated, isAdmin, isVolunteer, logout } = useAuth();
@@ -68,6 +69,7 @@ function App() {
                 <Route path="management" element={<MemberManagement />} />
                 <Route path="requests" element={<CoverageRequests />} />
                 <Route path="volunteer-profile" element={<AdminVolunteerProfile />} />
+                <Route path="profile" element={<AdminProfile />} />
               </Route>
             </Route>
           </Route>

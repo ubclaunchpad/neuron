@@ -1,3 +1,3 @@
-export function wrap<T>(value: T | T[]): T[] {
+export function wrapIfNotArray<T>(value: T | T[]): T[] {
     return Array.isArray(value) ? value : [value];
 }

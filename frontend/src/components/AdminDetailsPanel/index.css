@@ -1,0 +1,49 @@
+.panel-edit-class {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 8px;
+}
+
+.edit-class-button {
+    width: fit-content;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #bcbcbc;
+    background: #FFF;
+}
+
+.edit-class-button:hover {
+    cursor: pointer;
+    background: #fafafa;
+}
+
+.delete-class-button {
+    width: fit-content;
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    background-color: #952018;
+}
+
+.delete-class-button:hover {
+    cursor: pointer;
+    background-color: #6f1913;
+}
+
+.panel-details-description {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e3e3e3;
+}
+
+.panel-schedules {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.panel-no-schedules {
+    color: #808080;
+    font-size: 14px;
+}

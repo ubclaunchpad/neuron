@@ -159,7 +159,7 @@ function ClassPreferences() {
           }
 
           const availability = await fetchVolunteerAvailability(volunteerID);
-          let availabilityMap = new Map([[1, []], [2, []], [3, []], [4, []], [5, []], [6, []], [7, []]]);
+          let availabilityMap = new Map([[0, []], [1, []], [2, []], [3, []], [4, []], [5, []], [6, []]]);
           availability.sort((a, b) => {return compareTime(b.start_time, a.start_time) ? 1 : -1});
           
           for (let i = 0; i < availability.length; i++) {
@@ -533,7 +533,7 @@ function ClassPreferences() {
                          <button className="save-button" onClick={()=> {window.location.reload(true)}}>Close</button>
                     </div>
                </Modal>
-               </main>
+          </main>
                
      );
 };

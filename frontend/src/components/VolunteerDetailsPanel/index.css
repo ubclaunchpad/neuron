@@ -1,0 +1,145 @@
+@import '../../styles.css';  /*Imports custom fonts*/
+
+.my-shifts {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(24, 149, 49, 0.1);
+     color: var(--green);
+     font-weight: bold;
+     text-align: center;
+ }
+ 
+ .my-coverage-requests {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(203, 131, 36, 0.1);
+     color: var(--yellow);
+     font-weight: bold;
+     text-align: center;
+ }
+ 
+ .coverage {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(149, 32, 24, 0.1);
+     color: var(--error-red);
+     font-weight: bold;
+     text-align: center;
+ }
+
+.classTaken {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgb(211, 211, 211);
+     color: rgb(111, 111, 111);
+     font-weight: bold;
+     text-align: center;
+}
+
+.volunteersNeeded {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(89, 165, 213, 0.1);
+     color: var(--primary-blue);
+     font-weight: bold;
+     text-align: center;
+}
+
+.volunteer-profile {
+     width: 28px;
+     height: 28px;
+     border-radius: 4px;
+     margin-right: 10px;
+}
+
+/* Shift Details Panel */
+/* Dynamic Button Styling based on Shift Type */
+.panel-buttons {
+     margin-top: 4vh;
+     height: 4.5vh;
+     display: flex;
+     flex-direction: row;
+     gap: 12px;
+}
+
+.panel-class-status {
+     font-size: 14px;
+}
+
+.dynamic-button {
+     position: relative;
+     height: 100%;
+     border-radius: 8px;
+     border: 1px solid var(--primary-blue);
+     background: #FFF;
+     box-shadow: 0px 4px 16px 0px rgba(15, 17, 17, 0.05);
+     padding: 0 0.75rem;
+     display: flex;
+     align-items: center;
+ }
+ 
+.dynamic-button:not(:disabled):hover {
+     cursor: pointer;
+     background: var(--button-blue);
+     border: none;
+}
+ 
+.dynamic-button:disabled {
+     background-color: #d3d3d3;
+     border: 1px solid #d3d3d3;
+     box-shadow: none;
+}
+
+.dynamic-button.primary-action {
+     background-color: var(--button-blue);
+     color: var(--white);
+     border: var(--button-blue);
+}
+
+.dynamic-button.primary-action:hover {
+     background-color: var(--button-blue-hover);
+}
+
+.dynamic-button.cancel-action {
+     background-color: transparent; 
+     color: var(--red);
+     border: 1px solid var(--red);
+}
+
+.dynamic-button.cancel-action:hover {
+     background-color: transparent;
+     color: var(--red-hover);   
+     border: 1px solid var(--red-hover);  
+}
+ 
+ /* Icon within Button */
+.card-button-icon {
+     width: 1rem;
+     height: 1rem;
+     margin-right: .5rem;
+}
+
+.instructor-item {
+     display: flex;
+     flex-direction: column;
+     gap: 2px;
+}
+
+.instructor-email {
+     color: var(--primary-blue);
+     background-color: #FFF;
+     font-size: 12px;
+     padding: 0;
+     border: none;
+     cursor: pointer;
+     text-align: left;
+}
+
+.instructor-email:hover {
+     text-decoration: underline;
+}

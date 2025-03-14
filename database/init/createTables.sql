@@ -51,16 +51,14 @@ create table instructors (
 
 create table class (
 	class_id INT PRIMARY KEY AUTO_INCREMENT,
-    fk_instructor_id CHAR(36) NOT NULL,
     fk_image_id CHAR(36),
     class_name VARCHAR(64) NOT NULL,
-    instructions VARCHAR(150),
+    instructions VARCHAR(3000),
     zoom_link VARCHAR(3000) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     category VARCHAR(64),
     subcategory VARCHAR(64),
-    FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id),
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)
         ON DELETE SET NULL
 );
@@ -107,9 +105,13 @@ create table schedule (
     day INT NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
+    frequency VARCHAR(15) NOT NULL DEFAULT 'weekly',
     active BOOLEAN NOT NULL DEFAULT TRUE,
+    fk_instructor_id VARCHAR(36),
     FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
         ON DELETE CASCADE
+    FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id)
+        ON DELETE SET NULL,
 );
 
 CREATE TABLE shifts (

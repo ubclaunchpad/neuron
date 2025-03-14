@@ -1,9 +1,9 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import { ScheduleDB, ShiftDB } from '../common/databaseModels.js';
-import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
+import { Frequency, ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import connectionPool from '../config/database.js';
 import queryBuilder from '../config/queryBuilder.js';
-import { wrap } from '../utils/generalUtils.js';
+import { wrapIfNotArray } from '../utils/generalUtils.js';
 
 export default class ShiftModel {
 
@@ -30,7 +30,7 @@ export default class ShiftModel {
                JOIN 
                     neuron.class cl ON sc.fk_class_id = cl.class_id
                JOIN
-                    neuron.instructors i on i.instructor_id = cl.fk_instructor_id
+                    neuron.instructors i on i.instructor_id = sc.fk_instructor_id
                WHERE 
                     s.shift_id = ?       
           `;
@@ -86,14 +86,18 @@ export default class ShiftModel {
                     'sh.shift_date',
                     'sh.duration',
                     'sh.fk_volunteer_id AS volunteer_id',
-                    'shifts.checked_in',
+                    'sh.checked_in',
                     'sc.day',
                     'sc.start_time',
                     'sc.end_time',
+                    'i.l_name AS instructor_l_name',
+                    'i.f_name AS instructor_f_name',
+                    'i.email AS instructor_email',
                     'c.class_id',
                     'c.class_name',
                     'c.instructions',
                     'c.zoom_link',
+                    'ar.request_id',
                     queryBuilder.raw(`JSON_OBJECT(
                          'request_id', ar.request_id,
                          'category', ar.category,
@@ -105,9 +109,10 @@ export default class ShiftModel {
                               ELSE NULL
                          END,
                          'status', CASE 
-                              WHEN ar.request_id IS NOT NULL AND ar.approved IS NOT TRUE THEN 'absence-pending'
+                              WHEN ar.request_id IS NOT NULL AND ar.approved IS NOT TRUE AND ar.covered_by IS NULL THEN 'absence-pending'
+                              WHEN cr.request_id IS NOT NULL AND ar.covered_by IS NULL THEN 'coverage-pending'
                               WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NULL THEN 'open'
-                              WHEN cr.request_id IS NOT NULL THEN 'coverage-pending'
+                              
                               WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NOT NULL THEN 'resolved'
                               ELSE NULL
                          END
@@ -116,6 +121,7 @@ export default class ShiftModel {
                .from({ sh: 'shifts' })
                .join({ sc: 'schedule' }, 'sh.fk_schedule_id', 'sc.schedule_id')
                .join({ c: 'class' }, 'sc.fk_class_id', 'c.class_id')
+               .leftJoin({ i: 'instructors' }, 'sc.fk_instructor_id', 'i.instructor_id')
                .leftJoin({ ar: 'absence_request' }, 'sh.shift_id', 'ar.fk_shift_id')
                .leftJoin({ cr: 'coverage_request' }, 'ar.request_id', 'cr.request_id')
                .as('sub');
@@ -125,19 +131,19 @@ export default class ShiftModel {
 
           // Filter by date
           if (params.before) {
-               query.where('date', '<=', params.before);
+               query.where('shift_date', '<=', params.before);
           }
           if (params.after) {
-               query.where('date', '>=', params.after);
+               query.where('shift_date', '>=', params.after);
           }
 
           // Only want coverage
           if (params.type === 'coverage' || params.type === 'absence') {
-               query.whereNotNull('absence_request');
+               query.whereNotNull('request_id');
 
                // Filter by status
                if (params?.status) {
-                    query.whereRaw("JSON_EXTRACT(absence_request, '$.status') IN (?)", [wrap(params.status)]);
+                    query.whereRaw("JSON_EXTRACT(absence_request, '$.status') IN (?)", [wrapIfNotArray(params.status)]);
                }
           }
 
@@ -161,13 +167,19 @@ export default class ShiftModel {
           }
 
           // Order by date then time
-          query.orderBy('date').orderBy('start_time');
+          query.orderBy('shift_date').orderBy('start_time');
 
           // Construct query and bindings
           const { sql, bindings } = query.toSQL();
           const [results, _] = await connectionPool.query<any[]>(sql, bindings);
 
-          return results;
+          return results.map(result => {
+               if (!result.request_id) {
+                    delete result.absence_request;
+               }
+               delete result.request_id;
+               return result;
+          })
      }
 
      // use getShifts instead
@@ -275,7 +287,18 @@ export default class ShiftModel {
           return results;
      }
 
-     private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number): string[] {
+     private getDaysToAdd(frequency: Frequency) {
+          switch (frequency) {
+               case Frequency.weekly:
+                    return 7;
+               case Frequency.biweekly:
+                    return 14;
+               default:
+                    throw new Error("Invalid frequency.");
+          }
+     }
+
+     private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number, frequency: Frequency): string[] {
           const result: string[] = [];
 
           let start = new Date(classTimeline.start_date);
@@ -306,10 +329,17 @@ export default class ShiftModel {
                start.setDate(start.getDate() + 1);
           }
 
+          // if schedule only occurs once, then only add one date
+          if (frequency === Frequency.once) {
+               result.push(start.toISOString().split('T')[0]);
+               return result;
+          }
+
+          const daysToAdd = this.getDaysToAdd(frequency);
           // collect all occurrences of the given day until the end date
           while (start <= end) {
                result.push(start.toISOString().split('T')[0]); // store as YYYY-MM-DD
-               start.setDate(start.getDate() + 7);
+               start.setDate(start.getDate() + daysToAdd);
           }
 
           return result;
@@ -346,7 +376,7 @@ export default class ShiftModel {
                     return;
                }
 
-               const dates = this.getRecurringDates(classTimeline, schedule.start_time, schedule.day);
+               const dates = this.getRecurringDates(classTimeline, schedule.start_time, schedule.day, schedule.frequency);
                const duration = this.getDurationInMinutes(schedule.start_time, schedule.end_time);
 
                schedule.volunteer_ids.forEach((volunteer_id: any) => {
@@ -359,8 +389,10 @@ export default class ShiftModel {
           })
           valuesClause2 = valuesClause2.slice(0, -1);
 
-          const query2 = `INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES ${valuesClause2}`;
-          await transaction.query<ResultSetHeader>(query2, values2);
+          if (valuesClause2.length > 0) {
+               const query2 = `INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES ${valuesClause2}`;
+               await transaction.query<ResultSetHeader>(query2, values2);
+          }
      }
 
      async getSchedulesWithHistoricShifts(schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {

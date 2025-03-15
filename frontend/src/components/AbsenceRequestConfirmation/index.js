@@ -4,7 +4,7 @@ import "react-responsive-modal/styles.css";
 import RequestImage from "../../assets/request-sent.png";
 import "./index.css";
 
-const CoverageRequestConfirmation = ({ open, onClose }) => {
+const AbsenceRequestConfirmation = ({ open, onClose }) => {
   return (
     <Modal open={open} onClose={onClose} center classNames={{ modal: "confirmation-modal" }}>
       <img className="confirmation-modal-child" alt="" src= { RequestImage } />
@@ -26,4 +26,4 @@ const CoverageRequestConfirmation = ({ open, onClose }) => {
   );
 };
 
-export default CoverageRequestConfirmation;
+export default AbsenceRequestConfirmation;

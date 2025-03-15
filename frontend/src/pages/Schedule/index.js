@@ -10,7 +10,7 @@ import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { useAuth } from "../../contexts/authContext";
 import { COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
 import { getButtonConfig, setOpenCoverageRequestHandler } from "../../utils/buttonConfig";
-import CoverageRequestForm from "../../components/CoverageRequestForm";
+import AbsenceRequestForm from "../../components/AbsenceRequestForm";
 import "./index.css";
 
 function Schedule() {
@@ -226,7 +226,7 @@ function Schedule() {
                     )}
                 </div>
             </DetailsPanel>
-            <CoverageRequestForm
+            <AbsenceRequestForm
                 open={isCoverageRequestOpen}
                 onClose={closeCoverageRequest}
                 shift={coverageRequestShift}

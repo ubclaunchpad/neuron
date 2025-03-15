@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
 import { requestShiftCoverage } from "../../api/shiftService";
-import CoverageRequestConfirmation from "../CoverageRequestConfirmation";
+import AbsenceRequestConfirmation from "../AbsenceRequestConfirmation";
 import "./index.css";
 
-function CoverageRequestForm({ open, onClose, shift }) {
+function AbsenceRequestForm({ open, onClose, shift }) {
     const [whichShifts, setWhichShifts] = useState("single"); // "single" or "recurring"
     const [category, setCategory] = useState("");
     const [comments, setComments] = useState("");
@@ -172,9 +172,9 @@ function CoverageRequestForm({ open, onClose, shift }) {
                     {loading ? "Submitting..." : "Send Request"}
                 </button>
             </Modal>
-            <CoverageRequestConfirmation open={showConfirmation} onClose={() => setShowConfirmation(false)} />
+            <AbsenceRequestConfirmation open={showConfirmation} onClose={() => setShowConfirmation(false)} />
         </>
     );
 }
 
-export default CoverageRequestForm;
+export default AbsenceRequestForm;

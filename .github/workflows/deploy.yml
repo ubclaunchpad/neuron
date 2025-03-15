@@ -33,7 +33,7 @@ jobs:
         with:
           context: ./frontend
           build-args: |
-            PORT=80
+            BACKEND_URL=${{ vars.CONTAINER_URL }}/api
           push: true
           tags: |
             ghcr.io/ubclaunchpad/neuron-frontend:latest
@@ -60,7 +60,7 @@ jobs:
           context: ./backend
           push: true
           build-args: |
-            BACKEND_URL=${{ vars.CONTAINER_URL }}/api
+            PORT=80
           tags: |
             ghcr.io/ubclaunchpad/neuron-backend:latest
             ghcr.io/ubclaunchpad/neuron-backend:${{ github.sha }}

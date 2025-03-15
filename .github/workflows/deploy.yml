@@ -60,7 +60,7 @@ jobs:
           context: ./backend
           push: true
           build-args: |
-            BACKEND_URL='${{ vars.CONTAINER_URL }}/api'
+            BACKEND_URL=${{ vars.CONTAINER_URL }}/api
           tags: |
             ghcr.io/ubclaunchpad/neuron-backend:latest
             ghcr.io/ubclaunchpad/neuron-backend:${{ github.sha }}

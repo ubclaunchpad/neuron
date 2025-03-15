@@ -1,0 +1,69 @@
+version: '3.7'
+
+services:
+  frontend:
+    image: neuron-frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`x.x.x.x`) && PathPrefix(`/`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"  # Port for react app
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+    environment:
+      - VITE_BACKEND_URL=
+    deploy:
+      update_config:
+        order: start-first
+
+  backend:
+    image: neuron-backend-image
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`x.x.x.x`) && PathPrefix(`/api`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=3001" # Backend api port
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+    secrets:
+      - db-password
+    environment:
+      - RDS_HOSTNAME=
+      - RDS_USERNAME=
+      - RDS_PASSWORD=
+      - RDS_PORT=
+      - TOKEN_SECRET=
+      - HOST=
+      - FRONTEND_HOST=
+      - NEURON_ENV=production
+    deploy:
+      update_config:
+        order: start-first
+
+  traefik:
+    image: traefik:v3.1
+    restart: always
+    command:
+      - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=TODO"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - mode: host  # Port to forward HTTP to HTTPS
+        protocol: tcp
+        published: 80
+        target: 80
+      - mode: host  # Port for HTTPS
+        protocol: tcp
+        published: 443
+        target: 443
+      - "8080:8080"  # Port for Traefik dashboard
+    volumes:
+      - letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  letsencrypt:

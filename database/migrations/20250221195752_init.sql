@@ -14,10 +14,22 @@ create table users (
 
 create table instructors (
 	instructor_id CHAR(36) PRIMARY KEY, 
+    -- fk_user_id CHAR(36),  -- If instructors can login the the future they will need this     
     f_name VARCHAR(60) NOT NULL,
     l_name VARCHAR(60) NOT NULL,
     email VARCHAR(45) NOT NULL,
+    -- FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
 );
+
+-- Re-create if we need it in the future
+-- create table admins (
+-- 	admin_id CHAR(36) PRIMARY KEY, 
+--     fk_user_id CHAR(36),         
+--     f_name VARCHAR(15) NOT NULL,
+--     l_name VARCHAR(15) NOT NULL,
+--     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
+--         ON DELETE CASCADE
+-- );
 
 create table class (
 	class_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -97,7 +109,7 @@ CREATE TABLE shifts (
 
 CREATE TABLE absence_request (
     request_id INT PRIMARY KEY AUTO_INCREMENT,                     
-    fk_shift_id INT NOT NULL,
+    fk_shift_id INT NOT NULL UNIQUE,
     approved BOOLEAN NOT NULL DEFAULT FALSE,
     category ENUM('emergency', 'health', 'conflict', 'transportation', 'other') NOT NULL,
     details VARCHAR(250) NOT NULL,

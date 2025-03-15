@@ -127,7 +127,7 @@ CREATE TABLE shifts (
 
 CREATE TABLE absence_request (
     request_id INT PRIMARY KEY AUTO_INCREMENT,                     
-    fk_shift_id INT NOT NULL,
+    fk_shift_id INT NOT NULL UNIQUE,
     approved BOOLEAN NOT NULL DEFAULT FALSE,
     category ENUM('emergency', 'health', 'conflict', 'transportation', 'other') NOT NULL,
     details VARCHAR(250) NOT NULL,

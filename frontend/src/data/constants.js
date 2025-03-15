@@ -1,4 +1,4 @@
-export const backend = process.env.REACT_APP_BACKEND;
+export const backend = import.meta.env.PUBLIC_BACKEND_URL;
 
 export const SHIFT_TYPES = {
     MY_SHIFTS: 'my-shifts',

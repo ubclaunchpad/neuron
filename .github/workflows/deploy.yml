@@ -32,6 +32,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
+          build-args: |
+            PORT=80
           push: true
           tags: |
             ghcr.io/ubclaunchpad/neuron-frontend:latest

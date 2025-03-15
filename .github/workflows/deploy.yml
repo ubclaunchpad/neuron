@@ -33,7 +33,7 @@ jobs:
         with:
           context: ./frontend
           build-args: |
-            BACKEND_URL=${{ vars.CONTAINER_URL }}/api
+            BACKEND_URL=https://${{ vars.CONTAINER_URL }}/api
           push: true
           tags: |
             ghcr.io/ubclaunchpad/neuron-frontend:latest

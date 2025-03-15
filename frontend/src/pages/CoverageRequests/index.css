@@ -1,0 +1,127 @@
+@import '../../styles.css';
+/* Header Styling */
+.date-header {
+    font-weight: 600;
+    font-family: var(--font-secondary);
+    font-size: var(--large-text);
+}
+
+/* Date Styling */
+.selected-date {
+    color: var(--primary-blue);
+}
+
+.non-selected-date {
+    color: var(--dark);
+}
+
+.schedule-page {
+    width: 100%;
+    height: 100%;
+}
+
+/* Container Styling */
+.schedule-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto; /* Allow vertical scroll */
+    max-height: 10vh;
+    padding-bottom: 70vh;
+}
+
+.shifts-container {
+    padding-top: 2rem;
+    width: 70%;
+}
+
+/* List Styling */
+.shift-list {
+    display: flex; 
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Border Styling */
+hr {
+    margin: 0;                
+    border: none;            
+    height: 1px;            
+    background-color: var(--grey); 
+}
+
+
+.coverage-date-picker {
+    width: fit-content;
+
+    .MuiOutlinedInput-input {
+        padding: 12px 16px;
+    }
+}
+
+.coverage-tabs {
+    display: flex;
+    flex-direction: row;
+    gap: 40px;
+    padding: 0 36px;
+}
+
+.coverage-tab {
+    color: var(--dark-grey);
+    cursor: pointer;
+    transition: all 0.5s;
+}
+
+.coverage-active-tab {
+    color: var(--secondary-blue);
+}
+
+.coverage-active-tab::after {
+    content: '';
+    margin-top: 4px;
+    display: block;
+    width: 100%;
+    height: 4px;
+    color: var(--secondary-blue);
+    background-color: var(--secondary-blue);
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+}
+
+.notifications-btn {
+    background-color: white;
+    color: black;
+    padding: 10px 16px;
+    border: 1px solid #1687CA ;
+    border-radius: 8px ;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+.notificaitons-btn i {
+    margin-top: 4px;
+}
+
+.coverage-modal-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.coverage-date-picker {
+    width: fit-content;
+    margin-bottom: 12px;
+
+    .MuiOutlinedInput-input {
+        padding: 12px 16px;
+    }
+}

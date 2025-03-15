@@ -1,5 +1,6 @@
 import AvailabilityModel from "../models/availabilityModel.js";
 import ClassesModel from "../models/classModel.js";
+import CoverageModel from "../models/coverageModel.js";
 import ImageModel from "../models/imageModel.js";
 import InstructorModel from "../models/instructorModel.js";
 import ScheduleModel from "../models/scheduleModel.js";
@@ -15,3 +16,4 @@ export const scheduleModel = new ScheduleModel();
 export const shiftModel = new ShiftModel();
 export const userModel = new UserModel();
 export const volunteerModel = new VolunteerModel();
+export const coverageModel = new CoverageModel();

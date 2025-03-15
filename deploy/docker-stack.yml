@@ -2,21 +2,21 @@ version: '3.7'
 
 services:
   frontend:
-    image: neuron-frontend
+    image: ghcr.io/ubclaunchpad/neuron-frontend:${GIT_COMMIT_HASH:-latest}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`x.x.x.x`) && PathPrefix(`/`)"
-      - "traefik.http.services.frontend.loadbalancer.server.port=3000"  # Port for react app
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"  # Port for react app
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=myresolver"
     environment:
-      - VITE_BACKEND_URL=
+      - PUBLIC_BACKEND_URL="${CONTAINER_URL}/api"
     deploy:
       update_config:
         order: start-first
 
   backend:
-    image: neuron-backend-image
+    image: ghcr.io/ubclaunchpad/neuron-backend:${GIT_COMMIT_HASH:-latest}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`x.x.x.x`) && PathPrefix(`/api`)"
@@ -26,13 +26,15 @@ services:
     secrets:
       - db-password
     environment:
-      - RDS_HOSTNAME=
-      - RDS_USERNAME=
-      - RDS_PASSWORD=
-      - RDS_PORT=
-      - TOKEN_SECRET=
-      - HOST=
-      - FRONTEND_HOST=
+      - RDS_HOSTNAME=${RDS_HOSTNAME}
+      - RDS_USERNAME=${RDS_USERNAME}
+      - RDS_PASSWORD=${RDS_PASSWORD}
+      - RDS_PORT=${RDS_PORT}
+      - TOKEN_SECRET=${TOKEN_SECRET}
+      - GMAIL_ID=${GMAIL_ID}
+      - GMAIL_PASSWORD=${GMAIL_PASSWORD}
+      - HOST="${CONTAINER_URL}/api"
+      - FRONTEND_HOST=${CONTAINER_URL}
       - NEURON_ENV=production
     deploy:
       update_config:

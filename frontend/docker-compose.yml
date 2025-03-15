@@ -3,14 +3,8 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
-      args:
-        - PORT=3000
     restart: always
     env_file:
       - .env
     ports:
-      - "3000:3000"
-    command: npx serve -s build
-
-volumes:
-  db:
+      - "3000:80"

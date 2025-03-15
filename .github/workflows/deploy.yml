@@ -13,53 +13,53 @@ jobs:
 #     steps:
 #       - ... when tests added
 
-  build-and-push-frontend:
-    runs-on: ubuntu-latest
-    # needs:
-    #   - run-tests
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  # build-and-push-frontend:
+  #   runs-on: ubuntu-latest
+  #   # needs:
+  #   #   - run-tests
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: https://ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Log in to the Container registry
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: https://ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          push: true
-          tags: |
-            ghcr.io/ubclaunchpad/neuron-frontend:latest
-            ghcr.io/ubclaunchpad/neuron-frontend:${{ github.sha }}
+  #     - name: Build and push Docker image
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: ./frontend
+  #         push: true
+  #         tags: |
+  #           ghcr.io/ubclaunchpad/neuron-frontend:latest
+  #           ghcr.io/ubclaunchpad/neuron-frontend:${{ github.sha }}
 
-  build-and-push-backend:
-    runs-on: ubuntu-latest
-    # needs:
-    #   - run-tests
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  # build-and-push-backend:
+  #   runs-on: ubuntu-latest
+  #   # needs:
+  #   #   - run-tests
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: https://ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Log in to the Container registry
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: https://ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          push: true
-          tags: |
-            ghcr.io/ubclaunchpad/neuron-backend:latest
-            ghcr.io/ubclaunchpad/neuron-backend:${{ github.sha }}
+  #     - name: Build and push Docker image
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: ./backend
+  #         push: true
+  #         tags: |
+  #           ghcr.io/ubclaunchpad/neuron-backend:latest
+  #           ghcr.io/ubclaunchpad/neuron-backend:${{ github.sha }}
 
   migrate-rds:
     runs-on: ubuntu-latest
@@ -67,8 +67,7 @@ jobs:
       DATABASE_URL: >- 
         mysql://
         ${{ vars.RDS_USERNAME }}:${{ secrets.RDS_PASSWORD }}
-        @${{ vars.RDS_HOSTNAME }}:${{ vars.RDS_PORT }}
-        /${{ vars.RDS_DB }}?sslmode=require
+        @${{ vars.RDS_HOSTNAME }}:${{ vars.RDS_PORT }}/${{ vars.RDS_DB }}?sslmode=require
       DBMATE_MIGRATIONS_DIR: ./database/migrations
     steps:
       - name: Checkout code

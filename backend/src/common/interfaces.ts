@@ -11,9 +11,6 @@ export type ShiftQueryType = typeof ShiftQueryType.values[number];
 
 export const Frequency = createStringEnum(['once', 'weekly', 'biweekly'] as const);
 export type Frequency = typeof Frequency.values[number];
-<<<<<<< HEAD
 
 export const AbsenceRequestCategory = createStringEnum(['emergency', 'health', 'conflict', 'transportation', 'other'] as const);
 export type AbsenceRequestCategory = typeof Frequency.values[number];
-=======
->>>>>>> main

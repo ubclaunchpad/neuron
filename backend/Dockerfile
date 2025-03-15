@@ -12,6 +12,8 @@ COPY . .
 
 RUN npm run build
 
-EXPOSE ${PORT}
+ARG PORT
+
+EXPOSE $PORT
 
 CMD ["npm", "start"]

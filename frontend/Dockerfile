@@ -1,5 +1,3 @@
-ARG BACKEND_URL
-
 # Stage 1: Build the static site with rsbuild
 FROM node:18-alpine AS builder
 
@@ -11,7 +9,9 @@ RUN npm ci
 
 COPY . .
 
-ENV PUBLIC_BACKEND_URL=${BACKEND_URL}
+ARG BACKEND_URL
+
+ENV PUBLIC_BACKEND_URL=$BACKEND_URL
 
 RUN npm run build
 

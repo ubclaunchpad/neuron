@@ -64,10 +64,7 @@ jobs:
   migrate-rds:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: >- 
-        mysql://
-        ${{ vars.RDS_USERNAME }}:${{ secrets.RDS_PASSWORD }}
-        @${{ vars.RDS_HOSTNAME }}:${{ vars.RDS_PORT }}/${{ vars.RDS_DB }}?sslmode=require
+      DATABASE_URL: mysql://${{ vars.RDS_USERNAME }}:${{ secrets.RDS_PASSWORD }}@${{ vars.RDS_HOSTNAME }}:${{ vars.RDS_PORT }}/${{ vars.RDS_DB }}?sslmode=require
       DBMATE_MIGRATIONS_DIR: ./database/migrations
     steps:
       - name: Checkout code

@@ -30,6 +30,7 @@ services:
       - RDS_USERNAME=${RDS_USERNAME}
       - RDS_PASSWORD=${RDS_PASSWORD}
       - RDS_PORT=${RDS_PORT}
+      - RDS_DB=${RDS_DB}
       - TOKEN_SECRET=${TOKEN_SECRET}
       - GMAIL_ID=${GMAIL_ID}
       - GMAIL_PASSWORD=${GMAIL_PASSWORD}
@@ -51,7 +52,7 @@ services:
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=TODO"
+      - "--certificatesresolvers.myresolver.acme.email=neuronbc@gmail.com"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
       - mode: host  # Port to forward HTTP to HTTPS

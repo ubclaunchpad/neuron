@@ -1,11 +1,12 @@
-import TextInput from "../TextInput"
 import { Formik } from "formik";
 import * as Yup from "yup";
-import "./index.css";
-import { deactivateVolunteer, verifyVolunteer, deleteInstructor } from "../../api/adminService";
+import { deleteInstructor } from "../../api/instructorService";
+import { deactivateVolunteer, verifyVolunteer } from "../../api/volunteerService";
 import { useAuth } from "../../contexts/authContext";
-import notyf from "../../utils/notyf";
 import cleanInitials from "../../utils/cleanInitials";
+import notyf from "../../utils/notyf";
+import TextInput from "../TextInput";
+import "./index.css";
 
 const VerificationSchema = Yup.object().shape({
     initials: Yup.string()
@@ -57,9 +58,7 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                                 console.error(error);
                             });
                     } else if (type === 2) {
-                        deleteInstructor({
-                            instructor_id: id
-                        })
+                        deleteInstructor(id)
                             .then(() => {
                                 notyf.success("Instructor profile deleted.");
                                 closeEvent();

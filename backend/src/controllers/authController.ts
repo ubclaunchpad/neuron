@@ -237,16 +237,16 @@ async function verifyUserWithIdAndToken(
     id: string,
     token: string
 ): Promise<any> {
-    const user = await userModel.getUserById(id, true);
+    const users = await userModel.getUsersByIds(id, true);
 
-    if (!TOKEN_SECRET || !FRONTEND_HOST) {
+    if (!TOKEN_SECRET || !FRONTEND_HOST || users.length === 0) {
         throw {
             status: 500
         };
     }
 
     // Verify if token is valid
-    const secret = TOKEN_SECRET + user.password;
+    const secret = TOKEN_SECRET + users[0].password;
 
     // Throw if verify fails
     try {   

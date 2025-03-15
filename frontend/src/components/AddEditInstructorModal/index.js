@@ -1,14 +1,14 @@
-import TextInput from "../TextInput"
 import { Formik } from "formik";
-import * as Yup from "yup";
-import "./index.css";
-import { useAuth } from "../../contexts/authContext";
-import notyf from "../../utils/notyf";
-import { addInstructor, editInstructor } from "../../api/adminService";
-import cleanInitials from "../../utils/cleanInitials";
 import { useEffect, useState } from "react";
-import Modal from "../Modal";
+import * as Yup from "yup";
+import { addInstructor, editInstructor } from "../../api/instructorService";
+import { useAuth } from "../../contexts/authContext";
+import cleanInitials from "../../utils/cleanInitials";
+import notyf from "../../utils/notyf";
 import DeactivateReactivateModal from "../Deactivate-Reactivate-Modal";
+import Modal from "../Modal";
+import TextInput from "../TextInput";
+import "./index.css";
 
 const AddEditInstructorModal = ({ closeEvent, instructor_data = null }) => {
 
@@ -65,9 +65,7 @@ const AddEditInstructorModal = ({ closeEvent, instructor_data = null }) => {
                         }
 
                         if (instructor_data !== null) {
-                            data.instructor_id = instructor_data.instructor_id;
-
-                            editInstructor(data)
+                            editInstructor(instructor_data.instructor_id, data)
                                 .then(() => {
                                     notyf.success("Instructor details updated successfully.");
                                     closeEvent();

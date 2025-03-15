@@ -42,10 +42,10 @@ async function isAuthorized(
         // Verify the token
         const decoded = jwt.verify(token, TOKEN_SECRET) as DecodedJwtPayload;
         
-        const result = await userModel.getUserById(decoded.user_id);
+        const results = await userModel.getUsersByIds(decoded.user_id);
 
         // Attach the user to the request
-        (req as AuthenticatedRequest).user = result;
+        (req as AuthenticatedRequest).user = results[0];
 
         // Call the next function
         return next();

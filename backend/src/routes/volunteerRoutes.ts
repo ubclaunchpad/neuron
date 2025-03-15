@@ -1,19 +1,19 @@
-import { Request, Response, Router } from "express";
-import multer from 'multer';
 
 import {
+    deactivateVolunteer,
+    getAllClassPreferences,
+    getPreferredClassesById,
     getVolunteerById,
     getVolunteers,
     shiftCheckIn,
+    updatePreferredClassesById,
     updateVolunteer,
-    getPreferredClassesById,
-    getAllClassPreferences,
-    updatePreferredClassesById
+    verifyVolunteer
 } from "../controllers/volunteerController.js";
 
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 import { RouteDefinition } from "../common/types.js";
-import { isAuthorized } from "../config/authCheck.js";
+import { isAdmin, isAuthorized } from "../config/authCheck.js";
 import {
     getAvailabilities,
     getAvailabilityByVolunteerId,
@@ -30,7 +30,10 @@ export const VolunteerRoutes: RouteDefinition = {
         {
             path: '/',
             method: 'get',
-            action: getVolunteers
+            validation: [
+                query('unverified').isBoolean().optional(),
+            ],
+            action: getVolunteers,
         },
         {
             path: '/shift-check-in',
@@ -145,6 +148,22 @@ export const VolunteerRoutes: RouteDefinition = {
                     ],
                     action: updateVolunteer
                 },
+                {
+                    path: '/verify',
+                    method: 'put',
+                    middleware: [
+                        isAdmin,
+                    ],
+                    action: verifyVolunteer
+                },
+                {
+                    path: '/deactivate',
+                    method: 'put',
+                    middleware: [
+                        isAdmin,
+                    ],
+                    action: deactivateVolunteer
+                }
             ]
         },
     ]

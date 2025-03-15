@@ -102,11 +102,28 @@ export const updateUserPreferredClasses = async (volunteer_id, preferredClasses)
   }
 };
 
-export const getAllVolunteers = async () => {
-  try {
-    const response = await api.get("volunteer");
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching all volunteers:', error);
-  }
-};
+export const getVolunteers = (params) => 
+  api
+      .get('volunteer', {
+        params: params
+      })
+      .then((response) => response.data)
+      .catch((error) => {
+          console.error(error);
+      });
+
+export const verifyVolunteer = (volunteerId) => 
+  api
+      .put(`/admin/volunteer/${volunteerId}/verify`)
+      .then((response) => response.data)
+      .catch((error) => {
+          console.error(error);
+      });
+
+export const deactivateVolunteer = (volunteerId) => 
+  api
+      .put(`/admin/volunteer/${volunteerId}/deactivate`)
+      .then((response) => response.data)
+      .catch((error) => {
+          console.error(error);
+      });

@@ -5,9 +5,15 @@ import { userModel } from "../config/models.js";
 async function getUserById(req: AuthenticatedRequest, res: Response) {
     const { user_id } = req.params;
 
-    const user = await userModel.getUserById(user_id);
+    const users = await userModel.getUsersByIds(user_id);
+
+    if (users.length === 0) {
+        res.status(400).json({
+            error: 'No user found with the given user_id'
+        });
+    }
     
-    res.status(200).json(user);
+    res.status(200).json(users[0]);
 }
 
 async function insertProfilePicture(req: AuthenticatedRequest, res: Response) {

@@ -1,5 +1,4 @@
--- Procedure to get all shifts for a volunteer by month
-DROP PROCEDURE IF EXISTS GetShiftsByVolunteerIdAndMonth;
+-- migrate:up
 DELIMITER $$
 
 CREATE PROCEDURE GetShiftsByVolunteerIdAndMonth(
@@ -126,4 +125,5 @@ BEGIN
         start_time ASC;
 END$$
 
-DELIMITER ;
+-- migrate:down
+DROP PROCEDURE IF EXISTS GetShiftsByVolunteerIdAndMonth;

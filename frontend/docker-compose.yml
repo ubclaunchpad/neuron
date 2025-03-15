@@ -1,0 +1,10 @@
+services:
+  frontend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3000:80"

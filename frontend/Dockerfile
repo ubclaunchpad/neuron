@@ -5,9 +5,13 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY . .
+
+ARG BACKEND_URL
+
+ENV PUBLIC_BACKEND_URL=$BACKEND_URL
 
 RUN npm run build
 

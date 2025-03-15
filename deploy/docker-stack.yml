@@ -5,12 +5,10 @@ services:
     image: ghcr.io/ubclaunchpad/neuron-frontend:${GIT_COMMIT_HASH:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`x.x.x.x`) && PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"  # Port for react app
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=myresolver"
-    environment:
-      - PUBLIC_BACKEND_URL="${CONTAINER_URL}/api"
     deploy:
       update_config:
         order: start-first
@@ -19,12 +17,12 @@ services:
     image: ghcr.io/ubclaunchpad/neuron-backend:${GIT_COMMIT_HASH:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`x.x.x.x`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=PathPrefix(`/api`)"
       - "traefik.http.services.backend.loadbalancer.server.port=3001" # Backend api port
+      - "traefik.http.middlewares.backend-stripprefix.stripprefix.prefixes=/api"
+      - "traefik.http.routers.backend.middlewares=backend-stripprefix"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
-    secrets:
-      - db-password
     environment:
       - RDS_HOSTNAME=${RDS_HOSTNAME}
       - RDS_USERNAME=${RDS_USERNAME}
@@ -34,7 +32,7 @@ services:
       - TOKEN_SECRET=${TOKEN_SECRET}
       - GMAIL_ID=${GMAIL_ID}
       - GMAIL_PASSWORD=${GMAIL_PASSWORD}
-      - HOST="${CONTAINER_URL}/api"
+      - HOST=${CONTAINER_URL}/api
       - FRONTEND_HOST=${CONTAINER_URL}
       - NEURON_ENV=production
     deploy:
@@ -43,7 +41,6 @@ services:
 
   traefik:
     image: traefik:v3.1
-    restart: always
     command:
       - "--providers.docker"
       - "--providers.docker.exposedbydefault=false"
@@ -54,6 +51,7 @@ services:
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
       - "--certificatesresolvers.myresolver.acme.email=neuronbc@gmail.com"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--api.insecure=true"
     ports:
       - mode: host  # Port to forward HTTP to HTTPS
         protocol: tcp

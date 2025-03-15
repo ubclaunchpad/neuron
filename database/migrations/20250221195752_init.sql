@@ -1,5 +1,17 @@
 -- migrate:up
-create table users (
+CREATE TABLE images (
+    image_id CHAR(36) PRIMARY KEY,
+    image MEDIUMBLOB NOT NULL
+);
+
+CREATE TABLE instructors (
+    instructor_id CHAR(36) PRIMARY KEY, 
+    f_name VARCHAR(60) NOT NULL,
+    l_name VARCHAR(60) NOT NULL,
+    email VARCHAR(45) NOT NULL
+);
+
+CREATE TABLE users (
     user_id CHAR(36) PRIMARY KEY,
     f_name VARCHAR(60) NOT NULL,
     l_name VARCHAR(60) NOT NULL,
@@ -12,27 +24,8 @@ create table users (
         ON DELETE SET NULL
 );
 
-create table instructors (
-	instructor_id CHAR(36) PRIMARY KEY, 
-    -- fk_user_id CHAR(36),  -- If instructors can login the the future they will need this     
-    f_name VARCHAR(60) NOT NULL,
-    l_name VARCHAR(60) NOT NULL,
-    email VARCHAR(45) NOT NULL,
-    -- FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
-);
-
--- Re-create if we need it in the future
--- create table admins (
--- 	admin_id CHAR(36) PRIMARY KEY, 
---     fk_user_id CHAR(36),         
---     f_name VARCHAR(15) NOT NULL,
---     l_name VARCHAR(15) NOT NULL,
---     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
---         ON DELETE CASCADE
--- );
-
-create table class (
-	class_id INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE class (
+    class_id INT PRIMARY KEY AUTO_INCREMENT,
     fk_instructor_id CHAR(36) NOT NULL,
     fk_image_id CHAR(36),
     class_name VARCHAR(64) NOT NULL,
@@ -47,8 +40,8 @@ create table class (
         ON DELETE SET NULL
 );
 
-create table volunteers (
-	volunteer_id CHAR(36) PRIMARY KEY, 
+CREATE TABLE volunteers (
+    volunteer_id CHAR(36) PRIMARY KEY, 
     fk_user_id CHAR(36),      
     p_name VARCHAR(45),
     total_hours INT NOT NULL DEFAULT 0,
@@ -63,8 +56,19 @@ create table volunteers (
         ON DELETE CASCADE
 );
 
-create table availability (
-	availability_id INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE schedule (
+    schedule_id INT PRIMARY KEY AUTO_INCREMENT,
+    fk_class_id INT NOT NULL,
+    day INT NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE availability (
+    availability_id INT PRIMARY KEY AUTO_INCREMENT,
     fk_volunteer_id CHAR(36) NOT NULL,
     day INT NOT NULL,
     start_time TIME NOT NULL,
@@ -83,21 +87,10 @@ CREATE TABLE volunteer_schedule (
         ON DELETE CASCADE
 );
 
-create table schedule (
-	schedule_id INT PRIMARY KEY AUTO_INCREMENT,
-    fk_class_id INT NOT NULL,
-    day INT NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    active BOOLEAN NOT NULL DEFAULT TRUE,
-    FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
-        ON DELETE CASCADE
-);
-
 CREATE TABLE shifts (
     shift_id INT PRIMARY KEY AUTO_INCREMENT,
     fk_volunteer_id CHAR(36) NOT NULL, -- shifts always belong to a volunteer
-    fk_schedule_id INT NOT NULL, -- shifts always belong to a schedule
+    fk_schedule_id INT NOT NULL,         -- shifts always belong to a schedule
     shift_date DATE NOT NULL,
     duration INT NOT NULL,
     checked_in BOOLEAN NOT NULL DEFAULT FALSE,
@@ -115,16 +108,15 @@ CREATE TABLE absence_request (
     details VARCHAR(250) NOT NULL,
     comments VARCHAR(150),            
     covered_by CHAR(36),
-    FOREIGN KEY (fk_shift_id)
-        REFERENCES shifts(shift_id) ON DELETE CASCADE,
-    FOREIGN KEY (covered_by)
-        REFERENCES volunteers(volunteer_id) ON DELETE SET NULL
+    FOREIGN KEY (fk_shift_id) REFERENCES shifts(shift_id) 
+        ON DELETE CASCADE,
+    FOREIGN KEY (covered_by) REFERENCES volunteers(volunteer_id)
+        ON DELETE SET NULL
 );
 
 CREATE TABLE coverage_request (
     request_id INT NOT NULL,
     volunteer_id CHAR(36) NOT NULL,
-    
     PRIMARY KEY (request_id, volunteer_id),
     FOREIGN KEY (request_id) REFERENCES absence_request(request_id) 
         ON DELETE CASCADE,
@@ -142,23 +134,16 @@ CREATE TABLE class_preferences (
         ON DELETE CASCADE
 );
 
-create table images (
-    image_id CHAR(36) PRIMARY KEY,
-    image MEDIUMBLOB NOT NULL
-);
-
 -- migrate:down
+DROP TABLE IF EXISTS coverage_request;
+DROP TABLE IF EXISTS class_preferences;
 DROP TABLE IF EXISTS volunteer_schedule;
 DROP TABLE IF EXISTS availability;
-DROP TABLE IF EXISTS class_preferences;
-DROP TABLE IF EXISTS coverage_request;
 DROP TABLE IF EXISTS absence_request;
 DROP TABLE IF EXISTS shifts;
-DROP TABLE IF EXISTS volunteers;
 DROP TABLE IF EXISTS schedule;
-DROP TABLE IF EXISTS images;
+DROP TABLE IF EXISTS volunteers;
 DROP TABLE IF EXISTS class;
 DROP TABLE IF EXISTS instructors;
-DROP TABLE IF EXISTS user_session;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS images;

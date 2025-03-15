@@ -10,7 +10,15 @@ import {
     getShift,
     getShifts,
     getShiftsByVolunteerIdAndMonth,
+<<<<<<< HEAD
     updateShift,
+=======
+    requestAbsence,
+    withdrawAbsenceRequest,
+    requestCoverShift, 
+    withdrawCoverShift, 
+    updateShift
+>>>>>>> main
 } from '../controllers/shiftController.js';
 
 export const ShiftRoutes: RouteDefinition = {

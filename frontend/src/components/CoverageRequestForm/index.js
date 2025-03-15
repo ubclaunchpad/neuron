@@ -1,32 +1,18 @@
 import React, { useState } from "react";
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
-import { requestShiftCoverage } from "../../api/shiftService";
+import { requestToCoverShift } from "../../api/shiftService";
 import AbsenceRequestConfirmation from "../AbsenceRequestConfirmation";
 import "./index.css";
 
 function CoverageRequestForm({ open, onClose, shift }) {
     const [whichShifts, setWhichShifts] = useState("single"); // "single" or "recurring"
-    const [category, setCategory] = useState("");
-    const [comments, setComments] = useState("");
-    const [details, setDetails] = useState("");
     const [acknowledgment, setAcknowledgment] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
 
-    const categoryOptions = [
-        { value: "emergency", label: "Personal emergency" },
-        { value: "health", label: "Health-related issue" },
-        { value: "conflict", label: "Scheduling conflict" },
-        { value: "transportation", label: "Transportation" },
-        { value: "other", label: "Other" },
-    ];
-
     const resetForm = () => {
         setWhichShifts("single");
-        setCategory("");
-        setComments("");
-        setDetails("");
         setAcknowledgment(false);
         setLoading(false);
     };
@@ -55,15 +41,13 @@ function CoverageRequestForm({ open, onClose, shift }) {
 
         try {
             const requestData = {
-                shift_id: shift.shift_id,
-                category: category,
-                details: details,
-                comments: comments || "",
+                request_id: shift.shift_id,
+                volunteer_id: shift.fk_volunteer_id,
             };
 
             console.log("Submitting request with data:", requestData);
 
-            const response = await requestShiftCoverage(requestData);
+            const response = await requestToCoverShift(requestData);
 
             console.log("Coverage request submitted successfully:", response);
 
@@ -104,49 +88,7 @@ function CoverageRequestForm({ open, onClose, shift }) {
                                 />
                                 <span>This session only</span>
                             </div>
-
-                            <div className="radio-option">
-                                <input
-                                    type="radio"
-                                    name="whichShifts"
-                                    value="recurring"
-                                    className="radio-input"
-                                    checked={whichShifts === "recurring"}
-                                    onChange={() => setWhichShifts("recurring")}
-                                />
-                                <span>This session and future recurring sessions</span>
-                            </div>
                         </div>
-                    </div>
-
-                    {/* Category Selection */}
-                    <div className="form-group">
-                        <div className="form-label">
-                            <span>Why are you requesting coverage? </span>
-                            <i className="required">(Required)</i>
-                        </div>
-                        <div className="category-wrapper">
-                            {/* <div className="category-label">Category</div> */}
-                            <select className="dropdown" value={category} onChange={(e) => setCategory(e.target.value)} required>
-                                <option value="">Select category</option>
-                                {categoryOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <textarea className="textarea" placeholder="Enter details about your request" value={details} onChange={(e) => setDetails(e.target.value)}></textarea>
-                    </div>
-
-                    {/* Additional Comments */}
-                    <div className="form-group">
-                        <div className="form-label">
-                            <span>Additional comments </span>
-                            <i className="optional">(Optional)</i>
-                        </div>
-                        <textarea className="textarea" placeholder="Enter any additional comments here" value={comments} onChange={(e) => setComments(e.target.value)} />
                     </div>
 
                     {/* Acknowledgment */}

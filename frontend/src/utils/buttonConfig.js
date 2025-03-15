@@ -6,9 +6,14 @@ import PlusIcon from '../assets/images/button-icons/plus-icon.svg';
 import RequestCoverageIcon from '../assets/request-coverage.png'
 import CancelIcon from "../assets/images/button-icons/x-icon.svg";
 
+let openAbsenceRequestHandler = null;
 let openCoverageRequestHandler = null;
 
 // Setter to allow external modules (like Schedule) to set the handler
+export const setOpenAbsenceRequestHandler = (handler) => {
+    openAbsenceRequestHandler = handler;
+};
+
 export const setOpenCoverageRequestHandler = (handler) => {
     openCoverageRequestHandler = handler;
 };
@@ -28,13 +33,17 @@ const handleCheckInClick = async (shift, handleShiftUpdate) => {
 
 const handleCoverShiftClick = async (shift, handleShiftUpdate, volunteerID) => {
     try {
-        const body = {
-            request_id: shift.request_id,
-            volunteer_id: volunteerID,
-        };
-        // console.log(`Requesting to cover shift ${shift.shift_id}`);
-        await requestToCoverShift(body);
-        handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.PENDING });
+        if (openCoverageRequestHandler) {
+            openCoverageRequestHandler(shift);
+        } else {
+            const body = {
+                request_id: shift.request_id,
+                volunteer_id: volunteerID,
+            };
+            // console.log(`Requesting to cover shift ${shift.shift_id}`);
+            await requestToCoverShift(body);
+            handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.PENDING });
+        }
 
     } catch (error) {
         console.error('Error generating request to cover shift:', error);
@@ -43,8 +52,8 @@ const handleCoverShiftClick = async (shift, handleShiftUpdate, volunteerID) => {
 
 const handleRequestCoverageClick = async (shift, handleShiftUpdate) => {
     try {
-        if (openCoverageRequestHandler) {
-            openCoverageRequestHandler(shift);
+        if (openAbsenceRequestHandler) {
+            openAbsenceRequestHandler(shift);
         } else {
             // Otherwise, fallback to calling the API directly.
             const body = { shift_id: shift.shift_id };

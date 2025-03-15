@@ -9,9 +9,10 @@ import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { useAuth } from "../../contexts/authContext";
 import { COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
-import { getButtonConfig, setOpenCoverageRequestHandler } from "../../utils/buttonConfig";
+import { getButtonConfig, setOpenAbsenceRequestHandler, setOpenCoverageRequestHandler } from "../../utils/buttonConfig";
 import AbsenceRequestForm from "../../components/AbsenceRequestForm";
 import "./index.css";
+import CoverageRequestForm from "../../components/CoverageRequestForm";
 
 function Schedule() {
     const { user } = useAuth();
@@ -25,8 +26,15 @@ function Schedule() {
     const [viewMode, setViewMode] = useState("list");
     const { days, initialDate, nextWeek, previousWeek, goToToday } = useWeekView();
 
+    const [isAbsenceRequestOpen, setIsAbsenceRequestOpen] = useState(false);
+    const [absenceRequestShift, setAbsenceRequestShift] = useState(null);
     const [isCoverageRequestOpen, setIsCoverageRequestOpen] = useState(false);
     const [coverageRequestShift, setCoverageRequestShift] = useState(null);
+
+    const openAbsenceRequest = (shift) => {
+        setAbsenceRequestShift(shift);
+        setIsAbsenceRequestOpen(true);
+    };
 
     const openCoverageRequest = (shift) => {
         setCoverageRequestShift(shift);
@@ -34,13 +42,19 @@ function Schedule() {
     };
 
     useEffect(() => {
-        setOpenCoverageRequestHandler(openCoverageRequest);
+        setOpenAbsenceRequestHandler(openAbsenceRequest);
+        setOpenCoverageRequestHandler(openCoverageRequest)
     }, []);
+
+    const closeAbsenceRequest = () => {
+        setIsAbsenceRequestOpen(false);
+        setAbsenceRequestShift(null);
+    };
 
     const closeCoverageRequest = () => {
         setIsCoverageRequestOpen(false);
         setCoverageRequestShift(null);
-    };
+    };  
 
     // Create a ref object to store references to each shifts-container for scrolling
     const shiftRefs = useRef({});
@@ -227,6 +241,11 @@ function Schedule() {
                 </div>
             </DetailsPanel>
             <AbsenceRequestForm
+                open={isAbsenceRequestOpen}
+                onClose={closeAbsenceRequest}
+                shift={absenceRequestShift}
+            />
+            <CoverageRequestForm
                 open={isCoverageRequestOpen}
                 onClose={closeCoverageRequest}
                 shift={coverageRequestShift}

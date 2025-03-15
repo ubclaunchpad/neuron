@@ -10,9 +10,6 @@ import {
     getShift,
     getShifts,
     getShiftsByVolunteerIdAndMonth,
-    withdrawAbsenceRequest,
-    requestCoverShift, 
-    withdrawCoverShift, 
     updateShift
 } from '../controllers/shiftController.js';
 

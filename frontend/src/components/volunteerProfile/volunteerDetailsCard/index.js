@@ -21,7 +21,7 @@ import DeactivateReactivateModal from "../../Deactivate-Reactivate-Modal";
 
 function VolunteerDetailsCard({ volunteer, type = "" }) {
 
-    const { user, updateUser } = useAuth();
+    const { user, updateUser, isAdmin } = useAuth();
 
     const [isEditing, setIsEditing] = useState(false);
     const [mutableData, setMutableData] = useState({
@@ -56,12 +56,15 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
     }
 
     useEffect(() => {
-        if (Number(mutableData.timeCommitment) <= 0 && !isEditing) {
-            sendTcNotif();
+        if (!isAdmin) {
+            if (Number(mutableData.timeCommitment) <= 0 && !isEditing) {
+                sendTcNotif();
+            }
         }
     }, [
         mutableData.timeCommitment,
-        isEditing
+        isEditing,
+        isAdmin
     ]);
 
     const handleImageUpload = (event) => {

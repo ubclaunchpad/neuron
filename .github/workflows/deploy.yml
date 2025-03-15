@@ -91,7 +91,7 @@ jobs:
 
     - name: create env file
       run: |
-        cat <<-EOF > ./envfile
+        cat > ./envfile <<EOF
         GIT_COMMIT_HASH=${{ github.sha }}
         CONTAINER_URL=${{ vars.CONTAINER_URL }}
         RDS_HOSTNAME=${{ vars.RDS_HOSTNAME }}
@@ -103,6 +103,9 @@ jobs:
         GMAIL_PASSWORD=${{ secrets.GMAIL_PASSWORD }}
         GMAIL_ID=${{ vars.GMAIL_ID }}
         EOF
+
+    - name: test contents
+      run: cat ./envfile
 
     - name: Docker Stack Deploy
       uses: cssnr/stack-deploy-action@v1

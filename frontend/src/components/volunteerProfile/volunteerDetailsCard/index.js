@@ -8,16 +8,16 @@ import edit_icon from "../../../assets/edit-icon.png";
 import settings_icon from "../../../assets/settings-icon.png";
 import ProfileImg from "../../ImgFallback";
 
+import { City, State } from 'country-state-city';
+import { Formik } from "formik";
 import { CgSelect } from "react-icons/cg";
+import Select from 'react-select';
+import * as Yup from "yup";
 import { updateVolunteerData, uploadProfilePicture } from "../../../api/volunteerService";
 import { useAuth } from "../../../contexts/authContext";
-import {State, City} from 'country-state-city';
-import Select from 'react-select';
 import notyf from "../../../utils/notyf";
-import Modal from "../../Modal";
 import DeactivateReactivateModal from "../../Deactivate-Reactivate-Modal";
-import { Formik } from "formik";
-import * as Yup from "yup";
+import Modal from "../../Modal";
 
 const VolunteerSchema = Yup.object().shape({
     p_name: Yup.string()
@@ -40,7 +40,7 @@ const VolunteerSchema = Yup.object().shape({
 
 function VolunteerDetailsCard({ volunteer, type = "" }) {
 
-    const { user, updateUser } = useAuth();
+    const { user, updateUser, isAdmin } = useAuth();
 
     const [isEditing, setIsEditing] = useState(false);
     const [mutableData, setMutableData] = useState({
@@ -77,12 +77,15 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
     }
 
     useEffect(() => {
-        if (Number(mutableData.p_time_ctmt) <= 0 && !isEditing) {
-            sendTcNotif();
+        if (!isAdmin) {
+            if (Number(mutableData.timeCommitment) <= 0 && !isEditing) {
+                sendTcNotif();
+            }
         }
     }, [
-        mutableData.p_time_ctmt,
-        isEditing
+        mutableData.timeCommitment,
+        isEditing,
+        isAdmin
     ]);
 
     useEffect(() => {

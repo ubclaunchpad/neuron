@@ -1,6 +1,4 @@
 -- migrate:up
-CREATE DATABASE IF NOT EXISTS neuron;
-
 CREATE TABLE users (
     user_id CHAR(36) PRIMARY KEY,
     f_name VARCHAR(60) NOT NULL,

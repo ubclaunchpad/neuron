@@ -147,4 +147,13 @@ export default class CoverageModel {
 
     return results;
   }
+
+  async getCoverageRequests(): Promise<any> {
+    const query = `
+               SELECT * FROM coverage_request
+          `;
+    const [results, _] = await connectionPool.query<any>(query, []);
+
+    return results;
+  }
 }

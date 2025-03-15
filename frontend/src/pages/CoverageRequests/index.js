@@ -49,11 +49,10 @@ function CoverageRequests() {
       after: selectedDate.startOf("month").format("YYYY-MM-DD"),
       before: selectedDate.endOf("month").format("YYYY-MM-DD"),
       type: "absence",
-      // status: ["absence-pending"],
     };
     const response = await getShifts(params);
 
-    // Filter out duplicated shifts and past coverage requests
+    // Filter out duplicated shifts and past absence requests
     const coverageShiftMap = new Map();
     response.forEach((shift) => {
       const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
@@ -77,7 +76,6 @@ function CoverageRequests() {
       type: "coverage",
     };
     const response = await getShifts(params);
-
     // Filter out duplicated shifts and past coverage requests
     const coverageShiftMap = new Map();
     response.forEach((shift) => {
@@ -85,11 +83,7 @@ function CoverageRequests() {
       const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
       const pastShift = currentDate.isAfter(shiftEnd);
 
-      if (
-        !pastShift &&
-        (shift.absence_request.status === "coverage-pending" ||
-          shift.absence_request.status === "resolved")
-      ) {
+      if (!pastShift) {
         coverageShiftMap.set(shift.shift_id, shift);
       }
     });

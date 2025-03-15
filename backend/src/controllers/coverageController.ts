@@ -77,8 +77,14 @@ async function getAbsenceRequests(req: AuthenticatedRequest, res: Response) {
   res.json(results);
 }
 
+async function getCoverageRequests(req: AuthenticatedRequest, res: Response) {
+  const results = await coverageModel.getCoverageRequests();
+  res.json(results);
+}
+
 export {
   getAbsenceRequests,
+  getCoverageRequests,
   approveAbsenceRequest,
   approveCoverShift,
   rejectAbsenceRequest,

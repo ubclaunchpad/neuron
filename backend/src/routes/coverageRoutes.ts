@@ -10,6 +10,7 @@ import {
   withdrawAbsenceRequest,
   withdrawCoverShift,
   getAbsenceRequests,
+  getCoverageRequests,
 } from "../controllers/coverageController.js";
 
 export const CoverageRoutes: RouteDefinition = {
@@ -21,6 +22,11 @@ export const CoverageRoutes: RouteDefinition = {
       path: "/",
       method: "get",
       action: getAbsenceRequests,
+    },
+    {
+      path: "/coverage",
+      method: "get",
+      action: getCoverageRequests,
     },
     {
       path: "/approve",

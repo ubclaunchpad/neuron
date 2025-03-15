@@ -32,6 +32,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
+          build-args: |
+            BACKEND_URL=https://${{ vars.CONTAINER_URL }}/api
           push: true
           tags: |
             ghcr.io/ubclaunchpad/neuron-frontend:latest
@@ -57,6 +59,8 @@ jobs:
         with:
           context: ./backend
           push: true
+          build-args: |
+            PORT=3001
           tags: |
             ghcr.io/ubclaunchpad/neuron-backend:latest
             ghcr.io/ubclaunchpad/neuron-backend:${{ github.sha }}
@@ -64,11 +68,8 @@ jobs:
   migrate-rds:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: >- 
-        mysql://
-        ${{ vars.RDS_USERNAME }}:${{ secrets.RDS_PASSWORD }}
-        @${{ vars.RDS_HOSTNAME }}:${{ vars.RDS_PORT }}
-        /${{ vars.RDS_DB }}?sslmode=require
+      DATABASE_URL: mysql://${{ vars.RDS_USERNAME }}:${{ secrets.RDS_PASSWORD }}@${{ vars.RDS_HOSTNAME }}:${{ vars.RDS_PORT }}/${{ vars.RDS_DB }}
+      DBMATE_MIGRATIONS_DIR: ./database/migrations
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -80,38 +81,39 @@ jobs:
           sudo mv dbmate /usr/local/bin/dbmate
 
       - name: Run DB migrations
-        run: dbmate -m ./database/migrations up
+        run: dbmate up --strict
 
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - build-and-push-frontend
-  #     - build-and-push-backend
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v2
+  deploy:
+    runs-on: ubuntu-latest
+    needs:
+      - build-and-push-frontend
+      - build-and-push-backend
+      - migrate-rds
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-  #   - name: create env file
-  #     run: |
-  #       cat <<EOF >> ./envfile
-  #         GIT_COMMIT_HASH=${{ github.sha }}
-  #         CONTAINER_URL=${{ vars.CONTAINER_URL }}
-  #         RDS_HOSTNAME=${{ vars.RDS_HOSTNAME }}
-  #         RDS_USERNAME=${{ vars.RDS_USERNAME }}
-  #         RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
-  #         RDS_PORT=${{ vars.RDS_PORT }}
-  #         RDS_DB=${{ vars.RDS_DB }}
-  #         TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}
-  #         GMAIL_PASSWORD=${{ secrets.GMAIL_PASSWORD }}
-  #         GMAIL_ID=${{ vars.GMAIL_ID }}
-  #       EOF
+    - name: create env file
+      run: |
+        cat > ./envfile <<EOF
+        GIT_COMMIT_HASH=${{ github.sha }}
+        CONTAINER_URL=${{ vars.CONTAINER_URL }}
+        RDS_HOSTNAME=${{ vars.RDS_HOSTNAME }}
+        RDS_USERNAME=${{ vars.RDS_USERNAME }}
+        RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
+        RDS_PORT=${{ vars.RDS_PORT }}
+        RDS_DB=${{ vars.RDS_DB }}
+        TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}
+        GMAIL_PASSWORD='${{ secrets.GMAIL_PASSWORD }}'
+        GMAIL_ID=${{ vars.GMAIL_ID }}
+        EOF
 
-  #   - name: Docker Stack Deploy
-  #     uses: cssnr/stack-deploy-action@v1
-  #     with:
-  #       name: deploy
-  #       file: ./deploy/docker-stack.yml
-  #       host: ${{ vars.CONTAINER_URL }}
-  #       user: deploy
-  #       ssh_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
-  #       env_file: ./envfile
+    - name: Docker Stack Deploy
+      uses: cssnr/stack-deploy-action@v1
+      with:
+        name: neuron
+        file: ./deploy/docker-stack.yml
+        host: ${{ vars.CONTAINER_URL }}
+        user: deploy
+        ssh_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+        env_file: ./envfile

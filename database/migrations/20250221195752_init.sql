@@ -1,5 +1,7 @@
 -- migrate:up
-create table users (
+CREATE DATABASE IF NOT EXISTS neuron;
+
+CREATE TABLE users (
     user_id CHAR(36) PRIMARY KEY,
     f_name VARCHAR(60) NOT NULL,
     l_name VARCHAR(60) NOT NULL,
@@ -12,26 +14,14 @@ create table users (
         ON DELETE SET NULL
 );
 
-create table instructors (
+CREATE TABLE instructors (
 	instructor_id CHAR(36) PRIMARY KEY, 
-    -- fk_user_id CHAR(36),  -- If instructors can login the the future they will need this     
     f_name VARCHAR(60) NOT NULL,
     l_name VARCHAR(60) NOT NULL,
     email VARCHAR(45) NOT NULL,
-    -- FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
 );
 
--- Re-create if we need it in the future
--- create table admins (
--- 	admin_id CHAR(36) PRIMARY KEY, 
---     fk_user_id CHAR(36),         
---     f_name VARCHAR(15) NOT NULL,
---     l_name VARCHAR(15) NOT NULL,
---     FOREIGN KEY (fk_user_id) REFERENCES users(user_id)
---         ON DELETE CASCADE
--- );
-
-create table class (
+CREATE TABLE class (
 	class_id INT PRIMARY KEY AUTO_INCREMENT,
     fk_instructor_id CHAR(36) NOT NULL,
     fk_image_id CHAR(36),
@@ -47,7 +37,7 @@ create table class (
         ON DELETE SET NULL
 );
 
-create table volunteers (
+CREATE TABLE volunteers (
 	volunteer_id CHAR(36) PRIMARY KEY, 
     fk_user_id CHAR(36),      
     p_name VARCHAR(45),
@@ -63,7 +53,7 @@ create table volunteers (
         ON DELETE CASCADE
 );
 
-create table availability (
+CREATE TABLE availability (
 	availability_id INT PRIMARY KEY AUTO_INCREMENT,
     fk_volunteer_id CHAR(36) NOT NULL,
     day INT NOT NULL,
@@ -83,7 +73,7 @@ CREATE TABLE volunteer_schedule (
         ON DELETE CASCADE
 );
 
-create table schedule (
+CREATE TABLE schedule (
 	schedule_id INT PRIMARY KEY AUTO_INCREMENT,
     fk_class_id INT NOT NULL,
     day INT NOT NULL,
@@ -142,7 +132,7 @@ CREATE TABLE class_preferences (
         ON DELETE CASCADE
 );
 
-create table images (
+CREATE TABLE images (
     image_id CHAR(36) PRIMARY KEY,
     image MEDIUMBLOB NOT NULL
 );

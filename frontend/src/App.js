@@ -18,6 +18,8 @@ import Settings from "./pages/Settings";
 import Signup from "./pages/Signup";
 import VolunteerProfile from "./pages/VolunteerProfile";
 import AdminVolunteerProfile from "./pages/AdminVolunterProfile";
+import VolunteerNotVerified from "./pages/VolunteerNotVerified";
+import VolunteerDeactivated from "./pages/VolunteerDeactivated";
 
 function App() {
   const { isAuthenticated, isAdmin, isVolunteer, logout } = useAuth();
@@ -44,15 +46,24 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
-          <Route path="auth" element={<RouteGuard fallback={"/"} valid={!isAuthenticated} />}>
+          <Route
+            path="auth"
+            element={<RouteGuard fallback={"/"} valid={!isAuthenticated} />}
+          >
             <Route path="signup" element={<Signup />} />
             <Route path="login" element={<Login />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="reset-password" element={<ResetPassword />} />
+            <Route path="not-verified" element={<VolunteerNotVerified />} />
+            <Route path="deactivated" element={<VolunteerDeactivated />} />
           </Route>
 
           {/* Auth Protected Routes */}
-          <Route element={<RouteGuard fallback="/auth/login" valid={isAuthenticated} />}>
+          <Route
+            element={
+              <RouteGuard fallback="/auth/login" valid={isAuthenticated} />
+            }
+          >
             <Route element={<SidebarLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="classes" element={<Classes />} />
@@ -61,12 +72,18 @@ function App() {
 
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
                 <Route path="profile" element={<VolunteerProfile />} />
-                <Route path="profile/preferences" element={<ClassPreferences />} />
+                <Route
+                  path="profile/preferences"
+                  element={<ClassPreferences />}
+                />
               </Route>
 
               <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>
                 <Route path="management" element={<MemberManagement />} />
-                <Route path="requests" element={<CoverageRequests />} />
+                <Route
+                  path="coverage-requests"
+                  element={<CoverageRequests />}
+                />
                 <Route path="volunteer-profile" element={<AdminVolunteerProfile />} />
               </Route>
             </Route>

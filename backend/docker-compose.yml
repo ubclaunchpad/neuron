@@ -1,0 +1,16 @@
+services:
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - PORT=3001
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3001:3001"
+    command: npm start
+
+volumes:
+  db:

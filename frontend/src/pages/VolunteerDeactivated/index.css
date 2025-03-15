@@ -1,0 +1,9 @@
+@import '../../styles.css';
+
+
+.deactivated-image {
+  max-width: 100%;
+  width: 150px;
+  height: auto;
+  margin-bottom: 20px;
+}

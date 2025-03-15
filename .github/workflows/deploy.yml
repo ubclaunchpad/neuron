@@ -61,6 +61,27 @@ jobs:
             ghcr.io/ubclaunchpad/neuron-backend:latest
             ghcr.io/ubclaunchpad/neuron-backend:${{ github.sha }}
 
+  migrate-rds:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: >- 
+        mysql://
+        ${{ vars.RDS_USERNAME }}:${{ secrets.RDS_PASSWORD }}
+        @${{ vars.RDS_HOSTNAME }}:${{ vars.RDS_PORT }}
+        /${{ vars.RDS_DB }}?sslmode=require
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dbmate
+        run: |
+          curl -L https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64 -o dbmate
+          chmod +x dbmate
+          sudo mv dbmate /usr/local/bin/dbmate
+
+      - name: Run DB migrations
+        run: dbmate -m ./database/migrations up
+
   # deploy:
   #   runs-on: ubuntu-latest
   #   needs:

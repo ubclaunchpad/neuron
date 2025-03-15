@@ -70,6 +70,18 @@ const getVolunteerShiftsForMonth = async (body) => {
   }
 };
 
+const getAllShiftsByMonth = async (body) => {
+    try {
+        const response = await api.post('shifts/admin-shift-month', {
+            shift_date: body.shiftDate 
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching shift info:', error);
+        throw error;  
+    }
+}
+
 // Creates a request to check in for a shift
 const checkInShift = async (shift_id) => {
   try {

@@ -93,27 +93,29 @@ function CoverageRequestForm({ open, onClose, shift }) {
                             <i className="required">(Required)</i>
                         </div>
                         <div className="radio-group">
-                            <label className="radio-option">
+                            <div className="radio-option">
                                 <input
                                     type="radio"
                                     name="whichShifts"
                                     value="single"
+                                    className="radio-input"
                                     checked={whichShifts === "single"}
                                     onChange={() => setWhichShifts("single")}
                                 />
                                 <span>This session only</span>
-                            </label>
+                            </div>
 
-                            <label className="radio-option">
+                            <div className="radio-option">
                                 <input
                                     type="radio"
                                     name="whichShifts"
                                     value="recurring"
+                                    className="radio-input"
                                     checked={whichShifts === "recurring"}
                                     onChange={() => setWhichShifts("recurring")}
                                 />
                                 <span>This session and future recurring sessions</span>
-                            </label>
+                            </div>
                         </div>
                     </div>
 
@@ -124,7 +126,7 @@ function CoverageRequestForm({ open, onClose, shift }) {
                             <i className="required">(Required)</i>
                         </div>
                         <div className="category-wrapper">
-                            <label className="category-label">Category</label>
+                            {/* <div className="category-label">Category</div> */}
                             <select className="dropdown" value={category} onChange={(e) => setCategory(e.target.value)} required>
                                 <option value="">Select category</option>
                                 {categoryOptions.map((option) => (
@@ -149,12 +151,19 @@ function CoverageRequestForm({ open, onClose, shift }) {
 
                     {/* Acknowledgment */}
                     <div className="form-group acknowledgment-group">
-                        <label className="checkbox-label">
-                            <input type="checkbox" checked={acknowledgment} onChange={() => setAcknowledgment(!acknowledgment)} required />
+                        <div className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                className="acknowledgment-checkbox"
+                                checked={acknowledgment}
+                                onChange={() => setAcknowledgment(!acknowledgment)}
+                                required
+                            />
                             <span className="acknowledgment-text">
-                                I understand that submitting this request does not guarantee approval, and I remain responsible for the shift until this request is approved.
+                                I understand that submitting this request does not guarantee approval, <br/>
+                                and I remain responsible for the shift until this request is approved.
                             </span>
-                        </label>
+                        </div>
                     </div>
                 </div>
 

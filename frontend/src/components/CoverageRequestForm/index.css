@@ -25,6 +25,7 @@
 .request-coverage-title {
     flex: 1;
     line-height: 135%;
+    margin-bottom: 30px;
 }
 
 .close-button-icon {
@@ -66,16 +67,21 @@
 /* Radio Button Group */
 .radio-group {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 20px;
-    align-self: stretch;
+    width: 100%;
 }
 
 .radio-option {
     display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
     align-items: center;
-    gap: 8px;
-    cursor: pointer;
+    padding-right: 1rem;
+}
+
+.radio-input {
+    width: fit-content;
 }
 
 /* Dropdown (Category Selection) */
@@ -113,34 +119,41 @@
     color: var(--dark-grey);
     resize: none;
     font-family: var(--font-primary);
-    box-sizing: border-box;  /* ✅ Ensures padding doesn't add extra width */
+    box-sizing: border-box;
 }
 
-/* Force all inputs (text, select, textarea) to match */
 .form-input, 
 .dropdown, 
 .textarea {
-    max-width: 100%; /* ✅ Prevents exceeding parent width */
+    max-width: 100%;
 }
 
 /* Acknowledgment Checkbox */
 .acknowledgment-group {
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .checkbox-label {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: flex-start; 
+    gap: 10px;
+}
+
+.acknowledgment-checkbox {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-top: 3px; 
     cursor: pointer;
 }
 
 .acknowledgment-text {
-    font-size: var(--small-text);
+    font-size: var(--medium-text);
     color: var(--dark);
     line-height: 135%;
+    padding-left: 0px;
 }
 
 /* Button Wrapper */

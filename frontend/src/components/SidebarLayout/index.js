@@ -60,7 +60,10 @@ function SidebarLayout() {
 
   return (
     <div className="main-container">
-      <aside ref={sidebarRef} className={`navbar ${collapsed ? 'collapsed' : ''}`}>
+      <aside
+        ref={sidebarRef}
+        className={`navbar ${collapsed ? "collapsed" : ""}`}
+      >
         <span className="logo-banner">
           {!collapsed && (
             <a href="https://www.bcbrainwellness.ca/">
@@ -101,7 +104,7 @@ function SidebarLayout() {
 
           <Permission permissions="admin">
             <NavLink
-              to="/requests"
+              to="/coverage-requests"
               className={({ isActive }) =>
                 isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
               }

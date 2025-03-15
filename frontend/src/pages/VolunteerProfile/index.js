@@ -41,12 +41,7 @@ function VolunteerProfile() {
             </div>
           </div>
           <div className="column-2">
-            <div className="password-card">
-              <ChangePasswordCard volunteer={user.volunteer} />
-            </div>
-            <div >
               <ClassPreferencesCardMP volunteer={user.volunteer} />
-            </div>
           </div>
         </div>
         : <></> 

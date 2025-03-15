@@ -1,19 +1,20 @@
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWeekView } from "react-weekview";
-import { getVolunteerShiftsForMonth } from "../../api/shiftService";
+import { getShifts } from "../../api/shiftService";
 import CalendarView from "../../components/CalendarView";
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { useAuth } from "../../contexts/authContext";
-import { COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
+import { ADMIN_SHIFT_TYPES, COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
 import { getButtonConfig } from "../../utils/buttonConfig";
 import "./index.css";
+import { duration } from "@mui/material";
 
 function Schedule() {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const currentDate = dayjs();
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [shifts, setShifts] = useState([]);
@@ -29,33 +30,166 @@ function Schedule() {
     const scheduleContainerRef = useRef(null);
 
     const fetchShifts = useCallback(async () => {
-        const body = {
-            volunteer_id: user?.volunteer.volunteer_id,
-            shiftDate: selectedDate.format("YYYY-MM-DD"),
-        };
-        const response = await getVolunteerShiftsForMonth(body);
+      const params = {
+          // volunteer is passed in only for volunteers, not admins
+          volunteer: isAdmin ? null : user?.volunteer?.volunteer_id,
+          before: selectedDate.endOf('month').format("YYYY-MM-DD"),
+          after: selectedDate.startOf('month').format("YYYY-MM-DD"),
+        }
+      
+        let response;
 
-        // Filter out duplicated shifts and past coverage requests
+        if (isAdmin) {
+          response = await getShifts(params);
+        } else {
+          // For volunteers, fetch shifts associated to volunteer and open shifts for coverage
+          const [myShifts, myCoverageShifts] = await Promise.all([
+            getShifts({
+              ...params,
+            }),
+
+            getShifts({
+              ...params,
+              type: 'coverage',
+            })
+          ])
+
+          const openCoverageShifts = myCoverageShifts.filter(
+            shift => shift.absence_request?.status === 'open'
+          );
+          console.log('mycoverage', myCoverageShifts);
+          console.log('myopen', openCoverageShifts);
+          response = [...myShifts, ...openCoverageShifts];
+        }
+        console.log(response);
+
+      // Process shifts to determine shift_type based on absence_request ; case conditions for Admin accounts
+      const processedShifts = response.map(shift => {
+        let shift_type;
+        let coverage_status;
+        // COVERAGE_STATUSES.PENDING right now is for both pending coverage requests and absence requests – may need to fix
+      
+         if (!shift.absence_request) {
+          // If the absence request is resolved or there is no absence request, shift is covered
+          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_COVERED : SHIFT_TYPES.MY_SHIFTS;
+          // No coverage status for covered shifts
+          coverage_status = null;
+        } else if (shift.absence_request.status === 'absence-pending') {
+          // The shift has an absence request, that is pending
+          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE : SHIFT_TYPES.MY_COVERAGE_REQUESTS;
+          coverage_status = COVERAGE_STATUSES.PENDING;
+        } else if (shift.absence_request.status === 'resolved') {
+          // Resolved
+          shift_type = 'resolved';
+          // Coverage status is resolved
+          coverage_status = COVERAGE_STATUSES.RESOLVED;
+        } else if (shift.absence_request.status === 'coverage-pending') {
+          // A volunteer has offered to cover this shift 
+          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL : shift.volunteer_id === user.volunteer.volunteer_id ? SHIFT_TYPES.MY_SHIFTS : SHIFT_TYPES.COVERAGE;
+          coverage_status = COVERAGE_STATUSES.PENDING;
+        } else if (shift.absence_request.status === 'open') {
+          // Shift absence request is approved and is now open
+          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE : SHIFT_TYPES.COVERAGE;
+          coverage_status = COVERAGE_STATUSES.OPEN
+        } 
+      
+        return { ...shift, shift_type, coverage_status };
+      }).sort((a, b) => {
+        return dayjs(a.shift_date).diff(dayjs(b.shift_date));
+      })
+      console.log( 'processed', processedShifts);
+
         const shiftMap = new Map();
-        response.forEach((shift) => {
-            const existingShift = shiftMap.get(shift.shift_id);
-            const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
-            const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
-            const pastShift = currentDate.isAfter(shiftEnd);
 
-            // Prioritize showing coverage shifts over my shifts
-            if (existingShift && existingShift.shift_type === SHIFT_TYPES.MY_SHIFTS && shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
-                shiftMap.set(shift.shift_id, shift);
+        processedShifts.forEach((shift) => {
+          const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
+          const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
+          const pastShift = currentDate.isAfter(shiftEnd);
 
-                // Don't show past shifts that are open for coverage
-            } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && pastShift) {
-                // skip shift
-            } else if (!existingShift) {
-                shiftMap.set(shift.shift_id, shift);
+          // Don't show past shifts that are open for coverage
+          if (pastShift && shift.shift_type === (isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE : SHIFT_TYPES.COVERAGE)) {
+            // skip shift
+            return
+          }
+          // Don't show resolved shifts
+          if (shift.shift_type === 'resolved') {
+            return
+          }
+          
+          // Composite for admin -> class_id, with shift date and start time
+          // Key for volunteer -> shift_id
+          const key = isAdmin 
+          ? `${shift.class_id}-${shiftDay}-${shift.start_time}`
+          : shift.shift_id;
+
+          // Conditional to see if key is already in map
+          if (!shiftMap.has(key)) {
+
+            if (isAdmin) {
+              shiftMap.set(key, {
+                class_id: shift.class_id,
+                class_name: shift.class_name,
+                shift_date: shift.shift_date,
+                day: shift.day,
+                start_time: shift.start_time,
+                end_time: shift.end_time,
+                duration: shift.duration,
+                instructions: shift.instructions,
+                zoom_link: shift.zoom_link,
+  
+                // Volunteer-specific information is aggregated
+                volunteers: [{
+                  volunteer_id: shift.volunteer_id,
+                  shift_id: shift.shift_id,
+                  checked_in: shift.checked_in,
+                  absence_request: shift.absence_request
+                }],
+  
+                shift_type: shift.shift_type
+
+              })
+            } else {
+              // For volunteers, simply enter in shift information
+              shiftMap.set(key, shift)
             }
-        });
+          } else {
+            const existingEntry = shiftMap.get(key)
 
-        const uniqueShifts = Array.from(shiftMap.values());
+            // For admins, push volunteer information into the existing shift information if it already exists
+            if (isAdmin) {
+              existingEntry.volunteers.push({
+                volunteer_id: shift.volunteer_id,
+                shift_id: shift.shift_id,
+                checked_in: shift.checked_in,
+                absence_request: shift.absence_request
+              });
+
+              // Shifts are updated based on priority: PENDING_FULFILL > NEEDS_COVERAGE > REQUESTED_COVERAGE > COVERED
+              
+              if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL) {
+                existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL;
+              } else if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE && 
+                existingEntry.shift_type !== ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE) {
+                existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE;
+              } else if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE &&
+                existingEntry.shift_type !== ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE) {
+                existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE;
+              } 
+            } else {
+                // Prioritize showing coverage shifts over my shifts
+              if (existingEntry && existingEntry.shift_type === SHIFT_TYPES.MY_SHIFTS && shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
+                shiftMap.set(shift.shift_id, shift);
+               } else if (!existingEntry) {
+                shiftMap.set(key, shift);
+              }
+            }
+          }
+      });
+      
+
+      const uniqueShifts = Array.from(shiftMap.values());
+      console.log('unique', uniqueShifts)
+
 
         // Filter shifts based on selected filter type
         const filteredShifts = uniqueShifts.filter((shift) => {
@@ -65,7 +199,7 @@ function Schedule() {
             return shift.shift_type === filter;
         });
         setShifts(filteredShifts);
-    }, [selectedDate, filter, user?.volunteer.volunteer_id]);
+    }, [selectedDate, filter, user]);
 
     // Fetch shifts for the selected date and filter
     useEffect(() => {
@@ -92,18 +226,24 @@ function Schedule() {
         const pastShift = currentDate.isAfter(shiftEnd);
 
         const buttons = [];
-        const buttonConfig = getButtonConfig(shift, handleShiftUpdate, user?.volunteer.volunteer_id);
-        const primaryButton = buttonConfig[shift.shift_type] || buttonConfig[SHIFT_TYPES.DEFAULT];
+        const buttonConfig = getButtonConfig(shift, handleShiftUpdate, isAdmin? null : user?.volunteer.volunteer_id);
+        const primaryButton = buttonConfig[shift.shift_type]
 
-        buttons.push(primaryButton);
+        if (primaryButton.label && !pastShift) {
+          buttons.push(primaryButton);
+          }
 
-        if (shift.shift_type === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
-            buttons.push(buttonConfig.REQUEST_COVERAGE);
-        } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.PENDING) {
-            buttons.push(buttonConfig.CANCEL);
-        } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS && shift.coverage_status === COVERAGE_STATUSES.OPEN) {
-            buttons.push(buttonConfig.CANCEL);
+        if (isAdmin && !pastShift) {
+          buttons.push(buttonConfig.CANCEL);
         }
+        
+        if (shift.shift_type === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
+          buttons.push(buttonConfig.REQUEST_COVERAGE);
+      } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.PENDING) {
+          buttons.push(buttonConfig.CANCEL);
+      } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS && shift.coverage_status === COVERAGE_STATUSES.OPEN) {
+          buttons.push(buttonConfig.CANCEL);
+      } 
 
         return buttons;
     };
@@ -126,9 +266,10 @@ function Schedule() {
     // Update details panel when a shift is selected
     const handleShiftSelection = (classData) => {
         console.log("Selected shift: ", classData);
-        setSelectedClassId(classData._class_id);
+        setSelectedClassId(classData.class_id);
         setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
         console.log(selectedShiftButtons);
+        console.log( "HELLO", classData.shift_details);
         setShiftDetails(classData);
     };
 
@@ -168,7 +309,7 @@ function Schedule() {
                 />
             </div>
             <hr />
-            <DetailsPanel classId={selectedClassId} classList={shifts} setClassId={setSelectedClassId} shiftDetails={selectedShiftDetails} dynamicShiftButtons={selectedShiftButtons}>
+            <DetailsPanel classId={selectedClassId} classList={shifts} setClassId={setSelectedClassId} shiftDetails={selectedShiftDetails} dynamicShiftButtons={selectedShiftButtons} type='schedule'>
                 <div className="schedule-page">
                     {viewMode === "list" ? (
                         <>
@@ -192,7 +333,8 @@ function Schedule() {
                                                         shift={shift}
                                                         shiftType={shift.shift_type}
                                                         onShiftSelect={handleShiftSelection}
-                                                        buttonConfig={getButtonConfig(shift, handleShiftUpdate, user?.volunteer.volunteer_id)}
+                                                        // getButtonConfig sets volunteerID to null for Admin accounts
+                                                        buttonConfig={getButtonConfig(shift, handleShiftUpdate, isAdmin ? null : user?.volunteer.volunteer_id)}
                                                     />
                                                 ))}
                                             </div>

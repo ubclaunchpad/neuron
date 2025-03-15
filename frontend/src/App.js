@@ -18,6 +18,8 @@ import Settings from "./pages/Settings";
 import Signup from "./pages/Signup";
 import VolunteerProfile from "./pages/VolunteerProfile";
 import AdminVolunteerProfile from "./pages/AdminVolunterProfile";
+import VolunteerNotVerified from "./pages/VolunteerNotVerified";
+import VolunteerDeactivated from "./pages/VolunteerDeactivated";
 
 function App() {
   const { isAuthenticated, isAdmin, isVolunteer, logout } = useAuth();
@@ -52,6 +54,8 @@ function App() {
             <Route path="login" element={<Login />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="reset-password" element={<ResetPassword />} />
+            <Route path="not-verified" element={<VolunteerNotVerified />} />
+            <Route path="deactivated" element={<VolunteerDeactivated />} />
           </Route>
 
           {/* Auth Protected Routes */}
@@ -63,7 +67,7 @@ function App() {
             <Route element={<SidebarLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="classes" element={<Classes />} />
-              <Route path="schedule" element={<Schedule />} />
+              <Route path="schedule" element={<Schedule/>} />
               <Route path="settings" element={<Settings />} />
 
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>

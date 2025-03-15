@@ -1,5 +1,12 @@
 services:
   frontend:
-    image: ghcr.io/ubclaunchpad/neuron-frontend:f98c30ff2abb2d150566d02820a94825996ddcd3
+    build: 
+      context: .
+      args:
+        - BACKEND_URL=example.com
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env
     ports:
       - "80:80"

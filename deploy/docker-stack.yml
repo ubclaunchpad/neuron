@@ -18,7 +18,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=PathPrefix(`/api`)"
-      - "traefik.http.services.backend.loadbalancer.server.port=80" # Backend api port
+      - "traefik.http.services.backend.loadbalancer.server.port=3001" # Backend api port
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
     environment:

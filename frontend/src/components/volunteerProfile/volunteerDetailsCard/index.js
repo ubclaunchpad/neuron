@@ -123,7 +123,7 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
         Promise.all(requests)
             .then(() => {
                 setIsEditing(false);
-                notyf.success("Successfully updated data. Please refresh the page to see changes.");
+                notyf.success("Successfully updated profile.");
             })
             .catch((error) => {
                 console.log(error);

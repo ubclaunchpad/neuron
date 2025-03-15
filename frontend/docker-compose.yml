@@ -1,5 +1,5 @@
 services:
   frontend:
-    image: ghcr.io/ubclaunchpad/neuron-frontend:latest
+    image: ghcr.io/ubclaunchpad/neuron-frontend:f98c30ff2abb2d150566d02820a94825996ddcd3
     ports:
       - "80:80"

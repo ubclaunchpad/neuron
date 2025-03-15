@@ -11,7 +11,7 @@ RUN npm ci
 
 COPY . .
 
-ENV PUBLIC_BACKEND_URL=$BACKEND_URL
+RUN echo "PUBLIC_BACKEND_URL=${BACKEND_URL}" > .env
 
 RUN npm run build
 

@@ -60,16 +60,16 @@ function App() {
               <Route path="schedule" element={<Schedule/>} />
               <Route path="settings" element={<Settings />} />
 
-              <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
-                <Route path="profile" element={<VolunteerProfile />} />
-                <Route path="profile/preferences" element={<ClassPreferences />} />
-              </Route>
-
               <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>
                 <Route path="management" element={<MemberManagement />} />
                 <Route path="requests" element={<CoverageRequests />} />
                 <Route path="volunteer-profile" element={<AdminVolunteerProfile />} />
                 <Route path="profile" element={<AdminProfile />} />
+              </Route>
+
+              <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
+                <Route path="profile" element={<VolunteerProfile />} />
+                <Route path="profile/preferences" element={<ClassPreferences />} />
               </Route>
             </Route>
           </Route>

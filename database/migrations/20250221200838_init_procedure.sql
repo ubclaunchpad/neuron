@@ -1,6 +1,5 @@
 -- migrate:up
-DELIMITER $$
-
+-- dbmate:unsplit
 CREATE PROCEDURE GetShiftsByVolunteerIdAndMonth(
     IN volunteer_id VARCHAR(255),
     IN month INT,
@@ -58,7 +57,7 @@ BEGIN
                 SELECT 1 
                 FROM coverage_request 
                 WHERE coverage_request.request_id = absence_request.request_id 
-                AND coverage_request.volunteer_id = volunteer_id
+                  AND coverage_request.volunteer_id = volunteer_id
             ) THEN 'pending'
             ELSE 'open'
         END AS coverage_status, -- Coverage status indicator
@@ -71,9 +70,7 @@ BEGIN
         class ON schedule.fk_class_id = class.class_id
     JOIN 
         absence_request 
-            -- ON shifts.fk_schedule_id = absence_request.fk_schedule_id
-            -- AND shifts.shift_date = absence_request.shift_date
-            ON shifts.shift_id = absence_request.fk_shift_id -- CHANGED FOR UPDATED SHIFTS TABLE
+            ON shifts.shift_id = absence_request.fk_shift_id
     LEFT JOIN 
         coverage_request ON absence_request.request_id = coverage_request.request_id
     WHERE 
@@ -112,10 +109,7 @@ BEGIN
         class ON schedule.fk_class_id = class.class_id
     JOIN 
         absence_request 
-            -- ON shifts.fk_volunteer_id = absence_request.fk_volunteer_id
-            -- AND shifts.fk_schedule_id = absence_request.fk_schedule_id
-            -- AND shifts.shift_date = absence_request.shift_date
-            ON shifts.shift_id = absence_request.fk_shift_id -- CHANGED FOR UPDATED SHIFTS TABLE
+            ON shifts.shift_id = absence_request.fk_shift_id
     WHERE 
         shifts.fk_volunteer_id = volunteer_id 
         AND MONTH(shifts.shift_date) = month 
@@ -123,7 +117,7 @@ BEGIN
     ORDER BY 
         shift_date ASC,
         start_time ASC;
-END$$
+END;
 
 -- migrate:down
 DROP PROCEDURE IF EXISTS GetShiftsByVolunteerIdAndMonth;

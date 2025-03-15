@@ -186,8 +186,8 @@ export default class VolunteerModel {
                 class_preferences.fk_schedule_id AS schedule_id,
                 class_preferences.class_rank,
                 schedule.fk_class_id AS class_id,
-                schedule.day, schedule.start_time, schedule.end_time,
-                class.class_name, class.instructions, class.category, class.subcategory
+                schedule.day, schedule.start_time, schedule.end_time, schedule.frequency,
+                class.class_name, class.instructions, class.category, class.subcategory, class.start_date
             FROM class_preferences
             JOIN schedule ON class_preferences.fk_schedule_id = schedule.schedule_id
             JOIN class ON schedule.fk_class_id = class.class_id
@@ -202,12 +202,12 @@ export default class VolunteerModel {
 
         const query = `
             SELECT 
-                s.schedule_id, s.fk_class_id, s.day, s.start_time, s.end_time, s.active, 
-                c.class_name, c.instructions, c.category, 
+                s.schedule_id, s.fk_class_id, s.day, s.start_time, s.end_time, s.active, s.frequency,
+                c.class_name, c.instructions, c.category, c.start_date,
                 i.f_name, i.l_name
             FROM schedule AS s
             JOIN class AS c ON s.fk_class_id = c.class_id 
-            JOIN instructors AS i ON c.fk_instructor_id = i.instructor_id
+            JOIN instructors AS i ON s.fk_instructor_id = i.instructor_id
             WHERE s.active = 1; 
         `;
 

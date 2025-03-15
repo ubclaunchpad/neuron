@@ -1,11 +1,38 @@
+@import '../../styles.css';  /*Imports custom fonts*/
+
 .tabs {
-    width: 75vw;
+    width: auto;
+    height: 40;
+    margin: 28px 36px;
     display: flex;
-    border: 1px solid #e0e0e0;
+    flex-direction: row;
+    box-shadow: 0px 4px 16px 0px var(--light-grey);
+    border: 1px solid var(--grey);
     border-radius: 8px;
-    background: white;
-    margin: auto;
-    margin-bottom: 1.5vw;
+}
+
+.num-unv-user-container {
+    overflow: visible;
+    height: 16px;
+    width: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 5px;
+}
+
+.num-unv-user {
+    background: var(--red);
+    color: var(--white);
+    height: 22px;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    vertical-align: middle;
+    font-weight: 400;
 }
 
 .tab {
@@ -14,7 +41,7 @@
     border: none;
     background: none;
     cursor: pointer;
-    font-size: 1vw;
+    font-size: 16px;
 }
 
 .tab:first-child {
@@ -31,18 +58,23 @@
 }
 
 .tab.active {
-    font-weight: bold;
-    background-color: var(--light-grey);
-    border: 2px solid var(--primary-blue);
     z-index: 1;
+    background: var(--light-grey);
+    border: 1px solid var(--primary-blue);
+    color: var(--dark);
+    font-family: var( --font-primary);
+    font-weight: 600;
+    font-size: 16px;
+    text-align: center;
 }
 
 .member-search-bar {
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin: auto;
-    width: 75.5vw;
+    margin: 0px 36px;
+    margin-bottom: 16px;
+    width: auto;
 }
 
 .member-search-input {
@@ -53,11 +85,12 @@
     font-size: 14px;
     background: transparent url("../../assets/search-icon.png") no-repeat 10px;
     background-size: 16px;
+    height: 40px;
 }
 
 .member-search-input:focus {
     outline: none;
-    border-color: #2196f3;
+    border-color: var(--primary-blue);
 }
 
 .filter-button {
@@ -100,3 +133,4 @@
     color: white;
     margin-left: 7px;
 }
+

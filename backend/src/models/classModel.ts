@@ -41,14 +41,10 @@ export default class ClassesModel {
           }
 
           const query = `  
-               SELECT 
-                    c.*, 
-                    i.l_name AS instructor_l_name,
-                    i.f_name AS instructor_f_name,
-                    i.email AS instructor_email
-               FROM class c
-               LEFT JOIN instructors i ON c.fk_instructor_id = i.instructor_id
-               WHERE c.class_id IN (?);`;
+               SELECT *
+               FROM class
+               WHERE class_id IN (?);
+          `;
           const values = [class_ids];
 
           const [results, _] = await connectionPool.query<ClassDB[]>(query, values);
@@ -81,17 +77,17 @@ export default class ClassesModel {
                await transaction.beginTransaction();
 
                const query = `INSERT INTO class 
-                         (fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+                         (class_name, instructions, zoom_link, start_date, end_date, category, subcategory)
+                         VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-               const { fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = newClass;
-               const values = [fk_instructor_id, class_name, instructions, zoom_link, start_date, end_date, category, subcategory];
+               const { class_name, instructions, zoom_link, start_date, end_date, category, subcategory } = newClass;
+               const values = [class_name, instructions, zoom_link, start_date, end_date, category, subcategory];
 
                const [results, _] = await transaction.query<ResultSetHeader>(query, values);
                const classId = results.insertId;
 
-               let results2;
-               if (schedules) {
+               let results2 = [];
+               if (schedules && schedules.length > 0) {
                     results2 = await scheduleModel.addSchedulesToClass(classId, schedules, transaction);
                }
                

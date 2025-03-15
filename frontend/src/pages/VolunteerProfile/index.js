@@ -23,7 +23,7 @@ function VolunteerProfile() {
             <i className="fa-solid fa-arrow-right-from-bracket"></i>&nbsp;&nbsp;Log Out
           </button>
         </div>
-        { user?.volunteer ?
+        { user?.volunteer && user.volunteer.volunteer_id ?
         <div className="content">
           <div className="column-1">
             <div className="volunteer-card">
@@ -41,12 +41,7 @@ function VolunteerProfile() {
             </div>
           </div>
           <div className="column-2">
-            <div className="password-card">
-              <ChangePasswordCard volunteer={user.volunteer} />
-            </div>
-            <div >
               <ClassPreferencesCardMP volunteer={user.volunteer} />
-            </div>
           </div>
         </div>
         : <></> 

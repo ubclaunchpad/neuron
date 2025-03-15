@@ -1,10 +1,12 @@
 import dayjs from 'dayjs';
-import { COVERAGE_STATUSES, SHIFT_TYPES } from '../data/constants';
+import { COVERAGE_STATUSES, SHIFT_TYPES, ADMIN_SHIFT_TYPES } from '../data/constants';
 import { requestToCoverShift, requestShiftCoverage, cancelCoverShift, cancelCoverRequest, checkInShift } from '../api/shiftService';
 import CheckInIcon from '../assets/images/button-icons/clock-icon.svg';
 import PlusIcon from '../assets/images/button-icons/plus-icon.svg';
 import RequestCoverageIcon from '../assets/request-coverage.png'
-import CancelIcon from "../assets/images/button-icons/x-icon.svg";
+import Notify from '../assets/notif-icon.png'
+import CancelIcon from "../assets/cancel-icon.png";
+import ViewRequestIcon from "../assets/images/button-icons/clipboard.png"
 
 const handleCheckInClick = async (shift, handleShiftUpdate) => {
     try {
@@ -39,7 +41,7 @@ const handleRequestCoverageClick = async (shift, handleShiftUpdate) => {
         const body = {
             shift_id: shift.shift_id,
         }
-        // console.log(`Requesting coverage for shift ${shift.shift_id}`);
+        console.log(`Requesting coverage for shift ${shift.shift_id}`);
         let data = await requestShiftCoverage(body);
         handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_COVERAGE_REQUESTS, coverage_status: COVERAGE_STATUSES.OPEN, request_id: data.insertId });
          
@@ -83,7 +85,7 @@ const handleCancelClick = async (shift, handleShiftUpdate, volunteerID) => {
 }
 
 // Returns the button configuration for the shift based on the shift type
-export const getButtonConfig = (shift, handleShiftUpdate, volunteerID) => {
+export const getButtonConfig = (shift, handleShiftUpdate, volunteerID = null) => {
 
     const shiftDay = dayjs(shift.shift_date).format('YYYY-MM-DD');
     const shiftStart = dayjs(`${shiftDay} ${shift.start_time}`);
@@ -128,9 +130,7 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID) => {
         },
         [SHIFT_TYPES.MY_COVERAGE_REQUESTS]: {
             lineColor: 'var(--yellow)',
-            label: shift.coverage_status === COVERAGE_STATUSES.OPEN
-                ? 'Requested Coverage'
-                : 'Shift Filled',
+            label: 'Request Pending',
             icon: null,
             disabled: true,
             onClick: () => {}, // No action for this state
@@ -149,12 +149,42 @@ export const getButtonConfig = (shift, handleShiftUpdate, volunteerID) => {
             onClick: () => handleRequestCoverageClick(shift, handleShiftUpdate),
         },
         CANCEL: {
-            label: 'Cancel',
+            label: 'Cancel Class',
             icon: CancelIcon,
-            iconColourClass: 'icon-white',
+            // iconColourClass: 'icon-white',
             disabled: false,
             buttonClass: 'cancel-action',
             onClick: () => handleCancelClick(shift, handleShiftUpdate, volunteerID),
-        }
+        },
+        [ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE]: {
+            lineColor: "var(--red)",
+            label: "Notify Volunteers",
+            icon: Notify,
+            iconColourClass: 'icon-white',
+            disabled: false,
+            buttonClass: "primary-action",
+            onClick: () => {},
+          },
+          [ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE]: {
+            lineColor: "var(--yellow)",
+            label: "View Request",
+            icon: ViewRequestIcon,
+            iconColourClass: 'icon-white',
+            disabled: false,
+            buttonClass: "primary-action",
+            onClick: () => {},
+          },
+          [ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL]: {
+            lineColor: "var(--primary-blue)",
+            label: "View Request",
+            icon: ViewRequestIcon,
+            iconColourClass: 'icon-white',
+            disabled: false,
+            buttonClass: "primary-action",
+            onClick: () => {},
+          },
+          [ADMIN_SHIFT_TYPES.ADMIN_COVERED]: {
+            lineColor: "var(--dark-grey)",
+          }
     };
 }

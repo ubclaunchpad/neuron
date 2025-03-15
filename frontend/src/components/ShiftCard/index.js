@@ -1,14 +1,16 @@
 import "./index.css";
-import { SHIFT_TYPES, COVERAGE_STATUSES } from "../../data/constants";
+import { SHIFT_TYPES, COVERAGE_STATUSES, ADMIN_SHIFT_TYPES } from "../../data/constants";
 
 function ShiftCard({ shift, shiftType, onShiftSelect, buttonConfig }) {
+
   const handleShiftSelection = () => {
     onShiftSelect(shift);
   };
 
   const { lineColor, label, icon, disabled, buttonClass, onClick } =
     buttonConfig?.[shiftType] ||
-      buttonConfig?.[SHIFT_TYPES.DEFAULT] || {
+      buttonConfig?.[SHIFT_TYPES.DEFAULT] || 
+      buttonConfig?.[ADMIN_SHIFT_TYPES.ADMIN_COVERED] || {
         lineColor: "var(--grey)",
         label: "View Details",
         icon: null,
@@ -41,26 +43,28 @@ function ShiftCard({ shift, shiftType, onShiftSelect, buttonConfig }) {
           <div className="card-text">
             <h2>{shift.class_name}</h2>
             <p>
-              {shift.instructions.substring(0, 50)}
-              {shift.instructions.length > 40 ? "..." : ""}
+              {shift.instructions ? shift.instructions.substring(0, 50) : ""}
+              {shift.instructions && shift.instructions.length > 40 ? "..." : ""}
             </p>
           </div>
+          {label && (
           <div className="button-container">
             <button
               className={`check-in-button ${buttonClass}`}
               disabled={disabled}
               onClick={() => onClick(shift)}
             >
-              {icon && (
+              {icon && 
                 <img
                   src={icon}
                   alt="Button Icon"
                   className="card-button-icon"
                 />
-              )}
+              }
+
               {label}
             </button>
-          </div>
+          </div> )}
         </div>
       </div>
     </div>

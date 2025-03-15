@@ -1,22 +1,4 @@
-use neuron;
-
--- Paste all 'create' SQL commands here
-DROP TABLE IF EXISTS volunteer_schedule;
-DROP TABLE IF EXISTS availability;
-DROP TABLE IF EXISTS class_preferences;
-DROP TABLE IF EXISTS coverage_request;
-DROP TABLE IF EXISTS absence_request;
-DROP TABLE IF EXISTS shifts;
-DROP TABLE IF EXISTS volunteers;
-DROP TABLE IF EXISTS schedule;
-DROP TABLE IF EXISTS images;
-DROP TABLE IF EXISTS class;
--- DROP TABLE IF EXISTS admins;
-DROP TABLE IF EXISTS instructors;
-DROP TABLE IF EXISTS user_session;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS images;
-
+-- migrate:up
 create table users (
     user_id CHAR(36) PRIMARY KEY,
     f_name VARCHAR(60) NOT NULL,
@@ -51,14 +33,16 @@ create table instructors (
 
 create table class (
 	class_id INT PRIMARY KEY AUTO_INCREMENT,
+    fk_instructor_id CHAR(36) NOT NULL,
     fk_image_id CHAR(36),
     class_name VARCHAR(64) NOT NULL,
-    instructions VARCHAR(3000),
+    instructions VARCHAR(150),
     zoom_link VARCHAR(3000) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     category VARCHAR(64),
     subcategory VARCHAR(64),
+    FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id),
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)
         ON DELETE SET NULL
 );
@@ -105,13 +89,9 @@ create table schedule (
     day INT NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    frequency VARCHAR(15) NOT NULL DEFAULT 'weekly',
     active BOOLEAN NOT NULL DEFAULT TRUE,
-    fk_instructor_id VARCHAR(36),
     FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
         ON DELETE CASCADE
-    FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id)
-        ON DELETE SET NULL,
 );
 
 CREATE TABLE shifts (
@@ -166,3 +146,19 @@ create table images (
     image_id CHAR(36) PRIMARY KEY,
     image MEDIUMBLOB NOT NULL
 );
+
+-- migrate:down
+DROP TABLE IF EXISTS volunteer_schedule;
+DROP TABLE IF EXISTS availability;
+DROP TABLE IF EXISTS class_preferences;
+DROP TABLE IF EXISTS coverage_request;
+DROP TABLE IF EXISTS absence_request;
+DROP TABLE IF EXISTS shifts;
+DROP TABLE IF EXISTS volunteers;
+DROP TABLE IF EXISTS schedule;
+DROP TABLE IF EXISTS images;
+DROP TABLE IF EXISTS class;
+DROP TABLE IF EXISTS instructors;
+DROP TABLE IF EXISTS user_session;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS images;

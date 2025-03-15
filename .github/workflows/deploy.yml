@@ -100,7 +100,7 @@ jobs:
         RDS_PORT=${{ vars.RDS_PORT }}
         RDS_DB=${{ vars.RDS_DB }}
         TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}
-        GMAIL_PASSWORD=${{ secrets.GMAIL_PASSWORD }}
+        GMAIL_PASSWORD='${{ secrets.GMAIL_PASSWORD }}'
         GMAIL_ID=${{ vars.GMAIL_ID }}
         EOF
 

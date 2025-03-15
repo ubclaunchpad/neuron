@@ -33,7 +33,7 @@ services:
       - RDS_DB=${RDS_DB}
       - TOKEN_SECRET=${TOKEN_SECRET}
       - GMAIL_ID=${GMAIL_ID}
-      - GMAIL_PASSWORD='${GMAIL_PASSWORD}'
+      - GMAIL_PASSWORD=${GMAIL_PASSWORD}
       - HOST="${CONTAINER_URL}/api"
       - FRONTEND_HOST=${CONTAINER_URL}
       - NEURON_ENV=production

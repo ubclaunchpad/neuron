@@ -1,5 +1,4 @@
 export const backend = import.meta.env.PUBLIC_BACKEND_URL;
-console.log(import.meta.env.PUBLIC_BACKEND_URL);
 
 export const SHIFT_TYPES = {
     MY_SHIFTS: 'my-shifts',

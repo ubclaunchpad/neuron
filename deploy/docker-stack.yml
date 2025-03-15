@@ -49,7 +49,7 @@ services:
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
       - "--certificatesresolvers.myresolver.acme.email=neuronbc@gmail.com"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      - "--api.insecure=true"
+      - "--api.dashboard=true"
     ports:
       - mode: host  # Port to forward HTTP to HTTPS
         protocol: tcp

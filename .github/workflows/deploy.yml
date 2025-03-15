@@ -104,9 +104,6 @@ jobs:
         GMAIL_ID=${{ vars.GMAIL_ID }}
         EOF
 
-    - name: test contents
-      run: cat ./envfile
-
     - name: Docker Stack Deploy
       uses: cssnr/stack-deploy-action@v1
       with:

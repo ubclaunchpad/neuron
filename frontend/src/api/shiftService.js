@@ -112,11 +112,11 @@ const requestToCoverShift = async (body) => {
 // Cancels a request to cover a shift from another volunteer. An error is thrown if the request is not found or already approved
 const cancelCoverShift = async (body) => {
   try {
-    const response = await api.delete("/shifts/cover-shift", { 
+    const response = await api.delete("/shifts/cover-shift", {
       data: {
         request_id: body.request_id,
         volunteer_id: body.volunteer_id,
-      }
+      },
     });
 
     return response.data;
@@ -130,7 +130,7 @@ const cancelCoverShift = async (body) => {
 const requestShiftCoverage = async (body) => {
   try {
     const response = await api.put(`/shifts/shift-coverage-request`, {
-      shift_id: body.shift_id
+      shift_id: body.shift_id,
     });
 
     return response.data;
@@ -138,7 +138,7 @@ const requestShiftCoverage = async (body) => {
     console.error("Error requesting coverage for shift: ", error);
     throw error;
   }
-}
+};
 
 // Cancels a shift coverage request. An error is thrown if we try to cancel a request that has already been fulfilled or isn't found
 const cancelCoverRequest = async (body) => {
@@ -147,7 +147,7 @@ const cancelCoverRequest = async (body) => {
       data: {
         request_id: body.request_id,
         shift_id: body.shift_id,
-      }
+      },
     });
 
     return response.data;
@@ -155,10 +155,16 @@ const cancelCoverRequest = async (body) => {
     console.error("Error cancelling shift coverage request:", error);
     throw error;
   }
-}
+};
 
 export {
-  cancelCoverRequest, cancelCoverShift, checkInShift, getShift, getShifts,
-  getVolunteerShiftsForMonth, requestShiftCoverage, requestToCoverShift
+  cancelCoverRequest,
+  cancelCoverShift,
+  checkInShift,
+  getShift,
+  getShifts,
+  getVolunteerShiftsForMonth,
+  requestShiftCoverage,
+  requestToCoverShift,
 };
 

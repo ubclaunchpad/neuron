@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import Signup from "./pages/Signup";
 import VolunteerProfile from "./pages/VolunteerProfile";
 import AdminVolunteerProfile from "./pages/AdminVolunterProfile";
+import AdminProfile from "./pages/AdminProfile";
 import VolunteerNotVerified from "./pages/VolunteerNotVerified";
 import VolunteerDeactivated from "./pages/VolunteerDeactivated";
 
@@ -72,10 +73,7 @@ function App() {
 
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
                 <Route path="profile" element={<VolunteerProfile />} />
-                <Route
-                  path="profile/preferences"
-                  element={<ClassPreferences />}
-                />
+                <Route path="profile/preferences" element={<ClassPreferences />} />
               </Route>
 
               <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>
@@ -85,6 +83,12 @@ function App() {
                   element={<CoverageRequests />}
                 />
                 <Route path="volunteer-profile" element={<AdminVolunteerProfile />} />
+                <Route path="profile" element={<AdminProfile />} />
+              </Route>
+
+              <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
+                <Route path="profile" element={<VolunteerProfile />} />
+                <Route path="profile/preferences" element={<ClassPreferences />} />
               </Route>
             </Route>
           </Route>

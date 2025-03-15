@@ -48,13 +48,11 @@
 .profile-content-container {
     position: relative;
     display: flex;
-    /* align-items: flex-start; */
     height: auto;
 }
 
 .profile-content {
     display: flex;
-    /* align-items: flex-start; */
 }
 
 .profile-picture-form {
@@ -107,32 +105,32 @@
     display: none;
 }
 
-.profile-info {
-    margin-left: 16px;
-}
-
-.header {
-    margin-bottom: 10px;
-}
-
-.header h2 {
-    font-size: var(--title-text);
-    font-weight: var(--semi-bold);
-}
-
-.profile-info h2 {
-    margin: 0 0 10px 0;
-    font-size: 20px;
+.profile-details-form {
+    margin-left: 20px;
 }
 
 .profile-table {
     margin-left: 0;
     border-collapse: separate;
-    border-spacing: 5px;
+    border-spacing: 0 10px;
     font-size: 13px;
 }
 
-.profile-table tr td:nth-child(1) {
+.profile-row {
+    box-sizing: border-box;
+    padding-bottom: 10px;
+    height: fit-content;
+}
+
+.profile-title {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: var(--title-text);
+    font-weight: var(--semi-bold);
+    font-family: var(--font-secondary);
+}
+
+.profile-row td:nth-child(1) {
     padding-right: 32px;
 }
 
@@ -146,15 +144,14 @@
 
 .text-input {
     margin: 0;
-    padding: 6px;
+    padding: 8px 10px;
     font-size: 13px;
     border-radius: 4px;
-    font-family: var(--font-secondary)
+    font-family: var(--font-primary);
 }
 
 .text-input:focus {
     outline: none;
-    border: 1px solid #4385ac;
 }
 
 /* remove up and down arrow from phone number input */
@@ -245,17 +242,6 @@ input[type=number] {
     max-height: 20.5vw;
     overflow: scroll;
 }
-  
-.my-profile-title {
-    font-family: "Montserrat";
-    font-size: 20px;
-    font-weight: 600;
-    line-height: 27px;
-    text-align: left;
-    text-underline-position: from-font;
-    text-decoration-skip-ink: none;    
-}
-
 
 .bold {
     font-weight: var(--semi-bold);
@@ -270,12 +256,6 @@ input[type=number] {
     margin-left: 8px;
     color: #808080;
     font-style: italic;
-}
-
-.row-gap {
-    margin-top: 14px;
-    border: red;
-    border-radius: 5px;
 }
 
 .admin-menu {
@@ -329,5 +309,57 @@ input[type=number] {
 .admin-menu-item p {
     margin-left: 0.5vw;
     font-size: 15px;
+}
+
+.volunteer-select {
+    flex: 1;
+    align-self: stretch;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    background-color: #fff;
+}
+
+.volunteer-select-dropdown-icon {
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    align-items: center;
+    color: #666;
+}
+
+.volunteer-select-menu {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    height: fit-content;
+    min-width: fit-content;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: 4px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.volunteer-select-item {
+    border: 1px solid #fff;
+    border-radius: 4px;
+    padding: 8px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.volunteer-select-item:hover {
+    border: 1px solid #4385ac;
+    border-radius: 4px;
+    background-color: #f0faff;
 }
   

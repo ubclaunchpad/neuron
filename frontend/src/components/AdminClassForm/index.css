@@ -1,12 +1,4 @@
 .class-form {
-<<<<<<< HEAD
-    width: stretch;
-    height: fit-content;
-}
-
-.form-block {
-    width: stretch;
-=======
     width: 100%;
     height: fit-content;
 }
@@ -20,7 +12,6 @@
 }
 
 .form-block {
->>>>>>> main
     height: fit-content;
     display: flex;
     flex-direction: column;

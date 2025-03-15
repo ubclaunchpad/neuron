@@ -218,8 +218,6 @@ export default class ShiftModel {
           }
      }
 
-<<<<<<< HEAD
-=======
      // create a new entry in the absence_request table
      async insertAbsenceRequest(shift_id: number): Promise<ResultSetHeader> {
           const query = `
@@ -261,7 +259,6 @@ export default class ShiftModel {
           }
      }
 
->>>>>>> main
      private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number, frequency: Frequency): string[] {
           const result: string[] = [];
 

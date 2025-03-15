@@ -10,7 +10,6 @@ import {
     getShift,
     getShifts,
     getShiftsByVolunteerIdAndMonth,
-    requestAbsence,
     withdrawAbsenceRequest,
     requestCoverShift, 
     withdrawCoverShift, 

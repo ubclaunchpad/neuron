@@ -31,7 +31,13 @@ const LoginForm = () => {
                             notyf.success("Logged in successfully");
                         })
                         .catch((error) => {
-                            notyf.error(error.response.data.error);
+                            if (error.response?.data?.error?.includes("Waiting for an admin to verify")) {
+                                window.location.href = "/auth/not-verified";
+                            } else if (error.response?.data?.error?.includes("Your account has been deactivated")) {
+                                window.location.href = "/auth/deactivated";
+                            } else {
+                                notyf.error(error.response.data.error);
+                            }
                         })
                         .finally(() => 
                             setSubmitting(false)

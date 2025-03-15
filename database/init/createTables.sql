@@ -53,7 +53,7 @@ create table class (
 	class_id INT PRIMARY KEY AUTO_INCREMENT,
     fk_image_id CHAR(36),
     class_name VARCHAR(64) NOT NULL,
-    instructions VARCHAR(150),
+    instructions VARCHAR(3000),
     zoom_link VARCHAR(3000) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
@@ -129,7 +129,7 @@ CREATE TABLE shifts (
 
 CREATE TABLE absence_request (
     request_id INT PRIMARY KEY AUTO_INCREMENT,                     
-    fk_shift_id INT NOT NULL,
+    fk_shift_id INT NOT NULL UNIQUE,
     approved BOOLEAN NOT NULL DEFAULT FALSE,
     category ENUM('emergency', 'health', 'conflict', 'transportation', 'other') NOT NULL,
     details VARCHAR(250) NOT NULL,

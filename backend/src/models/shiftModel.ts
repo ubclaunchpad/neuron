@@ -109,9 +109,10 @@ export default class ShiftModel {
                               ELSE NULL
                          END,
                          'status', CASE 
-                              WHEN ar.request_id IS NOT NULL AND ar.approved IS NOT TRUE THEN 'absence-pending'
+                              WHEN ar.request_id IS NOT NULL AND ar.approved IS NOT TRUE AND ar.covered_by IS NULL THEN 'absence-pending'
+                              WHEN cr.request_id IS NOT NULL AND ar.covered_by IS NULL THEN 'coverage-pending'
                               WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NULL THEN 'open'
-                              WHEN cr.request_id IS NOT NULL THEN 'coverage-pending'
+                              
                               WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NOT NULL THEN 'resolved'
                               ELSE NULL
                          END
@@ -217,6 +218,50 @@ export default class ShiftModel {
           }
      }
 
+<<<<<<< HEAD
+=======
+     // create a new entry in the absence_request table
+     async insertAbsenceRequest(shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               INSERT INTO absence_request (fk_shift_id)
+               VALUES (?)
+          `;
+          const values = [shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
+     // delete corresponding entry in absence_request table
+     async deleteAbsenceRequest(request_id: number, shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               DELETE FROM absence_request WHERE request_id = ? AND fk_shift_id = ? AND covered_by IS NULL
+          `;
+          const values = [request_id, shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          // Check if it was successfully deleted or not
+          if (results.affectedRows === 0) {
+               throw new Error("Shift absence request not found or already fulfilled");
+          }
+
+          return results;
+     }
+
+     private getDaysToAdd(frequency: Frequency) {
+          switch (frequency) {
+               case Frequency.weekly:
+                    return 7;
+               case Frequency.biweekly:
+                    return 14;
+               default:
+                    throw new Error("Invalid frequency.");
+          }
+     }
+
+>>>>>>> main
      private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number, frequency: Frequency): string[] {
           const result: string[] = [];
 

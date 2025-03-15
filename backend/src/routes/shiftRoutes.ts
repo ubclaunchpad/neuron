@@ -58,7 +58,10 @@ export const ShiftRoutes: RouteDefinition = {
             ],
             action: getShiftsByVolunteerIdAndMonth
         },
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
         {
             path: '/check-in/:shift_id',
             method: 'patch',

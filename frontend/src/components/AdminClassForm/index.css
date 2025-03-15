@@ -1,10 +1,26 @@
 .class-form {
+<<<<<<< HEAD
     width: stretch;
     height: fit-content;
 }
 
 .form-block {
     width: stretch;
+=======
+    width: 100%;
+    height: fit-content;
+}
+
+.form-body {
+    font-family: var(--font-primary);
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px
+}
+
+.form-block {
+>>>>>>> main
     height: fit-content;
     display: flex;
     flex-direction: column;
@@ -29,6 +45,7 @@
     font-family: var(--font-secondary);
 }
 
+<<<<<<< HEAD
 .form-body {
     width: stretch;
     font-family: var(--font-primary);
@@ -41,10 +58,17 @@
 .class-form-input {
     font-family: var(--font-primary);
     width: stretch;
+=======
+.class-form-input {
+    font-family: var(--font-primary);
+    flex: 1;
+    align-self: stretch;
+>>>>>>> main
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 14px;
     padding: 12px 16px;
+<<<<<<< HEAD
 }
 
 .class-form-input[type="date"], .class-form-input[type="time"] {
@@ -55,6 +79,16 @@
 
 .invalid-message {
     width: stretch;
+=======
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    height: 42px;
+}
+
+.invalid-message {
+    align-self: stretch;
+>>>>>>> main
     text-align: right;
     color: #FF0000;
     margin-top: 4px;
@@ -68,6 +102,7 @@
 .input-row {
     display: flex;
     gap: 20px;
+<<<<<<< HEAD
     width: stretch;
 }
 
@@ -96,6 +131,19 @@
     }
 }
 
+=======
+    width: 100%;
+    align-items: baseline;
+}
+
+.flex-input {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 16px;
+}
+
+>>>>>>> main
 .class-form-label {
     color: #808080;
     width: fit-content;
@@ -105,6 +153,7 @@
 }
 
 .select {
+<<<<<<< HEAD
     width: stretch;
 }
 
@@ -113,6 +162,20 @@
     padding: 0;
     position: absolute;
     right: 10px;
+=======
+    flex: 1;
+    align-self: stretch;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.select-dropdown-icon {
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    right: 16px;
+>>>>>>> main
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
@@ -126,8 +189,17 @@
     background-color: white;
     border: 1px solid #ccc;
     border-radius: 8px;
+<<<<<<< HEAD
     width: stretch;
     min-width: fit-content;
+=======
+    width: 100%;
+    height: fit-content;
+    min-width: fit-content;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+>>>>>>> main
     padding: 6px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     z-index: 1000;
@@ -148,19 +220,32 @@
 }
 
 .flex-col-input {
+<<<<<<< HEAD
     width: stretch;
+=======
+    width: 100%;
+>>>>>>> main
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
 .description-input {
+<<<<<<< HEAD
     width: stretch;
 }
 
 .class-form-textarea {
     width: stretch;
     height: stretch;
+=======
+    flex: 1;
+    align-self: stretch;
+}
+
+.class-form-textarea {
+    height: 100%;
+>>>>>>> main
     min-height: 18px;
     max-height: 400px;
     resize: vertical;
@@ -176,7 +261,11 @@ textarea:focus {
 }
 
 .image-input {
+<<<<<<< HEAD
     flex: 1;
+=======
+    width: fit-content;
+>>>>>>> main
 }
 
 .image-content {
@@ -210,7 +299,10 @@ textarea:focus {
 }
 
 .class-upload-content {
+<<<<<<< HEAD
     width: stretch;
+=======
+>>>>>>> main
     aspect-ratio: 1 / 1;
     border-radius: 8px;
     border: 2px dashed #D9D9D9;
@@ -245,8 +337,18 @@ textarea:focus {
     display: none;
 }
 
+<<<<<<< HEAD
 .error-wrapper {
     width: stretch;
+=======
+.row-error-wrapper {
+    width: 100%;
+}
+
+.element-error-wrapper {
+    flex: 1;
+    align-self: stretch;
+>>>>>>> main
 }
 
 .schedules-input {
@@ -255,30 +357,47 @@ textarea:focus {
     gap: 20px;
 }
 
+<<<<<<< HEAD
 .days-input {
     width: stretch;
+=======
+.days-input-select {
+    width: 100%;
+>>>>>>> main
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
 .days-row {
+<<<<<<< HEAD
     width: stretch;
+=======
+    width: 100%;
+>>>>>>> main
     display: flex;
     box-shadow: 0px 4px 16px 0px #0F11110D;
 }
 
 .day-input {
+<<<<<<< HEAD
     width: stretch;
+=======
+    flex: 1;
+    align-self: stretch;
+>>>>>>> main
     border: 1px solid #ccc;
     font-size: 14px;
     color: #808080;
     padding: 12px 16px;
     font-family: var(--font-primary);
     background-color: #fff;
+<<<<<<< HEAD
 }
 
 .day-input:hover {
+=======
+>>>>>>> main
     cursor: pointer;
 }
 
@@ -292,6 +411,13 @@ textarea:focus {
     border-bottom-right-radius: 8px;
 }
 
+<<<<<<< HEAD
+=======
+.volunteers-input {
+    align-items: baseline;
+}
+
+>>>>>>> main
 .volunteers-row {
     display: flex;
     flex-wrap: wrap;
@@ -426,4 +552,49 @@ textarea:focus {
 .submit-button:disabled {
     cursor: default;
     background-color: #808080;
+<<<<<<< HEAD
+=======
+}
+
+@media screen and (max-width: 900px) {
+    .input-row {
+        flex-direction: column;
+    }
+}
+
+@media screen and (max-width: 1040px) {
+    .days-input-select {
+        display: none;
+    }
+    .days-input-dropdown {
+        display: flex;
+    }
+}
+
+@media screen and (min-width: 1041px) {
+    .days-input-select {
+        display: flex;
+    }
+    .days-input-dropdown {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .category-input {
+        flex-direction: column;
+        gap: 8px;
+        align-items: start;
+    }
+
+    .flex-input {
+        flex-direction: column;
+        gap: 8px;
+        align-items: start;
+    }
+
+    .volunteer-item {
+        white-space: wrap;
+    }
+>>>>>>> main
 }

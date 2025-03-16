@@ -73,7 +73,7 @@ function CoverageRequestForm({ open, onClose, shift }) {
                     {/* Shift Selection */}
                     <div className="form-group">
                         <div className="form-label">
-                            <span>Which shifts are you requesting coverage for? </span>
+                            <span>Which shifts are you requesting to fulfill coverage for?</span>
                             <i className="required">(Required)</i>
                         </div>
                         <div className="radio-group">
@@ -102,8 +102,7 @@ function CoverageRequestForm({ open, onClose, shift }) {
                                 required
                             />
                             <span className="acknowledgment-text">
-                                I understand that submitting this request does not guarantee approval, <br/>
-                                and I remain responsible for the shift until this request is approved.
+                                I understand that submitting this request does not guarantee approval.
                             </span>
                         </div>
                     </div>

@@ -1,7 +1,7 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { useEffect, useState } from "react";
-import { getVolunteers } from "../../api/adminService";
 import { getAllInstructors } from '../../api/instructorService';
+import { getVolunteers } from "../../api/volunteerService";
 import AddEditInstructorModal from "../../components/AddEditInstructorModal";
 import MemberList from "../../components/MemberList";
 import Modal from "../../components/Modal";

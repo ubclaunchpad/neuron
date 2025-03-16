@@ -16,8 +16,32 @@ const getInstructor = (instructor_id) =>
             console.error(error);
         });
 
-coexport {
-    getAllInstructors,
+const addInstructor = (instructor) => 
+    api
+        .post("instructor", instructor)
+        .then((response) => response.data)
+        .catch((error) => {
+            console.error(error);
+        });
+
+const editInstructor = (instructor_id, instructor) => 
+    api
+        .put(`instructor/${instructor_id}`, instructor)
+        .then((response) => response.data)
+        .catch((error) => {
+            console.error(error);
+        });
+
+const deleteInstructor = (instructor_id) => 
+    api
+        .delete(`instructor/${instructor_id}`)
+        .then((response) => response.data)
+        .catch((error) => {
+            console.error(error);
+        });
+
+export {
+    addInstructor, deleteInstructor, editInstructor, getAllInstructors,
     getInstructor
 };
 

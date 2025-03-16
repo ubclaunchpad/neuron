@@ -9,15 +9,34 @@ import settings_icon from "../../../assets/settings-icon.png";
 import ProfileImg from "../../ImgFallback";
 
 import { CgSelect } from "react-icons/cg";
-import { formatImageUrl } from "../../../api/imageService";
 import { updateVolunteerData, uploadProfilePicture } from "../../../api/volunteerService";
 import { useAuth } from "../../../contexts/authContext";
-import useComponentVisible from "../../../hooks/useComponentVisible";
 import {State, City} from 'country-state-city';
 import Select from 'react-select';
 import notyf from "../../../utils/notyf";
 import Modal from "../../Modal";
 import DeactivateReactivateModal from "../../Deactivate-Reactivate-Modal";
+import { Formik } from "formik";
+import * as Yup from "yup";
+
+const VolunteerSchema = Yup.object().shape({
+    p_name: Yup.string()
+        .max(45, 'Preferred name cannot exceed 45 characters.')
+        .optional(),
+    pronouns: Yup.string()
+        .nullable()
+        .optional(),
+    phone_number: Yup.string()
+        .max(15, 'Phone number cannot exceed 15 digits.')
+        .optional(),
+    city: Yup.string()
+        .optional(),
+    province: Yup.string()
+        .optional(),
+    p_time_ctmt: Yup.number()
+        .min(0, "Preferred time commitment can not be negative.")
+        .optional(),
+});
 
 function VolunteerDetailsCard({ volunteer, type = "" }) {
 
@@ -25,63 +44,56 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
 
     const [isEditing, setIsEditing] = useState(false);
     const [mutableData, setMutableData] = useState({
-        profilePicture: volunteer.profile_picture,
-        preferredName: volunteer.p_name,
+        p_name: volunteer.p_name,
         pronouns: volunteer.pronouns,
-        phoneNumber: volunteer.phone_number,
+        phone_number: volunteer.phone_number,
         city: volunteer.city,
         province: volunteer.province,
-        timeCommitment: volunteer.p_time_ctmt
+        p_time_ctmt: volunteer.p_time_ctmt
     });
     const [prevMutableData, setPrevMutableData] = useState({});
-    const [tempImage, setTempImage] = useState(null);
+    const [tempImage, setTempImage] = useState({
+        src: volunteer.profile_picture
+    });
     const [prevTempImage, setPrevTempImage] = useState(null);
     const provinces = [{value: "None", label: "None"}].concat(State.getStatesOfCountry('CA').map((state) => {
         return {value: state.isoCode, label: state.isoCode};
     }));
-    const [selectedProvince, setSelectedProvince] = useState("BC");
+    const [selectedProvince, setSelectedProvince] = useState(volunteer.province ?? "BC");
     const [cities, setCities] = useState([{value: "None", label: "None"}].concat(City.getCitiesOfState('CA', selectedProvince).map((city) => {
         return {value: city.name, label: city.name};
     })));
     const [showAdminMenu, setShowAdminMenu] = useState(false);
     const [showModal, setShowModal] = useState(false);
-
-    const { ref, isComponentVisible, setIsComponentVisible } = useComponentVisible(false);
-    // const { ref: provinceRef, isComponentVisible: isProvinceVisible, setIsComponentVisible: setisProvinceVisible } = useComponentVisible(false);
-    // const { ref: cityRef, isComponentVisible: isCityVisible, setIsComponentVisible: setisCityVisible } = useComponentVisible(false);
-    const pronouns = ["None", "He/Him", "She/Her", "They/Them"];
+    const pronounOptions = [
+        { value: null, label: "None" },
+        { value: "He/Him", label: "He/Him" },
+        { value: "She/Her", label: "She/Her" },
+        { value: "They/Them", label: "They/Them" },
+    ];
 
     function sendTcNotif() {
-        notyf.error("You may want to update your preferred time commitment.");
+        notyf.error("Please update your preferred time commitment.");
     }
 
     useEffect(() => {
-        if (Number(mutableData.timeCommitment) <= 0 && !isEditing) {
+        if (Number(mutableData.p_time_ctmt) <= 0 && !isEditing) {
             sendTcNotif();
         }
     }, [
-        mutableData.timeCommitment,
+        mutableData.p_time_ctmt,
         isEditing
     ]);
-
-    const handleImageUpload = (event) => {
-        const image = event.target.files[0];
-        const reader = new FileReader();
-        reader.onload = () => {
-            setTempImage(reader.result);
-            setMutableData({
-                ...mutableData,
-                profilePicture: image
-            });
-        };
-        reader.readAsDataURL(image);
-    };
 
     useEffect(() => {
         setCities([{value: "None", label: "None"}].concat(City.getCitiesOfState('CA', selectedProvince).map((city) => {
             return {value: city.name, label: city.name};
         })));
     }, [selectedProvince]);
+
+    useEffect(() => {
+        console.log("USER:", user);
+    }, [user]);
 
 
     function formatDate(created_at) {
@@ -93,8 +105,8 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
         }).format(date);
     }
 
-    function formatPhone(phoneNumber) {
-        return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6)}`;
+    function formatPhone(phone_number) {
+        return `(${phone_number.slice(0, 3)}) ${phone_number.slice(3, 6)}-${phone_number.slice(6)}`;
     }
 
     function handleEdit(e) {
@@ -104,70 +116,46 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
         setPrevTempImage(tempImage);
     }
 
-    async function handleSaveVolunteer() {
-        // only send request if there are changes
-        if (mutableData.preferredName !== prevMutableData.preferredName ||
-            mutableData.pronouns !== prevMutableData.pronouns ||
-            mutableData.phoneNumber !== prevMutableData.phoneNumber ||
-            mutableData.city !== prevMutableData.city ||
-            mutableData.province !== prevMutableData.province ||
-            mutableData.timeCommitment !== prevMutableData.timeCommitment) {
-                
-            // store empty strings as null
-            const volunteerData = {
-                p_name: mutableData.preferredName ?? null,
-                pronouns: mutableData.pronouns ?? null,
-                phone_number: mutableData.phoneNumber ?? null,
-                city: mutableData.city ?? "",
-                province: mutableData.province ?? "",
-                p_time_ctmt: mutableData.timeCommitment
-            }
+    function handleSave(values) {
+        const requests = [];
+        requests.push(handleSaveVolunteer(values));
+        requests.push(handleSavePicture());
+        Promise.all(requests)
+            .then(() => {
+                setIsEditing(false);
+                notyf.success("Successfully updated data. Please refresh the page to see changes.");
+            })
+            .catch((error) => {
+                console.log(error);
+                notyf.error("Failed to update profile.");
+            });
+    }
 
-            const volunteerResult = await updateVolunteerData(volunteerData, volunteer.volunteer_id);
-            console.log("Successfully updated volunteer.", volunteerResult);
-            notyf.success("Successfully updated data. Please refresh the page to see changes.");
-        }
+    async function handleSaveVolunteer(values) {
+        console.log("Updating volunteer...", values);
+        setMutableData(values);
+        await updateVolunteerData(values, volunteer.volunteer_id);
+        updateUser({
+            ...user,
+            volunteer: {
+                ...volunteer,
+                ...values
+            }
+        });
     }
 
     async function handleSavePicture() {
-        // only send request if there are changes
-        if (mutableData.profilePicture !== prevMutableData.profilePicture) {
-            // insert profile picture
+        // insert profile picture
+        if (tempImage && tempImage.blob) {
+            console.log("Updating profile picture...", tempImage);
             const profilePicData = new FormData();
-            profilePicData.append('image', mutableData.profilePicture);
+            profilePicData.append('image', tempImage.blob);
 
             const uploadedImageId = await uploadProfilePicture(volunteer.fk_user_id, profilePicData);
-
-            mutableData.profilePicture = formatImageUrl(uploadedImageId);
-            setTempImage(null);
-
-            if (user.volunteer.volunteer_id === volunteer.volunteer_id) {
-                updateUser({
-                    ...user,
-                    fk_image_id: uploadedImageId
-                });
-            }
-        }
-    }
-
-    async function handleCheck(e) {
-        e.preventDefault();
-
-        if (Number(mutableData.timeCommitment) < 0) {
-            notyf.error("Time commitment cannot be negative");
-            return;
-        }
-
-        setIsEditing(false);
-        mutableData.timeCommitment = Number(mutableData.timeCommitment);
-        // update volunteer
-        try {
-            await handleSaveVolunteer();
-            await handleSavePicture();
-        } catch (error) {
-            console.log(error)
-            setMutableData(prevMutableData);
-            setTempImage(prevTempImage);
+            updateUser({
+                ...user,
+                fk_image_id: uploadedImageId
+            });
         }
     }
 
@@ -178,237 +166,374 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
         setTempImage(prevTempImage);
     }
 
-    function handleInputChange(e) {
-        const { name, value } = e.target;
-        setMutableData({
-            ...mutableData,
-            [name]: value
-        });
-    }
-
-    function handlePronounsClick(option) {
-        setMutableData({
-            ...mutableData,
-            pronouns: option === "None" ? null : option
-        });
-        setIsComponentVisible(false);
-    }
-
-    function handleProvinceClick(option) {
-        setSelectedProvince(option.value);
-        setMutableData({
-            ...mutableData,
-            province: option.value === "None" ? null : option.value
-        });
-    }
-
-    function handleCityClick(option) {
-        setMutableData({
-            ...mutableData,
-            city: option.value === "None" ? null : option.value
-        });
-    }
-
     return (
         <div className="profile-card-container">
-            <div className="profile-card">
-                {type !== "admin" && 
-                    <>
-                        <img className="icon edit-icon" src={edit_icon} alt="Edit" hidden={isEditing} onClick={handleEdit}/>
-                        <div className="edit-options"> 
-                            <img className="icon check-icon" src={check_icon} alt="Check" hidden={!isEditing} onClick={handleCheck}/>          
-                            <img className="icon cancel-icon" src={cancel_icon} alt="Cancel" hidden={!isEditing} onClick={handleCancel}/>
-                        </div>
-                    </>
-                }
-                {type === "admin" && <>
-                    <img className="icon edit-icon" src={settings_icon} alt="Settings"      onClick={() => {
-                        setShowAdminMenu(!showAdminMenu);
-                    }}></img>
-                    <Modal title={volunteer.active === 1 ? "Deactivate account" : "Reactivate account"} isOpen={showModal} onClose={() => {setShowModal(false)}} children={"hello"} width={"500px"} height={"fit-content"}>
-                        <DeactivateReactivateModal id={volunteer.volunteer_id} type={volunteer.active} />
-                    </Modal>
-                </>
-                }
-                {showAdminMenu && 
-                    <div className="admin-menu">
-                        <div className="admin-menu-item" onClick={() => {
-                            setShowModal(true);
-                        }}><div className={volunteer.active === 1 ? "deactivate" : "reactivate"}></div><p>{volunteer.active === 1 ? "Deactivate" : "Reactivate"} account</p></div>
-                        <div className="admin-menu-item"><div className="edit-email"></div><p>Edit volunteer email</p></div>
-                    </div>
-                }
-                <div className="profile-content">
-                    <div 
-                        className="profile-picture-form"
-                        style={{
-                            cursor: isEditing ? 'pointer' : 'default'
-                        }}
-                        onClick={() => {
-                            if (isEditing) 
-                                document.getElementById('fileInput').click()
-                        }}
-                    >
-                        <ProfileImg
-                            className="profile-image"
-                            src={tempImage ?? mutableData.profilePicture}
-                            name={mutableData.preferredName || volunteer.f_name}
-                        ></ProfileImg>
-                        {isEditing && <div className="overlay">
-                            <img src={camera_icon} alt="Edit Profile" className="camera-icon" />
-                            <p className="edit-text">Edit</p>
-                        </div>}
-                        {isEditing && <input
-                            className="file-input"
-                            id="fileInput" 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={handleImageUpload} 
-                        />}
-                        
-                    </div>
-                    <div className="profile-info">
-                        <div className="header">
-                            <h2 className="my-profile-title">{volunteer.f_name} {volunteer.l_name}</h2>
-                        </div>
-                        <table className="profile-table">
-                            <tbody>
-                                <tr className="view volunteer-preferred-name">
-                                    <td>Preferred Name</td>
-                                    <td 
-                                        className="mutable-value" 
-                                        style={mutableData.preferredName ? {} : {
-                                            'color': '#808080',
-                                            'fontStyle': 'italic'
+        <Formik
+            initialValues={mutableData}
+            validationSchema={VolunteerSchema}
+            onSubmit={values => handleSave(values)}
+        >
+            {({
+                values,
+                errors,
+                touched,
+                handleChange,
+                handleBlur,
+                handleSubmit,
+                setFieldValue,
+                resetForm
+            }) => (
+                <form className="form-body">
+                    <div className="profile-card">
+                        {type !== "admin" && 
+                            <>
+                                <img 
+                                    className="icon edit-icon" 
+                                    src={edit_icon} alt="Edit" 
+                                    hidden={isEditing} 
+                                    onClick={handleEdit}
+                                />
+                                <div className="edit-options"> 
+                                    <img 
+                                        className="icon check-icon" 
+                                        src={check_icon} 
+                                        alt="Check" 
+                                        hidden={!isEditing} 
+                                        onClick={handleSubmit}
+                                    />          
+                                    <img 
+                                        className="icon cancel-icon" 
+                                        src={cancel_icon} 
+                                        alt="Cancel" 
+                                        hidden={!isEditing} 
+                                        onClick={(e) => {
+                                            handleCancel(e);
+                                            resetForm({ values: prevMutableData });
                                         }}
-                                        hidden={isEditing}>
-                                            {mutableData.preferredName ?? "not yet set"}
-                                    </td>
-                                    <td hidden={!isEditing}>
-                                        <input type="text" className="text-input" name="preferredName" value={mutableData.preferredName} onChange={handleInputChange}></input>
-                                    </td>
-                                </tr>
-                                <tr className="row-gap"/>
-                                <tr className="view volunteer-pronouns">
-                                    <td>Pronouns</td>
-                                    <td 
-                                        className="mutable-value" 
-                                        style={mutableData.pronouns ? {} : {
-                                            'color': '#808080',
-                                            'fontStyle': 'italic'
-                                        }}
-                                        hidden={isEditing}>
-                                            {mutableData.pronouns ?? "not yet set"}
-                                    </td>
-                                    {isEditing && (
-                                        <td 
-                                            className="pronouns-editor" 
-                                            ref={ref}
-                                        >
-                                            <button 
-                                                className="pronouns-button"
-                                                style={{
-                                                    'fontFamily': 'var(--font-secondary)',
-                                                    'color': mutableData.pronouns ? '':'#808080',
-                                                    'borderColor': isComponentVisible ? '#4385AC':''
+                                    />
+                                </div>
+                            </>
+                        }
+                        {type === "admin" && <>
+                            <img className="icon edit-icon" src={settings_icon} alt="Settings" onClick={() => {
+                                setShowAdminMenu(!showAdminMenu);
+                            }}></img>
+                            <Modal title={volunteer.active === 1 ? "Deactivate account" : "Reactivate account"} isOpen={showModal} onClose={() => {setShowModal(false)}} children={"hello"} width={"500px"} height={"fit-content"}>
+                                <DeactivateReactivateModal id={volunteer.volunteer_id} type={volunteer.active} />
+                            </Modal>
+                        </>
+                        }
+                        {showAdminMenu && 
+                            <div className="admin-menu">
+                                <div className="admin-menu-item" onClick={() => {
+                                    setShowModal(true);
+                                }}><div className={volunteer.active === 1 ? "deactivate" : "reactivate"}></div><p>{volunteer.active === 1 ? "Deactivate" : "Reactivate"} account</p></div>
+                                <div className="admin-menu-item"><div className="edit-email"></div><p>Edit volunteer email</p></div>
+                            </div>
+                        }
+                        <div className="profile-content">
+                            <div 
+                                className="profile-picture-form"
+                                style={{
+                                    cursor: isEditing ? 'pointer' : 'default'
+                                }}
+                                onClick={() => {
+                                    if (isEditing) 
+                                        document.getElementById('fileInput').click()
+                                }}
+                            >
+                                <ProfileImg
+                                    className="profile-image"
+                                    src={tempImage.src}
+                                    name={mutableData.p_name || volunteer.f_name}
+                                ></ProfileImg>
+                                {isEditing && <div className="overlay">
+                                    <img src={camera_icon} alt="Edit Profile" className="camera-icon" />
+                                    <p className="edit-text">Edit</p>
+                                </div>}
+                                {isEditing && <input
+                                    className="file-input"
+                                    id="fileInput" 
+                                    type="file" 
+                                    accept="image/*" 
+                                    onChange={(event) => {
+                                        const targetImage = event.target.files[0];
+                                        if (targetImage) {
+                                            const reader = new FileReader();
+                                            reader.onload = () => {
+                                                setTempImage({
+                                                    src: reader.result,
+                                                    blob: targetImage
+                                                });
+                                            };
+                                            reader.readAsDataURL(targetImage);
+                                        }
+                                    }}  
+                                />}
+                                
+                            </div>
+                            <div className="profile-details-form">
+                                <div className="header">
+                                    <h2 className="profile-title">{volunteer.f_name} {volunteer.l_name}</h2>
+                                </div>
+                                <table className="profile-table">
+                                    <tbody className="profile-tbody">
+                                        <tr className="profile-row">
+                                            <td>Preferred Name</td>
+                                            <td 
+                                                className="mutable-value" 
+                                                style={mutableData.p_name ? {} : {
+                                                    'color': '#808080',
+                                                    'fontStyle': 'italic'
                                                 }}
-                                                onClick={() => {
-                                                    setIsComponentVisible(!isComponentVisible)
+                                                hidden={isEditing}>
+                                                    {mutableData.p_name ?? "not yet set"}
+                                            </td>
+                                            <td hidden={!isEditing}>
+                                                <input 
+                                                    type="text" 
+                                                    className="text-input" 
+                                                    name="p_name" 
+                                                    value={values.p_name} 
+                                                    onChange={handleChange} 
+                                                    onBlur={handleBlur}
+                                                    errors={errors}
+                                                    touched={touched}
+                                                />
+                                            </td>
+                                        </tr>
+                                        <tr className="profile-row">
+                                            <td>Pronouns</td>
+                                            <td 
+                                                className="mutable-value" 
+                                                style={mutableData.pronouns ? {} : {
+                                                    'color': '#808080',
+                                                    'fontStyle': 'italic'
                                                 }}
-                                            >
-                                                {mutableData.pronouns ? mutableData.pronouns : "None"}
-                                                <CgSelect className="select-icon"/>
-                                            </button>
-                                            {isComponentVisible && (
-                                                <div 
-                                                    className="pronouns-menu"
+                                                hidden={isEditing}>
+                                                    {mutableData.pronouns ?? "not yet set"}
+                                            </td>
+                                            {isEditing && (
+                                                <td 
+                                                    className="pronouns-editor" 
                                                 >
-                                                    {pronouns.map((option, index) => (
-                                                        <div
-                                                            className="pronouns-item"
-                                                            key={index}
-                                                            onClick={() => handlePronounsClick(option)}
-                                                            style={index === 0 ? {'color': '#808080'} : {}}
-                                                        >
-                                                            {option}
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                                    <Select
+                                                        className="volunteer-select"
+                                                        label="Pronouns"
+                                                        defaultValue={values.pronouns ? 
+                                                            { value: values.pronouns, label: values.pronouns } :
+                                                            pronounOptions[0] // none
+                                                        }
+                                                        styles={{
+                                                            control: () => ({
+                                                                padding: '8px 26px 8px 10px',
+                                                                borderRadius: '4px',
+                                                                border: '1px solid #cccccc',
+                                                                cursor: 'pointer'
+                                                            }),
+                                                            valueContainer: (styles) => ({
+                                                                ...styles,
+                                                                padding: '0px'
+                                                            }), 
+                                                            singleValue: (styles) => ({
+                                                                ...styles,
+                                                                color: values.pronouns ? 'default' : '#808080' 
+                                                            })
+                                                        }}
+                                                        options={pronounOptions}
+                                                        isSearchable={false}
+                                                        components={
+                                                            {
+                                                                DropdownIndicator: () => 
+                                                                    <CgSelect className="volunteer-select-dropdown-icon"/>,
+                                                                IndicatorSeparator: () => null,
+                                                                Option: (props) => {
+                                                                    const {innerProps, innerRef} = props;
+                                                                    return (
+                                                                        <div {...innerProps} ref={innerRef} className="volunteer-select-item">
+                                                                            {props.data.label}
+                                                                        </div>
+                                                                    )
+                                                                },
+                                                                Menu: (props) => {
+                                                                    const {innerProps, innerRef} = props;
+                                                                    return (
+                                                                        <div {...innerProps} ref={innerRef}
+                                                                        className="volunteer-select-menu">
+                                                                            {props.children}
+                                                                        </div>
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                        onChange={(e) => {
+                                                            setFieldValue("pronouns", e.value);
+                                                        }}
+                                                    />
+                                                </td>
                                             )}
-                                        </td>)}
-                                </tr>
-                                <tr className="row-gap"/>
-                                <tr className="view volunteer-time-commitment">
-                                    <td>Preferred Time Commitment</td>
-                                    <td 
-                                        className="mutable-value" 
-                                        hidden={isEditing}>
-                                            <span className="bold">{mutableData.timeCommitment}</span> hr{mutableData.timeCommitment === 1 ? '':'s'}/week 
-                                    </td>
-                                    <td hidden={!isEditing}>
-                                        <div className="time-commitment-input">
-                                            <input 
-                                                type="number" 
-                                                min={0} 
-                                                max={40} 
-                                                className="text-input"
-                                                name="timeCommitment" 
-                                                value={mutableData.timeCommitment} 
-                                                onChange={handleInputChange}
-                                            />
-                                            <div className="time-commitment-units">hrs/week</div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr className="row-gap"/>
-                                <tr className="view volunteer-phone">
-                                    <td>Phone</td>
-                                    <td 
-                                        className="mutable-value" 
-                                        style={mutableData.phoneNumber ? {} : {
-                                            'color': '#808080',
-                                            'fontStyle': 'italic'
-                                        }}
-                                        hidden={isEditing}>
-                                            {mutableData.phoneNumber ? formatPhone(mutableData.phoneNumber) : "not yet set"}
-                                    </td>
-                                    <td hidden={!isEditing}>
-                                        <input type="number" className="text-input" name="phoneNumber" value={mutableData.phoneNumber} onChange={handleInputChange}></input>
-                                    </td>
-                                </tr>
-                                <tr className="row-gap"/>
-                                <tr className="view volunteer-email" hidden={isEditing}>
-                                    <td>Email</td>
-                                    <td>{volunteer.email}</td>
-                                </tr>
-                                <tr className="row-gap"/>
-                                <tr className="view volunteer-joined-date" hidden={isEditing}>
-                                    <td>Joined</td>
-                                    <td>{formatDate(volunteer.created_at)}</td>
-                                </tr>
-                                <tr className="view volunteer-location">
-                                    <td hidden={isEditing}>Location</td>
-                                    <td hidden={isEditing}>{volunteer.city && volunteer.province ? `${volunteer.city}, ${volunteer.province}` : 'No Location Set'}</td>
-                                    {isEditing && (
-                                        <>
-                                            <td style={{
-                                                'color': '#808080'
-                                            }}>Province</td>
+                                        </tr>
+                                        <tr className="profile-row">
+                                            <td>Preferred Time Commitment</td>
+                                            <td 
+                                                className="mutable-value" 
+                                                hidden={isEditing}>
+                                                    {mutableData.p_time_ctmt} hr{mutableData.p_time_ctmt === 1 ? '':'s'}/week 
+                                            </td>
+                                            <td hidden={!isEditing}>
+                                                <div className="time-commitment-input">
+                                                    <input 
+                                                        type="number" 
+                                                        min={0} 
+                                                        max={40} 
+                                                        className="text-input"
+                                                        name="p_time_ctmt" 
+                                                        value={values.p_time_ctmt} 
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        errors={errors}
+                                                        touched={touched}
+                                                    />
+                                                    <div className="time-commitment-units">hrs/week</div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr className="profile-row">
+                                            <td>Phone</td>
+                                            <td 
+                                                className="mutable-value" 
+                                                style={mutableData.phone_number ? {} : {
+                                                    'color': '#808080',
+                                                    'fontStyle': 'italic'
+                                                }}
+                                                hidden={isEditing}>
+                                                    {mutableData.phone_number ? formatPhone(mutableData.phone_number) : "not yet set"}
+                                            </td>
+                                            <td hidden={!isEditing}>
+                                                <input 
+                                                    type="number" 
+                                                    className="text-input"
+                                                    name="phone_number" 
+                                                    value={values.phone_number} 
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    errors={errors}
+                                                    touched={touched}
+                                                />
+                                            </td>
+                                        </tr>
+                                        <tr className="profile-row" hidden={isEditing}>
+                                            <td>Email</td>
+                                            <td>{volunteer.email}</td>
+                                        </tr>
+                                        <tr className="profile-row" hidden={isEditing}>
+                                            <td>Joined</td>
+                                            <td>{formatDate(volunteer.created_at)}</td>
+                                        </tr>
+                                        <tr className="profile-row">
+                                            <td hidden={isEditing}>Location</td>
+                                            <td hidden={isEditing}>{mutableData.city && mutableData.province ? `${mutableData.city}, ${mutableData.province}` : 'No Location Set'}</td>
+                                            {isEditing && (
+                                                <>
+                                                    <td style={{
+                                                        'color': '#808080'
+                                                    }}>Province</td>
+                                                    <Select
+                                                        className="volunteer-select"
+                                                        label="Province"
+                                                        defaultValue={values.province ? 
+                                                                {value: values.province, label: values.province} : 
+                                                                {value: null, label: 'Select Province'}
+                                                            }
+                                                        styles={{
+                                                            control: () => ({
+                                                                padding: '8px 10px',
+                                                                borderRadius: '4px',
+                                                                border: '1px solid #cccccc',
+                                                                cursor: 'pointer'
+                                                            }),
+                                                            valueContainer: (styles) => ({
+                                                                ...styles,
+                                                                padding: '0px'
+                                                            }),
+                                                            input: (styles) => ({
+                                                                ...styles,
+                                                                margin: '0px 2px',
+                                                                padding: '0px',
+                                                            }),
+                                                        }}
+                                                        options={provinces}
+                                                        isSearchable={true}
+                                                        components={
+                                                            {
+                                                                DropdownIndicator: () => 
+                                                                    <CgSelect className="volunteer-select-dropdown-icon"/>,
+                                                                IndicatorSeparator: () => null,
+                                                                Option: (props) => {
+                                                                    const {innerProps, innerRef} = props;
+                                                                    return (
+                                                                        <div {...innerProps} ref={innerRef} className="volunteer-select-item">
+                                                                            {props.data.value}
+                                                                        </div>
+                                                                    )
+                                                                },
+                                                                Menu: (props) => {
+                                                                    const {innerProps, innerRef} = props;
+                                                                    return (
+                                                                        <div {...innerProps} ref={innerRef}
+                                                                        className="volunteer-select-menu">
+                                                                            {props.children}
+                                                                        </div>
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                        onChange={(e) => {
+                                                            setSelectedProvince(e.value);
+                                                            setFieldValue("province", e.value);
+                                                        }}
+                                                    />
+                                                </>
+                                            )}
+                                        </tr>
+                                        <tr className="row-gap" hidden={isEditing}/>
+                                        <tr hidden={!isEditing} className="profile-row">
+                                            <td>City</td>
                                             <Select
-                                                className="basic-single"
-                                                classNamePrefix="select"
-                                                defaultValue={mutableData.province ? {value: mutableData.province, label: mutableData.province} : null}
-                                                options={provinces}
+                                                className="volunteer-select"
+                                                label="City"
+                                                defaultValue={values.city ? 
+                                                        {value: values.city, label: values.city} : 
+                                                        {value: null, label: 'Select City'}
+                                                    }
+                                                styles={{
+                                                    control: () => ({
+                                                        padding: '8px 10px',
+                                                        borderRadius: '4px',
+                                                        border: '1px solid #cccccc',
+                                                        cursor: 'pointer'
+                                                    }),
+                                                    valueContainer: (styles) => ({
+                                                        ...styles,
+                                                        padding: '0px'
+                                                    }),
+                                                    input: (styles) => ({
+                                                        ...styles,
+                                                        margin: '0px 2px',
+                                                        padding: '0px',
+                                                    }),
+                                                }}
+                                                options={cities}
                                                 isSearchable={true}
                                                 components={
                                                     {
                                                         DropdownIndicator: () => 
-                                                            <CgSelect className="select-icon"/>,
+                                                            <CgSelect className="volunteer-select-dropdown-icon"/>,
                                                         IndicatorSeparator: () => null,
                                                         Option: (props) => {
                                                             const {innerProps, innerRef} = props;
                                                             return (
-                                                                <div {...innerProps} ref={innerRef} className="pronouns-item">
+                                                                <div {...innerProps} ref={innerRef} className="volunteer-select-item">
                                                                     {props.data.value}
                                                                 </div>
                                                             )
@@ -417,62 +542,25 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
                                                             const {innerProps, innerRef} = props;
                                                             return (
                                                                 <div {...innerProps} ref={innerRef}
-                                                                className="pronouns-menu">
+                                                                className="volunteer-select-menu">
                                                                     {props.children}
                                                                 </div>
                                                             )
                                                         }
                                                     }
                                                 }
-                                                onChange={(option) => {
-                                                    handleProvinceClick(option);
+                                                onChange={(e) => {
+                                                    setFieldValue("city", e.value);
                                                 }}
                                             />
-                                        </>
-                                    )}
-                                </tr>
-                                <tr hidden={!isEditing}>
-                                    <td>City</td>
-                                    <Select
-                                        className="basic-single"
-                                        classNamePrefix="select"
-                                        defaultValue={mutableData.city ? {value: mutableData.city, label: mutableData.city} : null}
-                                        options={cities}
-                                        isSearchable={true}
-                                        components={
-                                            {
-                                                DropdownIndicator: () => 
-                                                    <CgSelect className="select-icon"/>,
-                                                IndicatorSeparator: () => null,
-                                                Option: (props) => {
-                                                    const {innerProps, innerRef} = props;
-                                                    return (
-                                                        <div {...innerProps} ref={innerRef} className="pronouns-item">
-                                                            {props.data.value}
-                                                        </div>
-                                                    )
-                                                },
-                                                Menu: (props) => {
-                                                    const {innerProps, innerRef} = props;
-                                                    return (
-                                                        <div {...innerProps} ref={innerRef}
-                                                        className="pronouns-menu">
-                                                            {props.children}
-                                                        </div>
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        onChange={(option) => {
-                                            handleCityClick(option);
-                                        }}
-                                    />
-                                </tr>
-                            </tbody>
-                        </table>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </form>)}
+            </Formik>
         </div>
       );
 }

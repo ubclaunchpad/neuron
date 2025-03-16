@@ -11,6 +11,7 @@ import { useAuth } from "../../contexts/authContext";
 import { ADMIN_SHIFT_TYPES, COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
 import { getButtonConfig, setOpenAbsenceRequestHandler, setOpenCoverageRequestHandler } from "../../utils/buttonConfig";
 import AbsenceRequestForm from "../../components/AbsenceRequestForm";
+import CoverageRequestForm from "../../components/CoverageRequestForm";
 import "./index.css";
 import { duration } from "@mui/material";
 

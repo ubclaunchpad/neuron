@@ -150,7 +150,7 @@ export const VolunteerRoutes: RouteDefinition = {
                 },
                 {
                     path: '/verify',
-                    method: 'put',
+                    method: 'patch',
                     middleware: [
                         isAdmin,
                     ],
@@ -158,7 +158,7 @@ export const VolunteerRoutes: RouteDefinition = {
                 },
                 {
                     path: '/deactivate',
-                    method: 'put',
+                    method: 'patch',
                     middleware: [
                         isAdmin,
                     ],

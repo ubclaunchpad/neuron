@@ -1,6 +1,7 @@
 import { RouteDefinition } from "../common/types.js";
 import { AuthRoutes } from './authRoutes.js';
 import { ClassRoutes } from './classRoutes.js';
+import { CoverageRoutes } from "./coverageRoutes.js";
 import { ImageRoutes } from './imageRoutes.js';
 import { InstructorRoutes } from './instructorRoutes.js';
 import { ScheduleRoutes } from './scheduleRoutes.js';
@@ -16,5 +17,6 @@ export const Routes: RouteDefinition[] = [
     ScheduleRoutes,
     ShiftRoutes,
     UserRoutes,
-    VolunteerRoutes
+    VolunteerRoutes,
+    CoverageRoutes
 ]

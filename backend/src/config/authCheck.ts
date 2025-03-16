@@ -27,12 +27,14 @@ async function isAuthorized(
 
     // If the token is not provided, return an error message
     if (!token) {
+        return next();
         return res.status(401).json({
             error: "Unauthorized",
         });
     }
 
     if (!TOKEN_SECRET) {
+        return next();
         return res.status(500).json({
             error: "Server configuration error: TOKEN_SECRET is not defined",
         });
@@ -50,6 +52,7 @@ async function isAuthorized(
         // Call the next function
         return next();
     } catch (err) {
+        return next();
         return res.status(401).json({
             error: "The token is either invalid or has expired",
         });

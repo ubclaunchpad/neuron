@@ -16,13 +16,17 @@ export const CoverageRoutes: RouteDefinition = {
         {
             path: '/approve',
             method: 'patch',
-            middleware: [isAdmin],
+            middleware: [
+                isAdmin
+            ],
             action: approveAbsenceRequest
         },
         {
             path: '/reject',
             method: 'delete',
-            middleware: [isAdmin],
+            middleware: [
+                isAdmin
+            ],
             action: rejectAbsenceRequest
         },
         {
@@ -47,13 +51,17 @@ export const CoverageRoutes: RouteDefinition = {
                 {
                     path: '/approve',
                     method: 'patch',
-                    middleware: [isAdmin],
+                    middleware: [
+                        isAdmin
+                    ],
                     action: approveCoverShift
                 },
                 {
                     path: '/reject',
                     method: 'delete',
-                    middleware: [isAdmin],
+                    middleware: [
+                        isAdmin
+                    ],
                     action: rejectCoverShift
                 },
                 {

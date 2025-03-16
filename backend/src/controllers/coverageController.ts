@@ -40,9 +40,9 @@ async function rejectCoverShift(req: AuthenticatedRequest, res: Response) {
 // volunteer requests absence for their own shift
 async function requestAbsence(req: AuthenticatedRequest, res: Response) {
     const { shift_id } = req.params; 
-    const data = req.body; 
+    const request = req.body; 
 
-    coverageModel.insertAbsenceRequest(Number(shift_id), data);
+    coverageModel.insertAbsenceRequest(Number(shift_id), request);
 
     res.sendStatus(200);
 }

@@ -114,7 +114,7 @@ export const getVolunteers = (params) =>
 
 export const verifyVolunteer = (volunteerId) => 
   api
-      .put(`/admin/volunteer/${volunteerId}/verify`)
+      .patch(`/admin/volunteer/${volunteerId}/verify`)
       .then((response) => response.data)
       .catch((error) => {
           console.error(error);
@@ -122,7 +122,7 @@ export const verifyVolunteer = (volunteerId) =>
 
 export const deactivateVolunteer = (volunteerId) => 
   api
-      .put(`/admin/volunteer/${volunteerId}/deactivate`)
+      .patch(`/admin/volunteer/${volunteerId}/deactivate`)
       .then((response) => response.data)
       .catch((error) => {
           console.error(error);

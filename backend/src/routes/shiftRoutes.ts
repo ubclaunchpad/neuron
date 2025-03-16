@@ -93,11 +93,11 @@ export const ShiftRoutes: RouteDefinition = {
                     action: deleteShift
                 },
                 {
-                    path: '/request-absence',
+                    path: '/absence',
                     method: 'post',
                     validation: [
                         body('details').isString(),
-                        body('comments').isString(),
+                        body('comments').isString().optional(),
                         body('category').isIn(AbsenceRequestCategory.values),
                     ],
                     action: requestAbsence

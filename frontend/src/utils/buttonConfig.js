@@ -1,12 +1,12 @@
 import dayjs from 'dayjs';
-import { COVERAGE_STATUSES, SHIFT_TYPES, ADMIN_SHIFT_TYPES } from '../data/constants';
-import { requestToCoverShift, requestShiftCoverage, cancelCoverShift, cancelCoverRequest, checkInShift } from '../api/shiftService';
+import { checkInShift } from '../api/shiftService';
+import CancelIcon from "../assets/cancel-icon.png";
+import ViewRequestIcon from "../assets/images/button-icons/clipboard.png";
 import CheckInIcon from '../assets/images/button-icons/clock-icon.svg';
 import PlusIcon from '../assets/images/button-icons/plus-icon.svg';
-import RequestCoverageIcon from '../assets/request-coverage.png'
-import Notify from '../assets/notif-icon.png'
-import CancelIcon from "../assets/cancel-icon.png";
-import ViewRequestIcon from "../assets/images/button-icons/clipboard.png"
+import Notify from '../assets/notif-icon.png';
+import RequestCoverageIcon from '../assets/request-coverage.png';
+import { ADMIN_SHIFT_TYPES, COVERAGE_STATUSES, SHIFT_TYPES } from '../data/constants';
 
 const handleCheckInClick = async (shift, handleShiftUpdate) => {
     try {
@@ -27,8 +27,7 @@ const handleCoverShiftClick = async (shift, handleShiftUpdate, volunteerID) => {
             request_id: shift.request_id,
             volunteer_id: volunteerID,
         };
-        // console.log(`Requesting to cover shift ${shift.shift_id}`);
-        await requestToCoverShift(body);
+        // await requestToCoverShift(body); TODO - use api in coverageService.js
         handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.PENDING });
 
     } catch (error) {
@@ -42,7 +41,7 @@ const handleRequestCoverageClick = async (shift, handleShiftUpdate) => {
             shift_id: shift.shift_id,
         }
         console.log(`Requesting coverage for shift ${shift.shift_id}`);
-        let data = await requestShiftCoverage(body);
+        //let data = await requestShiftCoverage(body); TODO - use api in coverageService.js
         handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_COVERAGE_REQUESTS, coverage_status: COVERAGE_STATUSES.OPEN, request_id: data.insertId });
          
     } catch (error) {
@@ -60,7 +59,7 @@ const handleCancelClick = async (shift, handleShiftUpdate, volunteerID) => {
                 request_id: shift.request_id,
                 volunteer_id: volunteerID
             };
-            await cancelCoverShift(body);
+            //await cancelCoverShift(body); TODO - use api in coverageService.js
             handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.OPEN });
 
         } catch (error) {
@@ -75,7 +74,7 @@ const handleCancelClick = async (shift, handleShiftUpdate, volunteerID) => {
                 request_id: shift.request_id,
                 shift_id: shift.shift_id,
             };
-            await cancelCoverRequest(body);
+            // await cancelCoverRequest(body); TODO - use api in coverageService.js
             handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_SHIFTS, coverage_status: null, request_id: null });
 
         } catch (error) {

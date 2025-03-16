@@ -14,5 +14,10 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    height: 85vh;
+}
+
+@media screen and (max-width: 1200px) {
+    .content {
+        flex-direction: column;
+    }
 }

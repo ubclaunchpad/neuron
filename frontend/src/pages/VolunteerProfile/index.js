@@ -26,7 +26,7 @@ function VolunteerProfile() {
         { user?.volunteer && user.volunteer.volunteer_id ?
         <div className="content">
           <div className="column-1">
-            <div className="volunteer-card">
+            <div className="volunteer-details-card">
               <VolunteerDetailsCard volunteer={{
                   ...user.volunteer,
                   profile_picture: formatImageUrl(user?.fk_image_id)
@@ -41,12 +41,7 @@ function VolunteerProfile() {
             </div>
           </div>
           <div className="column-2">
-            <div className="password-card">
-              <ChangePasswordCard volunteer={user.volunteer} />
-            </div>
-            <div >
               <ClassPreferencesCardMP volunteer={user.volunteer} />
-            </div>
           </div>
         </div>
         : <></> 

@@ -188,6 +188,7 @@ function Classes() {
         setUpdates={setUpdates}
         setClassId={setSelectedClassId}
         navigate={navigate}
+        type="classes"
       > 
         <div className="classes-page">
           {/* ----- */}

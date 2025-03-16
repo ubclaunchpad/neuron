@@ -526,7 +526,7 @@ export default class ScheduleModel {
             startTimeCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.start_time}' `;
             endTimeCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.end_time}' `;
             frequencyCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.frequency}' `;
-            instructorCase += `WHEN schedule_id = ${schedule.schedule_id} THEN '${schedule.fk_instructor_id}' `;
+            instructorCase += `WHEN schedule_id = ${schedule.schedule_id} THEN ${schedule.fk_instructor_id ? '\'' + schedule.fk_instructor_id + '\'' : null} `;
         });
 
         const query = `

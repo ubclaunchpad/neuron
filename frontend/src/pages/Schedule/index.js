@@ -231,14 +231,11 @@ function Schedule() {
             return shift.shift_type === filter;
         });
         setShifts(filteredShifts);
-    }, [selectedDate, filter, user, currentDate]);
+    }, [selectedDate, filter, user]);
 
     // Fetch shifts for the selected date and filter
     useEffect(() => {
-        const fetchData = async () => {
-            await fetchShifts();
-        };
-        fetchData();
+        fetchShifts();
     }, [fetchShifts]);
 
     // map of shifts grouped by date { date: [shift1, shift2, ...] }

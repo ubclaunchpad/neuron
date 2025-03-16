@@ -36,7 +36,7 @@ const AdminVolunteerProfile = () => {
           {volunteer ?
             <div className="content">
                 <div className="column-1">
-                    <div className="volunteer-card">
+                    <div className="volunteer-details-card">
                         <VolunteerDetailsCard volunteer={{
                             ...volunteer,
                             profile_picture: formatImageUrl(volunteer.fk_image_id)

@@ -127,15 +127,18 @@ const cancelCoverShift = async (body) => {
 };
 
 // Creates a request for shift coverage
-const requestShiftCoverage = async (body) => {
+const requestShiftCoverage = async ({ shift_id, category, details, comments }) => {
   try {
-    const response = await api.put(`/shifts/shift-coverage-request`, {
-      shift_id: body.shift_id,
+    const response = await api.post("/shifts/shift-coverage-request", {
+      shift_id: shift_id,
+      category: category,
+      details: details,
+      comments: comments || "",
     });
 
     return response.data;
   } catch (error) {
-    console.error("Error requesting coverage for shift: ", error);
+    console.error("Error submitting coverage request:", error.response?.data || error);
     throw error;
   }
 };

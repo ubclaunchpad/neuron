@@ -4,7 +4,7 @@ import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import { AuthenticatedRequest } from '../common/types.js';
 import { shiftModel, volunteerModel } from '../config/models.js';
 
-async function getShift(req: AuthenticatedRequest, res: Response){
+async function getShift(req: AuthenticatedRequest, res: Response) {
     const { shift_id } = req.body;
 
     const shift_info = await shiftModel.getShiftInfo(shift_id);
@@ -30,7 +30,7 @@ async function getShifts(req: AuthenticatedRequest, res: Response) {
 
     const shifts = await shiftModel.getShifts({
         volunteer_id: volunteer_id,
-        before: before ? new Date(before) : undefined, 
+        before: before ? new Date(before) : undefined,
         after: after ? new Date(after) : undefined,
         type: type as ShiftQueryType,
         status: status as ShiftStatus
@@ -93,7 +93,47 @@ async function checkInShift(req: AuthenticatedRequest, res: Response) {
 
   const request = await shiftModel.updateShiftCheckIn(shift_id);
 
-  res.status(200).json(request);
+    res.status(200).json(request);
+}
+
+// volunteer requesting to cover someone else’s open shift
+async function requestCoverShift(req: AuthenticatedRequest, res: Response) {
+    const { request_id, volunteer_id } = req.body;
+
+    const request = await shiftModel.insertCoverageRequest(request_id, volunteer_id);
+
+    res.status(200).json(request);
+}
+
+// volunteer cancels on covering a shift
+async function withdrawCoverShift(req: AuthenticatedRequest, res: Response) {
+    const { request_id, volunteer_id } = req.body;
+
+    const request = await shiftModel.deleteCoverageRequest(request_id, volunteer_id);
+
+    res.status(200).json(request);
+}
+
+// volunteer requests absence for their own shift
+async function requestAbsence(req: AuthenticatedRequest, res: Response) {
+    const { shift_id, category, details, comments } = req.body;
+
+    if (!shift_id || !category || !details) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const request = await shiftModel.insertAbsenceRequest(shift_id, category, details, comments);
+
+    res.status(200).json(request);
+}
+
+// volunteers cancels their request for shift absence
+async function withdrawAbsenceRequest(req: AuthenticatedRequest, res: Response) {
+    const { request_id, shift_id } = req.body;
+
+    const request = await shiftModel.deleteAbsenceRequest(request_id, shift_id);
+
+    res.status(200).json(request);
 }
 
 export {

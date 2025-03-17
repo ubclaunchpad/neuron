@@ -71,8 +71,8 @@ export default class ShiftModel {
       * // Get shifts which volunteer '123' for is requesting absence for
       * getShifts({ volunteer_id: '123', type: 'absence' });
       */
-     async getShifts(params: { 
-          volunteer_id?: string, 
+     async getShifts(params: {
+          volunteer_id?: string,
           type?: ShiftQueryType,
           status?: ShiftStatus | ShiftStatus[],
           before?: Date,
@@ -172,16 +172,16 @@ export default class ShiftModel {
                if (params.type === 'coverage') {
                     // For coverage: exclude shifts assigned to the volunteer
                     query.where('volunteer_id', '<>', params.volunteer_id);
-               } 
+               }
                else if (params.type == 'absence') {
                     // For absence: include shifts assigned to the volunteer
                     query.where('volunteer_id', params.volunteer_id);
-               } 
+               }
                else {
                     // For non-coverage and non-absence: include shifts assigned to the volunteer OR where they're covering.
                     query.where(q => {
                          q.where('volunteer_id', params.volunteer_id!)
-                         .orWhere(queryBuilder.raw("JSON_EXTRACT(absence_request, '$.covering_volunteer_id')"), '=', params.volunteer_id!);
+                              .orWhere(queryBuilder.raw("JSON_EXTRACT(absence_request, '$.covering_volunteer_id')"), '=', params.volunteer_id!);
                     });
                }
           }
@@ -231,8 +231,70 @@ export default class ShiftModel {
       values
     );
 
-    return results;
-  }
+          return results;
+     }
+
+     // create a new entry in the coverage_request table
+     async insertCoverageRequest(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
+          const query = `
+               INSERT INTO coverage_request (request_id, volunteer_id)
+               VALUES (?, ?)
+               ON DUPLICATE KEY UPDATE volunteer_id = VALUES(volunteer_id)
+          `;
+          const values = [request_id, volunteer_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
+     // delete corresponding entry in coverage_request table
+     async deleteCoverageRequest(request_id: number, volunteer_id: number): Promise<ResultSetHeader> {
+          const query = `
+               DELETE FROM coverage_request WHERE request_id = ? AND volunteer_id = ?
+          `;
+          const values = [request_id, volunteer_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          // Check if it was successfully deleted or not
+          if (results.affectedRows === 0) {
+               throw new Error("Cover shift request not found or already approved");
+          }
+
+          return results;
+     }
+
+     // create a new entry in the absence_request table
+     async insertAbsenceRequest(shift_id: number, category: string, details: string, comments?: string): Promise<ResultSetHeader> {
+          const query = `
+               INSERT INTO absence_request (fk_shift_id, category, details, comments)
+               VALUES (?, ?, ?, ?)
+               ON DUPLICATE KEY UPDATE category = VALUES(category), details = VALUES(details), comments = VALUES(comments)
+          `;
+          const values = [shift_id, category, details, comments || null];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          return results;
+     }
+
+     // delete corresponding entry in absence_request table
+     async deleteAbsenceRequest(request_id: number, shift_id: number): Promise<ResultSetHeader> {
+          const query = `
+               DELETE FROM absence_request WHERE request_id = ? AND fk_shift_id = ? AND covered_by IS NULL
+          `;
+          const values = [request_id, shift_id];
+
+          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+
+          // Check if it was successfully deleted or not
+          if (results.affectedRows === 0) {
+               throw new Error("Shift absence request not found or already fulfilled");
+          }
+
+          return results;
+     }
 
      private getDaysToAdd(frequency: Frequency) {
           switch (frequency) {

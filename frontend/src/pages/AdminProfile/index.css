@@ -15,9 +15,14 @@
 }
 
 .admin-title {
-    font-size: 24px;
-    font-weight: bold;
-}
+    flex: 1;
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-family: var(--font-secondary);
+    font-style: normal;
+    font-weight: 700;
+    font-size: var(--page-title-text);
+  }
 
 .logout-button {
     height: fit-content;

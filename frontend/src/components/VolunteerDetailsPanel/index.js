@@ -4,8 +4,70 @@ import zoom_icon from "../../assets/zoom.png";
 import { COVERAGE_STATUSES } from "../../data/constants";
 import ProfileImg from "../ImgFallback";
 import "./index.css";
+import checked_in from "../../assets/checked-in.png";
+import not_checked_in from "../../assets/not-checked-in.png";
+import { checkInShift } from "../../api/shiftService";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
 function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelInfo, myClass, classTaken }) {
+    const [volunteersInShift, setVolunteersInShift] = useState([]);
+    const navigate = useNavigate();
+    
+    useEffect(()=> {
+        if (shiftDetails)
+            setVolunteersInShift(shiftDetails.volunteers);
+    }, [shiftDetails]);
+
+    const renderCheckedInButton = (volunteer) => {
+        for (const vol of volunteersInShift) {
+            if (vol.volunteer_id === volunteer.volunteer_id) {
+                if (vol.checked_in === 0) {
+                    return (<div className="checked-in-status-btn">
+                        <img src={not_checked_in}/>
+                        {renderCheckedInPopUp(vol.shift_id, false)}
+                    </div>);
+                } else {
+                    return (<div className="checked-in-status-btn">
+                        <img src={checked_in}/>
+                        <>{renderCheckedInPopUp(vol.shift_id, true)}</>
+                    </div>);
+                }
+            }
+        }
+        return null;
+    }
+
+    const renderCheckedInPopUp = (shift_id, checked_in) => {
+        if (!checked_in) {
+            return (
+            <div className="checked-in-popup">
+                <div className="arrow"></div>
+                <div className="checked-in-popup-content">
+                    <div>
+                        <div>Not checked in</div> 
+                        <button onClick={
+                            () => {
+                                checkInShift(shift_id);
+                                navigate(0);
+                            }
+                        }>Mark as checked in</button>
+                    </div>
+                </div>
+            </div>);
+        } else {
+            return (
+                <div className="checked-in-popup">
+                    <div className="arrow"></div>
+                    <div className="checked-in-popup-content">
+                        <div>
+                            <div>Checked in!</div> 
+                        </div>
+                    </div>
+                </div>);
+        }
+    };
+
     const renderVolunteers = () => {
         const volunteers = panelInfo?.schedules.flatMap(
             (schedule) => {
@@ -56,6 +118,8 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
                         className="volunteer-profile"
                     />
                     <div>{name}</div>
+                    <>{renderCheckedInButton(volunteer)}</>
+                    
                 </div>
             );
             })}

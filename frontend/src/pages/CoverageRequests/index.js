@@ -267,7 +267,7 @@ function CoverageRequests() {
         shiftDetails={selectedShiftDetails}
         dynamicShiftButtons={selectedShiftButtons}
       >
-        <div className="schedule-page">
+        <div className="coverage-schedule-page">
           {viewMode === "list" ? (
             <>
               <div className="coverage-tabs">
@@ -296,13 +296,16 @@ function CoverageRequests() {
                 </div>
               </div>
               <hr />
-              <div ref={scheduleContainerRef} className="schedule-container">
+              <div
+                ref={scheduleContainerRef}
+                className="coverage-schedule-container"
+              >
                 {tab === 1 ? (
                   Object.keys(groupedAbsenceShifts).length > 0 ? (
                     Object.keys(groupedAbsenceShifts).map((date) => (
                       <div
                         key={date}
-                        className="shifts-container"
+                        className="coverage-shifts-container"
                         ref={(el) =>
                           (shiftRefs.current[dayjs(date).format("YYYY-MM-DD")] =
                             el)
@@ -310,10 +313,10 @@ function CoverageRequests() {
                       >
                         {/* Date Header */}
                         <h2
-                          className={`date-header ${
+                          className={`coverage-date-header ${
                             dayjs(date).isSame(selectedDate, "day")
-                              ? "selected-date"
-                              : "non-selected-date"
+                              ? "coverage-selected-date"
+                              : "coverage-non-selected-date"
                           }`}
                         >
                           {dayjs(date).format("ddd, D")}
@@ -321,7 +324,7 @@ function CoverageRequests() {
                         </h2>
 
                         {/* Shift List for this date */}
-                        <div className="shift-list">
+                        <div className="coverage-shift-list">
                           {groupedAbsenceShifts[date].map((shift) => (
                             <AbsenceRequestCard
                               key={shift.fk_schedule_id}
@@ -343,7 +346,7 @@ function CoverageRequests() {
                   Object.keys(groupedCoverageShifts).map((date) => (
                     <div
                       key={date}
-                      className="shifts-container"
+                      className="coverage-shifts-container"
                       ref={(el) =>
                         (shiftRefs.current[dayjs(date).format("YYYY-MM-DD")] =
                           el)
@@ -351,10 +354,10 @@ function CoverageRequests() {
                     >
                       {/* Date Header */}
                       <h2
-                        className={`date-header ${
+                        className={`coverage-date-header ${
                           dayjs(date).isSame(selectedDate, "day")
-                            ? "selected-date"
-                            : "non-selected-date"
+                            ? "coverage-selected-date"
+                            : "coverage-non-selected-date"
                         }`}
                       >
                         {dayjs(date).format("ddd, D")}
@@ -362,7 +365,7 @@ function CoverageRequests() {
                       </h2>
 
                       {/* Shift List for this date */}
-                      <div className="shift-list">
+                      <div className="coverage-shift-list">
                         {groupedCoverageShifts[date].map((shift) => (
                           <CoverageRequestCard
                             key={shift.fk_schedule_id}

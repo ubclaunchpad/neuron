@@ -1,15 +1,9 @@
 import dayjs from "dayjs";
 import React, { useEffect, useState } from "react";
 import { getClassById } from "../../api/classesPageService";
-import { formatImageUrl } from "../../api/imageService";
-import email from "../../assets/email.png";
 import button_icon_next from "../../assets/images/button-icons/button-icon-next.png";
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import button_icon_close from "../../assets/images/button-icons/x-icon.svg";
-import zoom_icon from "../../assets/zoom.png";
-import { useAuth } from "../../contexts/authContext";
-import { COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
-import ProfileImg from "../ImgFallback";
 import "./index.css";
 
 function CoverageDetailsPanel({
@@ -71,53 +65,6 @@ function CoverageDetailsPanel({
       </div>
     ));
   };
-
-  // const renderVolunteers = () => {
-  //   const volunteers = panelInfo?.schedules.flatMap(
-  //     (schedule) => schedule.volunteers || []
-  //   );
-
-  //   // same volunteer may be assigned to multiple schedules within a class
-  //   const uniqueIds = [],
-  //     uniqueVolunteers = [];
-  //   volunteers?.forEach((volunteer) => {
-  //     if (!uniqueIds.includes(volunteer.volunteer_id)) {
-  //       uniqueIds.push(volunteer.volunteer_id);
-  //       uniqueVolunteers.push(volunteer);
-  //     }
-  //   });
-
-  //   if (!uniqueVolunteers || uniqueVolunteers.length === 0) {
-  //     return <>No volunteer for this class</>;
-  //   }
-
-  //   return (
-  //     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-  //       {uniqueVolunteers.map((volunteer, idx) => {
-  //         const name =
-  //           volunteer.p_name ?? `${volunteer.f_name} ${volunteer.l_name}`;
-
-  //         return (
-  //           <div
-  //             key={idx}
-  //             style={{
-  //               display: "flex",
-  //               flexDirection: "row",
-  //               alignItems: "center",
-  //             }}
-  //           >
-  //             <ProfileImg
-  //               src={formatImageUrl(volunteer?.fk_image_id)}
-  //               name={name}
-  //               className="volunteer-profile"
-  //             ></ProfileImg>
-  //             <div>{name}</div>
-  //           </div>
-  //         );
-  //       })}
-  //     </div>
-  //   );
-  // };
 
   const handleToPrev = () => {
     if (!classList || !classId) return;

@@ -63,7 +63,6 @@ function CoverageRequests() {
 
     // Filter shifts based on selected filter type
     setShifts(uniqueShifts);
-    console.log(uniqueShifts);
   }, [selectedDate, showModal]);
 
   const fetchCoverageShifts = useCallback(async () => {
@@ -88,7 +87,6 @@ function CoverageRequests() {
 
     // Filter shifts based on selected filter type
     setCoverageShifts(uniqueShifts);
-    console.log(uniqueShifts);
   }, [selectedDate, showModal]);
 
   // Fetch shifts for the selected date
@@ -158,10 +156,8 @@ function CoverageRequests() {
 
   // Update details panel when a shift is selected
   const handleShiftSelection = (classData) => {
-    console.log("Selected shift: ", classData);
     setSelectedClassId(classData.class_id);
     setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
-    console.log(selectedShiftButtons);
     setShiftDetails(classData);
   };
 
@@ -182,7 +178,6 @@ function CoverageRequests() {
 
   const handleAbsenceApprove = (shift) => {
     setApprove(false);
-    console.log("absence approve");
     approveAbsenceRequest(shift.absence_request.request_id)
       .then(() => {
         console.log("Absence request approved successfully");

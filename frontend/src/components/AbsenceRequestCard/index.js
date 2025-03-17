@@ -1,5 +1,5 @@
 import "./index.css";
-import { SHIFT_TYPES, COVERAGE_STATUSES } from "../../data/constants";
+import { SHIFT_TYPES } from "../../data/constants";
 import dayjs from "dayjs";
 
 function AbsenceRequestCard({ shift, onShiftSelect, buttonConfig }) {

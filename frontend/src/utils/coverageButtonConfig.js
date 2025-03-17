@@ -1,5 +1,3 @@
-import React, { useState, useEffect } from "react";
-
 import dayjs from "dayjs";
 import CheckMarkIcon from "../assets/images/button-icons/check-mark-icon.svg";
 import CancelIcon from "../assets/images/button-icons/button-cancel-icon.svg";

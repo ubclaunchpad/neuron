@@ -52,8 +52,6 @@ async function getShiftsByVolunteerIdAndMonth(req: AuthenticatedRequest, res: Re
     res.status(200).json(shifts);
 }
 
-
-
 async function addShift(req: AuthenticatedRequest, res: Response) {
     const shift: ShiftDB = req.body;
 
@@ -96,47 +94,7 @@ async function checkInShift(req: AuthenticatedRequest, res: Response) {
     res.status(200).json(request);
 }
 
-// volunteer requesting to cover someone else’s open shift
-async function requestCoverShift(req: AuthenticatedRequest, res: Response) {
-    const { request_id, volunteer_id } = req.body;
-
-    const request = await shiftModel.insertCoverageRequest(request_id, volunteer_id);
-
-    res.status(200).json(request);
-}
-
-// volunteer cancels on covering a shift
-async function withdrawCoverShift(req: AuthenticatedRequest, res: Response) {
-    const { request_id, volunteer_id } = req.body;
-
-    const request = await shiftModel.deleteCoverageRequest(request_id, volunteer_id);
-
-    res.status(200).json(request);
-}
-
-// volunteer requests absence for their own shift
-async function requestAbsence(req: AuthenticatedRequest, res: Response) {
-    const { shift_id, category, details, comments } = req.body;
-
-    if (!shift_id || !category || !details) {
-        return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    const request = await shiftModel.insertAbsenceRequest(shift_id, category, details, comments);
-
-    res.status(200).json(request);
-}
-
-// volunteers cancels their request for shift absence
-async function withdrawAbsenceRequest(req: AuthenticatedRequest, res: Response) {
-    const { request_id, shift_id } = req.body;
-
-    const request = await shiftModel.deleteAbsenceRequest(request_id, shift_id);
-
-    res.status(200).json(request);
-}
-
 export {
-    addShift, checkInShift, deleteShift, getShift, getShifts, getShiftsByVolunteerIdAndMonth, requestAbsence, requestCoverShift, updateShift, withdrawAbsenceRequest, withdrawCoverShift
+    addShift, checkInShift, deleteShift, getShift, getShifts, getShiftsByVolunteerIdAndMonth, updateShift
 };
 

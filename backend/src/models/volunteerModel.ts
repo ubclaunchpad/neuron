@@ -235,8 +235,6 @@ export default class VolunteerModel {
              // Rollback
             await transaction.rollback();
             throw error;
-        } finally {
-            transaction.release(); 
         }
    }
 }

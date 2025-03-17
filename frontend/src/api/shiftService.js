@@ -68,7 +68,7 @@ const getVolunteerShiftsForMonth = async (body) => {
     console.error("Error fetching shift info:", error);
     throw error;
   }
-};
+}
 
 const getAllShiftsByMonth = async (body) => {
     try {
@@ -94,74 +94,7 @@ const checkInShift = async (shift_id) => {
   }
 };
 
-// Creates a request to cover a shift by a volunteer.
-const requestToCoverShift = async (body) => {
-  try {
-    const response = await api.post("/shifts/cover-shift", {
-      request_id: body.request_id,
-      volunteer_id: body.volunteer_id,
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error("Error generating request to cover shift:", error);
-    throw error;
-  }
-};
-
-// Cancels a request to cover a shift from another volunteer. An error is thrown if the request is not found or already approved
-const cancelCoverShift = async (body) => {
-  try {
-    const response = await api.delete("/shifts/cover-shift", {
-      data: {
-        request_id: body.request_id,
-        volunteer_id: body.volunteer_id,
-      }
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error("Error cancelling shift coverage:", error);
-    throw error;
-  }
-};
-
-// Creates a request for shift coverage
-const requestShiftCoverage = async ({ shift_id, category, details, comments }) => {
-  try {
-    const response = await api.post("/shifts/shift-coverage-request", {
-      shift_id: shift_id,
-      category: category,
-      details: details,
-      comments: comments || "",
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error("Error submitting coverage request:", error.response?.data || error);
-    throw error;
-  }
-};
-
-// Cancels a shift coverage request. An error is thrown if we try to cancel a request that has already been fulfilled or isn't found
-const cancelCoverRequest = async (body) => {
-  try {
-    const response = await api.delete("/shifts/shift-coverage-request", {
-      data: {
-        request_id: body.request_id,
-        shift_id: body.shift_id,
-      }
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error("Error cancelling shift coverage request:", error);
-    throw error;
-  }
-}
-
 export {
-  cancelCoverRequest, cancelCoverShift, checkInShift, getShift, getShifts,
-  getVolunteerShiftsForMonth, requestShiftCoverage, requestToCoverShift
+  checkInShift, getShift, getShifts, getVolunteerShiftsForMonth
 };
 

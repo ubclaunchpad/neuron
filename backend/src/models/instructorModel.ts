@@ -49,9 +49,9 @@ export default class InstructorModel {
     return results;
   };
 
-  async editInstructor(instructor: InstructorDB): Promise<ResultSetHeader> {
+  async editInstructor(instructor_id: string, instructor: InstructorDB): Promise<ResultSetHeader> {
     const query = `UPDATE instructors SET f_name = ?, l_name = ?, email = ? WHERE instructor_id = ?`;
-    const { instructor_id, f_name, l_name, email } = instructor;
+    const { f_name, l_name, email } = instructor;
     const values = [f_name, l_name, email, instructor_id];
 
     const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);

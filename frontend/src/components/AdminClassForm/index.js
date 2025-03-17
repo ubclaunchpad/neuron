@@ -1,27 +1,27 @@
+import { FieldArray, Formik, useFormikContext } from "formik";
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { Formik, FieldArray, useFormikContext } from "formik";
-import * as Yup from "yup";
 import { CgSelect } from "react-icons/cg";
-import upload_light from "../../assets/upload-light.png";
-import upload_dark from "../../assets/upload-dark.png";
-import delete_icon from "../../assets/delete-icon.png";
-import add_icon from "../../assets/add-icon.png";
+import { useLocation } from "react-router-dom";
 import Select from 'react-select';
-import { 
-    getClassById, 
+import * as Yup from "yup";
+import {
     addClass,
-    updateClass, 
-    updateSchedules,
-    addSchedules, 
+    addSchedules,
     deleteSchedules,
-    uploadClassImage 
+    getClassById,
+    updateClass,
+    updateSchedules,
+    uploadClassImage
 } from "../../api/classesPageService";
-import notyf from "../../utils/notyf";
-import "./index.css";
 import { formatImageUrl } from "../../api/imageService";
 import { getAllInstructors } from "../../api/instructorService";
-import { getAllVolunteers } from "../../api/volunteerService";
+import { getVolunteers } from "../../api/volunteerService";
+import add_icon from "../../assets/add-icon.png";
+import delete_icon from "../../assets/delete-icon.png";
+import upload_dark from "../../assets/upload-dark.png";
+import upload_light from "../../assets/upload-light.png";
+import notyf from "../../utils/notyf";
+import "./index.css";
 
 const Mode = {
     CREATE: "create",
@@ -223,7 +223,7 @@ function AdminClassForm({ setUpdates }) {
             });
             setInstructors(instructors);
 
-            const volunteerData = await getAllVolunteers();
+            const volunteerData = await getVolunteers();
             const volunteers = volunteerData.map((volunteer) => {
                 return {
                     value: {

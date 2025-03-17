@@ -1,7 +1,7 @@
-import { Response } from "express";
+import { NextFunction, Response } from "express";
+import { VolunteerDB } from "../common/databaseModels.js";
 import { AuthenticatedRequest } from "../common/types.js";
-import { volunteerModel } from "../config/models.js";
-import { userModel } from "../config/models.js";
+import { userModel, volunteerModel } from "../config/models.js";
 
 async function getVolunteerById(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
@@ -18,14 +18,19 @@ async function getVolunteerById(req: AuthenticatedRequest, res: Response) {
     res.status(200).json(volunteers[0]);
 }
 
-async function getVolunteers(req: AuthenticatedRequest, res: Response) {
-    const volunteers = await volunteerModel.getAllVolunteers();
-    const users = await userModel.getAllVolunteerUsers();
+async function getVolunteers(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    let volunteers;
+    if (req.query.unverified) {
+        volunteers = await volunteerModel.getUnverifiedVolunteers();
+    } else {
+        volunteers = await volunteerModel.getAllVolunteers();
+    }
+
+    const volunteer_user_ids = volunteers.flatMap(v => v.fk_user_id ?? []);
+    const users = await userModel.getUsersByIds(volunteer_user_ids);
 
     const finalData = volunteers.map((volunteer) => {
         const user = users.find((user: any) => user.user_id === volunteer.fk_user_id);
-        // remove password from user object
-
         return {
             ...volunteer,
             image: user?.fk_image_id,
@@ -95,9 +100,42 @@ async function updatePreferredClassesById (req: AuthenticatedRequest, res: Respo
     res.status(200).json({msg: "Successfully updated class preferences"});
 }
 
+async function verifyVolunteer(
+    req: AuthenticatedRequest,
+    res: Response
+): Promise<any> {
+    // Get the token from the request parameters
+    const volunteer_id = req.params.volunteer_id;
+
+    // Update the user's active status
+    await volunteerModel.updateVolunteer(volunteer_id, {
+        active: true,
+    } as VolunteerDB);
+    
+    return res.status(200).json({
+        message: "User verified successfully",
+    });
+}
+
+async function deactivateVolunteer(
+    req: AuthenticatedRequest,
+    res: Response
+): Promise<any> {
+    // Get the token from the request parameters
+    const volunteer_id = req.params.volunteer_id;
+
+    // Update the user's active status
+    await volunteerModel.updateVolunteer(volunteer_id, {
+        active: false,
+    } as VolunteerDB);
+
+    return res.status(200).json({
+        message: "User deactivated successfully",
+    });
+}
+
 export {
-    getAllClassPreferences, getPreferredClassesById, getVolunteerById,
-    getVolunteers,
-    shiftCheckIn, updatePreferredClassesById, updateVolunteer
+    deactivateVolunteer, getAllClassPreferences, getPreferredClassesById, getVolunteerById,
+    getVolunteers, shiftCheckIn, updatePreferredClassesById, updateVolunteer, verifyVolunteer
 };
 

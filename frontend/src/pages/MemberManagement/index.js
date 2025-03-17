@@ -1,13 +1,13 @@
-import { getUnverifiedVolunteers } from "../../api/adminService";
-import UnverifiedUsers from "../../components/UnverifiedUsers";
-import { useEffect, useState } from "react";
-import { getVolunteers, getInstructors } from "../../api/adminService";
-import "./index.css";
-import Notifications from "../../components/Notifications";
-import MemberList from "../../components/MemberList";
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import Modal from "../../components/Modal";
+import { useEffect, useState } from "react";
+import { getAllInstructors } from '../../api/instructorService';
+import { getVolunteers } from "../../api/volunteerService";
 import AddEditInstructorModal from "../../components/AddEditInstructorModal";
+import MemberList from "../../components/MemberList";
+import Modal from "../../components/Modal";
+import Notifications from "../../components/Notifications";
+import UnverifiedUsers from "../../components/UnverifiedUsers";
+import "./index.css";
 
 const MemberManagement = () => {
     const [data, setData] = useState([]);
@@ -18,8 +18,8 @@ const MemberManagement = () => {
     const [unverifiedUsers, setUnverifiedUsers] = useState(null);
 
     async function getMemMgtData() {
-        const unverifiedUsers_ = await getUnverifiedVolunteers();
-        setUnverifiedUsers(unverifiedUsers_.volunteers);
+        const unverifiedUsers_ = await getVolunteers({ unverified: true });
+        setUnverifiedUsers(unverifiedUsers_);
     }
 
     useEffect(() => {
@@ -43,7 +43,7 @@ const MemberManagement = () => {
             if (activeTab === "volunteers") {
                 data = await getVolunteers();
             } else if (activeTab === "instructors") {
-                data = await getInstructors();
+                data = await getAllInstructors();
             }
 
             setData(data);

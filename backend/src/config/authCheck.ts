@@ -1,4 +1,3 @@
-import dotenv from "dotenv";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { Role } from "../common/interfaces.js";
@@ -6,13 +5,8 @@ import {
     AuthenticatedRequest,
     DecodedJwtPayload
 } from "../common/types.js";
+import { TOKEN_SECRET } from "./environment.js";
 import { userModel } from "./models.js";
-
-// Load environment variables
-dotenv.config();
-
-// Define environment variables
-const TOKEN_SECRET = process.env.TOKEN_SECRET;
 
 async function isAuthorized(
     req: Request,

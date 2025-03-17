@@ -107,28 +107,38 @@ export default class ShiftModel {
      } = {}): Promise<any[]> {
           // Construct subquery
           let subQuery = queryBuilder
-               .select([
-                    'sh.shift_id',
-                    'sh.shift_date',
-                    'sh.duration',
-                    'sh.fk_volunteer_id AS volunteer_id',
-                    'sh.checked_in',
-                    'sc.day',
-                    'sc.start_time',
-                    'sc.end_time',
-                    'i.l_name AS instructor_l_name',
-                    'i.f_name AS instructor_f_name',
-                    'i.email AS instructor_email',
-                    'c.class_id',
-                    'c.class_name',
-                    'c.instructions',
-                    'c.zoom_link',
-                    'ar.request_id',
-                    queryBuilder.raw(`JSON_OBJECT(
+            .select([
+              "sh.shift_id",
+              "sh.shift_date",
+              "sh.duration",
+              "sh.fk_volunteer_id AS volunteer_id",
+              "sh.checked_in",
+              "sc.day",
+              "sc.start_time",
+              "sc.end_time",
+              "i.l_name AS instructor_l_name",
+              "i.f_name AS instructor_f_name",
+              "i.email AS instructor_email",
+              "c.class_id",
+              "c.class_name",
+              "c.instructions",
+              "c.zoom_link",
+              "ar.request_id",
+              "u.l_name AS volunteer_l_name",
+              "u.f_name AS volunteer_f_name",
+              queryBuilder.raw(`JSON_OBJECT(
                          'request_id', ar.request_id,
                          'category', ar.category,
                          'details', ar.details,
                          'comments', ar.comments,
+                         'request_f_name', CASE
+                              WHEN cr.request_id IS NOT NULL THEN u1.f_name
+                              ELSE NULL
+                         END,
+                         'request_l_name', CASE
+                              WHEN cr.request_id IS NOT NULL THEN u1.l_name
+                              ELSE NULL
+                         END,
                          'covering_volunteer_id', CASE 
                               WHEN ar.covered_by IS NOT NULL THEN ar.covered_by
                               WHEN cr.volunteer_id IS NOT NULL THEN cr.volunteer_id
@@ -142,15 +152,39 @@ export default class ShiftModel {
                               WHEN ar.request_id IS NOT NULL AND ar.covered_by IS NOT NULL THEN 'resolved'
                               ELSE NULL
                          END
-                    ) AS absence_request`)
-               ])
-               .from({ sh: 'shifts' })
-               .join({ sc: 'schedule' }, 'sh.fk_schedule_id', 'sc.schedule_id')
-               .join({ c: 'class' }, 'sc.fk_class_id', 'c.class_id')
-               .leftJoin({ i: 'instructors' }, 'sc.fk_instructor_id', 'i.instructor_id')
-               .leftJoin({ ar: 'absence_request' }, 'sh.shift_id', 'ar.fk_shift_id')
-               .leftJoin({ cr: 'coverage_request' }, 'ar.request_id', 'cr.request_id')
-               .as('sub');
+                    ) AS absence_request`),
+            ])
+            .from({ sh: "shifts" })
+            .join({ sc: "schedule" }, "sh.fk_schedule_id", "sc.schedule_id")
+            .join({ c: "class" }, "sc.fk_class_id", "c.class_id")
+            .leftJoin(
+              { i: "instructors" },
+              "sc.fk_instructor_id",
+              "i.instructor_id"
+            )
+            .leftJoin(
+              { ar: "absence_request" },
+              "sh.shift_id",
+              "ar.fk_shift_id"
+            )
+            .leftJoin(
+              { cr: "coverage_request" },
+              "ar.request_id",
+              "cr.request_id"
+            )
+            .leftJoin(
+              { v: "volunteers" },
+              "sh.fk_volunteer_id",
+              "v.volunteer_id"
+            )
+            .leftJoin({ u: "users" }, "u.user_id", "v.fk_user_id")
+            .leftJoin(
+              { v1: "volunteers" },
+              "cr.volunteer_id",
+              "v1.volunteer_id"
+            )
+            .leftJoin({ u1: "users" }, "v1.fk_user_id", "u1.user_id")
+            .as("sub");
 
           // Build the main query and add filters as before
           const query = queryBuilder.select('*').from(subQuery);

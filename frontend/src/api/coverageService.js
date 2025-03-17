@@ -48,14 +48,14 @@ const withdrawCoverageRequest = async (request_id, volunteer_id) => {
 
 const approveAbsenceRequest = async (request_id) => {
   try {
-    const response = await api.patch(`/absence/${request_id}/approve`);
+    const response = await api.put(`/absence/${request_id}/approve`);
 
     return response.data;
   } catch (error) {
     console.error("Error approving coverage for shift: ", error);
     throw error;
   }
-}
+};
 
 const rejectAbsenceRequest = async (request_id) => {
   try {
@@ -66,18 +66,20 @@ const rejectAbsenceRequest = async (request_id) => {
     console.error("Error rejecting coverage for shift: ", error);
     throw error;
   }
-}
+};
 
 const approveCoverageRequest = async (request_id, volunteer_id) => {
   try {
-    const response = await api.patch(`/absence/${request_id}/coverage/${volunteer_id}/approve`);
+    const response = await api.put(
+      `/absence/${request_id}/coverage/${volunteer_id}/approve`
+    );
 
     return response.data;
   } catch (error) {
     console.error("Error approving coverage for shift: ", error);
     throw error;
   }
-}
+};
 
 const rejectCoverageRequest = async (request_id, volunteer_id) => {
   try {

@@ -2,7 +2,9 @@ import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWeekView } from "react-weekview";
 import { getShifts } from "../../api/shiftService";
+import AbsenceRequestForm from "../../components/AbsenceRequestForm";
 import CalendarView from "../../components/CalendarView";
+import CoverageRequestForm from "../../components/CoverageRequestForm";
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
@@ -10,10 +12,7 @@ import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { useAuth } from "../../contexts/authContext";
 import { ADMIN_SHIFT_TYPES, COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
 import { getButtonConfig, setOpenAbsenceRequestHandler, setOpenCoverageRequestHandler } from "../../utils/buttonConfig";
-import AbsenceRequestForm from "../../components/AbsenceRequestForm";
-import CoverageRequestForm from "../../components/CoverageRequestForm";
 import "./index.css";
-import { duration } from "@mui/material";
 
 function Schedule() {
     const { user, isAdmin } = useAuth();
@@ -294,7 +293,7 @@ function Schedule() {
 
     // Update details panel when a shift is selected
     const handleShiftSelection = (classData) => {
-        console.log("Selected shift: ", classData);
+        // console.log("Selected shift: ", classData);
         setSelectedClassId(classData.class_id);
         setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
         console.log(selectedShiftButtons);
@@ -338,7 +337,7 @@ function Schedule() {
                 />
             </div>
             <hr />
-            <DetailsPanel classId={selectedClassId} classList={shifts} setClassId={setSelectedClassId} shiftDetails={selectedShiftDetails} dynamicShiftButtons={selectedShiftButtons} type='schedule'>
+            <DetailsPanel classId={selectedClassId} classList={shifts} setClassId={setSelectedClassId} shiftDetails={selectedShiftDetails} shifts={shifts} handleShiftSelection={handleShiftSelection} dynamicShiftButtons={selectedShiftButtons} type='schedule'>
                 <div className="schedule-page">
                     {viewMode === "list" ? (
                         <>
@@ -358,7 +357,7 @@ function Schedule() {
                                             <div className="shift-list">
                                                 {groupedShifts[date].map((shift) => (
                                                     <ShiftCard
-                                                        key={shift.fk_schedule_id}
+                                                        key={shift.shift_id}
                                                         shift={shift}
                                                         shiftType={shift.shift_type}
                                                         onShiftSelect={handleShiftSelection}

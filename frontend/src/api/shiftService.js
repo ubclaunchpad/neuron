@@ -112,7 +112,7 @@ const requestToCoverShift = async (body) => {
 // Cancels a request to cover a shift from another volunteer. An error is thrown if the request is not found or already approved
 const cancelCoverShift = async (body) => {
   try {
-    const response = await api.delete("/shifts/cover-shift", { 
+    const response = await api.delete("/shifts/cover-shift", {
       data: {
         request_id: body.request_id,
         volunteer_id: body.volunteer_id,
@@ -127,18 +127,21 @@ const cancelCoverShift = async (body) => {
 };
 
 // Creates a request for shift coverage
-const requestShiftCoverage = async (body) => {
+const requestShiftCoverage = async ({ shift_id, category, details, comments }) => {
   try {
-    const response = await api.put(`/shifts/shift-coverage-request`, {
-      shift_id: body.shift_id
+    const response = await api.post("/shifts/shift-coverage-request", {
+      shift_id: shift_id,
+      category: category,
+      details: details,
+      comments: comments || "",
     });
 
     return response.data;
   } catch (error) {
-    console.error("Error requesting coverage for shift: ", error);
+    console.error("Error submitting coverage request:", error.response?.data || error);
     throw error;
   }
-}
+};
 
 // Cancels a shift coverage request. An error is thrown if we try to cancel a request that has already been fulfilled or isn't found
 const cancelCoverRequest = async (body) => {

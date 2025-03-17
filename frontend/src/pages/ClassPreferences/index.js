@@ -1,14 +1,14 @@
-import "./index.css";
-import React, {useEffect, useState, useRef} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { fetchAllClassPreferences, fetchUserPreferredClasses, fetchVolunteerAvailability, updateUserPreferredClasses } from "../../api/volunteerService";
+import dropdown_button from "../../assets/dropdown-button.png";
 import edit_icon from "../../assets/edit-icon.png";
 import filter_icon from "../../assets/filter-icon.png";
 import search_icon from "../../assets/search-icon.png";
-import { useAuth } from "../../contexts/authContext";
-import { fetchUserPreferredClasses, fetchAllClassPreferences, updateUserPreferredClasses, fetchVolunteerAvailability} from "../../api/volunteerService";
+import Checkbox from "../../components/Checkbox";
 import ClassPreferencesCard from "../../components/ClassPreferencesCard";
 import Modal from "../../components/Modal";
-import Checkbox from "../../components/Checkbox";
-import dropdown_button from "../../assets/dropdown-button.png";
+import { useAuth } from "../../contexts/authContext";
+import "./index.css";
 
 function ifFitAvailability(class_, availability) {
      return compareTime(availability.start_time, class_.start_time) && compareTime(class_.end_time, availability.end_time);
@@ -31,6 +31,7 @@ function ClassPreferences() {
      const { user } = useAuth();
      const [userAvailability, setUserAvailability] = useState(null);
      const FIT_AVAILABILITY_TITLE = "Classes that Fit My Availability";
+     const { logout } = useAuth();
 
      // Modal hooks
      const [modalOpen, setModalOpen] = useState(false);
@@ -497,10 +498,7 @@ function ClassPreferences() {
           <main className="content-container">
                <div className="content-heading">
                     <h2 className="content-title">Class - Schedule Preferences</h2>
-                    <button className="logout-button" onClick={() => {
-                         localStorage.removeItem("neuronAuthToken");
-                         window.location.href = "/auth/login";
-                    }}>
+                    <button className="logout-button" onClick={logout}>
                     <i className="fa-solid fa-arrow-right-from-bracket"></i>&nbsp;&nbsp;Log Out
                     </button>
                </div>

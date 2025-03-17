@@ -1,8 +1,12 @@
 import mysql, { Pool, PoolOptions } from 'mysql2/promise';
-import { DB_URI } from "./environment.js";
+import { RDS_DB, RDS_HOSTNAME, RDS_PASSWORD, RDS_PORT, RDS_USERNAME } from "./environment.js";
 
 const configuration: PoolOptions = {
-  uri: DB_URI, // from config.ts
+  host: RDS_HOSTNAME,
+  user: RDS_USERNAME,
+  password: RDS_PASSWORD,
+  database: RDS_DB,
+  port: RDS_PORT, 
   typeCast: (_, next) => {
     // Turn null columns into undefined
     const value = next();

@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import { ValidationChain } from "express-validator";
-import { UserDB } from "./databaseModels.js";
+import { UserDB, VolunteerDB } from "./databaseModels.js";
 
 export type AuthenticatedRequest = Request & {
     user: UserDB
+    volunteer?: VolunteerDB
 }
 
 /**

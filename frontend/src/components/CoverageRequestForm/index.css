@@ -84,6 +84,12 @@
     width: fit-content;
 }
 
+/* Greyed out text for recurring sessions */
+.radio-text-recurring-sessions {
+    color: "grey";
+    opacity: 0.6;
+}
+
 .form-input, 
 .dropdown, 
 .textarea {

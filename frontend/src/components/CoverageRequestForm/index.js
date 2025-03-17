@@ -88,6 +88,16 @@ function CoverageRequestForm({ open, onClose, shift }) {
                                     onChange={() => setWhichShifts("single")}
                                 />
                                 <span>This session only</span>
+                                <input
+                                    type="radio"
+                                    name="whichShifts"
+                                    value="recurring"
+                                    className="radio-input"
+                                    checked={whichShifts === "recurring"}
+                                    onChange={() => setWhichShifts("recurring")}
+                                    disabled={true}
+                                />
+                                <span className="radio-text-recurring-sessions">This session and future recurring sessions</span>
                             </div>
                         </div>
                     </div>

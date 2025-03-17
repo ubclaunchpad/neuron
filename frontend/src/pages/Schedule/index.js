@@ -173,7 +173,8 @@ function Schedule() {
                             volunteer_id: shift.volunteer_id,
                             shift_id: shift.shift_id,
                             checked_in: shift.checked_in,
-                            absence_request: shift.absence_request
+                            absence_request: shift.absence_request,
+                            checked_in: shift.checked_in,
                         }],
 
                         shift_type: shift.shift_type

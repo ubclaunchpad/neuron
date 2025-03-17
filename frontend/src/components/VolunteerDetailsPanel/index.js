@@ -6,7 +6,6 @@ import ProfileImg from "../ImgFallback";
 import "./index.css";
 
 function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelInfo, myClass, classTaken }) {
-
     const renderVolunteers = () => {
         const volunteers = panelInfo?.schedules.flatMap(
             (schedule) => {

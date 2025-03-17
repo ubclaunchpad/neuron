@@ -44,15 +44,15 @@ function CoverageRequestCard({
         className="coverage-vertical-line"
         style={{ backgroundColor: lineColor }}
       />
-      <div className="card-content">
+      <div className="coverage-card-content">
         <div className="column coverage-segment-1">
-          <div className="card-text">
+          <div className="coverage-card-text">
             <h2 className="shift-time">{shift.start_time}</h2>
             <p>{parseShiftDuration(shift.duration)}</p>
           </div>
         </div>
         <div className="column coverage-segment-2">
-          <div className="card-text coverage-card-text">
+          <div className="coverage-card-text coverage-card-text">
             <h2>
               {shift.class_name.substring(0, 30)}
               {shift.class_name.length > 25 ? "..." : ""}
@@ -66,10 +66,10 @@ function CoverageRequestCard({
           </div>
         </div>
         <div className="column coverage-segment-3">
-          <div className="card-text coverage-card-text">
+          <div className="coverage-card-text coverage-card-text">
             <h2>
               Requested By: {shift.volunteer_f_name} {shift.volunteer_l_name}
-            </h2>
+            coverage-</h2>
             <p>Requested For: This Session Only</p>
             <p>Requested On: {dayjs().format("YYYY-MM-DD").toString()}</p>
           </div>
@@ -83,7 +83,7 @@ function CoverageRequestCard({
                 <img
                   src={icon}
                   alt="Button Icon"
-                  className="card-button-icon"
+                  className="coverage-card-button-icon"
                 />
               )}
               {label}

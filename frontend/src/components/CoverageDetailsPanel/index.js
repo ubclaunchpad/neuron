@@ -50,7 +50,7 @@ function CoverageDetailsPanel({
 
   const renderSchedules = () => {
     if (!panelInfo?.schedules) {
-      return <div className="panel-header-dow panel-titles">Not Scheduled</div>;
+      return <div className="coverage-panel-header-dow coverage-panel-titles">Not Scheduled</div>;
     }
 
     // to stay consistent with the javascript Date getDay() function, we start at 0 for Sunday
@@ -65,7 +65,7 @@ function CoverageDetailsPanel({
     ];
 
     return panelInfo.schedules.map((schedule, idx) => (
-      <div key={idx} className="panel-header-dow panel-titles">
+      <div key={idx} className="coverage-panel-header-dow coverage-panel-titles">
         {dow[schedule.day]}, {formatTime(schedule.start_time)} -{" "}
         {formatTime(schedule.end_time)}
       </div>
@@ -162,7 +162,7 @@ function CoverageDetailsPanel({
     return (
       <>
         {uniqueInstructors.map((instructor, idx) => (
-          <div className="instructor-item" key={idx}>
+          <div className="coverage-instructor-item" key={idx}>
             <div>{instructor.f_name + " " + instructor.l_name}</div>
             <button
               className="coverage-instructor-email"
@@ -181,21 +181,21 @@ function CoverageDetailsPanel({
   return (
     <>
       <div
-        className="main-container"
+        className="coverage-main-container"
         style={{ width: `calc(100% - ${panelWidth})`, overflow: "hidden" }}
       >
         <div className="coverage-panel-content">{children}</div>
       </div>
       <div
-        className="panel-container"
+        className="coverage-panel-container"
         style={{
           width: openPanelWidth,
           right: `calc(-${openPanelWidth} + ${panelWidth})`,
         }}
       >
-        <div className="panel-header">
+        <div className="coverage-panel-header">
           {shiftDetails ? (
-            <span className="panel-header-date-details">
+            <span className="coverage-panel-header-date-details">
               <div>{dayjs(shiftDetails.shift_date).format("dddd, MMMM D")}</div>
               <div>
                 {dayjs(shiftDetails.start_time, "HH:mm").format("h:mm A")} -{" "}
@@ -205,11 +205,11 @@ function CoverageDetailsPanel({
           ) : (
             renderSchedules()
           )}
-          <div className="panel-header-class-name">
+          <div className="coverage-panel-header-class-name">
             {panelInfo?.class_name || "N/A"}
           </div>
           <button
-            className="panel-button-icon panel-button-icon-close"
+            className="coverage-panel-button-icon coverage-panel-button-icon-close"
             onClick={() => {
               setPanelWidth("0px");
               setClassId(null);
@@ -222,47 +222,47 @@ function CoverageDetailsPanel({
             />
           </button>
         </div>
-        <div className="panel-details">
-          <div className="panel-details-shift">
-            <div className="panel-details-shift-row">
-              <div className="panel-titles">Instructor</div>
-              <div className="panel-details-shift-right">
+        <div className="coverage-panel-details">
+          <div className="coverage-panel-details-shift">
+            <div className="coverage-panel-details-shift-row">
+              <div className="coverage-panel-titles">Instructor</div>
+              <div className="coverage-panel-details-shift-right">
                 {renderInstructorInfo()}
               </div>
             </div>
-            <div className="panel-details-shift-row">
-              <div className="panel-titles">Volunteers</div>
-              <div className="panel-details-shift-right">
+            <div className="coverage-panel-details-shift-row">
+              <div className="coverage-panel-titles">Volunteers</div>
+              <div className="coverage-panel-details-shift-right">
                 {shiftDetails?.volunteer_f_name}{" "}
                 {shiftDetails?.volunteer_l_name}
               </div>
             </div>
-            <div className="panel-details-shift-row">
-              <div className="panel-titles">Requested By</div>
-              <div className="panel-description">
+            <div className="coverage-panel-details-shift-row">
+              <div className="coverage-panel-titles">Requested By</div>
+              <div className="coverage-panel-description">
                 {shiftDetails?.volunteer_f_name}{" "}
                 {shiftDetails?.volunteer_l_name}
               </div>
             </div>
-            <div className="panel-details-shift-row">
-              <div className="panel-titles">Requested For</div>
-              <div className="panel-description">This session only</div>
+            <div className="coverage-panel-details-shift-row">
+              <div className="coverage-panel-titles">Requested For</div>
+              <div className="coverage-panel-description">This session only</div>
             </div>
-            <div className="panel-details-shift-row">
-              <div className="panel-titles">Requested On</div>
-              <div className="panel-description">
+            <div className="coverage-panel-details-shift-row">
+              <div className="coverage-panel-titles">Requested On</div>
+              <div className="coverage-panel-description">
                 {dayjs(shiftDetails?.shift_date).format("YYYY-MM-DD")}
               </div>
             </div>
-            <div className="panel-details-shift-row">
+            <div className="coverage-panel-details-shift-row">
               <div className="coverage-panel-titles">Reason for Request</div>
-              <div className="panel-description">
+              <div className="coverage-panel-description">
                 {shiftDetails?.absence_request.category}
               </div>
             </div>
-            <div className="panel-details-shift-row">
-              <div className="panel-titles">Reason Details</div>
-              <div className="panel-description">
+            <div className="coverage-panel-details-shift-row">
+              <div className="coverage-panel-titles">Reason Details</div>
+              <div className="coverage-panel-description">
                 {shiftDetails?.absence_request.details}
               </div>
             </div>
@@ -282,7 +282,7 @@ function CoverageDetailsPanel({
                 {button.icon && (
                   <img
                     src={button.icon}
-                    className={`card-button-icon ${
+                    className={`coverage-card-button-icon ${
                       button.iconColourClass || ""
                     }`}
                   />
@@ -291,15 +291,15 @@ function CoverageDetailsPanel({
               </button>
             ))}
           </div>
-          <div className="button-icons">
-            <button className="panel-button-icon" onClick={handleToPrev}>
+          <div className="coverage-button-icons">
+            <button className="coverage-panel-button-icon" onClick={handleToPrev}>
               <img
                 alt="Previous"
                 src={button_icon_prev}
                 style={{ width: 16, height: 16 }}
               />
             </button>
-            <button className="panel-button-icon" onClick={handleToNext}>
+            <button className="coverage-panel-button-icon" onClick={handleToNext}>
               <img
                 alt="Next"
                 src={button_icon_next}

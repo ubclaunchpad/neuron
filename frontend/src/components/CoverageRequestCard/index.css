@@ -28,7 +28,7 @@
 }
 
 /* Card Content Layout */
-.card-content {
+.coverage-card-content {
     display: flex;
     width: 100%;
     align-items: center;
@@ -58,19 +58,19 @@
 }
 
 /* Text and Typography */
-.card-text {
+.coverage-card-text {
     margin: 0;
     font-family: var(--font-primary);
 }
 
-.card-text h2 {
+.coverage-card-text h2 {
     margin: .25rem 0;
     font-size: 1rem;
     font-weight: 400;
     color: var(--text-dark, #0F1111);
 }
 
-.card-text p {
+.coverage-card-text p {
     margin: 0;
     font-size: var(--small-text);
     font-weight: 400;
@@ -113,7 +113,7 @@
 }
 
 /* Icon within Button */
-.card-button-icon {
+.coverage-card-button-icon {
     width: 1rem;
     height: 1rem;
     margin-right: .5rem;

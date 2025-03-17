@@ -1,11 +1,11 @@
 @import '../../styles.css';  /*Imports custom fonts*/
 
-.main-container {
+.coverage-main-container {
      height: 100%;
      transition: 0.2s width ease-in-out;
 }
 
-.panel-container {
+.coverage-panel-container {
      position: fixed;
      height: 100vh;
      top: 0px;
@@ -35,7 +35,7 @@
      text-align: center;
  }
 
-.panel-header {
+.coverage-panel-header {
      width: 87%;
      height: auto;
      margin-right: 36px; 
@@ -48,7 +48,7 @@
      gap: 4px;
 }
 
-.panel-header-date-details {
+.coverage-panel-header-date-details {
      font-family: var(--font-primary);
      font-size: var(--medium-text);
      color: var(--dark-grey);
@@ -57,7 +57,7 @@
      gap: 4px;
 }
 
-.panel-header-class-name {
+.coverage-panel-header-class-name {
      font-family: 'Montserrat';
      font-weight: 600;
      font-size: 20px;
@@ -65,14 +65,14 @@
      color: #0f1111;
 }
 
-.panel-button-icon {
+.coverage-panel-button-icon {
      padding: 0px;
      background-color: transparent;
      border: none;
      cursor: pointer;
 }
 
-.panel-button-icon-close {
+.coverage-panel-button-icon-close {
      position: absolute;
      right: 0px;
      top: 0px;
@@ -80,11 +80,11 @@
      height: fit-content;
 }
 
-.panel-header-time {
+.coverage-panel-header-time {
      width: 100%;
 }
 
-.panel-button-icon:hover {
+.coverage-panel-button-icon:hover {
      filter:brightness(0.6);
 }
 
@@ -98,7 +98,7 @@
      text-align: left;
 }
 
-.panel-details {
+.coverage-panel-details {
      margin-right: 36px; 
      margin-left: 20px;
      padding: 32px 0px;
@@ -113,7 +113,7 @@
      color: #808080;
 }
 
-.my-shifts {
+.coverage-my-shifts {
      padding: 4px 12px;
      width: fit-content;
      border-radius: 4px;
@@ -143,7 +143,7 @@
      text-align: center;
  }
 
-.classTaken {
+.coverage-classTaken {
      padding: 4px 12px;
      width: fit-content;
      border-radius: 4px;
@@ -153,7 +153,7 @@
      text-align: center;
 }
 
-.volunteersNeeded {
+.coverage-volunteersNeeded {
      padding: 4px 12px;
      width: fit-content;
      border-radius: 4px;
@@ -163,19 +163,19 @@
      text-align: center;
 }
 
-.panel-details-shift {
+.coverage-panel-details-shift {
      display: flex;
      flex-direction: column;
      gap: 12px;
 }
 
-.panel-details-shift-row {
+.coverage-panel-details-shift-row {
      display: flex;
      flex-direction: row;
      align-items: center;
 }
 
-.panel-details-shift-right {
+.coverage-panel-details-shift-right {
      width: 264px;
      font-family: 'Roboto';
      font-weight: 400;
@@ -184,18 +184,18 @@
      align-items: center;
 }
 
-.volunteer-profile {
+.coverage-volunteer-profile {
      width: 28px;
      height: 28px;
      border-radius: 4px;
      margin-right: 6px;
 }
 
-.panel-details-description {
+.coverage-panel-details-description {
      margin-top: 20px;
 }
 
-.panel-description {
+.coverage-panel-description {
      margin-top: 0.5rem;
      font-family: 'Roboto';
      font-weight: 400;
@@ -203,7 +203,7 @@
      line-height: 21.6px;
 }
 
-.button-icons {
+.coverage-button-icons {
      display: flex;
      flex-direction: row;
      gap: 4px;
@@ -269,19 +269,19 @@
  }
  
  /* Icon within Button */
- .card-button-icon {
+ .coverage-card-button-icon {
      width: 1rem;
      height: 1rem;
      margin-right: .5rem;
  }
 
- .zoom-icon {
+ .coverage-zoom-icon {
      height: 1.5rem;
      width: 1.5rem;
      margin-right: 0.5rem; 
  }
 
- .email-icon {
+ .coverage-email-icon {
      margin-left: 0.5rem;
  }
 

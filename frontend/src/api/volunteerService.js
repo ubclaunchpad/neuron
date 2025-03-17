@@ -105,7 +105,7 @@ export const updateUserPreferredClasses = async (volunteer_id, preferredClasses)
 export const getVolunteers = (params) => 
   api
       .get('volunteer', {
-        params: params
+        params: params ?? {}
       })
       .then((response) => response.data)
       .catch((error) => {

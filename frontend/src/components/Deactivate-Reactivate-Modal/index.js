@@ -2,7 +2,6 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import { deleteInstructor } from "../../api/instructorService";
 import { deactivateVolunteer, verifyVolunteer } from "../../api/volunteerService";
-import { useAuth } from "../../contexts/authContext";
 import cleanInitials from "../../utils/cleanInitials";
 import notyf from "../../utils/notyf";
 import TextInput from "../TextInput";
@@ -16,9 +15,6 @@ const VerificationSchema = Yup.object().shape({
 
 
 const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
-
-    const {user} = useAuth();
-
     return (
         <div className="deactivate-reactivate-modal">
             {type === 1 && <p className="inactive-account">Deactivating this account will mark the account as <span>Inactive</span>. This volunteer will no longer be able to sign in or volunteer for classes until their account is reactivated.

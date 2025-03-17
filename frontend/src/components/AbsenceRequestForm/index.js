@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
-import { requestShiftCoverage } from "../../api/shiftService";
+import { requestAbsence } from "../../api/coverageService";
 import AbsenceRequestConfirmation from "../AbsenceRequestConfirmation";
 import "./index.css";
 
@@ -55,15 +55,12 @@ function AbsenceRequestForm({ open, onClose, shift }) {
 
         try {
             const requestData = {
-                shift_id: shift.shift_id,
                 category: category,
                 details: details,
-                comments: comments || "",
+                comments: comments,
             };
 
-            console.log("Submitting request with data:", requestData);
-
-            const response = await requestShiftCoverage(requestData);
+            const response = await requestAbsence(shift.shift_id, requestData);
 
             console.log("Coverage request submitted successfully:", response);
 

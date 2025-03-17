@@ -11,6 +11,7 @@ import { getCoverageButtonConfig } from "../../utils/coverageButtonConfig";
 import "./index.css";
 import CoverageRequestCard from "../../components/CoverageRequestCard";
 import AbsenceRequestCard from "../../components/AbsenceRequestCard";
+import Notifications from "../../components/Notifications";
 import {
   approveAbsenceRequest,
   rejectAbsenceRequest,
@@ -232,9 +233,7 @@ function CoverageRequests() {
     <main className="content-container">
       <div className="content-heading">
         <h2 className="content-title">Coverage Requests</h2>
-        <div className="notifications-btn">
-          <i class="fa-solid fa-bell"></i> Notifications
-        </div>
+        <Notifications />
       </div>
       <div className="content-heading">
         <div className="coverage-date-picker">

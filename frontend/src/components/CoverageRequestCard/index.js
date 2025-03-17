@@ -66,7 +66,6 @@ function CoverageRequestCard({ shift, onShiftSelect, buttonConfig }) {
           <div className="coverage-card-text coverage-card-text">
             <h2>
               Requested By: {shift.volunteer_f_name} {shift.volunteer_l_name}
-              coverage-
             </h2>
             <p>Requested For: This Session Only</p>
             <p>Requested On: {dayjs().format("YYYY-MM-DD").toString()}</p>

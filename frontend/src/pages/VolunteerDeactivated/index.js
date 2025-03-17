@@ -1,17 +1,11 @@
-import React, { useState } from 'react';
-import './index.css';
-import logoutIcon from "./button-icon.png";
-import deactivatedImg from "./acct-deactivated-img.png";
+import React from 'react';
 import { useAuth } from "../../contexts/authContext";
+import deactivatedImg from "./acct-deactivated-img.png";
+import logoutIcon from "./button-icon.png";
+import './index.css';
 
 function VolunteerDeactivated() {
   const { logout } = useAuth();
-  
-    const logoutRedirect = () => {
-      logout();
-      window.location.href = "/auth/login";
-    };
-
 
   return (
     <div className="account-verification-page">
@@ -23,7 +17,7 @@ function VolunteerDeactivated() {
         />
         <h2><b>Your account has been deactivated.</b></h2>
         <div className="account-verification-contact-text">You can reach out to us at <b>bwp@gmail.com</b>. </div>
-        <button className = "account-verification-button" onClick={logoutRedirect}>
+        <button className = "account-verification-button" onClick={logout}>
           <img
             src={logoutIcon}
             alt="Log out icon"

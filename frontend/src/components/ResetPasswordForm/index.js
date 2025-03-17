@@ -1,10 +1,11 @@
-import TextInput from "../TextInput";
-import CustomButton from "../CustomButton";
 import { Formik } from "formik";
-import * as Yup from "yup";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import * as Yup from "yup";
 import { resetPassword } from "../../api/authService";
 import notyf from "../../utils/notyf";
+import CustomButton from "../CustomButton";
+import TextInput from "../TextInput";
 import "./index.css";
 
 const ResetPassSchema = Yup.object().shape({
@@ -19,13 +20,14 @@ const ResetPassSchema = Yup.object().shape({
 const ResetPasswordForm = () => {
     const [id, setId] = useState("");
     const [token, setToken] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         // Get the id and token from the URL queries
         const urlParams = new URLSearchParams(window.location.search);
 
         if (!urlParams.has("id") || !urlParams.has("token")) {
-            window.location.href = "/auth/login";
+            navigate("/auth/login");
         }
 
         setId(urlParams.get("id"));
@@ -44,10 +46,10 @@ const ResetPasswordForm = () => {
                     // Remove confirm password from the data
                     delete values.confirmPassword;
                     resetPassword({ ...values, id, token })
-                        .then((response) => {
+                        .then(() => {
                             notyf.success("Password reset successfully.");
                             setTimeout(() => {
-                                window.location.href = "/auth/login";
+                                navigate("/auth/login");
                             }, 2500);
                         })
                         .catch((error) => {

@@ -44,7 +44,7 @@ const VolunteerSchema = Yup.object().shape({
 
 function VolunteerDetailsCard({ volunteer, type = "" }) {
 
-    const { user, updateUser } = useAuth();
+    const { user, updateUser, isAdmin } = useAuth();
 
     const [isEditing, setIsEditing] = useState(false);
     const [mutableData, setMutableData] = useState({
@@ -77,11 +77,17 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
     ];
 
     function sendTcNotif() {
-        notyf.error("Please update your preferred time commitment.");
+        notyf.open({
+            type: 'warning',
+            message: 'Please set Preferred Time Commitment to a value greater than 0.',
+            background: '#FFC107',
+            duration: 0,
+            dismissible: true,
+        });
     }
 
     useEffect(() => {
-        if (Number(mutableData.p_time_ctmt) <= 0 && !isEditing) {
+        if (Number(mutableData.p_time_ctmt) <= 0 && !isEditing && !isAdmin) {
             sendTcNotif();
         }
     }, [

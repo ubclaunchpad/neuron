@@ -1,12 +1,13 @@
 import dayjs from 'dayjs';
-import { COVERAGE_STATUSES, SHIFT_TYPES, ADMIN_SHIFT_TYPES } from '../data/constants';
-import { requestToCoverShift, requestShiftCoverage, cancelCoverShift, cancelCoverRequest, checkInShift } from '../api/shiftService';
+import { requestCoverage, withdrawAbsenceRequest, withdrawCoverageRequest } from '../api/coverageService';
+import { checkInShift } from '../api/shiftService';
+import CancelIcon from "../assets/cancel-icon.png";
+import ViewRequestIcon from "../assets/images/button-icons/clipboard.png";
 import CheckInIcon from '../assets/images/button-icons/clock-icon.svg';
 import PlusIcon from '../assets/images/button-icons/plus-icon.svg';
-import RequestCoverageIcon from '../assets/request-coverage.png'
-import Notify from '../assets/notif-icon.png'
-import CancelIcon from "../assets/cancel-icon.png";
-import ViewRequestIcon from "../assets/images/button-icons/clipboard.png"
+import Notify from '../assets/notif-icon.png';
+import RequestCoverageIcon from '../assets/request-coverage.png';
+import { ADMIN_SHIFT_TYPES, COVERAGE_STATUSES, SHIFT_TYPES } from '../data/constants';
 
 let openAbsenceRequestHandler = null;
 let openCoverageRequestHandler = null;
@@ -38,15 +39,9 @@ const handleCoverShiftClick = async (shift, handleShiftUpdate, volunteerID) => {
         if (openCoverageRequestHandler) {
             openCoverageRequestHandler(shift);
         } else {
-            const body = {
-                request_id: shift.request_id,
-                volunteer_id: volunteerID,
-            };
-            // console.log(`Requesting to cover shift ${shift.shift_id}`);
-            await requestToCoverShift(body);
+            await requestCoverage(shift.request_id, volunteerID);
             handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.PENDING });
         }
-
     } catch (error) {
         console.error('Error generating request to cover shift:', error);
     }
@@ -59,7 +54,7 @@ const handleRequestCoverageClick = async (shift, handleShiftUpdate) => {
         } else {
             // Otherwise, fallback to calling the API directly.
             const body = { shift_id: shift.shift_id };
-            let data = await requestShiftCoverage(body);
+            throw new Error('Not implemented');
             handleShiftUpdate({
                 ...shift,
                 shift_type: SHIFT_TYPES.MY_COVERAGE_REQUESTS,
@@ -73,30 +68,17 @@ const handleRequestCoverageClick = async (shift, handleShiftUpdate) => {
 };
 
 const handleCancelClick = async (shift, handleShiftUpdate, volunteerID) => {
-
     if (shift.shift_type === SHIFT_TYPES.COVERAGE) {
-
         try {
             // console.log("Canceling coverage for shift ID: ", shift.shift_id);
-            const body = {
-                request_id: shift.request_id,
-                volunteer_id: volunteerID
-            };
-            await cancelCoverShift(body);
+            await withdrawCoverageRequest(shift.request_id, volunteerID);
             handleShiftUpdate({ ...shift, coverage_status: COVERAGE_STATUSES.OPEN });
-
         } catch (error) {
             console.error('Error canceling coverage:', error);
         }
     } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
-
         try {
-            // console.log("Canceling coverage request for shift ID: ", shift.shift_id);
-            const body = {
-                request_id: shift.request_id,
-                shift_id: shift.shift_id,
-            };
-            await cancelCoverRequest(body);
+            await withdrawAbsenceRequest(shift.request_id);
             handleShiftUpdate({ ...shift, shift_type: SHIFT_TYPES.MY_SHIFTS, coverage_status: null, request_id: null });
         }
         catch (error) {

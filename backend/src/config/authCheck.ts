@@ -6,7 +6,7 @@ import {
     DecodedJwtPayload
 } from "../common/types.js";
 import { TOKEN_SECRET } from "./environment.js";
-import { userModel } from "./models.js";
+import { userModel, volunteerModel } from "./models.js";
 
 async function isAuthorized(
     req: Request,
@@ -36,10 +36,25 @@ async function isAuthorized(
         // Verify the token
         const decoded = jwt.verify(token, TOKEN_SECRET) as DecodedJwtPayload;
         
-        const result = await userModel.getUserById(decoded.user_id);
+        const results = await userModel.getUsersByIds(decoded.user_id);
+
+        // If the user does not exist, return an error message
+        if (results.length === 0) {
+            return res.status(401).json({
+                error: "The token is either invalid or has expired",
+            });
+        }
+
+        const user = results[0];
 
         // Attach the user to the request
-        (req as AuthenticatedRequest).user = result;
+        (req as AuthenticatedRequest).user = user;
+
+         // If the user is a volunteer, attach the volunteer to the request as well
+        if (user.role === Role.volunteer) {
+            const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
+            (req as AuthenticatedRequest).volunteer = volunteer;
+        }
 
         // Call the next function
         return next();

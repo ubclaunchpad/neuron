@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
-import { requestToCoverShift } from "../../api/shiftService";
+import { requestCoverage } from "../../api/coverageService";
 import AbsenceRequestConfirmation from "../AbsenceRequestConfirmation";
 import "./index.css";
 
@@ -40,15 +40,9 @@ function CoverageRequestForm({ open, onClose, shift }) {
         setLoading(true);
 
         try {
-            const requestData = {
-                request_id: shift.absence_request.request_id,
-                volunteer_id: shift.volunteer_id,
-            };
-            console.log("shift", shift);
-
-            console.log("Submitting request with data:", requestData);
-
-            const response = await requestToCoverShift(requestData);
+            const request_id = shift.absence_request.request_id;
+            const volunteer_id = shift.volunteer_id;
+            const response = await requestCoverage(request_id, volunteer_id);
 
             console.log("Coverage request submitted successfully:", response);
 

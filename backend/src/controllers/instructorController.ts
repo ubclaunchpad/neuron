@@ -1,8 +1,8 @@
 import { Response } from 'express';
+import { v4 as uuidv4 } from "uuid";
 import { InstructorDB } from '../common/databaseModels.js';
 import { AuthenticatedRequest } from '../common/types.js';
 import { instructorModel } from '../config/models.js';
-import { v4 as uuidv4 } from "uuid";
 
 async function getInstructors(req: AuthenticatedRequest, res: Response) {
     const instructors = await instructorModel.getInstructors();
@@ -29,7 +29,7 @@ async function insertInstructor(req: AuthenticatedRequest, res: Response) {
 }
 
 async function deleteInstructor(req: AuthenticatedRequest, res: Response) {
-    const { instructor_id } = req.body;
+    const instructor_id = req.params.instructor_id;
 
     const result = await instructorModel.deleteInstructor(instructor_id);
 
@@ -37,13 +37,13 @@ async function deleteInstructor(req: AuthenticatedRequest, res: Response) {
 }
 
 async function editInstructor(req: AuthenticatedRequest, res: Response) {
-    let instructor: InstructorDB = req.body;
+    const instructor: InstructorDB = req.body;
+    const instructor_id = req.params.instructor_id;
 
-    const result = await instructorModel.editInstructor(instructor);
+    const result = await instructorModel.editInstructor(instructor_id, instructor);
 
     res.status(200).json(result);
 }
 
-export {
-    getInstructorById, getInstructors, insertInstructor, deleteInstructor, editInstructor
-};
+export { deleteInstructor, editInstructor, getInstructorById, getInstructors, insertInstructor };
+

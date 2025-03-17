@@ -1,12 +1,11 @@
-import "./index.css";
-import search_icon from "../../assets/search-icon.png";
+import { useEffect, useState } from "react";
+import { verifyVolunteer } from "../../api/volunteerService";
+import warning_icon from "../../assets/admin-initial-warning.png";
 import button_icon_deny from "../../assets/button-icon-deny.png";
 import button_icon_verify from "../../assets/button-icon-verify.png";
-import warning_icon from "../../assets/admin-initial-warning.png";
 import confirm_img from "../../assets/confirm-verify-deny.png";
 import Modal from "../Modal";
-import { verifyVolunteer } from "../../api/adminService";
-import { useEffect, useState } from "react";
+import "./index.css";
 
 function UnverifiedUsers({ unverifiedUsers }) {
      const [itemsToRender, setItemsToRender] = useState(unverifiedUsers);

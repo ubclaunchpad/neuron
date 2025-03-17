@@ -41,6 +41,32 @@ export default class ShiftModel {
           return results[0];
      }
 
+     // get all the details of a shift
+     async getShiftByRequestId(shift_id: number): Promise<ShiftDB> {
+          const query = `
+               SELECT 
+                    s.duration,
+                    sc.start_time,
+                    sc.end_time,
+                    u.l_name AS volunteer_l_name,
+                    u.f_name AS volunteer_f_name,
+                    i.l_name AS instructor_l_name,
+                    i.f_name AS instructor_f_name, 
+                    cl.class_name
+               FROM 
+                    neuron.shifts s
+               JOIN 
+                    neuron.absence_request ar ON s.shift_id = ar.fk_shift_id
+               WHERE 
+                    s.shift_id = ?       
+          `;
+          const values = [shift_id];
+
+          const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
+
+          return results[0];
+     }
+
      /**
       * Retrieves shifts from the database with optional filtering.
       *
@@ -183,26 +209,6 @@ export default class ShiftModel {
      }
 
      // use getShifts instead
-     async getShiftsByVolunteerId(volunteer_id: string): Promise<ShiftDB[]> {
-          const query = "SELECT * FROM shifts WHERE fk_volunteer_id = ?";
-          const values = [volunteer_id];
-
-          const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
-
-          return results;
-     }
-
-     // use getShifts instead
-     async getShiftsByDate(date: string): Promise<ShiftDB[]> {
-          const query = "SELECT * FROM shifts WHERE shift_date = ?";
-          const values = [date];
-
-          const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
-
-          return results;
-     }
-
-     // use getShifts instead
      async getShiftsByVolunteerIdAndMonth(volunteer_id: string, month: number, year: number): Promise<ShiftDB[]> {
           const query = `
                CALL GetShiftsByVolunteerIdAndMonth(?, ?, ?);
@@ -223,37 +229,6 @@ export default class ShiftModel {
           const values = [shift_id];
 
           const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
-
-          return results;
-     }
-
-     // create a new entry in the coverage_request table
-     async insertCoverageRequest(request_id: number, volunteer_id: string): Promise<ResultSetHeader> {
-          const query = `
-               INSERT INTO coverage_request (request_id, volunteer_id)
-               VALUES (?, ?)
-               ON DUPLICATE KEY UPDATE volunteer_id = VALUES(volunteer_id)
-          `;
-          const values = [request_id, volunteer_id];
-
-          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
-
-          return results;
-     }
-
-     // delete corresponding entry in coverage_request table
-     async deleteCoverageRequest(request_id: number, volunteer_id: number): Promise<ResultSetHeader> {
-          const query = `
-               DELETE FROM coverage_request WHERE request_id = ? AND volunteer_id = ?
-          `;
-          const values = [request_id, volunteer_id];
-
-          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
-
-          // Check if it was successfully deleted or not
-          if (results.affectedRows === 0) {
-               throw new Error("Cover shift request not found or already approved");
-          }
 
           return results;
      }
@@ -445,7 +420,8 @@ export default class ShiftModel {
      }
 
      // create a new shift. having fk_volunteer_id = null indicates an unassigned shift
-     async addShift(shift: ShiftDB): Promise<ResultSetHeader> {
+     async addShift(shift: ShiftDB, transaction?: PoolConnection): Promise<ResultSetHeader> {
+          const connection = transaction ?? connectionPool;
           const query = `
                INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration, checked_in)
                VALUES (?, ?, ?, ?, ?)
@@ -458,7 +434,7 @@ export default class ShiftModel {
                shift.checked_in
           ];
 
-          const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+          const [results, _] = await connection.query<ResultSetHeader>(query, values);
 
           return results;
      }

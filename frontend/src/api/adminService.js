@@ -51,6 +51,6 @@ const getUnverifiedVolunteers = async () => await request("/admin/unverified-vol
 const verifyVolunteer = async (volunteerId) => await request("/admin/verify-volunteer", volunteerId);
 
 // Deactivate a volunteer
-const deactivateVolunteer = async ({volunteer_id: volunteerId}) => await request("/admin/deactivate-volunteer", volunteerId);
+const deactivateVolunteer = async (volunteerId) => await request("/admin/deactivate-volunteer", volunteerId);
 
 export { getVolunteers, getInstructors, addInstructor, editInstructor, deleteInstructor, getUnverifiedVolunteers, verifyVolunteer, deactivateVolunteer };

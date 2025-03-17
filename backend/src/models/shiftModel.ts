@@ -232,6 +232,7 @@ export default class ShiftModel {
           const query = `
                INSERT INTO coverage_request (request_id, volunteer_id)
                VALUES (?, ?)
+               ON DUPLICATE KEY UPDATE volunteer_id = VALUES(volunteer_id)
           `;
           const values = [request_id, volunteer_id];
 

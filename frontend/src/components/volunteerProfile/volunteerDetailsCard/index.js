@@ -8,16 +8,18 @@ import edit_icon from "../../../assets/edit-icon.png";
 import settings_icon from "../../../assets/settings-icon.png";
 import ProfileImg from "../../ImgFallback";
 
+import { City, State } from 'country-state-city';
+import { Formik } from "formik";
 import { CgSelect } from "react-icons/cg";
+import Select from 'react-select';
+import * as Yup from "yup";
 import { updateVolunteerData, uploadProfilePicture } from "../../../api/volunteerService";
 import { useAuth } from "../../../contexts/authContext";
-import {State, City} from 'country-state-city';
-import Select from 'react-select';
 import notyf from "../../../utils/notyf";
-import Modal from "../../Modal";
 import DeactivateReactivateModal from "../../Deactivate-Reactivate-Modal";
-import { Formik } from "formik";
-import * as Yup from "yup";
+import Modal from "../../Modal";
+
+const phoneRegex = /^[0-9]{10}$/;
 
 const VolunteerSchema = Yup.object().shape({
     p_name: Yup.string()
@@ -27,11 +29,13 @@ const VolunteerSchema = Yup.object().shape({
         .nullable()
         .optional(),
     phone_number: Yup.string()
-        .max(15, 'Phone number cannot exceed 15 digits.')
+        .matches(phoneRegex, "Phone number must be 10 digits.")
         .optional(),
     city: Yup.string()
+        .nullable()
         .optional(),
     province: Yup.string()
+        .nullable()
         .optional(),
     p_time_ctmt: Yup.number()
         .min(0, "Preferred time commitment can not be negative.")
@@ -40,7 +44,7 @@ const VolunteerSchema = Yup.object().shape({
 
 function VolunteerDetailsCard({ volunteer, type = "" }) {
 
-    const { user, updateUser } = useAuth();
+    const { user, updateUser, isAdmin } = useAuth();
 
     const [isEditing, setIsEditing] = useState(false);
     const [mutableData, setMutableData] = useState({
@@ -56,11 +60,11 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
         src: volunteer.profile_picture
     });
     const [prevTempImage, setPrevTempImage] = useState(null);
-    const provinces = [{value: "None", label: "None"}].concat(State.getStatesOfCountry('CA').map((state) => {
+    const provinces = [{value: null, label: "None"}].concat(State.getStatesOfCountry('CA').map((state) => {
         return {value: state.isoCode, label: state.isoCode};
     }));
     const [selectedProvince, setSelectedProvince] = useState(volunteer.province ?? "BC");
-    const [cities, setCities] = useState([{value: "None", label: "None"}].concat(City.getCitiesOfState('CA', selectedProvince).map((city) => {
+    const [cities, setCities] = useState([{value: null, label: "None"}].concat(City.getCitiesOfState('CA', selectedProvince).map((city) => {
         return {value: city.name, label: city.name};
     })));
     const [showAdminMenu, setShowAdminMenu] = useState(false);
@@ -73,20 +77,29 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
     ];
 
     function sendTcNotif() {
-        notyf.error("Please update your preferred time commitment.");
+        notyf.open({
+            type: 'warning',
+            message: 'Please set Preferred Time Commitment to a value greater than 0.',
+            background: '#FFC107',
+            duration: 0,
+            dismissible: true,
+        });
     }
 
     useEffect(() => {
-        if (Number(mutableData.p_time_ctmt) <= 0 && !isEditing) {
-            sendTcNotif();
+        if (!isAdmin) {
+            if (Number(mutableData.timeCommitment) <= 0 && !isEditing) {
+                sendTcNotif();
+            }
         }
     }, [
-        mutableData.p_time_ctmt,
-        isEditing
+        mutableData.timeCommitment,
+        isEditing,
+        isAdmin
     ]);
 
     useEffect(() => {
-        setCities([{value: "None", label: "None"}].concat(City.getCitiesOfState('CA', selectedProvince).map((city) => {
+        setCities([{value: null, label: "None"}].concat(City.getCitiesOfState('CA', selectedProvince).map((city) => {
             return {value: city.name, label: city.name};
         })));
     }, [selectedProvince]);
@@ -106,6 +119,7 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
     }
 
     function formatPhone(phone_number) {
+        phone_number = String(phone_number);
         return `(${phone_number.slice(0, 3)}) ${phone_number.slice(3, 6)}-${phone_number.slice(6)}`;
     }
 
@@ -293,7 +307,8 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
                                                 <input 
                                                     type="text" 
                                                     className="text-input" 
-                                                    name="p_name" 
+                                                    name="p_name"
+                                                    placeholder="Preferred Name"
                                                     value={values.p_name} 
                                                     onChange={handleChange} 
                                                     onBlur={handleBlur}
@@ -414,6 +429,7 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
                                                     type="number" 
                                                     className="text-input"
                                                     name="phone_number" 
+                                                    placeholder="1234567890"
                                                     value={values.phone_number} 
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
@@ -432,7 +448,15 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
                                         </tr>
                                         <tr className="profile-row">
                                             <td hidden={isEditing}>Location</td>
-                                            <td hidden={isEditing}>{mutableData.city && mutableData.province ? `${mutableData.city}, ${mutableData.province}` : 'No Location Set'}</td>
+                                            <td 
+                                                hidden={isEditing}
+                                                style={mutableData.city && mutableData.province ? {} : {
+                                                    'color': '#808080',
+                                                    'fontStyle': 'italic'
+                                                }}
+                                            >
+                                                {mutableData.city && mutableData.province ? `${mutableData.city}, ${mutableData.province}` : 'not yet set'}
+                                            </td>
                                             {isEditing && (
                                                 <>
                                                     <td style={{
@@ -473,7 +497,7 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
                                                                     const {innerProps, innerRef} = props;
                                                                     return (
                                                                         <div {...innerProps} ref={innerRef} className="volunteer-select-item">
-                                                                            {props.data.value}
+                                                                            {props.data.label}
                                                                         </div>
                                                                     )
                                                                 },
@@ -496,7 +520,6 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
                                                 </>
                                             )}
                                         </tr>
-                                        <tr className="row-gap" hidden={isEditing}/>
                                         <tr hidden={!isEditing} className="profile-row">
                                             <td>City</td>
                                             <Select
@@ -534,7 +557,7 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
                                                             const {innerProps, innerRef} = props;
                                                             return (
                                                                 <div {...innerProps} ref={innerRef} className="volunteer-select-item">
-                                                                    {props.data.value}
+                                                                    {props.data.label}
                                                                 </div>
                                                             )
                                                         },
@@ -556,6 +579,9 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
                                         </tr>
                                     </tbody>
                                 </table>
+                                {isEditing && errors && Object.values(errors).map((error, index) => (
+                                    <div key={index} className="profile-row-error">{error}</div>
+                                ))}
                             </div>
                         </div>
                     </div>

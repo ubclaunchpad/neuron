@@ -16,7 +16,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Schedule from "./pages/Schedule";
 import Settings from "./pages/Settings";
 import Signup from "./pages/Signup";
-import VolunteerProfile from "./pages/VolunteerProfile";
+import Profile from "./pages/Profile";
 import AdminVolunteerProfile from "./pages/AdminVolunterProfile";
 import VolunteerNotVerified from "./pages/VolunteerNotVerified";
 import VolunteerDeactivated from "./pages/VolunteerDeactivated";
@@ -62,9 +62,9 @@ function App() {
               <Route path="classes" element={<Classes />} />
               <Route path="schedule" element={<Schedule/>} />
               <Route path="settings" element={<Settings />} />
+              <Route path="profile" element={<Profile />} />
 
               <Route element={<RouteGuard fallback="/" valid={isVolunteer} />}>
-                <Route path="profile" element={<VolunteerProfile />} />
                 <Route path="profile/preferences" element={<ClassPreferences />} />
               </Route>
 

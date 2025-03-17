@@ -4,7 +4,7 @@ import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import { AuthenticatedRequest } from '../common/types.js';
 import { shiftModel, volunteerModel } from '../config/models.js';
 
-async function getShift(req: AuthenticatedRequest, res: Response){
+async function getShift(req: AuthenticatedRequest, res: Response) {
     const { shift_id } = req.body;
 
     const shift_info = await shiftModel.getShiftInfo(shift_id);
@@ -30,7 +30,7 @@ async function getShifts(req: AuthenticatedRequest, res: Response) {
 
     const shifts = await shiftModel.getShifts({
         volunteer_id: volunteer_id,
-        before: before ? new Date(before) : undefined, 
+        before: before ? new Date(before) : undefined,
         after: after ? new Date(after) : undefined,
         type: type as ShiftQueryType,
         status: status as ShiftStatus
@@ -51,8 +51,6 @@ async function getShiftsByVolunteerIdAndMonth(req: AuthenticatedRequest, res: Re
 
     res.status(200).json(shifts);
 }
-
-
 
 async function addShift(req: AuthenticatedRequest, res: Response) {
     const shift: ShiftDB = req.body;

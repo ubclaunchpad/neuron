@@ -100,11 +100,8 @@ jobs:
         CONTAINER_URL=${{ vars.CONTAINER_URL }}
         RDS_HOSTNAME=${{ vars.RDS_HOSTNAME }}
         RDS_USERNAME=${{ vars.RDS_USERNAME }}
-        RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
         RDS_PORT=${{ vars.RDS_PORT }}
         RDS_DB=${{ vars.RDS_DB }}
-        TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}
-        GMAIL_PASSWORD='${{ secrets.GMAIL_PASSWORD }}'
         GMAIL_ID=${{ vars.GMAIL_ID }}
         EOF
 

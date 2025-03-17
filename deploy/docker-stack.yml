@@ -5,7 +5,7 @@ services:
     image: ghcr.io/ubclaunchpad/neuron-frontend:${GIT_COMMIT_HASH:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.rule=Host(`vms.bcbrainwellness.ca`) && PathPrefix(`/`)"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"  # Port for react app
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=myresolver"
@@ -17,21 +17,25 @@ services:
     image: ghcr.io/ubclaunchpad/neuron-backend:${GIT_COMMIT_HASH:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`vms.bcbrainwellness.ca`) && PathPrefix(`/api`)"
       - "traefik.http.services.backend.loadbalancer.server.port=3001" # Backend api port
       - "traefik.http.middlewares.backend-stripprefix.stripprefix.prefixes=/api"
       - "traefik.http.routers.backend.middlewares=backend-stripprefix"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
+    secrets:
+      - gmail-password
+      - token-secret
+      - rds-password
     environment:
       - RDS_HOSTNAME=${RDS_HOSTNAME}
       - RDS_USERNAME=${RDS_USERNAME}
-      - RDS_PASSWORD=${RDS_PASSWORD}
+      - RDS_PASSWORD_FILE=/run/secrets/rds-password
       - RDS_PORT=${RDS_PORT}
       - RDS_DB=${RDS_DB}
-      - TOKEN_SECRET=${TOKEN_SECRET}
+      - TOKEN_SECRET_FILE=/run/secrets/token-secret
       - GMAIL_ID=${GMAIL_ID}
-      - GMAIL_PASSWORD=${GMAIL_PASSWORD}
+      - GMAIL_PASSWORD_FILE=/run/secrets/gmail-password
       - HOST=${CONTAINER_URL}/api
       - FRONTEND_HOST=${CONTAINER_URL}
       - NEURON_ENV=production
@@ -68,3 +72,11 @@ services:
 
 volumes:
   letsencrypt:
+
+secrets:
+  gmail-password:
+    external: true
+  token-secret:
+    external: true
+  rds-password:
+    external: true

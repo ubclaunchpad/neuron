@@ -98,8 +98,8 @@ export default class ShiftModel {
       * // Get shifts which volunteer '123' for is requesting absence for
       * getShifts({ volunteer_id: '123', type: 'absence' });
       */
-     async getShifts(params: { 
-          volunteer_id?: string, 
+     async getShifts(params: {
+          volunteer_id?: string,
           type?: ShiftQueryType,
           status?: ShiftStatus | ShiftStatus[],
           before?: Date,
@@ -178,16 +178,16 @@ export default class ShiftModel {
                if (params.type === 'coverage') {
                     // For coverage: exclude shifts assigned to the volunteer
                     query.where('volunteer_id', '<>', params.volunteer_id);
-               } 
+               }
                else if (params.type == 'absence') {
                     // For absence: include shifts assigned to the volunteer
                     query.where('volunteer_id', params.volunteer_id);
-               } 
+               }
                else {
                     // For non-coverage and non-absence: include shifts assigned to the volunteer OR where they're covering.
                     query.where(q => {
                          q.where('volunteer_id', params.volunteer_id!)
-                         .orWhere(queryBuilder.raw("JSON_EXTRACT(absence_request, '$.covering_volunteer_id')"), '=', params.volunteer_id!);
+                              .orWhere(queryBuilder.raw("JSON_EXTRACT(absence_request, '$.covering_volunteer_id')"), '=', params.volunteer_id!);
                     });
                }
           }
@@ -234,12 +234,13 @@ export default class ShiftModel {
      }
 
      // create a new entry in the absence_request table
-     async insertAbsenceRequest(shift_id: number): Promise<ResultSetHeader> {
+     async insertAbsenceRequest(shift_id: number, category: string, details: string, comments?: string): Promise<ResultSetHeader> {
           const query = `
-               INSERT INTO absence_request (fk_shift_id)
-               VALUES (?)
+               INSERT INTO absence_request (fk_shift_id, category, details, comments)
+               VALUES (?, ?, ?, ?)
+               ON DUPLICATE KEY UPDATE category = VALUES(category), details = VALUES(details), comments = VALUES(comments)
           `;
-          const values = [shift_id];
+          const values = [shift_id, category, details, comments || null];
 
           const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
 

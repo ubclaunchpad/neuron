@@ -20,7 +20,7 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
     const {user} = useAuth();
 
     return (
-        <div className="deactivate-reactivate-modal" style={type === 2 && {zIndex: "3"}}>
+        <div className="deactivate-reactivate-modal">
             {type === 1 && <p className="inactive-account">Deactivating this account will mark the account as <span>Inactive</span>. This volunteer will no longer be able to sign in or volunteer for classes until their account is reactivated.
             </p>}
             {type === 0 && <p className="active-account">Re-activating this account will mark the account as <span>Active</span>. This will restore access for the volunteer, allowing them to sign in and volunteer for classes again.</p>}
@@ -34,7 +34,9 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                 onSubmit={(values, { setSubmitting }) => {
                     const initials = cleanInitials(values.initials);
                     if (type === 1) {
-                        deactivateVolunteer(id)
+                        deactivateVolunteer({
+                            volunteer_id: id,
+                        })
                             .then(() => {
                                 notyf.success("Account deactivated.");
                                 setTimeout(() => {
@@ -46,7 +48,9 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                                 console.error(error);
                             });
                     } else if (type === 0) {
-                        verifyVolunteer(id)
+                        verifyVolunteer({
+                            volunteer_id: id,
+                        })
                             .then(() => {
                                 notyf.success("Account reactivated.");
                                 setTimeout(() => {

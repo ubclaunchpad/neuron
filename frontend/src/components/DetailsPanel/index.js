@@ -19,6 +19,8 @@ function DetailsPanel({
   children,
   dynamicShiftButtons = [],
   shiftDetails,
+  shifts,
+  handleShiftSelection,
   type,
 }) {
   const openPanelWidth = '448px'
@@ -44,14 +46,20 @@ function DetailsPanel({
     } else {
       setPanelWidth("0px");
     }
-  }, [classId, updates]);
+  }, [classId, updates, shiftDetails]);
 
   const myClassCheck = async (data) => {
     const volunteers = data.schedules.flatMap(
-      (schedule) => schedule.volunteers || []
+      (schedule) => {
+        if (schedule.start_time === shiftDetails.start_time && schedule.end_time === shiftDetails.end_time) {
+          return schedule.volunteers
+        } else {
+          return []
+        }
+      }
     );
-    console.log("Volunteers", volunteers)
-    console.log("User", user)
+    // console.log("Volunteers", volunteers)
+    // console.log("User", user)
     setMyClass(
       volunteers.some((volunteer) => volunteer.fk_user_id === user?.user_id)
     );
@@ -106,19 +114,26 @@ function DetailsPanel({
 
   const handleToPrev = () => {
       if (!classList || !classId) return;
-      const currentIndex = classList.findIndex((c) => c.class_id === classId);
-      if (currentIndex > 0) {
-          const prevClass = classList[currentIndex - 1];
-          setClassId(prevClass.class_id);
+      // const currentClassIndex = classList.findIndex((c) => c.class_id === classId);
+      const currentShiftIndex = shifts.findIndex((s) => s.shift_id === shiftDetails.shift_id);
+      if (currentShiftIndex > 0) {
+          // const prevClass = classList[currentClassIndex - 1];
+          const prevShift = shifts[currentShiftIndex - 1];
+          handleShiftSelection(prevShift);
+          // setClassId(prevClass.class_id);
       }
   };
 
   const handleToNext = () => {
       if (!classList || !classId) return;
-      const currentIndex = classList.findIndex((c) => c.class_id === classId);
-      if (currentIndex < classList.length - 1) {
-          const nextClass = classList[currentIndex + 1];
-          setClassId(nextClass.class_id);
+      // const currentClassIndex = classList.findIndex((c) => c.class_id === classId);
+      const currentShiftIndex = shifts.findIndex((s) => s.shift_id === shiftDetails.shift_id);
+      if (currentShiftIndex < shifts.length - 1) {
+          // const nextClass = classList[currentClassIndex + 1];
+          const nextShift = shifts[currentShiftIndex + 1];
+          handleShiftSelection(nextShift);
+          // setClassId(nextClass.class_id);
+
       }
   };
 

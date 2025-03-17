@@ -5,7 +5,7 @@ services:
     image: ghcr.io/ubclaunchpad/neuron-frontend:${GIT_COMMIT_HASH:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.rule=Host(`vms.bcbrainwellness.ca`) && PathPrefix(`/`)"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"  # Port for react app
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=myresolver"
@@ -17,7 +17,7 @@ services:
     image: ghcr.io/ubclaunchpad/neuron-backend:${GIT_COMMIT_HASH:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`vms.bcbrainwellness.ca`) && PathPrefix(`/api`)"
       - "traefik.http.services.backend.loadbalancer.server.port=3001" # Backend api port
       - "traefik.http.middlewares.backend-stripprefix.stripprefix.prefixes=/api"
       - "traefik.http.routers.backend.middlewares=backend-stripprefix"

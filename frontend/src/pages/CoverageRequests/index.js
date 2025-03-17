@@ -90,6 +90,7 @@ function CoverageRequests() {
 
     // Filter shifts based on selected filter type
     setCoverageShifts(uniqueShifts);
+    console.log(uniqueShifts);
   }, [selectedDate, showModal]);
 
   // Fetch shifts for the selected date
@@ -133,6 +134,17 @@ function CoverageRequests() {
           : [buttonConfig.approved];
 
     return buttons;
+  };
+
+  const getRequestorName = (shift) => {
+    if (shift) {
+      const f_name =
+        shift.absence_request.request_f_name || shift.volunteer_f_name;
+      const l_name =
+        shift.absence_request.request_l_name || shift.volunteer_l_name;
+      return `${f_name} ${l_name}`;
+    }
+    return "";
   };
 
   const handleShiftButton = (shift, action) => {
@@ -278,6 +290,7 @@ function CoverageRequests() {
         setClassId={setSelectedClassId}
         shiftDetails={selectedShiftDetails}
         dynamicShiftButtons={selectedShiftButtons}
+        requestName={getRequestorName(selectedShiftDetails)}
       >
         <div className="coverage-schedule-page">
           {viewMode === "list" ? (

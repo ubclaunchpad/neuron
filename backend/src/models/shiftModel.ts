@@ -131,6 +131,14 @@ export default class ShiftModel {
                          'category', ar.category,
                          'details', ar.details,
                          'comments', ar.comments,
+                         'request_f_name', CASE
+                              WHEN cr.request_id IS NOT NULL THEN u1.f_name
+                              ELSE NULL
+                         END,
+                         'request_l_name', CASE
+                              WHEN cr.request_id IS NOT NULL THEN u1.l_name
+                              ELSE NULL
+                         END,
                          'covering_volunteer_id', CASE 
                               WHEN ar.covered_by IS NOT NULL THEN ar.covered_by
                               WHEN cr.volunteer_id IS NOT NULL THEN cr.volunteer_id
@@ -170,6 +178,12 @@ export default class ShiftModel {
               "v.volunteer_id"
             )
             .leftJoin({ u: "users" }, "u.user_id", "v.fk_user_id")
+            .leftJoin(
+              { v1: "volunteers" },
+              "cr.volunteer_id",
+              "v1.volunteer_id"
+            )
+            .leftJoin({ u1: "users" }, "v1.fk_user_id", "u1.user_id")
             .as("sub");
 
           // Build the main query and add filters as before

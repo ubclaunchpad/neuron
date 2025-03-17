@@ -83,7 +83,28 @@ async function rejectAbsenceRequest(req: AuthenticatedRequest, res: Response) {
     res.sendStatus(200);
 }
 
+async function getAbsenceRequests(req: AuthenticatedRequest, res: Response) {
+  const absenceRequests = await coverageModel.getAbsenceRequests();
+
+  res.json(absenceRequests);
+}
+
+async function getCoverageRequests(req: AuthenticatedRequest, res: Response) {
+  const coverageRequests = await coverageModel.getCoverageRequests();
+
+  res.json(coverageRequests);
+}
+
 export {
-    approveAbsenceRequest, approveCoverShift, rejectAbsenceRequest, rejectCoverShift, requestAbsence, requestCoverShift, withdrawAbsenceRequest, withdrawCoverShift
+  approveAbsenceRequest,
+  approveCoverShift,
+  rejectAbsenceRequest,
+  rejectCoverShift,
+  requestAbsence,
+  requestCoverShift,
+  withdrawAbsenceRequest,
+  withdrawCoverShift,
+  getAbsenceRequests,
+  getCoverageRequests,
 };
 

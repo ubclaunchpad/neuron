@@ -13,6 +13,7 @@ function CoverageDetailsPanel({
   children,
   dynamicShiftButtons = [],
   shiftDetails,
+  requestName,
 }) {
   const openPanelWidth = "448px";
   const [panelWidth, setPanelWidth] = useState("0px");
@@ -44,7 +45,11 @@ function CoverageDetailsPanel({
 
   const renderSchedules = () => {
     if (!panelInfo?.schedules) {
-      return <div className="coverage-panel-header-dow coverage-panel-titles">Not Scheduled</div>;
+      return (
+        <div className="coverage-panel-header-dow coverage-panel-titles">
+          Not Scheduled
+        </div>
+      );
     }
 
     // to stay consistent with the javascript Date getDay() function, we start at 0 for Sunday
@@ -59,7 +64,10 @@ function CoverageDetailsPanel({
     ];
 
     return panelInfo.schedules.map((schedule, idx) => (
-      <div key={idx} className="coverage-panel-header-dow coverage-panel-titles">
+      <div
+        key={idx}
+        className="coverage-panel-header-dow coverage-panel-titles"
+      >
         {dow[schedule.day]}, {formatTime(schedule.start_time)} -{" "}
         {formatTime(schedule.end_time)}
       </div>
@@ -186,14 +194,13 @@ function CoverageDetailsPanel({
             </div>
             <div className="coverage-panel-details-shift-row">
               <div className="coverage-panel-titles">Requested By</div>
-              <div className="coverage-panel-description">
-                {shiftDetails?.volunteer_f_name}{" "}
-                {shiftDetails?.volunteer_l_name}
-              </div>
+              <div className="coverage-panel-description">{requestName}</div>
             </div>
             <div className="coverage-panel-details-shift-row">
               <div className="coverage-panel-titles">Requested For</div>
-              <div className="coverage-panel-description">This session only</div>
+              <div className="coverage-panel-description">
+                This session only
+              </div>
             </div>
             <div className="coverage-panel-details-shift-row">
               <div className="coverage-panel-titles">Requested On</div>
@@ -239,14 +246,20 @@ function CoverageDetailsPanel({
             ))}
           </div>
           <div className="coverage-button-icons">
-            <button className="coverage-panel-button-icon" onClick={handleToPrev}>
+            <button
+              className="coverage-panel-button-icon"
+              onClick={handleToPrev}
+            >
               <img
                 alt="Previous"
                 src={button_icon_prev}
                 style={{ width: 16, height: 16 }}
               />
             </button>
-            <button className="coverage-panel-button-icon" onClick={handleToNext}>
+            <button
+              className="coverage-panel-button-icon"
+              onClick={handleToNext}
+            >
               <img
                 alt="Next"
                 src={button_icon_next}

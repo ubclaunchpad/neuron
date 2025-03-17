@@ -7,7 +7,6 @@ export const CoverageRoutes: RouteDefinition = {
     path: '/absence/:request_id',
     middleware: [
         isAuthorized,
-        isAdmin,
     ],
     validation: [
         param('request_id').isInt({ min: 0 }),

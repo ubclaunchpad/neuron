@@ -41,9 +41,10 @@ function CoverageRequestForm({ open, onClose, shift }) {
 
         try {
             const requestData = {
-                request_id: shift.shift_id,
-                volunteer_id: shift.fk_volunteer_id,
+                request_id: shift.absence_request.request_id,
+                volunteer_id: shift.volunteer_id,
             };
+            console.log("shift", shift);
 
             console.log("Submitting request with data:", requestData);
 

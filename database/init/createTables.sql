@@ -107,7 +107,7 @@ create table schedule (
     end_time TIME NOT NULL,
     frequency VARCHAR(15) NOT NULL DEFAULT 'weekly',
     active BOOLEAN NOT NULL DEFAULT TRUE,
-    fk_instructor_id VARCHAR(36),
+    fk_instructor_id CHAR(36),
     FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
         ON DELETE CASCADE
     FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id)

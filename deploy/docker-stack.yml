@@ -10,6 +10,8 @@ services:
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=myresolver"
     deploy:
+      restart_policy:
+        condition: any
       update_config:
         order: start-first
 
@@ -40,6 +42,8 @@ services:
       - FRONTEND_HOST=${CONTAINER_URL}
       - NEURON_ENV=production
     deploy:
+      restart_policy:
+        condition: any
       update_config:
         order: start-first
 

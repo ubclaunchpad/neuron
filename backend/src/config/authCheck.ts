@@ -6,7 +6,7 @@ import {
     AuthenticatedRequest,
     DecodedJwtPayload
 } from "../common/types.js";
-import { userModel } from "./models.js";
+import { userModel, volunteerModel } from "./models.js";
 
 // Load environment variables
 dotenv.config();
@@ -27,14 +27,12 @@ async function isAuthorized(
 
     // If the token is not provided, return an error message
     if (!token) {
-        return next();
         return res.status(401).json({
             error: "Unauthorized",
         });
     }
 
     if (!TOKEN_SECRET) {
-        return next();
         return res.status(500).json({
             error: "Server configuration error: TOKEN_SECRET is not defined",
         });
@@ -46,13 +44,27 @@ async function isAuthorized(
         
         const results = await userModel.getUsersByIds(decoded.user_id);
 
+        // If the user does not exist, return an error message
+        if (results.length === 0) {
+            return res.status(401).json({
+                error: "The token is either invalid or has expired",
+            });
+        }
+
+        const user = results[0];
+
         // Attach the user to the request
-        (req as AuthenticatedRequest).user = results[0];
+        (req as AuthenticatedRequest).user = user;
+
+         // If the user is a volunteer, attach the volunteer to the request as well
+        if (user.role === Role.volunteer) {
+            const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
+            (req as AuthenticatedRequest).volunteer = volunteer;
+        }
 
         // Call the next function
         return next();
     } catch (err) {
-        return next();
         return res.status(401).json({
             error: "The token is either invalid or has expired",
         });

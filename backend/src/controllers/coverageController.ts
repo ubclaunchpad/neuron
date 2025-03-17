@@ -16,6 +16,10 @@ async function requestCoverShift(req: AuthenticatedRequest, res: Response) {
 async function withdrawCoverShift(req: AuthenticatedRequest, res: Response) {
     const { request_id, volunteer_id } = req.params;
 
+    if (req.volunteer?.volunteer_id !== volunteer_id) {
+        res.sendStatus(403);
+    }
+
     await coverageModel.deleteCoverageRequest(Number(request_id), volunteer_id);
 
     res.sendStatus(200);
@@ -42,7 +46,7 @@ async function requestAbsence(req: AuthenticatedRequest, res: Response) {
     const { shift_id } = req.params; 
     const request = req.body; 
 
-    coverageModel.insertAbsenceRequest(Number(shift_id), request);
+    await coverageModel.insertAbsenceRequest(Number(shift_id), request);
 
     res.sendStatus(200);
 }
@@ -50,6 +54,13 @@ async function requestAbsence(req: AuthenticatedRequest, res: Response) {
 // volunteers cancels their request for shift absence
 async function withdrawAbsenceRequest(req: AuthenticatedRequest, res: Response) {
     const { request_id } = req.params;
+
+    const absenceRequest = await coverageModel.getAbsenceRequest(Number(request_id));
+
+    // 403 if volunteer is not the one who made the request
+    if (absenceRequest.volunteer_id !== req.volunteer?.volunteer_id) {
+        res.sendStatus(403);
+    }
 
     await coverageModel.deleteAbsenceRequest(Number(request_id));
 

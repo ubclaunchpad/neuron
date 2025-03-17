@@ -139,8 +139,8 @@ export const VolunteerRoutes: RouteDefinition = {
                         body('email').isEmail().optional(),
                         body('active').isInt().optional(),
                         body('phone_number').isMobilePhone('en-US').optional(),
-                        body('city').isString().optional(),
-                        body('province').isString().optional(),
+                        body("city").optional().custom(value => value === null || typeof value === "string"),
+                        body("province").optional().custom(value => value === null || typeof value === "string"),
                         body('p_time_ctmt').isInt({ min: 0 }).optional(),
                     ],
                     action: updateVolunteer

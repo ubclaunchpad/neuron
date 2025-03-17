@@ -71,14 +71,14 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
         const uniqueIds = [],
             uniqueInstructors = [];
             instructors?.forEach((instructor) => {
-                if (!uniqueIds.includes(instructor.id)) {
+                if (instructor.id && !uniqueIds.includes(instructor.id)) {
                     uniqueIds.push(instructor.id);
                     uniqueInstructors.push(instructor);
                 }
         });
 
         if (!uniqueInstructors || uniqueInstructors.length === 0) {
-            return <>No instructors for this class</>;
+            return <>No instructors for this class.</>;
         }
 
         return (

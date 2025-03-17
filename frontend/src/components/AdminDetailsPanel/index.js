@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams, useLocation } from "react-router-dom";
 import ClassScheduleCard from "../ClassScheduleCard";
 import "./index.css";
 import { deleteClass } from "../../api/classesPageService";
@@ -11,6 +12,10 @@ function AdminDetailsPanel({
     setUpdates, 
     setClassId 
 }) {
+    const [searchParams] = useSearchParams();
+    const location = useLocation();
+    const pageClassId = location.state?.classId;
+    const editing = searchParams.get("edit") === "true";
     const [showPopup, setShowPopup] = useState(false);
 
     return (
@@ -43,6 +48,9 @@ function AdminDetailsPanel({
                                     onClick={() => {
                                         deleteClass(classId)
                                             .then(() => {
+                                                if (editing && pageClassId === classId) {
+                                                    navigate("/classes");
+                                                }
                                                 notyf.success("Class deleted successfully.");
 
                                                 // collapse the details panel

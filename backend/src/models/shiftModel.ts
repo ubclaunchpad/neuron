@@ -245,21 +245,29 @@ export default class ShiftModel {
           }
      }
 
+     private formatDate(date: Date): string {
+          const options: Intl.DateTimeFormatOptions = { timeZone: "America/Vancouver", year: "numeric", month: "2-digit", day: "2-digit" };
+          const [{ value: year }, , { value: month }, , { value: day }] = 
+               new Intl.DateTimeFormat("en-CA", options).formatToParts(date);
+          return `${year}-${month}-${day}`;
+     }
+
      private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number, frequency: Frequency): string[] {
           const result: string[] = [];
 
-    let start = new Date(classTimeline.start_date);
-    const end = new Date(classTimeline.end_date);
+          let start = new Date(classTimeline.start_date); // start date, 12:00 AM (local time)
+          const end = new Date(classTimeline.end_date); // end date, 12:00 AM (local time)
+          end.setHours(23, 59); // set last possible shift time as end_date, 11:59 PM (local time)
 
-    const [hours, minutes] = startTime.split(":").map(Number);
-    const startDateAndTime = new Date(classTimeline.start_date);
-    startDateAndTime.setHours(hours, minutes);
+          const [hours, minutes] = startTime.split(':').map(Number);
+          const startDateAndTime = new Date(classTimeline.start_date);
+          startDateAndTime.setHours(hours, minutes); // set using local time
 
     const now = new Date();
 
-    // if start is earlier than right now
-    if (startDateAndTime < now) {
-      start = now;
+          // if start is earlier than right now (both are in UTC)
+          if (startDateAndTime < now) {
+               start = now;
 
       // if schedule starts today at exactly now or at an earlier time than now, we need to skip this week
       if (
@@ -279,14 +287,14 @@ export default class ShiftModel {
 
           // if schedule only occurs once, then only add one date
           if (frequency === Frequency.once) {
-               result.push(start.toISOString().split('T')[0]);
+               result.push(this.formatDate(start)); // format to YYYY-MM-DD in local time
                return result;
           }
 
           const daysToAdd = this.getDaysToAdd(frequency);
-          // collect all occurrences of the given day until the end date
+          // collect all occurrences of the given day until the end date (both are in UTC)
           while (start <= end) {
-               result.push(start.toISOString().split('T')[0]); // store as YYYY-MM-DD
+               result.push(this.formatDate(start)); // format to YYYY-MM-DD in local time
                start.setDate(start.getDate() + daysToAdd);
           }
 

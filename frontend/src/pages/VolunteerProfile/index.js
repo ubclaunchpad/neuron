@@ -26,7 +26,7 @@ function VolunteerProfile() {
         { user?.volunteer && user.volunteer.volunteer_id ?
         <div className="content">
           <div className="column-1">
-            <div className="volunteer-card">
+            <div className="volunteer-details-card">
               <VolunteerDetailsCard volunteer={{
                   ...user.volunteer,
                   profile_picture: formatImageUrl(user?.fk_image_id)

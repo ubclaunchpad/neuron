@@ -17,31 +17,37 @@ export default function AbsenceModal({ shift, setShowModal, handleApprove, handl
   return (
     <form className="approve-coverage" onSubmit={handleSubmit}>
       <div className="approve-coverage-header">
-        <h2 className="approve-coverage-title">{approve ? "Approve" : "Decline"} Absence</h2>
+        <h2 className="approve-coverage-title">
+          {approve ? "Approve" : "Decline"} Absence
+        </h2>
         <div
           className="close-modal-btn"
           onClick={() => {
-            setShowModal(false)
+            setShowModal(false);
           }}
         >
           <CloseIcon />
         </div>
       </div>
       <div>
-        Which requests do you want to approve?{" "}
+        Which requests do you want to {approve ? "approve" : "decline"}?{" "}
         <span className="required-field-text">
           {"("}Required{")"}
         </span>
       </div>
       <div className="approve-coverage-options">
         <div className="approve-coverage-option">
-          <input type="checkbox" className="approve-coverage-checkbox" onChange={(e) => {
-            if (e.target.checked) {
-              setChecked(true);
-            } else {
-              setChecked(false);
-            }
-          }} />
+          <input
+            type="checkbox"
+            className="approve-coverage-checkbox"
+            onChange={(e) => {
+              if (e.target.checked) {
+                setChecked(true);
+              } else {
+                setChecked(false);
+              }
+            }}
+          />
           <span>This Session Only</span>
         </div>
         <div className="approve-coverage-option">
@@ -70,7 +76,9 @@ export default function AbsenceModal({ shift, setShowModal, handleApprove, handl
         />
       </div>
       <button
-        className={approve ? "approve-coverage-button" : "decline-coverage-button"}
+        className={
+          approve ? "approve-coverage-button" : "decline-coverage-button"
+        }
         type="submit"
         disabled={initials.length !== 2 || !checked}
       >

@@ -20,6 +20,7 @@ import {
 } from "../../api/coverageService";
 import AbsenceModal from "../../components/AbsenceModal";
 import CoverageModal from "../../components/CoverageModal";
+import { useNavigate } from "react-router-dom";
 
 function CoverageRequests() {
   const currentDate = dayjs();
@@ -37,6 +38,7 @@ function CoverageRequests() {
   const [selectedCoverage, setSelectedCoverage] = useState(null);
   const { days, initialDate, nextWeek, previousWeek, goToToday } =
     useWeekView();
+  const navigate = useNavigate();
 
   // Create a ref object to store references to each shifts-container for scrolling
   const shiftRefs = useRef({});
@@ -120,7 +122,7 @@ function CoverageRequests() {
 
   // Creates the buttons for the details panel based on the shift type
   const generateButtonsForDetailsPanel = (shift) => {
-    const buttonConfig = getCoverageButtonConfig(shift, handleShiftUpdate);
+    const buttonConfig = getCoverageButtonConfig(shift, handleShiftButton);
     const buttons =
       tab === 1
         ? shift.absence_request.status === "absence-pending"
@@ -133,8 +135,7 @@ function CoverageRequests() {
     return buttons;
   };
 
-  // Update state when we update a shift
-  const handleShiftUpdate = (shift, action) => {
+  const handleShiftButton = (shift, action) => {
     setSelectedShift(shift);
     setShowModal(true);
     if (action === "approve") {
@@ -142,21 +143,37 @@ function CoverageRequests() {
     } else if (action === "decline") {
       setApprove(false);
     }
-    setShifts((staleShifts) => {
-      return staleShifts.map((shift) => {
-        if (shift.shift_id === shift.shift_id) {
+  };
+
+  // Update state when we update a shift
+  const handleShiftUpdate = (newShift, action) => {
+    if (tab === 1) {
+      setShifts((staleShifts) => {
+        return staleShifts.map((shift) => {
+          if (shift.shift_id === newShift.shift_id) {
+            return newShift;
+          }
           return shift;
-        }
-        return shift;
+        });
       });
-    });
+    } else {
+      setCoverageShifts((staleShifts) => {
+        return staleShifts.map((shift) => {
+          if (shift.shift_id === newShift.shift_id) {
+            return newShift;
+          }
+          return shift;
+        });
+      });
+    }
 
     // Triggers a re-render of the details panel
-    handleShiftSelection(shift);
+    handleShiftSelection(newShift);
   };
 
   // Update details panel when a shift is selected
   const handleShiftSelection = (classData) => {
+    console.log(classData);
     setSelectedClassId(classData.class_id);
     setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
     setShiftDetails(classData);
@@ -182,6 +199,7 @@ function CoverageRequests() {
     approveAbsenceRequest(shift.absence_request.request_id)
       .then(() => {
         console.log("Absence request approved successfully");
+        window.location.reload();
       })
       .catch((error) => {
         console.error("Error approving absence request:", error);
@@ -196,6 +214,7 @@ function CoverageRequests() {
     )
       .then(() => {
         console.log("Coverage request approved successfully");
+        window.location.reload();
       })
       .catch((error) => {
         console.error("Error approving coverage request:", error);
@@ -206,6 +225,7 @@ function CoverageRequests() {
     rejectAbsenceRequest(shift.absence_request.request_id)
       .then(() => {
         console.log("Absence request declined successfully");
+        window.location.reload();
       })
       .catch((error) => {
         console.error("Error declining absence request:", error);
@@ -219,6 +239,7 @@ function CoverageRequests() {
     )
       .then(() => {
         console.log("Coverage request declined successfully");
+        window.location.reload();
       })
       .catch((error) => {
         console.error("Error declining coverage request:", error);
@@ -253,7 +274,7 @@ function CoverageRequests() {
       <hr />
       <CoverageDetailsPanel
         classId={selectedClassId}
-        classList={shifts}
+        classList={tab === 1 ? shifts : coverageShifts}
         setClassId={setSelectedClassId}
         shiftDetails={selectedShiftDetails}
         dynamicShiftButtons={selectedShiftButtons}
@@ -323,7 +344,7 @@ function CoverageRequests() {
                               onShiftSelect={handleShiftSelection}
                               buttonConfig={getCoverageButtonConfig(
                                 shift,
-                                handleShiftUpdate
+                                handleShiftButton
                               )}
                             />
                           ))}
@@ -364,7 +385,7 @@ function CoverageRequests() {
                             onShiftSelect={handleShiftSelection}
                             buttonConfig={getCoverageButtonConfig(
                               shift,
-                              handleShiftUpdate
+                              handleShiftButton
                             )}
                           />
                         ))}

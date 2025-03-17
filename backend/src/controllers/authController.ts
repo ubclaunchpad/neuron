@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import dotenv from "dotenv";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
@@ -8,25 +7,17 @@ import { UserDB, VolunteerDB } from "../common/databaseModels.js";
 import { Role } from "../common/interfaces.js";
 import { AuthenticatedRequest } from "../common/types.js";
 import connectionPool from "../config/database.js";
+import { FRONTEND_HOST, GMAIL_ID, GMAIL_PASSWORD, HOST, TOKEN_SECRET } from "../config/environment.js";
 import { userModel, volunteerModel } from "../config/models.js";
-
-// Load environment variables
-dotenv.config();
-
-// Define environment variables
-const HOST = process.env.HOST;
-const TOKEN_SECRET = process.env.TOKEN_SECRET;
-const FRONTEND_HOST = process.env.FRONTEND_HOST;
 
 //Mail Config
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: process.env.GMAIL_ID,
-        pass: process.env.GMAIL_PASSWORD,
+        user: GMAIL_ID,
+        pass: GMAIL_PASSWORD,
     },
 });
-
 
 async function checkAuthorization(
     req: AuthenticatedRequest,

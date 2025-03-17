@@ -23,15 +23,19 @@ services:
       - "traefik.http.routers.backend.middlewares=backend-stripprefix"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
+    secrets:
+      - gmail_password
+      - token_secret
+      - rds_password
     environment:
       - RDS_HOSTNAME=${RDS_HOSTNAME}
       - RDS_USERNAME=${RDS_USERNAME}
-      - RDS_PASSWORD=${RDS_PASSWORD}
+      - RDS_PASSWORD_FILE=/run/secrets/rds_password
       - RDS_PORT=${RDS_PORT}
       - RDS_DB=${RDS_DB}
-      - TOKEN_SECRET=${TOKEN_SECRET}
+      - TOKEN_SECRET_FILE=/run/secrets/token_secret
       - GMAIL_ID=${GMAIL_ID}
-      - GMAIL_PASSWORD=${GMAIL_PASSWORD}
+      - GMAIL_PASSWORD_FILE=/run/secrets/gmail_password
       - HOST=${CONTAINER_URL}/api
       - FRONTEND_HOST=${CONTAINER_URL}
       - NEURON_ENV=production
@@ -68,3 +72,11 @@ services:
 
 volumes:
   letsencrypt:
+
+secrets:
+  gmail_password:
+    external: true
+  token_secret:
+    external: true
+  rds_password:
+    external: true

@@ -271,7 +271,7 @@ function CoverageRequests() {
                     setTab(1);
                   }}
                 >
-                  Request for Shift Coverage
+                  Request for Shift Absence
                 </div>
                 <div
                   className={"coverage-tab".concat(

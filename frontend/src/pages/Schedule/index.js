@@ -2,14 +2,16 @@ import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWeekView } from "react-weekview";
 import { getShifts } from "../../api/shiftService";
+import AbsenceRequestForm from "../../components/AbsenceRequestForm";
 import CalendarView from "../../components/CalendarView";
+import CoverageRequestForm from "../../components/CoverageRequestForm";
 import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
 import { useAuth } from "../../contexts/authContext";
 import { ADMIN_SHIFT_TYPES, COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
-import { getButtonConfig } from "../../utils/buttonConfig";
+import { getButtonConfig, setOpenAbsenceRequestHandler, setOpenCoverageRequestHandler } from "../../utils/buttonConfig";
 import "./index.css";
 
 function Schedule() {
@@ -24,170 +26,200 @@ function Schedule() {
     const [viewMode, setViewMode] = useState("list");
     const { days, initialDate, nextWeek, previousWeek, goToToday } = useWeekView();
 
+    const [isAbsenceRequestOpen, setIsAbsenceRequestOpen] = useState(false);
+    const [absenceRequestShift, setAbsenceRequestShift] = useState(null);
+    const [isCoverageRequestOpen, setIsCoverageRequestOpen] = useState(false);
+    const [coverageRequestShift, setCoverageRequestShift] = useState(null);
+
+    const openAbsenceRequest = (shift) => {
+        setAbsenceRequestShift(shift);
+        setIsAbsenceRequestOpen(true);
+    };
+
+    const openCoverageRequest = (shift) => {
+        setCoverageRequestShift(shift);
+        setIsCoverageRequestOpen(true);
+    };
+
+    useEffect(() => {
+        setOpenAbsenceRequestHandler(openAbsenceRequest);
+        setOpenCoverageRequestHandler(openCoverageRequest)
+    }, []);
+
+    const closeAbsenceRequest = () => {
+        setIsAbsenceRequestOpen(false);
+        setAbsenceRequestShift(null);
+    };
+
+    const closeCoverageRequest = () => {
+        setIsCoverageRequestOpen(false);
+        setCoverageRequestShift(null);
+    };
+
     // Create a ref object to store references to each shifts-container for scrolling
     const shiftRefs = useRef({});
     const scheduleContainerRef = useRef(null);
 
     const fetchShifts = useCallback(async () => {
-      const params = {
-          // volunteer is passed in only for volunteers, not admins
-          volunteer: isAdmin ? null : user?.volunteer?.volunteer_id,
-          before: selectedDate.endOf('month').format("YYYY-MM-DD"),
-          after: selectedDate.startOf('month').format("YYYY-MM-DD"),
+        const params = {
+            // volunteer is passed in only for volunteers, not admins
+            volunteer: isAdmin ? null : user?.volunteer?.volunteer_id,
+            before: selectedDate.endOf('month').format("YYYY-MM-DD"),
+            after: selectedDate.startOf('month').format("YYYY-MM-DD"),
         }
-      
+
         let response;
 
         if (isAdmin) {
-          response = await getShifts(params);
+            response = await getShifts(params);
         } else {
-          // For volunteers, fetch shifts associated to volunteer and open shifts for coverage
-          const [myShifts, myCoverageShifts] = await Promise.all([
-            getShifts({
-              ...params,
-            }),
+            // For volunteers, fetch shifts associated to volunteer and open shifts for coverage
+            const [myShifts, myCoverageShifts] = await Promise.all([
+                getShifts({
+                    ...params,
+                }),
 
-            getShifts({
-              ...params,
-              type: 'coverage',
-            })
-          ])
+                getShifts({
+                    ...params,
+                    type: 'coverage',
+                })
+            ])
 
-          const openCoverageShifts = myCoverageShifts.filter(
-            shift => shift.absence_request?.status === 'open'
-          );
-          console.log('mycoverage', myCoverageShifts);
-          console.log('myopen', openCoverageShifts);
-          response = [...myShifts, ...openCoverageShifts];
+            const openCoverageShifts = myCoverageShifts.filter(
+                shift => shift.absence_request?.status === 'open'
+            );
+            console.log('mycoverage', myCoverageShifts);
+            console.log('myopen', openCoverageShifts);
+            response = [...myShifts, ...openCoverageShifts];
         }
         console.log(response);
 
-      // Process shifts to determine shift_type based on absence_request ; case conditions for Admin accounts
-      const processedShifts = response.map(shift => {
-        let shift_type;
-        let coverage_status;
-        // COVERAGE_STATUSES.PENDING right now is for both pending coverage requests and absence requests – may need to fix
-      
-         if (!shift.absence_request) {
-          // If the absence request is resolved or there is no absence request, shift is covered
-          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_COVERED : SHIFT_TYPES.MY_SHIFTS;
-          // No coverage status for covered shifts
-          coverage_status = null;
-        } else if (shift.absence_request.status === 'absence-pending') {
-          // The shift has an absence request, that is pending
-          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE : SHIFT_TYPES.MY_COVERAGE_REQUESTS;
-          coverage_status = COVERAGE_STATUSES.PENDING;
-        } else if (shift.absence_request.status === 'resolved') {
-          // Resolved
-          shift_type = 'resolved';
-          // Coverage status is resolved
-          coverage_status = COVERAGE_STATUSES.RESOLVED;
-        } else if (shift.absence_request.status === 'coverage-pending') {
-          // A volunteer has offered to cover this shift 
-          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL : shift.volunteer_id === user.volunteer.volunteer_id ? SHIFT_TYPES.MY_SHIFTS : SHIFT_TYPES.COVERAGE;
-          coverage_status = COVERAGE_STATUSES.PENDING;
-        } else if (shift.absence_request.status === 'open') {
-          // Shift absence request is approved and is now open
-          shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE : SHIFT_TYPES.COVERAGE;
-          coverage_status = COVERAGE_STATUSES.OPEN
-        } 
-      
-        return { ...shift, shift_type, coverage_status };
-      }).sort((a, b) => {
-        return dayjs(a.shift_date).diff(dayjs(b.shift_date));
-      })
-      console.log( 'processed', processedShifts);
+        // Process shifts to determine shift_type based on absence_request ; case conditions for Admin accounts
+        const processedShifts = response.map(shift => {
+            let shift_type;
+            let coverage_status;
+            // COVERAGE_STATUSES.PENDING right now is for both pending coverage requests and absence requests – may need to fix
+
+            if (!shift.absence_request) {
+                // If the absence request is resolved or there is no absence request, shift is covered
+                shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_COVERED : SHIFT_TYPES.MY_SHIFTS;
+                // No coverage status for covered shifts
+                coverage_status = null;
+            } else if (shift.absence_request.status === 'absence-pending') {
+                // The shift has an absence request, that is pending
+                shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE : SHIFT_TYPES.MY_COVERAGE_REQUESTS;
+                coverage_status = COVERAGE_STATUSES.PENDING;
+            } else if (shift.absence_request.status === 'resolved') {
+                // Resolved
+                shift_type = 'resolved';
+                // Coverage status is resolved
+                coverage_status = COVERAGE_STATUSES.RESOLVED;
+            } else if (shift.absence_request.status === 'coverage-pending') {
+                // A volunteer has offered to cover this shift 
+                shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL : shift.volunteer_id === user.volunteer.volunteer_id ? SHIFT_TYPES.MY_SHIFTS : SHIFT_TYPES.COVERAGE;
+                coverage_status = COVERAGE_STATUSES.PENDING;
+            } else if (shift.absence_request.status === 'open') {
+                // Shift absence request is approved and is now open
+                shift_type = isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE : SHIFT_TYPES.COVERAGE;
+                coverage_status = COVERAGE_STATUSES.OPEN
+            }
+
+            return { ...shift, shift_type, coverage_status };
+        }).sort((a, b) => {
+            return dayjs(a.shift_date).diff(dayjs(b.shift_date));
+        })
+        console.log('processed', processedShifts);
 
         const shiftMap = new Map();
 
         processedShifts.forEach((shift) => {
-          const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
-          const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
-          const pastShift = currentDate.isAfter(shiftEnd);
+            const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
+            const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
+            const pastShift = currentDate.isAfter(shiftEnd);
 
-          // Don't show past shifts that are open for coverage
-          if (pastShift && shift.shift_type === (isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE : SHIFT_TYPES.COVERAGE)) {
-            // skip shift
-            return
-          }
-          // Don't show resolved shifts
-          if (shift.shift_type === 'resolved') {
-            return
-          }
-          
-          // Composite for admin -> class_id, with shift date and start time
-          // Key for volunteer -> shift_id
-          const key = isAdmin 
-          ? `${shift.class_id}-${shiftDay}-${shift.start_time}`
-          : shift.shift_id;
-
-          // Conditional to see if key is already in map
-          if (!shiftMap.has(key)) {
-
-            if (isAdmin) {
-              shiftMap.set(key, {
-                class_id: shift.class_id,
-                class_name: shift.class_name,
-                shift_date: shift.shift_date,
-                day: shift.day,
-                start_time: shift.start_time,
-                end_time: shift.end_time,
-                duration: shift.duration,
-                instructions: shift.instructions,
-                zoom_link: shift.zoom_link,
-  
-                // Volunteer-specific information is aggregated
-                volunteers: [{
-                  volunteer_id: shift.volunteer_id,
-                  shift_id: shift.shift_id,
-                  checked_in: shift.checked_in,
-                  absence_request: shift.absence_request
-                }],
-  
-                shift_type: shift.shift_type
-
-              })
-            } else {
-              // For volunteers, simply enter in shift information
-              shiftMap.set(key, shift)
+            // Don't show past shifts that are open for coverage
+            if (pastShift && shift.shift_type === (isAdmin ? ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE : SHIFT_TYPES.COVERAGE)) {
+                // skip shift
+                return
             }
-          } else {
-            const existingEntry = shiftMap.get(key)
-
-            // For admins, push volunteer information into the existing shift information if it already exists
-            if (isAdmin) {
-              existingEntry.volunteers.push({
-                volunteer_id: shift.volunteer_id,
-                shift_id: shift.shift_id,
-                checked_in: shift.checked_in,
-                absence_request: shift.absence_request
-              });
-
-              // Shifts are updated based on priority: PENDING_FULFILL > NEEDS_COVERAGE > REQUESTED_COVERAGE > COVERED
-              
-              if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL) {
-                existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL;
-              } else if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE && 
-                existingEntry.shift_type !== ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE) {
-                existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE;
-              } else if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE &&
-                existingEntry.shift_type !== ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE) {
-                existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE;
-              } 
-            } else {
-                // Prioritize showing coverage shifts over my shifts
-              if (existingEntry && existingEntry.shift_type === SHIFT_TYPES.MY_SHIFTS && shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
-                shiftMap.set(shift.shift_id, shift);
-               } else if (!existingEntry) {
-                shiftMap.set(key, shift);
-              }
+            // Don't show resolved shifts
+            if (shift.shift_type === 'resolved') {
+                return
             }
-          }
-      });
-      
 
-      const uniqueShifts = Array.from(shiftMap.values());
-      console.log('unique', uniqueShifts)
+            // Composite for admin -> class_id, with shift date and start time
+            // Key for volunteer -> shift_id
+            const key = isAdmin
+                ? `${shift.class_id}-${shiftDay}-${shift.start_time}`
+                : shift.shift_id;
+
+            // Conditional to see if key is already in map
+            if (!shiftMap.has(key)) {
+
+                if (isAdmin) {
+                    shiftMap.set(key, {
+                        class_id: shift.class_id,
+                        class_name: shift.class_name,
+                        shift_date: shift.shift_date,
+                        day: shift.day,
+                        start_time: shift.start_time,
+                        end_time: shift.end_time,
+                        duration: shift.duration,
+                        instructions: shift.instructions,
+                        zoom_link: shift.zoom_link,
+
+                        // Volunteer-specific information is aggregated
+                        volunteers: [{
+                            volunteer_id: shift.volunteer_id,
+                            shift_id: shift.shift_id,
+                            checked_in: shift.checked_in,
+                            absence_request: shift.absence_request
+                        }],
+
+                        shift_type: shift.shift_type
+
+                    })
+                } else {
+                    // For volunteers, simply enter in shift information
+                    shiftMap.set(key, shift)
+                }
+            } else {
+                const existingEntry = shiftMap.get(key)
+
+                // For admins, push volunteer information into the existing shift information if it already exists
+                if (isAdmin) {
+                    existingEntry.volunteers.push({
+                        volunteer_id: shift.volunteer_id,
+                        shift_id: shift.shift_id,
+                        checked_in: shift.checked_in,
+                        absence_request: shift.absence_request
+                    });
+
+                    // Shifts are updated based on priority: PENDING_FULFILL > NEEDS_COVERAGE > REQUESTED_COVERAGE > COVERED
+
+                    if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL) {
+                        existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_PENDING_FULFILL;
+                    } else if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE &&
+                        existingEntry.shift_type !== ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE) {
+                        existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE;
+                    } else if (shift.shift_type === ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE &&
+                        existingEntry.shift_type !== ADMIN_SHIFT_TYPES.ADMIN_NEEDS_COVERAGE) {
+                        existingEntry.shift_type = ADMIN_SHIFT_TYPES.ADMIN_REQUESTED_COVERAGE;
+                    }
+                } else {
+                    // Prioritize showing coverage shifts over my shifts
+                    if (existingEntry && existingEntry.shift_type === SHIFT_TYPES.MY_SHIFTS && shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) {
+                        shiftMap.set(shift.shift_id, shift);
+                    } else if (!existingEntry) {
+                        shiftMap.set(key, shift);
+                    }
+                }
+            }
+        });
+
+
+        const uniqueShifts = Array.from(shiftMap.values());
+        console.log('unique', uniqueShifts)
 
 
         // Filter shifts based on selected filter type
@@ -202,10 +234,7 @@ function Schedule() {
 
     // Fetch shifts for the selected date and filter
     useEffect(() => {
-        const fetchData = async () => {
-            await fetchShifts();
-        };
-        fetchData();
+        fetchShifts();
     }, [fetchShifts]);
 
     // map of shifts grouped by date { date: [shift1, shift2, ...] }
@@ -225,24 +254,24 @@ function Schedule() {
         const pastShift = currentDate.isAfter(shiftEnd);
 
         const buttons = [];
-        const buttonConfig = getButtonConfig(shift, handleShiftUpdate, isAdmin? null : user?.volunteer.volunteer_id);
+        const buttonConfig = getButtonConfig(shift, handleShiftUpdate, isAdmin ? null : user?.volunteer.volunteer_id);
         const primaryButton = buttonConfig[shift.shift_type]
 
         if (primaryButton.label && !pastShift) {
-          buttons.push(primaryButton);
-          }
+            buttons.push(primaryButton);
+        }
 
         if (isAdmin && !pastShift) {
-          buttons.push(buttonConfig.CANCEL);
+            buttons.push(buttonConfig.CANCEL);
         }
-        
+
         if (shift.shift_type === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
-          buttons.push(buttonConfig.REQUEST_COVERAGE);
-      } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.PENDING) {
-          buttons.push(buttonConfig.CANCEL);
-      } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS && shift.coverage_status === COVERAGE_STATUSES.OPEN) {
-          buttons.push(buttonConfig.CANCEL);
-      } 
+            buttons.push(buttonConfig.REQUEST_COVERAGE);
+        } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.PENDING) {
+            buttons.push(buttonConfig.CANCEL);
+        } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS && shift.coverage_status === COVERAGE_STATUSES.OPEN) {
+            buttons.push(buttonConfig.CANCEL);
+        }
 
         return buttons;
     };
@@ -268,7 +297,7 @@ function Schedule() {
         setSelectedClassId(classData.class_id);
         setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
         console.log(selectedShiftButtons);
-        // console.log( "HELLO", classData.shift_details);
+        console.log("HELLO", classData.shift_details);
         setShiftDetails(classData);
     };
 
@@ -349,6 +378,16 @@ function Schedule() {
                     )}
                 </div>
             </DetailsPanel>
+            <AbsenceRequestForm
+                open={isAbsenceRequestOpen}
+                onClose={closeAbsenceRequest}
+                shift={absenceRequestShift}
+            />
+            <CoverageRequestForm
+                open={isCoverageRequestOpen}
+                onClose={closeCoverageRequest}
+                shift={coverageRequestShift}
+            />
         </main>
     );
 }

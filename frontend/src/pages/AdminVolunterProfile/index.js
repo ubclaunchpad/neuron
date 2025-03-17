@@ -1,18 +1,18 @@
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
-import { getVolunteerShiftsForMonth } from "../../api/shiftService";
-import { SHIFT_TYPES } from "../../data/constants";
 import { useSearchParams } from "react-router-dom";
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import { formatImageUrl } from '../../api/imageService';
+import { getVolunteerShiftsForMonth } from "../../api/shiftService";
+import { fetchVolunteerData } from "../../api/volunteerService";
 import DashboardCoverage from "../../components/DashboardCoverage";
 import Notifications from "../../components/Notifications";
-import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
 import AvailabilityGrid from "../../components/volunteerProfile/availabilityGrid";
-import { formatImageUrl } from '../../api/imageService';
-import { fetchVolunteerData } from "../../api/volunteerService";
+import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
+import { SHIFT_TYPES } from "../../data/constants";
 import "./index.css";
 
 const AdminVolunteerProfile = () => {

@@ -42,7 +42,7 @@ const SignUpForm = () => {
                             notyf.success("Account created successfully.");
                             setSubmitting(false);
                             setTimeout(() => {
-                                window.location.href = "/auth/login";
+                                navigate("/auth/login");
                             }, 2500);
                         })
                         .catch((error) => {

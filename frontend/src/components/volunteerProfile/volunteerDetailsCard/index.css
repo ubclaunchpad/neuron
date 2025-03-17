@@ -130,6 +130,12 @@
     height: fit-content;
 }
 
+.profile-row td {
+    white-space: normal;
+    word-break: break-word;
+    padding: 4px 0;
+}
+
 .profile-title {
     margin-top: 0;
     margin-bottom: 12px;

@@ -113,8 +113,9 @@ function AbsenceRequestForm({ open, onClose, shift }) {
                                     className="radio-input"
                                     checked={whichShifts === "recurring"}
                                     onChange={() => setWhichShifts("recurring")}
+                                    disabled={true}
                                 />
-                                <span>This session and future recurring sessions</span>
+                                <span className="radio-text-recurring-sessions">This session and future recurring sessions</span>
                             </div>
                         </div>
                     </div>

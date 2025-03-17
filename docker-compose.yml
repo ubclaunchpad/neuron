@@ -1,7 +1,0 @@
-version: '3.7'
-
-services:
-  frontend:
-    image: ghcr.io/ubclaunchpad/neuron-frontend:d2ed389e4d8fc06d86fa91d07abd73f49436e57a
-    ports:
-      - "80:80"

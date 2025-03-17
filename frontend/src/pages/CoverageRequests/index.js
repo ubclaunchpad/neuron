@@ -90,7 +90,6 @@ function CoverageRequests() {
 
     // Filter shifts based on selected filter type
     setCoverageShifts(uniqueShifts);
-    console.log(uniqueShifts);
   }, [selectedDate, showModal]);
 
   // Fetch shifts for the selected date

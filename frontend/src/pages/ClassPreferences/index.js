@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchAllClassPreferences, fetchUserPreferredClasses, fetchVolunteerAvailability, updateUserPreferredClasses } from "../../api/volunteerService";
 import dropdown_button from "../../assets/dropdown-button.png";
 import edit_icon from "../../assets/edit-icon.png";
@@ -32,6 +33,7 @@ function ClassPreferences() {
      const [userAvailability, setUserAvailability] = useState(null);
      const FIT_AVAILABILITY_TITLE = "Classes that Fit My Availability";
      const { logout } = useAuth();
+     const navigate = useNavigate();
 
      // Modal hooks
      const [modalOpen, setModalOpen] = useState(false);
@@ -575,9 +577,9 @@ function ClassPreferences() {
                     </div>
                </Modal>
 
-               <Modal isOpen={alertModalOpen} width={"fit-content"} height={"fit-content"} onClose={() => {window.location.reload(true)}}>
+               <Modal isOpen={alertModalOpen} width={"fit-content"} height={"fit-content"} onClose={() => {navigate(0)}}>
                     <div className="alert-modal-content">Your preferences have been recorded!
-                         <button className="save-button" onClick={()=> {window.location.reload(true)}}>Close</button>
+                         <button className="save-button" onClick={()=> {navigate(0)}}>Close</button>
                     </div>
                </Modal>
           </main>      

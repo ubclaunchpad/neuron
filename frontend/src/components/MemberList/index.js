@@ -1,9 +1,11 @@
-import "./index.css";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import BorderColorRoundedIcon from '@mui/icons-material/BorderColorRounded';
-import Modal from "../Modal";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { formatImageUrl } from "../../api/imageService";
 import AddEditInstructorModal from "../AddEditInstructorModal";
+import ProfileImg from "../ImgFallback";
+import Modal from "../Modal";
+import "./index.css";
 
 const MemberList = ({data, fetchData, type}) => {
     const navigate = useNavigate();
@@ -21,8 +23,7 @@ const MemberList = ({data, fetchData, type}) => {
                     }
                 }}>
                     <div className="member-info">
-                        <div className="avatar" style={{backgroundImage: member.fk_image_id !== undefined ? `url(http://localhost:3001/image/${member.fk_image_id})` : `url('https://api.dicebear.com/9.x/initials/svg?seed=${member.f_name}+${member.l_name}')`}}>
-                        </div>
+                        <ProfileImg src={formatImageUrl(member.fk_image_id)} name={member.f_name}></ProfileImg>
                         <div className="member-details">
                             <div className="member-name">{member.f_name} {member.l_name}</div>
                             <div className="member-email">{member.email}</div>

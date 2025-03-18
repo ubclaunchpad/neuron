@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { ShiftDB } from '../common/databaseModels.js';
-import { ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
+import { Role, ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import { AuthenticatedRequest } from '../common/types.js';
 import { shiftModel, volunteerModel } from '../config/models.js';
 
@@ -17,7 +17,7 @@ async function getShifts(req: AuthenticatedRequest, res: Response) {
     const { volunteer, before, after, type, status } = req.query as Record<string, string>;
     const volunteer_id = volunteer;
 
-    if (req.user.role === 'volunteer') {
+    if (req.user.role === Role.volunteer) {
         const volunteer = await volunteerModel.getVolunteerByUserId(req.user.user_id);
 
         /* Cannot get shifts for other volunteer */

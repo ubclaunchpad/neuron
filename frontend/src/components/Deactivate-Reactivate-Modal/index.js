@@ -1,4 +1,5 @@
 import { Formik } from "formik";
+import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { deleteInstructor } from "../../api/instructorService";
 import { deactivateVolunteer, verifyVolunteer } from "../../api/volunteerService";
@@ -15,6 +16,8 @@ const VerificationSchema = Yup.object().shape({
 
 
 const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
+    const navigate = useNavigate();
+
     return (
         <div className="deactivate-reactivate-modal">
             {type === 1 && <p className="inactive-account">Deactivating this account will mark the account as <span>Inactive</span>. This volunteer will no longer be able to sign in or volunteer for classes until their account is reactivated.
@@ -30,13 +33,11 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                 onSubmit={(values, { setSubmitting }) => {
                     const initials = cleanInitials(values.initials);
                     if (type === 1) {
-                        deactivateVolunteer({
-                            volunteer_id: id,
-                        })
+                        deactivateVolunteer(id)
                             .then(() => {
                                 notyf.success("Account deactivated.");
                                 setTimeout(() => {
-                                    window.location.reload();
+                                    navigate(0);
                                 }, 2000);
                             })
                             .catch((error) => {
@@ -44,13 +45,11 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                                 console.error(error);
                             });
                     } else if (type === 0) {
-                        verifyVolunteer({
-                            volunteer_id: id,
-                        })
+                        verifyVolunteer(id)
                             .then(() => {
                                 notyf.success("Account reactivated.");
                                 setTimeout(() => {
-                                    window.location.reload();
+                                    navigate(0);
                                 }, 2000);
                             })
                             .catch((error) => {

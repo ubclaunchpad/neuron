@@ -1,26 +1,26 @@
-import dayjs from "dayjs";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useWeekView } from "react-weekview";
-import { getShifts } from "../../api/shiftService";
-import CalendarView from "../../components/CalendarView";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import CoverageDetailsPanel from "../../components/CoverageDetailsPanel";
-import { getCoverageButtonConfig } from "../../utils/coverageButtonConfig";
-import "./index.css";
-import CoverageRequestCard from "../../components/CoverageRequestCard";
-import AbsenceRequestCard from "../../components/AbsenceRequestCard";
-import Notifications from "../../components/Notifications";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import dayjs from "dayjs";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useWeekView } from "react-weekview";
 import {
   approveAbsenceRequest,
-  rejectAbsenceRequest,
   approveCoverageRequest,
+  rejectAbsenceRequest,
   rejectCoverageRequest,
 } from "../../api/coverageService";
+import { getShifts } from "../../api/shiftService";
 import AbsenceModal from "../../components/AbsenceModal";
+import AbsenceRequestCard from "../../components/AbsenceRequestCard";
+import CalendarView from "../../components/CalendarView";
+import CoverageDetailsPanel from "../../components/CoverageDetailsPanel";
 import CoverageModal from "../../components/CoverageModal";
-import { useNavigate } from "react-router-dom";
+import CoverageRequestCard from "../../components/CoverageRequestCard";
+import Notifications from "../../components/Notifications";
+import { getCoverageButtonConfig } from "../../utils/coverageButtonConfig";
+import "./index.css";
 
 function CoverageRequests() {
   const currentDate = dayjs();
@@ -210,7 +210,7 @@ function CoverageRequests() {
     approveAbsenceRequest(shift.absence_request.request_id)
       .then(() => {
         console.log("Absence request approved successfully");
-        window.location.reload();
+        navigate(0);
       })
       .catch((error) => {
         console.error("Error approving absence request:", error);
@@ -225,7 +225,7 @@ function CoverageRequests() {
     )
       .then(() => {
         console.log("Coverage request approved successfully");
-        window.location.reload();
+        navigate(0);
       })
       .catch((error) => {
         console.error("Error approving coverage request:", error);
@@ -236,7 +236,7 @@ function CoverageRequests() {
     rejectAbsenceRequest(shift.absence_request.request_id)
       .then(() => {
         console.log("Absence request declined successfully");
-        window.location.reload();
+        navigate(0);
       })
       .catch((error) => {
         console.error("Error declining absence request:", error);
@@ -250,7 +250,7 @@ function CoverageRequests() {
     )
       .then(() => {
         console.log("Coverage request declined successfully");
-        window.location.reload();
+        navigate(0);
       })
       .catch((error) => {
         console.error("Error declining coverage request:", error);

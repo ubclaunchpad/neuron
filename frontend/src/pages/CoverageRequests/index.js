@@ -210,7 +210,7 @@ function CoverageRequests() {
     approveAbsenceRequest(shift.absence_request.request_id, initials)
       .then(() => {
         console.log("Absence request approved successfully");
-        window.location.reload();
+        navigate(0);
       })
       .catch((error) => {
         console.error("Error approving absence request:", error);
@@ -226,7 +226,7 @@ function CoverageRequests() {
     )
       .then(() => {
         console.log("Coverage request approved successfully");
-        window.location.reload();
+        navigate(0);
       })
       .catch((error) => {
         console.error("Error approving coverage request:", error);
@@ -237,7 +237,7 @@ function CoverageRequests() {
     rejectAbsenceRequest(shift.absence_request.request_id, initials)
       .then(() => {
         console.log("Absence request declined successfully");
-        window.location.reload();
+        navigate(0);
       })
       .catch((error) => {
         console.error("Error declining absence request:", error);
@@ -252,7 +252,7 @@ function CoverageRequests() {
     )
       .then(() => {
         console.log("Coverage request declined successfully");
-        window.location.reload();
+        navigate(0);
       })
       .catch((error) => {
         console.error("Error declining coverage request:", error);

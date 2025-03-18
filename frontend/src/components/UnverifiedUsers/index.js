@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { verifyVolunteer } from "../../api/volunteerService";
 import warning_icon from "../../assets/admin-initial-warning.png";
 import button_icon_deny from "../../assets/button-icon-deny.png";
@@ -17,6 +18,7 @@ function UnverifiedUsers({ unverifiedUsers }) {
      const [isVerifying, setIsVerifying] = useState(null);
      const [isConfirming, setIsConfirming] = useState(false);
      const [modalTitle, setModalTitle] = useState("");
+     const navigate = useNavigate();
 
      const handleOpenModal = () => {
           setOpenModal(true);
@@ -118,7 +120,7 @@ function UnverifiedUsers({ unverifiedUsers }) {
                               <div>Access to the platform has been denied for <strong>{toBeVerified.f_name} {toBeVerified.l_name}</strong>.</div>
           }
                          </div>
-                         <button className="verify-account-btn" onClick={()=>window.location.reload()}>OK</button>
+                         <button className="verify-account-btn" onClick={()=>navigate(0)}>OK</button>
                     </div>
                );
           }

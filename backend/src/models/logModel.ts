@@ -1,37 +1,37 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
-import { LogDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
 
 export default class LogModel {
-    async getAllSchedules(): Promise<LogDB[]> {
-        const query = `
-            SELECT 
-                l.*, 
-                c.class_name,
-                CASE 
-                    WHEN v.p_name IS NOT NULL THEN v.p_name
-                    ELSE u.f_name
-                END AS volunteer_name,
-            FROM log l
-            INNER JOIN 
-                class c ON l.fk_class_id = c.class_id
-            INNER JOIN 
-                volunteers v ON l.fk_volunteer_id = v.volunteer_id
-            INNER JOIN 
-                users u ON v.fk_user_id = u.user_id`;
+    // async getAllSchedules(): Promise<LogDB[]> {
+    //     const query = `
+    //         SELECT 
+    //             l.*, 
+    //             c.class_name,
+    //             CASE 
+    //                 WHEN v.p_name IS NOT NULL THEN v.p_name
+    //                 ELSE u.f_name
+    //             END AS volunteer_name,
+    //         FROM log l
+    //         INNER JOIN 
+    //             class c ON l.fk_class_id = c.class_id
+    //         INNER JOIN 
+    //             volunteers v ON l.fk_volunteer_id = v.volunteer_id
+    //         INNER JOIN 
+    //             users u ON v.fk_user_id = u.user_id`;
 
-        const [results, _] = await connectionPool.query<LogDB[]>(query, []);
+    //     const [results, _] = await connectionPool.query<LogDB[]>(query, []);
 
-        return results;
-    }
+    //     return results;
+    // }
     
-    async log(
+    async log(params: {
         signoff: string, 
         description: string, 
         volunteer_id?: string,
         class_id?: number,
         transaction?: PoolConnection
-    ): Promise<any> {
+    }): Promise<any> {
+        const { signoff, description, volunteer_id, class_id, transaction } = params;
         const connection = transaction ?? connectionPool;
 
         const log = {

@@ -27,16 +27,18 @@ async function withdrawCoverShift(req: AuthenticatedRequest, res: Response) {
 
 async function approveCoverShift(req: AuthenticatedRequest, res: Response) {
     const { request_id, volunteer_id } = req.params;
+    const { signoff } = req.body;
 
-    await coverageModel.approveCoverageRequest(Number(request_id), volunteer_id);
+    await coverageModel.approveCoverageRequest(Number(request_id), volunteer_id, signoff);
 
     res.sendStatus(200);
 }
 
 async function rejectCoverShift(req: AuthenticatedRequest, res: Response) {
     const { request_id, volunteer_id } = req.params;
+    const { signoff } = req.body;
 
-    await coverageModel.deleteCoverageRequest(Number(request_id), volunteer_id);
+    await coverageModel.denyCoverageRequest(Number(request_id), volunteer_id, signoff);
 
     res.sendStatus(200);
 }
@@ -69,42 +71,30 @@ async function withdrawAbsenceRequest(req: AuthenticatedRequest, res: Response) 
 
 async function approveAbsenceRequest(req: AuthenticatedRequest, res: Response) {
     const { request_id } = req.params;
+    const { signoff } = req.body;
 
-    await coverageModel.approveAbsenceRequest(Number(request_id));
+    await coverageModel.approveAbsenceRequest(Number(request_id), signoff);
 
     res.sendStatus(200);
 }
 
 async function rejectAbsenceRequest(req: AuthenticatedRequest, res: Response) {
     const { request_id } = req.params;
+    const { signoff } = req.body;
 
-    await coverageModel.deleteAbsenceRequest(Number(request_id));
+    await coverageModel.denyAbsenceRequest(Number(request_id), signoff);
 
     res.sendStatus(200);
 }
 
-async function getAbsenceRequests(req: AuthenticatedRequest, res: Response) {
-  const absenceRequests = await coverageModel.getAbsenceRequests();
-
-  res.json(absenceRequests);
-}
-
-async function getCoverageRequests(req: AuthenticatedRequest, res: Response) {
-  const coverageRequests = await coverageModel.getCoverageRequests();
-
-  res.json(coverageRequests);
-}
-
 export {
-  approveAbsenceRequest,
-  approveCoverShift,
-  rejectAbsenceRequest,
-  rejectCoverShift,
-  requestAbsence,
-  requestCoverShift,
-  withdrawAbsenceRequest,
-  withdrawCoverShift,
-  getAbsenceRequests,
-  getCoverageRequests,
+    approveAbsenceRequest,
+    approveCoverShift,
+    rejectAbsenceRequest,
+    rejectCoverShift,
+    requestAbsence,
+    requestCoverShift,
+    withdrawAbsenceRequest,
+    withdrawCoverShift
 };
 

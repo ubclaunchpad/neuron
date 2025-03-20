@@ -2,10 +2,10 @@ import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
 import { isAdmin, isAuthorized } from '../config/authCheck.js';
 import {
-  getAbsenceRequests,
-  getCoverageRequests,
   approveAbsenceRequest,
   approveCoverShift,
+  getAbsenceRequests,
+  getCoverageRequests,
   rejectAbsenceRequest,
   rejectCoverShift,
   requestCoverShift,
@@ -15,8 +15,12 @@ import {
 
 export const CoverageRoutes: RouteDefinition = {
   path: "/absence/:request_id",
-  middleware: [isAuthorized, isAdmin],
-  validation: [param("request_id").isInt({ min: 0 })],
+  middleware: [
+    isAuthorized, 
+  ],
+  validation: [
+    param("request_id").isInt({ min: 0 })
+  ],
   children: [
     {
       path: "",
@@ -26,13 +30,23 @@ export const CoverageRoutes: RouteDefinition = {
     {
       path: "/approve",
       method: "put",
-      middleware: [isAdmin],
+      middleware: [
+        isAdmin
+      ],
+      validation: [
+        body("signoff").isAlpha('en-US', { ignore: '.' })
+      ],
       action: approveAbsenceRequest,
     },
     {
       path: "/reject",
       method: "delete",
-      middleware: [isAdmin],
+      middleware: [
+        isAdmin
+      ],
+      validation: [
+        body("signoff").isAlpha('en-US', { ignore: '.' })
+      ],
       action: rejectAbsenceRequest,
     },
     {
@@ -58,13 +72,23 @@ export const CoverageRoutes: RouteDefinition = {
         {
           path: "/approve",
           method: "put",
-          middleware: [isAdmin],
+          middleware: [
+            isAdmin
+          ],
+          validation: [
+            body("signoff").isAlpha('en-US', { ignore: '.' })
+          ],
           action: approveCoverShift,
         },
         {
           path: "/reject",
           method: "delete",
-          middleware: [isAdmin],
+          middleware: [
+            isAdmin
+          ],
+          validation: [
+            body("signoff").isAlpha('en-US', { ignore: '.' })
+          ],
           action: rejectCoverShift,
         },
         {

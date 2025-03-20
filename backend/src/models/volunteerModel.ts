@@ -1,6 +1,7 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { ShiftDB, VolunteerDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
+import { logModel } from "../config/models.js";
 import { wrapIfNotArray } from "../utils/generalUtils.js";
 
 export default class VolunteerModel {
@@ -85,7 +86,9 @@ export default class VolunteerModel {
         return results
     }
 
-    async updateVolunteer(volunteer_id: string, volunteerData: Partial<VolunteerDB>): Promise<ResultSetHeader> {
+    async updateVolunteer(volunteer_id: string, volunteerData: Partial<VolunteerDB>, transaction?: PoolConnection): Promise<ResultSetHeader> {
+        const connection = transaction ?? connectionPool;
+
         // Construct the SET clause dynamically
         const setClause = Object.keys(volunteerData)
             .map((key) => `${key} = ?`)
@@ -93,7 +96,7 @@ export default class VolunteerModel {
         const query = `UPDATE volunteers SET ${setClause} WHERE volunteer_id = ?`;
         const values = [...Object.values(volunteerData), volunteer_id];
 
-        const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+        const [results, _] = await connection.query<ResultSetHeader>(query, values);
 
         return results
     }
@@ -236,5 +239,57 @@ export default class VolunteerModel {
             await transaction.rollback();
             throw error;
         }
-   }
+    }
+
+    async verifyVolunteer(volunteer_id: string, signoff: string): Promise<void> {
+        const transaction = await connectionPool.getConnection();
+        try {
+            // Set active to true
+            await this.updateVolunteer(
+                volunteer_id, 
+                { active: true } as VolunteerDB, 
+                transaction
+            );
+
+            // Log verify
+            await logModel.log({
+                signoff, 
+                description: "TODO", 
+                volunteer_id: volunteer_id,
+                transaction
+            });
+
+            await transaction.commit();
+        } catch (error) {
+            // Rollback
+            await transaction.rollback();
+            throw error;
+        }
+    }
+
+    async deactivateVolunteer(volunteer_id: string, signoff: string): Promise<void> {
+        const transaction = await connectionPool.getConnection();
+        try {
+            // Set active to true
+            await this.updateVolunteer(
+                volunteer_id, 
+                { active: false } as VolunteerDB, 
+                transaction
+            );
+
+            // Log verify
+            await logModel.log({
+                signoff, 
+                description: "TODO", 
+                volunteer_id: volunteer_id,
+                transaction
+            });
+
+            await transaction.commit();
+        } catch (error) {
+            // Rollback
+            await transaction.rollback();
+            throw error;
+        }
+    }
 }

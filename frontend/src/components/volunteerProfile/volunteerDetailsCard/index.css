@@ -267,6 +267,7 @@ input[type=number] {
 }
 
 .time-commitment-units {
+    white-space: nowrap;
     margin-left: 8px;
     color: #808080;
     font-style: italic;

@@ -19,7 +19,6 @@
     "@mui/x-date-pickers": "^7.22.0",
     "axios": "^1.7.5",
     "bootstrap": "^5.3.3",
-    "country-state-city": "^3.2.1",
     "dayjs": "^1.11.13",
     "formik": "^2.4.6",
     "notyf": "^3.10.0",

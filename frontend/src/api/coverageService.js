@@ -46,9 +46,9 @@ const withdrawCoverageRequest = async (request_id, volunteer_id) => {
   }
 }
 
-const approveAbsenceRequest = async (request_id) => {
+const approveAbsenceRequest = async (request_id, signoff) => {
   try {
-    const response = await api.put(`/absence/${request_id}/approve`);
+    const response = await api.put(`/absence/${request_id}/approve`, { signoff });
 
     return response.data;
   } catch (error) {
@@ -57,9 +57,9 @@ const approveAbsenceRequest = async (request_id) => {
   }
 };
 
-const rejectAbsenceRequest = async (request_id) => {
+const rejectAbsenceRequest = async (request_id, signoff) => {
   try {
-    const response = await api.delete(`/absence/${request_id}/reject`);
+    const response = await api.delete(`/absence/${request_id}/reject`, { data: { signoff } });
 
     return response.data;
   } catch (error) {
@@ -68,10 +68,11 @@ const rejectAbsenceRequest = async (request_id) => {
   }
 };
 
-const approveCoverageRequest = async (request_id, volunteer_id) => {
+const approveCoverageRequest = async (request_id, volunteer_id, signoff) => {
   try {
     const response = await api.put(
-      `/absence/${request_id}/coverage/${volunteer_id}/approve`
+      `/absence/${request_id}/coverage/${volunteer_id}/approve`,
+      { signoff }
     );
 
     return response.data;
@@ -81,9 +82,12 @@ const approveCoverageRequest = async (request_id, volunteer_id) => {
   }
 };
 
-const rejectCoverageRequest = async (request_id, volunteer_id) => {
+const rejectCoverageRequest = async (request_id, volunteer_id, signoff) => {
   try {
-    const response = await api.delete(`/absence/${request_id}/coverage/${volunteer_id}/reject`);
+    const response = await api.delete(
+      `/absence/${request_id}/coverage/${volunteer_id}/reject`, 
+      { data: { signoff } }
+    );
 
     return response.data;
   } catch (error) {

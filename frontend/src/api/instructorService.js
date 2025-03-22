@@ -16,25 +16,33 @@ const getInstructor = (instructor_id) =>
             console.error(error);
         });
 
-const addInstructor = (instructor) => 
+const addInstructor = (instructor, signoff) => 
     api
-        .post("instructor", instructor)
+        .post("instructor", {
+            ...instructor,
+            signoff
+        })
         .then((response) => response.data)
         .catch((error) => {
             console.error(error);
         });
 
-const editInstructor = (instructor_id, instructor) => 
+const editInstructor = (instructor_id, instructor, signoff) => 
     api
-        .put(`instructor/${instructor_id}`, instructor)
+        .put(`instructor/${instructor_id}`, {
+            ...instructor,
+            signoff
+        })
         .then((response) => response.data)
         .catch((error) => {
             console.error(error);
         });
 
-const deleteInstructor = (instructor_id) => 
+const deleteInstructor = (instructor_id, signoff) => 
     api
-        .delete(`instructor/${instructor_id}`)
+        .delete(`instructor/${instructor_id}`, {
+            data: { signoff }
+        })
         .then((response) => response.data)
         .catch((error) => {
             console.error(error);

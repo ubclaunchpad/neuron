@@ -112,17 +112,19 @@ export const getVolunteers = (params) =>
           console.error(error);
       });
 
-export const verifyVolunteer = (volunteerId) => 
+export const verifyVolunteer = (volunteerId, signoff) => {
+  console.log(volunteerId, signoff)
   api
-      .patch(`/admin/volunteer/${volunteerId}/verify`)
+      .patch(`/volunteer/${volunteerId}/verify`, { signoff })
       .then((response) => response.data)
       .catch((error) => {
           console.error(error);
       });
+    }
 
-export const deactivateVolunteer = (volunteerId) => 
+export const deactivateVolunteer = (volunteerId, signoff) => 
   api
-      .patch(`/admin/volunteer/${volunteerId}/deactivate`)
+      .patch(`/volunteer/${volunteerId}/deactivate`, { signoff })
       .then((response) => response.data)
       .catch((error) => {
           console.error(error);

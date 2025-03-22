@@ -244,6 +244,8 @@ export default class VolunteerModel {
     async verifyVolunteer(volunteer_id: string, signoff: string): Promise<void> {
         const transaction = await connectionPool.getConnection();
         try {
+            await transaction.beginTransaction();
+
             // Set active to true
             await this.updateVolunteer(
                 volunteer_id, 
@@ -270,6 +272,8 @@ export default class VolunteerModel {
     async deactivateVolunteer(volunteer_id: string, signoff: string): Promise<void> {
         const transaction = await connectionPool.getConnection();
         try {
+            await transaction.beginTransaction();
+            
             // Set active to true
             await this.updateVolunteer(
                 volunteer_id, 

@@ -20,6 +20,8 @@ export default class CoverageModel {
   ): Promise<void> {
     const transaction = await connectionPool.getConnection();
     try {
+      await transaction.beginTransaction();
+
       // Resolve the absence request
       const updateQuery = `
                     UPDATE absence_request 
@@ -157,6 +159,8 @@ export default class CoverageModel {
   ): Promise<void> {
     const transaction = await connectionPool.getConnection();
     try {
+      await transaction.beginTransaction();
+
       // Delete the coverage request
       await this.deleteCoverageRequest(
         request_id,
@@ -188,6 +192,8 @@ export default class CoverageModel {
   async approveAbsenceRequest(request_id: number, signoff: string): Promise<void> {
     const transaction = await connectionPool.getConnection();
     try {
+      await transaction.beginTransaction();
+
       const query = `
                     UPDATE absence_request 
                     SET approved = TRUE
@@ -283,6 +289,8 @@ export default class CoverageModel {
   ): Promise<void> {
     const transaction = await connectionPool.getConnection();
     try {
+      await transaction.beginTransaction();
+
       // Delete the coverage request
       await this.deleteAbsenceRequest(
         request_id,
@@ -317,7 +325,7 @@ export default class CoverageModel {
     const query = queryBuilder
       .select([
         "ar.request_id",
-        "s.volunteer_id as volunteer_id",
+        "s.fk_volunteer_id as volunteer_id",
         "ar.category",
         "ar.details",
         "ar.comments",

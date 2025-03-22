@@ -138,6 +138,8 @@ export default class ClassesModel {
                .toBuffer();
 
           try {
+               await transaction.beginTransaction();
+
                const query = `SELECT * FROM class WHERE class_id = ?`;
                const values = [class_id];
 
@@ -175,6 +177,8 @@ export default class ClassesModel {
           const transaction = await connectionPool.getConnection();
      
           try {
+               await transaction.beginTransaction();
+               
                const query1 = `SELECT * FROM class WHERE class_id = ?`;
                const values1 = [class_id];
 

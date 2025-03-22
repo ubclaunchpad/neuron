@@ -4,13 +4,11 @@ import { isAdmin, isAuthorized } from '../config/authCheck.js';
 import {
   approveAbsenceRequest,
   approveCoverShift,
-  getAbsenceRequests,
-  getCoverageRequests,
   rejectAbsenceRequest,
   rejectCoverShift,
   requestCoverShift,
   withdrawAbsenceRequest,
-  withdrawCoverShift,
+  withdrawCoverShift
 } from "../controllers/coverageController.js";
 
 export const CoverageRoutes: RouteDefinition = {
@@ -22,11 +20,6 @@ export const CoverageRoutes: RouteDefinition = {
     param("request_id").isInt({ min: 0 })
   ],
   children: [
-    {
-      path: "",
-      method: "get",
-      action: getAbsenceRequests,
-    },
     {
       path: "/approve",
       method: "put",
@@ -59,11 +52,6 @@ export const CoverageRoutes: RouteDefinition = {
       method: "post",
       validation: [body("volunteer_id").isUUID()],
       action: requestCoverShift,
-    },
-    {
-      path: "/coverage",
-      method: "get",
-      action: getCoverageRequests,
     },
     {
       path: "/coverage/:volunteer_id",

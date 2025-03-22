@@ -66,6 +66,8 @@ async function registerUser(
 
     const transaction = await connectionPool.getConnection();
     try {
+        await transaction.beginTransaction();
+
         // Create User
         await userModel.insertUser({
             user_id: user_id,

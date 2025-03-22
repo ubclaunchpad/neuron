@@ -44,7 +44,7 @@ export default class LogModel {
         const valuesClause = Object.keys(log)
             .map(_ => '?')
             .join(", ");
-        const query = `INSERT INTO volunteers (${insertClause}) VALUES (${valuesClause})`;
+        const query = `INSERT INTO log (${insertClause}) VALUES (${valuesClause})`;
         const values = Object.values(log);
 
         const [results, _] = await connection.query<ResultSetHeader>(query, values);

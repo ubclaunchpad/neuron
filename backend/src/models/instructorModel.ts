@@ -31,6 +31,8 @@ export default class InstructorModel {
   async insertInstructor(instructor: InstructorDB, signoff: string): Promise<void> {
     const transaction = await connectionPool.getConnection();
     try {
+      await transaction.beginTransaction();
+
       const query = `INSERT INTO 
       instructors (instructor_id, f_name, l_name, email)
       VALUES (?, ?, ?, ?)`;
@@ -38,7 +40,7 @@ export default class InstructorModel {
       const values = [instructor_id, f_name, l_name, email];
 
       // Perform insert
-      await connectionPool.query<ResultSetHeader>(query, values);
+      await transaction.query<ResultSetHeader>(query, values);
 
       // Log to db
       await logModel.log({
@@ -58,11 +60,13 @@ export default class InstructorModel {
   async deleteInstructor(instructor_id: string, signoff: string): Promise<void> {
     const transaction = await connectionPool.getConnection();
     try {
+      await transaction.beginTransaction();
+
       const query = `DELETE FROM instructors WHERE instructor_id = ?`;
       const values = [instructor_id];
 
       // Perform delete
-      await connectionPool.query<ResultSetHeader>(query, values);
+      await transaction.query<ResultSetHeader>(query, values);
 
       // Log to db
       await logModel.log({
@@ -82,12 +86,14 @@ export default class InstructorModel {
   async editInstructor(instructor_id: string, instructor: InstructorDB, signoff: string): Promise<void> {
     const transaction = await connectionPool.getConnection();
     try {
+      await transaction.beginTransaction();
+      
       const query = `UPDATE instructors SET f_name = ?, l_name = ?, email = ? WHERE instructor_id = ?`;
       const { f_name, l_name, email } = instructor;
       const values = [f_name, l_name, email, instructor_id];
 
       // Perform update
-      await connectionPool.query<ResultSetHeader>(query, values);
+      await transaction.query<ResultSetHeader>(query, values);
 
       // Log to db
       await logModel.log({

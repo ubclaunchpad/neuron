@@ -149,21 +149,6 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
                     </div>
                 </div>
                 <div className="panel-details-shift-row zoom-link">
-                    <div className="panel-titles">Zoom Link</div>
-                    <div className="panel-details-shift-right">
-                        <button className="join-class-button">
-                            <a href={panelInfo?.zoom_link} >
-                            <img 
-                                src={zoom_icon}
-                                alt="Zoom" 
-                                className="zoom-icon" 
-                            />
-                                Join Class
-                            </a>
-                        </button>
-                    </div>
-                </div>
-                <div className="panel-details-shift-row zoom-link">
                     <div>
                         <div className="panel-titles">Description</div>
                         <div className="panel-description">

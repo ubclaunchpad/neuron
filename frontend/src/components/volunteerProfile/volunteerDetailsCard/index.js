@@ -81,19 +81,19 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
             type: 'warning',
             message: 'Please set Preferred Time Commitment to a value greater than 0.',
             background: '#FFC107',
-            duration: 0,
+            duration: 5000,
             dismissible: true,
         });
     }
 
     useEffect(() => {
         if (!isAdmin) {
-            if (Number(mutableData.timeCommitment) <= 0 && !isEditing) {
+            if (Number(mutableData.p_time_ctmt) <= 0 && !isEditing) {
                 sendTcNotif();
             }
         }
     }, [
-        mutableData.timeCommitment,
+        mutableData.p_time_ctmt,
         isEditing,
         isAdmin
     ]);

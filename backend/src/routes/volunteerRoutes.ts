@@ -155,7 +155,7 @@ export const VolunteerRoutes: RouteDefinition = {
                         isAdmin,
                     ],
                     validation: [
-                        body('signoff').isAlpha('en-US')
+                        body('signoff').isAlpha('en-US', { ignore: '.' })
                     ],
                     action: verifyVolunteer
                 },
@@ -166,7 +166,7 @@ export const VolunteerRoutes: RouteDefinition = {
                         isAdmin,
                     ],
                     validation: [
-                        body('signoff').isAlpha('en-US')
+                        body('signoff').isAlpha('en-US', { ignore: '.' })
                     ],
                     action: deactivateVolunteer
                 }

@@ -83,7 +83,7 @@ export default class CoverageModel {
         page: 'Coverage Requests',
         description: `Coverage request for ${new Date(currentRequest.shift_date).toDateString()} approved`, 
         volunteer_id,
-        class_id: 0, //TODO
+        class_id: currentRequest.class_id,
         transaction
       });
 
@@ -178,7 +178,7 @@ export default class CoverageModel {
         page: 'Coverage Requests',
         description: `Coverage request for ${new Date(currentRequest.shift_date).toDateString()} denied`, 
         volunteer_id,
-        class_id: 0, //TODO
+        class_id: currentRequest.class_id,
         transaction
       });
 
@@ -223,7 +223,7 @@ export default class CoverageModel {
         page: 'Coverage Requests',
         description: `Absence request for ${new Date(currentRequest.shift_date).toDateString()} approved`, 
         volunteer_id: currentRequest.volunteer_id,
-        class_id: 0, //TODO
+        class_id: currentRequest.class_id,
         transaction
       });
 
@@ -312,7 +312,7 @@ export default class CoverageModel {
         page: 'Coverage Requests',
         description: `Absence request for ${new Date(currentRequest.shift_date).toDateString()} denied`,
         volunteer_id: currentRequest.volunteer_id,
-        class_id: 0, //TODO
+        class_id: currentRequest.class_id,
         transaction
       });
 
@@ -337,6 +337,7 @@ export default class CoverageModel {
         "ar.request_id",
         "s.fk_volunteer_id as volunteer_id",
         "s.shift_date",
+        "sc.fk_class_id as class_id",
         "ar.category",
         "ar.details",
         "ar.comments",
@@ -355,6 +356,7 @@ export default class CoverageModel {
       ])
       .from({ ar: "absence_request" })
       .join({ s: "shifts" }, "ar.fk_shift_id", "s.shift_id")
+      .join({ sc: "schedule" }, "s.fk_schedule_id", "sc.schedule_id")
       .leftJoin({ cr: "coverage_request" }, "ar.request_id", "cr.request_id")
       .where("ar.request_id", request_id);
 

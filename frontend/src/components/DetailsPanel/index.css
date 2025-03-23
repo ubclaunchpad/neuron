@@ -6,7 +6,7 @@
 }
 
 .main-content {
-     min-width: min(calc(100dvw - var(--sidebar-width)), 854px);
+     min-width: clamp(346px, calc(100dvw - var(--sidebar-width)), 854px);
      width: 100%;
      max-width: 100%;
 }

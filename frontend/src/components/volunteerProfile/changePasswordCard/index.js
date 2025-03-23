@@ -66,6 +66,7 @@ function ChangePasswordCard({ volunteer }) {
                             name="current"
                             value={passwordForm.current}
                             onChange={handleChange}
+                            className='icon'
                         />
                         <span
                             className="password-toggle"
@@ -84,6 +85,7 @@ function ChangePasswordCard({ volunteer }) {
                             name="new"
                             value={passwordForm.new}
                             onChange={handleChange}
+                            className='icon'
                         />
                         <span
                             className="password-toggle"
@@ -102,6 +104,7 @@ function ChangePasswordCard({ volunteer }) {
                             name="confirm"
                             value={passwordForm.confirm}
                             onChange={handleChange}
+                            className='icon'
                         />
                         <span
                             className="password-toggle"

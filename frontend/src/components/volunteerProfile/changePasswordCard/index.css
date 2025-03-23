@@ -50,13 +50,16 @@ input::-ms-reveal {
 /* Input field styling */
 input {
     width: 100%; /* Make input take up the full width of its container */
-    padding: 10px;
-    padding-right: 40px; /* Add extra padding on the right for the toggle icon */
+    padding: 12px 20px;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 12px;
     box-sizing: border-box;
     font-family: var(--font-secondary);
+}
+
+input.icon {
+    padding-right: 40px; /* Add extra padding on the right for the icon */
 }
 
 /* Password toggle icon styling */

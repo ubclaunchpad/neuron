@@ -5,21 +5,22 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom
 import api from "./api/api";
 import SidebarLayout from "./components/SidebarLayout";
 import { useAuth } from "./contexts/authContext";
+import AdminVolunteerProfile from "./pages/AdminVolunterProfile";
 import Classes from "./pages/Classes";
 import ClassPreferences from "./pages/ClassPreferences";
 import CoverageRequests from "./pages/CoverageRequests";
 import Dashboard from "./pages/Dashboard";
 import ForgotPassword from "./pages/ForgotPassword";
+import LogHistory from "./pages/LogHistory";
 import Login from "./pages/Login";
 import MemberManagement from "./pages/MemberManagement";
+import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import Schedule from "./pages/Schedule";
 import Settings from "./pages/Settings";
 import Signup from "./pages/Signup";
-import Profile from "./pages/Profile";
-import AdminVolunteerProfile from "./pages/AdminVolunterProfile";
-import VolunteerNotVerified from "./pages/VolunteerNotVerified";
 import VolunteerDeactivated from "./pages/VolunteerDeactivated";
+import VolunteerNotVerified from "./pages/VolunteerNotVerified";
 
 function App() {
   const { isAuthenticated, isAdmin, isVolunteer, logout } = useAuth();
@@ -71,6 +72,7 @@ function App() {
               <Route element={<RouteGuard fallback="/" valid={isAdmin} />}>
                 <Route path="management" element={<MemberManagement />} />
                 <Route path="requests" element={<CoverageRequests />} />
+                <Route path="logs" element={<LogHistory />} />
                 <Route path="volunteer-profile" element={<AdminVolunteerProfile />} />
               </Route>
             </Route>

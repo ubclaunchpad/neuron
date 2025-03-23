@@ -114,3 +114,17 @@ jobs:
         user: deploy
         ssh_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
         env_file: ./envfile
+
+  prune-docker:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Prune unused Docker images
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ vars.CONTAINER_URL }}
+          username: deploy
+          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          script: |
+            # Prune unused Docker objects
+            docker system prune -af

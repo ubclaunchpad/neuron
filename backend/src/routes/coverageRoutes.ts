@@ -1,7 +1,17 @@
 import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
 import { isAdmin, isAuthorized } from '../config/authCheck.js';
-import { approveAbsenceRequest, approveCoverShift, rejectAbsenceRequest, rejectCoverShift, requestCoverShift, withdrawAbsenceRequest, withdrawCoverShift } from '../controllers/coverageController.js';
+import {
+  getAbsenceRequests,
+  getCoverageRequests,
+  approveAbsenceRequest,
+  approveCoverShift,
+  rejectAbsenceRequest,
+  rejectCoverShift,
+  requestCoverShift,
+  withdrawAbsenceRequest,
+  withdrawCoverShift,
+} from "../controllers/coverageController.js";
 
 export const CoverageRoutes: RouteDefinition = {
     path: '/absence/:request_id',

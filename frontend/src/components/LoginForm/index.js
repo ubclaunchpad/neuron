@@ -1,5 +1,5 @@
 import { Formik } from "formik";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { useAuth } from "../../contexts/authContext";
 import notyf from "../../utils/notyf";
@@ -16,6 +16,7 @@ const LoginSchema = Yup.object().shape({
 
 const LoginForm = () => {
     const { login } = useAuth();
+    const navigate = useNavigate();
 
     return (
         <>
@@ -31,13 +32,14 @@ const LoginForm = () => {
                             notyf.success("Logged in successfully");
                         })
                         .catch((error) => {
-                            if (error.response?.data?.error?.includes("Waiting for an admin to verify")) {
-                                window.location.href = "/auth/not-verified";
-                            } else if (error.response?.data?.error?.includes("Your account has been deactivated")) {
-                                window.location.href = "/auth/deactivated";
-                            } else {
-                                notyf.error(error.response.data.error);
-                            }
+                            // if (error.response?.data?.error?.includes("Waiting for an admin to verify")) {
+                            //     navigate("/auth/not-verified");
+                            // } else if (error.response?.data?.error?.includes("Your account has been deactivated")) {
+                            //     navigate("/auth/deactivated");
+                            // } else {
+                            //     notyf.error(error.response.data.error);
+                            // }
+                            notyf.error(error.response.data.error);
                         })
                         .finally(() => 
                             setSubmitting(false)

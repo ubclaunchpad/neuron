@@ -1,0 +1,318 @@
+@import '../../styles.css';  /*Imports custom fonts*/
+
+.coverage-main-container {
+     height: 100%;
+     transition: 0.2s width ease-in-out;
+}
+
+.coverage-panel-container {
+     position: fixed;
+     height: 100vh;
+     top: 0px;
+     right: 0px;
+     z-index: 1;
+     transition: 0.2s all ease-in-out;
+     border-left: 1px solid #e3e3e3;
+     padding-top: 50px;
+     overflow: hidden;
+     background: white;
+}
+
+.coverage-panel-content {
+     min-width: min(calc(100dvw - var(--sidebar-width)), 854px);
+     width: 100%;
+     max-width: 100%;
+     padding: 1rem 0;
+}
+
+.coverage {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(149, 32, 24, 0.1);
+     color: var(--error-red);
+     font-weight: bold;
+     text-align: center;
+ }
+
+.coverage-panel-header {
+     width: 87%;
+     height: auto;
+     margin-right: 36px; 
+     margin-left: 20px;
+     position: relative;
+     padding-bottom: 20px;
+     border-bottom: 1px solid #e3e3e3;
+     display: flex;
+     flex-direction: column;
+     gap: 4px;
+}
+
+.coverage-panel-header-date-details {
+     font-family: var(--font-primary);
+     font-size: var(--medium-text);
+     color: var(--dark-grey);
+     display: flex;
+     flex-direction: column;
+     gap: 4px;
+}
+
+.coverage-panel-header-class-name {
+     font-family: 'Montserrat';
+     font-weight: 600;
+     font-size: 20px;
+     line-height: 27px;
+     color: #0f1111;
+}
+
+.coverage-panel-button-icon {
+     padding: 0px;
+     background-color: transparent;
+     border: none;
+     cursor: pointer;
+}
+
+.coverage-panel-button-icon-close {
+     position: absolute;
+     right: 0px;
+     top: 0px;
+     width: fit-content;
+     height: fit-content;
+}
+
+.coverage-panel-header-time {
+     width: 100%;
+}
+
+.coverage-panel-button-icon:hover {
+     filter:brightness(0.6);
+}
+
+.coverage-instructor-email {
+     color: var(--dark-grey);
+     background-color: #FFF;
+     font-size: 12px;
+     padding: 0;
+     border: none;
+     cursor: pointer;
+     text-align: left;
+}
+
+.coverage-panel-details {
+     margin-right: 36px; 
+     margin-left: 20px;
+     padding: 32px 0px;
+}
+
+.coverage-panel-titles {
+     width: 120px;
+     font-family: 'Roboto';
+     font-weight: 400;
+     font-size: 16px;
+     line-height: 21.6px;
+     color: #808080;
+}
+
+.coverage-my-shifts {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(24, 149, 49, 0.1);
+     color: var(--green);
+     font-weight: bold;
+     text-align: center;
+ }
+ 
+ .my-coverage-requests {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(203, 131, 36, 0.1);
+     color: var(--yellow);
+     font-weight: bold;
+     text-align: center;
+ }
+ 
+ .coverage {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(149, 32, 24, 0.1);
+     color: var(--error-red);
+     font-weight: bold;
+     text-align: center;
+ }
+
+.coverage-classTaken {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgb(211, 211, 211);
+     color: rgb(111, 111, 111);
+     font-weight: bold;
+     text-align: center;
+}
+
+.coverage-volunteersNeeded {
+     padding: 4px 12px;
+     width: fit-content;
+     border-radius: 4px;
+     background: rgba(89, 165, 213, 0.1);
+     color: var(--primary-blue);
+     font-weight: bold;
+     text-align: center;
+}
+
+.coverage-panel-details-shift {
+     display: flex;
+     flex-direction: column;
+     gap: 12px;
+}
+
+.coverage-panel-details-shift-row {
+     display: flex;
+     flex-direction: row;
+     align-items: center;
+}
+
+.coverage-panel-details-shift-instructors-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.coverage-panel-details-instructors {
+    width: 264px;
+     font-family: 'Roboto';
+     font-weight: 400;
+     font-size: 16px;
+     display: flex; 
+     flex-direction: column;
+     gap: 8px;
+}
+
+.coverage-panel-details-shift-right {
+     width: 264px;
+     font-family: 'Roboto';
+     font-weight: 400;
+     font-size: 16px;
+     display: flex; 
+     align-items: center;
+}
+
+.coverage-volunteer-profile {
+     width: 28px;
+     height: 28px;
+     border-radius: 4px;
+     margin-right: 6px;
+}
+
+.coverage-panel-details-description {
+     margin-top: 20px;
+}
+
+.coverage-panel-description {
+     margin-top: 0.5rem;
+     font-family: 'Roboto';
+     font-weight: 400;
+     font-size: 16px;
+     line-height: 21.6px;
+}
+
+.coverage-button-icons {
+     display: flex;
+     flex-direction: row;
+     gap: 4px;
+     width: fit-content;
+     margin-left: auto;
+     margin-right: 36px;
+     margin-top: 20px;
+}
+
+ /* Shift Details Panel */
+/* Dynamic Button Styling based on Shift Type */
+.coverage-panel-buttons {
+     margin-top: 4vh;
+     width: fit-content;
+     display: flex;
+     flex-direction: column;
+     gap: 12px;
+}
+
+.coverage-dynamic-button {
+     position: relative;
+     height: 100%;
+     border-radius: 8px;
+     background: #FFF;
+     box-shadow: 0px 4px 16px 0px rgba(15, 17, 17, 0.05);
+     padding: 0.8rem 2rem;
+     display: flex;
+     align-items: center;
+     gap: 4px;
+     font-size: 14px;
+ }
+ 
+ .coverage-dynamic-button:not(:disabled):hover {
+     cursor: pointer;
+     background: var(--button-blue);
+     border: none;
+ }
+ 
+ .coverage-dynamic-button:disabled {
+     background-color: #d3d3d3;
+     border: 1px solid #d3d3d3;
+     box-shadow: none;
+ }
+
+ .coverage-dynamic-button.primary-action {
+     background-color: var(--button-blue);
+     color: var(--white);
+     border: var(--button-blue);
+ }
+
+ .coverage-dynamic-button.primary-action:hover {
+     background-color: var(--button-blue-hover);
+ }
+
+ .coverage-dynamic-button.cancel-action {
+     background-color: var(--red);
+     color: var(--white);
+     border: var(--red);
+ }
+
+ .coverage-dynamic-button.cancel-action:hover {
+     background-color: var(--red-hover);
+ }
+ 
+ /* Icon within Button */
+ .coverage-card-button-icon {
+     width: 1rem;
+     height: 1rem;
+     margin-right: .5rem;
+ }
+
+ .coverage-zoom-icon {
+     height: 1.5rem;
+     width: 1.5rem;
+     margin-right: 0.5rem; 
+ }
+
+ .coverage-email-icon {
+     margin-left: 0.5rem;
+ }
+
+ .coverage-primary-action {
+     background-color: var(--button-blue);
+     color: var(--white);
+     border: var(--button-blue);
+ }
+ 
+ .coverage-primary-action:hover {
+     background-color: var(--button-blue-hover);
+ }
+
+ .coverage-decline-action {
+     border: 2px solid var(--red);
+ }
+ .coverage-decline-action:hover {
+     background-color: white;
+ }

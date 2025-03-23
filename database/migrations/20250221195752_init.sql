@@ -26,7 +26,6 @@ CREATE TABLE users (
 
 CREATE TABLE class (
     class_id INT PRIMARY KEY AUTO_INCREMENT,
-    fk_instructor_id CHAR(36) NOT NULL,
     fk_image_id CHAR(36),
     class_name VARCHAR(64) NOT NULL,
     instructions VARCHAR(150),
@@ -35,7 +34,6 @@ CREATE TABLE class (
     end_date DATE NOT NULL,
     category VARCHAR(64),
     subcategory VARCHAR(64),
-    FOREIGN KEY (fk_instructor_id) REFERENCES instructors(instructor_id),
     FOREIGN KEY (fk_image_id) REFERENCES images(image_id)
         ON DELETE SET NULL
 );
@@ -62,7 +60,9 @@ CREATE TABLE schedule (
     day INT NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
+    frequency VARCHAR(15) NOT NULL DEFAULT 'weekly',
     active BOOLEAN NOT NULL DEFAULT TRUE,
+    fk_instructor_id CHAR(36),
     FOREIGN KEY (fk_class_id) REFERENCES class(class_id)
         ON DELETE CASCADE
 );

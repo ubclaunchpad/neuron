@@ -145,11 +145,12 @@ async function loginUser(req: Request, res: Response): Promise<any> {
             return res.status(403).json({
                 error: "Waiting for an admin to verify your account.\nYou can reach out to us at bwp@gmail.com",
             });
-        } else if (!volunteer.existing) {
-            return res.status(403).json({
-                error: "Your account has been deactivated.\nYou can reach out to us at bwp@gmail.com",
-            });
         }
+        // } else if (!volunteer.existing) {
+        //     return res.status(403).json({
+        //         error: "Your account has been deactivated.\nYou can reach out to us at bwp@gmail.com",
+        //     });
+        // }
     }
 
     // If the TOKEN_SECRET is not defined, return an error

@@ -256,7 +256,8 @@ export default class VolunteerModel {
             // Log verify
             await logModel.log({
                 signoff, 
-                description: "TODO", 
+                page: 'Member Management',
+                description: 'Volunteer account verified', 
                 volunteer_id: volunteer_id,
                 transaction
             });
@@ -284,7 +285,8 @@ export default class VolunteerModel {
             // Log verify
             await logModel.log({
                 signoff, 
-                description: "TODO", 
+                page: 'Member Management',
+                description: 'Volunteer account deactivated', 
                 volunteer_id: volunteer_id,
                 transaction
             });

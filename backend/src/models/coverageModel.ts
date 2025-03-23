@@ -77,10 +77,13 @@ export default class CoverageModel {
       );
 
       // Log approval
+      const currentRequest = await this.getAbsenceRequest(request_id);
       await logModel.log({
-        signoff, 
-        description: "TODO", 
+        signoff,
+        page: 'Coverage Requests',
+        description: `Coverage request for ${new Date(currentRequest.shift_date).toDateString()} approved`, 
         volunteer_id,
+        class_id: 0, //TODO
         transaction
       });
 
@@ -169,10 +172,13 @@ export default class CoverageModel {
       );
 
       // Log deny
+      const currentRequest = await this.getAbsenceRequest(request_id);
       await logModel.log({
         signoff, 
-        description: "TODO", 
+        page: 'Coverage Requests',
+        description: `Coverage request for ${new Date(currentRequest.shift_date).toDateString()} denied`, 
         volunteer_id,
+        class_id: 0, //TODO
         transaction
       });
 
@@ -214,8 +220,10 @@ export default class CoverageModel {
       const currentRequest = await this.getAbsenceRequest(request_id);
       await logModel.log({
         signoff, 
-        description: "TODO", 
+        page: 'Coverage Requests',
+        description: `Absence request for ${new Date(currentRequest.shift_date).toDateString()} approved`, 
         volunteer_id: currentRequest.volunteer_id,
+        class_id: 0, //TODO
         transaction
       });
 
@@ -301,8 +309,10 @@ export default class CoverageModel {
       const currentRequest = await this.getAbsenceRequest(request_id);
       await logModel.log({
         signoff, 
-        description: "TODO", 
+        page: 'Coverage Requests',
+        description: `Absence request for ${new Date(currentRequest.shift_date).toDateString()} denied`,
         volunteer_id: currentRequest.volunteer_id,
+        class_id: 0, //TODO
         transaction
       });
 
@@ -326,6 +336,7 @@ export default class CoverageModel {
       .select([
         "ar.request_id",
         "s.fk_volunteer_id as volunteer_id",
+        "s.shift_date",
         "ar.category",
         "ar.details",
         "ar.comments",

@@ -1,4 +1,5 @@
 import { ResultSetHeader } from 'mysql2';
+import { PoolConnection } from 'mysql2/promise';
 import { InstructorDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
 import { logModel } from '../config/models.js';
@@ -12,11 +13,12 @@ export default class InstructorModel {
     return results;
   }
 
-  async getInstructorById(instructor_id: string): Promise<InstructorDB> {
+  async getInstructorById(instructor_id: string, transaction?: PoolConnection): Promise<InstructorDB> {
+    const connection = transaction ?? connectionPool;
     const query = "SELECT * FROM instructors WHERE instructor_id = ?";
     const values = [instructor_id];
 
-    const [results, _] = await connectionPool.query<InstructorDB[]>(query, values);
+    const [results, _] = await connection.query<InstructorDB[]>(query, values);
 
     if (results.length === 0) {
       throw {
@@ -45,7 +47,8 @@ export default class InstructorModel {
       // Log to db
       await logModel.log({
         signoff,
-        description: "TODO",
+        page: 'Member Management',
+        description: `Created instructor ${f_name} ${l_name}`,
         transaction,
       });
 
@@ -62,6 +65,9 @@ export default class InstructorModel {
     try {
       await transaction.beginTransaction();
 
+      // Ensure instructor exists
+      const instructor = await this.getInstructorById(instructor_id, transaction);
+
       const query = `DELETE FROM instructors WHERE instructor_id = ?`;
       const values = [instructor_id];
 
@@ -71,7 +77,8 @@ export default class InstructorModel {
       // Log to db
       await logModel.log({
         signoff,
-        description: "TODO",
+        page: 'Member Management',
+        description: `Deleted instructor ${instructor.f_name} ${instructor.l_name}`,
         transaction,
       });
 
@@ -98,7 +105,8 @@ export default class InstructorModel {
       // Log to db
       await logModel.log({
         signoff,
-        description: "TODO",
+        page: 'Member Management',
+        description: `Deleted instructor ${f_name} ${l_name}`,
         transaction,
       });
 

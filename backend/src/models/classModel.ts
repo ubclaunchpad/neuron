@@ -32,8 +32,7 @@ export default class ClassesModel {
           return results;
      }
 
-     async getClassesByIds(class_ids: number | number[], schedules: boolean = false): Promise<any> {
-          const single = !Array.isArray(class_ids);
+     async getClassesByIds(class_ids: number | number[], schedules: boolean = false): Promise<any[]> {
           class_ids = wrapIfNotArray(class_ids);
 
           if (class_ids.length === 0) {
@@ -48,12 +47,6 @@ export default class ClassesModel {
           const values = [class_ids];
 
           const [results, _] = await connectionPool.query<ClassDB[]>(query, values);
-          if (single && results.length === 0) {
-               throw {
-                    status: 400,
-                    message: `No class found under the given ID: ${class_ids[0]}`,
-               };
-          }
 
           let classes = results;
           if (schedules) {
@@ -67,7 +60,7 @@ export default class ClassesModel {
                classes = await Promise.all(classPromises);
           }
 
-          return single ? classes[0] : classes;
+          return classes;
      }
 
      async addClass(newClass: ClassDB, schedules?: ScheduleDB[]): Promise<any> {
@@ -138,6 +131,8 @@ export default class ClassesModel {
                .toBuffer();
 
           try {
+               await transaction.beginTransaction();
+
                const query = `SELECT * FROM class WHERE class_id = ?`;
                const values = [class_id];
 
@@ -175,6 +170,8 @@ export default class ClassesModel {
           const transaction = await connectionPool.getConnection();
      
           try {
+               await transaction.beginTransaction();
+
                const query1 = `SELECT * FROM class WHERE class_id = ?`;
                const values1 = [class_id];
 

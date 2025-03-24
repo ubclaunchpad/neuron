@@ -205,9 +205,9 @@ function CoverageRequests() {
     }
   }, [selectedDate]); // Scroll to top when selectedDate changes
 
-  const handleAbsenceApprove = (shift) => {
+  const handleAbsenceApprove = (shift, initials) => {
     setApprove(false);
-    approveAbsenceRequest(shift.absence_request.request_id)
+    approveAbsenceRequest(shift.absence_request.request_id, initials)
       .then(() => {
         console.log("Absence request approved successfully");
         navigate(0);
@@ -217,11 +217,12 @@ function CoverageRequests() {
       });
   };
 
-  const handleCoverageApprove = (shift) => {
+  const handleCoverageApprove = (shift, initials) => {
     setApprove(false);
     approveCoverageRequest(
       shift.absence_request.request_id,
-      shift.absence_request.covering_volunteer_id
+      shift.absence_request.covering_volunteer_id,
+      initials
     )
       .then(() => {
         console.log("Coverage request approved successfully");
@@ -232,8 +233,8 @@ function CoverageRequests() {
       });
   };
 
-  const handleAbsenceDecline = (shift) => {
-    rejectAbsenceRequest(shift.absence_request.request_id)
+  const handleAbsenceDecline = (shift, initials) => {
+    rejectAbsenceRequest(shift.absence_request.request_id, initials)
       .then(() => {
         console.log("Absence request declined successfully");
         navigate(0);
@@ -243,10 +244,11 @@ function CoverageRequests() {
       });
   };
 
-  const handleCoverageDecline = (shift) => {
+  const handleCoverageDecline = (shift, initials) => {
     rejectCoverageRequest(
       shift.absence_request.request_id,
-      shift.absence_request.covering_volunteer_id
+      shift.absence_request.covering_volunteer_id,
+      initials
     )
       .then(() => {
         console.log("Coverage request declined successfully");

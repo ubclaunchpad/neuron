@@ -1,6 +1,6 @@
-import "./index.css";
-import React, { useState, useEffect } from "react";
 import CloseIcon from "@mui/icons-material/Close";
+import React, { useState } from "react";
+import "./index.css";
 
 export default function CoverageModal({ shift, setShowModal, handleApprove, handleDecline, approve }) {
   const [initials, setInitials] = useState("");
@@ -9,9 +9,9 @@ export default function CoverageModal({ shift, setShowModal, handleApprove, hand
       e.preventDefault();
       setShowModal(false);
       if (approve) {
-        handleApprove(shift);
+        handleApprove(shift, initials);
       } else {
-        handleDecline(shift);
+        handleDecline(shift, initials);
       }
     }
   return (

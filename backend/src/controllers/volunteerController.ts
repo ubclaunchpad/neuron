@@ -1,5 +1,4 @@
 import { NextFunction, Response } from "express";
-import { VolunteerDB } from "../common/databaseModels.js";
 import { AuthenticatedRequest } from "../common/types.js";
 import { userModel, volunteerModel } from "../config/models.js";
 
@@ -104,13 +103,10 @@ async function verifyVolunteer(
     req: AuthenticatedRequest,
     res: Response
 ): Promise<any> {
-    // Get the token from the request parameters
-    const volunteer_id = req.params.volunteer_id;
+    const { volunteer_id } = req.params;
+    const { signoff } = req.body;
 
-    // Update the user's active status
-    await volunteerModel.updateVolunteer(volunteer_id, {
-        active: true,
-    } as VolunteerDB);
+    await volunteerModel.verifyVolunteer(volunteer_id, signoff);
     
     return res.status(200).json({
         message: "User verified successfully",
@@ -121,13 +117,10 @@ async function deactivateVolunteer(
     req: AuthenticatedRequest,
     res: Response
 ): Promise<any> {
-    // Get the token from the request parameters
-    const volunteer_id = req.params.volunteer_id;
+    const { volunteer_id } = req.params;
+    const { signoff } = req.body;
 
-    // Update the user's active status
-    await volunteerModel.updateVolunteer(volunteer_id, {
-        active: false,
-    } as VolunteerDB);
+    await volunteerModel.deactivateVolunteer(volunteer_id, signoff);
 
     return res.status(200).json({
         message: "User deactivated successfully",

@@ -65,7 +65,7 @@ const AddEditInstructorModal = ({ closeEvent, instructor_data = null }) => {
                         }
 
                         if (instructor_data !== null) {
-                            editInstructor(instructor_data.instructor_id, data)
+                            editInstructor(instructor_data.instructor_id, data, initials)
                                 .then(() => {
                                     notyf.success("Instructor details updated successfully.");
                                     closeEvent();
@@ -74,7 +74,7 @@ const AddEditInstructorModal = ({ closeEvent, instructor_data = null }) => {
                                     notyf.error("Failed to update instructor details.");
                                 });
                         } else {
-                            addInstructor(data)
+                            addInstructor(data, initials)
                                 .then(() => {
                                     notyf.success("Instructor added successfully.");
                                     closeEvent();

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "rsbuild build",
-    "dev": "rsbuild dev --open",
+    "build:analyze": "BUNDLE_ANALYZE=true rsbuild build",
+    "dev": "rsbuild dev",
     "format": "prettier --write .",
     "lint": "eslint .",
     "preview": "rsbuild preview"

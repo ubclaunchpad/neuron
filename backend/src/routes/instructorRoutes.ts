@@ -27,6 +27,7 @@ export const InstructorRoutes: RouteDefinition = {
                 body('f_name').isString(),
                 body('l_name').isString(),
                 body('email').isEmail(),
+                body('signoff').isAlpha('en-US', { ignore: '.' })
             ],
             action: insertInstructor
         },
@@ -42,13 +43,17 @@ export const InstructorRoutes: RouteDefinition = {
                     validation: [
                         body('f_name').isString(),
                         body('l_name').isString(),
-                        body('email').isEmail()
+                        body('email').isEmail(),
+                        body('signoff').isAlpha('en-US', { ignore: '.' })
                     ],
                     action: editInstructor
                 },
                 {
                     path: '/',
                     method: 'delete',
+                    validation: [
+                        body('signoff').isAlpha('en-US', { ignore: '.' }),
+                    ],
                     action: deleteInstructor
                 },
             ]

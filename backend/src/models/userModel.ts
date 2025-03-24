@@ -84,6 +84,8 @@ export default class UserModel {
         const transaction = await connectionPool.getConnection();
 
         try {
+            await transaction.beginTransaction();
+
             const users = await this.getUsersByIds(user_id);
 
             if (users.length === 0) {
@@ -122,6 +124,8 @@ export default class UserModel {
             .toBuffer();
 
         try {
+            await transaction.beginTransaction();
+            
             const users = await this.getUsersByIds(user_id);
 
             if (users.length === 0) {

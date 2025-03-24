@@ -1,7 +1,7 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { AbsenceRequestDB, ShiftDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
-import { shiftModel } from "../config/models.js";
+import { logModel, shiftModel } from "../config/models.js";
 import queryBuilder from "../config/queryBuilder.js";
 
 export default class CoverageModel {
@@ -11,21 +11,17 @@ export default class CoverageModel {
    *
    * @param request_id - The ID of the absence request to be covered
    * @param volunteer_id - The ID of the volunteer who will cover the shift
-   */
-  /**
-   * Approves a coverage request by updating the absence request with the volunteer ID
-   * and creating a new shift for the covering volunteer
-   *
-   * @param request_id - The ID of the absence request to be covered
-   * @param volunteer_id - The ID of the volunteer who will cover the shift
-   * @throws Error if the absence request is not found or if the associated shift cannot be found
+   * @param signoff - the signoff of the approving admin
    */
   async approveCoverageRequest(
     request_id: number,
-    volunteer_id: string
+    volunteer_id: string,
+    signoff: string
   ): Promise<void> {
     const transaction = await connectionPool.getConnection();
     try {
+      await transaction.beginTransaction();
+
       // Resolve the absence request
       const updateQuery = `
                     UPDATE absence_request 
@@ -80,6 +76,17 @@ export default class CoverageModel {
         transaction
       );
 
+      // Log approval
+      const currentRequest = await this.getAbsenceRequest(request_id);
+      await logModel.log({
+        signoff,
+        page: 'Coverage Requests',
+        description: `Coverage request for ${new Date(currentRequest.shift_date).toDateString()} approved`, 
+        volunteer_id,
+        class_id: currentRequest.class_id,
+        transaction
+      });
+
       await transaction.commit();
     } catch (error) {
       // Rollback
@@ -93,7 +100,6 @@ export default class CoverageModel {
    *
    * @param request_id - The ID of the absence request to be covered
    * @param volunteer_id - The ID of the volunteer who is offering to cover the shift
-   * @returns A ResultSetHeader containing information about the database operation
    */
   async insertCoverageRequest(
     request_id: number,
@@ -119,8 +125,6 @@ export default class CoverageModel {
    * @param request_id - The ID of the absence request
    * @param volunteer_id - The ID of the volunteer who offered to cover the shift
    * @param transaction - Optional database transaction for ensuring atomicity
-   * @returns A ResultSetHeader containing information about the database operation
-   * @throws Error if the coverage request is not found or already approved
    */
   async deleteCoverageRequest(
     request_id: number,
@@ -145,21 +149,64 @@ export default class CoverageModel {
   }
 
   /**
+   * Deletes a coverage request and logs the deleting admin
+   *
+   * @param request_id - The ID of the absence request
+   * @param volunteer_id - The ID of the volunteer who offered to cover the shift
+   * @param signoff - the signoff of the denying admin
+   */
+  async denyCoverageRequest(
+    request_id: number,
+    volunteer_id: string,
+    signoff: string
+  ): Promise<void> {
+    const transaction = await connectionPool.getConnection();
+    try {
+      await transaction.beginTransaction();
+
+      // Delete the coverage request
+      await this.deleteCoverageRequest(
+        request_id,
+        volunteer_id,
+        transaction
+      );
+
+      // Log deny
+      const currentRequest = await this.getAbsenceRequest(request_id);
+      await logModel.log({
+        signoff, 
+        page: 'Coverage Requests',
+        description: `Coverage request for ${new Date(currentRequest.shift_date).toDateString()} denied`, 
+        volunteer_id,
+        class_id: currentRequest.class_id,
+        transaction
+      });
+
+      await transaction.commit();
+    } catch (error) {
+      // Rollback
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  /**
    * Approves an absence request by updating its status in the database
    *
    * @param request_id - The ID of the absence request to approve
-   * @throws Error if the absence request is not found
    */
-  async approveAbsenceRequest(request_id: number): Promise<void> {
+  async approveAbsenceRequest(request_id: number, signoff: string): Promise<void> {
     const transaction = await connectionPool.getConnection();
     try {
+      await transaction.beginTransaction();
+
       const query = `
                     UPDATE absence_request 
                     SET approved = TRUE
                     WHERE request_id = ?
                `;
       const values = [request_id];
-      const [results, _] = await connectionPool.query<ResultSetHeader>(
+      const [results] = await transaction.query<ResultSetHeader>(
         query,
         values
       );
@@ -168,6 +215,19 @@ export default class CoverageModel {
       if (results.affectedRows === 0) {
         throw new Error("Shift absence request request not found");
       }
+
+      // Log approval
+      const currentRequest = await this.getAbsenceRequest(request_id);
+      await logModel.log({
+        signoff, 
+        page: 'Coverage Requests',
+        description: `Absence request for ${new Date(currentRequest.shift_date).toDateString()} approved`, 
+        volunteer_id: currentRequest.volunteer_id,
+        class_id: currentRequest.class_id,
+        transaction
+      });
+
+      await transaction.commit();
     } catch (error) {
       // Rollback
       await transaction.rollback();
@@ -180,7 +240,6 @@ export default class CoverageModel {
    *
    * @param shift_id - The ID of the shift for which absence is requested
    * @param data - The absence request data to be inserted
-   * @returns A ResultSetHeader containing information about the database operation
    */
   async insertAbsenceRequest(
     shift_id: number,
@@ -205,15 +264,15 @@ export default class CoverageModel {
    *
    * @param request_id - The ID of the absence request to delete
    * @returns A ResultSetHeader containing information about the database operation
-   * @throws Error if the absence request is not found or already fulfilled
    */
-  async deleteAbsenceRequest(request_id: number): Promise<ResultSetHeader> {
+  async deleteAbsenceRequest(request_id: number, transaction?: PoolConnection): Promise<ResultSetHeader> {
+    const connection = transaction || connectionPool;
     const query = `
                DELETE FROM absence_request WHERE request_id = ?
           `;
     const values = [request_id];
 
-    const [results, _] = await connectionPool.query<ResultSetHeader>(
+    const [results, _] = await connection.query<ResultSetHeader>(
       query,
       values
     );
@@ -227,6 +286,45 @@ export default class CoverageModel {
   }
 
   /**
+   * Deletes a absence request and logs the denying admin
+   *
+   * @param request_id - The ID of the absence request
+   * @param signoff - the signoff of the denying admin
+   */
+  async denyAbsenceRequest(
+    request_id: number,
+    signoff: string
+  ): Promise<void> {
+    const transaction = await connectionPool.getConnection();
+    try {
+      await transaction.beginTransaction();
+
+      // Delete the coverage request
+      await this.deleteAbsenceRequest(
+        request_id,
+        transaction
+      );
+
+      // Log deny
+      const currentRequest = await this.getAbsenceRequest(request_id);
+      await logModel.log({
+        signoff, 
+        page: 'Coverage Requests',
+        description: `Absence request for ${new Date(currentRequest.shift_date).toDateString()} denied`,
+        volunteer_id: currentRequest.volunteer_id,
+        class_id: currentRequest.class_id,
+        transaction
+      });
+
+      await transaction.commit();
+    } catch (error) {
+      // Rollback
+      await transaction.rollback();
+      throw error;
+    }
+  }  
+
+  /**
    * Retrieves the absence request for a specific request ID
    *
    * @param request_id - The ID of the absence request to retrieve
@@ -237,7 +335,9 @@ export default class CoverageModel {
     const query = queryBuilder
       .select([
         "ar.request_id",
-        "s.volunteer_id as volunteer_id",
+        "s.fk_volunteer_id as volunteer_id",
+        "s.shift_date",
+        "sc.fk_class_id as class_id",
         "ar.category",
         "ar.details",
         "ar.comments",
@@ -256,6 +356,7 @@ export default class CoverageModel {
       ])
       .from({ ar: "absence_request" })
       .join({ s: "shifts" }, "ar.fk_shift_id", "s.shift_id")
+      .join({ sc: "schedule" }, "s.fk_schedule_id", "sc.schedule_id")
       .leftJoin({ cr: "coverage_request" }, "ar.request_id", "cr.request_id")
       .where("ar.request_id", request_id);
 
@@ -267,18 +368,6 @@ export default class CoverageModel {
       throw new Error("Absence request not found");
     }
 
-    return results[0];
-  }
-
-  async getAbsenceRequests(): Promise<any> {
-    const query = "SELECT * FROM absence_request";
-    const [results, _] = await connectionPool.query<any[]>(query);
-    return results[0];
-  }
-
-  async getCoverageRequests(): Promise<any> {
-    const query = "SELECT * FROM coverage_request";
-    const [results, _] = await connectionPool.query<any[]>(query);
     return results[0];
   }
 }

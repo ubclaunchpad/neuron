@@ -139,7 +139,7 @@ function UnverifiedUsers({ unverifiedUsers }) {
                // Logging Admin Initial
                console.log("Logging admin initial...");
                if (isVerifying){
-                    verifyVolunteer(toBeVerified.volunteer_id);
+                    verifyVolunteer(toBeVerified.volunteer_id, adminInitial);
                } 
                else {
                     // TODO: 

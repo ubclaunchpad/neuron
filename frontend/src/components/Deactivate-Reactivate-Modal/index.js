@@ -33,7 +33,7 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                 onSubmit={(values, { setSubmitting }) => {
                     const initials = cleanInitials(values.initials);
                     if (type === 1) {
-                        deactivateVolunteer(id)
+                        deactivateVolunteer(id, initials)
                             .then(() => {
                                 notyf.success("Account deactivated.");
                                 setTimeout(() => {
@@ -45,7 +45,7 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                                 console.error(error);
                             });
                     } else if (type === 0) {
-                        verifyVolunteer(id)
+                        verifyVolunteer(id, initials)
                             .then(() => {
                                 notyf.success("Account reactivated.");
                                 setTimeout(() => {
@@ -57,7 +57,7 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                                 console.error(error);
                             });
                     } else if (type === 2) {
-                        deleteInstructor(id)
+                        deleteInstructor(id, initials)
                             .then(() => {
                                 notyf.success("Instructor profile deleted.");
                                 closeEvent();

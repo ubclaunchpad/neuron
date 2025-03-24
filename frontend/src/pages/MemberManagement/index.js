@@ -6,6 +6,7 @@ import AddEditInstructorModal from "../../components/AddEditInstructorModal";
 import MemberList from "../../components/MemberList";
 import Modal from "../../components/Modal";
 import Notifications from "../../components/Notifications";
+import SearchInput from '../../components/SearchInput';
 import UnverifiedUsers from "../../components/UnverifiedUsers";
 import "./index.css";
 
@@ -101,7 +102,7 @@ const MemberManagement = () => {
             </nav>
             { type === "unverified" ? null :
                 <div className="member-search-bar">
-                    <input type="search" placeholder="Search by name or email" className="member-search-input" onChange={(e) => {
+                    <SearchInput placeholder="Search by name or email" onChange={(e) => {
                         searchVolunteers(e.target.value);
                     }} />
                     {type === "volunteers" && (

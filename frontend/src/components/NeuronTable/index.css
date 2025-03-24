@@ -12,46 +12,49 @@
 
 .neuron-table-scroll {
   overflow: auto;
+  flex-grow: 1;
 }
 
 .neuron-table {
   width: 100%;
-  border-collapse: collapse;
 }
 
 .neuron-table__thead {
-  border-bottom: 1px solid var(--bg-grey-outline, #D9D9D9);
-  background: rgba(217, 217, 217, 0.30);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f4f4f4;
 }
 
 .neuron-table__th {
+  color: var(--text-dark, #0F1111);
   text-align: left;
   font-weight: 600;
   white-space: nowrap;
   padding-top: 20px;
   padding-bottom: 16px;
-}
-
-.neuron-table__th:last-child {
-  padding-right: 20px;
-}
-
-.neuron-table__th:first-child {
-  padding-left: 20px;
-}
-
-
-.neuron-table__tbody {
+  border-bottom: 1px solid var(--bg-grey-outline, #d9d9d9);
 }
 
 .neuron-table__td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #eee;
+  padding-block: 12px;
+  padding-right: 12px;
+  font-size: 0.75em;
   white-space: nowrap;
 }
 
+.neuron-table__td:nth-last-child(2) {
+  padding-right: 0px;
+}
+
+.neuron-table__td i {
+  color: var(--text-grey, #808080);
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
 .neuron-table__tbody tr:hover {
-  background-color: #f9f9f9;
+  background: #F0FAFF;
 }
 
 .neuron-table__pagination {

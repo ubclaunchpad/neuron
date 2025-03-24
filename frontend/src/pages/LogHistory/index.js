@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { getLogHistory } from "../../api/logService";
 import NeuronTable from '../../components/NeuronTable';
 import Notifications from "../../components/Notifications";
+import SearchInput from "../../components/SearchInput";
 import { useDebouncedState } from '../../utils/hookUtils';
 import "./index.css";
 
@@ -9,49 +10,63 @@ const columns = [
   {
     accessorKey: 'page',
     header: 'Page',
-    width: ''
+    minSize: 150,
   },
   {
-    accessorFn: (row) => {
-      if (!row.class_id) return 'N/A';
-      if (!row.class_name) return '[Deleted]';
-      return row.class_name;
-    },
+    // accessorFn: (row) => row.class_name, // return the raw value
     id: 'class',
     header: 'Class',
-    width: ''
+    cell: ({ row }) => {
+      if (!row.original.class_id) return <i>N/A</i>;
+      if (!row.original.class_name) return <i>[Deleted]</i>;
+      return row.original.class_name;
+    },
+    minSize: 56,
+    maxSize: 200,
   },
   {
     accessorKey: 'description',
     header: 'Description',
-    width: ''
+    minSize: 100,
   },
   {
-    accessorFn: (row) => {
-      if (!row.fk_volunteer_id) return 'N/A';
-      if (!row.volunteer_f_name && !row.volunteer_l_name) return '[Deleted]';
-      return `${row.volunteer_f_name || ''} ${row.volunteer_l_name || ''}`.trim();
-    },
     id: 'volunteer',
     header: 'Volunteer',
-    width: ''
+    cell: ({ row }) => {
+      console.log(row);
+      if (!row.original.fk_volunteer_id) return <i>'N/A</i>;
+      if (!row.original.volunteer_f_name && !row.original.volunteer_l_name) return <i>[Deleted]</i>;
+      return `${row.original.volunteer_f_name} ${row.original.volunteer_l_name}`.trim();
+    },
+    minSize: 80,
   },
   {
     accessorKey: 'signoff',
     header: 'Admin',
-    width: ''
+    maxSize: 60,
+    minSize: 60,
   },
   {
-    accessorFn: (row) => new Date(row.created_at).toLocaleDateString(),
+    accessorFn: (row) => new Date(row.created_at).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }),
     id: 'date',
     header: 'Date',
-    width: ''
+    maxSize: 120,
+    minSize: 60,
   },
   {
-    accessorFn: (row) => new Date(row.created_at).toLocaleTimeString(),
+    accessorFn: (row) => new Date(row.created_at).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    }),
     id: 'time',
     header: 'Time',
-    width: ''
+    minSize: 50,
+    maxSize: 50,
   },
 ];
 
@@ -75,8 +90,7 @@ function LogHistory() {
       <div className="logs-container">
         {/* Search bar */}
         <div>
-          <input
-            type="text"
+          <SearchInput
             placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}

@@ -23,7 +23,7 @@ function NeuronTable({ fetchTableData, fetchDeps, columns, pageSizeOptions }, re
     const loadData = async () => {
       const result = await fetchTableData({ pageIndex, pageSize });
       setData(result.data);
-      setTotalRows(result.totalRowCount);
+      setTotalRows(result.totalCount);
     };
     loadData();
   }, [pageIndex, pageSize, ...(fetchDeps || [])]);
@@ -51,35 +51,39 @@ function NeuronTable({ fetchTableData, fetchDeps, columns, pageSizeOptions }, re
     manualPagination: true,
   });
 
+  const getColumnStyle = (colDef) => ({
+    minWidth: colDef.minSize ? `${colDef.minSize}px` : 'unset',
+    maxWidth: colDef.maxSize ? `${colDef.maxSize}px` : 'unset',
+  });
+
   return (
     <div className="neuron-table-container">
       {/* Scrollable section for the table */}
       <div className="neuron-table-scroll">
-        <table className="neuron-table">
-          <colgroup>
-            {columns.map((col, idx) => (
-              <col key={idx} style={col.widthStyles} />
-            ))}
-          </colgroup>
+        <table className="neuron-table" cellSpacing="0" cellPadding="0">
           <thead className="neuron-table__thead">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="neuron-table__tr">
+                <th style={{ minWidth: '20px' }} className="neuron-table__th" />
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} className="neuron-table__th">
+                  <th key={header.id} style={getColumnStyle(header.column.columnDef)} className="neuron-table__th">
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
+                <th style={{ minWidth: '20px' }} className="neuron-table__th" />
               </tr>
             ))}
           </thead>
           <tbody className="neuron-table__tbody">
             {table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="neuron-table__tr">
+                <td/>
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="neuron-table__td">
+                  <td key={cell.id} style={getColumnStyle(cell.column.columnDef)} className="neuron-table__td">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
+                <td/>
               </tr>
             ))}
           </tbody>

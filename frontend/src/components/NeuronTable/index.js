@@ -99,7 +99,7 @@ function NeuronTable({ fetchTableData, fetchDeps, columns }, ref) {
             ref={index === Math.round((pageIndex + 0.75) * PAGE_SIZE) ? sentinelRef : null}
             className="neuron-table__tr"
           >
-            <td/>
+            <td className="neuron-table__td neuron-table__spacer" />
             {row.getVisibleCells().map((cell, idx) => (
               <td
                 key={cell.id}
@@ -108,9 +108,9 @@ function NeuronTable({ fetchTableData, fetchDeps, columns }, ref) {
                 <div style={{ minWidth: columns[idx].minWidth || 'unset' }} className="neuron-table__cell">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </div>
-              </td>
+              </td >
             ))}
-            <td/>
+            <td className="neuron-table__td neuron-table__spacer" />
           </tr>
         ))}
         {/* Spinner row at the bottom, only shown while loading more data */}

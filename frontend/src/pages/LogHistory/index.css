@@ -10,7 +10,8 @@
 
 .log-table-container {
     border: 1px solid var(--bg-grey-outline, #d9d9d9);
-    background: var(--bg-white, #fff);
+    /* So in safari the top is header colored and bottom is white */
+    background: linear-gradient(to bottom, #f4f4f4, #fff);
     border-radius: 8px;
     flex-direction: column;
     flex-grow: 1;

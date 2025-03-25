@@ -1,6 +1,7 @@
 .neuron-table {
   width: 100%;
   table-layout: auto;
+  overflow: hidden;
 }
 
 .neuron-table__thead {
@@ -24,17 +25,16 @@
 }
 
 .neuron-table__spacer {
-  padding: 0;
-  min-width: 20px;
-  max-width: 20px;
+  padding: 0 !important;
   width: 20px;
+  min-width: 20px;
 }
 
 .neuron-table__td {
   padding-block: 12px;
   padding-right: 12px;
   font-size: 0.75em;
-  white-space: nowrap;
+  background-color: #fff;
 }
 
 .neuron-table__td:nth-last-child(2) {

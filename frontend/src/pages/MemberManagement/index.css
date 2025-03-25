@@ -79,13 +79,12 @@
 
 .member-search-input {
     flex: 1;
-    padding: 8px 1vw 8px 2.5vw;
+    padding: 12px 20px 12px 44px;
+    font-size: 0.75em;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    font-size: 14px;
-    background: transparent url("../../assets/search-icon.png") no-repeat 10px;
+    background: transparent url("../../assets/search-icon.svg") no-repeat 20px;
     background-size: 16px;
-    height: 40px;
 }
 
 .member-search-input:focus {

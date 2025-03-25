@@ -106,7 +106,7 @@ export default class InstructorModel {
       await logModel.log({
         signoff,
         page: 'Member Management',
-        description: `Deleted instructor ${f_name} ${l_name}`,
+        description: `Edited instructor ${f_name} ${l_name}`,
         transaction,
       });
 

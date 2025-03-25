@@ -7,7 +7,7 @@
 
 .coverage-panel-container {
      position: fixed;
-     height: 100vh;
+     height: 100dvh;
      top: 0px;
      right: 0px;
      z-index: 1;
@@ -231,7 +231,7 @@
  /* Shift Details Panel */
 /* Dynamic Button Styling based on Shift Type */
 .coverage-panel-buttons {
-     margin-top: 4vh;
+     margin-top: 4dvh;
      width: fit-content;
      display: flex;
      flex-direction: column;

@@ -60,8 +60,8 @@
 /* Shift Details Panel */
 /* Dynamic Button Styling based on Shift Type */
 .panel-buttons {
-     margin-top: 4vh;
-     height: 4.5vh;
+     margin-top: 4dvh;
+     height: 4.5dvh;
      display: flex;
      flex-direction: row;
      gap: 12px;

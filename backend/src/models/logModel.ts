@@ -52,6 +52,9 @@ export default class LogModel {
             }, {} as Record<string, ClassDB>);
         }
 
+        // Grab total count
+        const totalCount = logs.length > 0 ? logs[0].total_count : 0;
+
         // Transform logs
         logs.forEach((log) => {
             delete log.total_count;
@@ -68,7 +71,6 @@ export default class LogModel {
             }
         });
 
-        const totalCount = logs.length > 0 ? logs[0].total_count : 0;
         return { data: logs, totalCount };
     }
     

@@ -34,3 +34,14 @@ export interface RouteEndpoint<T extends Request = Request> {
 /* We know the correct Request subtype, this prevents ts from getting mad */
 export type RouteDefinition = RouteGroup<any> | RouteEndpoint<any>;
 
+
+export type ListRequestOptions = {
+    page?: number;
+    perPage?: number;
+    search?: string;
+}
+
+export type ListResponse<T> = {
+    data: T[];
+    totalCount: number;
+}

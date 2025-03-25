@@ -6,14 +6,14 @@
 }
 
 .main-content {
-     min-width: min(calc(100dvw - var(--sidebar-width)), 854px);
+     min-width: clamp(346px, calc(100dvw - var(--sidebar-width)), 854px);
      width: 100%;
      max-width: 100%;
 }
 
 .panel-container {
      position: fixed;
-     height: 100vh;
+     height: 100dvh;
      top: 0px;
      right: 0px;
      z-index: 4;

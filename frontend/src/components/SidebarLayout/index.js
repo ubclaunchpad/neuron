@@ -7,7 +7,6 @@ import nav_item_dash from "../../assets/nav-item-dash.png";
 import nav_item_management from "../../assets/nav-item-management.png";
 import nav_item_schedule from "../../assets/nav-item-sched.png";
 import nav_item_settings from "../../assets/nav-item-settings.png";
-import nav_item_member from "../../assets/nav-item-member.png";
 import sidebar_toggle from "../../assets/sidebar-toggle.png";
 import "./index.css";
 
@@ -130,6 +129,18 @@ function SidebarLayout() {
             >
               <img src={nav_item_management} alt="Member Management" />
               {!collapsed && "Member Management"}
+            </NavLink>
+          </Permission>
+
+          <Permission permissions="admin">
+            <NavLink
+              to="/logs"
+              className={({ isActive }) =>
+                isActive ? "NavbarText nav-item active" : "NavbarText nav-item"
+              }
+            >
+              <img src={nav_item_coverage} alt="Log History" />
+              {!collapsed && "Log History"}
             </NavLink>
           </Permission>
 

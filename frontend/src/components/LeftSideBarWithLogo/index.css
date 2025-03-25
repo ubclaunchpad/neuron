@@ -1,5 +1,5 @@
 .leftSideBar{
-    height: 100vh;
+    height: 100dvh;
     width: 40vw;
     background-color: var(--light-grey);
     display: flex;
@@ -14,8 +14,8 @@
     width: 13vw;
     background: url('../../assets/logo-icon.png') no-repeat center center;
     background-size: cover;
-    margin-top: -5vh;
-    margin-bottom: 3vh;
+    margin-top: -5dvh;
+    margin-bottom: 3dvh;
 }
 
 .text {

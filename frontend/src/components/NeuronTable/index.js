@@ -1,130 +1,128 @@
-import { flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import "./index.css";
 
-function NeuronTable({ fetchTableData, fetchDeps, columns, pageSizeOptions }, ref) {
+// Constants
+const PAGE_SIZE = 50;
+
+function NeuronTable({ fetchTableData, fetchDeps, columns }, ref) {
   const [data, setData] = useState([]);
   const [totalRows, setTotalRows] = useState(0);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  // Request parameters
-  const [pageIndex, setPageIndexInternal] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  pageSizeOptions = pageSizeOptions || [10, 20, 30, 40, 50];
-
+  // Expose a setPageIndex method to the parent
   useImperativeHandle(ref, () => ({
-    setPageIndex: (pageIndex) => {
-      console.log("setPageIndex");
-      setPageIndexInternal(pageIndex);
+    setPageIndex: (index) => {
+      setPageIndex(index);
     },
   }));
 
-  // Fetch data whenever pagination changes
+  // Fetch data when pageIndex changes
   useEffect(() => {
     const loadData = async () => {
-      const result = await fetchTableData({ pageIndex, pageSize });
-      setData(result.data);
+      setLoadingMore(true);
+      const result = await fetchTableData({ pageIndex, pageSize: PAGE_SIZE });
+
+      // If first page, replace existing data
+      if (pageIndex === 0) {
+        setData(result.data);
+      } else {
+        setData((prev) => [...prev, ...result.data]);
+      }
+
       setTotalRows(result.totalCount);
+      setLoadingMore(false);
     };
     loadData();
-  }, [pageIndex, pageSize, ...(fetchDeps || [])]);
+  }, [pageIndex, ...(fetchDeps || [])]);
+
+  // Setup an IntersectionObserver on the sentinel row
+  const sentinelRef = useRef(null);
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver((entries) => {
+        console.log('observed', entries);
+        const entry = entries[0];
+
+        // Only load more if there is more data
+        if (entry.isIntersecting && data.length < totalRows) {
+          console.log('loading more data');
+          setPageIndex((prev) => prev + 1);
+        }
+      }, { threshold: 0.1 }
+    );
+
+    observer.observe(sentinel);
+    return () => {
+      if (sentinel) observer.unobserve(sentinel);
+    };
+  }, [data, totalRows]);
 
   const table = useReactTable({
     data,
     columns,
-    pageCount: Math.ceil(totalRows / pageSize),
-    state: {
-      pagination: {
-        pageIndex,
-        pageSize,
-      },
-    },
-    onPaginationChange: (updater) => {
-      const newPaginationState =
-        typeof updater === 'function'
-          ? updater({ pageIndex, pageSize })
-          : updater;
-      setPageIndexInternal(newPaginationState.pageIndex);
-      setPageSize(newPaginationState.pageSize);
-    },
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    manualPagination: true,
-  });
-
-  const getColumnStyle = (colDef) => ({
-    minWidth: colDef.minSize ? `${colDef.minSize}px` : 'unset',
-    maxWidth: colDef.maxSize ? `${colDef.maxSize}px` : 'unset',
   });
 
   return (
-    <div className="neuron-table-container">
-      {/* Scrollable section for the table */}
-      <div className="neuron-table-scroll">
-        <table className="neuron-table" cellSpacing="0" cellPadding="0">
-          <thead className="neuron-table__thead">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="neuron-table__tr">
-                <th style={{ minWidth: '20px' }} className="neuron-table__th" />
-                {headerGroup.headers.map((header) => (
-                  <th key={header.id} style={getColumnStyle(header.column.columnDef)} className="neuron-table__th">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
-                <th style={{ minWidth: '20px' }} className="neuron-table__th" />
-              </tr>
+    <table className="neuron-table" cellSpacing="0" cellPadding="0">
+      <colgroup>
+        <col className='neuron-table__spacer' />
+        {columns.map((col, idx) => (
+          <col key={idx} style={{ width: col.width || 'unset' }} />
+        ))}
+        <col className='neuron-table__spacer' />
+      </colgroup>
+      <thead className="neuron-table__thead">
+        {table.getHeaderGroups().map((headerGroup) => (
+          <tr key={headerGroup.id} className="neuron-table__tr">
+            <th className="neuron-table__th neuron-table__spacer" />
+            {headerGroup.headers.map((header) => (
+              <th
+                key={header.id}
+                className="neuron-table__th"
+              >
+                {flexRender(header.column.columnDef.header, header.getContext())}
+              </th>
             ))}
-          </thead>
-          <tbody className="neuron-table__tbody">
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="neuron-table__tr">
-                <td/>
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} style={getColumnStyle(cell.column.columnDef)} className="neuron-table__td">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-                <td/>
-              </tr>
+            <th className="neuron-table__th neuron-table__spacer" />
+          </tr>
+        ))}
+      </thead>
+      <tbody className="neuron-table__tbody">
+        {table.getRowModel().rows.map((row, index) => (
+          <tr
+            key={row.id}
+            ref={index === Math.round((pageIndex + 0.75) * PAGE_SIZE) ? sentinelRef : null}
+            className="neuron-table__tr"
+          >
+            <td/>
+            {row.getVisibleCells().map((cell, idx) => (
+              <td
+                key={cell.id}
+                className="neuron-table__td"
+              >
+                <div style={{ minWidth: columns[idx].minWidth || 'unset' }} className="neuron-table__cell">
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </div>
+              </td>
             ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination controls */}
-      <div className="neuron-table__pagination">
-        <button
-          className="neuron-table__pagination-button"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          {'<'}
-        </button>
-        <span className="neuron-table__pagination-info">
-          Page {table.getPageCount() ? pageIndex + 1 : 0} of {table.getPageCount() || 0}
-        </span>
-        <button
-          className="neuron-table__pagination-button"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          {'>'}
-        </button>
-
-        <select
-          className="neuron-table__pagination-select"
-          value={table.getState().pagination.pageSize}
-          onChange={(e) => {
-            table.setPageSize(Number(e.target.value));
-          }}
-        >
-          {pageSizeOptions.map((pageSizeOption) => (
-            <option key={pageSizeOption} value={pageSizeOption}>
-              {pageSizeOption}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
+            <td/>
+          </tr>
+        ))}
+        {/* Spinner row at the bottom, only shown while loading more data */}
+        {loadingMore && (
+          <tr>
+            <td colSpan={columns.length + 2} style={{ textAlign: 'center' }}>
+              <div className="neuron-table__spinner" />
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
   );
 }
 

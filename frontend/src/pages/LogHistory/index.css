@@ -8,3 +8,13 @@
     overflow: hidden;
 }
 
+.log-table-container {
+    border: 1px solid var(--bg-grey-outline, #d9d9d9);
+    background: var(--bg-white, #fff);
+    border-radius: 8px;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
+    overflow: auto;
+    box-shadow: 0 4px 16px #0f11110d;
+}

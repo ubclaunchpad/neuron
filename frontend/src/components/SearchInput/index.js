@@ -5,7 +5,7 @@ const SearchInput = ({ placeholder, value, onChange }) => {
         <input
             type="search"
             className="search-input"
-            placeholder={placeholder ?? "Search..."}
+            placeholder={placeholder ?? 'Search'}
             value={value}
             onChange={onChange}
         />

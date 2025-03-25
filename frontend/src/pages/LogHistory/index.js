@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import { getLogHistory } from "../../api/logService";
 import NeuronTable from '../../components/NeuronTable';
 import Notifications from "../../components/Notifications";
 import SearchInput from "../../components/SearchInput";
@@ -10,10 +9,8 @@ const columns = [
   {
     accessorKey: 'page',
     header: 'Page',
-    minSize: 150,
   },
   {
-    // accessorFn: (row) => row.class_name, // return the raw value
     id: 'class',
     header: 'Class',
     cell: ({ row }) => {
@@ -21,30 +18,27 @@ const columns = [
       if (!row.original.class_name) return <i>[Deleted]</i>;
       return row.original.class_name;
     },
-    minSize: 56,
-    maxSize: 200,
+    minWidth: '150px',
   },
   {
     accessorKey: 'description',
     header: 'Description',
-    minSize: 100,
+    minWidth: '200px',
   },
   {
     id: 'volunteer',
     header: 'Volunteer',
     cell: ({ row }) => {
-      console.log(row);
       if (!row.original.fk_volunteer_id) return <i>'N/A</i>;
       if (!row.original.volunteer_f_name && !row.original.volunteer_l_name) return <i>[Deleted]</i>;
       return `${row.original.volunteer_f_name} ${row.original.volunteer_l_name}`.trim();
     },
-    minSize: 80,
   },
   {
     accessorKey: 'signoff',
     header: 'Admin',
-    maxSize: 60,
-    minSize: 60,
+    width: '52px',
+    minWidth: '52px',
   },
   {
     accessorFn: (row) => new Date(row.created_at).toLocaleDateString('en-US', {
@@ -54,8 +48,8 @@ const columns = [
     }),
     id: 'date',
     header: 'Date',
-    maxSize: 120,
-    minSize: 60,
+    width: '84px',
+    minWidth: '84px',
   },
   {
     accessorFn: (row) => new Date(row.created_at).toLocaleTimeString('en-US', {
@@ -65,8 +59,8 @@ const columns = [
     }),
     id: 'time',
     header: 'Time',
-    minSize: 50,
-    maxSize: 50,
+    width: '52px',
+    minWidth: '52px',
   },
 ];
 
@@ -97,13 +91,15 @@ function LogHistory() {
           />
         </div>
 
-        <NeuronTable
-          ref={logTable}
-          columns={columns}
-          fetchTableData={({ pageIndex, pageSize }) => 
-            getLogHistory(pageIndex, pageSize, debouncedSearch || undefined)}
-          fetchDeps={[debouncedSearch]}
-        ></NeuronTable>
+        <div className="log-table-container">
+          <NeuronTable
+            ref={logTable}
+            columns={columns}
+            fetchTableData={({ pageIndex, pageSize }) => 
+              getLogHistory(pageIndex, pageSize, debouncedSearch || undefined)}
+            fetchDeps={[debouncedSearch]}
+          ></NeuronTable>
+        </div>
       </div>
     </main>
   );

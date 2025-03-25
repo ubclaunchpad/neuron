@@ -1,7 +1,7 @@
 .neuron-table {
   width: 100%;
   table-layout: auto;
-  overflow: hidden;
+  transform: translateY(-1px);
 }
 
 .neuron-table__thead {

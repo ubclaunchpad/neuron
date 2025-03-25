@@ -18,4 +18,5 @@
     justify-content: space-between;
     overflow: auto;
     box-shadow: 0 4px 16px #0f11110d;
+    transform: translateZ(0);
 }

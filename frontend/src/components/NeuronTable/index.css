@@ -1,3 +1,8 @@
+.neuron-table-container {
+  background: white;
+  height: 100%;
+}
+
 .neuron-table {
   width: 100%;
   table-layout: auto;

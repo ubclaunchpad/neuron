@@ -68,61 +68,63 @@ function NeuronTable({ fetchTableData, fetchDeps, columns }, ref) {
   });
 
   return (
-    <table className="neuron-table" cellSpacing="0" cellPadding="0">
-      <colgroup>
-        <col className='neuron-table__spacer' />
-        {columns.map((col, idx) => (
-          <col key={idx} style={{ width: col.width || 'unset' }} />
-        ))}
-        <col className='neuron-table__spacer' />
-      </colgroup>
-      <thead className="neuron-table__thead">
-        {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id} className="neuron-table__tr">
-            <th className="neuron-table__th neuron-table__spacer" />
-            {headerGroup.headers.map((header) => (
-              <th
-                key={header.id}
-                className="neuron-table__th"
-              >
-                {flexRender(header.column.columnDef.header, header.getContext())}
-              </th>
-            ))}
-            <th className="neuron-table__th neuron-table__spacer" />
-          </tr>
-        ))}
-      </thead>
-      <tbody className="neuron-table__tbody">
-        {table.getRowModel().rows.map((row, index) => (
-          <tr
-            key={row.id}
-            ref={index === Math.round((pageIndex + 0.75) * PAGE_SIZE) ? sentinelRef : null}
-            className="neuron-table__tr"
-          >
-            <td className="neuron-table__td neuron-table__spacer" />
-            {row.getVisibleCells().map((cell, idx) => (
-              <td
-                key={cell.id}
-                className="neuron-table__td"
-              >
-                <div style={{ minWidth: columns[idx].minWidth || 'unset' }} className="neuron-table__cell">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </div>
-              </td >
-            ))}
-            <td className="neuron-table__td neuron-table__spacer" />
-          </tr>
-        ))}
-        {/* Spinner row at the bottom, only shown while loading more data */}
-        {loadingMore && (
-          <tr>
-            <td colSpan={columns.length + 2} style={{ textAlign: 'center' }}>
-              <div className="neuron-table__spinner" />
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
+    <div className="neuron-table-container">
+      <table className="neuron-table" cellSpacing="0" cellPadding="0">
+        <colgroup>
+          <col className='neuron-table__spacer' />
+          {columns.map((col, idx) => (
+            <col key={idx} style={{ width: col.width || 'unset' }} />
+          ))}
+          <col className='neuron-table__spacer' />
+        </colgroup>
+        <thead className="neuron-table__thead">
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id} className="neuron-table__tr">
+              <th className="neuron-table__th neuron-table__spacer" />
+              {headerGroup.headers.map((header) => (
+                <th
+                  key={header.id}
+                  className="neuron-table__th"
+                >
+                  {flexRender(header.column.columnDef.header, header.getContext())}
+                </th>
+              ))}
+              <th className="neuron-table__th neuron-table__spacer" />
+            </tr>
+          ))}
+        </thead>
+        <tbody className="neuron-table__tbody">
+          {table.getRowModel().rows.map((row, index) => (
+            <tr
+              key={row.id}
+              ref={index === Math.round((pageIndex + 0.75) * PAGE_SIZE) ? sentinelRef : null}
+              className="neuron-table__tr"
+            >
+              <td className="neuron-table__td neuron-table__spacer" />
+              {row.getVisibleCells().map((cell, idx) => (
+                <td
+                  key={cell.id}
+                  className="neuron-table__td"
+                >
+                  <div style={{ minWidth: columns[idx].minWidth || 'unset' }} className="neuron-table__cell">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </div>
+                </td >
+              ))}
+              <td className="neuron-table__td neuron-table__spacer" />
+            </tr>
+          ))}
+          {/* Spinner row at the bottom, only shown while loading more data */}
+          {loadingMore && (
+            <tr>
+              <td colSpan={columns.length + 2} style={{ textAlign: 'center' }}>
+                <div className="neuron-table__spinner" />
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

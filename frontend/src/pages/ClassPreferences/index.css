@@ -212,7 +212,7 @@
      position: relative;
      margin-top: 32px;
      margin-bottom: 32px;
-     height: calc(90vh - 250px);
+     height: calc(90dvh - 250px);
      overflow: scroll;
 }
 

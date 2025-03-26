@@ -35,6 +35,12 @@ async function isAuthorized(
     try {
         // Verify the token
         const decoded = jwt.verify(token, TOKEN_SECRET) as DecodedJwtPayload;
+
+        if (!decoded?.user_id) {
+            return res.status(401).json({
+                error: "The token is either invalid or has expired",
+            });
+        }
         
         const results = await userModel.getUsersByIds(decoded.user_id);
 

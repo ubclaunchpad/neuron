@@ -403,7 +403,7 @@ textarea:focus {
     aspect-ratio: 1 / 1;
 }
 
-.submit-button {
+.submit-class-button {
     border: none;
     color: #fff;
     width: fit-content;
@@ -412,12 +412,12 @@ textarea:focus {
     background-color: #1A7DB7;
 }
 
-.submit-button:hover {
+.submit-class-button:hover {
     cursor: pointer;
     background-color: #176a9a;
 }
 
-.submit-button:disabled {
+.submit-class-button:disabled {
     cursor: default;
     background-color: #808080;
 }

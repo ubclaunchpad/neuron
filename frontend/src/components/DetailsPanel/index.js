@@ -49,21 +49,23 @@ function DetailsPanel({
   }, [classId, updates, shiftDetails]);
 
   const myClassCheck = async (data) => {
-    const volunteers = data.schedules.flatMap(
-      (schedule) => {
-        if (schedule.start_time === shiftDetails.start_time && schedule.end_time === shiftDetails.end_time) {
-          return schedule.volunteers
-        } else {
-          return []
+    if (shiftDetails) {
+      const volunteers = data.schedules.flatMap(
+        (schedule) => {
+          if (schedule.start_time === shiftDetails.start_time && schedule.end_time === shiftDetails.end_time) {
+            return schedule.volunteers
+          } else {
+            return []
+          }
         }
-      }
-    );
-    // console.log("Volunteers", volunteers)
-    // console.log("User", user)
-    setMyClass(
-      volunteers.some((volunteer) => volunteer.fk_user_id === user?.user_id)
-    );
-    setClassTaken(volunteers.length !== 0);
+      );
+      // console.log("Volunteers", volunteers)
+      // console.log("User", user)
+      setMyClass(
+        volunteers.some((volunteer) => volunteer.fk_user_id === user?.user_id)
+      );
+      setClassTaken(volunteers.length !== 0);
+    }
   };
 
   const formatTime = (time) => {
@@ -113,28 +115,33 @@ function DetailsPanel({
   };
 
   const handleToPrev = () => {
-      if (!classList || !classId) return;
-      // const currentClassIndex = classList.findIndex((c) => c.class_id === classId);
+    if (shifts) {
       const currentShiftIndex = shifts.findIndex((s) => s.shift_id === shiftDetails.shift_id);
       if (currentShiftIndex > 0) {
-          // const prevClass = classList[currentClassIndex - 1];
-          const prevShift = shifts[currentShiftIndex - 1];
-          handleShiftSelection(prevShift);
-          // setClassId(prevClass.class_id);
+        const prevShift = shifts[currentShiftIndex - 1];
+        handleShiftSelection(prevShift);
       }
+    } else if (classList && class_id) {
+      const currentClassIndex = classList.findIndex((c) => c.class_id === classId);
+      const prevClass = classList[currentClassIndex - 1];
+      if (prevClass)
+        setClassId(prevClass.class_id);
+    }
   };
 
   const handleToNext = () => {
-      if (!classList || !classId) return;
-      // const currentClassIndex = classList.findIndex((c) => c.class_id === classId);
+    if (shifts) {
       const currentShiftIndex = shifts.findIndex((s) => s.shift_id === shiftDetails.shift_id);
       if (currentShiftIndex < shifts.length - 1) {
-          // const nextClass = classList[currentClassIndex + 1];
           const nextShift = shifts[currentShiftIndex + 1];
           handleShiftSelection(nextShift);
-          // setClassId(nextClass.class_id);
-
       }
+    } else if (classList && class_id) {
+      const currentClassIndex = classList.findIndex((c) => c.class_id === classId);
+      const nextClass = classList[currentClassIndex + 1];
+      if (nextClass)
+        setClassId(nextClass.class_id);
+    }
   };
 
   return (

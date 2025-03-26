@@ -259,11 +259,17 @@ function AdminClassForm({ setUpdates }) {
         );
 
         // seperate added schedules from updated schedules
-        const addedSchedules = values.schedules.filter((schedule) => !schedule.schedule_id)
-        const updatedSchedules = values.schedules.filter((schedule) => schedule.schedule_id);
+        const addedSchedules = values.schedules.filter((schedule) => !schedule.schedule_id);
+        const updatedSchedules = values.schedules.filter((schedule) => {
+            if (classData.schedules) {
+                const originalSchedule = classData.schedules.find(s => s.schedule_id === schedule.schedule_id);
+                return originalSchedule && JSON.stringify(originalSchedule) !== JSON.stringify(schedule);
+            }
+            return false;
+        });
         const deletedSchedules = classData.schedules
                 .filter((schedule) => !values.schedules.find((s) => s.schedule_id === schedule.schedule_id))
-                .map((schedule) => schedule.schedule_id)
+                .map((schedule) => schedule.schedule_id);
 
         // if user is sending an update right after a create, class id will be in classData
         const validClassId = classData.class_id ?? classId;
@@ -291,6 +297,10 @@ function AdminClassForm({ setUpdates }) {
             await Promise.all(requests);
             notyf.success("Class updated successfully.");
             setSubmitting(false);
+            setClassData({
+                class_id: validClassId,
+                ...values
+            });
             setUpdates((prev) => prev + 1);
         } catch (error) {
             console.log(error);
@@ -1035,7 +1045,7 @@ function AdminClassForm({ setUpdates }) {
                     </FieldArray>
                     <button 
                         type="submit" 
-                        className="submit-button" 
+                        className="submit-class-button" 
                         disabled={isSubmitting} 
                     >
                         {mode === Mode.EDIT ? "Save Class" : "Create Class"}

@@ -3,12 +3,7 @@ import sharp from 'sharp';
 import { ClassDB, ScheduleDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
 import { wrapIfNotArray } from '../utils/generalUtils.js';
-import ImageModel from './imageModel.js';
-import ScheduleModel from './scheduleModel.js';
-import { shiftModel } from '../config/models.js';
-
-const imageModel = new ImageModel();
-const scheduleModel = new ScheduleModel();
+import { shiftModel, imageModel, scheduleModel } from '../config/models.js';
 
 export default class ClassesModel {
      async getClasses(): Promise<ClassDB[]> {

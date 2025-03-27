@@ -409,7 +409,7 @@ export default class ShiftModel {
      }
 
      // delete all shifts that have not happened yet
-     async deleteFutureShifts(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
+     async deleteAllFutureShifts(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
 
           const query1 = `
                SELECT shift_id 
@@ -582,9 +582,9 @@ export default class ShiftModel {
                     s.*, 
                     GROUP_CONCAT(vs.fk_volunteer_id) as volunteer_ids
                FROM 
-                    neuron.schedule s
+                    schedule s
                LEFT JOIN 
-                    neuron.volunteer_schedule vs 
+                    volunteer_schedule vs 
                ON 
                     vs.fk_schedule_id = s.schedule_id
                WHERE 
@@ -605,4 +605,17 @@ export default class ShiftModel {
           if (classData.end_date && classData.end_date !== oldClassData.end_date)
                await this.updateEndDate(classData.end_date as string, oldClassData.end_date, schedules, transaction);
      }
+
+     async deleteSpecificFutureShifts(transaction: PoolConnection): Promise<void> {  
+          // use temp table to run a delete using joins
+          await transaction.query(`
+              DELETE sh FROM shifts sh
+              INNER JOIN temp_delete_schedules tds 
+              ON sh.fk_volunteer_id = tds.volunteer_id 
+              AND sh.fk_schedule_id = tds.schedule_id
+              LEFT JOIN schedule sc
+              ON sh.fk_schedule_id = sc.schedule_id
+              WHERE STR_TO_DATE(CONCAT(sh.shift_date, ' ', sc.start_time), '%Y-%m-%d %H:%i:%s') > CONVERT_TZ(NOW(), 'UTC', 'America/Vancouver')
+          `);
+      }
 }

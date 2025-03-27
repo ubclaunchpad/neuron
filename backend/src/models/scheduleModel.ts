@@ -4,9 +4,7 @@ import { ScheduleDB, ShiftDB, VolunteerScheduleDB } from '../common/databaseMode
 import connectionPool from '../config/database.js';
 import ShiftModel from '../models/shiftModel.js';
 import VolunteerModel from './volunteerModel.js';
-
-const shiftModel = new ShiftModel();
-const volunteerModel = new VolunteerModel();
+import { shiftModel, volunteerModel } from '../config/models.js';
 
 export default class ScheduleModel {
     async getAllSchedules(): Promise<ScheduleDB[]> {
@@ -155,7 +153,7 @@ export default class ScheduleModel {
             }
 
             // unassign current volunteers from schedule
-            await this.unassignVolunteers(scheduleIds, transaction);
+            await this.unassignAllVolunteers(scheduleIds, transaction);
 
             // check if there are any shifts still remaining (historic shifts)
             const schedulesToSetInactive = await this.getSchedulesToSetInactive(scheduleIds, transaction);
@@ -210,6 +208,7 @@ export default class ScheduleModel {
         return schedulesToSetInactive;
     }
 
+    // return all schedules that will require shifts to be re-created
     async getModifiedSchedules(schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
         const scheduleIds = schedules.map(schedule => schedule.schedule_id);
         const query = `
@@ -218,8 +217,7 @@ export default class ScheduleModel {
                 day,
                 TIME_FORMAT(start_time, '%H:%i') AS start_time,
                 TIME_FORMAT(end_time, '%H:%i') AS end_time,
-                frequency,
-                fk_instructor_id
+                frequency
             FROM schedule 
             WHERE schedule_id IN (?)
         `;
@@ -237,8 +235,7 @@ export default class ScheduleModel {
                 (scheduleInDb.day != schedule.day ||
                 formatTime(scheduleInDb.start_time) != formatTime(schedule.start_time) ||
                 formatTime(scheduleInDb.end_time) != formatTime(schedule.end_time) ||
-                scheduleInDb.frequency != schedule.frequency ||
-                scheduleInDb.fk_instructor_id != schedule.fk_instructor_id);
+                scheduleInDb.frequency != schedule.frequency);
         })
     }
 
@@ -282,7 +279,7 @@ export default class ScheduleModel {
         const scheduleIds = schedulesWithVolunteers.map(schedule => schedule.schedule_id as number);
 
         // unassign volunteers from schedules going inactive
-        await this.unassignVolunteers(scheduleIds, transaction);
+        await this.unassignAllVolunteers(scheduleIds, transaction);
 
         // set schedules inactive
         await this.setSchedulesInactive(scheduleIds, transaction);
@@ -296,20 +293,92 @@ export default class ScheduleModel {
         }
     }
 
+    async deleteVolunteerSchedulePairs(transaction: PoolConnection): Promise<void> {
+        const query = `
+            DELETE vs FROM volunteer_schedule vs
+            INNER JOIN temp_delete_schedules tds 
+            ON vs.fk_volunteer_id = tds.volunteer_id 
+            AND vs.fk_schedule_id = tds.schedule_id
+        `;
+        await transaction.query<ResultSetHeader>(query);
+    }
+
+    async unassignSpecificVolunteers(pairs: { scheduleId: number, volunteerId: string }[], transaction: PoolConnection): Promise<void> {
+        if (pairs.length == 0) {
+            return;
+        }
+
+        // create temp table to hold pairs to unassign
+        await transaction.query(`
+            CREATE TEMPORARY TABLE temp_delete_schedules (
+                volunteer_id CHAR(36) NOT NULL,
+                schedule_id INT NOT NULL
+            )
+        `);
+
+        const insertValues = pairs.map(() => "(?, ?)").join(",");
+        const params = pairs.flatMap(p => [p.volunteerId, p.scheduleId]);
+
+        await transaction.query(`INSERT INTO temp_delete_schedules (volunteer_id, schedule_id) VALUES ${insertValues}`, params);
+        
+        // delete from assignments table
+        await this.deleteVolunteerSchedulePairs(transaction);
+
+        // delete future shifts for volunteer-schedule pairs
+        await shiftModel.deleteSpecificFutureShifts(transaction);
+
+        // drop temp table
+        await transaction.query("DROP TEMPORARY TABLE temp_delete_schedules");
+    }
+
+    // all schedules given are unmodified, meaning unchanged volunteers do not need to be reassigned. here we only need to 
+    // add or delete future volunteers based on the assignments in the updated schedules. unchanged volunteers are not touched
+    // to preserve data
     async updateAssignments(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
         if (schedules.length === 0) {
             return [];
         }
+
+        // only work with schedules where volunteer_ids is defined
         const schedulesWithVolunteers = schedules.filter(schedule => schedule.volunteer_ids !== undefined);
         const scheduleIds = schedulesWithVolunteers.map(schedule => schedule.schedule_id as number);
 
+        // get the currently assigned volunteers
+        const currentAssignments = await this.getCurrentAssignments(scheduleIds, transaction);
+
+        const schedulesWithNewAssignments = schedulesWithVolunteers.map((schedule) => {
+            const assignedVolunteers = currentAssignments.get(schedule.schedule_id as number);
+
+            let addedVolunteerIds;
+            if (assignedVolunteers)
+                addedVolunteerIds = schedule.volunteer_ids.filter((volunteerId: string) => !assignedVolunteers.includes(volunteerId));
+            else
+                addedVolunteerIds = schedule.volunteer_ids;
+
+            return {
+                ...schedule,
+                volunteer_ids: addedVolunteerIds
+            }
+        });
+
+        // get volunteer-schedule pairs that need to be deleted
+        const unassignments = schedulesWithVolunteers.flatMap((schedule) => {
+            const assignedVolunteers = currentAssignments.get(schedule.schedule_id as number);
+
+            let deletedVolunteerIds: string[] = [];
+            if (assignedVolunteers)
+                deletedVolunteerIds = assignedVolunteers.filter((volunteerId: string) => !schedule.volunteer_ids.includes(volunteerId));
+
+            return deletedVolunteerIds.map(volunteerId => ({ scheduleId: schedule.schedule_id as number, volunteerId: volunteerId }));
+        })
+
         // unassign volunteers from schedules
-        await this.unassignVolunteers(scheduleIds, transaction);
+        await this.unassignSpecificVolunteers(unassignments, transaction);
 
-        // make new assignments to the schedules
-        await this.assignVolunteers(classId, schedulesWithVolunteers, transaction);
+        // // add new assignments to the schedules
+        await this.assignVolunteers(classId, schedulesWithNewAssignments, transaction);
 
-        return schedulesWithVolunteers;
+        return schedules;
     }
 
     async updateHistoric(classId: number, schedules: ScheduleDB[], transaction: PoolConnection): Promise<any> {
@@ -324,7 +393,7 @@ export default class ScheduleModel {
         const unmodifiedSchedules = schedules.filter(schedule => !modifiedSchedules.includes(schedule));
 
         const { addedSchedules, inactiveSchedules } = await this.updateModifiedHistoric(classId, modifiedSchedules, transaction);
-        const updatedSchedules = await this.updateAssignments(classId, unmodifiedSchedules, transaction);
+        const updatedSchedules = await this.updateUnmodified(classId, unmodifiedSchedules, transaction);
 
         return {
             addedSchedules: addedSchedules,
@@ -341,7 +410,7 @@ export default class ScheduleModel {
         const scheduleIds = schedulesWithVolunteers.map(schedule => schedule.schedule_id as number);
 
         // unassign volunteers from schedules
-        await this.unassignVolunteers(scheduleIds, transaction);
+        await this.unassignAllVolunteers(scheduleIds, transaction);
 
         // safely update the schedules
         await this.updateSchedules(schedulesWithVolunteers, transaction);
@@ -361,9 +430,21 @@ export default class ScheduleModel {
         const unmodifiedSchedules = schedules.filter(schedule => !modifiedSchedules.includes(schedule));
 
         const updatedSchedules1 = await this.updateModifiedNonHistoric(classId, modifiedSchedules, transaction);
-        const updatedSchedules2 = await this.updateAssignments(classId, unmodifiedSchedules, transaction);
+        const updatedSchedules2 = await this.updateUnmodified(classId, unmodifiedSchedules, transaction);
 
         return updatedSchedules1.concat(updatedSchedules2);
+    }
+
+    async updateUnmodified(classId: number, unmodifiedSchedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
+        if (unmodifiedSchedules.length == 0) {
+            return [];
+        }
+
+        // update the schedules in case fk_instructor_id was changed
+        await this.updateSchedules(unmodifiedSchedules, transaction);
+
+        // add or remove future volunteers from the schedules (unchanged volunteers are not touched to preserve data)
+        return await this.updateAssignments(classId, unmodifiedSchedules, transaction);
     }
 
     /*
@@ -499,7 +580,7 @@ export default class ScheduleModel {
         }
     }
 
-    private async unassignVolunteers(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
+    private async unassignAllVolunteers(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
         if (scheduleIds.length === 0) {
             return;
         }
@@ -508,7 +589,7 @@ export default class ScheduleModel {
         await transaction.query<ResultSetHeader>(query, values);
 
         // delete all future shifts for the schedules going inactive
-        await shiftModel.deleteFutureShifts(scheduleIds, transaction);
+        await shiftModel.deleteAllFutureShifts(scheduleIds, transaction);
     }
 
     private async updateSchedules(schedules: any[], transaction: PoolConnection): Promise<void> {

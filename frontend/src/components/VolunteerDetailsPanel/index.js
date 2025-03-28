@@ -15,7 +15,7 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
     const navigate = useNavigate();
     
     useEffect(()=> {
-        if (shiftDetails)
+        if (shiftDetails && shiftDetails.volunteers)
             setVolunteersInShift(shiftDetails.volunteers);
     }, [shiftDetails]);
 

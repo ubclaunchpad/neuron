@@ -422,6 +422,12 @@ textarea:focus {
     background-color: #808080;
 }
 
+.message-row {
+    color: #9b9b9b;
+    width: fit-content;
+    font-size: 12px;
+}
+
 @media screen and (max-width: 900px) {
     .input-row {
         flex-direction: column;

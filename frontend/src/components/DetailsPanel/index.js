@@ -121,7 +121,7 @@ function DetailsPanel({
         const prevShift = shifts[currentShiftIndex - 1];
         handleShiftSelection(prevShift);
       }
-    } else if (classList && class_id) {
+    } else if (classList && classId) {
       const currentClassIndex = classList.findIndex((c) => c.class_id === classId);
       const prevClass = classList[currentClassIndex - 1];
       if (prevClass)
@@ -133,10 +133,10 @@ function DetailsPanel({
     if (shifts) {
       const currentShiftIndex = shifts.findIndex((s) => s.shift_id === shiftDetails.shift_id);
       if (currentShiftIndex < shifts.length - 1) {
-          const nextShift = shifts[currentShiftIndex + 1];
-          handleShiftSelection(nextShift);
+        const nextShift = shifts[currentShiftIndex + 1];
+        handleShiftSelection(nextShift);
       }
-    } else if (classList && class_id) {
+    } else if (classList && classId) {
       const currentClassIndex = classList.findIndex((c) => c.class_id === classId);
       const nextClass = classList[currentClassIndex + 1];
       if (nextClass)

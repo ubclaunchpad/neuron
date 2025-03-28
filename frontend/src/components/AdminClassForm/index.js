@@ -620,9 +620,9 @@ function AdminClassForm({ setUpdates }) {
                         </div>
                         <div className="message-row">
                             Assigning a volunteer to a schedule will automatically generate shifts for them inside the class's start 
-                            date and end date. Updating a schedule's start time, end time, day or frequency will re-generate shifts 
-                            for all volunteers assigned, causing any corresponding absence requests or coverage requests to be lost. Updating a
-                            class's start date or end date may also generate new shifts or cause existing shifts to be deleted.
+                            date and end date. {mode === Mode.EDIT && <span>Updating an existing schedule's start time, end time, day or frequency will re-generate shifts 
+                            for all volunteers assigned, causing any related absence requests or coverage requests to be lost. Updating a
+                            class's start date or end date may also generate new shifts or cause existing shifts to be deleted.</span>}
                         </div>
                     </div>
                     <FieldArray

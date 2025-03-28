@@ -20,6 +20,7 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
     }, [shiftDetails]);
 
     const renderCheckedInButton = (volunteer) => {
+        if (!volunteersInShift) return null;
         for (const vol of volunteersInShift) {
             if (vol.volunteer_id === volunteer.volunteer_id) {
                 if (vol.checked_in === 0) {

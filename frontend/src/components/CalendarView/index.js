@@ -1,7 +1,10 @@
 import dayjs from "dayjs";
+import utc from 'dayjs/plugin/utc';
 import { useState } from "react";
 import { SHIFT_TYPES } from "../../data/constants";
 import "./index.css";
+
+dayjs.extend(utc);
 
 const timeSlots = Array.from({ length: 26 }, (_, i) => {
   const hour = Math.floor(i / 2) + 8; // Start at 08:00
@@ -13,8 +16,6 @@ const timeSlots = Array.from({ length: 26 }, (_, i) => {
 
 const CalendarView = ({ days, shifts, onShiftSelect }) => {
   const [scrollTop, setScrollTop] = useState(0);
-  // only mon to sat
-  days = days.slice(0, 6);
 
   const colors = {
     [SHIFT_TYPES.MY_SHIFTS]: "var(--green)",
@@ -30,7 +31,7 @@ const CalendarView = ({ days, shifts, onShiftSelect }) => {
   return (
     <div 
       className="calendar-container"
-      onScroll={(e) => setScrollTop(e?.target?.scrollTop)}
+      // onScroll={(e) => setScrollTop(e?.target?.scrollTop)}
     >
       <table className="calendar-grid" cellSpacing="0" cellPadding="0">
         <colgroup>
@@ -49,7 +50,9 @@ const CalendarView = ({ days, shifts, onShiftSelect }) => {
                 <div className="day-number" s>
                   {day.dayOfMonthWithZero}
                 </div>
-                <div className="day-name">{day.name}</div>
+                <div className="day-name">
+                  {day.name}
+                  </div>
               </th>
             ))}
           </tr>
@@ -71,7 +74,7 @@ const CalendarView = ({ days, shifts, onShiftSelect }) => {
                   {shifts
                     .filter(
                       (shift) =>
-                        shift.shift_date === dayjs(day.date).toISOString() &&
+                        shift.shift_date.slice(0, 11) === dayjs(day.date).toISOString().slice(0,11) &&
                         shift.start_time === time
                     )
                     .map((shift) => (

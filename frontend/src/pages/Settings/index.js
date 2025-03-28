@@ -32,7 +32,7 @@ function Settings() {
       <div className="settings-container">
         {/* Notifications Card */}
         <div className="notification-container">
-          <h3>Notifications</h3>
+          <h2 className="settings-card-title">Notifications</h2>
           <div className="notification-list">
             {/* Admin notifications */}
             <Permission permissions="admin">

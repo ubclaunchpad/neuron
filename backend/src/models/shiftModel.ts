@@ -1,9 +1,12 @@
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
-import { ScheduleDB, ShiftDB } from '../common/databaseModels.js';
+import { ClassDB, ScheduleDB, ShiftDB } from '../common/databaseModels.js';
 import { Frequency, ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import connectionPool from '../config/database.js';
 import queryBuilder from '../config/queryBuilder.js';
 import { wrapIfNotArray } from '../utils/generalUtils.js';
+import { DateTime } from 'luxon';
+
+const timeZone = "America/Vancouver";
 
 export default class ShiftModel {
 
@@ -277,56 +280,54 @@ export default class ShiftModel {
           }
      }
 
-     private formatDate(date: Date): string {
-          const options: Intl.DateTimeFormatOptions = { timeZone: "America/Vancouver", year: "numeric", month: "2-digit", day: "2-digit" };
-          const [{ value: year }, , { value: month }, , { value: day }] = 
-               new Intl.DateTimeFormat("en-CA", options).formatToParts(date);
-          return `${year}-${month}-${day}`;
-     }
-
      private getRecurringDates(classTimeline: any, startTime: string, dayNumber: number, frequency: Frequency): string[] {
           const result: string[] = [];
 
-          let start = new Date(classTimeline.start_date); // start date, 12:00 AM (local time)
-          const end = new Date(classTimeline.end_date); // end date, 12:00 AM (local time)
-          end.setHours(23, 59); // set last possible shift time as end_date, 11:59 PM (local time)
+          // parse class start and end dates in PST
+          let start = DateTime.fromISO(classTimeline.start_date, { zone: timeZone }).startOf("day");
+          const end = DateTime.fromISO(classTimeline.end_date, { zone: timeZone }).endOf("day");
 
-          const [hours, minutes] = startTime.split(':').map(Number);
-          const startDateAndTime = new Date(classTimeline.start_date);
-          startDateAndTime.setHours(hours, minutes); // set using local time
+          // parse the current time in PST
+          const now = DateTime.now().setZone(timeZone);
 
-          const now = new Date();
+          // extract shift start time (given in PST)
+          const [hours, minutes] = startTime.split(":").map(Number);
 
-          // if start is earlier than right now (both are in UTC)
-          if (startDateAndTime < now) {
-               start = now;
+          // set start date and time
+          let startDateTime = start.set({ hour: hours, minute: minutes });
 
-               // if schedule starts today at exactly now or at an earlier time than now, we need to skip this week
-               if (dayNumber === now.getDay() &&
-                    startDateAndTime.getHours() <= now.getHours() &&
-                    startDateAndTime.getMinutes() <= now.getMinutes()) {
+          // ensure shifts are only scheduled in the future
+          if (startDateTime < now) {
+               start = now.startOf("day");
+               startDateTime = start.set({ hour: hours, minute: minutes });
 
-                    start.setDate(start.getDate() + 7);
+               // if today is the shift day but time has passed, skip to the next week for the first shift
+               if (
+                    (start.weekday % 7) === dayNumber && // luxon uses 1-based indexing for weekdays
+                    (startDateTime.hour < now.hour ||
+                    (startDateTime.hour === now.hour && startDateTime.minute <= now.minute))
+               ) {
+                    start = start.plus({ days: 7 });
                }
-               // NOTE: if the schedule starts today at a later time than now, all the shifts today will still be scheduled
           }
 
-          // find the first occurrence of the given day (both day numbers are in local time)
-          while (start.getDay() !== dayNumber) {
-               start.setDate(start.getDate() + 1);
+          // move start to the first occurrence of the given day
+          while ((start.weekday % 7) !== dayNumber) {
+               start = start.plus({ days: 1 });
           }
 
-          // if schedule only occurs once, then only add one date
           if (frequency === Frequency.once) {
-               result.push(this.formatDate(start)); // format to YYYY-MM-DD in local time
+               if (start <= end) 
+                    result.push(start.toFormat("yyyy-MM-dd"));
                return result;
           }
 
           const daysToAdd = this.getDaysToAdd(frequency);
-          // collect all occurrences of the given day until the end date (both are in UTC)
+
+          // collect all shift dates within the range
           while (start <= end) {
-               result.push(this.formatDate(start)); // format to YYYY-MM-DD in local time
-               start.setDate(start.getDate() + daysToAdd);
+               result.push(start.toFormat("yyyy-MM-dd"));
+               start = start.plus({ days: daysToAdd });
           }
 
           return result;
@@ -345,19 +346,12 @@ export default class ShiftModel {
           return Math.round(endTimeInMinutes - startTimeInMinutes);
      }
 
-     async addShiftsForSchedules(classId: number, createdSchedules: any[], transaction: PoolConnection): Promise<void> {
-
-          // get class start date and end date
-          const query1 = `SELECT start_date, end_date FROM class WHERE class_id = ?`;
-          const values1 = [classId];
-          const [results, _] = await transaction.query<ScheduleDB[]>(query1, values1);
-          const classTimeline = results[0];
-
+     async computeAndAddShifts(schedules: any[], classTimeline: any, transaction: PoolConnection): Promise<void> {
           // for every schedule, for every assigned volunteer, for every date in between the class's 
           // time line - we create a new shift
-          let valuesClause2 = "";
-          const values2: any[][] = [];
-          createdSchedules.forEach(schedule => {
+          let valuesClause = "";
+          const values: any[][] = [];
+          schedules.forEach(schedule => {
 
                if (!schedule.volunteer_ids) {
                     return;
@@ -369,17 +363,33 @@ export default class ShiftModel {
                schedule.volunteer_ids.forEach((volunteer_id: any) => {
 
                     dates.forEach(date => {
-                         valuesClause2 = valuesClause2.concat("(?),");
-                         values2.push([volunteer_id, schedule.schedule_id, date, duration]);
+                         valuesClause = valuesClause.concat("(?),");
+                         values.push([volunteer_id, schedule.schedule_id, date, duration]);
                     })
                })
           })
-          valuesClause2 = valuesClause2.slice(0, -1);
+          valuesClause = valuesClause.slice(0, -1);
 
-          if (valuesClause2.length > 0) {
-               const query2 = `INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES ${valuesClause2}`;
-               await transaction.query<ResultSetHeader>(query2, values2);
+          if (valuesClause.length > 0) {
+               const query = `INSERT INTO shifts (fk_volunteer_id, fk_schedule_id, shift_date, duration) VALUES ${valuesClause}`;
+               await transaction.query<ResultSetHeader>(query, values);
           }
+     }
+
+     async addShiftsForSchedules(classId: number, createdSchedules: any[], transaction: PoolConnection): Promise<void> {
+
+          // get class start date and end date
+          const query = `
+               SELECT
+                    DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date,
+                    DATE_FORMAT(end_date, '%Y-%m-%d') AS end_date
+               FROM class WHERE class_id = ?
+          `;
+          const values = [classId];
+          const [results, _] = await transaction.query<ScheduleDB[]>(query, values);
+          const classTimeline = results[0];
+
+          await this.computeAndAddShifts(createdSchedules, classTimeline, transaction);
      }
 
      async getSchedulesWithHistoricShifts(schedules: ScheduleDB[], transaction: PoolConnection): Promise<ScheduleDB[]> {
@@ -399,7 +409,7 @@ export default class ShiftModel {
      }
 
      // delete all shifts that have not happened yet
-     async deleteFutureShifts(scheduleIds: number[], transaction: PoolConnection): Promise<any> {
+     async deleteAllFutureShifts(scheduleIds: number[], transaction: PoolConnection): Promise<void> {
 
           const query1 = `
                SELECT shift_id 
@@ -414,6 +424,30 @@ export default class ShiftModel {
 
           const shiftIds = results.map(result => result.shift_id);
 
+          if (shiftIds.length > 0) {
+               const query2 = `DELETE FROM shifts WHERE shift_id IN (?)`;
+               const values2 = [shiftIds];
+               await transaction.query<ResultSetHeader>(query2, values2);
+          }
+     }
+
+     async deleteShiftsInTimeline(timeline: any, scheduleIds: number[], transaction: PoolConnection): Promise<void> {
+          
+          // get shift ids for all future shifts inside given timeline
+          const query1 = `
+               SELECT sh.shift_id
+               FROM neuron.shifts sh
+               LEFT JOIN neuron.schedule sc 
+               ON sh.fk_schedule_id = sc.schedule_id
+               WHERE sh.fk_schedule_id IN (?)
+               AND STR_TO_DATE(CONCAT(sh.shift_date, ' ', sc.start_time), '%Y-%m-%d %H:%i:%s') > CONVERT_TZ(NOW(), 'UTC', 'America/Vancouver')
+               AND sh.shift_date >= STR_TO_DATE(?, '%Y-%m-%d')
+               AND sh.shift_date <= STR_TO_DATE(?, '%Y-%m-%d');
+          `;
+          const values1 = [scheduleIds, timeline.start_date, timeline.end_date];
+          const [results, _] = await transaction.query<ShiftDB[]>(query1, values1);
+
+          const shiftIds = results.map(result => result.shift_id);
           if (shiftIds.length > 0) {
                const query2 = `DELETE FROM shifts WHERE shift_id IN (?)`;
                const values2 = [shiftIds];
@@ -469,4 +503,119 @@ export default class ShiftModel {
 
           return results;
      }
+
+     async updateStartDate(startDate: string, oldStartDate: string, schedules: ScheduleDB[], transaction: PoolConnection): Promise<void> {
+          let startDateObj = DateTime.fromISO(startDate, { zone: timeZone });
+          let oldStartDateObj = DateTime.fromISO(oldStartDate, { zone: timeZone });
+
+          // if we need to add shifts
+          if (startDateObj < oldStartDateObj) {
+
+               // last possible date for added shifts will be day prior to old start date
+               oldStartDateObj = oldStartDateObj.minus({ days: 1 });
+
+               const timeline = {
+                    start_date: startDateObj.toFormat("yyyy-MM-dd"),
+                    end_date: oldStartDateObj.toFormat("yyyy-MM-dd")
+               };
+               await this.computeAndAddShifts(schedules, timeline, transaction);
+
+          // if we need to remove shifts
+          } else {
+               // latest possible date for deleted shifts will be day prior to new start date
+               startDateObj = startDateObj.minus({ days: 1 });
+
+               const timeline = {
+                    start_date: oldStartDateObj.toFormat("yyyy-MM-dd"),
+                    end_date: startDateObj.toFormat("yyyy-MM-dd")
+               };
+               await this.deleteShiftsInTimeline(
+                    timeline, 
+                    schedules.map(s => s.schedule_id as number), 
+                    transaction
+               );
+          }
+     }
+
+     async updateEndDate(endDate: string, oldEndDate: string, schedules: ScheduleDB[], transaction: PoolConnection): Promise<void> {
+          let endDateObj = DateTime.fromISO(endDate, { zone: timeZone });
+          let oldEndDateObj = DateTime.fromISO(oldEndDate, { zone: timeZone });
+
+          // if we need to remove shifts
+          if (endDateObj < oldEndDateObj) {
+               // earliest possible date for removed shifts will be day after new end date
+               endDateObj = endDateObj.plus({ days: 1 });
+
+               const timeline = {
+                    start_date: endDateObj.toFormat("yyyy-MM-dd"),
+                    end_date: oldEndDateObj.toFormat("yyyy-MM-dd")
+               };
+               await this.deleteShiftsInTimeline(
+                    timeline, 
+                    schedules.map(s => s.schedule_id as number), 
+                    transaction
+               );
+
+          // if we need to add shifts
+          } else {
+               // earliest possible date for added shifts will be day after old end date
+               oldEndDateObj = oldEndDateObj.plus({ days: 1 });
+
+               const timeline = {
+                    start_date: oldEndDateObj.toFormat("yyyy-MM-dd"),
+                    end_date: endDateObj.toFormat("yyyy-MM-dd")
+               };
+               await this.computeAndAddShifts(schedules, timeline, transaction);
+          }
+     }
+
+     async updateShiftsTimeline(
+          class_id: number, 
+          classData: Partial<ClassDB>, 
+          oldClassData: ClassDB, 
+          transaction: PoolConnection
+     ): Promise<void> {
+
+          // get all active schedules under this class, and their volunteers
+          const query = `
+               SELECT 
+                    s.*, 
+                    GROUP_CONCAT(vs.fk_volunteer_id) as volunteer_ids
+               FROM 
+                    schedule s
+               LEFT JOIN 
+                    volunteer_schedule vs 
+               ON 
+                    vs.fk_schedule_id = s.schedule_id
+               WHERE 
+                    s.fk_class_id = ? AND s.active = true
+               GROUP BY schedule_id;
+          `;
+          const values = [class_id];
+          const [results, _] = await connectionPool.query<ScheduleDB[]>(query, values);
+          const schedules = results.map((schedule) => ({
+               ...schedule,
+               frequency: schedule.frequency as Frequency,
+               volunteer_ids: schedule.volunteer_ids ? schedule.volunteer_ids.split(',') : []
+          }));
+
+          if (classData.start_date && classData.start_date !== oldClassData.start_date) 
+               await this.updateStartDate(classData.start_date as string, oldClassData.start_date, schedules, transaction);
+
+          if (classData.end_date && classData.end_date !== oldClassData.end_date)
+               await this.updateEndDate(classData.end_date as string, oldClassData.end_date, schedules, transaction);
+     }
+
+     async deleteSpecificFutureShifts(transaction: PoolConnection): Promise<void> {  
+          // use temp table to run a delete using joins
+          await transaction.query(`
+              DELETE sh FROM shifts sh
+              INNER JOIN temp_delete_schedules tds 
+              ON sh.fk_volunteer_id = tds.volunteer_id 
+              AND sh.fk_schedule_id = tds.schedule_id
+              LEFT JOIN schedule sc
+              ON sh.fk_schedule_id = sc.schedule_id
+              WHERE STR_TO_DATE(CONCAT(sh.shift_date, ' ', sc.start_time), '%Y-%m-%d %H:%i:%s') > CONVERT_TZ(NOW(), 'UTC', 'America/Vancouver')
+          `);
+      }
 }

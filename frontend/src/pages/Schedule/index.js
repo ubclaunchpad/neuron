@@ -92,7 +92,6 @@ function Schedule() {
             console.log('myopen', openCoverageShifts);
             response = [...myShifts, ...openCoverageShifts];
         }
-        console.log(response);
 
         // Process shifts to determine shift_type based on absence_request ; case conditions for Admin accounts
         const processedShifts = response.map(shift => {
@@ -128,7 +127,6 @@ function Schedule() {
         }).sort((a, b) => {
             return dayjs(a.shift_date).diff(dayjs(b.shift_date));
         })
-        console.log('processed', processedShifts);
 
         const shiftMap = new Map();
 
@@ -158,6 +156,7 @@ function Schedule() {
 
                 if (isAdmin) {
                     shiftMap.set(key, {
+                        shift_id: key,
                         class_id: shift.class_id,
                         class_name: shift.class_name,
                         shift_date: shift.shift_date,
@@ -217,11 +216,7 @@ function Schedule() {
                 }
             }
         });
-
-
         const uniqueShifts = Array.from(shiftMap.values());
-        console.log('unique', uniqueShifts)
-
 
         // Filter shifts based on selected filter type
         const filteredShifts = uniqueShifts.filter((shift) => {
@@ -297,8 +292,6 @@ function Schedule() {
         // console.log("Selected shift: ", classData);
         setSelectedClassId(classData.class_id);
         setSelectedShiftButtons(generateButtonsForDetailsPanel(classData));
-        console.log(selectedShiftButtons);
-        console.log("HELLO", classData.shift_details);
         setShiftDetails(classData);
     };
 

@@ -1,10 +1,10 @@
+import { DateTime } from 'luxon';
 import { PoolConnection, ResultSetHeader } from 'mysql2/promise';
 import { ClassDB, ScheduleDB, ShiftDB } from '../common/databaseModels.js';
 import { Frequency, ShiftQueryType, ShiftStatus } from '../common/interfaces.js';
 import connectionPool from '../config/database.js';
 import queryBuilder from '../config/queryBuilder.js';
 import { wrapIfNotArray } from '../utils/generalUtils.js';
-import { DateTime } from 'luxon';
 
 const timeZone = "America/Vancouver";
 

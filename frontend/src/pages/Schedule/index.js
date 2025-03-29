@@ -251,10 +251,16 @@ function Schedule() {
 
         const buttons = [];
         const buttonConfig = getButtonConfig(shift, handleShiftUpdate, isAdmin ? null : user?.volunteer.volunteer_id);
-        const primaryButton = buttonConfig[shift.shift_type]
+        const primaryButtons = buttonConfig[shift.shift_type]
 
-        if (primaryButton.label && !pastShift) {
-            buttons.push(primaryButton);
+        if (Array.isArray(primaryButtons)) {
+            primaryButtons.forEach((btn) => {
+                if (btn.label && !pastShift) {
+                    buttons.push(btn);
+                }
+            });
+        } else if (primaryButtons?.label && !pastShift) {
+            buttons.push(primaryButtons);
         }
 
         if (isAdmin && !pastShift) {
@@ -349,16 +355,22 @@ function Schedule() {
 
                                             {/* Shift List for this date */}
                                             <div className="shift-list">
-                                                {groupedShifts[date].map((shift) => (
+                                            {groupedShifts[date].map((shift) => {
+                                                const config = getButtonConfig(shift, handleShiftUpdate, isAdmin ? null : user?.volunteer?.volunteer_id);
+                                                const buttonConfig = Array.isArray(config[shift.shift_type])
+                                                    ? config[shift.shift_type][0]
+                                                    : config[shift.shift_type];
+
+                                                return (
                                                     <ShiftCard
                                                         key={shift.shift_id}
                                                         shift={shift}
                                                         shiftType={shift.shift_type}
                                                         onShiftSelect={handleShiftSelection}
-                                                        // getButtonConfig sets volunteerID to null for Admin accounts
-                                                        buttonConfig={getButtonConfig(shift, handleShiftUpdate, isAdmin ? null : user?.volunteer.volunteer_id)}
+                                                        buttonConfig={buttonConfig}
                                                     />
-                                                ))}
+                                                );
+                                            })}
                                             </div>
                                         </div>
                                     ))

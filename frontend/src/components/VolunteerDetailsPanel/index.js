@@ -178,8 +178,8 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
                             {shiftDetails.shift_type === "my-shifts"
                             ? "My Class"
                             : shiftDetails.shift_type === "my-coverage-requests" &&
-                                shiftDetails.coverage_status === COVERAGE_STATUSES.OPEN
-                            ? "Requested Coverage"
+                                shiftDetails.coverage_status === COVERAGE_STATUSES.PENDING
+                            ? "Requested Absence"
                             : shiftDetails.shift_type === "my-coverage-requests" &&
                                 shiftDetails.coverage_status ===
                                 COVERAGE_STATUSES.RESOLVED
@@ -212,6 +212,23 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
                         {renderVolunteers()}
                     </div>
                 </div>
+                {shiftDetails?.shift_type === "my-shifts" && panelInfo?.zoom_link && (
+                    <div className="panel-details-shift-row">
+                        <div className="panel-titles">Location</div>
+                        <div className="panel-details-shift-right">
+                            <button className="join-class-button">
+                                <a href={panelInfo.zoom_link} >
+                                <img 
+                                    src={zoom_icon}
+                                    alt="Zoom" 
+                                    className="zoom-icon" 
+                                />
+                                    Join Class
+                                </a>
+                            </button>
+                        </div>
+                    </div>
+                )}
                 <div className="panel-details-shift-row zoom-link">
                     <div>
                         <div className="panel-titles">Description</div>

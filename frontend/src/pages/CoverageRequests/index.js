@@ -401,6 +401,7 @@ function CoverageRequests() {
                               shift,
                               handleShiftButton
                             )}
+                            coverageVolunteerName={getRequestorName(shift)}
                           />
                         ))}
                       </div>

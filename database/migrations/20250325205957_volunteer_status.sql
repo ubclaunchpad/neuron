@@ -1,7 +1,7 @@
 -- migrate:up
 
 ALTER TABLE volunteers
-ADD COLUMN temp_status ENUM('active', 'inactive', 'unverified') NOT NULL DEFAULT 'unverified';
+ADD COLUMN temp_status ENUM('active', 'inactive', 'unverified', 'deleted') NOT NULL DEFAULT 'unverified';
 
 SET SQL_SAFE_UPDATES = 0;
 

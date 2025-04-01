@@ -39,7 +39,7 @@ const MemberManagement = () => {
     }, [activeTab]);
 
     async function fetchData() {
-        let data = {};
+        let data = [];
         try {
             if (activeTab === "volunteers") {
                 data = await getVolunteers();
@@ -47,7 +47,7 @@ const MemberManagement = () => {
                 data = await getAllInstructors();
             }
 
-            setData(data);
+            setData(data.filter((item)=>item.status!=='deleted'));
             setMainData(data);
             setType(activeTab);
         }
@@ -58,7 +58,7 @@ const MemberManagement = () => {
 
     const searchVolunteers = (searchTerm) => {
         if (!searchTerm) {
-            setData(mainData);
+            setData(mainData.filter((item)=>item.status!=='deleted'));
             return;
         }
         const words = searchTerm.toLowerCase().split(/\s+/); // Split query into words
@@ -74,7 +74,7 @@ const MemberManagement = () => {
             })
         );
 
-        setData(filteredData);
+        setData(filteredData.filter((item)=>item.status!=='deleted'));
     }
 
     return (

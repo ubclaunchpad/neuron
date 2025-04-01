@@ -5,17 +5,15 @@ import camera_icon from "../../../assets/camera.png";
 import cancel_icon from "../../../assets/cancel-icon.png";
 import check_icon from "../../../assets/check-icon.png";
 import edit_icon from "../../../assets/edit-icon.png";
-import settings_icon from "../../../assets/settings-icon.png";
 import ProfileImg from "../../ImgFallback";
-
+import { useNavigate } from "react-router-dom";
 import { Formik } from "formik";
 import { CgSelect } from "react-icons/cg";
 import Select from "react-select";
 import * as Yup from "yup";
-import { updateVolunteerData, uploadProfilePicture } from "../../../api/volunteerService";
+import { updateVolunteerData, uploadProfilePicture, updatVolunteerEmail } from "../../../api/volunteerService";
 import { useAuth } from "../../../contexts/authContext";
 import notyf from "../../../utils/notyf";
-import DeactivateReactivateModal from "../../Deactivate-Reactivate-Modal";
 import Modal from "../../Modal";
 
 const phoneRegex = /^[0-9]{10}$/;
@@ -57,6 +55,7 @@ const provinceLabels = provinces.reduce((map, province) => {
 
 function VolunteerDetailsCard({ volunteer, type = "" }) {
   const { user, updateUser, isAdmin } = useAuth();
+  const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [mutableData, setMutableData] = useState({
@@ -70,8 +69,8 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
   const [prevMutableData, setPrevMutableData] = useState({});
   const [tempImage, setTempImage] = useState({ src: volunteer.profile_picture });
   const [prevTempImage, setPrevTempImage] = useState(null);
-  const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [volunteerEmail, setVolunteerEmail] = useState(volunteer.email);
   const pronounOptions = [
     { value: null, label: "None" },
     { value: "He/Him", label: "He/Him" },
@@ -212,35 +211,52 @@ function VolunteerDetailsCard({ volunteer, type = "" }) {
               )}
               {type === "admin" && (
                 <>
-                  <img
+                   <img
                     className="icon edit-icon"
-                    src={settings_icon}
-                    alt="Settings"
-                    onClick={() => setShowAdminMenu(!showAdminMenu)}
-                  />
+                    src={edit_icon}
+                    alt="Edit icon"
+                    onClick={() => setShowModal(!showModal)}
+                  /> 
                   <Modal
-                    title={volunteer.active === 1 ? "Deactivate account" : "Reactivate account"}
+                    title={"Edit Volunteer Email"}
                     isOpen={showModal}
                     onClose={() => setShowModal(false)}
                     width={"500px"}
                     height={"fit-content"}
                   >
-                    <DeactivateReactivateModal id={volunteer.volunteer_id} type={volunteer.active} />
+                    <div className="email-change-modal"> 
+                      <div>Volunteer Email:</div>
+                      <input value={volunteerEmail} onChange={(event) => {
+                        setVolunteerEmail(event.target.value);
+                      }}></input>
+                      <button 
+                        className="save-button"
+                        onClick={ async ()=> {
+                          const response = await updatVolunteerEmail(volunteer.volunteer_id, {email: volunteerEmail});
+                          notyf.success("Successfully updated email.");
+                          setShowModal(false);
+                          navigate(0);
+                          
+                        }}
+                      >Update Email</button>
+                    </div>
+
+
                   </Modal>
                 </>
               )}
-              {showAdminMenu && (
+              {/* {(
                 <div className="admin-menu">
                   <div className="admin-menu-item" onClick={() => setShowModal(true)}>
-                    <div className={volunteer.active === 1 ? "deactivate" : "reactivate"}></div>
-                    <p>{volunteer.active === 1 ? "Deactivate" : "Reactivate"} account</p>
+                    <div className={volunteer.status === 'active' ? "deactivate" : "reactivate"}></div>
+                    <p>{volunteer.status === 'active' ? "Deactivate" : "Reactivate"} account</p>
                   </div>
                   <div className="admin-menu-item">
                     <div className="edit-email"></div>
                     <p>Edit volunteer email</p>
                   </div>
                 </div>
-              )}
+              )} */}
               <div className="profile-content">
                 <div
                   className="profile-picture-form"

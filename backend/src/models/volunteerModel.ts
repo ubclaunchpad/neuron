@@ -1,7 +1,7 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { ShiftDB, VolunteerDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
-import { logModel } from "../config/models.js";
+import { logModel, userModel } from "../config/models.js";
 import { wrapIfNotArray } from "../utils/generalUtils.js";
 
 export default class VolunteerModel {
@@ -78,7 +78,7 @@ export default class VolunteerModel {
             JOIN 
                 users u ON v.fk_user_id = u.user_id
             WHERE
-                active = false
+                status = 'unverified'
             `;
 
         const [results, _] = await connectionPool.query<VolunteerDB[]>(query, []);
@@ -119,7 +119,7 @@ export default class VolunteerModel {
     }
 
     async deleteVolunteer(user_id: string): Promise<any> {
-        const query = "DELETE FROM volunteers WHERE user_id = ?";
+        const query = "DELETE FROM volunteers WHERE fk_user_id = ?";
         const values = [user_id];
 
         const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
@@ -249,7 +249,7 @@ export default class VolunteerModel {
             // Set active to true
             await this.updateVolunteer(
                 volunteer_id, 
-                { active: true } as VolunteerDB, 
+                { status : 'active' } as VolunteerDB, 
                 transaction
             );
 
@@ -257,7 +257,7 @@ export default class VolunteerModel {
             await logModel.log({
                 signoff, 
                 page: 'Member Management',
-                description: 'Volunteer account verified', 
+                description: 'Volunteer account activated', 
                 volunteer_id: volunteer_id,
                 transaction
             });
@@ -278,7 +278,7 @@ export default class VolunteerModel {
             // Set active to true
             await this.updateVolunteer(
                 volunteer_id, 
-                { active: false } as VolunteerDB, 
+                { status: 'inactive' } as VolunteerDB, 
                 transaction
             );
 
@@ -294,6 +294,54 @@ export default class VolunteerModel {
             await transaction.commit();
         } catch (error) {
             // Rollback
+            await transaction.rollback();
+            throw error;
+        }
+    }
+
+    async denyVolunteer(volunteer_id: string, signoff: string): Promise<void> {
+        const transaction = await connectionPool.getConnection();
+        try {
+            await transaction.beginTransaction();
+
+            await this.updateVolunteer(
+                volunteer_id, 
+                { status : 'deleted' } as VolunteerDB, 
+                transaction
+            );
+
+            // Log verify
+            await logModel.log({
+                signoff, 
+                page: 'Member Management',
+                description: 'Volunteer account denied/deleted', 
+                volunteer_id: volunteer_id,
+                transaction
+            });
+
+            await transaction.commit();
+        } catch (error) {
+            // Rollback
+            await transaction.rollback();
+            throw error;
+        }
+    }
+
+    async updateVolunteerEmail(volunteer_id: string, data: { email: string} ): Promise<void> {
+        const transaction = await connectionPool.getConnection();
+   
+        try {
+            await transaction.beginTransaction();
+            const query_del = 
+                `UPDATE users u
+                JOIN volunteers v ON u.user_id = v.fk_user_id
+                SET u.email = ?
+                WHERE v.volunteer_id = ?;`;
+            const values_del = [data.email, volunteer_id];
+            await transaction.query<ResultSetHeader>(query_del, values_del);
+            await transaction.commit();
+        } catch (error) {
+             // Rollback
             await transaction.rollback();
             throw error;
         }

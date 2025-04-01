@@ -8,7 +8,9 @@ import {
     shiftCheckIn,
     updatePreferredClassesById,
     updateVolunteer,
-    verifyVolunteer
+    updateVolunteerEmail,
+    verifyVolunteer,
+    denyVolunteer
 } from "../controllers/volunteerController.js";
 
 import { body, param, query } from "express-validator";
@@ -119,6 +121,19 @@ export const VolunteerRoutes: RouteDefinition = {
             ]
         },
         {
+            path: '/email-update',
+            children: [
+                {
+                    path: '/:volunteer_id',
+                    validation: [
+                        param('volunteer_id').isUUID('4')
+                    ],
+                    method: 'put',
+                    action: updateVolunteerEmail
+                }
+            ]
+        },
+        {
             path: '/:volunteer_id',
             validation: [
                 param('volunteer_id').isUUID('4')
@@ -169,8 +184,19 @@ export const VolunteerRoutes: RouteDefinition = {
                         body('signoff').isAlpha('en-US', { ignore: '.' })
                     ],
                     action: deactivateVolunteer
+                },
+                {
+                    path: '/deny',
+                    method: 'patch',
+                    middleware: [
+                        isAdmin,
+                    ],
+                    validation: [
+                        body('signoff').isAlpha('en-US', { ignore: '.' })
+                    ],
+                    action: denyVolunteer
                 }
             ]
-        },
+        }
     ]
 };

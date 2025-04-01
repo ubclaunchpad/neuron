@@ -3,6 +3,7 @@ import { Modal } from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
 import { requestCoverage } from "../../api/coverageService";
 import AbsenceRequestConfirmation from "../AbsenceRequestConfirmation";
+import { useAuth } from "../../contexts/authContext";
 import "./index.css";
 
 function CoverageRequestForm({ open, onClose, shift }) {
@@ -10,6 +11,7 @@ function CoverageRequestForm({ open, onClose, shift }) {
     const [acknowledgment, setAcknowledgment] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
+    const { user } = useAuth();
 
     const resetForm = () => {
         setWhichShifts("single");
@@ -41,7 +43,7 @@ function CoverageRequestForm({ open, onClose, shift }) {
 
         try {
             const request_id = shift.absence_request.request_id;
-            const volunteer_id = shift.volunteer_id;
+            const volunteer_id = user?.volunteer?.volunteer_id;
             const response = await requestCoverage(request_id, volunteer_id);
 
             console.log("Coverage request submitted successfully:", response);

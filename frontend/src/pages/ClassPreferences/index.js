@@ -1,13 +1,16 @@
-import "./index.css";
-import React, {useEffect, useState, useRef} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { fetchAllClassPreferences, fetchUserPreferredClasses, fetchVolunteerAvailability, updateUserPreferredClasses } from "../../api/volunteerService";
+import dropdown_button from "../../assets/dropdown-button.png";
 import edit_icon from "../../assets/edit-icon.png";
 import filter_icon from "../../assets/filter-icon.png";
 import search_icon from "../../assets/search-icon.png";
-import { useAuth } from "../../contexts/authContext";
-import { fetchUserPreferredClasses, fetchAllClassPreferences, updateUserPreferredClasses, fetchVolunteerAvailability} from "../../api/volunteerService";
+import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
+import Checkbox from "../../components/Checkbox";
 import ClassPreferencesCard from "../../components/ClassPreferencesCard";
 import Modal from "../../components/Modal";
-import Checkbox from "../../components/Checkbox";
+import { useAuth } from "../../contexts/authContext";
+import "./index.css";
 
 function ifFitAvailability(class_, availability) {
      return compareTime(availability.start_time, class_.start_time) && compareTime(class_.end_time, availability.end_time);
@@ -30,6 +33,8 @@ function ClassPreferences() {
      const { user } = useAuth();
      const [userAvailability, setUserAvailability] = useState(null);
      const FIT_AVAILABILITY_TITLE = "Classes that Fit My Availability";
+     const { logout } = useAuth();
+     const navigate = useNavigate();
 
      // Modal hooks
      const [modalOpen, setModalOpen] = useState(false);
@@ -47,6 +52,24 @@ function ClassPreferences() {
      const [filterSet, setFilterSet] = useState(new Set());
      const [ifFitAvailabilityShow, setIfFitAvailabilityShow] = useState(false);
      const [fitAvailabilityClasses, setFitAvailabilityClasses] = useState(null);
+     const days = [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+     ];
+
+     const [collapsed, setCollapsed] = useState({});
+
+     const toggleCollapse = (index) => {
+          setCollapsed((prev) => ({
+            ...prev,
+            [index]: !prev[index], 
+          }));
+     };
 
      const openModal = () => {
           setModalOpen(true);
@@ -75,13 +98,23 @@ function ClassPreferences() {
               return `${Number(e[0]) - Number(s[0])} hr`;
           }
      };
+
+     const formatDur = (s_time, e_time) => {
+          const s_time_ = formatTime(s_time);
+          const e_time_ = formatTime(e_time);
+          if (s_time_[1] == e_time_[1]) {
+              return `${s_time_[0]} - ${e_time_[0]}${s_time_[1]}`;
+          } else {
+              return `${s_time_[0]}${s_time_[1]} - ${e_time_[0]}${e_time_[1]}`;
+          }
+      };
   
      const formatTime = (time) => {
           if (time === null || time === undefined || time === "") return "";
           const [hour, minute] = time.split(":").map(Number);
           const period = hour >= 12 ? "PM" : "AM";
           const formattedHour = hour % 12 || 12;
-          return `${formattedHour}:${minute.toString().padStart(2, "0")} ${period}`;
+          return [`${formattedHour}:${minute.toString().padStart(2, "0")}`, period];
      };
 
      useEffect(()=> {
@@ -185,7 +218,10 @@ function ClassPreferences() {
      }
 
      const onSearch = () => {
-          if (searchText.length === 0) return;
+          if (searchText.length === 0) {
+               setDisplayClassPref(allClasses);
+               return;
+          }
           let tempMap = new Map();
           for (let [cat, classes] of allClasses.entries()) {
                tempMap.set(cat, []);
@@ -250,7 +286,7 @@ function ClassPreferences() {
           return (
                <>
                     {preferredClasses[rank].map((class_, index) => (
-                         <ClassPreferencesCard classData={class_} fullWith={false} key={index}></ClassPreferencesCard>
+                         <ClassPreferencesCard classData={class_} fullWith={false} key={index} showDropdown={false}></ClassPreferencesCard>
                     ))}
                </>
           );
@@ -264,11 +300,6 @@ function ClassPreferences() {
           else setChosenNumClasses(0);
           openModal();
      }
-
-     function renderTitle() {
-          return (<h2 className="modal-title">{modalTitle}</h2>);
-     }
-
 
      function renderFilterItem(title) {
           return (
@@ -364,22 +395,34 @@ function ClassPreferences() {
           return false;
      }
 
-     function renderClassesInCat(classes) {
+     function 
+     renderClassesInCat(classes) {
+          let collapse = false;
           return (
                <>
                     {classes.map((class_, index) => (
                          <div className="class-container" key={index}>
-                              <div className="class-container-col1">
-                                   <Checkbox onClicked={()=>{handleCheckboxClicked(class_)}} active={ifClassIsPreferred(class_)}/>
-                              </div>
-                              <div className="class-container-col2">
-                                   <h2>{formatTime(class_.start_time)}</h2>
-                                   <h3>{timeDifference(class_.end_time, class_.start_time)}</h3>
-                              </div>
-                              <div className="class-container-col3">
-                                   <div className="class-container-col3-name">{class_.class_name}</div>
-                                   <div className="class-container-col3-instr">{class_.instructions}</div>
-                              </div>
+                              <div className="class-container-content">
+                                   <div className="class-container-col1">
+                                        <Checkbox onClicked={()=>{handleCheckboxClicked(class_)}} active={ifClassIsPreferred(class_)}/>
+                                   </div>
+                                   <div className="class-container-col2">
+                                        <h2>{days[class_["day"]]}</h2>
+                                        <h3>{formatDur(class_.end_time, class_.start_time)}</h3>
+                                   </div>
+                                   <div className="class-container-col3">
+                                        <div className="class-container-col3-name">{class_.class_name}</div>
+                                        <div className="class-container-col3-info">
+                                             {capitalize(class_["frequency"])} | Starts on {getDate(class_["start_date"])}
+                                        </div>
+                                   </div>
+                                   </div>
+                              <img className={`${collapsed[index] ? "collapse-dropdown-btn" : ""}`} src={dropdown_button} onClick={()=> toggleCollapse(index)}/>
+                              {
+                                   collapsed[index] ? 
+                                   <div className="class-instrs">{class_.instructions}</div>
+                                   : null
+                              }
                          </div>
                     ))}
                </>
@@ -402,6 +445,17 @@ function ClassPreferences() {
           );
      }
         
+     const capitalize = (wrd) => {
+          return wrd.charAt(0).toUpperCase() + wrd.slice(1);
+     }
+
+     const getDate = (date) => {
+          const date_ = new Date(date);
+          const d = date_.getDate().toString().padStart(2, "0");
+          const m = (date_.getMonth()+1).toString().padStart(2, "0");
+          const y = (date_.getFullYear()).toString();
+          return `${d}/${m}/${y}`;
+     };
 
      function handleOK () {
           closeModal(true);
@@ -412,7 +466,6 @@ function ClassPreferences() {
 
           return (
                <>
-                    {renderTitle()}       
                     {renderSearchBar()}  
                     <div className="seach-classes-container">
                          {renderSearchClasses()}
@@ -447,11 +500,18 @@ function ClassPreferences() {
      return (
           <main className="content-container">
                <div className="content-heading">
-                    <h2 className="content-title">Class - Schedule Preferences</h2>
-                    <button className="logout-button" onClick={() => {
-                         localStorage.removeItem("neuronAuthToken");
-                         window.location.href = "/auth/login";
-                    }}>
+                    <button 
+                         className="back-button"
+                         onClick={() => navigate("/profile")}
+                         >
+                         <img
+                              alt="Back"
+                              src={button_icon_prev}
+                              style={{ width: 18, height: 18 }}
+                         />
+                         <h2 className="content-title">Class - Schedule Preferences</h2>
+                    </button>
+                    <button className="logout-button" onClick={logout}>
                     <i className="fa-solid fa-arrow-right-from-bracket"></i>&nbsp;&nbsp;Log Out
                     </button>
                </div>
@@ -514,7 +574,7 @@ function ClassPreferences() {
                     </div>
 
                </div>
-               <Modal isOpen={modalOpen} onClose={handleConfirm} width={"600px"} height={"90%"}>
+               <Modal isOpen={modalOpen} onClose={handleConfirm} width={"600px"} height={"90%"} title={modalTitle}>
                     {renderModal(chosenRank)}
                </Modal>
 
@@ -528,13 +588,12 @@ function ClassPreferences() {
                     </div>
                </Modal>
 
-               <Modal isOpen={alertModalOpen} width={"fit-content"} height={"fit-content"} onClose={() => {window.location.reload(true)}}>
+               <Modal isOpen={alertModalOpen} width={"fit-content"} height={"fit-content"} onClose={() => {navigate(0)}}>
                     <div className="alert-modal-content">Your preferences have been recorded!
-                         <button className="save-button" onClick={()=> {window.location.reload(true)}}>Close</button>
+                         <button className="save-button" onClick={()=> {navigate(0)}}>Close</button>
                     </div>
                </Modal>
-          </main>
-               
+          </main>      
      );
 };
 

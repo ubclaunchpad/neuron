@@ -1,13 +1,14 @@
-import { getUnverifiedVolunteers } from "../../api/adminService";
-import UnverifiedUsers from "../../components/UnverifiedUsers";
-import { useEffect, useState } from "react";
-import { getVolunteers, getInstructors } from "../../api/adminService";
-import "./index.css";
-import Notifications from "../../components/Notifications";
-import MemberList from "../../components/MemberList";
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import Modal from "../../components/Modal";
+import { useEffect, useState } from "react";
+import { getAllInstructors } from '../../api/instructorService';
+import { getVolunteers } from "../../api/volunteerService";
 import AddEditInstructorModal from "../../components/AddEditInstructorModal";
+import MemberList from "../../components/MemberList";
+import Modal from "../../components/Modal";
+import Notifications from "../../components/Notifications";
+import SearchInput from '../../components/SearchInput';
+import UnverifiedUsers from "../../components/UnverifiedUsers";
+import "./index.css";
 
 const MemberManagement = () => {
     const [data, setData] = useState([]);
@@ -18,8 +19,8 @@ const MemberManagement = () => {
     const [unverifiedUsers, setUnverifiedUsers] = useState(null);
 
     async function getMemMgtData() {
-        const unverifiedUsers_ = await getUnverifiedVolunteers();
-        setUnverifiedUsers(unverifiedUsers_.volunteers);
+        const unverifiedUsers_ = await getVolunteers({ unverified: true });
+        setUnverifiedUsers(unverifiedUsers_);
     }
 
     useEffect(() => {
@@ -38,15 +39,15 @@ const MemberManagement = () => {
     }, [activeTab]);
 
     async function fetchData() {
-        let data = {};
+        let data = [];
         try {
             if (activeTab === "volunteers") {
                 data = await getVolunteers();
             } else if (activeTab === "instructors") {
-                data = await getInstructors();
+                data = await getAllInstructors();
             }
 
-            setData(data);
+            setData(data.filter((item)=>item.status!=='deleted'));
             setMainData(data);
             setType(activeTab);
         }
@@ -57,7 +58,7 @@ const MemberManagement = () => {
 
     const searchVolunteers = (searchTerm) => {
         if (!searchTerm) {
-            setData(mainData);
+            setData(mainData.filter((item)=>item.status!=='deleted'));
             return;
         }
         const words = searchTerm.toLowerCase().split(/\s+/); // Split query into words
@@ -73,7 +74,7 @@ const MemberManagement = () => {
             })
         );
 
-        setData(filteredData);
+        setData(filteredData.filter((item)=>item.status!=='deleted'));
     }
 
     return (
@@ -101,7 +102,7 @@ const MemberManagement = () => {
             </nav>
             { type === "unverified" ? null :
                 <div className="member-search-bar">
-                    <input type="search" placeholder="Search by name or email" className="member-search-input" onChange={(e) => {
+                    <SearchInput placeholder="Search by name or email" onChange={(e) => {
                         searchVolunteers(e.target.value);
                     }} />
                     {type === "volunteers" && (

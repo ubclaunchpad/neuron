@@ -1,15 +1,88 @@
 import React from "react";
-import zoom_icon from "../../assets/zoom.png";
 import { formatImageUrl } from "../../api/imageService";
+import zoom_icon from "../../assets/zoom.png";
 import { COVERAGE_STATUSES } from "../../data/constants";
 import ProfileImg from "../ImgFallback";
 import "./index.css";
+import checked_in from "../../assets/checked-in.png";
+import not_checked_in from "../../assets/not-checked-in.png";
+import { checkInShift } from "../../api/shiftService";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
 function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelInfo, myClass, classTaken }) {
+    const [volunteersInShift, setVolunteersInShift] = useState([]);
+    const navigate = useNavigate();
+    
+    useEffect(()=> {
+        if (shiftDetails && shiftDetails.volunteers)
+            setVolunteersInShift(shiftDetails.volunteers);
+    }, [shiftDetails]);
+
+    const renderCheckedInButton = (volunteer) => {
+        if (!volunteersInShift) return null;
+        for (const vol of volunteersInShift) {
+            if (vol.volunteer_id === volunteer.volunteer_id) {
+                if (vol.checked_in === 0) {
+                    return (<div className="checked-in-status-btn">
+                        <img src={not_checked_in}/>
+                        {renderCheckedInPopUp(vol.shift_id, false)}
+                    </div>);
+                } else {
+                    return (<div className="checked-in-status-btn">
+                        <img src={checked_in}/>
+                        <>{renderCheckedInPopUp(vol.shift_id, true)}</>
+                    </div>);
+                }
+            }
+        }
+        return null;
+    }
+
+    const renderCheckedInPopUp = (shift_id, checked_in) => {
+        if (!checked_in) {
+            return (
+            <div className="checked-in-popup">
+                <div className="arrow"></div>
+                <div className="checked-in-popup-content">
+                    <div>
+                        <div>Not checked in</div> 
+                        <button onClick={
+                            () => {
+                                checkInShift(shift_id);
+                                navigate(0);
+                            }
+                        }>Mark as checked in</button>
+                    </div>
+                </div>
+            </div>);
+        } else {
+            return (
+                <div className="checked-in-popup">
+                    <div className="arrow"></div>
+                    <div className="checked-in-popup-content">
+                        <div>
+                            <div>Checked in!</div> 
+                        </div>
+                    </div>
+                </div>);
+        }
+    };
 
     const renderVolunteers = () => {
         const volunteers = panelInfo?.schedules.flatMap(
-            (schedule) => schedule.volunteers || []
+            (schedule) => {
+                if (shiftDetails) {
+                    if (schedule.start_time === shiftDetails.start_time && schedule.end_time === shiftDetails.end_time) {
+                        return schedule.volunteers
+                    } else {
+                        return []
+                    }
+                }
+                else {
+                    return schedule.volunteers
+                }
+            }     
         );
 
         // same volunteer may be assigned to multiple schedules within a class
@@ -46,6 +119,8 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
                         className="volunteer-profile"
                     />
                     <div>{name}</div>
+                    <>{renderCheckedInButton(volunteer)}</>
+                    
                 </div>
             );
             })}
@@ -65,14 +140,14 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
         const uniqueIds = [],
             uniqueInstructors = [];
             instructors?.forEach((instructor) => {
-                if (!uniqueIds.includes(instructor.id)) {
+                if (instructor.id && !uniqueIds.includes(instructor.id)) {
                     uniqueIds.push(instructor.id);
                     uniqueInstructors.push(instructor);
                 }
         });
 
         if (!uniqueInstructors || uniqueInstructors.length === 0) {
-            return <>No instructors for this class</>;
+            return <>No instructors for this class.</>;
         }
 
         return (
@@ -104,8 +179,8 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
                             {shiftDetails.shift_type === "my-shifts"
                             ? "My Class"
                             : shiftDetails.shift_type === "my-coverage-requests" &&
-                                shiftDetails.coverage_status === COVERAGE_STATUSES.OPEN
-                            ? "Requested Coverage"
+                                shiftDetails.coverage_status === COVERAGE_STATUSES.PENDING
+                            ? "Requested Absence"
                             : shiftDetails.shift_type === "my-coverage-requests" &&
                                 shiftDetails.coverage_status ===
                                 COVERAGE_STATUSES.RESOLVED
@@ -138,21 +213,23 @@ function VolunteerDetailsPanel({ dynamicShiftButtons = [], shiftDetails, panelIn
                         {renderVolunteers()}
                     </div>
                 </div>
-                <div className="panel-details-shift-row zoom-link">
-                    <div className="panel-titles">Zoom Link</div>
-                    <div className="panel-details-shift-right">
-                        <button className="join-class-button">
-                            <a href={panelInfo?.zoom_link} >
-                            <img 
-                                src={zoom_icon}
-                                alt="Zoom" 
-                                className="zoom-icon" 
-                            />
-                                Join Class
-                            </a>
-                        </button>
+                {shiftDetails?.shift_type === "my-shifts" && panelInfo?.zoom_link && (
+                    <div className="panel-details-shift-row">
+                        <div className="panel-titles">Location</div>
+                        <div className="panel-details-shift-right">
+                            <button className="join-class-button">
+                                <a href={panelInfo.zoom_link} >
+                                <img 
+                                    src={zoom_icon}
+                                    alt="Zoom" 
+                                    className="zoom-icon" 
+                                />
+                                    Join Class
+                                </a>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
                 <div className="panel-details-shift-row zoom-link">
                     <div>
                         <div className="panel-titles">Description</div>

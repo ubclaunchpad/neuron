@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchVolunteerAvailability, setVolunteerAvailability, updateVolunteerAvailability } from '../../../api/volunteerService';
 import './index.css';
+import notyf from '../../../utils/notyf';
 
 import cancel_icon from "../../../assets/cancel-icon.png";
 import check_icon from "../../../assets/check-icon.png";
@@ -79,8 +80,10 @@ const AvailabilityGrid = ({ volunteerId, type = "" }) => {
         await updateVolunteerAvailability(volunteerId, availabilities);
       }
       setSavedTimes(unsavedTimes);
+      notyf.success("Successfully updated availability.");
       setIsEditing(false);
     } catch (error) {
+      notyf.error("Failed to update availability.");
       console.error('Failed to update availability:', error);
     }
   };

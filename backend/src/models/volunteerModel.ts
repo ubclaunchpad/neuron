@@ -1,6 +1,7 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { ShiftDB, VolunteerDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
+import { logModel, userModel } from "../config/models.js";
 import { wrapIfNotArray } from "../utils/generalUtils.js";
 
 export default class VolunteerModel {
@@ -77,7 +78,7 @@ export default class VolunteerModel {
             JOIN 
                 users u ON v.fk_user_id = u.user_id
             WHERE
-                active = false
+                status = 'unverified'
             `;
 
         const [results, _] = await connectionPool.query<VolunteerDB[]>(query, []);
@@ -85,7 +86,9 @@ export default class VolunteerModel {
         return results
     }
 
-    async updateVolunteer(volunteer_id: string, volunteerData: Partial<VolunteerDB>): Promise<ResultSetHeader> {
+    async updateVolunteer(volunteer_id: string, volunteerData: Partial<VolunteerDB>, transaction?: PoolConnection): Promise<ResultSetHeader> {
+        const connection = transaction ?? connectionPool;
+
         // Construct the SET clause dynamically
         const setClause = Object.keys(volunteerData)
             .map((key) => `${key} = ?`)
@@ -93,7 +96,7 @@ export default class VolunteerModel {
         const query = `UPDATE volunteers SET ${setClause} WHERE volunteer_id = ?`;
         const values = [...Object.values(volunteerData), volunteer_id];
 
-        const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
+        const [results, _] = await connection.query<ResultSetHeader>(query, values);
 
         return results
     }
@@ -116,7 +119,7 @@ export default class VolunteerModel {
     }
 
     async deleteVolunteer(user_id: string): Promise<any> {
-        const query = "DELETE FROM volunteers WHERE user_id = ?";
+        const query = "DELETE FROM volunteers WHERE fk_user_id = ?";
         const values = [user_id];
 
         const [results, _] = await connectionPool.query<ResultSetHeader>(query, values);
@@ -186,8 +189,8 @@ export default class VolunteerModel {
                 class_preferences.fk_schedule_id AS schedule_id,
                 class_preferences.class_rank,
                 schedule.fk_class_id AS class_id,
-                schedule.day, schedule.start_time, schedule.end_time,
-                class.class_name, class.instructions, class.category, class.subcategory
+                schedule.day, schedule.start_time, schedule.end_time, schedule.frequency,
+                class.class_name, class.instructions, class.category, class.subcategory, class.start_date
             FROM class_preferences
             JOIN schedule ON class_preferences.fk_schedule_id = schedule.schedule_id
             JOIN class ON schedule.fk_class_id = class.class_id
@@ -202,8 +205,8 @@ export default class VolunteerModel {
 
         const query = `
             SELECT 
-                s.schedule_id, s.fk_class_id, s.day, s.start_time, s.end_time, s.active, 
-                c.class_name, c.instructions, c.category, 
+                s.schedule_id, s.fk_class_id, s.day, s.start_time, s.end_time, s.active, s.frequency,
+                c.class_name, c.instructions, c.category, c.start_date,
                 i.f_name, i.l_name
             FROM schedule AS s
             JOIN class AS c ON s.fk_class_id = c.class_id 
@@ -235,8 +238,112 @@ export default class VolunteerModel {
              // Rollback
             await transaction.rollback();
             throw error;
-        } finally {
-            transaction.release(); 
         }
-   }
+    }
+
+    async verifyVolunteer(volunteer_id: string, signoff: string): Promise<void> {
+        const transaction = await connectionPool.getConnection();
+        try {
+            await transaction.beginTransaction();
+
+            // Set active to true
+            await this.updateVolunteer(
+                volunteer_id, 
+                { status : 'active' } as VolunteerDB, 
+                transaction
+            );
+
+            // Log verify
+            await logModel.log({
+                signoff, 
+                page: 'Member Management',
+                description: 'Volunteer account activated', 
+                volunteer_id: volunteer_id,
+                transaction
+            });
+
+            await transaction.commit();
+        } catch (error) {
+            // Rollback
+            await transaction.rollback();
+            throw error;
+        }
+    }
+
+    async deactivateVolunteer(volunteer_id: string, signoff: string): Promise<void> {
+        const transaction = await connectionPool.getConnection();
+        try {
+            await transaction.beginTransaction();
+            
+            // Set active to true
+            await this.updateVolunteer(
+                volunteer_id, 
+                { status: 'inactive' } as VolunteerDB, 
+                transaction
+            );
+
+            // Log verify
+            await logModel.log({
+                signoff, 
+                page: 'Member Management',
+                description: 'Volunteer account deactivated', 
+                volunteer_id: volunteer_id,
+                transaction
+            });
+
+            await transaction.commit();
+        } catch (error) {
+            // Rollback
+            await transaction.rollback();
+            throw error;
+        }
+    }
+
+    async denyVolunteer(volunteer_id: string, signoff: string): Promise<void> {
+        const transaction = await connectionPool.getConnection();
+        try {
+            await transaction.beginTransaction();
+
+            await this.updateVolunteer(
+                volunteer_id, 
+                { status : 'deleted' } as VolunteerDB, 
+                transaction
+            );
+
+            // Log verify
+            await logModel.log({
+                signoff, 
+                page: 'Member Management',
+                description: 'Volunteer account denied/deleted', 
+                volunteer_id: volunteer_id,
+                transaction
+            });
+
+            await transaction.commit();
+        } catch (error) {
+            // Rollback
+            await transaction.rollback();
+            throw error;
+        }
+    }
+
+    async updateVolunteerEmail(volunteer_id: string, data: { email: string} ): Promise<void> {
+        const transaction = await connectionPool.getConnection();
+   
+        try {
+            await transaction.beginTransaction();
+            const query_del = 
+                `UPDATE users u
+                JOIN volunteers v ON u.user_id = v.fk_user_id
+                SET u.email = ?
+                WHERE v.volunteer_id = ?;`;
+            const values_del = [data.email, volunteer_id];
+            await transaction.query<ResultSetHeader>(query_del, values_del);
+            await transaction.commit();
+        } catch (error) {
+             // Rollback
+            await transaction.rollback();
+            throw error;
+        }
+    }
 }

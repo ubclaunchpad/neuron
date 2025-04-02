@@ -104,7 +104,7 @@ export interface VolunteerScheduleDB extends RowDataPacket {
   'fk_volunteer_id': string;
 }
 export interface VolunteerDB extends RowDataPacket {
-  'active'?: any;
+  'status'?: any;
   'bio'?: string | null;
   'city'?: string | null;
   'existing'?: number;

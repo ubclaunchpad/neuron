@@ -1,19 +1,21 @@
-import { Request, Response, Router } from "express";
-import multer from 'multer';
 
 import {
+    deactivateVolunteer,
+    getAllClassPreferences,
+    getPreferredClassesById,
     getVolunteerById,
     getVolunteers,
     shiftCheckIn,
+    updatePreferredClassesById,
     updateVolunteer,
-    getPreferredClassesById,
-    getAllClassPreferences,
-    updatePreferredClassesById
+    updateVolunteerEmail,
+    verifyVolunteer,
+    denyVolunteer
 } from "../controllers/volunteerController.js";
 
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 import { RouteDefinition } from "../common/types.js";
-import { isAuthorized } from "../config/authCheck.js";
+import { isAdmin, isAuthorized } from "../config/authCheck.js";
 import {
     getAvailabilities,
     getAvailabilityByVolunteerId,
@@ -30,7 +32,10 @@ export const VolunteerRoutes: RouteDefinition = {
         {
             path: '/',
             method: 'get',
-            action: getVolunteers
+            validation: [
+                query('unverified').isBoolean().optional(),
+            ],
+            action: getVolunteers,
         },
         {
             path: '/shift-check-in',
@@ -116,6 +121,19 @@ export const VolunteerRoutes: RouteDefinition = {
             ]
         },
         {
+            path: '/email-update',
+            children: [
+                {
+                    path: '/:volunteer_id',
+                    validation: [
+                        param('volunteer_id').isUUID('4')
+                    ],
+                    method: 'put',
+                    action: updateVolunteerEmail
+                }
+            ]
+        },
+        {
             path: '/:volunteer_id',
             validation: [
                 param('volunteer_id').isUUID('4')
@@ -139,13 +157,46 @@ export const VolunteerRoutes: RouteDefinition = {
                         body('email').isEmail().optional(),
                         body('active').isInt().optional(),
                         body('phone_number').isMobilePhone('en-US').optional(),
-                        body('city').isString().optional(),
-                        body('province').isString().optional(),
+                        body("city").optional().custom(value => value === null || typeof value === "string"),
+                        body("province").optional().custom(value => value === null || typeof value === "string"),
                         body('p_time_ctmt').isInt({ min: 0 }).optional(),
                     ],
                     action: updateVolunteer
                 },
+                {
+                    path: '/verify',
+                    method: 'patch',
+                    middleware: [
+                        isAdmin,
+                    ],
+                    validation: [
+                        body('signoff').isAlpha('en-US', { ignore: '.' })
+                    ],
+                    action: verifyVolunteer
+                },
+                {
+                    path: '/deactivate',
+                    method: 'patch',
+                    middleware: [
+                        isAdmin,
+                    ],
+                    validation: [
+                        body('signoff').isAlpha('en-US', { ignore: '.' })
+                    ],
+                    action: deactivateVolunteer
+                },
+                {
+                    path: '/deny',
+                    method: 'patch',
+                    middleware: [
+                        isAdmin,
+                    ],
+                    validation: [
+                        body('signoff').isAlpha('en-US', { ignore: '.' })
+                    ],
+                    action: denyVolunteer
+                }
             ]
-        },
+        }
     ]
 };

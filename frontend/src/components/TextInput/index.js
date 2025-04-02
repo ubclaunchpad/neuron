@@ -1,6 +1,6 @@
-import "./index.css";
-import { useRef, useState } from "react";
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { useRef, useState } from "react";
+import "./index.css";
 
 const TextInput = ({
     type,
@@ -46,7 +46,7 @@ const TextInput = ({
                         value={value || ""}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        className={errors[name] && touched[name] && "error"}
+                        className={`icon ${errors[name] && touched[name] && "error"}`}
                     />
                     {errors[name] && touched[name] && (
                         <div className="error-message">{errors[name]}</div>

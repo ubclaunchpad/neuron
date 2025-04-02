@@ -1,5 +1,5 @@
 import { Express, NextFunction, Request, Response, Router } from "express";
-import { validationResult } from "express-validator";
+import { checkExact, validationResult } from "express-validator";
 import { RouteDefinition, RouteEndpoint, RouteGroup } from "../common/types.js";
 
 export function registerRoutes(app: Express | Router, routes: RouteDefinition[]) {
@@ -23,7 +23,7 @@ export function registerRoutes(app: Express | Router, routes: RouteDefinition[])
         else if (isRouteEndpoint(route)) {
             const middlewares = [
                 ...(route.middleware || []),
-                ...(route.validation || [])
+                checkExact(route.validation || [])
             ];
 
             (app as any)[route.method](route.path, ...middlewares, async (req: Request, res: Response, next: NextFunction) => {

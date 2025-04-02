@@ -47,9 +47,16 @@ async function getClassesByDay(req: AuthenticatedRequest, res: Response) {
 async function getClassById(req: AuthenticatedRequest, res: Response) {
 	const class_id = Number(req.params.class_id);
 
-	const class_info = await classesModel.getClassesByIds(class_id, true);
+	const classes = await classesModel.getClassesByIds(class_id, true);
 
-	res.status(200).json(class_info);
+	if (classes.length === 0) {
+		throw {
+			 status: 400,
+			 message: `No class found under the given ID: ${class_id}`,
+		};
+   }
+
+	res.status(200).json(classes[0]);
 }
 
 async function uploadClassImage(req: AuthenticatedRequest, res: Response) {

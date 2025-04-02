@@ -45,7 +45,7 @@ export const ScheduleRoutes: RouteDefinition = {
                         body('*.frequency').isIn(Object.values(Frequency)),
                         body('*.volunteer_ids').isArray({ min: 0 }),
                         body('*.volunteer_ids.*').isUUID('4'),
-                        body('*.fk_instructor_id').isUUID('4'),
+                        body('*.fk_instructor_id').isUUID('4').optional(),
                     ],
                     action: addSchedulesToClass
                 },

@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import { ValidationChain } from "express-validator";
-import { UserDB } from "./databaseModels.js";
+import { UserDB, VolunteerDB } from "./databaseModels.js";
 
 export type AuthenticatedRequest = Request & {
     user: UserDB
+    volunteer?: VolunteerDB
 }
 
 /**
@@ -33,3 +34,14 @@ export interface RouteEndpoint<T extends Request = Request> {
 /* We know the correct Request subtype, this prevents ts from getting mad */
 export type RouteDefinition = RouteGroup<any> | RouteEndpoint<any>;
 
+
+export type ListRequestOptions = {
+    page?: number;
+    perPage?: number;
+    search?: string;
+}
+
+export type ListResponse<T> = {
+    data: T[];
+    totalCount: number;
+}

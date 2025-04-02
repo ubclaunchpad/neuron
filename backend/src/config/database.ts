@@ -1,14 +1,14 @@
-import { config } from "dotenv";
 import mysql, { Pool, PoolOptions } from 'mysql2/promise';
-
-config();
+import { RDS_DB, RDS_HOSTNAME, RDS_PASSWORD, RDS_PORT, RDS_USERNAME } from "./environment.js";
 
 const configuration: PoolOptions = {
-  host: process.env.RDS_HOSTNAME || '',
-  user: process.env.RDS_USERNAME || '',
-  password: process.env.RDS_PASSWORD || '',
-  database: process.env.RDS_DB || '',
-  port: process.env.RDS_PORT ? parseInt(process.env.RDS_PORT, 10) : 3306, // Default to port 3306 if not specified
+  host: RDS_HOSTNAME,
+  user: RDS_USERNAME,
+  password: RDS_PASSWORD,
+  database: RDS_DB,
+  port: RDS_PORT, 
+  timezone: 'Z',
+  dateStrings: true,
   typeCast: (_, next) => {
     // Turn null columns into undefined
     const value = next();

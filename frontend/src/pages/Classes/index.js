@@ -15,6 +15,7 @@ import { useAuth } from "../../contexts/authContext";
 
 function Classes() {
   const [completeClassData, setCompleteClassData] = useState(null);
+  const [orderedClassData, setOrderedClassData] = useState(null);
   const [groupedByCategory, setGroupedByCategory] = useState({});
   const [selectedCategory, setSelectedCategory] = useState("Online Exercise");
   const [selectedClassId, setSelectedClassId] = useState(null);
@@ -75,6 +76,28 @@ function Classes() {
         return acc;
       }, {});
       setGroupedByCategory(grouped);
+
+      // reorder complete class data by group
+      const reordered = Object.keys(grouped).reduce((acc, key) => {
+        const group = grouped[key];
+        const groupedBySubcategory = group.reduce((acc, classItem) => {
+          const subcategory = classItem.subcategory || ""; // Handle no subcategory case
+          if (!acc[subcategory]) {
+            acc[subcategory] = [];
+          }
+          acc[subcategory].push(classItem);
+          return acc;
+        }, {});
+
+        const reorderedGroup = Object.keys(groupedBySubcategory).reduce((subacc, subkey) => {
+          subacc.push(...groupedBySubcategory[subkey]);
+          return subacc;
+        }, []);
+        acc.push(...reorderedGroup);
+
+        return acc;
+      }, []);
+      setOrderedClassData(reordered);
     }
   }, [completeClassData]);
 
@@ -183,7 +206,7 @@ function Classes() {
       </div>
       <DetailsPanel
         classId={selectedClassId}
-        classList={completeClassData}
+        classList={orderedClassData}
         updates={updates}
         setUpdates={setUpdates}
         setClassId={setSelectedClassId}

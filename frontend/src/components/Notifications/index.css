@@ -1,12 +1,10 @@
 .notif-button {
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    font-family: var(--primary-font);
-    width: 130px;
-    height: 40px;
+    font-family: var(--font-primary);
     border: 1px solid var(--primary-blue);
-    border-radius: 8px;
-    background: white;
     cursor: pointer;
+    background: #fff;
+    border-radius: 8px;
+    display: flex;
+    padding: 12px 16px;
+    gap: 8px;
 }

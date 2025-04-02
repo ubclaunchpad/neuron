@@ -10,6 +10,7 @@ import "./index.css";
 function ClassPreferencesCardMP({volunteer}) {
     const [preferredClasses, setPreferredClasses] = useState(null);
 
+
     useEffect(() => {
         const getCurrentUserPreferredClasses = async () => {
             const volunteerID = volunteer.volunteer_id;
@@ -48,7 +49,7 @@ function ClassPreferencesCardMP({volunteer}) {
             <h3 className="rank-title">{rankTitle}</h3>
             <>
                 {item.length===0 ? <p style={{textAlign: "center"}}>No preferences</p> : item.map((class_, index) => (
-                            <ClassPreferencesCard classData={class_} fullWith={true}/>
+                            <ClassPreferencesCard classData={class_} fullWith={true} showDropdown={true}/>
                 ))}
             </>
         </>;

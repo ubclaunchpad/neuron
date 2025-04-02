@@ -1,16 +1,18 @@
 import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
-import { isAuthorized } from '../config/authCheck.js';
+import { isAdmin, isAuthorized } from '../config/authCheck.js';
 import {
-    getInstructorById,
+    deleteInstructor,
+    editInstructor,
     getInstructors,
     insertInstructor
 } from '../controllers/instructorController.js';
 
 export const InstructorRoutes: RouteDefinition = {
-    path: '/instructors',
+    path: '/instructor',
     middleware: [
         isAuthorized,
+        isAdmin
     ],
     children: [
         {
@@ -22,20 +24,39 @@ export const InstructorRoutes: RouteDefinition = {
             path: '/',
             method: 'post',
             validation: [
-                body('instructor_id').isUUID('4'),
                 body('f_name').isString(),
                 body('l_name').isString(),
                 body('email').isEmail(),
+                body('signoff').isAlpha('en-US', { ignore: '.' })
             ],
             action: insertInstructor
         },
         {
             path: '/:instructor_id',
-            method: 'get',
             validation: [
                 param('instructor_id').isUUID('4')
             ],
-            action: getInstructorById
+            children: [
+                {
+                    path: '/',
+                    method: 'put',
+                    validation: [
+                        body('f_name').isString(),
+                        body('l_name').isString(),
+                        body('email').isEmail(),
+                        body('signoff').isAlpha('en-US', { ignore: '.' })
+                    ],
+                    action: editInstructor
+                },
+                {
+                    path: '/',
+                    method: 'delete',
+                    validation: [
+                        body('signoff').isAlpha('en-US', { ignore: '.' }),
+                    ],
+                    action: deleteInstructor
+                },
+            ]
         },
     ]
 };

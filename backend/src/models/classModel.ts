@@ -3,11 +3,7 @@ import sharp from 'sharp';
 import { ClassDB, ScheduleDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
 import { wrapIfNotArray } from '../utils/generalUtils.js';
-import ImageModel from './imageModel.js';
-import ScheduleModel from './scheduleModel.js';
-
-const imageModel = new ImageModel();
-const scheduleModel = new ScheduleModel();
+import { shiftModel, imageModel, scheduleModel } from '../config/models.js';
 
 export default class ClassesModel {
      async getClasses(): Promise<ClassDB[]> {
@@ -32,8 +28,7 @@ export default class ClassesModel {
           return results;
      }
 
-     async getClassesByIds(class_ids: number | number[], schedules: boolean = false): Promise<any> {
-          const single = !Array.isArray(class_ids);
+     async getClassesByIds(class_ids: number | number[], schedules: boolean = false): Promise<any[]> {
           class_ids = wrapIfNotArray(class_ids);
 
           if (class_ids.length === 0) {
@@ -48,12 +43,6 @@ export default class ClassesModel {
           const values = [class_ids];
 
           const [results, _] = await connectionPool.query<ClassDB[]>(query, values);
-          if (single && results.length === 0) {
-               throw {
-                    status: 400,
-                    message: `No class found under the given ID: ${class_ids[0]}`,
-               };
-          }
 
           let classes = results;
           if (schedules) {
@@ -67,7 +56,7 @@ export default class ClassesModel {
                classes = await Promise.all(classPromises);
           }
 
-          return single ? classes[0] : classes;
+          return classes;
      }
 
      async addClass(newClass: ClassDB, schedules?: ScheduleDB[]): Promise<any> {
@@ -107,23 +96,50 @@ export default class ClassesModel {
      }
 
      async updateClass(class_id: number, classData: Partial<ClassDB>, transaction?: PoolConnection): Promise<any> {
-          const connection = transaction ?? connectionPool;
+          if (!transaction) 
+               transaction = await connectionPool.getConnection();
 
-          // Construct the SET clause dynamically
-          const setClause = Object.keys(classData)
-               .map((key) => `${key} = ?`)
-               .join(", ");
-          const query = `UPDATE class SET ${setClause} WHERE class_id = ?`;
-          const values = [...Object.values(classData), class_id];
+          try {
+               await transaction.beginTransaction();
 
-          if (setClause.length > 0) {
-               await connection.query<ResultSetHeader>(query, values);
+               // get current class data
+               const query1 = `
+                    SELECT 
+                         DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date,
+                         DATE_FORMAT(end_date, '%Y-%m-%d') AS end_date
+                    FROM class WHERE class_id = ?
+               `;
+               const [results, _] = await transaction.query<ClassDB[]>(query1, [class_id]);
+               const classInDb = results[0];
+
+               // Construct the SET clause dynamically
+               const setClause = Object.keys(classData)
+                    .map((key) => `${key} = ?`)
+                    .join(", ");
+               const query2 = `UPDATE class SET ${setClause} WHERE class_id = ?`;
+               const values = [...Object.values(classData), class_id];
+
+               if (setClause.length > 0) {
+                    await transaction.query<ResultSetHeader>(query2, values);
+
+                    if (classInDb.start_date !== classData.start_date || 
+                         classInDb.end_date !== classData.end_date) {
+                         // add/remove shifts to align with new dates
+                         await shiftModel.updateShiftsTimeline(class_id, classData, classInDb, transaction);
+                    }
+               }
+               
+               await transaction.commit();
+
+               return {
+                    class_id: class_id,
+                    ...classData
+               };
+          } catch (error) {
+               await transaction.rollback();
+               throw error;
           }
 
-          return {
-               class_id: class_id,
-               ...classData
-          };
      }
 
      async upsertClassImage(class_id: number, image: Buffer): Promise<string> {
@@ -138,6 +154,8 @@ export default class ClassesModel {
                .toBuffer();
 
           try {
+               await transaction.beginTransaction();
+
                const query = `SELECT * FROM class WHERE class_id = ?`;
                const values = [class_id];
 
@@ -175,6 +193,8 @@ export default class ClassesModel {
           const transaction = await connectionPool.getConnection();
      
           try {
+               await transaction.beginTransaction();
+
                const query1 = `SELECT * FROM class WHERE class_id = ?`;
                const values1 = [class_id];
 

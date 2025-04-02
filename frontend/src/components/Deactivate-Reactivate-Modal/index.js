@@ -1,11 +1,12 @@
-import TextInput from "../TextInput"
 import { Formik } from "formik";
+import { useNavigate } from "react-router-dom";
 import * as Yup from "yup";
-import "./index.css";
-import { deactivateVolunteer, verifyVolunteer, deleteInstructor } from "../../api/adminService";
-import { useAuth } from "../../contexts/authContext";
-import notyf from "../../utils/notyf";
+import { deleteInstructor } from "../../api/instructorService";
+import { deactivateVolunteer, verifyVolunteer } from "../../api/volunteerService";
 import cleanInitials from "../../utils/cleanInitials";
+import notyf from "../../utils/notyf";
+import TextInput from "../TextInput";
+import "./index.css";
 
 const VerificationSchema = Yup.object().shape({
     initials: Yup.string()
@@ -15,11 +16,10 @@ const VerificationSchema = Yup.object().shape({
 
 
 const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
-
-    const {user} = useAuth();
+    const navigate = useNavigate();
 
     return (
-        <div className="deactivate-reactivate-modal" style={type === 2 && {zIndex: "3"}}>
+        <div className="deactivate-reactivate-modal">
             {type === 1 && <p className="inactive-account">Deactivating this account will mark the account as <span>Inactive</span>. This volunteer will no longer be able to sign in or volunteer for classes until their account is reactivated.
             </p>}
             {type === 0 && <p className="active-account">Re-activating this account will mark the account as <span>Active</span>. This will restore access for the volunteer, allowing them to sign in and volunteer for classes again.</p>}
@@ -33,11 +33,11 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                 onSubmit={(values, { setSubmitting }) => {
                     const initials = cleanInitials(values.initials);
                     if (type === 1) {
-                        deactivateVolunteer(id)
+                        deactivateVolunteer(id, initials)
                             .then(() => {
                                 notyf.success("Account deactivated.");
                                 setTimeout(() => {
-                                    window.location.reload();
+                                    navigate(0);
                                 }, 2000);
                             })
                             .catch((error) => {
@@ -45,11 +45,11 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                                 console.error(error);
                             });
                     } else if (type === 0) {
-                        verifyVolunteer(id)
+                        verifyVolunteer(id, initials)
                             .then(() => {
                                 notyf.success("Account reactivated.");
                                 setTimeout(() => {
-                                    window.location.reload();
+                                    navigate(0);
                                 }, 2000);
                             })
                             .catch((error) => {
@@ -57,9 +57,7 @@ const DeactivateReactivateModal = ({ id, closeEvent, type }) => {
                                 console.error(error);
                             });
                     } else if (type === 2) {
-                        deleteInstructor({
-                            instructor_id: id
-                        })
+                        deleteInstructor(id, initials)
                             .then(() => {
                                 notyf.success("Instructor profile deleted.");
                                 closeEvent();

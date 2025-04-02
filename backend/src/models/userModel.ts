@@ -4,26 +4,26 @@ import sharp from "sharp";
 import { UserDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
 import { imageModel } from "../config/models.js";
+import { wrapIfNotArray } from "../utils/generalUtils.js";
 
 export default class UserModel {
-    async getUserById(user_id: string, password: boolean = false): Promise<UserDB> {
-        const query = `
-        SELECT 
-            ${password ? "*" : "user_id, f_name, l_name, fk_image_id, email, role, created_at"}
-        FROM users
-        WHERE user_id = ?`;
-        const values = [user_id];
+    async getUsersByIds(user_ids: string | string[], password: boolean = false): Promise<UserDB[]> {
+        try {
+            const query = `
+                SELECT 
+                    ${password ? "*" : "user_id, f_name, l_name, fk_image_id, email, role, created_at"}
+                FROM users
+                WHERE user_id IN (?)`;
+            const values = [wrapIfNotArray(user_ids)];
 
-        const [results, _] = await connectionPool.query<UserDB[]>(query, values);
-
-        if (results.length === 0) {
-            throw {
-                status: 400,
-                message: `No user found with the given user_id`,
-            };
+            const [results, _] = await connectionPool.query<UserDB[]>(query, values);
+            
+            return results;
+        } catch (e) {
+            console.log(`user_ids: ${user_ids}`);
+            console.trace();
+            throw e;
         }
-
-        return results[0];
     }
 
     async getUserByEmail(email: string, password: boolean = false): Promise<UserDB> {
@@ -90,7 +90,15 @@ export default class UserModel {
         const transaction = await connectionPool.getConnection();
 
         try {
-            const user = await this.getUserById(user_id);
+            await transaction.beginTransaction();
+
+            const users = await this.getUsersByIds(user_id);
+
+            if (users.length === 0) {
+                return;
+            }
+
+            const user = users[0];
 
             // Delete profile photo before user
             if (user.fk_image_id) {
@@ -122,7 +130,17 @@ export default class UserModel {
             .toBuffer();
 
         try {
-            const user = await this.getUserById(user_id);
+            await transaction.beginTransaction();
+            
+            const users = await this.getUsersByIds(user_id);
+
+            if (users.length === 0) {
+                throw {
+                    status: 400,
+                    message: 'No user found with the given user_id'
+                }
+            }
+            const user = users[0];
 
             // Delete old if exists
             if (user.fk_image_id) {

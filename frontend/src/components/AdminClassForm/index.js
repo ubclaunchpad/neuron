@@ -1,27 +1,27 @@
+import { FieldArray, Formik, useFormikContext } from "formik";
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { Formik, FieldArray, useFormikContext } from "formik";
-import * as Yup from "yup";
 import { CgSelect } from "react-icons/cg";
-import upload_light from "../../assets/upload-light.png";
-import upload_dark from "../../assets/upload-dark.png";
-import delete_icon from "../../assets/delete-icon.png";
-import add_icon from "../../assets/add-icon.png";
+import { useLocation } from "react-router-dom";
 import Select from 'react-select';
-import { 
-    getClassById, 
+import * as Yup from "yup";
+import {
     addClass,
-    updateClass, 
-    updateSchedules,
-    addSchedules, 
+    addSchedules,
     deleteSchedules,
-    uploadClassImage 
+    getClassById,
+    updateClass,
+    updateSchedules,
+    uploadClassImage
 } from "../../api/classesPageService";
-import notyf from "../../utils/notyf";
-import "./index.css";
 import { formatImageUrl } from "../../api/imageService";
 import { getAllInstructors } from "../../api/instructorService";
-import { getAllVolunteers } from "../../api/volunteerService";
+import { getVolunteers } from "../../api/volunteerService";
+import add_icon from "../../assets/add-icon.png";
+import delete_icon from "../../assets/delete-icon.png";
+import upload_dark from "../../assets/upload-dark.png";
+import upload_light from "../../assets/upload-light.png";
+import notyf from "../../utils/notyf";
+import "./index.css";
 
 const Mode = {
     CREATE: "create",
@@ -223,7 +223,7 @@ function AdminClassForm({ setUpdates }) {
             });
             setInstructors(instructors);
 
-            const volunteerData = await getAllVolunteers();
+            const volunteerData = await getVolunteers();
             const volunteers = volunteerData.map((volunteer) => {
                 return {
                     value: {
@@ -253,49 +253,60 @@ function AdminClassForm({ setUpdates }) {
             (touched.schedules[index]["end_time"] || touched.schedules[index]["start_time"])
     }
 
-    function update(values, setSubmitting) {
+    async function update(values, setSubmitting) {
         const classDetails = Object.fromEntries(
             Object.entries(values).filter(([key]) => classFields.includes(key))
         );
 
         // seperate added schedules from updated schedules
-        const addedSchedules = values.schedules.filter((schedule) => !schedule.schedule_id)
-        const updatedSchedules = values.schedules.filter((schedule) => schedule.schedule_id);
+        const addedSchedules = values.schedules.filter((schedule) => !schedule.schedule_id);
+        const updatedSchedules = values.schedules.filter((schedule) => {
+            if (classData.schedules) {
+                const originalSchedule = classData.schedules.find(s => s.schedule_id === schedule.schedule_id);
+                return originalSchedule && JSON.stringify(originalSchedule) !== JSON.stringify(schedule);
+            }
+            return false;
+        });
         const deletedSchedules = classData.schedules
                 .filter((schedule) => !values.schedules.find((s) => s.schedule_id === schedule.schedule_id))
-                .map((schedule) => schedule.schedule_id)
+                .map((schedule) => schedule.schedule_id);
 
         // if user is sending an update right after a create, class id will be in classData
         const validClassId = classData.class_id ?? classId;
 
-        const requests = [];
-        requests.push(updateClass(validClassId, classDetails));
-        if (updatedSchedules.length > 0)
-            requests.push(updateSchedules(validClassId, updatedSchedules));
+        // class update needs to happen first, in case start/end dates were changed
+        try {
+            await updateClass(validClassId, classDetails);
 
-        if (addedSchedules.length > 0)
-            requests.push(addSchedules(validClassId, addedSchedules));
+            // remaining requests can happen in any order
+            const requests = [];
+            if (updatedSchedules.length > 0)
+                requests.push(updateSchedules(validClassId, updatedSchedules));
 
-        if (deletedSchedules.length > 0)
-            requests.push(deleteSchedules(validClassId, deletedSchedules));
+            if (addedSchedules.length > 0)
+                requests.push(addSchedules(validClassId, addedSchedules));
 
-        if (image && image.blob) {
-            const imageData = new FormData();
-            imageData.append('image', image.blob);
-            requests.push(uploadClassImage(validClassId, imageData));
-        }
+            if (deletedSchedules.length > 0)
+                requests.push(deleteSchedules(validClassId, deletedSchedules));
 
-        Promise.all(requests)
-            .then(() => {
-                notyf.success("Class updated successfully.");
-                setSubmitting(false);
-                setUpdates((prev) => prev + 1);
-            })
-            .catch((error) => {
-                console.log(error);
-                notyf.error("Sorry, an error occurred while updating the class.");
-                setSubmitting(false);
+            if (image && image.blob) {
+                const imageData = new FormData();
+                imageData.append('image', image.blob);
+                requests.push(uploadClassImage(validClassId, imageData));
+            }
+            await Promise.all(requests);
+            notyf.success("Class updated successfully.");
+            setSubmitting(false);
+            setClassData({
+                class_id: validClassId,
+                ...values
             });
+            setUpdates((prev) => prev + 1);
+        } catch (error) {
+            console.log(error);
+            notyf.error("Sorry, an error occurred while updating the class.");
+            setSubmitting(false);
+        }
     }
 
     function add(values, setSubmitting) {
@@ -607,6 +618,12 @@ function AdminClassForm({ setUpdates }) {
                                 )}
                             </div>
                         </div>
+                        <div className="message-row">
+                            Note: Assigning a volunteer to a schedule will automatically generate shifts for them inside the class's start 
+                            date and end date. Updating an existing schedule's start time, end time, day or frequency will re-generate shifts 
+                            for all volunteers assigned, causing any related absence requests or coverage requests to be lost. Updating a
+                            class's start date or end date may also generate new shifts or cause existing shifts to be deleted.
+                        </div>
                     </div>
                     <FieldArray
                         name="schedules"
@@ -705,6 +722,67 @@ function AdminClassForm({ setUpdates }) {
                                         <div className="input-row">
                                             <div className="flex-input">
                                                 <label className="class-form-label">
+                                                    Instructor
+                                                </label>
+                                                <Select
+                                                    className="select"
+                                                    label="Instructor"
+                                                    defaultValue={instructors.find(i => i.value === schedule.fk_instructor_id) || { label: 'Select Instructor', value: null }}
+                                                    styles={{
+                                                        control: () => ({
+                                                            padding: '12px 32px 12px 16px',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid #cccccc',
+                                                            cursor: 'pointer'
+                                                        }),
+                                                        valueContainer: (styles) => ({
+                                                            ...styles,
+                                                            padding: '0px'
+                                                        }),
+                                                        input: (styles) => ({
+                                                            ...styles,
+                                                            margin: '0px 2px',
+                                                            padding: '0px',
+                                                        }),
+                                                        singleValue: (styles) => ({
+                                                            ...styles,
+                                                            color: schedule.fk_instructor_id ? 'default' : '#808080' 
+                                                        })
+                                                        
+                                                    }}
+                                                    options={instructors}
+                                                    isSearchable={true}
+                                                    components={
+                                                        {
+                                                            DropdownIndicator: () => 
+                                                                <CgSelect className="select-dropdown-icon"/>,
+                                                            IndicatorSeparator: () => null,
+                                                            Option: (props) => {
+                                                                const {innerProps, innerRef} = props;
+                                                                return (
+                                                                    <div {...innerProps} ref={innerRef} className="select-item">
+                                                                        {props.data.label}
+                                                                    </div>
+                                                                )
+                                                            },
+                                                            Menu: (props) => {
+                                                                const {innerProps, innerRef} = props;
+                                                                return (
+                                                                    <div {...innerProps} ref={innerRef}
+                                                                    className="select-menu">
+                                                                        {props.children}
+                                                                    </div>
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                    onChange={(e) => {
+                                                        setFieldValue(`schedules[${index}].fk_instructor_id`, e.value);
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex-input">
+                                                <label className="class-form-label">
                                                     Frequency
                                                 </label>
                                                 <Select
@@ -795,71 +873,6 @@ function AdminClassForm({ setUpdates }) {
                                                 {timeErrorExists(errors, touched, index) && (
                                                     <div className="invalid-message">{errors.schedules[index]["end_time"]}</div>
                                                 )}
-                                            </div>
-                                        </div>
-                                        <div className="row-error-wrapper">
-                                            <div className="input-row">
-                                                <div className="flex-input">
-                                                    <label className="class-form-label">
-                                                        Instructor
-                                                    </label>
-                                                    <Select
-                                                        className="select"
-                                                        label="Instructor"
-                                                        defaultValue={instructors.find(i => i.value === schedule.fk_instructor_id) || { label: 'Select Instructor', value: null }}
-                                                        styles={{
-                                                            control: () => ({
-                                                                padding: '12px 32px 12px 16px',
-                                                                borderRadius: '8px',
-                                                                border: '1px solid #cccccc',
-                                                                cursor: 'pointer'
-                                                            }),
-                                                            valueContainer: (styles) => ({
-                                                                ...styles,
-                                                                padding: '0px'
-                                                            }),
-                                                            input: (styles) => ({
-                                                                ...styles,
-                                                                margin: '0px 2px',
-                                                                padding: '0px',
-                                                            }),
-                                                            singleValue: (styles) => ({
-                                                                ...styles,
-                                                                color: schedule.fk_instructor_id ? 'default' : '#808080' 
-                                                            })
-                                                            
-                                                        }}
-                                                        options={instructors}
-                                                        isSearchable={true}
-                                                        components={
-                                                            {
-                                                                DropdownIndicator: () => 
-                                                                    <CgSelect className="select-dropdown-icon"/>,
-                                                                IndicatorSeparator: () => null,
-                                                                Option: (props) => {
-                                                                    const {innerProps, innerRef} = props;
-                                                                    return (
-                                                                        <div {...innerProps} ref={innerRef} className="select-item">
-                                                                            {props.data.label}
-                                                                        </div>
-                                                                    )
-                                                                },
-                                                                Menu: (props) => {
-                                                                    const {innerProps, innerRef} = props;
-                                                                    return (
-                                                                        <div {...innerProps} ref={innerRef}
-                                                                        className="select-menu">
-                                                                            {props.children}
-                                                                        </div>
-                                                                    )
-                                                                }
-                                                            }
-                                                        }
-                                                        onChange={(e) => {
-                                                            setFieldValue(`schedules[${index}].fk_instructor_id`, e.value);
-                                                        }}
-                                                    />
-                                                </div>
                                             </div>
                                         </div>
                                         <div className="input-row">
@@ -1038,7 +1051,7 @@ function AdminClassForm({ setUpdates }) {
                     </FieldArray>
                     <button 
                         type="submit" 
-                        className="submit-button" 
+                        className="submit-class-button" 
                         disabled={isSubmitting} 
                     >
                         {mode === Mode.EDIT ? "Save Class" : "Create Class"}

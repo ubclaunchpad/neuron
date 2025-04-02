@@ -1,8 +1,8 @@
 .settings-container {
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    font-family: var(--font-secondary);
+    padding-inline: 36px;
+    font-family: var(--font-primary);
     width: 100%;
     box-sizing: border-box;
 }
@@ -28,9 +28,14 @@
 }
 
 .settings-title {
-    font-size: 20px;
-    font-weight: bold;
-}
+    flex: 1;
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-family: var(--font-secondary);
+    font-style: normal;
+    font-weight: 700;
+    font-size: var(--page-title-text);
+  }
 
 .settings-card {
     background: white;
@@ -40,6 +45,14 @@
     box-shadow: 0px 4px 16px 0px #0F11110D;
     width: 100%;
     box-sizing: border-box;
+}
+
+.settings-card-title {
+    font-size: var(--title-text);
+    font-weight: var(--semi-bold);
+    font-family: var(--font-secondary);
+    margin: 0;
+    margin-bottom: 32px;
 }
 
 .full-width {
@@ -153,7 +166,7 @@
 
 .notification-container {
     background: white;
-    padding: 20px 20px 20px 30px;
+    padding: 32px;
     border-radius: 8px;
     border: 1px solid #D9D9D9;
     box-shadow: 0px 4px 16px 0px #0F11110D;

@@ -1,7 +1,6 @@
-import { Response } from "express";
+import { NextFunction, Response } from "express";
 import { AuthenticatedRequest } from "../common/types.js";
-import { volunteerModel } from "../config/models.js";
-import { userModel } from "../config/models.js";
+import { userModel, volunteerModel } from "../config/models.js";
 
 async function getVolunteerById(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
@@ -18,14 +17,19 @@ async function getVolunteerById(req: AuthenticatedRequest, res: Response) {
     res.status(200).json(volunteers[0]);
 }
 
-async function getVolunteers(req: AuthenticatedRequest, res: Response) {
-    const volunteers = await volunteerModel.getAllVolunteers();
-    const users = await userModel.getAllVolunteerUsers();
+async function getVolunteers(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    let volunteers;
+    if (req.query.unverified) {
+        volunteers = await volunteerModel.getUnverifiedVolunteers();
+    } else {
+        volunteers = await volunteerModel.getAllVolunteers();
+    }
+
+    const volunteer_user_ids = volunteers.flatMap(v => v.fk_user_id ?? []);
+    const users = await userModel.getUsersByIds(volunteer_user_ids);
 
     const finalData = volunteers.map((volunteer) => {
         const user = users.find((user: any) => user.user_id === volunteer.fk_user_id);
-        // remove password from user object
-
         return {
             ...volunteer,
             image: user?.fk_image_id,
@@ -95,9 +99,75 @@ async function updatePreferredClassesById (req: AuthenticatedRequest, res: Respo
     res.status(200).json({msg: "Successfully updated class preferences"});
 }
 
+async function verifyVolunteer(
+    req: AuthenticatedRequest,
+    res: Response
+): Promise<any> {
+    const { volunteer_id } = req.params;
+    const { signoff } = req.body;
+
+    await volunteerModel.verifyVolunteer(volunteer_id, signoff);
+    
+    return res.status(200).json({
+        message: "User verified successfully",
+    });
+}
+
+async function deactivateVolunteer(
+    req: AuthenticatedRequest,
+    res: Response
+): Promise<any> {
+    const { volunteer_id } = req.params;
+    const { signoff } = req.body;
+
+    await volunteerModel.deactivateVolunteer(volunteer_id, signoff);
+
+    return res.status(200).json({
+        message: "User deactivated successfully",
+    });
+}
+
+async function updateVolunteerEmail (req: AuthenticatedRequest, res: Response) {
+    const { volunteer_id } = req.params;
+    const data = req.body;
+
+    if (!volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'volunteer_id'",
+        });
+    } else if (!data || !data.email) {
+        return res.status(400).json({
+            error: "Missing required body for class preferences: 'data' or 'data.email'",
+        });
+    }
+    await volunteerModel.updateVolunteerEmail(volunteer_id, data);
+    res.status(200).json({msg: "Successfully updated user email"});
+}
+
+async function denyVolunteer (req: AuthenticatedRequest, res: Response): Promise<any> {
+        const { volunteer_id } = req.params;
+        const { signoff } = req.body;
+
+        if (!volunteer_id) {
+            return res.status(400).json({
+                error: "Missing required parameter: 'volunteer_id'",
+            });
+        } else if (!signoff) {
+            return res.status(400).json({
+                error: "Missing required body: 'signoff'",
+            });
+        }
+    
+        await volunteerModel.denyVolunteer(volunteer_id, signoff);
+    
+        return res.status(200).json({
+            message: "User account successfully denied/deleted",
+        });
+    }
+
 export {
-    getAllClassPreferences, getPreferredClassesById, getVolunteerById,
-    getVolunteers,
-    shiftCheckIn, updatePreferredClassesById, updateVolunteer
+    deactivateVolunteer, getAllClassPreferences, getPreferredClassesById, getVolunteerById,
+    getVolunteers, shiftCheckIn, updatePreferredClassesById, updateVolunteer, verifyVolunteer,
+    updateVolunteerEmail, denyVolunteer
 };
 

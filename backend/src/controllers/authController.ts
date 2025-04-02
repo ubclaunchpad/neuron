@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import dotenv from "dotenv";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
@@ -8,25 +7,17 @@ import { UserDB, VolunteerDB } from "../common/databaseModels.js";
 import { Role } from "../common/interfaces.js";
 import { AuthenticatedRequest } from "../common/types.js";
 import connectionPool from "../config/database.js";
+import { FRONTEND_HOST, GMAIL_ID, GMAIL_PASSWORD, HOST, TOKEN_SECRET } from "../config/environment.js";
 import { userModel, volunteerModel } from "../config/models.js";
-
-// Load environment variables
-dotenv.config();
-
-// Define environment variables
-const HOST = process.env.HOST;
-const TOKEN_SECRET = process.env.TOKEN_SECRET;
-const FRONTEND_HOST = process.env.FRONTEND_HOST;
 
 //Mail Config
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: process.env.GMAIL_ID,
-        pass: process.env.GMAIL_PASSWORD,
+        user: GMAIL_ID,
+        pass: GMAIL_PASSWORD,
     },
 });
-
 
 async function checkAuthorization(
     req: AuthenticatedRequest,
@@ -39,7 +30,7 @@ async function checkAuthorization(
     if (user && user.role === Role.volunteer) {
         volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
         
-        if (!volunteer.active) {
+        if (volunteer.status !== 'active') {
             return res.status(401).json({
                 error: "Unauthorized",
             });
@@ -75,6 +66,8 @@ async function registerUser(
 
     const transaction = await connectionPool.getConnection();
     try {
+        await transaction.beginTransaction();
+
         // Create User
         await userModel.insertUser({
             user_id: user_id,
@@ -90,7 +83,7 @@ async function registerUser(
                 await volunteerModel.insertVolunteer({
                     volunteer_id: uuidv4(),
                     fk_user_id: user_id,
-                    active: false,
+                    status: 'unverified',
                 } as VolunteerDB, transaction);
         
                 // Send a confirmation email
@@ -150,11 +143,16 @@ async function loginUser(req: Request, res: Response): Promise<any> {
     if (user.role === Role.volunteer) {
         const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
 
-        if (!volunteer.active) {
+        if (volunteer.status !== 'active') {
             return res.status(403).json({
                 error: "Waiting for an admin to verify your account.\nYou can reach out to us at bwp@gmail.com",
             });
         }
+        // } else if (!volunteer.existing) {
+        //     return res.status(403).json({
+        //         error: "Your account has been deactivated.\nYou can reach out to us at bwp@gmail.com",
+        //     });
+        // }
     }
 
     // If the TOKEN_SECRET is not defined, return an error
@@ -233,16 +231,16 @@ async function verifyUserWithIdAndToken(
     id: string,
     token: string
 ): Promise<any> {
-    const user = await userModel.getUserById(id, true);
+    const users = await userModel.getUsersByIds(id, true);
 
-    if (!TOKEN_SECRET || !FRONTEND_HOST) {
+    if (!TOKEN_SECRET || !FRONTEND_HOST || users.length === 0) {
         throw {
             status: 500
         };
     }
 
     // Verify if token is valid
-    const secret = TOKEN_SECRET + user.password;
+    const secret = TOKEN_SECRET + users[0].password;
 
     // Throw if verify fails
     try {   

@@ -90,8 +90,7 @@ function Dashboard() {
       const pastShift = dayjs().isAfter(shiftEnd);
 
       return (
-        (shift.shift_type === SHIFT_TYPES.MY_SHIFTS ||
-          shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS) &&
+        (shift.shift_type === SHIFT_TYPES.COVERAGE ) &&
         !pastShift
       );
     })

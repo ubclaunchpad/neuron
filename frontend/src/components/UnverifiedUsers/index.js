@@ -1,12 +1,13 @@
-import "./index.css";
-import search_icon from "../../assets/search-icon.png";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { verifyVolunteer } from "../../api/volunteerService";
+import warning_icon from "../../assets/admin-initial-warning.png";
 import button_icon_deny from "../../assets/button-icon-deny.png";
 import button_icon_verify from "../../assets/button-icon-verify.png";
-import warning_icon from "../../assets/admin-initial-warning.png";
 import confirm_img from "../../assets/confirm-verify-deny.png";
 import Modal from "../Modal";
-import { verifyVolunteer } from "../../api/adminService";
-import { useEffect, useState } from "react";
+import "./index.css";
+import { denyVolunteer } from "../../api/volunteerService";
 
 function UnverifiedUsers({ unverifiedUsers }) {
      const [itemsToRender, setItemsToRender] = useState(unverifiedUsers);
@@ -18,6 +19,7 @@ function UnverifiedUsers({ unverifiedUsers }) {
      const [isVerifying, setIsVerifying] = useState(null);
      const [isConfirming, setIsConfirming] = useState(false);
      const [modalTitle, setModalTitle] = useState("");
+     const navigate = useNavigate();
 
      const handleOpenModal = () => {
           setOpenModal(true);
@@ -119,7 +121,7 @@ function UnverifiedUsers({ unverifiedUsers }) {
                               <div>Access to the platform has been denied for <strong>{toBeVerified.f_name} {toBeVerified.l_name}</strong>.</div>
           }
                          </div>
-                         <button className="verify-account-btn" onClick={()=>window.location.reload()}>OK</button>
+                         <button className="verify-account-btn" onClick={()=>navigate(0)}>OK</button>
                     </div>
                );
           }
@@ -134,16 +136,12 @@ function UnverifiedUsers({ unverifiedUsers }) {
      function handleVerifyDeny() {
           if (isInitialValid()) {
                setIsConfirming(true);
-               // TODO: 
-               // Logging Admin Initial
                console.log("Logging admin initial...");
                if (isVerifying){
-                    verifyVolunteer({volunteer_id: toBeVerified.volunteer_id});
+                    verifyVolunteer(toBeVerified.volunteer_id, adminInitial.trim());
                } 
                else {
-                    // TODO: 
-                    // Handle deny Volunteer (delete from db, send email, etc.)
-                    //      denyVolunteer(toBeVerified.volunteer_id);
+                    denyVolunteer(toBeVerified.volunteer_id, adminInitial.trim());
                     console.log("Denying volunteer...");
                }
           }

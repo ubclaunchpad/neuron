@@ -8,16 +8,22 @@ import { wrapIfNotArray } from "../utils/generalUtils.js";
 
 export default class UserModel {
     async getUsersByIds(user_ids: string | string[], password: boolean = false): Promise<UserDB[]> {
-        const query = `
-        SELECT 
-            ${password ? "*" : "user_id, f_name, l_name, fk_image_id, email, role, created_at"}
-        FROM users
-        WHERE user_id IN (?)`;
-        const values = [wrapIfNotArray(user_ids)];
+        try {
+            const query = `
+                SELECT 
+                    ${password ? "*" : "user_id, f_name, l_name, fk_image_id, email, role, created_at"}
+                FROM users
+                WHERE user_id IN (?)`;
+            const values = [wrapIfNotArray(user_ids)];
 
-        const [results, _] = await connectionPool.query<UserDB[]>(query, values);
-        
-        return results;
+            const [results, _] = await connectionPool.query<UserDB[]>(query, values);
+            
+            return results;
+        } catch (e) {
+            console.log(`user_ids: ${user_ids}`);
+            console.trace();
+            throw e;
+        }
     }
 
     async getUserByEmail(email: string, password: boolean = false): Promise<UserDB> {

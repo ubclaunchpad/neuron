@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 import { ClassDB, VolunteerDB } from "../common/databaseModels.js";
 import { ListRequestOptions, ListResponse } from "../common/types.js";
@@ -58,6 +59,13 @@ export default class LogModel {
         // Transform logs
         logs.forEach((log) => {
             delete log.total_count;
+
+            // Get full time string in ISO
+            log.created_at = DateTime.fromFormat(
+                log.created_at, 
+                "yyyy-MM-dd HH:mm:ss", 
+                { zone: 'utc' }
+            ).toISO();
 
             if (log.fk_volunteer_id) {
                 const volunteer = volunteerMap[log.fk_volunteer_id];

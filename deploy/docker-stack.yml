@@ -43,6 +43,7 @@ services:
       - FRONTEND_HOST=${CONTAINER_URL}
       - NEURON_ENV=production
     deploy:
+      replicas: 3
       restart_policy:
         condition: any
       update_config:

@@ -102,6 +102,16 @@ export const updateUserPreferredClasses = async (volunteer_id, preferredClasses)
   }
 };
 
+export const updatVolunteerEmail = async (volunteer_id, email) => {
+  try {
+    const response = await api.put(`/volunteer/email-update/${volunteer_id}`, email);
+    return response.data; // Assuming API returns success or updated data
+  } catch (error) {
+    console.error('Error updating volunteer class preferences data:', error);
+    throw error;
+  }
+};
+
 export const getVolunteers = (params) => 
   api
       .get('volunteer', {
@@ -113,7 +123,6 @@ export const getVolunteers = (params) =>
       });
 
 export const verifyVolunteer = (volunteerId, signoff) => {
-  console.log(volunteerId, signoff)
   api
       .patch(`/volunteer/${volunteerId}/verify`, { signoff })
       .then((response) => response.data)
@@ -125,6 +134,14 @@ export const verifyVolunteer = (volunteerId, signoff) => {
 export const deactivateVolunteer = (volunteerId, signoff) => 
   api
       .patch(`/volunteer/${volunteerId}/deactivate`, { signoff })
+      .then((response) => response.data)
+      .catch((error) => {
+          console.error(error);
+      });
+
+export const denyVolunteer = (volunteerId, signoff) => 
+  api
+      .patch(`/volunteer/${volunteerId}/deny`, { signoff })
       .then((response) => response.data)
       .catch((error) => {
           console.error(error);

@@ -86,10 +86,12 @@
     background-color: var(--active-green);
 }
 
-.badge-status.inactive {
+.badge-status.unverified {
     background-color: var(--inactive-red);
 }
-
+.badge-status.inactive {
+    background-color: var(--dark-grey);
+}
 .badge-role.regular-volunteer {
     background-color: var(--regular-volunteer);
 }

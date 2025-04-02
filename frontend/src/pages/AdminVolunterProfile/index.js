@@ -12,7 +12,10 @@ import DashboardCoverage from "../../components/DashboardCoverage";
 import Notifications from "../../components/Notifications";
 import AvailabilityGrid from "../../components/volunteerProfile/availabilityGrid";
 import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
+import AdminVolunteerBadgeCard from '../../components/AdminVolunteerBadgeCard';
+
 import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
+
 import { SHIFT_TYPES } from "../../data/constants";
 import "./index.css";
 
@@ -36,6 +39,7 @@ const AdminVolunteerProfile = () => {
             .then((data) => {
                 // console.log(data);
                 setVolunteer(data);
+                console.log(data);
             });
 
         const body = {
@@ -144,8 +148,13 @@ const AdminVolunteerProfile = () => {
                         </div>
                     </div>
                     <div className="column-2">
+
+                        <div className="volunteer-card">
+                            <AdminVolunteerBadgeCard volunteer={volunteer}/>
+                        </div>
+
                         <div className="dash-col-card dash-grid-item">
-                            <div className="dash-card-title">Volunteer Hours</div>
+                            <h2 className="dash-card-title">Volunteer Hours</h2>
                             <div className="dash-hours-container">
                                 <div className="dash-hours">
                                     <h1 className="dash-completed-hours">{completedHours}</h1>

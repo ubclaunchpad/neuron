@@ -383,4 +383,15 @@ input[type=number] {
     font-size: 11px;
     color: red;
 }
+.email-change-modal {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.icon.edit-icon {
+    width: 28px;
+    height: 28px;
+}
   

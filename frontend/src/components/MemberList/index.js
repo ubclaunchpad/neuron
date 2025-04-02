@@ -30,7 +30,15 @@ const MemberList = ({data, fetchData, type}) => {
                         </div>
                         {type === "volunteers" && (
                             <div className="member-badges">
-                                <span className={`badge badge-status ${member.active === 1 ? 'active' : 'inactive'}`}>{member.active === 1 ? 'Active' : 'Inactive'}</span>
+                                {member.status === 'active' ? 
+                                    <span className={`badge badge-status active`}>Active</span>
+                                : null}
+                                {member.status === 'inactive' ? 
+                                    <span className={`badge badge-status inactive`}>Inactive</span>
+                                : null}
+                                {member.status === 'unverified' ? 
+                                    <span className={`badge badge-status unverified`}>Unverified</span>
+                                : null}
                                 <span className={`badge badge-role regular-volunteer`}>Regular Volunteer</span>
                             </div>
                         )}

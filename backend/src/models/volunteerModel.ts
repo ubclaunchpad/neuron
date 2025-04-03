@@ -1,5 +1,5 @@
 import { PoolConnection, ResultSetHeader } from "mysql2/promise";
-import { ShiftDB, VolunteerDB } from "../common/databaseModels.js";
+import { ShiftDB, UserDB, VolunteerDB } from "../common/databaseModels.js";
 import connectionPool from "../config/database.js";
 import { logModel, userModel } from "../config/models.js";
 import { wrapIfNotArray } from "../utils/generalUtils.js";
@@ -345,5 +345,23 @@ export default class VolunteerModel {
             await transaction.rollback();
             throw error;
         }
+    }
+
+    async getVerifiedEmails(transaction: PoolConnection): Promise<string[]> {
+        const query = `
+            SELECT 
+                u.email
+            FROM 
+                volunteers v
+            JOIN 
+                users u ON v.fk_user_id = u.user_id
+            WHERE
+                status = 'active'
+        `;
+
+        const [results, _] = await transaction.query<UserDB[]>(query, []);
+        const emails = results.map((result) => result.email);
+
+        return emails;
     }
 }

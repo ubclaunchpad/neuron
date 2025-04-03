@@ -3,7 +3,9 @@ import sharp from 'sharp';
 import { ClassDB, ScheduleDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
 import { wrapIfNotArray } from '../utils/generalUtils.js';
-import { shiftModel, imageModel, scheduleModel } from '../config/models.js';
+import { shiftModel, imageModel, scheduleModel, instructorModel, volunteerModel } from '../config/models.js';
+import { GMAIL_ID, GMAIL_PASSWORD } from "../config/environment.js";
+import nodemailer from "nodemailer";
 
 export default class ClassesModel {
      async getClasses(): Promise<ClassDB[]> {
@@ -223,6 +225,51 @@ export default class ClassesModel {
                return classData;
           } catch (error) {
                // Rollback
+               await transaction.rollback();
+               throw error;
+          }
+     }
+
+     async sendCancellationEmail(email: any): Promise<any> {
+          const transaction = await connectionPool.getConnection();
+
+          try {
+               await transaction.beginTransaction();
+
+               let emails: string[] = [];
+               if (email.to_instructors) {
+                    const instructorEmails = await instructorModel.getInstructorEmails(transaction);
+                    emails = emails.concat(instructorEmails); 
+               }
+
+               if (email.to_volunteers) {
+                    const volunteerEmails = await volunteerModel.getVerifiedEmails(transaction);
+                    emails = emails.concat(volunteerEmails);
+               }
+
+               const emailToSend = {
+                    from: '"Team Neuron" <neuronbc@gmail.com>',
+                    to: emails.join(","),
+                    subject: email.subject,
+                    text: email.body
+               };
+
+               if (emails.length > 0) {
+                    // mail config
+                    const transporter = nodemailer.createTransport({
+                        service: "gmail",
+                        auth: {
+                            user: GMAIL_ID,
+                            pass: GMAIL_PASSWORD,
+                        },
+                    });
+                    await transporter.sendMail(emailToSend);
+               }
+
+               await transaction.commit();
+
+               return emailToSend;
+          } catch (error) {
                await transaction.rollback();
                throw error;
           }

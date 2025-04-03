@@ -1,6 +1,6 @@
 import { ResultSetHeader } from 'mysql2';
 import { PoolConnection } from 'mysql2/promise';
-import { InstructorDB } from '../common/databaseModels.js';
+import { InstructorDB, UserDB } from '../common/databaseModels.js';
 import connectionPool from '../config/database.js';
 import { logModel } from '../config/models.js';
 
@@ -117,4 +117,13 @@ export default class InstructorModel {
       throw error;
     }
   };
+
+  async getInstructorEmails(transaction: PoolConnection): Promise<string[]> {
+    const query = `SELECT email FROM instructors`;
+
+    const [results, _] = await transaction.query<InstructorDB[]>(query, []);
+    const emails = results.map((result) => result.email);
+
+    return emails;
+  }
 }

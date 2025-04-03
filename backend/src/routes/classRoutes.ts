@@ -2,7 +2,7 @@ import { body, param } from 'express-validator';
 import { RouteDefinition } from "../common/types.js";
 import { isAuthorized } from '../config/authCheck.js';
 import { imageUploadMiddleware } from '../config/fileUpload.js';
-import { addClass, deleteClass, getAllClasses, getClassById, getClassesByDay, updateClass, uploadClassImage } from '../controllers/classController.js';
+import { addClass, deleteClass, getAllClasses, getClassById, getClassesByDay, sendCancellationEmail, updateClass, uploadClassImage } from '../controllers/classController.js';
 import { Frequency } from '../common/interfaces.js';
 
 export const ClassRoutes: RouteDefinition = {
@@ -15,6 +15,17 @@ export const ClassRoutes: RouteDefinition = {
             path: '/',
             method: 'get',
             action: getAllClasses
+        },
+        {
+            path: '/cancel',
+            method: 'post',
+            validation: [
+                body('subject').isString(),
+                body('body').isString(),
+                body('to_instructors').isBoolean(),
+                body('to_volunteers').isBoolean()
+            ],
+            action: sendCancellationEmail
         },
         {
             path: '/',

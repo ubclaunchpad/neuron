@@ -71,6 +71,9 @@ const uploadClassImage = (class_id, image) =>
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 
+const sendCancellationEmail = (email) => 
+  api.post("/classes/cancel", email)
+
 export { 
   getAllClasses, 
   getClassById, 
@@ -82,5 +85,6 @@ export {
   addSchedules,
   deleteSchedules,
   updateSchedules,
-  uploadClassImage
+  uploadClassImage,
+  sendCancellationEmail
 };

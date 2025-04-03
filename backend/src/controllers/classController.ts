@@ -71,8 +71,18 @@ async function uploadClassImage(req: AuthenticatedRequest, res: Response) {
 	});
 }
 
+async function sendCancellationEmail(req: AuthenticatedRequest, res: Response) {
+	const email = req.body;
+
+	const result = await classesModel.sendCancellationEmail(email);
+
+	return res.status(201).json({
+		email: result
+	});
+}
+
 export {
 	addClass, deleteClass, getAllClasses, getClassById,
-	getClassesByDay, updateClass, uploadClassImage
+	getClassesByDay, updateClass, uploadClassImage, sendCancellationEmail
 };
 

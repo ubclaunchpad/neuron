@@ -1,0 +1,163 @@
+.cancellation-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    font-family: var(--font-primary);
+}
+
+.cancellation-modal {
+    background-color: white;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0px 4px 16px 0px #0F11110D;
+    border: 1px solid #D9D9D9;
+    overflow: hidden;
+}
+
+.cancellation-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32px;
+    border-bottom: 1px solid #D9D9D9;
+}
+
+.cancellation-title {
+    margin: 0;
+    font-size: var(--title-text);
+    font-weight: var(--semi-bold);
+    font-family: var(--font-secondary);
+    color: #333;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.cancellation-form {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-label {
+    color: #333;
+    font-size: 14px;
+    margin: 0;
+}
+
+.required {
+    color: #808080;
+    font-style: italic;
+}
+
+.radio-group,
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.radio-option,
+.checkbox-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.radio-option input[type="radio"],
+.checkbox-option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.form-input, 
+.form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-family: var(--font-primary);
+}
+
+.form-input {
+    height: 42px;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.input-error {
+    border-color: #FF0000;
+}
+
+.error-message {
+    color: #FF0000;
+    font-size: 12px;
+    margin-top: 4px;
+    text-align: right;
+}
+
+.form-actions {
+    margin-top: 16px;
+}
+
+.cancel-class-button {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: none;
+    background-color: #1A7DB7;
+    color: white;
+    font-size: 14px;
+    font-family: var(--font-primary);
+    cursor: pointer;
+}
+
+.cancel-class-button:hover {
+    background-color: #176a9a;
+}
+
+.cancel-class-button:disabled {
+    background-color: #808080;
+    cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 600px) {
+    .cancellation-modal {
+        margin: 0 16px;
+    }
+    
+    .cancellation-modal-header,
+    .cancellation-form {
+        padding: 24px;
+    }
+}

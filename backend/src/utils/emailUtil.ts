@@ -61,7 +61,7 @@ async function volunteerAccountReactivateDeactivate(volunteer_id: string, status
     await sendEmail(mailData);
 }
 
-async function volunteerAccountVerified(volunteer_id: string) {
+async function volunteerAccountVerifiedDenied(volunteer_id: string, status: string) {
     const user = await userModel.getUserByVolunteerId(volunteer_id);
 
     if (!user) {
@@ -71,9 +71,9 @@ async function volunteerAccountVerified(volunteer_id: string) {
 
     const mailData = {
         email: user.email,
-        subject: "Your account for BC Brain Wellness has been verified",
+        subject: `Your account for BC Brain Wellness has been ${status}.`,
         message: `Hello ${user.f_name} ${user.l_name},<br><br>
-        Your account for the BC Brain Wellness volunteer platform has been verified by BWP admins. Please login to the platform to finish setting up your account.`
+        Your account for the BC Brain Wellness volunteer platform has been ${status} by BWP admins. ${status === "verified" ? `Please login to the platform to finish setting up your account.` : `You have not gained access to the platform yet. Please reach out to the admins at [admin email] if you have any questions.`}`
     }
 
     await sendEmail(mailData);
@@ -241,4 +241,4 @@ async function sendEmail(mailData: MailData) {
         .catch(() => console.log("Email failed to send"));
 }
 
-export { sendEmail, volunterRequestingAbsence, volunteerRequestingCoverage, adminApprovesDeniesAbsence, adminApprovesDeniesCoverage, volunteerAccountVerified, volunteerAccountReactivateDeactivate, newVolunteerToBeVerifiedByAdmins, volunteerAccountCreated, adminClicksNotifyInstructorForCoverage, adminClicksNotifyInstructorForAbsence, notifyVolunteersForShiftCoverage };
+export { sendEmail, volunterRequestingAbsence, volunteerRequestingCoverage, adminApprovesDeniesAbsence, adminApprovesDeniesCoverage, volunteerAccountVerifiedDenied, volunteerAccountReactivateDeactivate, newVolunteerToBeVerifiedByAdmins, volunteerAccountCreated, adminClicksNotifyInstructorForCoverage, adminClicksNotifyInstructorForAbsence, notifyVolunteersForShiftCoverage };

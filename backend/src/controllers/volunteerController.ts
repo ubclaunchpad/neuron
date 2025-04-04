@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express";
 import { AuthenticatedRequest } from "../common/types.js";
 import { userModel, volunteerModel } from "../config/models.js";
-import { volunteerAccountReactivateDeactivate, volunteerAccountVerified } from "../utils/emailUtil.js";
+import { volunteerAccountReactivateDeactivate, volunteerAccountVerifiedDenied } from "../utils/emailUtil.js";
 
 async function getVolunteerById(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
@@ -121,7 +121,7 @@ async function verifyVolunteer(
     await volunteerModel.verifyVolunteer(volunteer_id, signoff);
 
     if (email_type === "verify") {
-        await volunteerAccountVerified(volunteer_id);
+        await volunteerAccountVerifiedDenied(volunteer_id, "verified");
     } else if (email_type === "reactivate") {
         await volunteerAccountReactivateDeactivate(volunteer_id, "reactivated");
     }
@@ -179,6 +179,9 @@ async function denyVolunteer (req: AuthenticatedRequest, res: Response): Promise
         }
     
         await volunteerModel.denyVolunteer(volunteer_id, signoff);
+
+        // send email to volunteer
+        await volunteerAccountVerifiedDenied(volunteer_id, "denied");
     
         return res.status(200).json({
             message: "User account successfully denied/deleted",

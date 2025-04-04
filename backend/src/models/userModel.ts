@@ -171,4 +171,23 @@ export default class UserModel {
         
         return results;
     }
+
+    async getAllAdminUsers(): Promise<UserDB[]> {
+        const query = `SELECT * FROM users WHERE role = 'admin'`;
+        const [results, _] = await connectionPool.query<UserDB[]>(query);
+        
+        return results;
+    }
+
+    async getUserByVolunteerId(volunteer_id: string): Promise<UserDB> {
+        const query = `SELECT u.* 
+        FROM users u
+        JOIN volunteers v ON u.user_id = v.fk_user_id
+        WHERE v.volunteer_id = ?;`;
+
+        const values = [volunteer_id];
+        const [results, _] = await connectionPool.query<UserDB[]>(query, values);
+
+        return results[0];
+    }
 }

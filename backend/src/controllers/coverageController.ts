@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../common/types.js';
 import { coverageModel } from '../config/models.js';
+import { adminApprovesDeniesAbsence, adminApprovesDeniesCoverage, adminClicksNotifyInstructorForAbsence, adminClicksNotifyInstructorForCoverage, notifyVolunteersForShiftCoverage, volunteerRequestingCoverage, volunterRequestingAbsence } from '../utils/emailUtil.js';
 
 // volunteer requesting to cover someone else’s open shift
 async function requestCoverShift(req: AuthenticatedRequest, res: Response) {
@@ -8,6 +9,9 @@ async function requestCoverShift(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.body;
 
     await coverageModel.insertCoverageRequest(Number(request_id), volunteer_id);
+
+    // send email to admins
+    await volunteerRequestingCoverage(Number(request_id), volunteer_id);
 
     res.sendStatus(200);
 }
@@ -31,12 +35,22 @@ async function approveCoverShift(req: AuthenticatedRequest, res: Response) {
 
     await coverageModel.approveCoverageRequest(Number(request_id), volunteer_id, signoff);
 
+    // send email to volunteer who requested coverage
+    await adminApprovesDeniesCoverage(Number(request_id), volunteer_id, "approved");
+
+    // send email to instructor of the class
+    await adminClicksNotifyInstructorForCoverage(Number(request_id), volunteer_id);
+
     res.sendStatus(200);
 }
 
 async function rejectCoverShift(req: AuthenticatedRequest, res: Response) {
     const { request_id, volunteer_id } = req.params;
     const { signoff } = req.body;
+
+    // send email to volunteer who requested coverage
+    // Sending before deleting the request to ensure the email is sent even if the request is not found
+    await adminApprovesDeniesCoverage(Number(request_id), volunteer_id, "denied");
 
     await coverageModel.denyCoverageRequest(Number(request_id), volunteer_id, signoff);
 
@@ -49,6 +63,8 @@ async function requestAbsence(req: AuthenticatedRequest, res: Response) {
     const request = req.body; 
 
     await coverageModel.insertAbsenceRequest(Number(shift_id), request);
+    // send email to admins
+    await volunterRequestingAbsence(Number(shift_id));
 
     res.sendStatus(200);
 }
@@ -75,12 +91,25 @@ async function approveAbsenceRequest(req: AuthenticatedRequest, res: Response) {
 
     await coverageModel.approveAbsenceRequest(Number(request_id), signoff);
 
+    // send email to volunteer who requested absence
+    await adminApprovesDeniesAbsence(Number(request_id), "approved");
+
+    // send email to instructor of the class
+    await adminClicksNotifyInstructorForAbsence(Number(request_id));
+
+    // send email to all volunteers to notify them that a shift needs coverage
+    await notifyVolunteersForShiftCoverage(Number(request_id));
+
     res.sendStatus(200);
 }
 
 async function rejectAbsenceRequest(req: AuthenticatedRequest, res: Response) {
     const { request_id } = req.params;
     const { signoff } = req.body;
+
+    // send email to volunteer who requested absence
+    // Sending before deleting the request to ensure the email is sent even if the request is not found
+    await adminApprovesDeniesAbsence(Number(request_id), "denied");
 
     await coverageModel.denyAbsenceRequest(Number(request_id), signoff);
 

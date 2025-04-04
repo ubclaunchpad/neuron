@@ -7,60 +7,111 @@ import { wrapIfNotArray } from '../utils/generalUtils.js';
 
 export default class ShiftModel {
 
-     // get all the details of a shift
-     async getShiftInfo(shift_id: number): Promise<ShiftDB> {
+     // // get all the details of a shift
+     // async getShiftInfo(shift_id: number): Promise<ShiftDB> {
+     //      const query = `
+     //           SELECT 
+     //                s.duration,
+     //                s.shift_date,
+     //                sc.start_time,
+     //                sc.end_time,
+     //                sc.day,
+     //                u.l_name AS volunteer_l_name,
+     //                u.f_name AS volunteer_f_name,
+     //                i.l_name AS instructor_l_name,
+     //                i.f_name AS instructor_f_name, 
+     //                cl.class_name
+     //           FROM 
+     //                neuron.shifts s
+     //           JOIN 
+     //                neuron.schedule sc ON s.fk_schedule_id = sc.schedule_id
+     //           JOIN 
+     //                neuron.volunteers v ON s.fk_volunteer_id = v.volunteer_id
+     //           JOIN 
+     //                neuron.users u ON u.user_id = v.fk_user_id
+     //           JOIN 
+     //                neuron.class cl ON sc.fk_class_id = cl.class_id
+     //           JOIN
+     //                neuron.instructors i on i.instructor_id = sc.fk_instructor_id
+     //           WHERE 
+     //                s.shift_id = ?       
+     //      `;
+     //      const values = [shift_id];
+
+     //      const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
+
+     //      return results[0];
+     // }
+
+     async getShiftInfo(shift_id: number): Promise<ShiftDB | null> {
           const query = `
-               SELECT 
-                    s.duration,
-                    sc.start_time,
-                    sc.end_time,
-                    u.l_name AS volunteer_l_name,
-                    u.f_name AS volunteer_f_name,
-                    i.l_name AS instructor_l_name,
-                    i.f_name AS instructor_f_name, 
-                    cl.class_name
-               FROM 
-                    neuron.shifts s
-               JOIN 
-                    neuron.schedule sc ON s.fk_schedule_id = sc.schedule_id
-               JOIN 
-                    neuron.volunteers v ON s.fk_volunteer_id = v.volunteer_id
-               JOIN 
-                    neuron.users u ON u.user_id = v.fk_user_id
-               JOIN 
-                    neuron.class cl ON sc.fk_class_id = cl.class_id
-               JOIN
-                    neuron.instructors i on i.instructor_id = sc.fk_instructor_id
-               WHERE 
-                    s.shift_id = ?       
+              SELECT 
+                  s.duration,
+                  s.shift_date,
+                  sc.start_time,
+                  sc.end_time,
+                  sc.day,
+                  u.l_name AS volunteer_l_name,
+                  u.f_name AS volunteer_f_name,
+                  i.l_name AS instructor_l_name,
+                  i.f_name AS instructor_f_name, 
+                  cl.class_name
+              FROM 
+                  neuron.shifts s
+              JOIN 
+                  neuron.schedule sc ON s.fk_schedule_id = sc.schedule_id
+              LEFT JOIN 
+                  neuron.volunteers v ON s.fk_volunteer_id = v.volunteer_id
+              LEFT JOIN 
+                  neuron.users u ON u.user_id = v.fk_user_id
+              JOIN 
+                  neuron.class cl ON sc.fk_class_id = cl.class_id
+              LEFT JOIN
+                  neuron.instructors i ON i.instructor_id = sc.fk_instructor_id
+              WHERE 
+                  s.shift_id = ?       
           `;
           const values = [shift_id];
-
-          const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
-
-          return results[0];
-     }
+      
+          const [results] = await connectionPool.query<ShiftDB[]>(query, values);
+          
+          return results.length > 0 ? results[0] : null;
+      }
+      
 
      // get all the details of a shift
-     async getShiftByRequestId(shift_id: number): Promise<ShiftDB> {
+     async getShiftByRequestId(request_id: number): Promise<ShiftDB> {
           const query = `
                SELECT 
-                    s.duration,
-                    sc.start_time,
-                    sc.end_time,
-                    u.l_name AS volunteer_l_name,
-                    u.f_name AS volunteer_f_name,
+                    s.shift_date,
+                    sch.start_time,
+                    sch.end_time,
+                    sch.day,
+                    c.class_name,
+                    u.f_name AS request_f_name,
+                    u.l_name AS request_l_name,
+                    u.email AS request_email,
+                    i.f_name AS instructor_f_name,
                     i.l_name AS instructor_l_name,
-                    i.f_name AS instructor_f_name, 
-                    cl.class_name
+                    i.email AS instructor_email
                FROM 
-                    neuron.shifts s
+                    absence_request ar
                JOIN 
-                    neuron.absence_request ar ON s.shift_id = ar.fk_shift_id
+                    shifts s ON ar.fk_shift_id = s.shift_id
+               JOIN 
+                    schedule sch ON s.fk_schedule_id = sch.schedule_id
+               JOIN 
+                    class c ON sch.fk_class_id = c.class_id
+               LEFT JOIN
+                    instructors i ON sch.fk_instructor_id = i.instructor_id
+               LEFT JOIN 
+                    volunteers v ON s.fk_volunteer_id = v.volunteer_id
+               LEFT JOIN 
+                    users u ON v.fk_user_id = u.user_id
                WHERE 
-                    s.shift_id = ?       
+                    ar.request_id = ?;      
           `;
-          const values = [shift_id];
+          const values = [request_id];
 
           const [results, _] = await connectionPool.query<ShiftDB[]>(query, values);
 

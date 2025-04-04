@@ -1,6 +1,7 @@
 import { NextFunction, Response } from "express";
 import { AuthenticatedRequest } from "../common/types.js";
 import { userModel, volunteerModel } from "../config/models.js";
+import { volunteerAccountReactivateDeactivate, volunteerAccountVerified } from "../utils/emailUtil.js";
 
 async function getVolunteerById(req: AuthenticatedRequest, res: Response) {
     const { volunteer_id } = req.params;
@@ -105,8 +106,25 @@ async function verifyVolunteer(
 ): Promise<any> {
     const { volunteer_id } = req.params;
     const { signoff } = req.body;
+    let email_type = "reactivate";
+
+    const volunteer = await volunteerModel.getVolunteersByIds(volunteer_id);
+    if (volunteer.length === 0) {
+        return res.status(400).json({
+            error: "Volunteer not found",
+        });
+    }
+    if (volunteer[0].status === "unverified") {
+        email_type = "verify";
+    }
 
     await volunteerModel.verifyVolunteer(volunteer_id, signoff);
+
+    if (email_type === "verify") {
+        await volunteerAccountVerified(volunteer_id);
+    } else if (email_type === "reactivate") {
+        await volunteerAccountReactivateDeactivate(volunteer_id, "reactivated");
+    }
     
     return res.status(200).json({
         message: "User verified successfully",
@@ -121,6 +139,8 @@ async function deactivateVolunteer(
     const { signoff } = req.body;
 
     await volunteerModel.deactivateVolunteer(volunteer_id, signoff);
+
+    await volunteerAccountReactivateDeactivate(volunteer_id, "deactivated");
 
     return res.status(200).json({
         message: "User deactivated successfully",

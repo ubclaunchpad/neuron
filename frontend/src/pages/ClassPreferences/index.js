@@ -5,6 +5,7 @@ import dropdown_button from "../../assets/dropdown-button.png";
 import edit_icon from "../../assets/edit-icon.png";
 import filter_icon from "../../assets/filter-icon.png";
 import search_icon from "../../assets/search-icon.png";
+import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
 import Checkbox from "../../components/Checkbox";
 import ClassPreferencesCard from "../../components/ClassPreferencesCard";
 import Modal from "../../components/Modal";
@@ -499,7 +500,17 @@ function ClassPreferences() {
      return (
           <main className="content-container">
                <div className="content-heading">
-                    <h2 className="content-title">Class - Schedule Preferences</h2>
+                    <button 
+                         className="back-button"
+                         onClick={() => navigate("/profile")}
+                         >
+                         <img
+                              alt="Back"
+                              src={button_icon_prev}
+                              style={{ width: 18, height: 18 }}
+                         />
+                         <h2 className="content-title">Class - Schedule Preferences</h2>
+                    </button>
                     <button className="logout-button" onClick={logout}>
                     <i className="fa-solid fa-arrow-right-from-bracket"></i>&nbsp;&nbsp;Log Out
                     </button>

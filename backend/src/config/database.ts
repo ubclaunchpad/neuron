@@ -8,6 +8,7 @@ const configuration: PoolOptions = {
   database: RDS_DB,
   port: RDS_PORT, 
   timezone: 'Z',
+  dateStrings: true,
   typeCast: (_, next) => {
     // Turn null columns into undefined
     const value = next();

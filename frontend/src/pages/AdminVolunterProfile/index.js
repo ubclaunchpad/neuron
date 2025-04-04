@@ -4,7 +4,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { formatImageUrl } from '../../api/imageService';
 import { getVolunteerShiftsForMonth } from "../../api/shiftService";
 import { fetchVolunteerData } from "../../api/volunteerService";
@@ -12,6 +12,10 @@ import DashboardCoverage from "../../components/DashboardCoverage";
 import Notifications from "../../components/Notifications";
 import AvailabilityGrid from "../../components/volunteerProfile/availabilityGrid";
 import VolunteerDetailsCard from "../../components/volunteerProfile/volunteerDetailsCard";
+import AdminVolunteerBadgeCard from '../../components/AdminVolunteerBadgeCard';
+
+import button_icon_prev from "../../assets/images/button-icons/button-icon-prev.png";
+
 import { SHIFT_TYPES } from "../../data/constants";
 import "./index.css";
 
@@ -26,6 +30,8 @@ const AdminVolunteerProfile = () => {
     const [future, setFuture] = useState(false);
     const monthDate = dayjs().date(1).hour(0).minute(0);
 
+    const navigate = useNavigate();
+
     const fetchShifts = useCallback(async () => {
         const volunteer_id = searchParams.get("volunteer_id");
         if (!volunteer_id) return;
@@ -33,6 +39,7 @@ const AdminVolunteerProfile = () => {
             .then((data) => {
                 // console.log(data);
                 setVolunteer(data);
+                console.log(data);
             });
 
         const body = {
@@ -95,7 +102,18 @@ const AdminVolunteerProfile = () => {
     return (
         <main className="content-container" style={{ overflowY: "auto" }}>
             <div className="content-heading">
-                <h2 className="content-title">Volunteer Profile</h2>
+                <button 
+                    className="back-button"
+                    onClick={() => navigate("/management")}
+                >
+                    <img
+                        alt="Back"
+                        src={button_icon_prev}
+                        style={{ width: 18, height: 18 }}
+                    />
+                    <h2 className="content-title">Volunteer Profile</h2>
+                </button>
+                
                 <div className="dash-date-picker">
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
@@ -114,7 +132,7 @@ const AdminVolunteerProfile = () => {
             {volunteer &&
                 <div className="content">
                     <div className="column-1">
-                        <div className="volunteer-card">
+                        <div className="volunteer-profile-card">
                             <VolunteerDetailsCard volunteer={{
                                 ...volunteer,
                                 profile_picture: formatImageUrl(volunteer.fk_image_id)
@@ -130,8 +148,13 @@ const AdminVolunteerProfile = () => {
                         </div>
                     </div>
                     <div className="column-2">
+
+                        <div className="volunteer-card">
+                            <AdminVolunteerBadgeCard volunteer={volunteer}/>
+                        </div>
+
                         <div className="dash-col-card dash-grid-item">
-                            <div className="dash-card-title">Volunteer Hours</div>
+                            <h2 className="dash-card-title">Volunteer Hours</h2>
                             <div className="dash-hours-container">
                                 <div className="dash-hours">
                                     <h1 className="dash-completed-hours">{completedHours}</h1>

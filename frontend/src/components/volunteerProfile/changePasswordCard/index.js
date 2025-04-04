@@ -55,9 +55,9 @@ function ChangePasswordCard({ volunteer }) {
     return (
         <div className="change-password-card-container">
             <div className="change-password-card">
-                <h2 className="my-profile-title">Change Password</h2>
+                <h2 className="settings-card-title">Change Password</h2>
                 <form onSubmit={handleSubmit}>
-                    <div className="form-group">
+                    <div className="cp-form-group">
                         <label>Current Password</label>
                         <div className="input-wrapper">
                         <input
@@ -76,7 +76,7 @@ function ChangePasswordCard({ volunteer }) {
                         </span>
                         </div>
                     </div>
-                    <div className="form-group">
+                    <div className="cp-form-group">
                         <label>New Password</label>
                         <div className="input-wrapper">
                         <input
@@ -95,7 +95,7 @@ function ChangePasswordCard({ volunteer }) {
                         </span>
                         </div>
                     </div>
-                    <div className="form-group">
+                    <div className="cp-form-group">
                         <label>Confirm New Password</label>
                         <div className="input-wrapper">
                         <input

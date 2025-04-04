@@ -7,6 +7,7 @@ import button_icon_verify from "../../assets/button-icon-verify.png";
 import confirm_img from "../../assets/confirm-verify-deny.png";
 import Modal from "../Modal";
 import "./index.css";
+import { denyVolunteer } from "../../api/volunteerService";
 
 function UnverifiedUsers({ unverifiedUsers }) {
      const [itemsToRender, setItemsToRender] = useState(unverifiedUsers);
@@ -135,16 +136,12 @@ function UnverifiedUsers({ unverifiedUsers }) {
      function handleVerifyDeny() {
           if (isInitialValid()) {
                setIsConfirming(true);
-               // TODO: 
-               // Logging Admin Initial
                console.log("Logging admin initial...");
                if (isVerifying){
-                    verifyVolunteer(toBeVerified.volunteer_id, adminInitial);
+                    verifyVolunteer(toBeVerified.volunteer_id, adminInitial.trim());
                } 
                else {
-                    // TODO: 
-                    // Handle deny Volunteer (delete from db, send email, etc.)
-                    //      denyVolunteer(toBeVerified.volunteer_id);
+                    denyVolunteer(toBeVerified.volunteer_id, adminInitial.trim());
                     console.log("Denying volunteer...");
                }
           }

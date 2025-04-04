@@ -11,7 +11,7 @@ const UserProfileForm = ({ volunteer_id }) => {
     total_hours: "",
     class_preferences: "",
     bio: "",
-    active: false,
+    status: 'unverified',
     email: ""
   });
 
@@ -102,7 +102,7 @@ const UserProfileForm = ({ volunteer_id }) => {
         <input
           type="checkbox"
           name="active"
-          checked={volunteerData.active}
+          checked={volunteerData.status === 'active'}
           onChange={(e) => handleChange({ target: { name: 'active', value: e.target.checked } })}
         />
       </label>

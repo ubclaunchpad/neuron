@@ -13,20 +13,12 @@
     padding: 32px;
 }
 
-.change-password-card h2 {
-    margin-top: 0;
-    margin-bottom: 24px;
-    font-size: 20px;
-    font-size: var(--title-text);
-    font-weight: var(--semi-bold);
-}
-
-.form-group {
+.cp-form-group {
     margin-bottom: 16px;
 }
   
 /* Label styling */
-.form-group label {
+.cp-form-group label {
     display: block;
     margin-bottom: 8px;
     font-size: 13px;
@@ -55,7 +47,7 @@ input {
     border-radius: 4px;
     font-size: 12px;
     box-sizing: border-box;
-    font-family: var(--font-secondary);
+    font-family: var(--font-primary);
 }
 
 input.icon {
@@ -71,6 +63,8 @@ input.icon {
     cursor: pointer;
     font-size: 18px;
     color: #666;
+    display: flex;
+    align-items: center;
 }
 
 /* Button styling */
@@ -84,20 +78,10 @@ input.icon {
     font-size: 13px;
     cursor: pointer;
     margin-top: 16px;
-    font-family: var(--font-secondary);
+    font-family: var(--font-primary);
 }
 
 /* Button hover effect */
 .change-password-btn:hover {
     background-color: #1a98e1;
-}
-
-.my-profile-title {
-    font-family: "Montserrat";
-    font-size: 20px;
-    font-weight: 600;
-    line-height: 27px;
-    text-align: left;
-    text-underline-position: from-font;
-    text-decoration-skip-ink: none;    
 }

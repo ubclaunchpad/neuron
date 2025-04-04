@@ -31,7 +31,7 @@ async function checkAuthorization(
     if (user && user.role === Role.volunteer) {
         volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
         
-        if (!volunteer.active) {
+        if (volunteer.status !== 'active') {
             return res.status(401).json({
                 error: "Unauthorized",
             });
@@ -84,7 +84,7 @@ async function registerUser(
                 await volunteerModel.insertVolunteer({
                     volunteer_id: uuidv4(),
                     fk_user_id: user_id,
-                    active: false,
+                    status: 'unverified',
                 } as VolunteerDB, transaction);
         
                 // Send a confirmation email to the user
@@ -135,7 +135,7 @@ async function loginUser(req: Request, res: Response): Promise<any> {
     if (user.role === Role.volunteer) {
         const volunteer = await volunteerModel.getVolunteerByUserId(user.user_id);
 
-        if (!volunteer.active) {
+        if (volunteer.status !== 'active') {
             return res.status(403).json({
                 error: "Waiting for an admin to verify your account.\nYou can reach out to us at bwp@gmail.com",
             });

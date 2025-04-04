@@ -147,8 +147,47 @@ async function deactivateVolunteer(
     });
 }
 
+async function updateVolunteerEmail (req: AuthenticatedRequest, res: Response) {
+    const { volunteer_id } = req.params;
+    const data = req.body;
+
+    if (!volunteer_id) {
+        return res.status(400).json({
+            error: "Missing required parameter: 'volunteer_id'",
+        });
+    } else if (!data || !data.email) {
+        return res.status(400).json({
+            error: "Missing required body for class preferences: 'data' or 'data.email'",
+        });
+    }
+    await volunteerModel.updateVolunteerEmail(volunteer_id, data);
+    res.status(200).json({msg: "Successfully updated user email"});
+}
+
+async function denyVolunteer (req: AuthenticatedRequest, res: Response): Promise<any> {
+        const { volunteer_id } = req.params;
+        const { signoff } = req.body;
+
+        if (!volunteer_id) {
+            return res.status(400).json({
+                error: "Missing required parameter: 'volunteer_id'",
+            });
+        } else if (!signoff) {
+            return res.status(400).json({
+                error: "Missing required body: 'signoff'",
+            });
+        }
+    
+        await volunteerModel.denyVolunteer(volunteer_id, signoff);
+    
+        return res.status(200).json({
+            message: "User account successfully denied/deleted",
+        });
+    }
+
 export {
     deactivateVolunteer, getAllClassPreferences, getPreferredClassesById, getVolunteerById,
-    getVolunteers, shiftCheckIn, updatePreferredClassesById, updateVolunteer, verifyVolunteer
+    getVolunteers, shiftCheckIn, updatePreferredClassesById, updateVolunteer, verifyVolunteer,
+    updateVolunteerEmail, denyVolunteer
 };
 

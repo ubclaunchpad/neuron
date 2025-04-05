@@ -1,0 +1,101 @@
+.cancellation-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.cancellation-modal {
+    background-color: #fff;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 500px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cancellation-modal-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.check-icon {
+    margin-bottom: 16px;
+}
+
+.cancellation-modal-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+    margin: 0;
+}
+
+.cancellation-modal-content {
+    margin-bottom: 24px;
+}
+
+.cancellation-modal-message {
+    font-size: 16px;
+    line-height: 1.5;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.cancellation-modal-reminder {
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+}
+
+.cancellation-modal-footer {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.cancellation-modal-button-cancel {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid #bcbcbc;
+    background: #FFF;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.cancellation-modal-button-cancel:hover {
+    background: #fafafa;
+}
+
+.cancellation-modal-button-confirm {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.cancellation-modal-button-confirm:hover {
+    background-color: #3d8b40;
+}
+
+.cancellation-modal-button-loading {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    background-color: #e0e0e0;
+    color: #666;
+    font-size: 14px;
+    cursor: not-allowed;
+}

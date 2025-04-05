@@ -1,10 +1,9 @@
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useState } from "react";
-import "./cancellation-form.css"; // You'll need to create this CSS file
+import "./index.css";
 
-// Validation schema for form
-const CancellationSchema = Yup.object().shape({
+const CancelShiftSchema = Yup.object().shape({
   cancelScope: Yup.string()
     .required("Please select which sessions to cancel"),
   subject: Yup.string()
@@ -17,19 +16,22 @@ const CancellationSchema = Yup.object().shape({
     .required("Please enter your admin initials")
 });
 
-function ClassCancellationForm({ onClose, classData }) {
+function CancelShiftForm({ open, onClose, shift, onSubmitSuccess }) {
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (values, { setSubmitting }) => {
     setSubmitting(true);
     try {
-      // Here you would add your API call to cancel the class
-      console.log("Submitting cancellation:", values);
+      // Here you would add your API call to cancel the shift
+      console.log("Submitting shift cancellation:", values);
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      onClose(); // Close modal on success
+      
+      // On successful submission, trigger the modal
+      onSubmitSuccess();
+      onClose();
     } catch (error) {
-      console.error("Error cancelling class:", error);
+      console.error("Error cancelling shift:", error);
     } finally {
       setSubmitting(false);
     }
@@ -37,17 +39,19 @@ function ClassCancellationForm({ onClose, classData }) {
 
   const initialValues = {
     cancelScope: "this",
-    subject: "",
-    message: "",
-    sendTo: [],
+    subject: `Cancellation: ${shift?.class_name || 'Shift'} on ${dayjs(shift?.shift_date).format('MMM D')}`,
+    message: `The ${shift?.class_name || 'shift'} scheduled for ${dayjs(shift?.shift_date).format('dddd, MMMM D')} at ${shift?.start_time} has been cancelled.\n\nReason: `,
+    sendTo: ["instructors", "volunteers"],
     adminInitials: ""
   };
+
+  if (!open) return null;
 
   return (
     <div className="cancellation-modal-overlay">
       <div className="cancellation-modal">
         <div className="cancellation-modal-header">
-          <h2 className="cancellation-title">Class cancellation notice</h2>
+          <h2 className="cancellation-title">Shift Cancellation Notice</h2>
           <button 
             type="button" 
             className="close-button"
@@ -59,7 +63,7 @@ function ClassCancellationForm({ onClose, classData }) {
 
         <Formik
           initialValues={initialValues}
-          validationSchema={CancellationSchema}
+          validationSchema={CancelShiftSchema}
           onSubmit={handleSubmit}
         >
           {({
@@ -87,7 +91,7 @@ function ClassCancellationForm({ onClose, classData }) {
                       checked={values.cancelScope === "this"}
                       onChange={handleChange}
                     />
-                    <label htmlFor="this-session">This session only</label>
+                    <label htmlFor="this-session">This shift only</label>
                   </div>
                   <div className="radio-option">
                     <input
@@ -98,7 +102,7 @@ function ClassCancellationForm({ onClose, classData }) {
                       checked={values.cancelScope === "future"}
                       onChange={handleChange}
                     />
-                    <label htmlFor="future-sessions">This session and future recurring sessions</label>
+                    <label htmlFor="future-sessions">This shift and future recurring shifts</label>
                   </div>
                 </div>
                 {errors.cancelScope && touched.cancelScope && (
@@ -113,7 +117,6 @@ function ClassCancellationForm({ onClose, classData }) {
                 <input
                   type="text"
                   name="subject"
-                  placeholder="Enter subject"
                   value={values.subject}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -130,7 +133,6 @@ function ClassCancellationForm({ onClose, classData }) {
                 </label>
                 <textarea
                   name="message"
-                  placeholder="Enter message"
                   value={values.message}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -203,11 +205,19 @@ function ClassCancellationForm({ onClose, classData }) {
 
               <div className="form-actions">
                 <button
-                  type="submit"
-                  className="cancel-class-button"
+                  type="button"
+                  className="cancel-button"
+                  onClick={onClose}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Submitting..." : "Cancel Class"}
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="submit-button"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit Cancellation"}
                 </button>
               </div>
             </form>
@@ -218,4 +228,4 @@ function ClassCancellationForm({ onClose, classData }) {
   );
 }
 
-export default ClassCancellationForm;
+export default CancelShiftForm;

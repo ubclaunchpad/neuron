@@ -9,6 +9,8 @@ import DateToolbar from "../../components/DateToolbar";
 import DetailsPanel from "../../components/DetailsPanel";
 import ShiftCard from "../../components/ShiftCard";
 import ShiftStatusToolbar from "../../components/ShiftStatusToolbar";
+import CancelShiftForm from "../../components/CancelShiftForm";
+import CancelShiftModal from "../../components/CancelShiftModal";
 import { useAuth } from "../../contexts/authContext";
 import { ADMIN_SHIFT_TYPES, COVERAGE_STATUSES, SHIFT_TYPES } from "../../data/constants";
 import { getButtonConfig, setOpenAbsenceRequestHandler, setOpenCoverageRequestHandler } from "../../utils/buttonConfig";
@@ -30,6 +32,9 @@ function Schedule() {
     const [absenceRequestShift, setAbsenceRequestShift] = useState(null);
     const [isCoverageRequestOpen, setIsCoverageRequestOpen] = useState(false);
     const [coverageRequestShift, setCoverageRequestShift] = useState(null);
+    const [isCancelShiftFormOpen, setIsCancelShiftFormOpen] = useState(false);
+    const [cancelShiftData, setCancelShiftData] = useState(null);
+    const [isCancelShiftModalOpen, setIsCancelShiftModalOpen] = useState(false);
 
     const openAbsenceRequest = (shift) => {
         setAbsenceRequestShift(shift);
@@ -39,6 +44,24 @@ function Schedule() {
     const openCoverageRequest = (shift) => {
         setCoverageRequestShift(shift);
         setIsCoverageRequestOpen(true);
+    };
+
+    const openCancelShiftForm = (shift) => {
+        setCancelShiftData(shift);
+        setIsCancelShiftFormOpen(true);
+    };
+    
+    const closeCancelShiftForm = () => {
+        setIsCancelShiftFormOpen(false);
+        setCancelShiftData(null);
+    };
+    
+    const openCancelShiftModal = () => {
+        setIsCancelShiftModalOpen(true);
+    };
+    
+    const closeCancelShiftModal = () => {
+        setIsCancelShiftModalOpen(false);
     };
 
     useEffect(() => {
@@ -248,19 +271,24 @@ function Schedule() {
         const shiftDay = dayjs(shift.shift_date).format("YYYY-MM-DD");
         const shiftEnd = dayjs(`${shiftDay} ${shift.end_time}`);
         const pastShift = currentDate.isAfter(shiftEnd);
-
+    
         const buttons = [];
         const buttonConfig = getButtonConfig(shift, handleShiftUpdate, isAdmin ? null : user?.volunteer.volunteer_id);
         const primaryButton = buttonConfig[shift.shift_type]
-
+    
         if (primaryButton.label && !pastShift) {
             buttons.push(primaryButton);
         }
-
+    
         if (isAdmin && !pastShift) {
-            buttons.push(buttonConfig.CANCEL);
+            // Modify the CANCEL button to use our new handler
+            /*const cancelButton = {
+                ...buttonConfig.CANCEL,
+                onClick: () => openCancelShiftForm(shift)
+            };*/
+            buttons.push(cancelButton);
         }
-
+    
         if (shift.shift_type === SHIFT_TYPES.MY_SHIFTS && !shift.checked_in && !pastShift) {
             buttons.push(buttonConfig.REQUEST_COVERAGE);
         } else if (shift.shift_type === SHIFT_TYPES.COVERAGE && shift.coverage_status === COVERAGE_STATUSES.PENDING) {
@@ -268,7 +296,7 @@ function Schedule() {
         } else if (shift.shift_type === SHIFT_TYPES.MY_COVERAGE_REQUESTS && shift.coverage_status === COVERAGE_STATUSES.OPEN) {
             buttons.push(buttonConfig.CANCEL);
         }
-
+    
         return buttons;
     };
 
@@ -381,6 +409,24 @@ function Schedule() {
                 open={isCoverageRequestOpen}
                 onClose={closeCoverageRequest}
                 shift={coverageRequestShift}
+            />
+            <CancelShiftForm
+                open={isCancelShiftFormOpen}
+                onClose={closeCancelShiftForm}
+                shift={cancelShiftData}
+                onSubmitSuccess={openCancelShiftModal}
+            />
+            <CancelShiftModal
+                isOpen={isCancelShiftModalOpen}
+                onClose={closeCancelShiftModal}
+                shiftId={cancelShiftData?.shift_id}
+                className={cancelShiftData?.class_name}
+                shiftDate={cancelShiftData?.shift_date}
+                shiftTime={cancelShiftData?.start_time}
+                onSuccess={() => {
+                    fetchShifts();
+                    setSelectedClassId(null);
+                }}
             />
         </main>
     );

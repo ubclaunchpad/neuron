@@ -4,7 +4,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useWeekView } from "react-weekview";
+import { useWeekView } from "../../hooks/useWeekView";
 import {
   approveAbsenceRequest,
   approveCoverageRequest,
@@ -36,8 +36,7 @@ function CoverageRequests() {
   const [showModal, setShowModal] = useState(false);
   const [approve, setApprove] = useState(false);
   const [selectedCoverage, setSelectedCoverage] = useState(null);
-  const { days, initialDate, nextWeek, previousWeek, goToToday } =
-    useWeekView();
+  const { days} = useWeekView(selectedDate);
   const navigate = useNavigate();
 
   // Create a ref object to store references to each shifts-container for scrolling

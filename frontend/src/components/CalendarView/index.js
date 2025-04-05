@@ -47,7 +47,7 @@ const CalendarView = ({ days, shifts, onShiftSelect }) => {
             <th className="time-header"></th>
             {days.map((day) => (
               <th className="day-header" key={day.dayOfMonthWithZero}>
-                <div className="day-number" s>
+                <div className="day-number">
                   {day.dayOfMonthWithZero}
                 </div>
                 <div className="day-name">
@@ -74,7 +74,7 @@ const CalendarView = ({ days, shifts, onShiftSelect }) => {
                   {shifts
                     .filter(
                       (shift) =>
-                        shift.shift_date.slice(0, 11) === dayjs(day.date).toISOString().slice(0,11) &&
+                        shift.shift_date.slice(0, 11) === dayjs(day.date).format("YYYY-MM-DD") &&
                         shift.start_time === time
                     )
                     .map((shift) => (

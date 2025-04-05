@@ -31,6 +31,12 @@ button {
     color: var(--dark);
 }
 
+.today-btn {
+    font-weight: 500;
+    font-size: 1vw;
+    font-family: var(--font-primary);
+}
+
 /* Override default icon colors */
 .date-toolbar .MuiSvgIcon-root {
     color: var(--dark); /* Set icon color to dark */

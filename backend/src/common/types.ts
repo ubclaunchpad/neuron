@@ -45,3 +45,9 @@ export type ListResponse<T> = {
     data: T[];
     totalCount: number;
 }
+
+export type MailData = {
+    email: string;
+    subject: string;
+    message: string;
+}

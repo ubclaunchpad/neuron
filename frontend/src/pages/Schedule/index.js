@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useWeekView } from "react-weekview";
+import { useWeekView } from "../../hooks/useWeekView";
 import { getShifts } from "../../api/shiftService";
 import AbsenceRequestForm from "../../components/AbsenceRequestForm";
 import CalendarView from "../../components/CalendarView";
@@ -24,7 +24,7 @@ function Schedule() {
     const [selectedShiftButtons, setSelectedShiftButtons] = useState([]);
     const [selectedShiftDetails, setShiftDetails] = useState(null);
     const [viewMode, setViewMode] = useState("list");
-    const { days, initialDate, nextWeek, previousWeek, goToToday } = useWeekView();
+    const { days, nextWeek, previousWeek, goToToday } = useWeekView(selectedDate);
 
     const [isAbsenceRequestOpen, setIsAbsenceRequestOpen] = useState(false);
     const [absenceRequestShift, setAbsenceRequestShift] = useState(null);
@@ -368,7 +368,7 @@ function Schedule() {
                             </div>
                         </>
                     ) : (
-                        <CalendarView days={days} shifts={shifts} initialDate={initialDate} onShiftSelect={handleShiftSelection} />
+                        <CalendarView days={days} shifts={shifts} onShiftSelect={handleShiftSelection} />
                     )}
                 </div>
             </DetailsPanel>

@@ -9,6 +9,7 @@ import { AuthenticatedRequest } from "../common/types.js";
 import connectionPool from "../config/database.js";
 import { FRONTEND_HOST, GMAIL_ID, GMAIL_PASSWORD, HOST, TOKEN_SECRET } from "../config/environment.js";
 import { userModel, volunteerModel } from "../config/models.js";
+import { newVolunteerToBeVerifiedByAdmins, volunteerAccountCreated } from "../utils/emailUtil.js";
 
 //Mail Config
 const transporter = nodemailer.createTransport({
@@ -86,21 +87,12 @@ async function registerUser(
                     status: 'unverified',
                 } as VolunteerDB, transaction);
         
-                // Send a confirmation email
-                const mailOptions = {
-                    from: '"Team Neuron" <neuronbc@gmail.com>',
-                    to: email,
-                    subject: "Neuron - Account Created",
-                    html: `Hello ${firstName} ${lastName},<br><br>
-                            Your Neuron account has been created successfully.<br>
-                            Please wait for the team to verify your account. This usually takes around 3-4 hours.<br><br>
-                            Thank you!<br>
-                            Best,<br>
-                            Team Neuron`,
-                };
-        
-                // Send the mail, ignore errors, not an important email
-                await transporter.sendMail(mailOptions).catch();
+                // Send a confirmation email to the user
+                await volunteerAccountCreated(firstName, lastName, email);
+
+                // Send a notification email to the admins
+                await newVolunteerToBeVerifiedByAdmins(firstName, lastName);
+
                 break;
 
             default: // Cant create admin/instructor currently

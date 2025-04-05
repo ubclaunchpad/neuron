@@ -23,7 +23,7 @@ function DateToolbar({ selectedDate, setSelectedDate, viewMode, setViewMode, nex
         <div className="date-toolbar">
             <div className="left-nav nav-group">
                 {viewMode === "week" && (<>
-                        <button className="calendar-btn" onClick={goToToday}>
+                        <button className="calendar-btn today-btn" onClick={goToToday}>
                             Today
                         </button>
                         <div className="nav-group">

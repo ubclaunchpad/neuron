@@ -162,13 +162,35 @@ export const getButtonConfig = (
       onClick: () =>
         handleCoverShiftClick(shift, handleShiftUpdate, volunteerID),
     },
-    [SHIFT_TYPES.MY_COVERAGE_REQUESTS]: {
-      lineColor: "var(--yellow)",
-      label: "Request Pending",
-      icon: null,
-      disabled: true,
-      onClick: () => {}, // No action for this state
-    },
+    [SHIFT_TYPES.MY_COVERAGE_REQUESTS]: [
+      {
+        lineColor: "var(--yellow)",
+        label: "Request Pending",
+        icon: null,
+        disabled: true,
+        onClick: () => {}, // No action for this state
+      },
+      {
+        label: "Withdraw Request",
+        icon: null,
+        disabled: false,
+        buttonClass: "withdraw-request",
+        onClick: () => {
+          withdrawAbsenceRequest(shift.request_id)
+            .then(() => {
+              handleShiftUpdate({
+                ...shift,
+                shift_type: SHIFT_TYPES.MY_SHIFTS,
+                coverage_status: null,
+                request_id: null,
+              });
+            })
+            .catch((error) => {
+              console.error("Error withdrawing absence request:", error);
+            });
+        },
+      },
+    ],
     [SHIFT_TYPES.DEFAULT]: {
       lineColor: "var(--grey)",
       label: "View Details",

@@ -7,16 +7,15 @@ function ShiftCard({ shift, shiftType, onShiftSelect, buttonConfig }) {
     onShiftSelect(shift);
   };
 
-  const { lineColor, label, icon, disabled, buttonClass, onClick } =
-    buttonConfig?.[shiftType] ||
-      buttonConfig?.[SHIFT_TYPES.DEFAULT] || 
-      buttonConfig?.[ADMIN_SHIFT_TYPES.ADMIN_COVERED] || {
-        lineColor: "var(--grey)",
-        label: "View Details",
-        icon: null,
-        disabled: false,
-        onClick: () => {},
-      };
+  const {
+    lineColor = "var(--grey)",
+    label = "View Details",
+    icon = null,
+    disabled = false,
+    buttonClass = "",
+    onClick = () => {},
+  } = buttonConfig || {};
+  
 
   const parseShiftDuration = (duration) => {
     const hours = Math.round((duration / 60) * 10) / 10;

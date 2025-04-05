@@ -225,3 +225,15 @@
      filter: brightness(0.8);
      cursor: pointer;
 }
+
+.dynamic-button.withdraw-request {
+     color: var(--red);
+     background: #fff;
+     border: 1px solid var(--red);
+   }
+   
+   .dynamic-button.withdraw-request:hover {
+     color: var(--red-hover);
+     border-color: var(--red-hover);
+     background: #fff;
+   }   

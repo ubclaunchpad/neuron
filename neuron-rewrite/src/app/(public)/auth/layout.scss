@@ -1,0 +1,83 @@
+@use "typography" as *;
+@use "variables" as *;
+
+.public-layout {
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  width: 100dvw;
+  display: flex;
+}
+
+.public-sidebar {
+  display: flex;
+  width: clamp(80px, 40%, 596px);
+  height: 100%;
+  padding: $padding-xxxl;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: $padding-xxxl;
+  flex-shrink: 0;
+  flex-grow: 0;
+  background-color: $bg-sidebar-lightblue;
+  border-right: 2px solid $bg-grey-outline;
+  overflow: hidden;
+}
+
+.public-sidebar__inner {
+  width: 100%;
+  display: flex;
+  gap: $padding-xxxl;
+  flex-direction: column;
+  text-align: center;
+  align-items: center;
+}
+
+.public-sidebar__logo {
+  width: 15rem;
+  height: auto;
+}
+
+.public-sidebar__title {
+  @include text-lg-title;
+  font-weight: 300;
+  color: $primary;
+}
+
+.public-content {
+  flex-grow: 1;
+  overflow: auto;
+}
+
+.form-main {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: max-content;
+}
+
+@media (max-width: $breakpoint-md) {
+  .public-sidebar {
+    display: none;
+  }
+
+  .public-sidebar__inner {
+    padding-top: $padding-xxxl;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+
+    .public-sidebar__logo {
+      width: 7.5rem;
+    }
+
+    .public-sidebar__title {
+      font-size: $font-size-lg;
+      align-self: self-end;
+    }
+  }
+}

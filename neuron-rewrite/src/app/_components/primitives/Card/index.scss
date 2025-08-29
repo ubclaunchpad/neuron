@@ -1,0 +1,26 @@
+@use "variables" as *;
+
+.card {
+    border-radius: $radius-regular;
+    padding: $padding-xxl;
+    border: 1px solid $bg-grey-outline;
+    background: $bg-white;
+    box-shadow: $shadow-regular;
+
+    &.success {
+        border-color: $text-success;
+        color: $text-success;
+        background: rgba($text-success, .10);
+    }
+
+    &.error {
+        border-color: $text-error;
+        color: $text-error;
+        background: rgba($text-error, .10);
+    }
+
+    &.small {
+        padding: $padding-md;
+        border-radius: $radius-md;
+    }
+}

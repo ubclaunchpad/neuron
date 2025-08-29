@@ -1,0 +1,24 @@
+@use "./variables.scss" as *;
+
+// Base, configurable text mixin
+@mixin text(
+  $size: $font-size-base,
+  $weight: $font-weight-regular,
+  $family: $font-body,
+  $line-height: 1.35,
+  $style: normal
+) {
+  font-family: $family;
+  font-size: $size;
+  font-style: $style;
+  font-weight: $weight;
+  line-height: $line-height;
+}
+
+@mixin text-reg { @include text(); }
+@mixin text-reg-bold { @include text($weight: $font-weight-semibold); }
+@mixin text-sm { @include text($size: $font-size-sm); }
+@mixin text-button { @include text($line-height: 1); }
+@mixin text-title { @include text($size: $font-size-lg, $family: $font-display, $weight: $font-weight-bold); }
+@mixin text-lg-title { @include text($size: $font-size-xl, $family: $font-display, $weight: $font-weight-medium); }
+@mixin text-xl-title { @include text($size: $font-size-xxl, $family: $font-display, $weight: $font-weight-bold); }

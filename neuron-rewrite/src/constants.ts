@@ -1,0 +1,1 @@
+export const AVAILABILITY_SLOTS = 7 * 24 * 4; // The number of 15 minutes chunks in a week

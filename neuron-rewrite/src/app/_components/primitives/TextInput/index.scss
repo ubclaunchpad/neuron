@@ -1,0 +1,79 @@
+@use "mixins" as *;
+@use "typography" as *;
+@use "variables" as *;
+@use 'sass:color';
+
+.text-input {
+  @include text-reg;
+  display: flex;
+  flex-direction: column;
+  gap: $padding-xxs;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  height: max-content;
+
+  &__group {
+    display: flex;
+    place-items: center;
+    width: 100%;
+    position: relative;
+  }
+
+  &__input {
+    @include text-reg;
+    padding: $padding-sm 0 $padding-sm $padding-md;
+    border-radius: $radius-regular;
+    border: 1px solid $bg-grey-outline;
+    background: $bg-white;
+    margin: 0;
+    width: 100%;
+    outline-color: $primary;
+
+    & .with-icon {
+      padding-right: $padding-xxxl;
+    }
+  }
+
+
+
+  &__toggle {
+    all: unset;
+    position: absolute;
+    right: $padding-md;
+    @include text-icon;
+  }
+
+  &__error {
+    @include text-reg;
+    color: $text-error;
+    display: inline-flex;
+    gap: $padding-xxs;
+    align-items: center;
+
+    > svg {
+      @include text-icon;
+    }
+  }
+
+  &__bottom-container {
+    display: flex;
+    width: 100%;
+    
+    .text-input__description {
+      margin-inline-start: auto;
+    }
+  }
+
+  &[data-invalid] .text-input__input {
+    border-color: $text-error;
+    outline-color: $text-error;
+    outline-offset: 0px;
+
+    $text-error-focus: color.mix(#fff, $text-error, 40%); 
+    &[data-focused] {
+      border-color: $text-error-focus;
+      outline-color: $text-error-focus;
+    }
+  }
+}

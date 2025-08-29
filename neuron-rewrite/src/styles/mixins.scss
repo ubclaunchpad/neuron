@@ -1,0 +1,24 @@
+@use "variables" as *;
+
+@mixin scrollbar-hide {
+    /* For Webkit-based browsers (Chrome, Safari and Opera) */
+    &::-webkit-scrollbar {
+        display: none;
+        -webkit-appearance: none;
+    }
+
+    /* For IE, Edge and Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+@mixin transition-inherit-all {
+    transition-property: inherit;
+    transition-duration: inherit;
+    transition-timing-function: inherit;
+}
+
+@mixin text-icon {
+    height: $font-size-base;
+    aspect-ratio: 1 / 1;
+}

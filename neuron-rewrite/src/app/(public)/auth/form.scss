@@ -1,0 +1,38 @@
+@use "variables" as *;
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  place-items: center;
+  gap: $padding-xxxl;
+  width: min(100%, 40rem);
+  padding: $padding-xxxl;
+}
+
+.form-content {
+  width: 100%;
+  gap: $padding-lg;
+  display: flex;
+  flex-direction: column;
+
+  .form-footer {
+    align-self: center;
+  }
+}
+
+.form-group {
+  display: flex;
+  gap: $padding-sm;
+}
+
+.form-title {
+  color: $primary;
+  line-height: 1;
+  align-self: flex-start;
+}
+
+.root-error-container {
+  padding: $padding-md;
+  background-color: rgba($text-error, .10);
+  outline: solid 1px $text-error;
+}

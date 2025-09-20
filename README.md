@@ -71,8 +71,8 @@ pnpm dev:redis:clear
 ## Install & Run
 
 ```bash
-npm install
-npm dev
+pnpm install
+pnpm dev
 ```
 
 This launches the Next.js app (frontend + tRPC backend) in development mode
@@ -84,10 +84,10 @@ This launches the Next.js app (frontend + tRPC backend) in development mode
 This repo uses [**Drizzle**](https://orm.drizzle.team/). After Postgres is up, run migrations:
 
 ```bash
-npm db:push
+pnpm db:push
 
 # Fallback:
-npx drizzle-kit push
+pnpx drizzle-kit push
 ```
 
 Migrations target Postgres and align with the schema under the `src/server/db/schema` module.

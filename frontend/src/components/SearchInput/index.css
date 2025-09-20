@@ -1,9 +1,0 @@
-.search-input {
-    flex: 1;
-    padding: 12px 20px 12px 44px;
-    font-size: 0.75em;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    background: transparent url("../../assets/search-icon.svg") no-repeat 20px;
-    background-size: 16px;
-}

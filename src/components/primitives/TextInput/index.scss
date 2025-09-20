@@ -1,0 +1,80 @@
+@use "mixins" as *;
+@use "typography" as *;
+@use "variables" as *;
+@use 'sass:color';
+
+.text-input {
+  @include text-reg;
+  display: flex;
+  flex-direction: column;
+  gap: $padding-xxs;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  height: max-content;
+
+  &__group {
+    display: flex;
+    place-items: center;
+    width: 100%;
+    position: relative;
+    border-radius: $radius-regular;
+    border: 1px solid $bg-grey-outline;
+    background: $bg-white;
+    outline-color: $primary;
+    overflow: hidden;
+  }
+
+  &__input {
+    @include text-reg;
+    padding: $padding-sm 0 $padding-sm $padding-md;
+    margin: 0;
+    outline: none;
+    border: none;
+    flex: 1;
+  }
+
+  &__toggle {
+    all: unset;
+    padding-right: $padding-md;
+    color: $text-grey;
+    width: $font-size-md;
+    height: $font-size-md;
+    aspect-ratio: 1 / 1;
+    flex-shrink: 0;
+  }
+
+  &__error {
+    @include text-reg;
+    color: $text-error;
+    display: inline-flex;
+    gap: $padding-xxs;
+    align-items: center;
+
+    > svg {
+      @include text-icon;
+    }
+  }
+
+  &__bottom-container {
+    display: flex;
+    width: 100%;
+    
+    .text-input__description {
+      margin-inline-start: auto;
+    }
+  }
+
+  &[data-invalid] .text-input__input {
+    border-width: 2px;
+    border-color: $text-error;
+    outline-color: $text-error;
+    outline-offset: 0px;
+
+    &[data-focused] {
+      border-width: 3px;
+      border-color: $text-error-hover;
+      outline-color: $text-error-hover;
+    }
+  }
+}

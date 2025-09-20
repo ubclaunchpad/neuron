@@ -1,0 +1,92 @@
+@use "variables" as *;
+@use "typography" as *;
+@use "mixins" as *;
+
+.calendar {
+  padding: $padding-md;
+  background: $bg-white;
+  display: flex;
+  flex-direction: column;
+  gap: $padding-sm;
+  width: min-content;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__title {
+    @include text-reg-bold;
+  }
+
+  &__nav-group {
+    display: inline-flex;
+    align-items: center;
+    width: min-content;
+    gap: $padding-xs;
+  }
+
+  &__nav {
+    flex-shrink: 0;
+    color: $text-grey;
+    @include text-icon;
+  }
+
+  &__dow-cell {
+    @include text-reg;
+    color: $text-grey;
+    text-align: center;
+    cursor: default;
+  }
+
+  &__cell {
+    position: relative;
+    height: 2rem;
+    width: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-ms;
+    @include text-reg;
+    color: $text-dark;
+    cursor: pointer;
+    transition: $transition-fast;
+    outline: none;
+
+    /* Hover */
+    &[data-hovered] { 
+      background: $bg-white-hover; 
+    }
+
+    /* Outside month / disabled */
+    &[data-outside-month],
+    &[data-disabled] { 
+      color: $text-grey; 
+      cursor: default;
+    }
+
+    /* Selected */
+    &[data-selected] {
+      outline: 1px solid $primary;
+      background-color: $bg-sidebar-lightblue;
+      color: $text-dark;
+    }
+
+    /* Focus visible ring */
+    &[data-focus-visible]:not([data-selected]) {
+      outline: 1px solid $primary;
+    }
+
+    /* Today dot indicator */
+    &[data-today]::after {
+      content: "";
+      position: absolute;
+      bottom: 1.5px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: $primary;
+    }
+  }
+}

@@ -1,0 +1,54 @@
+@use "variables" as *;
+
+.page-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  margin-right: var(--main-offset);
+  transition: margin-right $transition-fast;
+
+  --main-offset: 0px;
+
+  &.is-open {
+    --main-offset: var(--sidebar-w);
+  }
+
+  &-content {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+    transition: padding-right $transition-fast;
+
+    .inner-content {
+      min-width: var(--main-min);
+    }
+  }
+
+  &-sidebar {
+    top: 0;
+    right: 0;
+    position: fixed;
+    height: 100%;
+    width: min(var(--sidebar-w), 100vw);
+    width: min(var(--sidebar-w), 100dvw);
+
+    display: flex;
+    flex-direction: column;
+    background: $bg-white;
+    border-left: 0.67px solid $bg-grey-outline;
+    transform: translateX(100%);
+    transition: transform $transition-fast;
+
+    .sidebar-content {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: $padding-md;
+    }
+
+    .is-open & {
+      transform: translateX(0);
+    }
+  }
+}

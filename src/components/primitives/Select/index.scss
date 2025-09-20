@@ -1,0 +1,108 @@
+@use "variables" as *;
+@use "typography" as *;
+@use "mixins" as *;
+
+.select {
+  width: fit-content;
+
+  &__label {
+    @include text-sm;
+    color: $text-dark;
+  }
+
+  &__trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $padding-xs;
+    outline: none;
+
+    background: $bg-white;
+    border: 1px solid $primary;
+    border-radius: $radius-regular;
+    padding: $padding-sm $padding-md;
+    cursor: pointer;
+
+    &[data-hovered] { 
+      background: $bg-white-hover; 
+    }
+    
+    &[data-disabled] { 
+      border-color: $bg-grey-outline;
+      background: $bg-grey-outline;
+      cursor: not-allowed; 
+
+      .select__icon {
+        display: none;
+      }
+    }
+  }
+
+  &__value {
+    @include text-reg;
+    line-height: 1;
+    color: $text-dark;
+
+    &[data-placeholder] { 
+      color: $text-grey; 
+    }
+  }
+
+  &__icon {
+    @include text-icon;
+    color: $text-grey;
+  }
+
+  &__hint { 
+    @include text-xs; 
+    color: $text-grey; 
+  }
+  
+  &__error { 
+    @include text-xs; 
+    color: $text-error; 
+  }
+
+  &__popover {
+    background: $bg-white;
+    border: 1px solid $bg-grey-outline;
+    border-radius: $radius-regular;
+    box-shadow: $shadow-regular;
+    overflow: hidden;
+  }
+
+  &__listbox {
+    max-block-size: 16rem;
+    overflow: auto;
+    padding: $padding-xxs;
+    display: flex;
+    flex-direction: column;
+    gap: $padding-xxxs;
+    outline: none;
+
+    .react-aria-ListBoxItem {
+      @include text-reg;
+      padding: $padding-xs $padding-sm;
+      cursor: pointer;
+      border-radius: $radius-sm;
+      outline: none;
+
+      &[data-hovered] { 
+        background: $bg-white-hover; 
+      }
+      
+      &[data-focused] { 
+        background: $bg-white-hover; 
+      }
+      
+      &[data-selected] { 
+        outline: 1px solid $primary;
+      }
+      
+      &[data-disabled] { 
+        color: $text-grey; 
+        cursor: not-allowed; 
+      }
+    }
+  }
+}

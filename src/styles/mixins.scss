@@ -1,0 +1,57 @@
+@use "variables" as *;
+@use "sass:color";
+@use "sass:math";
+
+@mixin scrollbar-hide {
+    /* For Webkit-based browsers (Chrome, Safari and Opera) */
+    &::-webkit-scrollbar {
+        display: none;
+        -webkit-appearance: none;
+    }
+
+    /* For IE, Edge and Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+@mixin transition-inherit-all {
+    transition-property: inherit;
+    transition-duration: inherit;
+    transition-timing-function: inherit;
+}
+
+@mixin text-icon {
+    height: $font-size-base;
+    aspect-ratio: 1 / 1;
+}
+
+// Exact hover tone:
+// - $delta: the amount to change the lightness
+// - returns the color with the exact delta applied
+@function exact-hover-tone($c, $delta: 12%) {
+    // Read the HSL lightness
+    $l: color.channel($c, "lightness", $space: hsl);
+    // Darken if it's light, lighten if it's dark
+    @return color.scale($c, $lightness: if($l > 50%, -$delta, $delta));
+}
+
+// Adaptive hover tone:
+// - $min-delta: smallest change at the extremes (very light/very dark)
+// - $max-delta: biggest change near mid lightness (~50%)
+// - $curve:     shape of the falloff (1 = linear; >1 = faster falloff near extremes)
+// - returns the color with the adaptive delta applied
+@function hover-tone($c, $min-delta: 3%, $max-delta: 25%, $curve: 1.25) {
+    $L: color.channel($c, "lightness", $space: hsl); // 0%..100%
+  
+    // distance from middle (0..1): 0 at 50%, 1 at 0% or 100%
+    $dist: calc(math.abs($L - 50%) / 50%);
+  
+    // weight is highest at the middle, lowest at extremes
+    $weight: math.pow(1 - $dist, $curve);
+  
+    // interpolate delta between min and max using the weight
+    $delta: $min-delta + ($max-delta - $min-delta) * $weight;
+  
+    // darken if light, lighten if dark
+    @return color.scale($c, $lightness: if($L > 50%, -$delta, $delta));
+  }

@@ -1,5 +1,6 @@
 import { AbsenceRequestCategory, AttendanceStatus, CoverageStatus } from "@/models/interfaces";
-import { course, schedule } from "@/server/db/schema/course";
+import { course } from "@/server/db/schema/course";
+import { schedule } from "@/server/db/schema/schedule";
 import { user, volunteer } from "@/server/db/schema/user";
 import { eq, not, relations, sql } from "drizzle-orm";
 import {

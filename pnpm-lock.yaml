@@ -14,12 +14,15 @@ importers:
       '@internationalized/date':
         specifier: ^3.9.0
         version: 3.9.0
+      '@js-temporal/polyfill':
+        specifier: ^0.5.1
+        version: 0.5.1
       '@react-aria/i18n':
         specifier: ^3.12.12
         version: 3.12.12(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@t3-oss/env-nextjs':
-        specifier: ^0.12.0
-        version: 0.12.0(typescript@5.9.2)(zod@3.25.76)
+        specifier: ^0.13.0
+        version: 0.13.8(typescript@5.9.2)(zod@4.1.11)
       '@tanstack/react-query':
         specifier: ^5.69.0
         version: 5.85.3(react@19.1.1)
@@ -37,7 +40,7 @@ importers:
         version: 12.0.5
       better-auth:
         specifier: ^1.3.7
-        version: 1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@3.25.76)
+        version: 1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.1.11)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -56,6 +59,9 @@ importers:
       nodemailer:
         specifier: ^7.0.5
         version: 7.0.5
+      nuqs:
+        specifier: ^2.6.0
+        version: 2.6.0(next@15.4.6(@babel/core@7.28.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(sass@1.90.0))(react@19.1.1)
       postgres:
         specifier: ^3.4.4
         version: 3.4.7
@@ -77,6 +83,9 @@ importers:
       redis:
         specifier: ^5.8.2
         version: 5.8.2
+      rrule-temporal:
+        specifier: ^1.2.0
+        version: 1.2.0
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
@@ -90,8 +99,8 @@ importers:
         specifier: ^1.7.0
         version: 1.7.0
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: ^4.1.11
+        version: 4.1.11
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.3.1
@@ -1338,6 +1347,10 @@ packages:
   '@jridgewell/trace-mapping@0.3.30':
     resolution: {integrity: sha512-GQ7Nw5G2lTu/BtHTKfXhKHok2WGetd4XYcVKGx00SjAk8GMwgJM3zr6zORiPGuOE+/vkc90KtTosSSvaCjKb2Q==}
 
+  '@js-temporal/polyfill@0.5.1':
+    resolution: {integrity: sha512-hloP58zRVCRSpgDxmqCWJNlizAlUgJFqG2ypq79DCvyv9tHjRYMDOcPFjzfl/A1/YxDvRCZz8wvZvmapQnKwFQ==}
+    engines: {node: '>=12'}
+
   '@levischuck/tiny-cbor@0.2.11':
     resolution: {integrity: sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow==}
 
@@ -2322,6 +2335,9 @@ packages:
     resolution: {integrity: sha512-b+zebfKCfRdgNJDknHCob3O7FpeYQN6ZG6YLExMcasDHsCXlsXCEuiPZeLnJLpwa5dvPetGlnGCiMHuLwGvFow==}
     engines: {node: '>=18.0.0'}
 
+  '@standard-schema/spec@1.0.0':
+    resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
+
   '@standard-schema/utils@0.3.0':
     resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
 
@@ -2409,13 +2425,16 @@ packages:
   '@swc/helpers@0.5.17':
     resolution: {integrity: sha512-5IKx/Y13RsYd+sauPb2x+U/xZikHjolzfuDgTAl/Tdf3Q8rslRvC19NKDLgAJQ6wsqADk10ntlv08nPFw/gO/A==}
 
-  '@t3-oss/env-core@0.12.0':
-    resolution: {integrity: sha512-lOPj8d9nJJTt81mMuN9GMk8x5veOt7q9m11OSnCBJhwp1QrL/qR+M8Y467ULBSm9SunosryWNbmQQbgoiMgcdw==}
+  '@t3-oss/env-core@0.13.8':
+    resolution: {integrity: sha512-L1inmpzLQyYu4+Q1DyrXsGJYCXbtXjC4cICw1uAKv0ppYPQv656lhZPU91Qd1VS6SO/bou1/q5ufVzBGbNsUpw==}
     peerDependencies:
+      arktype: ^2.1.0
       typescript: '>=5.0.0'
       valibot: ^1.0.0-beta.7 || ^1.0.0
-      zod: ^3.24.0
+      zod: ^3.24.0 || ^4.0.0-beta.0
     peerDependenciesMeta:
+      arktype:
+        optional: true
       typescript:
         optional: true
       valibot:
@@ -2423,13 +2442,16 @@ packages:
       zod:
         optional: true
 
-  '@t3-oss/env-nextjs@0.12.0':
-    resolution: {integrity: sha512-rFnvYk1049RnNVUPvY8iQ55AuQh1Rr+qZzQBh3t++RttCGK4COpXGNxS4+45afuQq02lu+QAOy/5955aU8hRKw==}
+  '@t3-oss/env-nextjs@0.13.8':
+    resolution: {integrity: sha512-QmTLnsdQJ8BiQad2W2nvV6oUpH4oMZMqnFEjhVpzU0h3sI9hn8zb8crjWJ1Amq453mGZs6A4v4ihIeBFDOrLeQ==}
     peerDependencies:
+      arktype: ^2.1.0
       typescript: '>=5.0.0'
       valibot: ^1.0.0-beta.7 || ^1.0.0
-      zod: ^3.24.0
+      zod: ^3.24.0 || ^4.0.0-beta.0
     peerDependenciesMeta:
+      arktype:
+        optional: true
       typescript:
         optional: true
       valibot:
@@ -3583,6 +3605,9 @@ packages:
     resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
     hasBin: true
 
+  jsbi@4.3.2:
+    resolution: {integrity: sha512-9fqMSQbhJykSeii05nxKl4m6Eqn2P6rOlYiS+C5Dr/HPIU/7yZxu5qzbs40tgaFORiw2Amd0mirjxatXYMkIew==}
+
   jsesc@3.0.2:
     resolution: {integrity: sha512-xKqzzWXDttJuOcawBt4KnKHHIf5oQ/Cxax+0PWFG+DFDgHNAdi+TXECADI+RYiFUMmx8792xsMbbgXj4CwnP4g==}
     engines: {node: '>=6'}
@@ -3752,6 +3777,27 @@ packages:
 
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
+
+  nuqs@2.6.0:
+    resolution: {integrity: sha512-EvIKBvfJeyL8n6lxfebxoAbkHJutNsxmy1oo4noFUYNUESbnecxWxgnxXoa0/4fYiFwdEuyMQx1Z9rV0h4bnkg==}
+    peerDependencies:
+      '@remix-run/react': '>=2'
+      '@tanstack/react-router': ^1
+      next: '>=14.2.0'
+      react: '>=18.2.0 || ^19.0.0-0'
+      react-router: ^6 || ^7
+      react-router-dom: ^6 || ^7
+    peerDependenciesMeta:
+      '@remix-run/react':
+        optional: true
+      '@tanstack/react-router':
+        optional: true
+      next:
+        optional: true
+      react-router:
+        optional: true
+      react-router-dom:
+        optional: true
 
   object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
@@ -3970,6 +4016,9 @@ packages:
 
   rou3@0.5.1:
     resolution: {integrity: sha512-OXMmJ3zRk2xeXFGfA3K+EOPHC5u7RDFG7lIOx0X1pdnhUkI8MdVrbV+sNsD80ElpUZ+MRHdyxPnFthq9VHs8uQ==}
+
+  rrule-temporal@1.2.0:
+    resolution: {integrity: sha512-WkkpeYr17MjZb63fEIAnARos4XrHbx/wWLlXtpazQXodwBWESG22KsWOqFAamqsUflc7xV3aIcrCbDyOLVp6JQ==}
 
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
@@ -4299,8 +4348,8 @@ packages:
   yup@1.7.0:
     resolution: {integrity: sha512-VJce62dBd+JQvoc+fCVq+KZfPHr+hXaxCcVgotfwWvlR0Ja3ffYKaJBT8rptPOSKOGJDCUnW2C2JWpud7aRP6Q==}
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+  zod@4.1.11:
+    resolution: {integrity: sha512-WPsqwxITS2tzx1bzhIKsEs19ABD5vmCVa4xBo2tq/SrV4RNZtfws1EnCWQXM6yh8bD08a1idvkB5MZSBiZsjwg==}
 
 snapshots:
 
@@ -5796,6 +5845,10 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@js-temporal/polyfill@0.5.1':
+    dependencies:
+      jsbi: 4.3.2
 
   '@levischuck/tiny-cbor@0.2.11': {}
 
@@ -7310,6 +7363,8 @@ snapshots:
       '@smithy/util-buffer-from': 4.0.0
       tslib: 2.8.1
 
+  '@standard-schema/spec@1.0.0': {}
+
   '@standard-schema/utils@0.3.0': {}
 
   '@svgr/babel-plugin-add-jsx-attribute@8.0.0(@babel/core@7.28.3)':
@@ -7413,17 +7468,17 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@t3-oss/env-core@0.12.0(typescript@5.9.2)(zod@3.25.76)':
+  '@t3-oss/env-core@0.13.8(typescript@5.9.2)(zod@4.1.11)':
     optionalDependencies:
       typescript: 5.9.2
-      zod: 3.25.76
+      zod: 4.1.11
 
-  '@t3-oss/env-nextjs@0.12.0(typescript@5.9.2)(zod@3.25.76)':
+  '@t3-oss/env-nextjs@0.13.8(typescript@5.9.2)(zod@4.1.11)':
     dependencies:
-      '@t3-oss/env-core': 0.12.0(typescript@5.9.2)(zod@3.25.76)
+      '@t3-oss/env-core': 0.13.8(typescript@5.9.2)(zod@4.1.11)
     optionalDependencies:
       typescript: 5.9.2
-      zod: 3.25.76
+      zod: 4.1.11
 
   '@tanstack/query-core@5.85.3': {}
 
@@ -7773,7 +7828,7 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  better-auth@1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@3.25.76):
+  better-auth@1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.1.11):
     dependencies:
       '@better-auth/utils': 0.2.6
       '@better-fetch/fetch': 1.1.18
@@ -7786,7 +7841,7 @@ snapshots:
       jose: 5.10.0
       kysely: 0.28.5
       nanostores: 0.11.4
-      zod: 3.25.76
+      zod: 4.1.11
     optionalDependencies:
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
@@ -8742,6 +8797,8 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
+  jsbi@4.3.2: {}
+
   jsesc@3.0.2: {}
 
   jsesc@3.1.0: {}
@@ -8885,6 +8942,13 @@ snapshots:
   nth-check@2.1.1:
     dependencies:
       boolbase: 1.0.0
+
+  nuqs@2.6.0(next@15.4.6(@babel/core@7.28.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(sass@1.90.0))(react@19.1.1):
+    dependencies:
+      '@standard-schema/spec': 1.0.0
+      react: 19.1.1
+    optionalDependencies:
+      next: 15.4.6(@babel/core@7.28.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(sass@1.90.0)
 
   object-assign@4.1.1: {}
 
@@ -9206,6 +9270,10 @@ snapshots:
   reusify@1.1.0: {}
 
   rou3@0.5.1: {}
+
+  rrule-temporal@1.2.0:
+    dependencies:
+      '@js-temporal/polyfill': 0.5.1
 
   run-parallel@1.2.0:
     dependencies:
@@ -9654,4 +9722,4 @@ snapshots:
       toposort: 2.0.2
       type-fest: 2.19.0
 
-  zod@3.25.76: {}
+  zod@4.1.11: {}

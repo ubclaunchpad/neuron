@@ -27,7 +27,7 @@
 
   &__input {
     @include text-reg;
-    padding: $padding-sm 0 $padding-sm $padding-md;
+    padding: $padding-sm calc($font-size-md + $padding-md + $padding-sm) $padding-sm $padding-md;
     margin: 0;
     outline: none;
     border: none;
@@ -35,8 +35,9 @@
   }
 
   &__toggle {
-    all: unset;
-    padding-right: $padding-md;
+    position: absolute;
+    cursor: pointer;
+    right: $padding-md;
     color: $text-grey;
     width: $font-size-md;
     height: $font-size-md;

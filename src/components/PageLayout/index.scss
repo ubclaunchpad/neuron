@@ -14,11 +14,22 @@
     --main-offset: var(--sidebar-w);
   }
 
+  &-header {
+    background-color: $bg-white;
+    border-bottom: 1px solid $bg-grey-outline;
+  }
+
   &-content {
     height: 100%;
     min-height: 0;
-    overflow: auto;
     transition: padding-right $transition-fast;
+    overflow-y: auto;
+
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable both-edges;
 
     .inner-content {
       min-width: var(--main-min);
@@ -27,7 +38,6 @@
 
   &-sidebar {
     top: 0;
-    right: 0;
     position: fixed;
     height: 100%;
     width: min(var(--sidebar-w), 100vw);
@@ -37,7 +47,7 @@
     flex-direction: column;
     background: $bg-white;
     border-left: 0.67px solid $bg-grey-outline;
-    transform: translateX(100%);
+    right: -100%;
     transition: transform $transition-fast;
 
     .sidebar-content {
@@ -48,7 +58,7 @@
     }
 
     .is-open & {
-      transform: translateX(0);
+      right: 0;
     }
   }
 }

@@ -69,6 +69,7 @@
     border-radius: $radius-regular;
     box-shadow: $shadow-regular;
     overflow: hidden;
+    min-width: var(--trigger-width);
   }
 
   &__listbox {

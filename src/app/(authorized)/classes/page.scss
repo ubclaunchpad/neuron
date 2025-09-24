@@ -1,2 +1,81 @@
 @use "variables" as *;
+@use "mixins" as *;
+@use "typography" as *;
 
+.classes {
+    &__content {
+        display: flex;
+        flex-direction: column;
+        gap: $padding-lg;
+        padding: 2.25rem;
+    }
+
+    &__categories {
+        display: flex;
+        gap: $padding-lg;
+        padding-inline: 2.25rem;
+        overflow: auto;
+        @include scrollbar-hide;
+    }
+
+    &__category {
+        @include text-reg;
+        color: $text-grey;
+        padding-inline: $padding-xxs;
+        padding-bottom: 6.5px;
+        overflow: hidden;
+        position: relative;
+        flex-shrink: 0;
+        scroll-margin-inline: $padding-xxxl;
+        
+        &::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -5px;
+            height: 5px;
+            border-radius: $radius-regular $radius-regular 0 0;
+            background: $secondary;
+            transition: bottom $transition-regular;
+        }
+
+        &.active::before {
+            bottom: 0;
+        }
+    }
+
+    &__create-button {
+        width: 100%;
+        > svg {
+            color: $text-white;
+        }
+    }
+
+    &__list-content {
+        display: flex;
+        flex-direction: column;
+        gap: $padding-lg;
+    }
+
+    &__list-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.75rem;
+        scroll-margin-block: 2.25rem;
+
+        &-title {
+            color: $text-dark;
+            padding-top: $padding-sm;
+            padding-bottom: $padding-xs;
+            border-bottom: 1px solid $bg-grey-outline;
+        }
+
+        &-content {
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            gap: $padding-lg;
+        }
+    }
+}

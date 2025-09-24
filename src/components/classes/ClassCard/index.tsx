@@ -5,12 +5,12 @@ import { Card } from "@/components/primitives/Card";
 import { FallbackImage } from "@/components/utils/FallbackImage";
 import { WithPermission } from "@/components/utils/WithPermission";
 import type { ListClass } from "@/models/class";
-import EditIcon from "@/public/assets/icons/edit.svg";
-import { computeLiteralSchedule } from "@/utils/scheduleUtils";
+import { consolidateSchedules } from "@/utils/scheduleUtils";
+import EditIcon from "@public/assets/icons/edit.svg";
 import "./index.scss";
 
 export function ClassCard({ classData }: { classData: ListClass }) {
-
+  const schedules = consolidateSchedules(classData.schedules);
   return (
     <Card>
       <WithPermission permissions={{ permission: { classes: ["update"] }}}>
@@ -23,9 +23,12 @@ export function ClassCard({ classData }: { classData: ListClass }) {
       <div className="class-card__content">
         <strong className="class-card__name">{classData.name}</strong>
         <p className="class-card__schedule">
-          {classData.schedules.map(schedule => (
-            <span key={schedule.id}>{computeLiteralSchedule(schedule)}</span>
+          {schedules.slice(0, 2).map((schedule, index) => (
+            <span className="class-card__schedule-item" key={index}>{schedule}</span>
           ))}
+          {schedules.length > 2 && (
+            <span className="class-card__schedule-item">+{schedules.length - 2} more</span>
+          )}
         </p>
       </div>
     </Card>

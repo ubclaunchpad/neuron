@@ -1,6 +1,6 @@
 import { AVAILABILITY_SLOTS } from "@/constants";
 import { Role, Status } from "@/models/interfaces";
-import { schedule } from "@/server/db/schema/course";
+import { schedule } from "@/server/db/schema/schedule";
 import { eq, relations, sql } from "drizzle-orm";
 import { bit, boolean, check, index, integer, pgEnum, pgTable, pgView, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 

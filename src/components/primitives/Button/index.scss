@@ -9,7 +9,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: $padding-sm;
+  gap: $padding-xs;
   padding: $padding-sm $padding-md;
   line-height: 1;
 
@@ -43,7 +43,7 @@
   > svg {
     @include text-icon;
     color: var(--btn-icon);
-    transition: color $transition-fast;
+    transition: color $transition-hover;
   }
   > span { 
     line-height: 1; 

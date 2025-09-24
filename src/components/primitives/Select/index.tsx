@@ -1,3 +1,4 @@
+import { SkeletonButton } from "@/components/skeleton";
 import CaretDownIcon from "@public/assets/icons/caret-down.svg";
 import clsx from "clsx";
 import type { ReactNode } from "react";
@@ -26,6 +27,7 @@ export interface SelectProps<T extends object>
   children: React.ReactNode | ((item: T) => React.ReactNode);
   placeholder?: string;
   className?: string;
+  isLoading?: boolean;
 }
 
 export function Select<T extends object>({
@@ -36,8 +38,13 @@ export function Select<T extends object>({
   children,
   placeholder = "Select",
   className,
+  isLoading,
   ...props
 }: SelectProps<T>) {
+  if (isLoading) {
+    return <SkeletonButton />;
+  }
+
   return (
     <AriaSelect
       {...props}

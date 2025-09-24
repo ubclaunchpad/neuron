@@ -25,8 +25,9 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
     "@internationalized/date": "^3.9.0",
+    "@js-temporal/polyfill": "^0.5.1",
     "@react-aria/i18n": "^3.12.12",
-    "@t3-oss/env-nextjs": "^0.12.0",
+    "@t3-oss/env-nextjs": "^0.13.0",
     "@tanstack/react-query": "^5.69.0",
     "@trpc/client": "^11.0.0",
     "@trpc/react-query": "^11.0.0",
@@ -39,6 +40,7 @@
     "next": "^15.2.3",
     "next-themes": "^0.4.6",
     "nodemailer": "^7.0.5",
+    "nuqs": "^2.6.0",
     "postgres": "^3.4.4",
     "react": "19.1.1",
     "react-aria": "^3.43.1",
@@ -46,11 +48,12 @@
     "react-dom": "19.1.1",
     "react-hook-form": "^7.62.0",
     "redis": "^5.8.2",
+    "rrule-temporal": "^1.2.0",
     "server-only": "^0.0.1",
     "sonner": "^2.0.7",
     "superjson": "^2.2.1",
     "yup": "^1.7.0",
-    "zod": "^3.25.76"
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
@@ -71,5 +74,5 @@
   "ct3aMetadata": {
     "initVersion": "7.39.3"
   },
-  "packageManager": "pnpm@10.15.0"
+  "packageManager": "pnpm@10.17.1"
 }

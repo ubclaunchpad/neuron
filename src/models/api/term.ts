@@ -1,13 +1,12 @@
 import { z } from "zod";
-import { DateYMD, Uuid } from "./common";
 
 export const TermIdInput = z.object({
-  termId: Uuid,
+  termId: z.uuid(),
 });
 
 export const CreateTermInput = z.object({
   name: z.string().min(1),
-  startDate: DateYMD,
-  endDate: DateYMD,
+  startDate: z.iso.date(),
+  endDate: z.iso.date(),
 });
 export type CreateTermInput = z.infer<typeof CreateTermInput>;

@@ -76,7 +76,7 @@ export default function ClientAuthProvider({
 
   // While page is loading
   if (!bootstrapped && isPending) {
-    return <h1>Loading...</h1>;
+    return <div>Loading...</div>;
   }
 
   if (!session && error) {

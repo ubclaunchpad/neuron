@@ -36,6 +36,7 @@ export const DevChildren = ({
   return warnedRef.current ? (
     <>{children}</>
   ) : (
-    <Wrapper ref={ref}>{children}</Wrapper>
+    // prevent wrapper from causing layout shift
+    <Wrapper ref={ref} style={{ position: 'fixed' }}>{children}</Wrapper>
   )
 }

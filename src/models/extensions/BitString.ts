@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** Generic factory if you want to reuse elsewhere */
-export const zodBitString = (len: number) =>
+export const BitString = (len: number) =>
   z
     .string()
     .length(len)

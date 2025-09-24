@@ -5,10 +5,10 @@ import "./index.scss";
 
 type PageLayoutProps = {
   children?: React.ReactNode;
-  title: string;
-  open?: boolean;
+  sidebarOpen?: boolean;
   sidebarWidth?: number;
   mainMinWidth?: number;
+  contentRef?: React.Ref<HTMLDivElement>; 
 };
 
 const SlotDefs = {
@@ -23,9 +23,10 @@ type PageLayoutCompound = React.FC<PageLayoutProps> & {
 
 export const PageLayout: PageLayoutCompound = ({
   children,
-  open = false,
+  sidebarOpen: open = false,
   sidebarWidth = 384,
   mainMinWidth = 360,
+  contentRef,
 }) => {
   const vars: React.CSSProperties = {
     ["--sidebar-w" as any]: `${sidebarWidth}px`,
@@ -43,7 +44,7 @@ export const PageLayout: PageLayoutCompound = ({
           {/* Main area */}
           { header && <header className="page-layout-header">{header}</header>}
     
-          <main className="page-layout-content">
+          <main ref={contentRef} className="page-layout-content">
             <div className="inner-content">{children}</div>
           </main>
     

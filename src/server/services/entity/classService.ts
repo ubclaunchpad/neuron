@@ -1,21 +1,16 @@
-import type {
-  ClassRequest,
-  CreateClassInput,
-  CreateScheduleInput,
-  UpdateClassInput,
-  UpdateScheduleInput
-} from "@/models/api/class";
-import { buildClass, buildSchedule, type Class, type ClassResponse } from "@/models/class";
+import { Temporal } from "@js-temporal/polyfill";
+import { and, eq, inArray, sql, SQL } from "drizzle-orm";
+import { RRuleTemporal } from "rrule-temporal";
+
+import type { ClassRequest, CreateClassInput, UpdateClassInput } from "@/models/api/class";
+import type { CreateScheduleInput, ScheduleRule, UpdateScheduleInput, Weekday } from "@/models/api/schedule";
+import { buildClass, type Class, type ClassResponse } from "@/models/class";
 import type { ListResponse } from "@/models/list-response";
+import { buildSchedule } from "@/models/schedule";
 import { type Drizzle, type Transaction } from "@/server/db";
-import {
-  course,
-  schedule,
-  volunteerToSchedule
-} from "@/server/db/schema/course";
+import { course, schedule, volunteerToSchedule } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap } from "@/utils/arrayUtils";
-import { and, eq, inArray, sql, SQL } from "drizzle-orm";
 import { InstructorService } from "./instructorService";
 import type { TermService } from "./termService";
 import { VolunteerService } from "./volunteerService";
@@ -192,6 +187,7 @@ export class ClassService {
           course.schedules.map((schedule) =>
             buildSchedule(
               schedule,
+              this.buildScheduleRuleFromRRule(schedule.rrule),
               schedule.instructorUserId
                 ? instructors.get(schedule.instructorUserId)!
                 : undefined,
@@ -214,13 +210,18 @@ export class ClassService {
     for (const updateSchedule of schedules) {
       const {
         scheduleId,
+        rule,
         addedVolunteerUserIds,
         removedVolunteerUserIds,
         ...scheduleUpdate
       } = updateSchedule;
+
       await tx
         .update(schedule)
-        .set(scheduleUpdate)
+        .set({
+          ...scheduleUpdate,
+          rrule: rule ? this.buildRRuleFromScheduleRule(rule).toString() : undefined,
+        })
         .where(eq(schedule.id, scheduleId));
 
       // Insert volunteers to schedule
@@ -257,10 +258,12 @@ export class ClassService {
   ): Promise<void> {
     // Insert schedules
     for (const createSchedule of schedules) {
-      const { volunteerUserIds, ...scheduleCreate } = createSchedule;
+      const { volunteerUserIds, rule, ...scheduleCreate } = createSchedule;
+      const rruleObject = this.buildRRuleFromScheduleRule(rule);
+
       const row = await tx
         .insert(schedule)
-        .values({ ...scheduleCreate, courseId })
+        .values({ ...scheduleCreate, courseId, rrule: rruleObject.toString() })
         .returning({ id: schedule.id })
         .then((rows) => rows[0]);
 
@@ -275,6 +278,84 @@ export class ClassService {
           volunteerUserId: volunteerId,
         })),
       );
+    }
+  }
+
+  private readonly PlaceholderDate = Temporal.Instant.fromEpochMilliseconds(0).toZonedDateTimeISO("UTC");
+  private buildRRuleFromScheduleRule(rule: ScheduleRule): RRuleTemporal {
+    // Build base RRule parameters
+    const { hour, minute, second } = Temporal.PlainTime.from(rule.localStartTime);
+    let baseRRuleParams = {
+      dtstart: this.PlaceholderDate,
+      byHour: [hour],
+      byMinute: [minute],
+      bySecond: [second],
+      tzid: rule.tzid,
+    };
+
+    switch (rule.type) {
+      case "weekly":
+        return new RRuleTemporal({
+          ...baseRRuleParams,
+          freq: "WEEKLY",
+          byDay: [rule.weekday],
+          interval: rule.interval,
+        });
+      case "monthly":
+        return new RRuleTemporal({
+          ...baseRRuleParams,
+          freq: "MONTHLY",
+          byDay: [rule.weekday],
+          bySetPos: [rule.nth],
+        });
+      case "single":
+        return new RRuleTemporal({
+          ...baseRRuleParams,
+          freq: "YEARLY",
+          count: rule.extraDates.length,
+          rDate: rule.extraDates.map(
+            (date) => Temporal.PlainDate.from(date).toZonedDateTime({ 
+              timeZone: rule.tzid,
+              plainTime: Temporal.PlainTime.from(rule.localStartTime)
+            })
+          ),
+        });
+    }
+  }
+
+  private buildScheduleRuleFromRRule(rruleString: string): ScheduleRule {
+    const rule = new RRuleTemporal({ rruleString });
+    const options = rule.options();
+
+    // Build base schedule rule
+    const baseScheduleRule = {
+      tzid: options.tzid ?? "America/Vancouver",
+      localStartTime: new Temporal.PlainTime(options.byHour?.[0] ?? 0, options.byMinute?.[0] ?? 0, options.bySecond?.[0] ?? 0).toString(),
+    };
+
+    switch (options.freq) {
+      case "WEEKLY":
+        return {
+          type: "weekly",
+          weekday: (options.byDay?.[0] ?? "SU") as Weekday,
+          interval: options.interval ?? 1,
+          ...baseScheduleRule,
+        };
+      case "MONTHLY":
+        return {
+          type: "monthly",
+          weekday: (options.byDay?.[0] ?? "SU") as Weekday,
+          nth: options.bySetPos?.[0] ?? 1,
+          ...baseScheduleRule,
+        };
+      case "YEARLY":
+        return {
+          type: "single",
+          extraDates: options.rDate?.map((date) => date.toPlainDate().toString()) ?? [],
+          ...baseScheduleRule,
+        };
+      default:
+        throw new NeuronError("Unable to build ScheduleRule from RRule", NeuronErrorCodes.INTERNAL_SERVER_ERROR);
     }
   }
 }

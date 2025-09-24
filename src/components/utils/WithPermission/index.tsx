@@ -13,7 +13,7 @@ export function WithPermission({
 }: {
   permissions?: Permissions;
   fallback?: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   if (permissions === undefined) {
     return children;

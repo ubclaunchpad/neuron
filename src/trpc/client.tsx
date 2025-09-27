@@ -49,10 +49,12 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
             if (process.env.NODE_ENV !== "development" || op.direction !== "down") {
               return false;
             }
+
             if (op.result instanceof TRPCClientError) {
-              const code = op.result.data?.code ?? (op.result.data as any).code;
+              const code = op.result.data?.code;
               return code === 'INTERNAL_SERVER_ERROR';
             }
+
             return true;
           }
         }),

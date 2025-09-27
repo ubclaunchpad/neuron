@@ -5,12 +5,12 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Form } from "react-aria-components";
 import { useForm } from "react-hook-form";
 import * as Yup from "yup";
-import "../form.scss";
+import "../index.scss";
 
 import { Button } from "@/components/primitives/Button";
 import { RootError } from "@/components/primitives/FormErrors/RootError";
 import { TextInput } from "@/components/primitives/TextInput";
-import { getBetterAuthErrorMessage, type ErrorCode } from "@/lib/auth/extensions/get-better-auth-error";
+import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 import { toast } from "sonner";
 
 const LoginSchema = Yup.object().shape({
@@ -47,7 +47,7 @@ export default function LoginForm() {
     if (error) {
       setError("root", {
         type: "custom",
-        message: getBetterAuthErrorMessage(error.code as ErrorCode),
+        message: getBetterAuthErrorMessage(error?.code),
       });
     } else {
       toast.success("Signed in successfully");

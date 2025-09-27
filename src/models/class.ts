@@ -6,8 +6,6 @@ export type Class = {
   id: string;
   name: string;
   description?: string;
-  startDate: string;
-  endDate: string;
   image?: string;
   published: boolean;
   meetingURL?: string;
@@ -26,8 +24,6 @@ export function buildClass(
     id: classDB.id,
     name: classDB.name,
     description: classDB.description ?? undefined,
-    startDate: classDB.startDate,
-    endDate: classDB.endDate,
     image: classDB.image ?? undefined,
     published: classDB.published,
     meetingURL: classDB.meetingURL ?? undefined,
@@ -44,8 +40,6 @@ export function getSingleClass(c: Class) {
     id: c.id,
     name: c.name,
     description: c.description,
-    startDate: c.startDate,
-    endDate: c.endDate,
     image: c.image,
     published: c.published,
     meetingURL: c.meetingURL,

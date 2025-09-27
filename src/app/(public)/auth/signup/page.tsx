@@ -6,14 +6,14 @@ import { useState } from "react";
 import { Form } from "react-aria-components";
 import { useForm } from "react-hook-form";
 import * as Yup from "yup";
-import "../form.scss";
+import "../index.scss";
 
 import { Button } from "@/components/primitives/Button";
 import { Card } from "@/components/primitives/Card";
 import { RootError } from "@/components/primitives/FormErrors/RootError";
 import { TextInput } from "@/components/primitives/TextInput";
 import { authClient } from "@/lib/auth/client";
-import { getBetterAuthErrorMessage, type ErrorCode } from "@/lib/auth/extensions/get-better-auth-error";
+import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 
 const SignupSchema = Yup.object().shape({
   firstName: Yup.string().required("Please fill out this field."),
@@ -64,7 +64,7 @@ export default function SignupForm() {
     if (error) {
       setError("root", {
         type: "custom",
-        message: getBetterAuthErrorMessage(error.code as ErrorCode),
+        message: getBetterAuthErrorMessage(error?.code),
       });
     } else {
       setSuccessMessage(

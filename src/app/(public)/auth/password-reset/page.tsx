@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Form } from "react-aria-components";
 import { useForm } from "react-hook-form";
 import * as Yup from "yup";
-import "../form.scss";
+import "../index.scss";
 
 import { Button } from "@/components/primitives/Button";
 import { Card } from "@/components/primitives/Card";
@@ -22,7 +22,7 @@ const PasswordResetSchema = Yup.object().shape({
     .required("Please fill out this field."),
   confirmPassword: Yup.string()
     .required("Please fill out this field.")
-    .oneOf([Yup.ref("password"), null], "Passwords don't match."),
+    .oneOf([Yup.ref("password")], "Passwords don't match."),
 });
 
 type PasswordResetSchemaType = Yup.InferType<typeof PasswordResetSchema>;
@@ -53,14 +53,14 @@ export default function PasswordResetForm() {
 
   const onSubmit = async (data: PasswordResetSchemaType) => {
     const { error } = await authClient.resetPassword({
-      token,
+      token: token ?? undefined,
       newPassword: data.password,
     });
 
     if (error) {
       setError("root", {
         type: "custom",
-        message: getBetterAuthErrorMessage(error.code),
+        message: getBetterAuthErrorMessage(error?.code),
       });
     } else {
       setSuccessMessage("Password successfully reset!");

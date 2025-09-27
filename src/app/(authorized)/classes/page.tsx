@@ -2,14 +2,16 @@
 
 import clsx from "clsx";
 import { parseAsString, useQueryState } from "nuqs";
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./page.scss";
 
+import { ActiveSectionProvider, Section, SectionLink, useActiveSection } from "@/components/classes/ActiveSectionProvider";
 import { ClassCard } from '@/components/classes/ClassCard';
-import { PageLayout } from "@/components/PageLayout";
+import { PageLayout, useSidebar } from "@/components/PageLayout";
 import { PageTitle } from "@/components/PageLayout/PageHeader";
 import { Button } from '@/components/primitives/Button';
 import { Select } from "@/components/primitives/Select";
+import { SidebarContainer, SidebarItem } from "@/components/sidebar";
 import { Loader } from '@/components/utils/Fallback';
 import { WithPermission } from '@/components/utils/WithPermission';
 import type { ListClass } from '@/models/class';
@@ -26,151 +28,18 @@ const classCategories = [
   "Other Opportunities",
 ];
 
-const CategoryNavContext = React.createContext<{
-  activeCategory: string | null;
-  scrollToCategory: (id: string) => void;
-  registerSection: (id: string, el: HTMLElement | null) => void;
-  registerHeader: (id: string, el: HTMLElement | null) => void;
-} | null>(null);
-
-export function CategoryNavProvider({
-  categories,
-  scrollRef,
-  children,
-}: {
-  categories: string[];
-  scrollRef: React.RefObject<HTMLElement | null>;
-  children: React.ReactNode;
-}) {
-  const initial = categories[0] ?? null;
-  const [active, setActive] = React.useState<string | null>(initial);
-  const activeRef = React.useRef<string | null>(active);
-  React.useEffect(() => {
-    activeRef.current = active;
-
-    // Scroll header into view
-    const headerEl = headerRegistry.current.get(active ?? "");
-    if (headerEl) {
-      headerEl.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
-    }
-  }, [active]);
-
-  const sectionRegistry = React.useRef(new Map<string, HTMLElement>());
-  const headerRegistry = React.useRef(new Map<string, HTMLElement>());
-
-  // When true, ignore exactly one scroll event
-  const ignoreNextScroll = React.useRef(false);
-
-  const registerSection = React.useCallback((id: string, el: HTMLElement | null) => {
-    if (el) {
-      sectionRegistry.current.set(id, el);
-
-      // If the user clicked this id before it was mounted, try to bring it into view now.
-      if (id === activeRef.current && ignoreNextScroll.current) {
-        el.scrollIntoView({ behavior: "auto", block: "start", inline: "nearest" });
-      }
-    } else {
-      sectionRegistry.current.delete(id);
-    }
-  }, []);
-
-  const registerHeader = React.useCallback((id: string, el: HTMLElement | null) => {
-    if (el) {
-      headerRegistry.current.set(id, el);
-
-      // If the user clicked this id before it was mounted, try to bring it into view now.
-      if (id === activeRef.current && ignoreNextScroll.current) {
-        el.scrollIntoView({ behavior: "auto", block: "start", inline: "nearest" });
-      }
-    } else {
-      headerRegistry.current.delete(id);
-    }
-  }, []);
-
-  const scrollToCategory = React.useCallback((id: string) => {
-    setActive(id);
-    ignoreNextScroll.current = true;
-
-    const el = sectionRegistry.current.get(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
-    }
-  }, []);
-
-  // Scroll handler
-  React.useEffect(() => {
-    const container = scrollRef?.current;
-    if (!container) return;
-
-    let ticking = false;
-    const onScroll = () => {
-      if (ignoreNextScroll.current) {
-        ignoreNextScroll.current = false;
-        return;
-      }
-
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        ticking = false;
-
-        const containerTop = container.getBoundingClientRect().top;
-        let closestId: string | null = null;
-        let closestDist = Number.POSITIVE_INFINITY;
-
-        sectionRegistry.current.forEach((el, id) => {
-          const dist = Math.abs(el.getBoundingClientRect().top - containerTop);
-          if (dist < closestDist) {
-            closestDist = dist;
-            closestId = id;
-          }
-        });
-
-        if (closestId && closestId !== activeRef.current) {
-          setActive(closestId);
-        }
-      });
-    };
-
-    container.addEventListener("scroll", onScroll, { passive: true });
-    // Initialize from current position, but respect a just-clicked selection.
-    onScroll();
-    return () => container.removeEventListener("scroll", onScroll);
-  }, [scrollRef]);
-
-  return (
-    <CategoryNavContext.Provider
-      value={{ activeCategory: active, scrollToCategory, registerSection, registerHeader }}
-    >{active}{children}</CategoryNavContext.Provider>
-  );
-}
-
-export function CategorySection({
-  category,
-  children,
-}: {
-  category: string;
-  children?: React.ReactNode;
-}) {
-  const { registerSection } = useContext(CategoryNavContext)!;
-  const setRef = React.useCallback(
-    (node: HTMLElement | null) => registerSection(category, node),
-    [category, registerSection]
-  );
-
-  return (
-    <section ref={setRef} className="classes__list-section" data-category={category}>
-      <h3 className="classes__list-section-title">{category}</h3>
-      {children}
-    </section>
-  );
-}
-
 function ClassesList({
   classes,
 }: {
   classes: ListClass[];
 }) {
+  const { setSelectedClassId } = useClassesPage();
+  const { setIsOpen } = useSidebar();
+  const handleSelectClass = useCallback((classId: string) => {
+    setSelectedClassId(classId);
+    setIsOpen(true);
+  }, [setSelectedClassId, setIsOpen]);
+
   // Group classes by category
   const classesByCategory = useMemo(() => {
     const defaultCategory = "Other Opportunities";
@@ -190,11 +59,18 @@ function ClassesList({
     </WithPermission>
     <div className="classes__list-content">
       {Object.entries(classesByCategory ?? {}).map(([category, classes]) => (
-        <CategorySection key={category} category={category}>
-          {classes.map((c) => (
-            <ClassCard key={c.id} classData={c} />
+        <Section key={category} sectionId={category} className="classes__list-section">
+          <h3 className="classes__list-section-title">{category}</h3>
+          {classes.map((cls) => (
+            <Button 
+              key={cls.id} 
+              onPress={() => handleSelectClass(cls.id)}
+              unstyled
+            >
+              <ClassCard classData={cls} />
+            </Button>
           ))}
-        </CategorySection>
+        </Section>
       ))}
     </div>
   </>);
@@ -207,50 +83,58 @@ function EmptyClassesList() {
 }
 
 export function ClassHeaderCategories() {
-  const { activeCategory, scrollToCategory, registerHeader } = useContext(CategoryNavContext)!;
+  const { activeSectionId } = useActiveSection();
 
   return (
     <div className="classes__categories">
-      {classCategories.map((category) => {
-          const setRef = React.useCallback(
-            (node: HTMLElement | null) => registerHeader(category, node),
-            [category, registerHeader]
-          );
-
-          return (
-            <Button 
-              unstyled
-              ref={setRef}
-              key={category} 
-              className={clsx(
-                "classes__category", 
-                { "active": category === activeCategory }
-              )}
-              onPress={() => scrollToCategory(category)}
-            >{category}</Button>
-          );
-      })}
+      {classCategories.map((category) => (
+        <SectionLink 
+          key={category}
+          sectionId={category}
+          className={clsx(
+            "classes__category", 
+            { "active": category === activeSectionId }
+          )}
+        >{category}</SectionLink>
+      ))}
     </div>
   );
 }
 
-export default function ClassesListView() {
-  const apiUtils = clientApi.useUtils();
-  const [queryTerm, setQueryTerm] = useQueryState(
-    "term",
-    parseAsString.withDefault("current"),
-  );  
+const ClassesPageContext = React.createContext<{
+  selectedClassId: string | null;
+  setSelectedClassId: (classId: string | null) => void;
+} | null>(null);
 
-  const { data: terms, isPending: isLoadingTerms, isError: isTermError } = clientApi.term.all.useQuery();
-  const { data: classData, isPending: isLoadingClasses, isError: isClassError } = clientApi.class.list.useQuery(
+export const useClassesPage = () => {
+  const ctx = React.useContext(ClassesPageContext);
+  if (!ctx) throw new Error("useClassesPage must be used within the <ClassesPage> component");
+  return ctx;
+};
+
+export default function ClassesPage() {
+  const apiUtils = clientApi.useUtils();
+  const [queryTerm, setQueryTerm] = useQueryState("term", parseAsString.withDefault("current"));
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+
+  const {
+    data: terms, 
+    isPending: isLoadingTerms,
+    isError: isTermError 
+  } = clientApi.term.all.useQuery();
+  const {
+    data: classListData, 
+    isPending: isLoadingClassList, 
+    isError: isClassListError
+  } = clientApi.class.list.useQuery(
     { term: queryTerm },
   );
 
   useEffect(() => {
     if (queryTerm == "current") {
-      setSelectedTermId(classData?.term.id ?? null);
+      setSelectedTermId(classListData?.term.id ?? null);
     }
-  }, [classData]);
+  }, [classListData]);
 
   const [selectedTermId, setSelectedTermId] = useState<string | null>(
     queryTerm !== "current" ? queryTerm : null
@@ -267,46 +151,70 @@ export default function ClassesListView() {
   // Wire in the scroll ref to the content to keep track of the active category
   const contentScrollRef = useRef<HTMLDivElement>(null);
   return (
-    <CategoryNavProvider categories={classCategories} scrollRef={contentScrollRef}>
-      <PageLayout contentRef={contentScrollRef}>
-        <PageLayout.Header>
-          <PageTitle title="Classes">
-            <PageTitle.RightContent>
-              {(!isLoadingTerms && terms?.length !== 0) && 
-                <Select
-                  isLoading={isLoadingTerms}
-                  items={terms ?? []}
-                  selectedKey={selectedTermId ?? undefined}
-                  isDisabled={terms?.length === 1}
-                  onSelectionChange={(k) => handleSelectTerm(k as string)}
-                >
-                  {(item) => <Select.Item>{item.name}</Select.Item>}
-                </Select>}
-            </PageTitle.RightContent>
-          </PageTitle>
-          <ClassHeaderCategories/>
-        </PageLayout.Header>
+    <ActiveSectionProvider sectionIds={classCategories} scrollRef={contentScrollRef}>
+      <ClassesPageContext.Provider value={{ selectedClassId, setSelectedClassId }}> 
+        <PageLayout contentRef={contentScrollRef}>
+          <PageLayout.Header>
+            <PageTitle title="Classes">
+              <PageTitle.RightContent>
+                {(!isLoadingTerms && terms?.length !== 0) && 
+                  <Select
+                    isLoading={isLoadingTerms}
+                    items={terms ?? []}
+                    selectedKey={selectedTermId ?? undefined}
+                    isDisabled={terms?.length === 1}
+                    onSelectionChange={(k) => handleSelectTerm(k as string)}
+                  >
+                    {(item) => <Select.Item>{item.name}</Select.Item>}
+                  </Select>}
+              </PageTitle.RightContent>
+            </PageTitle>
+            <ClassHeaderCategories/>
+          </PageLayout.Header>
 
-        <PageLayout.Sidebar>
-          <div>This is the sidebar</div>
-        </PageLayout.Sidebar>
+          <PageLayout.Sidebar>
+            <Suspense fallback={<div>Loading class…</div>}>
+              <SidebarContainer>
+                <SidebarContainer.Header>
+                  <h3>Art from the Heart</h3>
+                  <span>Mondays weekly, 10:00-11:00AM</span>
+                  <span>Wednesdays weekly, 10:00-11:00AM</span>
+                </SidebarContainer.Header>
+                <SidebarContainer.Body>
+                  <SidebarItem label="Something">
+                    <div>This is the content</div>
+                  </SidebarItem>
+                  <SidebarItem label="Something Else">
+                    <div>This is the content</div>
+                  </SidebarItem>
+                  <SidebarItem label="3rd Thing" inline={false}>
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                  </SidebarItem>
+                </SidebarContainer.Body>
+                <SidebarContainer.Footer>
+                  <div>This is the footer</div>
+                </SidebarContainer.Footer>
+              </SidebarContainer>
+            </Suspense>
+          </PageLayout.Sidebar>
 
-        <div className="classes__content">
-          <Loader isLoading={isLoadingClasses || isLoadingTerms} fallback={<div>Loading classes…</div>}>
-            <WithPermission 
-              permissions={{ permission: { classes: ["create"] }}}
-              fallback={<>
-                { !classData?.classes.length && <EmptyClassesList /> }
-                { !!classData?.classes.length && <ClassesList classes={classData?.classes!} /> }
-              </>}
-            >
-              { terms?.length === 0 && <div>Create your first term</div> }
-              { !classData?.classes.length && <div>Create your first class</div> }
-              { !!classData?.classes.length && <ClassesList classes={classData?.classes!} /> }
-            </WithPermission>
-          </Loader>
-        </div>
-      </PageLayout>
-    </CategoryNavProvider>
+          <div className="classes__content">
+            <Loader isLoading={isLoadingClassList || isLoadingTerms} fallback={<div>Loading classes…</div>}>
+              <WithPermission 
+                permissions={{ permission: { classes: ["create"] }}}
+                fallback={<>
+                  { !classListData?.classes.length && <EmptyClassesList /> }
+                  { !!classListData?.classes.length && <ClassesList classes={classListData?.classes!} /> }
+                </>}
+              >
+                { terms?.length === 0 && <div>Create your first term</div> }
+                { !classListData?.classes || classListData?.classes.length === 0 && <div>Create your first class</div> }
+                { classListData?.classes && classListData?.classes.length > 0 && <ClassesList classes={classListData?.classes!} /> }
+              </WithPermission>
+            </Loader>
+          </div>
+        </PageLayout>
+      </ClassesPageContext.Provider>
+    </ActiveSectionProvider>
   );
 }

@@ -1,11 +1,10 @@
 import { createHost, createSlot } from "@/lib/slots";
 import clsx from "clsx";
-import * as React from "react";
+import React, { useCallback } from "react";
 import "./index.scss";
 
 type PageLayoutProps = {
   children?: React.ReactNode;
-  sidebarOpen?: boolean;
   sidebarWidth?: number;
   mainMinWidth?: number;
   contentRef?: React.Ref<HTMLDivElement>; 
@@ -21,42 +20,58 @@ type PageLayoutCompound = React.FC<PageLayoutProps> & {
   Sidebar: typeof SlotDefs.Sidebar;
 };
 
+const SidebarContext = React.createContext<{
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  toggleSidebar: () => void;
+} | null>(null);
+
+export const useSidebar = () => {
+  const ctx = React.useContext(SidebarContext);
+  if (!ctx) throw new Error("useSidebar must be used within <PageLayout>");
+  return ctx;
+};
+
 export const PageLayout: PageLayoutCompound = ({
   children,
-  sidebarOpen: open = false,
-  sidebarWidth = 384,
+  sidebarWidth = 448,
   mainMinWidth = 360,
   contentRef,
 }) => {
+  const [isOpen, setIsOpen] = React.useState(true);
+  const toggleSidebar = useCallback(() => setIsOpen(!isOpen), [setIsOpen]);
+
   const vars: React.CSSProperties = {
     ["--sidebar-w" as any]: `${sidebarWidth}px`,
     ["--main-min" as any]: `${mainMinWidth}px`,
   };
 
   return (
-    <div className={clsx("page-layout", { "is-open": open })} style={vars}>
-      {createHost(children, (Slots) => {
-        const header = Slots.get(SlotDefs.Header);
-        const sidebar = Slots.get(SlotDefs.Sidebar);
-        const children = Slots.getRest();
+    <SidebarContext.Provider value={{ isOpen, setIsOpen, toggleSidebar }}>
+      <div className={clsx("page-layout", { "is-open": isOpen })} style={vars}>
+        {createHost(children, (Slots) => {
+          const header = Slots.get(SlotDefs.Header);
+          const sidebar = Slots.get(SlotDefs.Sidebar);
+          const children = Slots.getRest();
 
-        return (<>
-          {/* Main area */}
-          { header && <header className="page-layout-header">{header}</header>}
-    
-          <main ref={contentRef} className="page-layout-content">
-            <div className="inner-content">{children}</div>
-          </main>
-    
-          {/* Sidebar */}
-          { sidebar && <aside className="page-layout-sidebar" aria-hidden={!open} >
-            <div className="sidebar-content">
-              {sidebar}
-            </div>
-          </aside>}
-        </>)
-      })}
-    </div>
+          return (<>
+            {/* Main area */}
+            { header && <header className="page-layout-header">{header}</header>}
+      
+            <main ref={contentRef} className="page-layout-content">
+              <div className="inner-content">{children}</div>
+            </main>
+      
+            {/* Sidebar */}
+            { sidebar && <aside className="page-layout-sidebar" aria-hidden={!isOpen} >
+              <div className="sidebar-content">
+                {sidebar}
+              </div>
+            </aside>}
+          </>)
+        })}
+      </div>
+    </SidebarContext.Provider>
   );
 };
 

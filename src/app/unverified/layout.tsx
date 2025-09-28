@@ -6,6 +6,6 @@ export default async function UnverifiedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireStatus(Status.pending);
+  await requireStatus(Status.unverified);
   return children;
 }

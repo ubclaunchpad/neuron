@@ -2,7 +2,7 @@ CREATE TYPE "public"."attendance_status" AS ENUM('present', 'absent', 'excused',
 CREATE TYPE "public"."coverage_category" AS ENUM('emergency', 'health', 'conflict', 'transportation', 'other');--> statement-breakpoint
 CREATE TYPE "public"."coverage_status" AS ENUM('open', 'withdrawn', 'resolved');--> statement-breakpoint
 CREATE TYPE "public"."role" AS ENUM('admin', 'instructor', 'volunteer');--> statement-breakpoint
-CREATE TYPE "public"."status" AS ENUM('pending', 'active', 'inactive');--> statement-breakpoint
+CREATE TYPE "public"."status" AS ENUM('unverified', 'rejected', 'active', 'inactive');--> statement-breakpoint
 CREATE TABLE "account" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"account_id" text NOT NULL,
@@ -152,7 +152,7 @@ CREATE TABLE "user" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"role" "role" NOT NULL,
-	"status" "status" DEFAULT 'pending' NOT NULL,
+	"status" "status" DEFAULT 'unverified' NOT NULL,
 	"last_name" text NOT NULL,
 	CONSTRAINT "user_email_unique" UNIQUE("email")
 );

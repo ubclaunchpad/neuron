@@ -33,7 +33,7 @@ const baseAuthConfig = {
       },
       status: {
         type: StatusEnum.options,
-        defaultValue: Status.pending,
+        defaultValue: Status.unverified,
         input: false,
       },
       lastName: { type: "string" },

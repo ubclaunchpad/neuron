@@ -19,7 +19,7 @@ export const user = pgTable("user", {
 
     // Additional fields
     role: role('role').notNull(),
-    status: status('status').notNull().default(Status.pending),
+    status: status('status').notNull().default(Status.unverified),
     lastName: text('last_name').notNull(),
 }, (table) => [
     index("idx_user_email").on(table.email),

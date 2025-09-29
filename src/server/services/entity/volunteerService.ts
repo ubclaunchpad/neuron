@@ -5,7 +5,9 @@ import { type Drizzle } from "@/server/db";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { inArray, sql } from "drizzle-orm";
-import { volunteerUserView } from "../../db/schema/user";
+import { volunteerUserView, user } from "../../db/schema/user";
+import { Status } from "@/models/interfaces";
+import { eq } from "drizzle-orm";
 
 export class VolunteerService {
   private readonly db: Drizzle;
@@ -51,4 +53,31 @@ export class VolunteerService {
   async getVolunteer(id: string): Promise<Volunteer> {
     return await this.getVolunteers([id]).then(([volunteer]) => volunteer!);
   }
+
+  // any -> active
+  async verifyVolunteer(id: string): Promise<void> {
+    await this.db.update(user).set({ status: Status.active }).where(eq(user.id, id));
+  }
+
+  // unverified -> rejected
+  async rejectVolunteer(id: string): Promise<void> {
+    const currentStatus = await this.db.select().from(user).where(eq(user.id, id)).then(([user]) => user?.status);
+
+    if (currentStatus !== Status.unverified) {
+      throw new NeuronError(`Volunteer with id ${id} is already verified. Cannot be rejected.`, NeuronErrorCodes.BAD_REQUEST);
+    }
+    await this.db.update(user).set({ status: Status.rejected }).where(eq(user.id, id));
+  }
+
+  // active -> inactive
+  async deactivateVolunteer(id: string): Promise<void> {
+    const currentStatus = await this.db.select().from(user).where(eq(user.id, id)).then(([user]) => user?.status);
+
+    if (currentStatus !== Status.active) {
+      throw new NeuronError(`Volunteer with id ${id} is not active`, NeuronErrorCodes.BAD_REQUEST);
+    }
+
+    await this.db.update(user).set({ status: Status.inactive }).where(eq(user.id, id));
+  }
+
 }

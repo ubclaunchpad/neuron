@@ -5,7 +5,7 @@ export const RoleEnum = z.enum(["admin", "instructor", "volunteer"] as const);
 export type Role = z.infer<typeof RoleEnum>;
 export const Role = createStringEnum(RoleEnum);
 
-export const StatusEnum = z.enum(["pending", "active", "inactive"] as const);
+export const StatusEnum = z.enum(["unverified", "rejected", "active", "inactive"] as const);
 export type Status = z.infer<typeof StatusEnum>;
 export const Status = createStringEnum(StatusEnum);
 

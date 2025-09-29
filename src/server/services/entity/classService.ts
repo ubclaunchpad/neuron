@@ -12,6 +12,7 @@ import { course, schedule, volunteerToSchedule } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap } from "@/utils/arrayUtils";
 import { InstructorService } from "./instructorService";
+import { ShiftService } from "./shiftService";
 import type { TermService } from "./termService";
 import { VolunteerService } from "./volunteerService";
 
@@ -20,12 +21,20 @@ export class ClassService {
   private readonly instructorService: InstructorService;
   private readonly volunteerService: VolunteerService;
   private readonly termService: TermService;
+  private readonly shiftService: ShiftService;
 
-  constructor(db: Drizzle, instructorService: InstructorService, volunteerService: VolunteerService, termService: TermService) {
+  constructor(
+    db: Drizzle,
+    instructorService: InstructorService,
+    volunteerService: VolunteerService,
+    termService: TermService,
+    shiftService: ShiftService,
+  ) {
     this.db = db;
     this.instructorService = instructorService;
     this.volunteerService = volunteerService;
     this.termService = termService;
+    this.shiftService = shiftService;
   }
 
   async getClassesForRequest(

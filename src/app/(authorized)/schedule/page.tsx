@@ -1,22 +1,13 @@
 "use client";
 
-import {
-  PageLayout,
-  PageLayoutHeader,
-  PageLayoutHeaderContent,
-  PageLayoutHeaderTitle
-} from "@/components/page-layout";
+import dayGridPlugin from '@fullcalendar/daygrid';
+import FullCalendar from '@fullcalendar/react';
 
 export default function SchedulePage() {
   return (
-    <>
-      <PageLayout>
-        <PageLayoutHeader>
-          <PageLayoutHeaderContent>
-            <PageLayoutHeaderTitle>Schedule</PageLayoutHeaderTitle>
-          </PageLayoutHeaderContent>
-        </PageLayoutHeader>
-      </PageLayout>
-    </>
-  );
+    <FullCalendar
+      plugins={[ dayGridPlugin ]}
+      initialView="dayGridMonth"
+    />
+  )
 }

@@ -1,4 +1,9 @@
+import type { CreateShiftInput } from "@/models/api/shift";
 import { type Drizzle } from "@/server/db";
+import { schedule } from "@/server/db/schema/schedule";
+import { shift } from "@/server/db/schema/shift";
+import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import { eq } from "drizzle-orm";
 
 export class ShiftService {
   private readonly db: Drizzle;
@@ -7,8 +12,38 @@ export class ShiftService {
     this.db = db;
   }
 
-  async createShift(): Promise<void> {
-    throw new Error("Not implemented");
+  async createShift(input: CreateShiftInput): Promise<string> {
+    const scheduleRow = await this.db.query.schedule.findFirst({
+      where: eq(schedule.id, input.scheduleId),
+      columns: {
+        id: true,
+        courseId: true,
+      },
+    });
+
+    if (!scheduleRow) {
+      throw new NeuronError(`Schedule with id ${input.scheduleId} was not found`, NeuronErrorCodes.NOT_FOUND);
+    }
+
+    if (scheduleRow.courseId !== input.courseId) {
+      throw new NeuronError(
+        "Schedule does not belong to the provided class",
+        NeuronErrorCodes.BAD_REQUEST,
+      );
+    }
+
+    const [row] = await this.db
+      .insert(shift)
+      .values({
+        courseId: input.courseId,
+        scheduleId: input.scheduleId,
+        date: input.date,
+        startAt: new Date(input.startAt),
+        endAt: new Date(input.endAt),
+      })
+      .returning({ id: shift.id });
+
+    return row!.id;
   }
 
   async deleteShift(): Promise<void> {

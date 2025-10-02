@@ -17,3 +17,12 @@ export const AbsenceRequestInput = z.object({
   comments: z.string().optional(),
   category: AbsenceRequestCategoryEnum,
 });
+
+export const CreateShiftInput = z.object({
+  courseId: z.uuid(),
+  scheduleId: z.uuid(),
+  date: z.iso.date(),
+  startAt: z.iso.datetime(),
+  endAt: z.iso.datetime(),
+});
+export type CreateShiftInput = z.infer<typeof CreateShiftInput>;

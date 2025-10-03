@@ -11,6 +11,8 @@ export const GetShiftsInput = z.object({
 export const ShiftIdInput = z.object({
   shiftId: z.uuid(),
 });
+export type ShiftIdInput = z.infer<typeof ShiftIdInput>;
+
 
 export const AbsenceRequestInput = z.object({
   details: z.string(),

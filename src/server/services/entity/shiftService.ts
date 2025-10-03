@@ -1,4 +1,4 @@
-import type { CreateShiftInput } from "@/models/api/shift";
+import type { CreateShiftInput, ShiftIdInput } from "@/models/api/shift";
 import { type Drizzle } from "@/server/db";
 import { schedule } from "@/server/db/schema/schedule";
 import { shift } from "@/server/db/schema/shift";
@@ -46,7 +46,18 @@ export class ShiftService {
     return row!.id;
   }
 
-  async deleteShift(): Promise<void> {
-    throw new Error("Not implemented");
+  async deleteShift(input: ShiftIdInput): Promise<void> {
+    const shiftRow = await this.db.query.shift.findFirst({
+      where: eq(shift.id, input.shiftId),
+      columns: { id: true },
+    });
+
+    if (!shiftRow) {
+      throw new NeuronError(
+        `Shift with id ${input.shiftId} was not found`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+    await this.db.delete(shift).where(eq(shift.id, input.shiftId));
   }
 }

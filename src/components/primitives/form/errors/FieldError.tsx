@@ -1,6 +1,6 @@
 "use client";
 
-import { ErrorLine } from "@/components/primitives/FormErrors/ErrorLine";
+import { ErrorLine } from "@/components/primitives/form/errors/ErrorLine";
 import React from "react";
 import { FieldError as AriaFieldError } from "react-aria-components";
 import "./index.scss";

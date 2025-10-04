@@ -8,18 +8,28 @@ import { useSidebar } from "../PageLayout";
 import { Button } from "../primitives/Button";
 import "./index.scss";
 
-export const SidebarItem = ({ 
+export const SidebarSection = ({ 
+  children
+} : {
+  children: React.ReactNode;
+}) => {
+  return <div className="sidebar-section">
+    {children}
+  </div>;
+};
+
+export const SidebarField = ({ 
   label,
   inline = true,
   children
 } : {
-  label: React.ReactNode;
+  label?: React.ReactNode;
   inline?: boolean;
   children: React.ReactNode;
 }) => {
-  return <div className={clsx("sidebar-item", inline && "inline")}>
-    <span className="sidebar-item__label">{label}</span>
-    <span className="sidebar-item__content">{children}</span>
+  return <div className={clsx("sidebar-field", inline && "inline")}>
+    {label && <span className="sidebar-field__label">{label}</span>}
+    <span className="sidebar-field__content">{children}</span>
   </div>;
 };
 

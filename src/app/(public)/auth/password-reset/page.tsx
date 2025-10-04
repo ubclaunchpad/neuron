@@ -4,15 +4,16 @@ import { authClient } from "@/lib/auth/client";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Form } from "react-aria-components";
+import { Form } from 'react-aria-components';
 import { useForm } from "react-hook-form";
 import * as Yup from "yup";
 import "../index.scss";
 
 import { Button } from "@/components/primitives/Button";
 import { Card } from "@/components/primitives/Card";
-import { RootError } from "@/components/primitives/FormErrors/RootError";
-import { TextInput } from "@/components/primitives/TextInput";
+import { FormContent } from "@/components/primitives/form";
+import { RootError } from "@/components/primitives/form/errors/RootError";
+import { TextInput } from "@/components/primitives/form/TextInput";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 import BackIcon from "@public/assets/icons/caret-left.svg";
 
@@ -24,6 +25,18 @@ const PasswordResetSchema = Yup.object().shape({
     .required("Please fill out this field.")
     .oneOf([Yup.ref("password")], "Passwords don't match."),
 });
+
+// export const PasswordResetSchema2 = z
+//   .object({
+//     password: z.string()
+//       .nonempty("Please fill out this field.")
+//       .min(8, "Password must be at least 8 characters long."),
+//     confirmPassword: z.string().nonempty("Please fill out this field."),
+//   })
+//   .refine((data) => data.password === data.confirmPassword, {
+//     message: "Passwords don't match.",
+//     path: ["confirmPassword"],
+//   });
 
 type PasswordResetSchemaType = Yup.InferType<typeof PasswordResetSchema>;
 
@@ -69,52 +82,53 @@ export default function PasswordResetForm() {
   };
 
   return (
-    <div className="form-container">
-      <h1 className="form-title">Set your new password</h1>
+    <div className="auth-form-container">
+      <h1 className="auth-form-title">Set your new password</h1>
 
       <Form
         onSubmit={handleSubmit(onSubmit)}
         validationBehavior="aria"
-        className="form-content"
       >
-        <RootError id="form-error" message={error || errors.root?.message} />
+        <FormContent>
+          <RootError id="form-error" message={error || errors.root?.message} />
 
-        {successMessage && (
-          <Card variant="success" size="small" role="alert">
-            {successMessage}
-          </Card>
-        )}
+          {successMessage && (
+            <Card variant="success" size="small" role="alert">
+              {successMessage}
+            </Card>
+          )}
 
-        <TextInput
-          type="password"
-          disabled={!!error}
-          label="Create password (at least 8 characters)"
-          placeholder="Create a password"
-          errorMessage={errors.password?.message}
-          autoComplete="new-password"
-          {...register("password")}
-        />
+          <TextInput
+            type="password"
+            disabled={!!error}
+            label="Create password (at least 8 characters)"
+            placeholder="Create a password"
+            errorMessage={errors.password?.message}
+            autoComplete="new-password"
+            {...register("password")}
+          />
 
-        <TextInput
-          type="password"
-          disabled={!!error}
-          label="Confirm password"
-          placeholder="Confirm your password"
-          errorMessage={errors.confirmPassword?.message}
-          autoComplete="new-password"
-          {...register("confirmPassword")}
-        />
+          <TextInput
+            type="password"
+            disabled={!!error}
+            label="Confirm password"
+            placeholder="Confirm your password"
+            errorMessage={errors.confirmPassword?.message}
+            autoComplete="new-password"
+            {...register("confirmPassword")}
+          />
 
-        <Button type="submit" isDisabled={!!error}>
-          {isSubmitting ? "Resetting..." : "Reset Password"}
-        </Button>
-
-        <p className="form-footer">
-          <Button variant="link" href="/auth/login">
-            <BackIcon />
-            <span>Back to login</span>
+          <Button type="submit" isDisabled={!!error}>
+            {isSubmitting ? "Resetting..." : "Reset Password"}
           </Button>
-        </p>
+
+          <p className="auth-form-footer">
+            <Button variant="link" href="/auth/login">
+              <BackIcon />
+              <span>Back to login</span>
+            </Button>
+          </p>
+        </FormContent>
       </Form>
     </div>
   );

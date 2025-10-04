@@ -9,12 +9,13 @@ import { WithPermission } from "@/components/utils/WithPermission";
 import type { Permissions } from "@/lib/auth/extensions/permissions";
 import NavCloseIcon from "@public/assets/icons/nav/close.svg";
 import Logo from "@public/assets/logo.svg";
+import type { Route } from "next";
 import type { SVGProps } from "react";
 import { NavbarToggleButton } from "../NavbarToggle";
 import "./index.scss";
 
 export type NavbarItem = {
-  href: string;
+  href: Route;
   label: string;
   icon: React.ComponentType<SVGProps<SVGSVGElement>>;
   permissions?: Permissions;

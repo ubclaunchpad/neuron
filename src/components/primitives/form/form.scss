@@ -1,9 +1,22 @@
-@use "mixins" as *;
-@use "typography" as *;
 @use "variables" as *;
-@use 'sass:color';
+@use "typography" as *;
+@use "mixins" as *;
 
-.text-input {
+.form-content {
+  width: 100%;
+  gap: $padding-lg;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  display: grid;
+  gap: $padding-sm;
+  grid-template-columns: 1fr 1fr;
+  align-items: self-start;
+}
+
+.form-input {
   @include text-reg;
   display: flex;
   flex-direction: column;
@@ -13,7 +26,24 @@
   width: 100%;
   height: max-content;
 
+  &__label {
+    @include text-reg;
+    color: $text-grey;
+  }
+
   &__group {
+    display: grid;
+    grid-template-columns: 100%;
+    gap: $padding-xs;
+    width: 100%;
+
+    &-inline {
+      grid-template-columns: minmax(7.5rem, 1fr) 4fr;
+      align-items: center;
+    }
+  }
+
+  &__input-container {
     display: flex;
     place-items: center;
     width: 100%;
@@ -23,26 +53,44 @@
     background: $bg-white;
     outline-color: $primary;
     overflow: hidden;
+    text-align: start;
+
+    &[data-hovered] { 
+      background: $bg-white-hover; 
+    }
   }
 
   &__input {
     @include text-reg;
-    padding: $padding-sm calc($font-size-md + $padding-md + $padding-sm) $padding-sm $padding-md;
+    padding: $padding-sm $padding-md;
     margin: 0;
     outline: none;
     border: none;
     flex: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 100%;
+
+    &.has-trailing-icon {
+      padding-inline-end: calc($font-size-md + $padding-md + $padding-sm);
+    }
+
+    &[data-placeholder] { 
+      color: $text-grey; 
+    }
   }
 
-  &__toggle {
+  &__trailing-icon {
     position: absolute;
     cursor: pointer;
     right: $padding-md;
     color: $text-grey;
-    width: $font-size-md;
-    height: $font-size-md;
+    width: 1rem;
+    height: 1rem;
     aspect-ratio: 1 / 1;
     flex-shrink: 0;
+    align-self: center;
   }
 
   &__error {
@@ -61,12 +109,12 @@
     display: flex;
     width: 100%;
     
-    .text-input__description {
+    .form-input__description {
       margin-inline-start: auto;
     }
   }
 
-  &[data-invalid] .text-input__input {
+  &[data-invalid] .form-input__input {
     border-width: 2px;
     border-color: $text-error;
     outline-color: $text-error;

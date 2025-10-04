@@ -2,7 +2,14 @@
 @use "mixins" as *;
 @use "typography" as *;
 
-.sidebar-item {
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: $padding-md;
+  border-bottom: 1px solid $bg-grey-outline;
+}
+
+.sidebar-field {
   display: grid;
   grid-template-columns: 100%;
   gap: $padding-xxs;
@@ -18,7 +25,9 @@
   }
 
   &__content {
-    
+    display: flex;
+    flex-direction: column;
+    gap: $padding-xxs;
   }
 }
 

@@ -9,16 +9,23 @@
   padding-inline: 2.25rem;
   gap: $padding-sm;
 
+  .header-button {
+    align-self: center;
+    margin-inline: -$padding-xs;
+  }
+
   .header-right,
   .header-left {
     display: flex;
     align-items: flex-start;
     gap: $padding-sm;
+    height: min-content;
+    flex-shrink: 0;
   }
 }
 
 @media (max-width: $breakpoint-md) {
   .page-header {
-    padding-left: $padding-sm;
+    padding-left: $padding-lg;
   }
 }

@@ -1,31 +1,23 @@
 @use "variables" as *;
 
-.form-container {
+.auth-form-container {
   display: flex;
   flex-direction: column;
   place-items: center;
   gap: $padding-xxxl;
   width: min(100%, 40rem);
   padding: $padding-xxxl;
-}
 
-.form-content {
-  width: 100%;
-  gap: $padding-lg;
-  display: flex;
-  flex-direction: column;
-
-  .form-footer {
-    align-self: center;
+  .form-input__label {
+    color: $text-dark;
   }
 }
 
-.form-group {
-  display: flex;
-  gap: $padding-sm;
+.auth-form-footer {
+  align-self: center;
 }
 
-.form-title {
+.auth-form-title {
   color: $primary;
   line-height: 1;
   align-self: flex-start;

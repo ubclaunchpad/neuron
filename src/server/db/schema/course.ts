@@ -45,13 +45,13 @@ export const blackoutRelations = relations(blackout, ({ one }) => ({
 
 export const course = pgTable("course", {
     id: uuid("id").primaryKey().defaultRandom(),
-    termId: uuid("term_id").references(() => term.id, { onDelete: "cascade" }),
+    termId: uuid("term_id").notNull().references(() => term.id, { onDelete: "cascade" }),
     image: text("image"),
     name: text("name").notNull(),
     published: boolean("published").notNull().default(false),
     description: text("description"),
     meetingURL: text("meeting_url"),
-    category: text("category"),
+    category: text("category").notNull(),
     subcategory: text("subcategory"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

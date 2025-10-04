@@ -1,7 +1,7 @@
 import { requirePermission } from "@/lib/auth/guard";
 import { HydrateClient, ssrApi } from "@/trpc/server";
 
-export default async function ClassesLayout({
+export default async function ClassesTemplate({
   children,
   searchParams,
 }: {
@@ -11,11 +11,11 @@ export default async function ClassesLayout({
   };
 }) {
   await requirePermission({ permission: { classes: ["view"] } });
-  const resolvedTermId = searchParams?.term ?? "current";
+  const queryTerm = searchParams?.term ?? "current";
 
   // Prefetch terms
   await ssrApi.term.all.prefetch();
-  await ssrApi.class.list.prefetch({ term: resolvedTermId });
+  await ssrApi.class.list.prefetch({ term: queryTerm });
 
   return <HydrateClient>{children}</HydrateClient>;
 }

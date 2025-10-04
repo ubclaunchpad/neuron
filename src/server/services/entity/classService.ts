@@ -2,11 +2,11 @@ import { Temporal } from "@js-temporal/polyfill";
 import { and, eq, inArray, sql, SQL } from "drizzle-orm";
 import { RRuleTemporal } from "rrule-temporal";
 
-import type { ClassRequest, CreateClassInput, UpdateClassInput } from "@/models/api/class";
-import type { CreateScheduleInput, ScheduleRule, UpdateScheduleInput, Weekday } from "@/models/api/schedule";
+import type { ClassRequest, CreateClassOutput, UpdateClassOutput } from "@/models/api/class";
+import type { CreateScheduleInput, UpdateScheduleInput, Weekday } from "@/models/api/schedule";
 import { buildClass, type Class, type ClassResponse } from "@/models/class";
 import type { ListResponse } from "@/models/list-response";
-import { buildSchedule } from "@/models/schedule";
+import { buildSchedule, type ScheduleRule } from "@/models/schedule";
 import { type Drizzle, type Transaction } from "@/server/db";
 import { course, schedule, volunteerToSchedule } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
@@ -69,7 +69,7 @@ export class ClassService {
     }).then(c => c.data[0]!);
   }
 
-  async createClass(classCreate: CreateClassInput): Promise<string> {
+  async createClass(classCreate: CreateClassOutput): Promise<string> {
     const { schedules, ...dbClassCreate } = classCreate;
 
     return await this.db.transaction(async (tx: Transaction) => {
@@ -86,7 +86,7 @@ export class ClassService {
     });
   }
 
-  async updateClass(classUpdate: UpdateClassInput): Promise<void> {
+  async updateClass(classUpdate: UpdateClassOutput): Promise<void> {
     const {
       id,
       addedSchedules,
@@ -132,6 +132,20 @@ export class ClassService {
   }
 
   async publishClass(classId: string): Promise<void> {
+    const classData = await this.getClass(classId);
+    const term = await this.termService.getTerm(classData.termId);
+    const schedule: any = {}
+
+    const startDate = schedule.effectiveStart ?? term.startDate;
+
+    let rrule = new RRuleTemporal({ rruleString: "" });
+    rrule = new RRuleTemporal({
+      ...rrule.options(),
+      dtstart: Temporal.ZonedDateTime.from(startDate),
+      until: Temporal.ZonedDateTime.from("")
+    })
+
+
     throw new Error("Not implemented");
   }
 
@@ -209,26 +223,41 @@ export class ClassService {
     // Update schedules
     for (const updateSchedule of schedules) {
       const {
-        scheduleId,
+        id,
         rule,
+        localStartTime,
+        localEndTime,
+        tzid,
         addedVolunteerUserIds,
         removedVolunteerUserIds,
-        ...scheduleUpdate
+        ...scheduleData
       } = updateSchedule;
 
-      await tx
+      const rruleObject = this.buildRRuleFromScheduleRule({
+        ...rule,
+        localStartTime: localStartTime.toString(),
+        tzid,
+      });
+
+      const updated = await tx
         .update(schedule)
         .set({
-          ...scheduleUpdate,
-          rrule: rule ? this.buildRRuleFromScheduleRule(rule).toString() : undefined,
+          durationMinutes: localStartTime.until(localEndTime).minutes,
+          rrule: rruleObject.toString(),
+          ...scheduleData,
         })
-        .where(eq(schedule.id, scheduleId));
+        .where(eq(schedule.id, id))
+        .returning({ id: schedule.id });
+
+      if (updated.length != 1) {
+        throw new NeuronError("Failed to update schedule", "INTERNAL_SERVER_ERROR");
+      } 
 
       // Insert volunteers to schedule
       if (addedVolunteerUserIds) {
         await tx.insert(volunteerToSchedule).values(
           addedVolunteerUserIds?.map((volunteerId) => ({
-            scheduleId,
+            scheduleId: id,
             volunteerUserId: volunteerId,
           })),
         );
@@ -240,7 +269,7 @@ export class ClassService {
           .delete(volunteerToSchedule)
           .where(
             and(
-              eq(volunteerToSchedule.scheduleId, scheduleId),
+              eq(volunteerToSchedule.scheduleId, id),
               inArray(
                 volunteerToSchedule.volunteerUserId,
                 removedVolunteerUserIds,
@@ -257,13 +286,30 @@ export class ClassService {
     schedules: CreateScheduleInput[],
   ): Promise<void> {
     // Insert schedules
-    for (const createSchedule of schedules) {
-      const { volunteerUserIds, rule, ...scheduleCreate } = createSchedule;
-      const rruleObject = this.buildRRuleFromScheduleRule(rule);
+    for (const scheduleCreate of schedules) {
+      const { 
+        volunteerUserIds,
+        localEndTime,
+        localStartTime,
+        tzid,
+        rule,
+        ...scheduleData 
+      } = scheduleCreate;
+
+      const rruleObject = this.buildRRuleFromScheduleRule({
+        ...rule,
+        localStartTime: localStartTime.toString(),
+        tzid,
+      });
 
       const row = await tx
         .insert(schedule)
-        .values({ ...scheduleCreate, courseId, rrule: rruleObject.toString() })
+        .values({
+          courseId,
+          durationMinutes: localStartTime.until(localEndTime).minutes,
+          rrule: rruleObject.toString(),
+          ...scheduleData
+        })
         .returning({ id: schedule.id })
         .then((rows) => rows[0]);
 

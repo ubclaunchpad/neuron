@@ -13,16 +13,7 @@
     border: unset;
     cursor: pointer;
     box-shadow: $shadow-regular;
-
     transition: padding $transition-fast;
-
-    &[aria-current],
-    &:hover,
-    &:focus,
-    &__avatar-collapse img:hover,
-    &__avatar-collapse img:focus {
-        outline: 2px solid $primary;
-    }
 
     &__main {
         display: flex;

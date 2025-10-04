@@ -5,11 +5,13 @@
 
 .navbar-toggle {
   display: none !important;
+  align-self: center;
+  --btn-bg-hover: color-mix(in srgb, var(--tone-hover) 10%, transparent) !important;
 
   > svg {
     color: $text-grey !important;
-    width: 1.25rem !important;
-    height: 1.25rem !important;
+    width: 1rem !important;
+    height: 1rem !important;
   } 
 
   &.show {

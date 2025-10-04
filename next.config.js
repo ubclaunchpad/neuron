@@ -32,7 +32,7 @@ const nextConfig = {
 
     return config;
   },
-
+  typedRoutes: true,
   sassOptions: {
     includePaths: ["./src/styles"],
   },

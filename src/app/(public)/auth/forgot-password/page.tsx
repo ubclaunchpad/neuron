@@ -1,16 +1,17 @@
 "use client";
 
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Form } from "react-aria-components";
 import { useForm } from "react-hook-form";
 import * as Yup from "yup";
 import "../index.scss";
 
 import { Button } from "@/components/primitives/Button";
-import { TextInput } from "@/components/primitives/TextInput";
+import { FormContent } from "@/components/primitives/form";
+import { TextInput } from "@/components/primitives/form/TextInput";
 import useCountdown from "@/hooks/use-countdown";
 import { authClient } from "@/lib/auth/client";
 import BackIcon from "@public/assets/icons/caret-left.svg";
+import { Form } from "react-aria-components";
 
 const ForgotPasswordSchema = Yup.object().shape({
   email: Yup.string()
@@ -52,50 +53,51 @@ export default function ForgotPasswordForm() {
   };
 
   return (
-    <div className="form-container">
-      <h1 className="form-title">
+    <div className="auth-form-container">
+      <h1 className="auth-form-title">
         {isSubmitSuccessful ? "Check your mail" : "Reset your password"}
       </h1>
 
       <Form
         onSubmit={handleSubmit(onSubmit)}
         validationBehavior="aria"
-        className="form-content"
       >
-        {isSubmitSuccessful ? (
-          <p>
-            We have sent the password reset instructions to{" "}
-            <strong>{getValues("email")}</strong>
-            <br />
-            Did not receive the email? Check your spam folder or click below to
-            resend instructions.
-          </p>
-        ) : (
-          <TextInput
-            type="email"
-            label="Email"
-            placeholder="Enter your email"
-            errorMessage={errors.email?.message}
-            {...register("email")}
-          />
-        )}
-
-        <Button type="submit" isDisabled={isActive}>
-          {isActive ? (
-            <strong>{formatted}</strong>
-          ) : isSubmitSuccessful ? (
-            "Resend Instructions"
+        <FormContent>
+          {isSubmitSuccessful ? (
+            <p>
+              We have sent the password reset instructions to{" "}
+              <strong>{getValues("email")}</strong>
+              <br />
+              Did not receive the email? Check your spam folder or click below to
+              resend instructions.
+            </p>
           ) : (
-            "Send Instructions"
+            <TextInput
+              type="email"
+              label="Email"
+              placeholder="Enter your email"
+              errorMessage={errors.email?.message}
+              {...register("email")}
+            />
           )}
-        </Button>
 
-        <p className="form-footer">
-          <Button variant="link" href="/auth/login">
-            <BackIcon />
-            <span>Back to login</span>
+          <Button type="submit" isDisabled={isActive}>
+            {isActive ? (
+              <strong>{formatted}</strong>
+            ) : isSubmitSuccessful ? (
+              "Resend Instructions"
+            ) : (
+              "Send Instructions"
+            )}
           </Button>
-        </p>
+
+          <p className="auth-form-footer">
+            <Button variant="link" href="/auth/login">
+              <BackIcon />
+              <span>Back to login</span>
+            </Button>
+          </p>
+        </FormContent>
       </Form>
     </div>
   );

@@ -22,6 +22,7 @@
 
 @mixin text-icon {
     height: $font-size-base;
+    width: $font-size-base;
     aspect-ratio: 1 / 1;
 }
 

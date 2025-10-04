@@ -4,12 +4,13 @@ import type { Term } from "./term";
 
 export type Class = {
   id: string;
+  termId: string;
   name: string;
   description?: string;
   image?: string;
   published: boolean;
   meetingURL?: string;
-  category?: string;
+  category: string;
   subcategory?: string;
   schedules: Schedule[];
   createdAt: Date;
@@ -22,12 +23,13 @@ export function buildClass(
 ): Class {
   return {
     id: classDB.id,
+    termId: classDB.termId,
     name: classDB.name,
     description: classDB.description ?? undefined,
     image: classDB.image ?? undefined,
     published: classDB.published,
     meetingURL: classDB.meetingURL ?? undefined,
-    category: classDB.category ?? undefined,
+    category: classDB.category,
     subcategory: classDB.subcategory ?? undefined,
     schedules: schedules,
     createdAt: classDB.createdAt,

@@ -2,15 +2,16 @@
 
 import { authClient } from "@/lib/auth/client";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Form } from "react-aria-components";
 import { useForm } from "react-hook-form";
 import * as Yup from "yup";
 import "../index.scss";
 
 import { Button } from "@/components/primitives/Button";
-import { RootError } from "@/components/primitives/FormErrors/RootError";
-import { TextInput } from "@/components/primitives/TextInput";
+import { FormContent } from "@/components/primitives/form";
+import { RootError } from "@/components/primitives/form/errors/RootError";
+import { TextInput } from "@/components/primitives/form/TextInput";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
+import { Form } from "react-aria-components";
 import { toast } from "sonner";
 
 const LoginSchema = Yup.object().shape({
@@ -55,48 +56,49 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="form-container">
-      <h1 className="form-title">Welcome!</h1>
+    <div className="auth-form-container">
+      <h1 className="auth-form-title">Welcome!</h1>
 
       <Form
         onSubmit={handleSubmit(onSubmit)}
         validationBehavior="aria"
-        className="form-content"
       >
-        <RootError id="form-error" message={errors.root?.message} />
+        <FormContent>
+          <RootError id="form-error" message={errors.root?.message} />
 
-        <TextInput
-          type="email"
-          label="Email"
-          placeholder="Enter your email"
-          errorMessage={errors.email?.message}
-          {...register("email")}
-        />
+          <TextInput
+            type="email"
+            label="Email"
+            placeholder="Enter your email"
+            errorMessage={errors.email?.message}
+            {...register("email")}
+          />
 
-        <TextInput
-          type="password"
-          label="Password"
-          description={
-            <Button variant="link" href="/auth/forgot-password">
-              Forgot password?
-            </Button>
-          }
-          inlineDescription={true}
-          placeholder="Enter your password"
-          errorMessage={errors.password?.message}
-          {...register("password")}
-        />
+          <TextInput
+            type="password"
+            label="Password"
+            description={
+              <Button variant="link" href="/auth/forgot-password">
+                Forgot password?
+              </Button>
+            }
+            inlineDescription={true}
+            placeholder="Enter your password"
+            errorMessage={errors.password?.message}
+            {...register("password")}
+          />
 
-        <Button type="submit">
-          {isSubmitting ? "Signing in..." : "Log In"}
-        </Button>
-
-        <p className="form-footer">
-          Don't have an account?{" "}
-          <Button variant="link" href="/auth/signup">
-            <strong>Sign Up</strong>
+          <Button type="submit">
+            {isSubmitting ? "Signing in..." : "Log In"}
           </Button>
-        </p>
+
+          <p className="auth-form-footer">
+            Don't have an account?{" "}
+            <Button variant="link" href="/auth/signup">
+              <strong>Sign Up</strong>
+            </Button>
+          </p>
+        </FormContent>
       </Form>
     </div>
   );

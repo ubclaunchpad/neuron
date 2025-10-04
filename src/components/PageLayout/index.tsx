@@ -48,13 +48,13 @@ export const PageLayout: PageLayoutCompound = ({
 
   return (
     <SidebarContext.Provider value={{ isOpen, setIsOpen, toggleSidebar }}>
-      <div className={clsx("page-layout", { "is-open": isOpen })} style={vars}>
-        {createHost(children, (Slots) => {
-          const header = Slots.get(SlotDefs.Header);
-          const sidebar = Slots.get(SlotDefs.Sidebar);
-          const children = Slots.getRest();
+      {createHost(children, (Slots) => {
+        const header = Slots.get(SlotDefs.Header);
+        const sidebar = Slots.get(SlotDefs.Sidebar);
+        const children = Slots.getRest();
 
-          return (<>
+        return (<>
+          <div className={clsx("page-layout", { "is-open": isOpen && sidebar })} style={vars}>
             {/* Main area */}
             { header && <header className="page-layout-header">{header}</header>}
       
@@ -68,9 +68,9 @@ export const PageLayout: PageLayoutCompound = ({
                 {sidebar}
               </div>
             </aside>}
-          </>)
-        })}
-      </div>
+          </div>
+        </>)
+      })}
     </SidebarContext.Provider>
   );
 };

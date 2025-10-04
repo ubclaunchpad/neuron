@@ -1,9 +1,11 @@
 import { type CreateTermInput } from "@/models/api/term";
 import { buildTerm, type Term } from "@/models/term";
 import { type Drizzle } from "@/server/db";
-import { term } from "@/server/db/schema/course";
+import { term, blackout } from "@/server/db/schema/course";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
+// import { P } from "node_modules/better-auth/dist/shared/better-auth.jwa4Tx7v";
+// import { text } from "stream/consumers";
 
 export class TermService {
   private readonly db: Drizzle;
@@ -58,11 +60,38 @@ export class TermService {
   }
 
   async createTerm(input: CreateTermInput): Promise<string> {
-    return await this.db
-      .insert(term)
-      .values(input)
-      .returning({ id: term.id })
-      .then(([output]) => output!.id);
+
+    const {holidays, ...termData} = input;
+
+    return await this.db.transaction(async (tx) => {
+      
+    const [createdTerm] = await tx
+    .insert(term)
+    .values(termData)
+    .returning({id: term.id});
+
+    if(!createdTerm) {
+      throw new Error("Failed to create term")
+    }
+
+    const termId = createdTerm.id; // will be used for blackout insert
+
+    if (holidays && holidays.length > 0) {
+      await tx.insert(blackout).values(
+        holidays.map((h) => ({
+          termId,
+          startsOn: h.startsOn,
+          endsOn: h.endsOn,
+        }))
+      );
+    }
+    return termId;
+    });
+    // return await this.db
+    //   .insert(term)
+    //   .values(input) 
+    //   .returning({ id: term.id }) // return inserted row's id Array<{id:string}>
+    //   .then(([output]) => output!.id);
   }
 
   async deleteTerm(id: string): Promise<void> {

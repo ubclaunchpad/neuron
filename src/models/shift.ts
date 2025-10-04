@@ -18,14 +18,12 @@ export type Shift = {
 };
 
 export function buildShift(
-    shiftDB: ShiftDB,
-    course: Class,
-    schedule: Schedule
+    shiftDB: ShiftDB
 ): Shift {
     return {
         id: shiftDB.id,
-        courseId: course.id,
-        scheduleId: schedule.id,
+        courseId: shiftDB.courseId,
+        scheduleId: shiftDB.scheduleId,
         startAt: shiftDB.startAt,
         endAt: shiftDB.endAt,
         date: shiftDB.date,
@@ -35,6 +33,30 @@ export function buildShift(
     } as const;
 }
 
+export function getSingleShift(s: Shift) {
+    return {
+        id: s.id,
+        courseId: s.courseId,
+        scheduleId: s.scheduleId,
+        startAt: s.startAt,
+        endAt: s.endAt,
+        date: s.date,
+        canceled: s.canceled
+    }
+}
+
+
+export function getListShift(s: Shift) {
+    return {
+        id: s.id,
+        courseId: s.courseId,
+        scheduleId: s.scheduleId,
+        startAt: s.startAt,
+        endAt: s.endAt,
+        date: s.date,
+        canceled: s.canceled
+    }
+}
 
 // export type ShiftAttendance = {
 

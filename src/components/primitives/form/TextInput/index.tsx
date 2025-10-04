@@ -10,9 +10,9 @@ import {
   Text as AriaText,
   TextField as AriaTextField,
 } from "react-aria-components";
-import "./index.scss";
+import "../form.scss";
 
-import { FieldError } from "@/components/primitives/FormErrors/FieldError";
+import { FieldError } from "@/components/primitives/form/errors/FieldError";
 import HideIcon from "@public/assets/icons/eye-off.svg";
 import ShowIcon from "@public/assets/icons/eye.svg";
 
@@ -22,6 +22,7 @@ type InputProps = Omit<React.ComponentProps<typeof AriaInput>, "children">;
 
 export type TextInputProps = InputProps & {
   label: React.ReactNode;
+  inlineLabel?: boolean;
   description?: React.ReactNode;
   inlineDescription?: boolean;
   errorMessage?: React.ReactNode;
@@ -35,6 +36,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
   (
     {
       label,
+      inlineLabel,
       description,
       inlineDescription,
       errorMessage,
@@ -55,55 +57,57 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
       <AriaTextField
         {...fieldProps}
         isInvalid={isInvalid}
-        className={clsx("text-input", className)}
+        className={clsx("form-input", className)}
       >
-        {label && (
-          <AriaLabel
-            className={clsx("text-input__label", labelProps?.className)}
-            {...labelProps}
-          >
-            {label}
-          </AriaLabel>
-        )}
-
-        <AriaGroup
-          className={clsx("text-input__group", inputClassName)}
-          role="presentation"
-        >
-          <AriaInput
-            className="text-input__input"
-            ref={ref}
-            type={
-              type === "password" ? (isPassVisible ? "text" : "password") : type
-            }
-            {...inputProps}
-          />
-          {type == "password" && (
-            <AriaButton
-              className="text-input__toggle"
-              slot="end"
-              onPress={togglePassVisible}
+        <div className={clsx("form-input__group", {"form-input__group-inline": inlineLabel})}>
+          {label && (
+            <AriaLabel
+              className={clsx("form-input__label", labelProps?.className)}
+              {...labelProps}
             >
-              {isPassVisible ? <HideIcon /> : <ShowIcon />}
-            </AriaButton>
+              {label}
+            </AriaLabel>
           )}
-        </AriaGroup>
+
+          <AriaGroup
+            className={clsx("form-input__input-container", inputClassName)}
+            role="presentation"
+          >
+            <AriaInput
+              className={clsx("form-input__input", {"has-trailing-icon": type === "password"})}
+              ref={ref}
+              type={
+                type === "password" ? (isPassVisible ? "text" : "password") : type
+              }
+              {...inputProps}
+            />
+            {type == "password" && (
+              <AriaButton
+                className="form-input__trailing-icon"
+                slot="end"
+                onPress={togglePassVisible}
+              >
+                {isPassVisible ? <HideIcon /> : <ShowIcon />}
+              </AriaButton>
+            )}
+          </AriaGroup>
+        </div>
 
         {!inlineDescription && description && (
-          <AriaText className="text-input__description" slot="description">
+          <AriaText className="form-input__description" slot="description">
             {description}
           </AriaText>
         )}
 
-        <div className="text-input__bottom-container">
+        { (errorMessage || (inlineDescription && description)) && <div className="form-input__bottom-container">
           <FieldError errorMessage={errorMessage} />
 
           {inlineDescription && description && (
-            <AriaText className="text-input__description" slot="description">
+            <AriaText className="form-input__description" slot="description">
               {description}
             </AriaText>
           )}
-        </div>
+        </div> }
       </AriaTextField>
     );
   },

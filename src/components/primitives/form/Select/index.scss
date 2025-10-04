@@ -5,62 +5,35 @@
 .select {
   width: fit-content;
 
-  &__label {
-    @include text-sm;
-    color: $text-dark;
+  .form-input__input-container {
+    border: 1px solid $primary;
+    outline: none;
   }
 
-  &__trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: $padding-xs;
-    outline: none;
+  &__field {
+    width: 100%;
 
-    background: $bg-white;
-    border: 1px solid $primary;
-    border-radius: $radius-regular;
-    padding: $padding-sm $padding-md;
-    cursor: pointer;
-
-    &[data-hovered] { 
-      background: $bg-white-hover; 
-    }
-    
-    &[data-disabled] { 
-      border-color: $bg-grey-outline;
-      background: $bg-grey-outline;
-      cursor: not-allowed; 
-
-      .select__icon {
-        display: none;
+    .form-input__input-container {
+      border: 1px solid $bg-grey-outline;
+  
+      &[data-hovered] { 
+        background: $bg-white-hover; 
+      }
+      
+      &[data-disabled] { 
+        border-color: $bg-grey-outline;
+        background: $bg-grey-outline;
+        cursor: not-allowed; 
+  
+        .form-input__trailing-icon {
+          display: none;
+        }
+  
+        .form-input__input {
+          padding: $padding-sm $padding-md;
+        }
       }
     }
-  }
-
-  &__value {
-    @include text-reg;
-    line-height: 1;
-    color: $text-dark;
-
-    &[data-placeholder] { 
-      color: $text-grey; 
-    }
-  }
-
-  &__icon {
-    @include text-icon;
-    color: $text-grey;
-  }
-
-  &__hint { 
-    @include text-xs; 
-    color: $text-grey; 
-  }
-  
-  &__error { 
-    @include text-xs; 
-    color: $text-error; 
   }
 
   &__popover {

@@ -7,18 +7,18 @@ import "./page.scss";
 
 import { ActiveSectionProvider, Section, SectionLink, useActiveSection } from "@/components/classes/ActiveSectionProvider";
 import { ClassCard } from '@/components/classes/ClassCard';
+import { ClassSidebarContent } from "@/components/classes/ClassSidebar";
 import { PageLayout, useSidebar } from "@/components/PageLayout";
 import { PageTitle } from "@/components/PageLayout/PageHeader";
 import { Button } from '@/components/primitives/Button';
-import { Select } from "@/components/primitives/Select";
-import { SidebarContainer, SidebarItem } from "@/components/sidebar";
-import { Loader } from '@/components/utils/Fallback';
+import { Select } from "@/components/primitives/form/Select";
+import { Loader } from '@/components/utils/Loader';
 import { WithPermission } from '@/components/utils/WithPermission';
 import type { ListClass } from '@/models/class';
 import { clientApi } from "@/trpc/client";
 import AddIcon from "@public/assets/icons/add.svg";
 
-const classCategories = [
+export const classCategories = [
   "Online Exercise",
   "Creative & Expressive",
   "Care Partner Workshops",
@@ -26,7 +26,7 @@ const classCategories = [
   "In-Person Exercise",
   "One-on-One Exercise",
   "Other Opportunities",
-];
+] as const;
 
 function ClassesList({
   classes,
@@ -35,6 +35,7 @@ function ClassesList({
 }) {
   const { setSelectedClassId } = useClassesPage();
   const { setIsOpen } = useSidebar();
+  
   const handleSelectClass = useCallback((classId: string) => {
     setSelectedClassId(classId);
     setIsOpen(true);
@@ -52,7 +53,10 @@ function ClassesList({
 
   return (<>
     <WithPermission permissions={{ permission: { classes: ["create"] }}}>
-      <Button className="classes__create-button large primary">
+      <Button 
+        className="classes__create-button large primary"
+        href="/classes/edit"
+      >
         <AddIcon/>
         Create Class
       </Button>
@@ -78,6 +82,15 @@ function ClassesList({
 
 function EmptyClassesList() {
   return (<>
+    <WithPermission permissions={{ permission: { classes: ["create"] }}}>
+      <Button 
+        className="classes__create-button large primary"
+        href="/classes/edit"
+      >
+        <AddIcon/>
+        Create Class
+      </Button>
+    </WithPermission>
     No classes found
   </>);
 }
@@ -174,27 +187,7 @@ export default function ClassesPage() {
 
           <PageLayout.Sidebar>
             <Suspense fallback={<div>Loading class…</div>}>
-              <SidebarContainer>
-                <SidebarContainer.Header>
-                  <h3>Art from the Heart</h3>
-                  <span>Mondays weekly, 10:00-11:00AM</span>
-                  <span>Wednesdays weekly, 10:00-11:00AM</span>
-                </SidebarContainer.Header>
-                <SidebarContainer.Body>
-                  <SidebarItem label="Something">
-                    <div>This is the content</div>
-                  </SidebarItem>
-                  <SidebarItem label="Something Else">
-                    <div>This is the content</div>
-                  </SidebarItem>
-                  <SidebarItem label="3rd Thing" inline={false}>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                  </SidebarItem>
-                </SidebarContainer.Body>
-                <SidebarContainer.Footer>
-                  <div>This is the footer</div>
-                </SidebarContainer.Footer>
-              </SidebarContainer>
+              <ClassSidebarContent />
             </Suspense>
           </PageLayout.Sidebar>
 
@@ -208,7 +201,7 @@ export default function ClassesPage() {
                 </>}
               >
                 { terms?.length === 0 && <div>Create your first term</div> }
-                { !classListData?.classes || classListData?.classes.length === 0 && <div>Create your first class</div> }
+                { !classListData?.classes || classListData?.classes.length === 0 && <EmptyClassesList /> }
                 { classListData?.classes && classListData?.classes.length > 0 && <ClassesList classes={classListData?.classes!} /> }
               </WithPermission>
             </Loader>

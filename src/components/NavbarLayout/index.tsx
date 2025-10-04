@@ -13,7 +13,6 @@ import DashboardIcon from "@public/assets/icons/nav/dashboard.svg";
 import LogIcon from "@public/assets/icons/nav/log.svg";
 import MemberIcon from "@public/assets/icons/nav/member.svg";
 import ScheduleIcon from "@public/assets/icons/nav/schedule.svg";
-import SettingsIcon from "@public/assets/icons/nav/settings.svg";
 
 const navbarItems: NavbarItem[] = [
   {
@@ -50,11 +49,6 @@ const navbarItems: NavbarItem[] = [
     label: "Log History",
     icon: LogIcon,
     permissions: { permission: { logs: ["view"] } },
-  },
-  {
-    href: "/settings",
-    label: "Settings",
-    icon: SettingsIcon,
   },
 ];
 

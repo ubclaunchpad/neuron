@@ -39,7 +39,6 @@ export default function ClientAuthProvider({
     (initialSession || initialSession === null) as boolean,
   );
   const stableRef = useRef<Session | undefined>(initialSession);
-
   const { data: liveSession, isPending, error } = authClient.useSession();
 
   // Keep last non-pending session during client re-fetches

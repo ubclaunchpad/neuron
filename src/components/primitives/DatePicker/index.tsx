@@ -1,6 +1,8 @@
-import { type DateValue, getLocalTimeZone, today } from "@internationalized/date";
-import CaretDownIcon from "@public/assets/icons/caret-down.svg";
+"use client";
+
+import { CalendarDate, getLocalTimeZone, today, } from "@internationalized/date";
 import { useDateFormatter } from "@react-aria/i18n";
+import clsx from "clsx";
 import React from "react";
 import {
   Button as AriaButton,
@@ -11,106 +13,165 @@ import {
   Group as AriaGroup,
   Label as AriaLabel,
   Popover as AriaPopover,
+  Text as AriaText,
+  type DatePickerProps as AriaDatePickerProps,
 } from "react-aria-components";
-import { Calendar } from "../Calendar";
 import "./index.scss";
 
-interface DatePickerProps
-  extends Omit<React.ComponentProps<typeof AriaDatePicker>, "children"> {
-  label?: string;
-  placeholder?: string;
-  /** 'calendar' = display-only button w/ calendar; 'field' = editable field only; 'both' = field + calendar */
+import { Calendar } from "@/components/primitives/Calendar";
+import { FieldError } from "@/components/primitives/form/errors/FieldError";
+import CaretDownIcon from "@public/assets/icons/caret-down.svg";
+
+type Variant = "button" | "field";
+type FieldProps = Omit<AriaDatePickerProps<CalendarDate>, "children">;
+
+export interface DatePickerProps extends Omit<FieldProps, "children"> {
+  label?: React.ReactNode;
+  inlineLabel?: boolean;
+  description?: React.ReactNode;
+  inlineDescription?: boolean;
+  errorMessage?: React.ReactNode;
   inputMode?: "field" | "calendar" | "both";
+  placeholder?: string;
   displayFormatter?: (date: Date) => string | undefined;
   formatOptions?: Intl.DateTimeFormatOptions;
+  className?: string;
+  variant?: Variant;
 }
 
 export function DatePicker({
   label,
-  placeholder,
+  inlineLabel,
+  description,
+  inlineDescription,
+  errorMessage,
   defaultValue,
   inputMode = "both",
+  placeholder,
   displayFormatter,
   formatOptions,
-  ...rest
+  className,
+  variant = "field",
+  isInvalid: propIsInvalid,
+  ...props
 }: DatePickerProps) {
   const timeZone = getLocalTimeZone();
   const df = useDateFormatter(
-    formatOptions ?? { month: "long", day: "numeric", year: "numeric" }
+    formatOptions ?? { month: "long", day: "numeric", year: "numeric" },
   );
 
   const formatDisplay = React.useCallback(
-    (value: DateValue | null) => {
+    (value: CalendarDate | null) => {
       if (!value) return placeholder ?? "";
       const jsDate = value.toDate(timeZone);
       return displayFormatter?.(jsDate) ?? df.format(jsDate);
     },
-    [df, displayFormatter, placeholder, timeZone]
+    [df, displayFormatter, placeholder, timeZone],
   );
 
-  // We never want an empty calendar date
+  // We never want an empty calendar date when only the calendar button is shown.
   if (!defaultValue && inputMode === "calendar") {
     defaultValue = today(timeZone);
   }
 
+  const isInvalid = propIsInvalid ?? !!errorMessage;
+  const isField = variant === "field";
+
   return (
-    <AriaDatePicker {...rest} className="datepicker" defaultValue={defaultValue}>
+    <AriaDatePicker
+      {...props}
+      defaultValue={defaultValue}
+      isInvalid={isInvalid}
+      aria-label={(!label && (placeholder || "Date")) || undefined}
+      className={clsx("form-input datepicker", { "select__field": !isField }, className)}
+      data-variant={variant}
+    >
       {(picker) => (
         <>
-          {label && <AriaLabel className="datepicker__label">{label}</AriaLabel>}
+          <div
+            className={clsx("form-input__group", {
+              "form-input__group-inline": inlineLabel,
+            })}
+          >
+            {label && (
+              <AriaLabel className="form-input__label">
+                {label}
+              </AriaLabel>
+            )}
 
-          {inputMode === "calendar" && (
-            <AriaGroup>
-              <AriaDateInput style={{ display: 'none' }}>
-                {(segment) => (
-                  <AriaDateSegment
-                    segment={segment}
-                    className="datepicker__segment"
-                  />
-                )}
-              </AriaDateInput>
+            {/* INPUT RENDERING */}
+            {inputMode === "calendar" && (
+              <>
+                {/* Keep a hidden DateInput for accessibility/value handling */}
+                <AriaDateInput style={{ display: "none" }}>
+                  {(segment) => (
+                    <AriaDateSegment segment={segment} className="datepicker__segment" />
+                  )}
+                </AriaDateInput>
 
-              <AriaButton
-                slot="trigger"
-                className="datepicker__field datepicker__field-trigger"
-                aria-label={label || placeholder || "Open calendar"}
-              >
-                <span className="datepicker__input">
-                  {formatDisplay(picker.state.value as DateValue | null)}
-                </span>
-                <CaretDownIcon className="datepicker__trigger" />
-              </AriaButton>
-            </AriaGroup>
-          )}
+                <AriaButton className="form-input__input-container" slot="trigger">
+                  <span className="form-input__input has-trailing-icon">
+                    {formatDisplay(picker.state.value as CalendarDate | null)}
+                  </span>
+                  <span className="form-input__trailing-icon" aria-hidden="true">
+                    <CaretDownIcon />
+                  </span>
+                </AriaButton>
+              </>
+            )}
 
-          {inputMode !== "calendar" && (
-            <AriaGroup className="datepicker__field">
-              <AriaDateInput
-                className="datepicker__input"
-                aria-label={label || placeholder || "Date"}
-              >
-                {(segment) => (
-                  <AriaDateSegment
-                    segment={segment}
-                    className="datepicker__segment"
-                  />
-                )}
-              </AriaDateInput>
-
-              {inputMode === "both" && (
-                <AriaButton
-                  slot="trigger"
-                  className="datepicker__trigger"
-                  aria-label="Open calendar"
+            {inputMode === "field" && (
+              <AriaGroup className="form-input__input-container" role="presentation">
+                <AriaDateInput
+                  className="form-input__input"
+                  aria-label={(typeof label === "string" && label) || placeholder || "Date"}
                 >
+                  {(segment) => (
+                    <AriaDateSegment segment={segment} className="datepicker__segment" />
+                  )}
+                </AriaDateInput>
+                {/* No trigger shown; no calendar popover */}
+              </AriaGroup>
+            )}
+
+            {inputMode === "both" && (
+              <AriaGroup className="form-input__input-container" role="presentation">
+                <AriaDateInput
+                  className="form-input__input has-trailing-icon"
+                  aria-label={(typeof label === "string" && label) || placeholder || "Date"}
+                >
+                  {(segment) => (
+                    <AriaDateSegment segment={segment} className="datepicker__segment" />
+                  )}
+                </AriaDateInput>
+
+                <AriaButton className="form-input__trailing-icon" slot="trigger" aria-label="Open calendar">
                   <CaretDownIcon />
                 </AriaButton>
-              )}
-            </AriaGroup>
+              </AriaGroup>
+            )}
+          </div>
+
+          {!inlineDescription && description && (
+            <AriaText className="form-input__description" slot="description">
+              {description}
+            </AriaText>
           )}
 
+          {(errorMessage || (inlineDescription && description)) && (
+            <div className="form-input__bottom-container">
+              <FieldError errorMessage={errorMessage} />
+              {inlineDescription && description && (
+                <AriaText className="form-input__description" slot="description">
+                  {description}
+                </AriaText>
+              )}
+            </div>
+          )}
+
+          {/* Only render popover when a calendar is available */}
           {inputMode !== "field" && (
-            <AriaPopover className="datepicker__popover" placement="bottom start">
+            <AriaPopover className="select__popover" placement="bottom start">
               <AriaDialog className="datepicker__dialog">
                 <Calendar />
               </AriaDialog>

@@ -1,8 +1,8 @@
 import {
   ClassIdInput,
   ClassRequest,
-  CreateClassInput,
-  UpdateClassInput
+  CreateClass,
+  UpdateClass
 } from "@/models/api/class";
 import {
   getListClass,
@@ -31,13 +31,13 @@ export const classRouter = createTRPCRouter({
       return getSingleClass(cls);
     }),
   create: authorizedProcedure({ permission: { classes: ["create"] } })
-    .input(CreateClassInput)
+    .input(CreateClass)
     .mutation(async ({ input, ctx }): Promise<string> => {
       const id = await ctx.classService.createClass(input);
       return id;
     }),
   update: authorizedProcedure({ permission: { classes: ["update"] } })
-    .input(UpdateClassInput)
+    .input(UpdateClass)
     .mutation(async ({ input, ctx }): Promise<void> => {
       await ctx.classService.updateClass(input);
     }),

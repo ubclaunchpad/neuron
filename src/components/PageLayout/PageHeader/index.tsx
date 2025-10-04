@@ -1,4 +1,7 @@
+import { Button } from "@/components/primitives/Button";
 import { createHost, createSlot } from "@/lib/slots";
+import CaretLeftIcon from "@public/assets/icons/caret-left.svg";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { NavbarToggleButton } from "../../NavbarLayout/NavbarToggle";
 import "./index.scss";
@@ -6,6 +9,7 @@ import "./index.scss";
 type PageTitleProps = {
   children?: React.ReactNode;
   title: string;
+  showBackButton?: boolean;
 };
 
 const SlotDefs = {
@@ -20,8 +24,11 @@ type PageTitleCompound = React.FC<PageTitleProps> & {
 
 export const PageTitle: PageTitleCompound = ({
   children,
-  title
+  title,
+  showBackButton = false
 }) => {
+  const router = useRouter();
+  
   return (
     <div className="page-header">
       {createHost(children, (Slots) => {
@@ -30,7 +37,13 @@ export const PageTitle: PageTitleCompound = ({
 
         return (<>
           <div className="header-left">
-            <NavbarToggleButton />
+            <NavbarToggleButton className="header-button" />
+            {showBackButton && <Button 
+              className="header-button ghost small icon-only"
+              onPress={() => router.back()}
+            >
+              <CaretLeftIcon />
+            </Button>}
             <h2>{title}</h2>
             {leftContent}
           </div>

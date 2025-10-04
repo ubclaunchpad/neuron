@@ -11,10 +11,17 @@ import "./index.scss";
 
 export function ClassCard({ classData }: { classData: ListClass }) {
   const schedules = consolidateSchedules(classData.schedules);
+  
   return (
     <Card>
       <WithPermission permissions={{ permission: { classes: ["update"] }}}>
-        <Button className="class-card__button ghost small icon-only">
+        <Button 
+          className="class-card__button ghost small icon-only"
+          href={{
+            pathname: "/classes/edit",
+            query: { class: classData.id },
+          }}
+        >
           <EditIcon/>
         </Button>
       </WithPermission>

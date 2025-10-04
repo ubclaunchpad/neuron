@@ -1,7 +1,33 @@
 import type { ScheduleDB } from "@/server/db/schema";
-import type { ScheduleRule } from "./api/schedule";
+import { Temporal } from "@js-temporal/polyfill";
+import { ScheduleType, type Weekday } from "./api/schedule";
 import { getEmbeddedInstructor, type Instructor } from "./instructor";
 import { getEmbeddedVolunteer, type Volunteer } from "./volunteer";
+
+export type WeeklyRule = {
+  type: typeof ScheduleType.weekly,
+  weekday: Weekday,
+  interval: number,
+  localStartTime: string,
+  tzid: string
+};
+
+export type MonthlyRule = {
+  type: typeof ScheduleType.monthly,
+  weekday: Weekday,
+  nth: number,
+  localStartTime: string,
+  tzid: string
+};
+
+export type SingleRule = {
+  type: typeof ScheduleType.single,
+  extraDates: string[]
+  localStartTime: string,
+  tzid: string
+};
+
+export type ScheduleRule = WeeklyRule | MonthlyRule | SingleRule;
 
 export type Schedule = {
   id: string;
@@ -31,24 +57,36 @@ export function buildSchedule(
 }
 
 export function getSingleSchedule(s: Schedule) {
+  const { tzid, localStartTime, ...restRule } = s.rule;
+
   return {
     id: s.id,
+    localStartTime: s.rule.localStartTime,
+    localEndTime: Temporal.PlainTime.from(s.rule.localStartTime)
+      .add(Temporal.Duration.from({ minutes: s.durationMinutes }))
+      .toString(),
+    tzid: tzid,
     effectiveStart: s.effectiveStart,
     effectiveEnd: s.effectiveEnd,
-    durationMinutes: s.durationMinutes,
-    rule: s.rule,
+    rule: restRule,
     volunteers: s.volunteers.map(getEmbeddedVolunteer),
     instructors: s.instructors.map(getEmbeddedInstructor),
   } as const;
 }
 
 export function getEmbeddedSchedule(s: Schedule) {
+  const { tzid, localStartTime, ...restRule } = s.rule;
+
   return {
     id: s.id,
-    durationMinutes: s.durationMinutes,
+    localStartTime: s.rule.localStartTime,
+    localEndTime: Temporal.PlainTime.from(s.rule.localStartTime)
+      .add(Temporal.Duration.from({ minutes: s.durationMinutes }))
+      .toString(),
+    tzid: tzid,
     effectiveStart: s.effectiveStart,
     effectiveEnd: s.effectiveEnd,
-    rule: s.rule
+    rule: restRule
   } as const;
 }
 

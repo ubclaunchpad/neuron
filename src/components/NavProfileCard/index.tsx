@@ -5,22 +5,18 @@ import clsx from "clsx";
 import { Button } from "@/components/primitives/Button";
 import { FallbackImage } from "@/components/utils/FallbackImage";
 import { WithPermission } from "@/components/utils/WithPermission";
-import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { useAuth } from "@/providers/client-auth-provider";
 import CaretRightIcon from "@public/assets/icons/caret-right.svg";
 import "./index.scss";
 
 export function NavProfileCard({ collapsed }: { collapsed: boolean }) {
   const { user } = useAuth();
-  const profileAllowed = hasPermission({ permission: { profile: ["view"] }, user });
 
   return (
     <WithPermission permissions={{ permission: { profile: ["view"] } }}>
     <Button
       unstyled
-      href={profileAllowed ? "/profile" : undefined}
       className={clsx("nav-profile-card", collapsed && "collapsed")}
-      isDisabled={!profileAllowed}
     >
       <div className="nav-profile-card__main">
         <div className="nav-profile-card__avatar">

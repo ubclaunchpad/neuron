@@ -3,15 +3,16 @@
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Form } from "react-aria-components";
+import { Form } from 'react-aria-components';
 import { useForm } from "react-hook-form";
 import * as Yup from "yup";
 import "../index.scss";
 
 import { Button } from "@/components/primitives/Button";
 import { Card } from "@/components/primitives/Card";
-import { RootError } from "@/components/primitives/FormErrors/RootError";
-import { TextInput } from "@/components/primitives/TextInput";
+import { FormContent, FormGroup } from "@/components/primitives/form";
+import { RootError } from "@/components/primitives/form/errors/RootError";
+import { TextInput } from "@/components/primitives/form/TextInput";
 import { authClient } from "@/lib/auth/client";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 
@@ -77,72 +78,73 @@ export default function SignupForm() {
   };
 
   return (
-    <div className="form-container">
-      <h1 className="form-title">Welcome!</h1>
+    <div className="auth-form-container">
+      <h1 className="auth-form-title">Welcome!</h1>
 
       <Form
         onSubmit={handleSubmit(onSubmit)}
         validationBehavior="aria"
-        className="form-content"
       >
-        <RootError id="form-error" message={errors.root?.message} />
+        <FormContent>
+          <RootError id="form-error" message={errors.root?.message} />
 
-        {successMessage && (
-          <Card variant="success" size="small" role="alert">
-            {successMessage}
-          </Card>
-        )}
+          {successMessage && (
+            <Card variant="success" size="small" role="alert">
+              {successMessage}
+            </Card>
+          )}
 
-        <div className="form-group">
+          <FormGroup>
+            <TextInput
+              label="First name"
+              placeholder="Enter your first name"
+              errorMessage={errors.firstName?.message}
+              {...register("firstName")}
+            />
+
+            <TextInput
+              label="Last name"
+              placeholder="Enter your last name"
+              errorMessage={errors.lastName?.message}
+              {...register("lastName")}
+            />
+          </FormGroup>
+
           <TextInput
-            label="First name"
-            placeholder="Enter your first name"
-            errorMessage={errors.firstName?.message}
-            {...register("firstName")}
+            type="email"
+            label="Email"
+            placeholder="Enter your email"
+            errorMessage={errors.email?.message}
+            {...register("email")}
           />
 
           <TextInput
-            label="Last name"
-            placeholder="Enter your last name"
-            errorMessage={errors.lastName?.message}
-            {...register("lastName")}
+            type="password"
+            label="Create password (at least 8 characters)"
+            placeholder="Create a password"
+            errorMessage={errors.password?.message}
+            {...register("password")}
           />
-        </div>
 
-        <TextInput
-          type="email"
-          label="Email"
-          placeholder="Enter your email"
-          errorMessage={errors.email?.message}
-          {...register("email")}
-        />
+          <TextInput
+            type="password"
+            label="Confirm password"
+            placeholder="Confirm your password"
+            errorMessage={errors.confirmPassword?.message}
+            {...register("confirmPassword")}
+          />
 
-        <TextInput
-          type="password"
-          label="Create password (at least 8 characters)"
-          placeholder="Create a password"
-          errorMessage={errors.password?.message}
-          {...register("password")}
-        />
-
-        <TextInput
-          type="password"
-          label="Confirm password"
-          placeholder="Confirm your password"
-          errorMessage={errors.confirmPassword?.message}
-          {...register("confirmPassword")}
-        />
-
-        <Button type="submit">
-          {isSubmitting ? "Creating..." : "Create an Account"}
-        </Button>
-
-        <p className="form-footer">
-          Already have an account?{" "}
-          <Button variant="link" href="/auth/login">
-            <strong>Log In</strong>
+          <Button type="submit">
+            {isSubmitting ? "Creating..." : "Create an Account"}
           </Button>
-        </p>
+
+          <p className="auth-form-footer">
+            Already have an account?{" "}
+            <Button variant="link" href="/auth/login">
+              <strong>Log In</strong>
+            </Button>
+          </p>
+        </FormContent>
       </Form>
     </div>
   );

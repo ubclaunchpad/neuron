@@ -22,7 +22,7 @@ export function ActiveSectionProvider({
   scrollRef,
   children,
 }: {
-  sectionIds?: string[];
+  sectionIds?: readonly string[];
   initialSectionId?: string;
   scrollRef: React.RefObject<HTMLElement | null>;
   children: React.ReactNode;

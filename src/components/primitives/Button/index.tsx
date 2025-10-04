@@ -1,6 +1,9 @@
 "use client";
 
 import clsx from "clsx";
+import type { Route } from "next";
+import type { LinkProps } from "next/link";
+import { useRouter } from "next/navigation";
 import { forwardRef, type ForwardedRef } from "react";
 import {
   Button as AriaButton,
@@ -8,6 +11,7 @@ import {
   type ButtonProps as AriaButtonProps,
   type LinkProps as AriaLinkProps,
 } from "react-aria-components";
+import url from "url";
 import { ActiveContext } from "../../utils/ActiveContext";
 import "./index.scss";
 
@@ -17,11 +21,14 @@ type Common = {
   className?: string;
 };
 
-type ButtonOnlyProps = Omit<AriaButtonProps, "className"> &
+type Href = LinkProps<Route>["href"];
+
+type ButtonOnlyProps = Omit<AriaButtonProps, "className" | "href"> &
   Common & { href?: never };
-type LinkOnlyProps = Omit<AriaLinkProps, "className"> &
-  Common & { href: string };
+type LinkOnlyProps = Omit<AriaLinkProps, "className" | "href"> &
+  Common & { href: Href };
 export type ButtonLikeProps = ButtonOnlyProps | LinkOnlyProps;
+
 
 export const Button = forwardRef<
   HTMLButtonElement | HTMLAnchorElement,
@@ -39,17 +46,27 @@ export const Button = forwardRef<
     ref,
   ) => {
     const classes = unstyled ? className : clsx(variant, className);
+    const router = useRouter();
 
     if (href) {
+      const renderedHref: Route = (typeof href === "string" ? href : url.format(href)) as Route;
+      
+      const { onMouseEnter, ...rest } = props;
+      const onMouseEnterPrefetch = (e: any) => {
+        onMouseEnter?.(e);
+        router.prefetch(renderedHref);
+      };
+
       return (
-        <ActiveContext href={href}>
+        <ActiveContext href={renderedHref}>
           {({ isActive }) => (
             <AriaLink
               ref={ref as ForwardedRef<HTMLAnchorElement>}
-              href={href}
+              href={renderedHref}
               className={classes}
               aria-current={isActive ? "page" : undefined}
-              {...props as any}
+              onMouseEnter={onMouseEnterPrefetch}
+              {...rest as any}
             >
               {children}
             </AriaLink>
@@ -71,3 +88,18 @@ export const Button = forwardRef<
 );
 
 Button.displayName = "Button";
+
+
+export const ButtonGroup = ({ 
+  children, 
+  ...props 
+}: { 
+  children: React.ReactNode, 
+  className?: string 
+}) => {
+  return <div className={clsx("button-group", props.className)}>
+    {children}
+  </div>;
+};
+
+ButtonGroup.displayName = "ButtonGroup";

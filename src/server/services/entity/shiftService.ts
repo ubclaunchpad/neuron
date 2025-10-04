@@ -66,3 +66,5 @@ export class ShiftService {
         return resultsShifts.map(({ shift }) => buildShift(shift))  
     }
 }
+}
+

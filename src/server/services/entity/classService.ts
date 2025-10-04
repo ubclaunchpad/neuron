@@ -132,20 +132,6 @@ export class ClassService {
   }
 
   async publishClass(classId: string): Promise<void> {
-    const classData = await this.getClass(classId);
-    const term = await this.termService.getTerm(classData.termId);
-    const schedule: any = {}
-
-    const startDate = schedule.effectiveStart ?? term.startDate;
-
-    let rrule = new RRuleTemporal({ rruleString: "" });
-    rrule = new RRuleTemporal({
-      ...rrule.options(),
-      dtstart: Temporal.ZonedDateTime.from(startDate),
-      until: Temporal.ZonedDateTime.from("")
-    })
-
-
     throw new Error("Not implemented");
   }
 

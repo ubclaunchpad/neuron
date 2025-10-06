@@ -9,24 +9,6 @@ export const StatusEnum = z.enum(["unverified", "rejected", "active", "inactive"
 export type Status = z.infer<typeof StatusEnum>;
 export const Status = createStringEnum(StatusEnum);
 
-export const CoverageStatusEnum = z.enum([
-  "open",
-  "withdrawn",
-  "resolved",
-] as const);
-export type CoverageStatus = z.infer<typeof CoverageStatusEnum>;
-export const CoverageStatus = createStringEnum(CoverageStatusEnum);
-
-export const AbsenceRequestCategoryEnum = z.enum([
-  "emergency",
-  "health",
-  "conflict",
-  "transportation",
-  "other",
-] as const);
-export type AbsenceRequestCategory = z.infer<typeof AbsenceRequestCategoryEnum>;
-export const AbsenceRequestCategory = createStringEnum(AbsenceRequestCategoryEnum);
-
 export const AttendanceStatusEnum = z.enum([
   "present",
   "absent",

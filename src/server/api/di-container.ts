@@ -12,6 +12,7 @@ import { registerCacheClient, type CacheClient } from "../db/cache";
 import { CacheService } from "../services/cacheService";
 import { EmailService } from "../services/emailService";
 import { ClassService } from "../services/entity/classService";
+import { CoverageService } from "../services/entity/coverageService";
 import { InstructorService } from "../services/entity/instructorService";
 import { TermService } from "../services/entity/termService";
 import { VolunteerService } from "../services/entity/volunteerService";
@@ -34,6 +35,7 @@ export type NeuronCradle = {
   instructorService: InstructorService;
   volunteerService: VolunteerService;
   termService: TermService;
+  coverageService: CoverageService;
 };
 
 export type NeuronContainer = AwilixContainer<NeuronCradle>;
@@ -62,6 +64,7 @@ const registerServices = (container: NeuronContainer) => {
     instructorService: asClass<InstructorService>(InstructorService).singleton(),
     volunteerService: asClass<VolunteerService>(VolunteerService).singleton(),
     termService: asClass<TermService>(TermService).singleton(),
+    coverageService: asClass<CoverageService>(CoverageService),
 
     cacheService: asClass<CacheService>(CacheService).scoped(),
   });

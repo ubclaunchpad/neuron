@@ -1,4 +1,5 @@
-import { AbsenceRequestCategory, AttendanceStatus, CoverageStatus } from "@/models/interfaces";
+import { CoverageRequestCategory, CoverageStatus } from "@/models/api/coverage";
+import { AttendanceStatus } from "@/models/interfaces";
 import { course } from "@/server/db/schema/course";
 import { schedule } from "@/server/db/schema/schedule";
 import { user, volunteer } from "@/server/db/schema/user";
@@ -18,7 +19,7 @@ import {
     uuid
 } from "drizzle-orm/pg-core";
 
-export const coverageCategory = pgEnum("coverage_category", AbsenceRequestCategory.values);
+export const coverageCategory = pgEnum("coverage_category", CoverageRequestCategory.values);
 export const coverageStatus = pgEnum("coverage_status", CoverageStatus.values);
 
 export const shift = pgTable("shift", {
@@ -61,10 +62,10 @@ export const coverageRequest = pgTable("coverage_request", {
     details: text("details").notNull(),
     comments: text("comments"),
     status: coverageStatus("status").notNull().default(CoverageStatus.open),
-    requestingVolunteerUserId: uuid("requesting_volunteer_user_id").references(() => volunteer.userId, { onDelete: "cascade" }),
+    requestingVolunteerUserId: uuid("requesting_volunteer_user_id").notNull().references(() => volunteer.userId, { onDelete: "cascade" }),
     coveredByVolunteerUserId: uuid("covered_by_volunteer_user_id").references(() => volunteer.userId, { onDelete: "set null" }),
 }, (table) => [
-    uniqueIndex().on(table.shiftId, table.requestingVolunteerUserId).where(eq(table.status, sql.raw(`'${CoverageStatus.open}'::${coverageStatus.enumName}`))),
+    uniqueIndex().on(table.shiftId, table.requestingVolunteerUserId).where(not(eq(table.status, sql.raw(`'${CoverageStatus.withdrawn}'::${coverageStatus.enumName}`)))),
     index().on(table.shiftId, table.status),
     index().on(table.coveredByVolunteerUserId),
     index().on(table.requestingVolunteerUserId),

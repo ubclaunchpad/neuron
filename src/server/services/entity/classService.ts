@@ -10,7 +10,7 @@ import { buildSchedule } from "@/models/schedule";
 import { type Drizzle, type Transaction } from "@/server/db";
 import { course, schedule, volunteerToSchedule } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { toMap } from "@/utils/arrayUtils";
+import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import { InstructorService } from "./instructorService";
 import type { TermService } from "./termService";
 import { VolunteerService } from "./volunteerService";
@@ -166,18 +166,16 @@ export class ClassService {
       offset,
     });
 
-    console.log(courses);
-
     // Get instructors and volunteers for schedules
-    const instructorIds = courses.flatMap((course) =>
+    const instructorIds = uniqueDefined(courses.flatMap((course) =>
       course.schedules.flatMap((schedule) => schedule.instructorUserId ?? []),
-    );
+    ));
     const instructors = toMap(await this.instructorService.getInstructors(instructorIds));
-    const volunteerIds = courses.flatMap((course) =>
+    const volunteerIds = uniqueDefined(courses.flatMap((course) =>
       course.schedules.flatMap((schedule) =>
         schedule.volunteers.map((volunteer) => volunteer.volunteerUserId),
       ),
-    );
+    ));
     const volunteers = toMap(await this.volunteerService.getVolunteers(volunteerIds));
 
     return {

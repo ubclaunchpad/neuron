@@ -47,17 +47,16 @@ export class ShiftService {
   }
 
   async deleteShift(input: ShiftIdInput): Promise<void> {
-    const shiftRow = await this.db.query.shift.findFirst({
-      where: eq(shift.id, input.shiftId),
-      columns: { id: true },
-    });
+    const [deletedRow] = await this.db
+      .delete(shift)
+      .where(eq(shift.id, input.shiftId))
+      .returning({ id: shift.id });
 
-    if (!shiftRow) {
+    if (!deletedRow) {
       throw new NeuronError(
         `Shift with id ${input.shiftId} was not found`,
         NeuronErrorCodes.NOT_FOUND,
       );
     }
-    await this.db.delete(shift).where(eq(shift.id, input.shiftId));
   }
 }

@@ -66,4 +66,4 @@ yarn-error.log*
 **/.env.production.local
 **/.prettierignore
 **/repomix-output.txt
-src\test.ts
+src/test.ts

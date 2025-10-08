@@ -21,7 +21,6 @@ export const AbsenceRequestInput = z.object({
 });
 
 export const CreateShiftInput = z.object({
-  courseId: z.uuid(),
   scheduleId: z.uuid(),
   date: z.iso.date(),
   startAt: z.iso.datetime(),

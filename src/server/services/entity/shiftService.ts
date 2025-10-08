@@ -35,7 +35,7 @@ export class ShiftService {
     const [row] = await this.db
       .insert(shift)
       .values({
-        courseId: input.courseId,
+        courseId: scheduleRow.courseId,
         scheduleId: input.scheduleId,
         date: input.date,
         startAt: new Date(input.startAt),

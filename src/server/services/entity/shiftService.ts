@@ -22,13 +22,9 @@ export class ShiftService {
     });
 
     if (!scheduleRow) {
-      throw new NeuronError(`Schedule with id ${input.scheduleId} was not found`, NeuronErrorCodes.NOT_FOUND);
-    }
-
-    if (scheduleRow.courseId !== input.courseId) {
       throw new NeuronError(
-        "Schedule does not belong to the provided class",
-        NeuronErrorCodes.BAD_REQUEST,
+        `Schedule with id ${input.scheduleId} was not found`, 
+        NeuronErrorCodes.NOT_FOUND
       );
     }
 

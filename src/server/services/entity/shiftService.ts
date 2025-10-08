@@ -1,18 +1,61 @@
-import type { ListRequest } from "@/models/api/common";
+import type { CreateShiftInput, ShiftIdInput } from "@/models/api/shift";
 import { buildShift, type Shift } from "@/models/shift";
-import type { ListResponse } from "@/models/list-response";
 import { type Drizzle } from "@/server/db";
-import { getViewColumns } from "@/server/db/extensions/get-view-columns";
+import { schedule } from "@/server/db/schema/schedule";
+import { shiftAttendance, shift } from "@/server/db/schema/shift";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
-import { shiftAttendance, shift } from "@/server/db/schema";
-
+import { eq } from "drizzle-orm";
 
 export class ShiftService {
-    private readonly db: Drizzle;
-    constructor(db: Drizzle) {
-        this.db = db;
+  private readonly db: Drizzle;
+
+  constructor(db: Drizzle) {
+    this.db = db;
+  }
+
+  async createShift(input: CreateShiftInput): Promise<string> {
+    const scheduleRow = await this.db.query.schedule.findFirst({
+      where: eq(schedule.id, input.scheduleId),
+      columns: {
+        id: true,
+        courseId: true,
+      },
+    });
+
+    if (!scheduleRow) {
+      throw new NeuronError(
+        `Schedule with id ${input.scheduleId} was not found`, 
+        NeuronErrorCodes.NOT_FOUND
+      );
     }
+
+    const [row] = await this.db
+      .insert(shift)
+      .values({
+        courseId: scheduleRow.courseId,
+        scheduleId: input.scheduleId,
+        date: input.date,
+        startAt: new Date(input.startAt),
+        endAt: new Date(input.endAt),
+      })
+      .returning({ id: shift.id });
+
+    return row!.id;
+  }
+
+  async deleteShift(input: ShiftIdInput): Promise<void> {
+    const [deletedRow] = await this.db
+      .delete(shift)
+      .where(eq(shift.id, input.shiftId))
+      .returning({ id: shift.id });
+
+    if (!deletedRow) {
+      throw new NeuronError(
+        `Shift with id ${input.shiftId} was not found`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+  }
 
     async getVolunteerShifts(volunteerId: string): Promise<Shift[] | undefined> {
         const resultsShifts = await this.db

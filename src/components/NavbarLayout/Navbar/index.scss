@@ -73,9 +73,8 @@
         border-radius: $radius-regular;
         padding: $padding-md 0;
         position: relative;
-
-        // Reset button styles
         justify-content: unset;
+        --btn-bg-hover: color-mix(in srgb, var(--tone-hover) 10%, transparent) !important;
 
         &::before {
             content: "";

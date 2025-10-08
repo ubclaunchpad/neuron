@@ -24,13 +24,11 @@ export type NavbarItem = {
 export function Navbar({
   navbarItems,
   collapsed = false,
-  onToggle,
   toggleIcon,
   className,
 }: {
   navbarItems: NavbarItem[];
   collapsed?: boolean;
-  onToggle: () => void;
   toggleIcon?: React.ReactNode;
   className?: string;
 }) {

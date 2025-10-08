@@ -96,7 +96,7 @@
   }
 
   &.secondary {
-    --btn-bg: transparent;
+    --btn-bg: #{$bg-white};
     --btn-bg-hover: #{$bg-white-hover};
     --btn-text: #{$text-dark};
     --btn-icon: #{$text-grey};

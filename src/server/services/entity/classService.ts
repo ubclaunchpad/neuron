@@ -166,8 +166,6 @@ export class ClassService {
       offset,
     });
 
-    console.log(courses);
-
     // Get instructors and volunteers for schedules
     const instructorIds = courses.flatMap((course) =>
       course.schedules.flatMap((schedule) => schedule.instructorUserId ?? []),
@@ -228,7 +226,7 @@ export class ClassService {
       const updated = await tx
         .update(schedule)
         .set({
-          durationMinutes: localStartTime.until(localEndTime).minutes,
+          durationMinutes: localStartTime.until(localEndTime).total("minutes"),
           rrule: rruleObject.toString(),
           ...scheduleData,
         })
@@ -240,7 +238,7 @@ export class ClassService {
       } 
 
       // Insert volunteers to schedule
-      if (addedVolunteerUserIds) {
+      if (addedVolunteerUserIds.length > 0) {
         await tx.insert(volunteerToSchedule).values(
           addedVolunteerUserIds?.map((volunteerId) => ({
             scheduleId: id,
@@ -250,7 +248,7 @@ export class ClassService {
       }
 
       // Remove volunteers from schedule
-      if (removedVolunteerUserIds) {
+      if (removedVolunteerUserIds.length > 0) {
         await tx
           .delete(volunteerToSchedule)
           .where(
@@ -292,7 +290,7 @@ export class ClassService {
         .insert(schedule)
         .values({
           courseId,
-          durationMinutes: localStartTime.until(localEndTime).minutes,
+          durationMinutes: localStartTime.until(localEndTime).total("minutes"),
           rrule: rruleObject.toString(),
           ...scheduleData
         })
@@ -304,12 +302,14 @@ export class ClassService {
       }
 
       // Insert volunteers to schedule
-      await tx.insert(volunteerToSchedule).values(
-        volunteerUserIds.map((volunteerId) => ({
-          scheduleId: row.id,
-          volunteerUserId: volunteerId,
-        })),
-      );
+      if (volunteerUserIds.length > 0) {
+        await tx.insert(volunteerToSchedule).values(
+          volunteerUserIds.map((volunteerId) => ({
+            scheduleId: row.id,
+            volunteerUserId: volunteerId,
+          })),
+        );
+      }
     }
   }
 

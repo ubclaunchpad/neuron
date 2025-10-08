@@ -25,18 +25,14 @@ type LoginSchemaType = Yup.InferType<typeof LoginSchema>;
 
 export default function LoginForm() {
   const {
-    register,
+    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: yupResolver(LoginSchema),
     mode: "onSubmit",
-    reValidateMode: "onChange",
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    reValidateMode: "onChange"
   });
 
   const onSubmit = async (data: LoginSchemaType) => {
@@ -71,7 +67,8 @@ export default function LoginForm() {
             label="Email"
             placeholder="Enter your email"
             errorMessage={errors.email?.message}
-            {...register("email")}
+            control={control}
+            name="email"
           />
 
           <TextInput
@@ -85,7 +82,8 @@ export default function LoginForm() {
             inlineDescription={true}
             placeholder="Enter your password"
             errorMessage={errors.password?.message}
-            {...register("password")}
+            control={control}
+            name="password"
           />
 
           <Button type="submit">

@@ -7,6 +7,7 @@
   gap: $padding-xxxl;
   width: min(100%, 40rem);
   padding: $padding-xxxl;
+  align-items: stretch;
 
   .form-input__label {
     color: $text-dark;

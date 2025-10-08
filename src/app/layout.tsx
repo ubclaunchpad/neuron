@@ -2,6 +2,7 @@ import "@/styles/globals.scss";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 
+import HydrationGate from "@/components/utils/HydrationGate";
 import { Toaster } from "@/components/utils/Toaster";
 import { AuthProvider } from "@/providers/auth-provider";
 import { NavigateEventProvider } from "@/providers/navigate-event-provider";
@@ -34,6 +35,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} scroll-smooth`}>
       <body>
         <Toaster />
+        <HydrationGate/>
         <RouteProvider>
           <NuqsAdapter>
             <TRPCReactProvider>

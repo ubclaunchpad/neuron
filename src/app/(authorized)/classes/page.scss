@@ -64,6 +64,7 @@
         flex-direction: column;
         gap: 1.75rem;
         scroll-margin-block: 2.25rem;
+        align-items: stretch;
 
         &-title {
             color: $text-dark;
@@ -73,10 +74,10 @@
         }
 
         &-content {
-            display: flex;
-            flex-direction: column;
-            flex-wrap: wrap;
             gap: $padding-lg;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
+            justify-content: stretch;
         }
     }
 }

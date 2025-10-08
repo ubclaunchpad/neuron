@@ -85,7 +85,6 @@ export function NavbarLayout({ children }: { children: React.ReactNode }) {
           <Navbar
             navbarItems={navbarItems}
             collapsed={collapsed}
-            onToggle={toggle}
           />
         </nav>
         <nav
@@ -97,7 +96,6 @@ export function NavbarLayout({ children }: { children: React.ReactNode }) {
         >
           <Navbar
             navbarItems={navbarItems}
-            onToggle={toggle}
             toggleIcon={<CloseIcon />}
           />
         </nav>

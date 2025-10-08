@@ -35,10 +35,10 @@ export const useSidebar = () => {
 export const PageLayout: PageLayoutCompound = ({
   children,
   sidebarWidth = 448,
-  mainMinWidth = 360,
+  mainMinWidth = 412,
   contentRef,
 }) => {
-  const [isOpen, setIsOpen] = React.useState(true);
+  const [isOpen, setIsOpen] = React.useState(false);
   const toggleSidebar = useCallback(() => setIsOpen(!isOpen), [setIsOpen]);
 
   const vars: React.CSSProperties = {

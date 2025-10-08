@@ -1,5 +1,6 @@
 "use client";
 
+import { Slot } from "@radix-ui/react-slot";
 import clsx from "clsx";
 import * as React from "react";
 import "./index.scss";
@@ -7,12 +8,27 @@ import "./index.scss";
 export type CardVariant = "default" | "success" | "error";
 export type CardSize = "small" | "default";
 
-export type CardProps = React.HTMLAttributes<HTMLDivElement> & {
+type BaseCardProps = {
+  /** When true, Card won’t render a div—it will pass props to its single child */
+  asChild?: boolean;
   variant?: CardVariant;
   size?: CardSize;
   className?: string;
 };
 
-export function Card({ className, variant, size, ...props }: CardProps) {
-  return <div {...props} className={clsx("card", variant, size, className)} />;
-}
+type CardProps = BaseCardProps & React.ComponentPropsWithoutRef<"div">;
+
+export const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ asChild, variant, size, className, children, ...rest }, ref) => {
+    const Comp = asChild ? Slot : "div";
+    const classes = clsx("card", variant, size, className);
+
+    return (
+      <Comp ref={ref as any} className={classes} {...rest}>
+        {children}
+      </Comp>
+    );
+  }
+);
+
+Card.displayName = "Card";

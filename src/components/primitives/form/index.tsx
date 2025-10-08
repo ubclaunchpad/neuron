@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import "./form.scss";
+import "./index.scss";
 
 export const FormContent = ({ 
     children, 

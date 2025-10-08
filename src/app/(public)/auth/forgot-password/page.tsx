@@ -6,8 +6,7 @@ import * as Yup from "yup";
 import "../index.scss";
 
 import { Button } from "@/components/primitives/Button";
-import { FormContent } from "@/components/primitives/form";
-import { TextInput } from "@/components/primitives/form/TextInput";
+import { FormContent, TextInput } from "@/components/primitives/form";
 import useCountdown from "@/hooks/use-countdown";
 import { authClient } from "@/lib/auth/client";
 import BackIcon from "@public/assets/icons/caret-left.svg";
@@ -27,17 +26,14 @@ export default function ForgotPasswordForm() {
   });
 
   const {
-    register,
+    control,
     handleSubmit,
     getValues,
     formState: { errors, isSubmitSuccessful },
   } = useForm({
     resolver: yupResolver(ForgotPasswordSchema),
     mode: "onSubmit",
-    reValidateMode: "onChange",
-    defaultValues: {
-      email: "",
-    },
+    reValidateMode: "onChange"
   });
 
   const onSubmit = async (data: ForgotPasswordSchemaType) => {
@@ -77,7 +73,8 @@ export default function ForgotPasswordForm() {
               label="Email"
               placeholder="Enter your email"
               errorMessage={errors.email?.message}
-              {...register("email")}
+              name="email"
+              control={control}
             />
           )}
 

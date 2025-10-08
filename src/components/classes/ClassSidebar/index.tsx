@@ -12,11 +12,22 @@ import { useMemo } from "react";
 export function ClassSidebarContent() {
   const { selectedClassId } = useClassesPage();
 
-  console.log(selectedClassId);
   const { data: classData } = clientApi.class.byId.useQuery(
     { classId: selectedClassId ?? "" }, 
     { enabled: !!selectedClassId, suspense: !!selectedClassId }
   );
+
+  const scheduleViews = useMemo(() => {
+    return (classData?.schedules ?? []).map((s) => ({
+      id: s.id,
+      time: describeScheduleTime(s),
+      dates: describeScheduleDates(s),
+      occurance: describeScheduleOccurrence(s),
+      instructorFullName: s.instructor ? `${s.instructor.name} ${s.instructor.lastName}` : "—",
+      volunteers: (s.volunteers ?? []).map(v => ({ id: v.id, fullName: `${v.name} ${v.lastName}` })),
+    }));
+  }, [classData?.schedules]);
+  
 
   return (
     <SidebarContainer>
@@ -29,22 +40,20 @@ export function ClassSidebarContent() {
             {classData?.description ?? "No description"}
           </SidebarField>
         </SidebarSection>
-        {classData?.schedules.map((schedule) => {
-          const scheduleTime = useMemo(() => describeScheduleTime(schedule), [schedule]);
-          const scheduleDates = useMemo(() => describeScheduleDates(schedule), [schedule]);
-          const scheduleOccurrence = useMemo(() => describeScheduleOccurrence(schedule), [schedule]);
-
+        {scheduleViews.map(({
+          id, time, dates, occurance, instructorFullName, volunteers
+        }) => {
           return (
-            <SidebarSection key={schedule.id}>
+            <SidebarSection key={id}>
               <SidebarField>
-                <h3>{scheduleOccurrence}</h3> {scheduleTime} {scheduleDates}
+                <h3>{occurance}</h3> {time} {dates}
               </SidebarField>
-              <SidebarField label="Instructor" inline={false}>
-                {schedule?.instructor?.name} {schedule?.instructor?.lastName}
+              <SidebarField inline label="Instructor">
+                {instructorFullName}
               </SidebarField>
-              <SidebarField label="Volunteers" inline={false}>
-                {schedule?.volunteers.map((volunteer) => (
-                  <span key={volunteer.id}>{volunteer.name} {volunteer.lastName}</span>
+              <SidebarField inline label="Volunteers">
+                {volunteers.map((volunteer) => (
+                  <span key={volunteer.id}>{volunteer.fullName}</span>
                 ))}
               </SidebarField>
             </SidebarSection>

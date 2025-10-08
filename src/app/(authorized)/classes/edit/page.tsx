@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { parseAsString, useQueryState } from "nuqs";
 import { Form } from "react-aria-components";
-import { FormProvider, useForm, useFormContext } from "react-hook-form";
+import { FormProvider, useFieldArray, useForm, useFormContext } from "react-hook-form";
 import z from "zod";
 import "./page.scss";
 
@@ -13,7 +13,6 @@ import { Button } from "@/components/primitives/Button";
 import { Card } from "@/components/primitives/Card";
 import { FormContent, FormGroup, Select, TextArea, TextInput } from "@/components/primitives/form";
 import { Loader } from "@/components/utils/Loader";
-import { useFieldArrayChanges } from "@/hooks/use-form-array-chages";
 import type { CreateClassInput, UpdateClassInput } from "@/models/api/class";
 import { ScheduleRule } from "@/models/api/schedule";
 import type { SingleClass } from "@/models/class";
@@ -43,7 +42,7 @@ export const ClassEditSchema = z.object({
   description: z.string().optional(),
   meetingURL: z.url("Please enter a valid meeting url.").optional(),
   category: z.string().nonempty("Please fill out this field."),
-  schedules: z.array(ScheduleEditSchema).nonoptional().default([]),
+  schedules: z.array(ScheduleEditSchema).default([]),
 });
 type ClassEditSchemaOutput = z.output<typeof ClassEditSchema>; 
 
@@ -89,7 +88,7 @@ export default function ClassesEditView() {
         <PageTitle title={queryClassId ? "Edit Class" : "Create Class"} showBackButton/>
       </PageLayout.Header>
 
-      <Loader isLoading={isLoadingEditingClass || isLoadingCurrentTerm} fallback={"Loading class data"}>
+      <Loader isLoading={editing ? isLoadingEditingClass : isLoadingCurrentTerm} fallback={"Loading class data"}>
         <ClassEditForm 
           isEditing={editing}
           editingClassId={queryClassId ?? undefined}
@@ -141,21 +140,14 @@ function ClassEditForm({
         effectiveEnd: schedule.effectiveEnd,
         instructorUserId: schedule.instructor?.id,
       })),
-    } : {
-      name: "",
-      description: "",
-      meetingURL: "",
-      category: "",
-      schedules: [],
-    },
+    } : undefined
   });
 
   const { 
     fields: formSchedules, 
     append: addFormSchedule, 
-    remove: removeFormSchedule, 
-    getChanges: getScheduleChanges 
-  } = useFieldArrayChanges({
+    remove: removeFormSchedule
+  } = useFieldArray({
     control: form.control,
     name: "schedules"
   });
@@ -199,59 +191,59 @@ function ClassEditForm({
         onSubmit={form.handleSubmit(onSubmit)}
         validationBehavior="aria"
       >
+        { JSON.stringify(form.getValues()) }
         <div className="class-edit__content">
           <Card>
             <FormContent>
               <h3>General</h3>
 
-              <TextInput 
+              <TextInput
+                control={form.control}
+                name="name"
                 inlineLabel
                 label="Title"
                 placeholder="Enter Title"
                 errorMessage={form.formState.errors.name?.message}
-                {...form.register("name")}
               />
 
               <TextInput 
+                control={form.control}
+                name="meetingURL"
                 inlineLabel
                 label="Meeting Link"
                 placeholder="Enter Meeting Link"
                 errorMessage={form.formState.errors.meetingURL?.message}
-                {...form.register("meetingURL")}
               />
 
               <Select
+                control={form.control}
+                name="category"
                 inlineLabel
                 label="Category"
                 placeholder="Select Category"
                 errorMessage={form.formState.errors.category?.message}
-                {...form.register("category")}
               >
                 {classCategories.map(category => (
-                  <Select.Item key={category}>{category}</Select.Item>
+                  <Select.Item 
+                    key={category}
+                    id={category}
+                  >{category}</Select.Item>
                 ))}
               </Select>
 
               <FormGroup columns="2fr 1fr">
                 <TextArea
+                  control={form.control}
+                  name="description"
                   label="Description"
                   placeholder="Enter Description"
-                  errorMessage={form.formState.errors.description?.message}
-                  {...form.register("description")}
-                ></TextArea>
-
-                <TextArea
-                  label="Description"
-                  placeholder="Enter Description"
-                  errorMessage={form.formState.errors.description?.message}
-                  {...form.register("description")}
                 ></TextArea>
               </FormGroup>
             </FormContent>
           </Card>
 
           {formSchedules.map((schedule, index) => (
-            <Card key={schedule.key}>
+            <Card key={schedule.id}>
               <ScheduleEditForm index={index} selfDelete={() => removeFormSchedule(index)}/>
             </Card>
           ))}

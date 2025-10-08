@@ -6,8 +6,8 @@ $font-body: var(--font-roboto, "Roboto"), system-ui, -apple-system, "Segoe UI", 
 $font-display: var(--font-montserrat, "Montserrat"), var(--font-roboto, "Roboto"), system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
 
 /* FONT SIZE */
-$font-size-xs: 0.75rem;
-$font-size-sm: 0.875rem;
+$font-size-xs: 0.65rem;
+$font-size-sm: 0.75rem;
 $font-size-base: 1rem;
 $font-size-md: 1.25rem;
 $font-size-lg: 1.75rem;
@@ -25,7 +25,7 @@ $max-width-container: 1280px;
 
 /* BREAKPOINTS */
 $breakpoint-sm: 480px;
-$breakpoint-md: 768px;
+$breakpoint-md: 767px;
 $breakpoint-lg: 1024px;
 
 /* PADDING */

@@ -50,18 +50,14 @@ export default function PasswordResetForm() {
     : null;
 
   const {
-    register,
+    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: yupResolver(PasswordResetSchema),
     mode: "onSubmit",
-    reValidateMode: "onChange",
-    defaultValues: {
-      password: "",
-      confirmPassword: "",
-    },
+    reValidateMode: "onChange"
   });
 
   const onSubmit = async (data: PasswordResetSchemaType) => {
@@ -105,7 +101,8 @@ export default function PasswordResetForm() {
             placeholder="Create a password"
             errorMessage={errors.password?.message}
             autoComplete="new-password"
-            {...register("password")}
+            control={control}
+            name="password"
           />
 
           <TextInput
@@ -115,7 +112,8 @@ export default function PasswordResetForm() {
             placeholder="Confirm your password"
             errorMessage={errors.confirmPassword?.message}
             autoComplete="new-password"
-            {...register("confirmPassword")}
+            control={control}
+            name="confirmPassword"
           />
 
           <Button type="submit" isDisabled={!!error}>

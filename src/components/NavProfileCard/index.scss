@@ -14,6 +14,9 @@
     cursor: pointer;
     box-shadow: $shadow-regular;
     transition: padding $transition-fast;
+    min-width: 0;
+    max-width: 100%; 
+    flex: 1;
 
     &__main {
         display: flex;
@@ -72,6 +75,8 @@
     &.collapsed {
         padding: $padding-xxxs;
         border-radius: $radius-md;
+        flex-shrink: 0;
+        max-width: none;
 
         .nav-profile-card__info,
         .nav-profile-card__caret {

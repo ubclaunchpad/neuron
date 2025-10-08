@@ -37,21 +37,14 @@ export default function SignupForm() {
   const router = useRouter();
 
   const {
-    register,
+    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: yupResolver(SignupSchema),
     mode: "onSubmit",
-    reValidateMode: "onChange",
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
+    reValidateMode: "onChange"
   });
 
   const onSubmit = async (data: SignupSchemaType) => {
@@ -96,26 +89,29 @@ export default function SignupForm() {
 
           <FormGroup>
             <TextInput
+              control={control}
+              name="firstName"
               label="First name"
               placeholder="Enter your first name"
               errorMessage={errors.firstName?.message}
-              {...register("firstName")}
             />
 
             <TextInput
+              control={control}
+              name="lastName"
               label="Last name"
               placeholder="Enter your last name"
               errorMessage={errors.lastName?.message}
-              {...register("lastName")}
             />
           </FormGroup>
 
           <TextInput
+            control={control}
+            name="email"
             type="email"
             label="Email"
             placeholder="Enter your email"
             errorMessage={errors.email?.message}
-            {...register("email")}
           />
 
           <TextInput
@@ -123,7 +119,8 @@ export default function SignupForm() {
             label="Create password (at least 8 characters)"
             placeholder="Create a password"
             errorMessage={errors.password?.message}
-            {...register("password")}
+            control={control}
+            name="password"
           />
 
           <TextInput
@@ -131,7 +128,8 @@ export default function SignupForm() {
             label="Confirm password"
             placeholder="Confirm your password"
             errorMessage={errors.confirmPassword?.message}
-            {...register("confirmPassword")}
+            control={control}
+            name="confirmPassword"
           />
 
           <Button type="submit">

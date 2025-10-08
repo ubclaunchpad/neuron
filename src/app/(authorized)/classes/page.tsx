@@ -14,6 +14,7 @@ import { Button } from '@/components/primitives/Button';
 import { Select } from "@/components/primitives/form/Select";
 import { Loader } from '@/components/utils/Loader';
 import { WithPermission } from '@/components/utils/WithPermission';
+import { usePermission } from "@/hooks/use-permission";
 import type { ListClass } from '@/models/class';
 import { clientApi } from "@/trpc/client";
 import AddIcon from "@public/assets/icons/add.svg";
@@ -65,15 +66,15 @@ function ClassesList({
       {Object.entries(classesByCategory ?? {}).map(([category, classes]) => (
         <Section key={category} sectionId={category} className="classes__list-section">
           <h3 className="classes__list-section-title">{category}</h3>
-          {classes.map((cls) => (
-            <Button 
-              key={cls.id} 
-              onPress={() => handleSelectClass(cls.id)}
-              unstyled
-            >
-              <ClassCard classData={cls} />
-            </Button>
-          ))}
+          <div className="classes__list-section-content">
+            {classes.map((cls) => (
+              <ClassCard 
+                key={cls.id} 
+                classData={cls} 
+                onPress={() => handleSelectClass(cls.id)}
+              />
+            ))}
+          </div>
         </Section>
       ))}
     </div>
@@ -129,7 +130,7 @@ export default function ClassesPage() {
   const apiUtils = clientApi.useUtils();
   const [queryTerm, setQueryTerm] = useQueryState("term", parseAsString.withDefault("current"));
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-
+  const canCreateTerm = usePermission({ permission: { terms: ["create"] }});
   const {
     data: terms, 
     isPending: isLoadingTerms,
@@ -145,6 +146,7 @@ export default function ClassesPage() {
 
   useEffect(() => {
     if (queryTerm == "current") {
+      console.log(classListData?.term)
       setSelectedTermId(classListData?.term.id ?? null);
     }
   }, [classListData]);
@@ -172,13 +174,18 @@ export default function ClassesPage() {
               <PageTitle.RightContent>
                 {(!isLoadingTerms && terms?.length !== 0) && 
                   <Select
+                    overridePopoverContent
                     isLoading={isLoadingTerms}
-                    items={terms ?? []}
+                    items={terms}
                     selectedKey={selectedTermId ?? undefined}
-                    isDisabled={terms?.length === 1}
+                    isDisabled={!canCreateTerm && terms?.length === 1}
                     onSelectionChange={(k) => handleSelectTerm(k as string)}
                   >
-                    {(item) => <Select.Item>{item.name}</Select.Item>}
+                    <Select.ItemList items={terms}>
+                      {terms?.map((term) => <Select.Item key={term.id} id={term.id}>{term.name}</Select.Item>)}
+                    </Select.ItemList>
+                    <WithPermission permissions={{ permission: { terms: ["create"] }}}>
+                    </WithPermission>
                   </Select>}
               </PageTitle.RightContent>
             </PageTitle>

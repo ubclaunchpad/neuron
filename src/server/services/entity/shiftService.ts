@@ -1,7 +1,8 @@
 import type { CreateShiftInput, ShiftIdInput } from "@/models/api/shift";
+import { buildShift, type Shift } from "@/models/shift";
 import { type Drizzle } from "@/server/db";
 import { schedule } from "@/server/db/schema/schedule";
-import { shift } from "@/server/db/schema/shift";
+import { shiftAttendance, shift } from "@/server/db/schema/shift";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { eq } from "drizzle-orm";
 
@@ -55,4 +56,13 @@ export class ShiftService {
       );
     }
   }
+
+    async getVolunteerShifts(volunteerId: string): Promise<Shift[] | undefined> {
+        const resultsShifts = await this.db
+            .select()
+            .from(shift)
+            .innerJoin(shiftAttendance, eq(shift.id, shiftAttendance.shiftId))
+            .where(eq(shiftAttendance.userId, volunteerId));
+        return resultsShifts.map(({ shift }) => buildShift(shift))  
+    }
 }

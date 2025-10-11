@@ -13,6 +13,6 @@ export const CreateTermInput = z.object({
         startsOn: z.string().date(),
         endsOn: z.string().date(),
       }),
-    ).optional(),
+    ).default([]),
 });
 export type CreateTermInput = z.infer<typeof CreateTermInput>;

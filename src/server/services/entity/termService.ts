@@ -19,10 +19,11 @@ export class TermService {
     // Active term if one contains today
     const active = await this.db.query.term.findFirst({
       where: and(lte(term.startDate, nowDate), gte(term.endDate, nowDate)),
+      with: {blackouts: true},
       orderBy: [desc(term.startDate)],
     });
     if (active) {
-      return active;
+      return buildTerm(active);
     }
 
     // Most recent past term
@@ -30,14 +31,21 @@ export class TermService {
       where: lte(term.endDate, nowDate),
       orderBy: [desc(term.endDate)],
     });
-    if (past) return past;
+    if (past) return buildTerm(past);
+
+    const future = await this.db.query.term.findFirst({
+      with: { blackouts: true },
+      orderBy: [term.startDate],
+    });
 
     // Finally, the nearest future term
-    return this.db.query.term.findFirst({ orderBy: [term.startDate] });
+    return future ? buildTerm(future) : undefined;
   }
 
   async getAllTerms(): Promise<Term[]> {
-    const term = await this.db.query.term.findMany();
+    const term = await this.db.query.term.findMany({
+      with: {blackouts: true},
+    });
     return term.map((d) => buildTerm(d));
   }
 
@@ -56,7 +64,15 @@ export class TermService {
   }
 
   async getTerm(id: string): Promise<Term> {
-    return await this.getTerms([id]).then(([term]) => term!);
+    const termData = await this.db.query.term.findFirst({
+      where: eq(term.id, id),
+      with: {blackouts: true},
+    });
+    // return await this.getTerms([id]).then(([term]) => term!);
+    if (!termData) throw new NeuronError(
+      'Could not find Term with id ${id}', NeuronErrorCodes.NOT_FOUND,
+    );
+    return buildTerm(termData);
   }
 
   async createTerm(input: CreateTermInput): Promise<string> {
@@ -74,9 +90,9 @@ export class TermService {
       throw new Error("Failed to create term")
     }
 
-    const termId = createdTerm.id; // will be used for blackout insert
+    const termId = createdTerm.id; 
 
-    if (holidays && holidays.length > 0) {
+    if (holidays.length > 0) {
       await tx.insert(blackout).values(
         holidays.map((h) => ({
           termId,
@@ -87,11 +103,6 @@ export class TermService {
     }
     return termId;
     });
-    // return await this.db
-    //   .insert(term)
-    //   .values(input) 
-    //   .returning({ id: term.id }) // return inserted row's id Array<{id:string}>
-    //   .then(([output]) => output!.id);
   }
 
   async deleteTerm(id: string): Promise<void> {
@@ -108,5 +119,3 @@ export class TermService {
     }
   }
 }
-
-// update CreateTermInput : pass a list of holidays

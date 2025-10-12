@@ -1,6 +1,6 @@
 "use client"
 
-import { FieldError } from "@/components/primitives/form/errors/FieldError";
+import { FieldError } from "@/components/form/errors/FieldError";
 import HideIcon from "@public/assets/icons/eye-off.svg";
 import ShowIcon from "@public/assets/icons/eye.svg";
 import clsx from "clsx";

@@ -7,11 +7,11 @@ import { FormProvider, useFieldArray, useForm, useFormContext } from "react-hook
 import z from "zod";
 import "./page.scss";
 
+import { FormContent, FormGroup, Select, TextArea, TextInput } from "@/components/form";
 import { PageLayout } from "@/components/PageLayout";
 import { PageTitle } from "@/components/PageLayout/PageHeader";
-import { Button } from "@/components/primitives/Button";
+import { Button } from "@/components/primitives/button";
 import { Card } from "@/components/primitives/Card";
-import { FormContent, FormGroup, Select, TextArea, TextInput } from "@/components/primitives/form";
 import { Loader } from "@/components/utils/Loader";
 import type { CreateClassInput, UpdateClassInput } from "@/models/api/class";
 import { ScheduleRule } from "@/models/api/schedule";

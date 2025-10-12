@@ -1,7 +1,7 @@
 "use client";
 
 import { useClassesPage } from "@/app/(authorized)/classes/page";
-import { Button, ButtonGroup } from "@/components/primitives/Button";
+import { Button, ButtonGroup } from "@/components/primitives/button";
 import { SidebarContainer, SidebarField, SidebarSection } from "@/components/sidebar";
 import { WithPermission } from "@/components/utils/WithPermission";
 import { clientApi } from "@/trpc/client";

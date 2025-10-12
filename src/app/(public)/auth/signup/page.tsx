@@ -1,50 +1,63 @@
 "use client";
 
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Form } from 'react-aria-components';
 import { useForm } from "react-hook-form";
-import * as Yup from "yup";
-import "../index.scss";
+import { z } from "zod";
 
-import { Button } from "@/components/primitives/Button";
-import { Card } from "@/components/primitives/Card";
-import { FormContent, FormGroup } from "@/components/primitives/form";
-import { RootError } from "@/components/primitives/form/errors/RootError";
-import { TextInput } from "@/components/primitives/form/TextInput";
+import { Alert, AlertDescription, AlertTitle } from "@/components/primitives/alert";
+import { Button } from "@/components/primitives/button";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel
+} from "@/components/primitives/field";
+import { Input, PasswordInput } from "@/components/primitives/input";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
+
+import { Spinner } from "@/components/primitives/spinner";
 import { authClient } from "@/lib/auth/client";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 
-const SignupSchema = Yup.object().shape({
-  firstName: Yup.string().required("Please fill out this field."),
-  lastName: Yup.string().required("Please fill out this field."),
-  email: Yup.string()
-    .email("Please enter a valid email address.")
-    .required("Please fill out this field."),
-  password: Yup.string()
-    .min(8, "Password must be at least 8 characters long.")
-    .required("Please fill out this field."),
-  confirmPassword: Yup.string()
-    .required("Please fill out this field.")
-    .oneOf([Yup.ref("password")], "Passwords don't match."),
-});
+const SignupSchema = z.object({
+    firstName: z.string().nonempty("Please fill out this field."),
+    lastName: z.string().nonempty("Please fill out this field."),
+    email: z
+      .email("Please enter a valid email address.")
+      .nonempty("Please fill out this field."),
+    password: z.string()
+      .nonempty("Please fill out this field.")
+      .min(8, "Password must be at least 8 characters long."),
+    confirmPassword: z.string().nonempty("Please fill out this field."),
+  })
+  .superRefine((val, ctx) => {
+    if (val.password !== val.confirmPassword) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["confirmPassword"],
+        message: "Passwords don't match.",
+      });
+    }
+  });
 
-type SignupSchemaType = Yup.InferType<typeof SignupSchema>;
+type SignupSchemaType = z.infer<typeof SignupSchema>;
 
 export default function SignupForm() {
-  const [successMessage, setSuccessMessage] = useState<React.ReactNode>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const router = useRouter();
 
   const {
-    control,
+    register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: yupResolver(SignupSchema),
+  } = useForm<SignupSchemaType>({
+    resolver: zodResolver(SignupSchema),
     mode: "onSubmit",
-    reValidateMode: "onChange"
+    reValidateMode: "onChange",
   });
 
   const onSubmit = async (data: SignupSchemaType) => {
@@ -60,90 +73,122 @@ export default function SignupForm() {
         type: "custom",
         message: getBetterAuthErrorMessage(error?.code),
       });
-    } else {
-      setSuccessMessage(
-        "Your account has been successfully created! Please check your email to verify your account."
-      );
-
-      // Redirect to login page after 5 seconds on success
-      setTimeout(() => router.replace("/auth/login"), 5000);
+      return;
     }
+
+    setSuccessMessage(
+      "Your account has been successfully created! Please check your email to verify your account."
+    );
+
+    // Redirect to login page after 5 seconds on success
+    setTimeout(() => router.replace("/auth/login"), 5000);
   };
 
   return (
-    <div className="auth-form-container">
-      <h1 className="auth-form-title">Welcome!</h1>
+    <div className="w-full max-w-3xl space-y-8 p-8">
+      <h1 className="text-2xl font-display font-medium leading-none text-primary">
+        Welcome!
+      </h1>
 
-      <Form
-        onSubmit={handleSubmit(onSubmit)}
-        validationBehavior="aria"
-      >
-        <FormContent>
-          <RootError id="form-error" message={errors.root?.message} />
+      {/* Root error */}
+      {errors.root?.message && (
+        <Alert variant="destructive" role="alert" aria-live="assertive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Couldn’t create account</AlertTitle>
+          <AlertDescription>{errors.root.message}</AlertDescription>
+        </Alert>
+      )}
 
-          {successMessage && (
-            <Card variant="success" size="small" role="alert">
-              {successMessage}
-            </Card>
-          )}
+      {/* Success Message */}
+      {successMessage && (
+        <Alert variant="success" role="status" aria-live="polite">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
+      )}
 
-          <FormGroup>
-            <TextInput
-              control={control}
-              name="firstName"
-              label="First name"
-              placeholder="Enter your first name"
-              errorMessage={errors.firstName?.message}
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <FieldGroup>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-3">
+            <Field data-invalid={!!errors.firstName} className="gap-1">
+              <FieldLabel htmlFor="firstName">First name</FieldLabel>
+              <Input
+                id="firstName"
+                placeholder="John"
+                aria-invalid={!!errors.firstName}
+                {...register("firstName")}
+              />
+              <FieldError errors={errors.firstName}/>
+            </Field>
+
+            <Field data-invalid={!!errors.lastName} className="gap-1">
+              <FieldLabel htmlFor="lastName">Last name</FieldLabel>
+              <Input
+                id="lastName"
+                placeholder="Doe"
+                aria-invalid={!!errors.lastName}
+                {...register("lastName")}
+              />
+              <FieldError errors={errors.lastName}/>
+            </Field>
+          </div>
+
+          <Field data-invalid={!!errors.email} className="gap-1">
+            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="john.doe@example.com"
+              aria-invalid={!!errors.email}
+              {...register("email")}
             />
+            <FieldError errors={errors.email}/>
+          </Field>
 
-            <TextInput
-              control={control}
-              name="lastName"
-              label="Last name"
-              placeholder="Enter your last name"
-              errorMessage={errors.lastName?.message}
+          <Field data-invalid={!!errors.password} className="gap-1">
+            <FieldLabel htmlFor="password">
+              Create password (at least 8 characters)
+            </FieldLabel>
+            <PasswordInput
+              id="password"
+              autoComplete="new-password"
+              placeholder="•••••••••••••"
+              aria-invalid={!!errors.password}
+              {...register("password")}
             />
-          </FormGroup>
+            <FieldError errors={errors.password}/>
+          </Field>
 
-          <TextInput
-            control={control}
-            name="email"
-            type="email"
-            label="Email"
-            placeholder="Enter your email"
-            errorMessage={errors.email?.message}
-          />
+          <Field data-invalid={!!errors.confirmPassword} className="gap-1">
+            <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
+            <PasswordInput
+              id="confirmPassword"
+              autoComplete="new-password"
+              placeholder="•••••••••••••"
+              aria-invalid={!!errors.confirmPassword}
+              {...register("confirmPassword")}
+            />
+            <FieldError errors={errors.confirmPassword}/>
+          </Field>
 
-          <TextInput
-            type="password"
-            label="Create password (at least 8 characters)"
-            placeholder="Create a password"
-            errorMessage={errors.password?.message}
-            control={control}
-            name="password"
-          />
-
-          <TextInput
-            type="password"
-            label="Confirm password"
-            placeholder="Confirm your password"
-            errorMessage={errors.confirmPassword?.message}
-            control={control}
-            name="confirmPassword"
-          />
-
-          <Button type="submit">
-            {isSubmitting ? "Creating..." : "Create an Account"}
-          </Button>
-
-          <p className="auth-form-footer">
-            Already have an account?{" "}
-            <Button variant="link" href="/auth/login">
-              <strong>Log In</strong>
+          <Field orientation="horizontal">
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? <><Spinner /> Creating...</> : "Create an Account"}
             </Button>
-          </p>
-        </FormContent>
-      </Form>
+          </Field>
+        </FieldGroup>
+      </form>
+
+      <p className="text-center text-foreground">
+        Already have an account?{" "}
+        <Button asChild variant="link" className="p-0">
+          <Link href="/auth/login">
+            <strong>Log In</strong>
+          </Link>
+        </Button>
+      </p>
     </div>
   );
 }

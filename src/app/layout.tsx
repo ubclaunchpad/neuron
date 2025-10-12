@@ -1,6 +1,6 @@
-import "@/styles/globals.scss";
+import "@/styles/globals.css";
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Montserrat, Roboto } from "next/font/google";
 
 import HydrationGate from "@/components/utils/HydrationGate";
 import { Toaster } from "@/components/utils/Toaster";
@@ -10,10 +10,18 @@ import { RouteProvider } from "@/providers/route-provider";
 import { TRPCReactProvider } from "@/trpc/client";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-const inter = Inter({
+export const fontBody = Roboto({
   subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-roboto",
   display: "swap",
-  variable: "--font-inter",
+});
+
+export const fontDisplay = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-montserrat",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -32,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} scroll-smooth`}>
+    <html lang="en" className={`${fontBody.variable} ${fontDisplay.variable} scroll-smooth`}>
       <body>
         <Toaster />
         <HydrationGate/>

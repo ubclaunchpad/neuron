@@ -5,7 +5,7 @@ import CloseIcon from "@public/assets/icons/close.svg";
 import clsx from "clsx";
 import { useCallback } from "react";
 import { useSidebar } from "../PageLayout";
-import { Button } from "../primitives/Button";
+import { Button } from "../primitives/button";
 import "./index.scss";
 
 export const SidebarSection = ({ 

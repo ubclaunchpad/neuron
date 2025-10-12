@@ -4,22 +4,22 @@ import clsx from "clsx";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { mergeProps, useMove } from "react-aria";
 import {
-  Cell,
-  Column,
-  ResizableTableContainer,
-  Row,
-  Table,
-  TableBody,
-  TableHeader,
+    Cell,
+    Column,
+    ResizableTableContainer,
+    Row,
+    Table,
+    TableBody,
+    TableHeader,
 } from "react-aria-components";
 
-import { Button } from "@/components/primitives/Button";
+import { Button } from "@/components/primitives/button";
 import { Card } from "@/components/primitives/Card";
 import { DAYS_PER_WEEK, SLOTS_PER_DAY } from "@/constants";
 import {
-  getSlotIndex,
-  isSlotAvailable,
-  isValidAvailabilityBitstring,
+    getSlotIndex,
+    isSlotAvailable,
+    isValidAvailabilityBitstring,
 } from "@/utils/availabilityUtils";
 import EditIcon from "@public/assets/icons/edit.svg";
 import "./index.scss";

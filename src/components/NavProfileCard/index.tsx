@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 
-import { Button } from "@/components/primitives/Button";
+import { Button } from "@/components/primitives/button";
 import { FallbackImage } from "@/components/utils/FallbackImage";
 import { WithPermission } from "@/components/utils/WithPermission";
 import { useAuth } from "@/providers/client-auth-provider";

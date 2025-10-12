@@ -12,7 +12,7 @@ import {
   type LinkProps as AriaLinkProps,
 } from "react-aria-components";
 import url from "url";
-import { ActiveContext } from "../../utils/ActiveContext";
+import { ActiveContext } from "../utils/ActiveContext";
 import "./index.scss";
 
 type Common = {
@@ -30,7 +30,7 @@ type LinkOnlyProps = Omit<AriaLinkProps, "className" | "href"> &
 export type ButtonLikeProps = ButtonOnlyProps | LinkOnlyProps;
 
 
-export const Button = forwardRef<
+const Button = forwardRef<
   HTMLButtonElement | HTMLAnchorElement,
   ButtonLikeProps
 >(
@@ -90,7 +90,7 @@ export const Button = forwardRef<
 Button.displayName = "Button";
 
 
-export const ButtonGroup = ({ 
+const ButtonGroup = ({ 
   children, 
   ...props 
 }: { 

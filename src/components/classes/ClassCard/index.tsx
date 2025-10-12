@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/primitives/Button";
+import { Button } from "@/components/primitives/button";
 import { Card } from "@/components/primitives/Card";
 import { FallbackImage } from "@/components/utils/FallbackImage";
 import { WithPermission } from "@/components/utils/WithPermission";

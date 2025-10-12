@@ -1,5 +1,5 @@
 {
-  "id": "a24b0d00-e825-491b-bc47-c3f87fd1e2ce",
+  "id": "2f0a3d35-f4ad-46e5-b9b1-99eb445d6624",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -505,7 +505,7 @@
           "name": "term_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "image": {
           "name": "image",
@@ -542,7 +542,7 @@
           "name": "category",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "subcategory": {
           "name": "subcategory",
@@ -1650,7 +1650,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'pending'"
+          "default": "'unverified'"
         },
         "last_name": {
           "name": "last_name",
@@ -1894,7 +1894,8 @@
       "name": "status",
       "schema": "public",
       "values": [
-        "pending",
+        "unverified",
+        "rejected",
         "active",
         "inactive"
       ]
@@ -1966,7 +1967,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'pending'"
+          "default": "'unverified'"
         },
         "last_name": {
           "name": "last_name",
@@ -2014,7 +2015,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'pending'"
+          "default": "'unverified'"
         },
         "created_at": {
           "name": "created_at",

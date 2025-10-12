@@ -1,4 +1,4 @@
-import { Button } from "@/components/primitives/Button";
+import { Button } from "@/components/primitives/button";
 import { createHost, createSlot } from "@/lib/slots";
 import CaretLeftIcon from "@public/assets/icons/caret-left.svg";
 import { useRouter } from "next/navigation";

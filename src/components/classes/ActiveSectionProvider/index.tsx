@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/primitives/Button";
+import { Button } from "@/components/primitives/button";
 import React from "react";
 
 const ActiveSectionContext = React.createContext<{

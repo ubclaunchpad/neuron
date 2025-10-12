@@ -1,6 +1,6 @@
 "use client";
 
-import { FieldError } from "@/components/primitives/form/errors/FieldError";
+import { FieldError } from "@/components/form/errors/FieldError";
 import CaretDownIcon from "@public/assets/icons/caret-down.svg";
 import clsx from "clsx";
 import * as React from "react";

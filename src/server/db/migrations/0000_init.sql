@@ -52,13 +52,13 @@ CREATE TABLE "blackout" (
 --> statement-breakpoint
 CREATE TABLE "course" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"term_id" uuid,
+	"term_id" uuid NOT NULL,
 	"image" text,
 	"name" text NOT NULL,
 	"published" boolean DEFAULT false NOT NULL,
 	"description" text,
 	"meeting_url" text,
-	"category" text,
+	"category" text NOT NULL,
 	"subcategory" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL

@@ -1,36 +1,46 @@
 "use client";
 
-import { authClient } from "@/lib/auth/client";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
-import * as Yup from "yup";
-import "../index.scss";
-
-import { Button } from "@/components/primitives/Button";
-import { FormContent } from "@/components/primitives/form";
-import { RootError } from "@/components/primitives/form/errors/RootError";
-import { TextInput } from "@/components/primitives/form/TextInput";
-import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
-import { Form } from "react-aria-components";
 import { toast } from "sonner";
+import { z } from "zod";
 
-const LoginSchema = Yup.object().shape({
-  email: Yup.string()
-    .email("Please enter a valid email address.")
-    .required("Please fill out this field."),
-  password: Yup.string().required("Please fill out this field."),
+import { authClient } from "@/lib/auth/client";
+import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
+
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/primitives/alert";
+import { Button } from "@/components/primitives/button";
+import {
+  Field,
+  FieldError,
+  FieldLabel,
+} from "@/components/primitives/field";
+import { Input, PasswordInput } from "@/components/primitives/input";
+import { Spinner } from "@/components/primitives/spinner";
+
+const LoginSchema = z.object({
+  email: z
+    .string()
+    .nonempty("Please fill out this field.")
+    .email("Please enter a valid email address."),
+  password: z.string().nonempty("Please fill out this field."),
 });
-
-type LoginSchemaType = Yup.InferType<typeof LoginSchema>;
+type LoginSchemaType = z.infer<typeof LoginSchema>;
 
 export default function LoginForm() {
   const {
-    control,
+    register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: yupResolver(LoginSchema),
+  } = useForm<LoginSchemaType>({
+    resolver: zodResolver(LoginSchema),
     mode: "onSubmit",
     reValidateMode: "onChange"
   });
@@ -46,58 +56,71 @@ export default function LoginForm() {
         type: "custom",
         message: getBetterAuthErrorMessage(error?.code),
       });
-    } else {
-      toast.success("Signed in successfully");
+      return;
     }
+
+    toast.success("Signed in successfully");
   };
 
   return (
-    <div className="auth-form-container">
-      <h1 className="auth-form-title">Welcome!</h1>
+    <div className="w-full max-w-3xl space-y-8 p-8">
+      <h1 className="text-2xl font-display font-medium leading-none text-primary">
+        Welcome!
+      </h1>
 
-      <Form
-        onSubmit={handleSubmit(onSubmit)}
-        validationBehavior="aria"
-      >
-        <FormContent>
-          <RootError id="form-error" message={errors.root?.message} />
+      {/* Root error */}
+      {errors.root?.message && (
+        <Alert variant="destructive" role="alert" aria-live="assertive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Couldn’t sign you in</AlertTitle>
+          <AlertDescription>{errors.root.message}</AlertDescription>
+        </Alert>
+      )}
 
-          <TextInput
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+        <Field data-invalid={!!errors.email}>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input
+            id="email"
             type="email"
-            label="Email"
-            placeholder="Enter your email"
-            errorMessage={errors.email?.message}
-            control={control}
-            name="email"
+            autoComplete="email"
+            placeholder="john.doe@example.com"
+            aria-invalid={!!errors.email}
+            {...register("email")}
           />
+          <FieldError errors={errors.email}/>
+        </Field>
 
-          <TextInput
-            type="password"
-            label="Password"
-            description={
-              <Button variant="link" href="/auth/forgot-password">
-                Forgot password?
-              </Button>
-            }
-            inlineDescription={true}
-            placeholder="Enter your password"
-            errorMessage={errors.password?.message}
-            control={control}
-            name="password"
+        <Field data-invalid={!!errors.password}>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <PasswordInput
+            id="password"
+            autoComplete="current-password"
+            placeholder="•••••••••••••"
+            aria-invalid={!!errors.password}
+            {...register("password")}
           />
-
-          <Button type="submit">
-            {isSubmitting ? "Signing in..." : "Log In"}
-          </Button>
-
-          <p className="auth-form-footer">
-            Don't have an account?{" "}
-            <Button variant="link" href="/auth/signup">
-              <strong>Sign Up</strong>
+          <div className="flex items-center justify-between">
+            <FieldError errors={errors.password}/>
+            <Button asChild variant="link" size="sm" className="ms-auto">
+              <Link href="/auth/forgot-password">Forgot password?</Link>
             </Button>
-          </p>
-        </FormContent>
-      </Form>
+          </div>
+        </Field>
+
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? <><Spinner /> Signing in...</> : "Log In"}
+        </Button>
+      </form>
+
+      <p className="text-center text-foreground">
+        Don't have an account?{" "}
+        <Button asChild variant="link" className="p-0">
+          <Link href="/auth/signup">
+            <strong>Sign Up</strong>
+          </Link>
+        </Button>
+      </p>
     </div>
   );
 }

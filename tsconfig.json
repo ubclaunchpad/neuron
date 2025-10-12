@@ -43,7 +43,7 @@
     "**/*.cjs",
     "**/*.js",
     ".next/types/**/*.ts"
-, "src/components/primitives/form/TextInput"  ],
+, "src/components/form/TextInput"  ],
   "exclude": [
     "node_modules"
   ]

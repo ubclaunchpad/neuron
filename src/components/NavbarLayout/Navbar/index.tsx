@@ -3,7 +3,7 @@
 import clsx from "clsx";
 
 import { NavProfileCard } from "@/components/NavProfileCard";
-import { Button } from "@/components/primitives/Button";
+import { Button } from "@/components/primitives/button";
 import { ActiveContext } from "@/components/utils/ActiveContext";
 import { WithPermission } from "@/components/utils/WithPermission";
 import type { Permissions } from "@/lib/auth/extensions/permissions";

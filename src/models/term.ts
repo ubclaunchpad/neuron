@@ -1,4 +1,4 @@
-import type { TermDB, BlackoutDB } from "@/server/db/schema";
+import type { BlackoutDB, TermDB } from "@/server/db/schema";
 
 export type Term = {
   id: string;
@@ -12,7 +12,7 @@ export type Term = {
 };
 
 export function buildTerm(
-  termDB: TermDB & {blackouts?: BlackoutDB[]},
+  termDB: TermDB & { blackouts?: BlackoutDB[] },
 ): Term {
   return {
     id: termDB.id,

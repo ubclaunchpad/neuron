@@ -58,7 +58,7 @@ export type ScheduleRule = z.infer<typeof ScheduleRule>;
 export const CreateScheduleInput = z.object({
   durationMinutes: z.number().int().positive().max(32767),
   volunteerUserIds: z.array(z.uuid()).default([]),
-  instructorUserId: z.uuid().optional(),
+  instructorUserIds: z.array(z.uuid()).default([]),
   effectiveStart: z.iso.date().optional(),
   effectiveEnd: z.iso.date().optional(),
   rule: ScheduleRule,
@@ -70,7 +70,8 @@ export const UpdateScheduleInput = z.object({
   durationMinutes: z.number().int().positive().optional(),
   addedVolunteerUserIds: z.array(z.uuid()).optional(),
   removedVolunteerUserIds: z.array(z.uuid()).optional(),
-  instructorUserId: z.uuid().optional(),
+  addedInstructorUserIds: z.array(z.uuid()).optional(),
+  removedInstructorUserIds: z.array(z.uuid()).optional(),
   effectiveStart: z.iso.date().optional(),
   effectiveEnd: z.iso.date().optional(),
   rule: ScheduleRule.optional(), // If provided, need to provide full rule in case they switch types

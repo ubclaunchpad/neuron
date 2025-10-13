@@ -9,14 +9,14 @@ export type Schedule = {
   effectiveStart?: string;
   effectiveEnd?: string;
   rule: ScheduleRule;
-  instructor?: Instructor;
+  instructors: Instructor[];
   volunteers: Volunteer[];
 };
 
 export function buildSchedule(
   scheduleDB: ScheduleDB,
   rule: ScheduleRule,
-  instructor?: Instructor,
+  instructors: Instructor[] = [],
   volunteers: Volunteer[] = [],
 ): Schedule {
   return {
@@ -25,7 +25,7 @@ export function buildSchedule(
     effectiveStart: scheduleDB.effectiveStart ?? undefined,
     effectiveEnd: scheduleDB.effectiveEnd ?? undefined,
     volunteers: volunteers,
-    instructor: instructor,
+    instructors: instructors,
     rule: rule,
   } as const;
 }
@@ -38,7 +38,7 @@ export function getSingleSchedule(s: Schedule) {
     durationMinutes: s.durationMinutes,
     rule: s.rule,
     volunteers: s.volunteers.map(getEmbeddedVolunteer),
-    instructor: s.instructor ? getEmbeddedInstructor(s.instructor) : undefined,
+    instructors: s.instructors.map(getEmbeddedInstructor),
   } as const;
 }
 

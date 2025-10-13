@@ -11,10 +11,8 @@ export const schedule = pgTable("schedule", {
     effectiveStart: date("effective_start"),
     effectiveEnd: date("effective_end"),
     rrule: text("rrule").notNull(),
-    instructorUserId: uuid("instructor_user_id").references(() => user.id, { onDelete: "set null" }),
 }, (table) => [
     index().on(table.courseId),
-    index().on(table.instructorUserId),
     check("chk_schedule_duration_positive", sql`${table.durationMinutes} > 0`),
     check(
         "chk_schedule_effective_range_valid",
@@ -30,11 +28,8 @@ export const scheduleRelations = relations(schedule, ({ one, many }) => ({
         fields: [schedule.courseId],
         references: [course.id],
     }),
-    instructor: one(user, {
-        fields: [schedule.instructorUserId],
-        references: [user.id],
-    }),
     shifts: many(shift),
+    instructors: many(instructorToSchedule),
     volunteers: many(volunteerToSchedule),
 }));
 
@@ -55,6 +50,27 @@ export const volunteerToScheduleRelations = relations(volunteerToSchedule, ({ on
     }),
     schedule: one(schedule, {
         fields: [volunteerToSchedule.scheduleId],
+        references: [schedule.id],
+    }),
+}));
+
+export const instructorToSchedule = pgTable("instructor_to_schedule", {
+    instructorUserId: uuid("instructor_user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    scheduleId: uuid("schedule_id").notNull().references(() => schedule.id, { onDelete: "cascade" }),
+}, (table) => [
+    primaryKey({ name: "pk_instructor_schedule", columns: [table.instructorUserId, table.scheduleId] }),
+    index().on(table.instructorUserId),
+    index().on(table.scheduleId),
+]);
+export type InstructorToScheduleDB = typeof instructorToSchedule.$inferSelect;
+
+export const instructorToScheduleRelations = relations(instructorToSchedule, ({ one }) => ({
+    instructor: one(user, {
+        fields: [instructorToSchedule.instructorUserId],
+        references: [user.id],
+    }),
+    schedule: one(schedule, {
+        fields: [instructorToSchedule.scheduleId],
         references: [schedule.id],
     }),
 }));

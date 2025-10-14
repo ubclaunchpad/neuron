@@ -8,7 +8,7 @@ import { buildClass, type Class, type ClassResponse } from "@/models/class";
 import type { ListResponse } from "@/models/list-response";
 import { buildSchedule } from "@/models/schedule";
 import { type Drizzle, type Transaction } from "@/server/db";
-import { course, schedule, volunteerToSchedule } from "@/server/db/schema";
+import { course, schedule, volunteerToSchedule, instructorToSchedule } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap } from "@/utils/arrayUtils";
 import { InstructorService } from "./instructorService";
@@ -165,6 +165,7 @@ export class ClassService {
         schedules: {
           with: {
             volunteers: true,
+            instructors: true,
           },
         },
       },
@@ -179,7 +180,7 @@ export class ClassService {
 
     // Get instructors and volunteers for schedules
     const instructorIds = courses.flatMap((course) =>
-      course.schedules.flatMap((schedule) => schedule.instructorUserId ?? []),
+      course.schedules.flatMap((schedule) => schedule.instructors.map((i) => i.instructorUserId)),
     );
     const instructors = toMap(await this.instructorService.getInstructors(instructorIds));
     const volunteerIds = courses.flatMap((course) =>
@@ -197,12 +198,8 @@ export class ClassService {
             buildSchedule(
               schedule,
               this.buildScheduleRuleFromRRule(schedule.rrule),
-              schedule.instructorUserId
-                ? instructors.get(schedule.instructorUserId)!
-                : undefined,
-              schedule.volunteers.map(
-                (volunteer) => volunteers.get(volunteer.volunteerUserId)!,
-              ),
+              schedule.instructors.map((ins) => instructors.get(ins.instructorUserId)!),
+              schedule.volunteers.map((volunteer) => volunteers.get(volunteer.volunteerUserId)!),
             ),
           ),
         ),
@@ -222,6 +219,8 @@ export class ClassService {
         rule,
         addedVolunteerUserIds,
         removedVolunteerUserIds,
+        addedInstructorUserIds,
+        removedInstructorUserIds,
         ...scheduleUpdate
       } = updateSchedule;
 
@@ -257,6 +256,31 @@ export class ClassService {
             ),
           );
       }
+
+      // Insert instructors to schedule
+      if (addedInstructorUserIds) {
+        await tx.insert(instructorToSchedule).values(
+          addedInstructorUserIds?.map((instructorId) => ({
+            scheduleId,
+            instructorUserId: instructorId,
+          })),
+        );
+      }
+
+      // Remove instructors from schedule
+      if (removedInstructorUserIds) {
+        await tx
+          .delete(instructorToSchedule)
+          .where(
+            and(
+              eq(instructorToSchedule.scheduleId, scheduleId),
+              inArray(
+                instructorToSchedule.instructorUserId,
+                removedInstructorUserIds,
+              ),
+            ),
+          );
+      }
     }
   }
 
@@ -267,7 +291,7 @@ export class ClassService {
   ): Promise<void> {
     // Insert schedules
     for (const createSchedule of schedules) {
-      const { volunteerUserIds, rule, ...scheduleCreate } = createSchedule;
+      const { volunteerUserIds, instructorUserIds, rule, ...scheduleCreate } = createSchedule;
       const rruleObject = this.buildRRuleFromScheduleRule(rule);
 
       const row = await tx
@@ -281,12 +305,24 @@ export class ClassService {
       }
 
       // Insert volunteers to schedule
-      await tx.insert(volunteerToSchedule).values(
-        volunteerUserIds.map((volunteerId) => ({
-          scheduleId: row.id,
-          volunteerUserId: volunteerId,
-        })),
-      );
+      if (volunteerUserIds.length > 0) {
+        await tx.insert(volunteerToSchedule).values(
+          volunteerUserIds.map((volunteerId) => ({
+            scheduleId: row.id,
+            volunteerUserId: volunteerId,
+          })),
+        );
+      }
+
+      // Insert instructors to schedule
+      if (instructorUserIds.length > 0) {
+        await tx.insert(instructorToSchedule).values(
+          instructorUserIds.map((instructorId) => ({
+            scheduleId: row.id,
+            instructorUserId: instructorId,
+          })),
+        );
+      }
     }
   }
 

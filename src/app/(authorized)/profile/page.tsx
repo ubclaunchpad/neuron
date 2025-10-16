@@ -3,21 +3,21 @@
 import { PageLayout } from "@/components/PageLayout";
 import { PageTitle } from "@/components/PageLayout/PageHeader";
 import { Button } from "@/components/primitives/Button";
+import { WithPermission } from "@/components/utils/WithPermission";
 import { AvailabilityGrid } from "@/components/profile/AvailabilityGrid";
+import { ProfilePictureUpload } from "@/components/profile/ProfilePictureUpload";
 import { authClient } from "@/lib/auth/client";
-import { Role } from "@/models/interfaces";
 import { useAuth } from "@/providers/client-auth-provider";
 import LogOutIcon from "@public/assets/icons/log-out.svg";
 import "./page.scss";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const { user } = useAuth();
 
   return (
     <>
-      <PageLayout
-        title="My Profile"
-      >
+      <PageLayout>
         <PageLayout.Header>
           <PageTitle title="My Profile">
             <PageTitle.RightContent>
@@ -29,16 +29,35 @@ export default function ProfilePage() {
           </PageTitle>
         </PageLayout.Header>
         
-        <span>Welcome back, {user?.name}</span>
+        <div className="profile-content">
+          <div className="profile-header">
+            <ProfilePictureUpload
+              currentImage={user?.image || undefined}
+              name={user?.name}
+              onImageChange={(file) => {
+                toast.success("Profile picture updated successfully");
+                // TODO: Implement actual upload logic
+              }}
+            />
+            <div className="profile-info">
+              <h2>Welcome back, {user?.name}</h2>
+              <p className="profile-email">{user?.email}</p>
+            </div>
+          </div>
 
-        <AvailabilityGrid
-          availability={
-            user?.role === Role.volunteer ? user.availability ?? "" : ""
-          }
-          onSave={(availability) => {
-            //  updateMutation.mutate({ availability });
-          }}
-        />
+          <WithPermission permissions={{ permission: { profile: ["update"] } }}>
+            <div className="profile-actions">
+              {/* <AvailabilityGrid
+                availability={
+                  user?.role === Role.volunteer ? user.availability ?? "" : ""
+                }
+                onSave={(availability) => {
+                  //  updateMutation.mutate({ availability });
+                }}
+              /> */}
+            </div>
+          </WithPermission>
+        </div>
       </PageLayout>
     </>
   );

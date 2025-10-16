@@ -1,0 +1,44 @@
+@use "variables" as *;
+@use "mixins" as *;
+@use "typography" as *;
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: $padding-xxl;
+  padding: $padding-xxl;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: $padding-xl;
+  padding: $padding-lg;
+  background: $bg-white;
+  border-radius: $radius-regular;
+  border: 1px solid $bg-grey-outline;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: $padding-xs;
+
+  h2 {
+    @include text-pg-title;
+    margin: 0;
+    color: $text-dark;
+  }
+
+  .profile-email {
+    @include text-sm;
+    margin: 0;
+    color: $text-grey;
+  }
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: $padding-lg;
+}

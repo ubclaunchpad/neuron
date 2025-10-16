@@ -16,6 +16,7 @@ import { InstructorService } from "../services/entity/instructorService";
 import { ShiftService } from "../services/entity/shiftService";
 import { TermService } from "../services/entity/termService";
 import { VolunteerService } from "../services/entity/volunteerService";
+import { ProfileService } from "../services/entity/profileService";
 
 export type NeuronCradle = {
   env: typeof env;
@@ -36,6 +37,7 @@ export type NeuronCradle = {
   volunteerService: VolunteerService;
   termService: TermService;
   shiftService: ShiftService;
+  profileService: ProfileService;
 };
 
 export type NeuronContainer = AwilixContainer<NeuronCradle>;
@@ -65,7 +67,7 @@ const registerServices = (container: NeuronContainer) => {
     instructorService: asClass<InstructorService>(InstructorService).singleton(),
     volunteerService: asClass<VolunteerService>(VolunteerService).singleton(),
     termService: asClass<TermService>(TermService).singleton(),
-
+    profileService: asClass<ProfileService>(ProfileService).singleton(),
     cacheService: asClass<CacheService>(CacheService).scoped(),
   });
 };

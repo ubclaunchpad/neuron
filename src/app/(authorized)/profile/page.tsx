@@ -34,9 +34,12 @@ export default function ProfilePage() {
             <ProfilePictureUpload
               currentImage={user?.image || undefined}
               name={user?.name}
+              userId={user?.id}
               onImageChange={(file) => {
+                // getPresignedUrlMutation.mutate({ fileType: file.type });
+                // updateProfileImageMutation.mutate({ imageUrl: file.name, userId: user?.id });
                 toast.success("Profile picture updated successfully");
-                // TODO: Implement actual upload logic
+
               }}
             />
             <div className="profile-info">

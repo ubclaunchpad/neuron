@@ -35,12 +35,3 @@ export const UpdateVolunteerInput = z.object({
 export const AdminSignoffInput = z.object({
   signoff: z.string(),
 });
-
-export const GetPresignedUrlInput = z.object({
-  imageType: z.enum(["profile", "course"]),
-  fileType: z.string(),
-});
-
-export const UpdateProfileImageInput = z.object({
-  imageUrl: z.string().url(),
-});

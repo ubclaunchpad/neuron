@@ -1,8 +1,6 @@
 import {
   AdminSignoffInput,
-  GetPresignedUrlInput,
   GetVolunteersInput,
-  UpdateProfileImageInput,
   VolunteerIdInput,
 } from "@/models/api/volunteer";
 import { authorizedProcedure } from "@/server/api/procedures";
@@ -57,20 +55,6 @@ export const volunteerRouter = createTRPCRouter({
     .input(VolunteerIdInput.merge(AdminSignoffInput))
     .mutation(async ({ input, ctx }) => {
       await ctx.volunteerService.rejectVolunteer(input.volunteerUserId);
-      return { ok: true };
-    }),
-
-  // Image
-  getPresignedUrl: authorizedProcedure({ permission: { profile: ["update"] } })
-    .input(GetPresignedUrlInput)
-    .mutation(async ({ input, ctx }) => {
-      // TODO: getPresignedUrl
-      return { ok: true };
-    }),
-  updateProfileImage: authorizedProcedure({ permission: { profile: ["update"] } })
-    .input(UpdateProfileImageInput)
-    .mutation(async ({ input, ctx }) => {
-      // TODO: updateProfileImage
       return { ok: true };
     }),
 });

@@ -45,7 +45,7 @@ export const blackoutRelations = relations(blackout, ({ one }) => ({
 
 export const course = pgTable("course", {
     id: uuid("id").primaryKey().defaultRandom(),
-    termId: uuid("term_id").references(() => term.id, { onDelete: "cascade" }),
+    termId: uuid("term_id").notNull().references(() => term.id, { onDelete: "cascade" }),
     image: text("image"),
     name: text("name").notNull(),
     published: boolean("published").notNull().default(false),

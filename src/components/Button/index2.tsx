@@ -12,7 +12,7 @@ import {
   type LinkProps as AriaLinkProps,
 } from "react-aria-components";
 import url from "url";
-import { ActiveContext } from "../utils/ActiveContext";
+import { ActiveContext } from "../utils/active-context";
 import "./index.scss";
 
 type Common = {
@@ -58,7 +58,7 @@ const Button = forwardRef<
       };
 
       return (
-        <ActiveContext href={renderedHref}>
+        <ActiveContext url={renderedHref}>
           {({ isActive }) => (
             <AriaLink
               ref={ref as ForwardedRef<HTMLAnchorElement>}

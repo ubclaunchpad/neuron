@@ -196,7 +196,7 @@ export function SectionLink({
     <Button
       unstyled
       ref={setRef}
-      onPress={scrollTo}
+      onClick={scrollTo}
       className={className}
     >
       {children}

@@ -1,109 +1,131 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { parseAsString, useQueryState } from "nuqs";
-import { Form } from "react-aria-components";
-import { FormProvider, useFieldArray, useForm, useFormContext } from "react-hook-form";
-import z from "zod";
-import "./page.scss";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { parseAsString, useQueryState } from "nuqs"
+import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from "react-hook-form"
+import z from "zod"
 
-import { FormContent, FormGroup, Select, TextArea, TextInput } from "@/components/form";
-import { PageLayout } from "@/components/PageLayout";
-import { PageTitle } from "@/components/PageLayout/PageHeader";
-import { Button } from "@/components/primitives/button";
-import { Card } from "@/components/primitives/Card";
-import { Loader } from "@/components/utils/Loader";
-import type { CreateClassInput, UpdateClassInput } from "@/models/api/class";
-import { ScheduleRule } from "@/models/api/schedule";
-import type { SingleClass } from "@/models/class";
-import { clientApi } from "@/trpc/client";
-import { diffArray, diffEntityArray as diffArrayById } from "@/utils/formUtils";
-import AddIcon from "@public/assets/icons/add.svg";
-import DownCaretIcon from "@public/assets/icons/caret-down.svg";
-import RightCaretIcon from "@public/assets/icons/caret-right.svg";
-import { useState } from "react";
-import { classCategories } from "../page";
+import {
+  CLASS_CATEGORIES,
+} from "@/components/classes/classes-grid-view"
+import { PageLayout, PageLayoutHeader, PageLayoutHeaderContent, PageLayoutHeaderRight, PageLayoutHeaderTitle } from "@/components/page-layout"
+import { Button } from "@/components/primitives/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/primitives/card"
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/primitives/field"
+import { Input } from "@/components/primitives/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/primitives/select"
+import { Textarea } from "@/components/primitives/textarea"
+import { Loader } from "@/components/utils/loader"
+import type { CreateClassInput, UpdateClassInput } from "@/models/api/class"
+import { ScheduleRule } from "@/models/api/schedule"
+import type { SingleClass } from "@/models/class"
+import { clientApi } from "@/trpc/client"
+import { diffArray, diffEntityArray as diffArrayById } from "@/utils/formUtils"
+import AddIcon from "@public/assets/icons/add.svg"
+import DownCaretIcon from "@public/assets/icons/caret-down.svg"
+import RightCaretIcon from "@public/assets/icons/caret-right.svg"
+import { useState } from "react"
 
 export const ScheduleEditSchema = z.object({
   id: z.uuid().optional(),
-  localStartTime: z.iso.time().nonempty("Please fill out this field."),
-  localEndTime: z.iso.time().nonempty("Please fill out this field."),
-  tzid: z.string().nonempty(),
-  volunteerUserIds: z.array(z.uuid()).default([]),
-  instructorUserId: z.uuid().optional(),
-  effectiveStart: z.iso.date().optional(),
-  effectiveEnd: z.iso.date().optional(),
+  localStartTime: z.iso.time().min(1, "Please fill out this field."),
+  localEndTime: z.iso.time().min(1, "Please fill out this field."),
+  tzid: z.string().min(1, "Please fill out this field."),
+  volunteerUserIds: z.array(z.string().uuid()).default([]),
+  instructorUserId: z.string().uuid().optional(),
+  effectiveStart: z.string().date().optional(),
+  effectiveEnd: z.string().date().optional(),
   rule: ScheduleRule,
-});
-export type ScheduleEditSchemaType = z.output<typeof ScheduleEditSchema>;
+})
+export type ScheduleEditSchemaType = z.output<typeof ScheduleEditSchema>
 
 export const ClassEditSchema = z.object({
-  name: z.string().nonempty("Please fill out this field."),
+  name: z.string().min(1, "Please fill out this field."),
   description: z.string().optional(),
   meetingURL: z.url("Please enter a valid meeting url.").optional(),
-  category: z.string().nonempty("Please fill out this field."),
+  category: z.string().min(1, "Please fill out this field."),
   schedules: z.array(ScheduleEditSchema).default([]),
-});
-type ClassEditSchemaOutput = z.output<typeof ClassEditSchema>; 
+})
+type ClassEditSchemaOutput = z.output<typeof ClassEditSchema>
 
 export default function ClassesEditView() {
-  const [queryClassId, setQueryClassId] = useQueryState("class", parseAsString);
-  const [queryTermId, setQueryTermId] = useQueryState("term", parseAsString);
-  const apiUtils = clientApi.useUtils();
-  const editing = !!queryClassId;
+  const [queryClassId, setQueryClassId] = useQueryState("class", parseAsString)
+  const [queryTermId] = useQueryState("term", parseAsString)
+  const apiUtils = clientApi.useUtils()
+  const editing = !!queryClassId
 
-  const { 
-    data: editingClassData, 
+  const {
+    data: editingClassData,
     isPending: isLoadingEditingClass,
-  } = clientApi.class.byId.useQuery(
-    { classId: queryClassId ?? "" },
-    { enabled: editing }
-  );
+  } = clientApi.class.byId.useQuery({ classId: queryClassId ?? "" }, { enabled: editing })
 
-  const { 
-    data: currentTermData, 
-    isPending: isLoadingCurrentTerm, 
-  } = clientApi.term.current.useQuery(
-    undefined,
-    { enabled: !queryTermId && !editing }
-  );
+  const {
+    data: currentTermData,
+    isPending: isLoadingCurrentTerm,
+  } = clientApi.term.current.useQuery(undefined, { enabled: !queryTermId && !editing })
 
   const { mutate: createClass, isPending: isCreatingClass } = clientApi.class.create.useMutation({
     onSuccess: (createdId) => {
-      setQueryClassId(createdId);
-      apiUtils.class.list.invalidate();
+      setQueryClassId(createdId)
+      apiUtils.class.list.invalidate()
     },
-  });
+  })
 
   const { mutate: updateClass, isPending: isUpdatingClass } = clientApi.class.update.useMutation({
     onSuccess: (_, { id }) => {
-      apiUtils.class.byId.invalidate({ classId: id });
-      apiUtils.class.list.invalidate();
+      apiUtils.class.byId.invalidate({ classId: id })
+      apiUtils.class.list.invalidate()
     },
-  });
+  })
 
   return (
     <PageLayout>
-      <PageLayout.Header>
-        <PageTitle title={queryClassId ? "Edit Class" : "Create Class"} showBackButton/>
-      </PageLayout.Header>
+      <PageLayoutHeader>
+        <PageLayoutHeaderContent>
+          <PageLayoutHeaderRight showBackButton>
+            <PageLayoutHeaderTitle>{editing ? "Edit Class" : "Create Class"}</PageLayoutHeaderTitle>
+          </PageLayoutHeaderRight>
+        </PageLayoutHeaderContent>
+      </PageLayoutHeader>
 
-      <Loader isLoading={editing ? isLoadingEditingClass : isLoadingCurrentTerm} fallback={"Loading class data"}>
-        <ClassEditForm 
+      <Loader
+        isLoading={editing ? isLoadingEditingClass : isLoadingCurrentTerm}
+        fallback={"Loading class data"}
+      >
+        <ClassEditForm
           isEditing={editing}
           editingClassId={queryClassId ?? undefined}
           creatingTermId={queryTermId ?? currentTermData?.id}
-          editingClassData={editingClassData!}
+          editingClassData={editingClassData as SingleClass}
           updateClassMutation={updateClass}
           createClassMutation={createClass}
           mutationPending={isCreatingClass || isUpdatingClass}
         />
       </Loader>
     </PageLayout>
-  );
+  )
 }
 
-function ClassEditForm({ 
+function ClassEditForm({
   isEditing,
   editingClassId,
   creatingTermId,
@@ -111,180 +133,278 @@ function ClassEditForm({
   updateClassMutation,
   createClassMutation,
   mutationPending,
-}: { 
-  isEditing: boolean;
-  editingClassId?: string;
-  editingClassData: SingleClass;
-  creatingTermId?: string;
-  createClassMutation: (data: CreateClassInput) => void;
-  updateClassMutation: (data: UpdateClassInput) => void;
-  mutationPending: boolean;
+}: {
+  isEditing: boolean
+  editingClassId?: string
+  editingClassData: SingleClass
+  creatingTermId?: string
+  createClassMutation: (data: CreateClassInput) => void
+  updateClassMutation: (data: UpdateClassInput) => void
+  mutationPending: boolean
 }) {
-
   const form = useForm({
     resolver: zodResolver(ClassEditSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
-    defaultValues: isEditing ? {
-      name: defaultClassData!.name,
-      description: defaultClassData!.description,
-      meetingURL: defaultClassData!.meetingURL,
-      category: defaultClassData!.category,
-      schedules: defaultClassData!.schedules.map(schedule => ({
-        localStartTime: schedule.localStartTime,
-        localEndTime: schedule.localEndTime,
-        tzid: schedule.tzid,
-        volunteerUserIds: schedule.volunteers.map(volunteer => volunteer.id),
-        rule: schedule.rule,
-        effectiveStart: schedule.effectiveStart,
-        effectiveEnd: schedule.effectiveEnd,
-        instructorUserId: schedule.instructor?.id,
-      })),
-    } : undefined
-  });
+    defaultValues: isEditing
+      ? {
+          name: defaultClassData!.name,
+          description: defaultClassData!.description ?? "",
+          meetingURL: defaultClassData!.meetingURL ?? "",
+          category: defaultClassData!.category,
+          schedules: defaultClassData!.schedules.map((schedule) => ({
+            id: schedule.id,
+            localStartTime: schedule.localStartTime,
+            localEndTime: schedule.localEndTime,
+            tzid: schedule.tzid,
+            volunteerUserIds: schedule.volunteers.map((v) => v.id),
+            rule: schedule.rule,
+            effectiveStart: schedule.effectiveStart,
+            effectiveEnd: schedule.effectiveEnd,
+            instructorUserId: schedule.instructor?.id,
+          })),
+        }
+      : undefined,
+  })
 
-  const { 
-    fields: formSchedules, 
-    append: addFormSchedule, 
-    remove: removeFormSchedule
+  const {
+    fields: formSchedules,
+    append: addFormSchedule,
+    remove: removeFormSchedule,
   } = useFieldArray({
     control: form.control,
-    name: "schedules"
-  });
+    name: "schedules",
+  })
 
-  const onSubmit = async (data: ClassEditSchemaOutput) => {
+  const onSubmit = (data: ClassEditSchemaOutput) => {
     if (isEditing) {
-      const { schedules, ...dataToSubmit } = data;
-      const { schedules: originalSchedules } = form.formState.defaultValues!;
-      const originalIdToSchedule = new Map<string, ScheduleEditSchemaType>(originalSchedules!.map(s => [s!.id as string, s as ScheduleEditSchemaType]))
-      const { added, edited, deletedIds } = diffArrayById(originalSchedules as ScheduleEditSchemaType[], schedules, "id");
+      const { schedules, ...dataToSubmit } = data
+      const originalSchedules = (form.formState.defaultValues?.schedules ??
+        []) as ScheduleEditSchemaType[]
+      const originalIdToSchedule = new Map<string, ScheduleEditSchemaType>(
+        originalSchedules.map((s) => [s.id as string, s]),
+      )
+      const { added, edited, deletedIds } = diffArrayById(
+        originalSchedules,
+        schedules,
+        "id",
+      )
 
       updateClassMutation({
         id: editingClassId!,
         addedSchedules: added,
-        updatedSchedules: edited.map(schedule => {
-          const { volunteerUserIds, id, ...rest } = schedule;
-          const originalIds = originalIdToSchedule.get(id)?.volunteerUserIds ?? [];
-          const { added: addedIds, deleted: deletedIds } = diffArray(originalIds, volunteerUserIds);
-
+        updatedSchedules: edited.map((schedule) => {
+          const { volunteerUserIds, id, ...rest } = schedule
+          const originalIds = originalIdToSchedule.get(id!)?.volunteerUserIds ?? []
+          const { added: addedIds, deleted: deletedIds } = diffArray(originalIds, volunteerUserIds)
           return {
             ...rest,
-            id,
+            id: id!,
             addedVolunteerUserIds: addedIds,
-            removedVolunteerUserIds: deletedIds
+            removedVolunteerUserIds: deletedIds,
           }
         }),
         deletedSchedules: deletedIds,
         ...dataToSubmit,
-      });
+      })
     } else {
       createClassMutation({
         termId: creatingTermId!,
         ...data,
-      });
+      })
     }
-  };
-  
+  }
+
   return (
     <FormProvider {...form}>
-      <Form
-        onSubmit={form.handleSubmit(onSubmit)}
-        validationBehavior="aria"
-      >
-        { JSON.stringify(form.getValues()) }
-        <div className="class-edit__content">
-          <Card>
-            <FormContent>
-              <h3>General</h3>
-
-              <TextInput
-                control={form.control}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-8 p-9 pt-0">
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>General</CardTitle>
+            <CardDescription>Basic details about the class.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup>
+              <Controller
                 name="name"
-                inlineLabel
-                label="Title"
-                placeholder="Enter Title"
-                errorMessage={form.formState.errors.name?.message}
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="class-name">Title</FieldLabel>
+                    <Input
+                      id="class-name"
+                      placeholder="Enter Title"
+                      aria-invalid={fieldState.invalid}
+                      autoComplete="off"
+                      {...field}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
               />
 
-              <TextInput 
-                control={form.control}
+              <Controller
                 name="meetingURL"
-                inlineLabel
-                label="Meeting Link"
-                placeholder="Enter Meeting Link"
-                errorMessage={form.formState.errors.meetingURL?.message}
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="class-meeting-url">Meeting Link</FieldLabel>
+                    <Input
+                      id="class-meeting-url"
+                      type="url"
+                      placeholder="Enter Meeting Link"
+                      aria-invalid={fieldState.invalid}
+                      autoComplete="off"
+                      {...field}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
               />
 
-              <Select
-                control={form.control}
+              <Controller
                 name="category"
-                inlineLabel
-                label="Category"
-                placeholder="Select Category"
-                errorMessage={form.formState.errors.category?.message}
-              >
-                {classCategories.map(category => (
-                  <Select.Item 
-                    key={category}
-                    id={category}
-                  >{category}</Select.Item>
-                ))}
-              </Select>
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="class-category">Category</FieldLabel>
+                    <Select
+                      value={field.value ?? undefined}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger id="class-category" aria-invalid={fieldState.invalid}>
+                        <SelectValue placeholder="Select Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CLASS_CATEGORIES.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
 
-              <FormGroup columns="2fr 1fr">
-                <TextArea
-                  control={form.control}
-                  name="description"
-                  label="Description"
-                  placeholder="Enter Description"
-                ></TextArea>
-              </FormGroup>
-            </FormContent>
+              <Controller
+                name="description"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="class-description">Description</FieldLabel>
+                    <Textarea
+                      id="class-description"
+                      placeholder="Enter Description"
+                      className="min-h-24 resize-y"
+                      aria-invalid={fieldState.invalid}
+                      {...field}
+                    />
+                    <FieldDescription>Optional. Add context for instructors and volunteers.</FieldDescription>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </FieldGroup>
+          </CardContent>
+        </Card>
+
+        {formSchedules.map((schedule, index) => (
+          <Card key={schedule.id} className="w-full">
+            <ScheduleEditForm index={index} selfDelete={() => removeFormSchedule(index)} />
           </Card>
+        ))}
 
-          {formSchedules.map((schedule, index) => (
-            <Card key={schedule.id}>
-              <ScheduleEditForm index={index} selfDelete={() => removeFormSchedule(index)}/>
-            </Card>
-          ))}
+        <Button
+          type="button"
+          variant="ghost"
+          className="inline-flex items-center gap-5 text-muted-foreground"
+          onClick={() => addFormSchedule({} as any)}
+        >
+          <AddIcon />
+          <h3 className="text-base font-semibold">Add Class Schedule</h3>
+        </Button>
 
-          <Button 
-            unstyled 
-            className="card class-edit__add-schedule"
-            onClick={() => addFormSchedule({} as any)}>
-            <AddIcon/>
-            <h3 className="class-edit__add-schedule-text">Add Class Schedule</h3>
-          </Button>
-        </div>
-      </Form>
+        <CardFooter className="p-0">
+          <Field orientation="horizontal">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => form.reset()}
+              disabled={mutationPending}
+            >
+              Reset
+            </Button>
+            <Button type="submit" disabled={mutationPending}>
+              {mutationPending ? "Saving..." : "Submit"}
+            </Button>
+          </Field>
+        </CardFooter>
+      </form>
     </FormProvider>
-  );
+  )
 }
 
-function ScheduleEditForm({ 
+function ScheduleEditForm({
   index,
-  selfDelete
-}: { 
-  index: number,
+  selfDelete,
+}: {
+  index: number
   selfDelete: () => void
 }) {
-  const {
-    register,
-    watch,
-  } = useFormContext();
-  const [isOpen, setIsOpen] = useState(true);
+  const { register } = useFormContext()
+  const [isOpen, setIsOpen] = useState(true)
 
   return (
-    <FormContent>
-      <FormGroup columns="min-content minmax(min-content, max-content) 1fr">
-        <Button className="small ghost icon-only" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <DownCaretIcon/> : <RightCaretIcon/>}
-        </Button>
-        <h3>Class Schedule {index + 1}</h3>
-        <span>other stuff</span>
-      </FormGroup>
+    <CardContent>
+      <FieldGroup>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsOpen((v) => !v)}
+          >
+            {isOpen ? <DownCaretIcon /> : <RightCaretIcon />}
+          </Button>
+          <h3 className="text-base font-semibold">Class Schedule {index + 1}</h3>
+          <div className="ml-auto">
+            <Button type="button" variant="ghost" onClick={selfDelete}>
+              Remove
+            </Button>
+          </div>
+        </div>
 
-
-    </FormContent>
-  );
+        {isOpen && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <Field>
+              <FieldLabel htmlFor={`schedules.${index}.localStartTime`}>Start Time</FieldLabel>
+              <Input
+                id={`schedules.${index}.localStartTime`}
+                type="time"
+                {...register(`schedules.${index}.localStartTime` as const)}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor={`schedules.${index}.localEndTime`}>End Time</FieldLabel>
+              <Input
+                id={`schedules.${index}.localEndTime`}
+                type="time"
+                {...register(`schedules.${index}.localEndTime` as const)}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor={`schedules.${index}.tzid`}>Time Zone</FieldLabel>
+              <Input
+                id={`schedules.${index}.tzid`}
+                placeholder="e.g. America/Vancouver"
+                {...register(`schedules.${index}.tzid` as const)}
+              />
+            </Field>
+          </div>
+        )}
+      </FieldGroup>
+    </CardContent>
+  )
 }

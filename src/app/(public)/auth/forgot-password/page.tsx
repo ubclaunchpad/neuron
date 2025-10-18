@@ -100,7 +100,7 @@ export default function ForgotPasswordForm() {
 
       <p className="text-center text-foreground">
         <Button asChild variant="link" className="p-0">
-          <Link href="/auth/login">
+          <Link prefetch href="/auth/login">
             <ChevronLeft className="h-4 w-4" />
             Back to login
           </Link>

@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Card } from "../../primitives/Card";
+import { Card } from "../../primitives/card";
 import { ErrorLine } from "./ErrorLine";
 import "./index.scss";
 

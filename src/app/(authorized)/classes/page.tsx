@@ -1,220 +1,236 @@
 "use client";
-
-import clsx from "clsx";
 import { parseAsString, useQueryState } from "nuqs";
-import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import "./page.scss";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
-import { ActiveSectionProvider, Section, SectionLink, useActiveSection } from "@/components/classes/ActiveSectionProvider";
-import { ClassCard } from '@/components/classes/ClassCard';
-import { ClassSidebarContent } from "@/components/classes/ClassSidebar";
-import { Select } from "@/components/form/Select";
-import { PageLayout, useSidebar } from "@/components/PageLayout";
-import { PageTitle } from "@/components/PageLayout/PageHeader";
-import { Button } from '@/components/primitives/button';
-import { Loader } from '@/components/utils/Loader';
-import { WithPermission } from '@/components/utils/WithPermission';
+import { Loader } from "@/components/utils/loader";
+import { WithPermission } from "@/components/utils/with-permission";
 import { usePermission } from "@/hooks/use-permission";
-import type { ListClass } from '@/models/class';
 import { clientApi } from "@/trpc/client";
-import AddIcon from "@public/assets/icons/add.svg";
 
-export const classCategories = [
-  "Online Exercise",
-  "Creative & Expressive",
-  "Care Partner Workshops",
-  "Food & Nutrition",
-  "In-Person Exercise",
-  "One-on-One Exercise",
-  "Other Opportunities",
-] as const;
+import { ActiveSectionProvider } from "@/components/classes/active-section-provider";
+import { ClassSidebarContent } from "@/components/classes/class-sidebar-content";
+import {
+  CategoriesNav,
+  CLASS_CATEGORIES,
+  ClassesGrid,
+} from "@/components/classes/classes-grid-view";
+import { ClassesPageProvider } from "@/components/classes/context";
+import {
+  PageLayout,
+  PageLayoutAside,
+  PageLayoutContent,
+  PageLayoutHeader,
+  PageLayoutHeaderContent,
+  PageLayoutHeaderLeft,
+  PageLayoutHeaderRight,
+  PageLayoutHeaderTitle,
+} from "@/components/page-layout";
+import { Button } from "@/components/primitives/button";
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/primitives/dialog";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/primitives/empty";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/primitives/select";
+import { Skeleton } from "@/components/primitives/skeleton";
+import type { Term } from "@/models/term";
+import CalendarsIcon from "@public/assets/icons/calendars.svg";
+import React from "react";
 
-function ClassesList({
-  classes,
+export function TermSelect({
+  terms,
+  selectedKey,
+  onChange,
+  isLoading,
+  disableIfSingle,
 }: {
-  classes: ListClass[];
+  terms: Term[] | undefined;
+  selectedKey?: string;
+  onChange: (id: string) => void;
+  isLoading?: boolean;
+  disableIfSingle?: boolean;
 }) {
-  const { setSelectedClassId } = useClassesPage();
-  const { setIsOpen } = useSidebar();
-  
-  const handleSelectClass = useCallback((classId: string) => {
-    setSelectedClassId(classId);
-    setIsOpen(true);
-  }, [setSelectedClassId, setIsOpen]);
+  const apiUtils = clientApi.useUtils();
 
-  // Group classes by category
-  const classesByCategory = useMemo(() => {
-    const defaultCategory = "Other Opportunities";
-    return classes.reduce((rec, c) => {
-      const category = c.category ?? defaultCategory;
-      rec[category] = [...(rec[category] || []), c];
-      return rec;
-    }, {} as Record<string, ListClass[]>);
-  }, [classes]);
+  // Load via skeleton
+  if (isLoading) return <Skeleton className="h-10 w-30" />;
 
-  return (<>
-    <WithPermission permissions={{ permission: { classes: ["create"] }}}>
-      <Button 
-        className="classes__create-button large primary"
-        href="/classes/edit"
-      >
-        <AddIcon/>
-        Create Class
-      </Button>
-    </WithPermission>
-    <div className="classes__list-content">
-      {Object.entries(classesByCategory ?? {}).map(([category, classes]) => (
-        <Section key={category} sectionId={category} className="classes__list-section">
-          <h3 className="classes__list-section-title">{category}</h3>
-          <div className="classes__list-section-content">
-            {classes.map((cls) => (
-              <ClassCard 
-                key={cls.id} 
-                classData={cls} 
-                onPress={() => handleSelectClass(cls.id)}
-              />
-            ))}
-          </div>
-        </Section>
-      ))}
-    </div>
-  </>);
-}
+  const handleValueChange = React.useCallback(
+    (id: string) => {
+      // Prefetch classes for the selected term to speed up nav
+      apiUtils.class.list.prefetch({ term: id }).catch(() => {});
+      onChange(id);
+    },
+    [apiUtils.class.list, onChange],
+  );
 
-function EmptyClassesList() {
-  return (<>
-    <WithPermission permissions={{ permission: { classes: ["create"] }}}>
-      <Button 
-        className="classes__create-button large primary"
-        href="/classes/edit"
-      >
-        <AddIcon/>
-        Create Class
-      </Button>
-    </WithPermission>
-    No classes found
-  </>);
-}
-
-export function ClassHeaderCategories() {
-  const { activeSectionId } = useActiveSection();
+  const isDisabled =
+    (disableIfSingle && (terms?.length ?? 0) <= 1) || isLoading;
 
   return (
-    <div className="classes__categories">
-      {classCategories.map((category) => (
-        <SectionLink 
-          key={category}
-          sectionId={category}
-          className={clsx(
-            "classes__category", 
-            { "active": category === activeSectionId }
-          )}
-        >{category}</SectionLink>
-      ))}
-    </div>
+    <Select
+      value={selectedKey}
+      onValueChange={handleValueChange}
+      disabled={isDisabled}
+    >
+      <SelectTrigger className="min-w-48">
+        <SelectValue
+          placeholder={
+            isLoading
+              ? "Loading terms…"
+              : terms?.length
+                ? "Select term"
+                : "No terms"
+          }
+        />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          {(terms ?? []).map((t) => (
+            <SelectItem key={t.id} value={t.id}>
+              {t.name}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   );
 }
 
-const ClassesPageContext = React.createContext<{
-  selectedClassId: string | null;
-  setSelectedClassId: (classId: string | null) => void;
-} | null>(null);
-
-export const useClassesPage = () => {
-  const ctx = React.useContext(ClassesPageContext);
-  if (!ctx) throw new Error("useClassesPage must be used within the <ClassesPage> component");
-  return ctx;
-};
-
-export default function ClassesPage() {
+export default function ClassesPageClient() {
   const apiUtils = clientApi.useUtils();
-  const [queryTerm, setQueryTerm] = useQueryState("term", parseAsString.withDefault("current"));
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-  const canCreateTerm = usePermission({ permission: { terms: ["create"] }});
-  const {
-    data: terms, 
-    isPending: isLoadingTerms,
-    isError: isTermError 
-  } = clientApi.term.all.useQuery();
-  const {
-    data: classListData, 
-    isPending: isLoadingClassList, 
-    isError: isClassListError
-  } = clientApi.class.list.useQuery(
-    { term: queryTerm },
+  const [queryTerm, setQueryTerm] = useQueryState(
+    "term",
+    parseAsString.withDefault("current"),
+  );
+  const canCreateTerm = usePermission({ permission: { terms: ["create"] } });
+
+  const { data: termsData, isPending: isLoadingTerms } =
+    clientApi.term.all.useQuery();
+  const { data: classListData, isPending: isLoadingClassList } =
+    clientApi.class.list.useQuery({ term: queryTerm }, { meta: { suppressToast: true }});
+
+  const [selectedTermId, setSelectedTermId] = useState<string | null>(
+    queryTerm !== "current" ? queryTerm : null,
   );
 
   useEffect(() => {
-    if (queryTerm == "current") {
-      console.log(classListData?.term)
-      setSelectedTermId(classListData?.term.id ?? null);
+    if (queryTerm === "current") {
+      setSelectedTermId(classListData?.term?.id ?? null);
     }
-  }, [classListData]);
+  }, [classListData, queryTerm]);
 
-  const [selectedTermId, setSelectedTermId] = useState<string | null>(
-    queryTerm !== "current" ? queryTerm : null
+  const handleSelectTerm = useCallback(
+    (uuid: string) => {
+      setQueryTerm(uuid);
+      setSelectedTermId(uuid);
+      apiUtils.class.list.prefetch({ term: uuid }).catch(() => {});
+    },
+    [setQueryTerm, apiUtils.class.list],
   );
 
-  const handleSelectTerm = useCallback((uuid: string) => {
-    setQueryTerm(uuid);
-    setSelectedTermId(uuid);
-
-    // prefetch the classes for the selected term
-    apiUtils.class.list.prefetch({ term: uuid }).catch(() => {});
-  }, [setQueryTerm, apiUtils.class.list]);
-
-  // Wire in the scroll ref to the content to keep track of the active category
+  // Track active category using the content scroll area
   const contentScrollRef = useRef<HTMLDivElement>(null);
-  return (
-    <ActiveSectionProvider sectionIds={classCategories} scrollRef={contentScrollRef}>
-      <ClassesPageContext.Provider value={{ selectedClassId, setSelectedClassId }}> 
-        <PageLayout contentRef={contentScrollRef}>
-          <PageLayout.Header>
-            <PageTitle title="Classes">
-              <PageTitle.RightContent>
-                {(!isLoadingTerms && terms?.length !== 0) && 
-                  <Select
-                    overridePopoverContent
-                    isLoading={isLoadingTerms}
-                    items={terms}
-                    selectedKey={selectedTermId ?? undefined}
-                    isDisabled={!canCreateTerm && terms?.length === 1}
-                    onSelectionChange={(k) => handleSelectTerm(k as string)}
-                  >
-                    <Select.ItemList items={terms}>
-                      {terms?.map((term) => <Select.Item key={term.id} id={term.id}>{term.name}</Select.Item>)}
-                    </Select.ItemList>
-                    <WithPermission permissions={{ permission: { terms: ["create"] }}}>
-                    </WithPermission>
-                  </Select>}
-              </PageTitle.RightContent>
-            </PageTitle>
-            <ClassHeaderCategories/>
-          </PageLayout.Header>
 
-          <PageLayout.Sidebar>
-            <Suspense fallback={<div>Loading class…</div>}>
+  return (
+    <ActiveSectionProvider
+      sectionIds={CLASS_CATEGORIES}
+      scrollRef={contentScrollRef}
+    >
+      <PageLayout>
+        <ClassesPageProvider>
+          <PageLayoutHeader>
+            <PageLayoutHeaderContent>
+              <PageLayoutHeaderRight>
+                <PageLayoutHeaderTitle>Classes</PageLayoutHeaderTitle>
+              </PageLayoutHeaderRight>
+              <PageLayoutHeaderLeft>
+                  {!!termsData?.length && (
+                    <TermSelect
+                      terms={termsData}
+                      selectedKey={selectedTermId ?? undefined}
+                      onChange={handleSelectTerm}
+                      isLoading={isLoadingTerms}
+                      disableIfSingle={!canCreateTerm}
+                    />
+                  )}
+              </PageLayoutHeaderLeft>
+            </PageLayoutHeaderContent>
+            
+            <CategoriesNav />
+          </PageLayoutHeader>
+
+          <PageLayoutAside>
+            <Suspense fallback={<div>Loading class...</div>}>
               <ClassSidebarContent />
             </Suspense>
-          </PageLayout.Sidebar>
+          </PageLayoutAside>
 
-          <div className="classes__content">
-            <Loader isLoading={isLoadingClassList || isLoadingTerms} fallback={<div>Loading classes…</div>}>
-              <WithPermission 
-                permissions={{ permission: { classes: ["create"] }}}
-                fallback={<>
-                  { !classListData?.classes.length && <EmptyClassesList /> }
-                  { !!classListData?.classes.length && <ClassesList classes={classListData?.classes!} /> }
-                </>}
+          <PageLayoutContent>
+            <div ref={contentScrollRef} className="flex flex-col gap-6 p-9">
+              <Loader
+                isLoading={isLoadingClassList || isLoadingTerms}
+                fallback={<div>Loading classes...</div>}
               >
-                { terms?.length === 0 && <div>Create your first term</div> }
-                { !classListData?.classes || classListData?.classes.length === 0 && <EmptyClassesList /> }
-                { classListData?.classes && classListData?.classes.length > 0 && <ClassesList classes={classListData?.classes!} /> }
-              </WithPermission>
-            </Loader>
-          </div>
-        </PageLayout>
-      </ClassesPageContext.Provider>
+                <WithPermission
+                  permissions={{ permission: { classes: ["create"] } }}
+                  fallback={
+                    classListData?.classes?.length ? (
+                      <ClassesGrid classes={classListData.classes} />
+                    ) : (
+                      "No classes found"
+                    )
+                  }
+                >
+                  {!termsData?.length ? (
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <CalendarsIcon />
+                        </EmptyMedia>
+                        <EmptyTitle>No Terms Yet</EmptyTitle>
+                        <EmptyDescription>
+                          You haven&apos;t created any terms yet. Get started by creating
+                          your first term. 
+                        </EmptyDescription>
+                      </EmptyHeader>
+                      <EmptyContent>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline">Create Term</Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Create Term</DialogTitle>
+                            </DialogHeader>
+                            
+                            some content
+
+                            <DialogFooter>
+                              <DialogClose asChild>
+                                <Button variant="outline">Cancel</Button>
+                              </DialogClose>
+                              <Button type="submit">Save changes</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </EmptyContent>
+                    </Empty>
+                  ) : !classListData?.classes?.length ? (
+                    "No classes found"
+                  ) : (
+                    <ClassesGrid classes={classListData.classes} />
+                  )}
+                </WithPermission>
+              </Loader>
+            </div>
+          </PageLayoutContent>
+        </ClassesPageProvider>
+      </PageLayout>
     </ActiveSectionProvider>
   );
 }

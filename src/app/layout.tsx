@@ -2,8 +2,8 @@ import "@/styles/globals.css";
 import type { Metadata, Viewport } from "next";
 import { Montserrat, Roboto } from "next/font/google";
 
-import HydrationGate from "@/components/utils/HydrationGate";
-import { Toaster } from "@/components/utils/Toaster";
+import HydrationGate from "@/components/utils/hydration-gate";
+import { Toaster } from "@/components/utils/toaster";
 import { AuthProvider } from "@/providers/auth-provider";
 import { NavigateEventProvider } from "@/providers/navigate-event-provider";
 import { RouteProvider } from "@/providers/route-provider";

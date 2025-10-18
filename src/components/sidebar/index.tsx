@@ -1,94 +1,195 @@
 "use client";
 
-import { createHost, createSlot } from "@/lib/slots";
+import * as React from "react";
+
+import { Button } from "@/components/primitives/button";
+import { cn } from "@/lib/utils";
 import CloseIcon from "@public/assets/icons/close.svg";
-import clsx from "clsx";
-import { useCallback } from "react";
-import { useSidebar } from "../PageLayout";
-import { Button } from "../primitives/button";
-import "./index.scss";
+import { usePageSidebar } from "../page-layout";
 
-export const SidebarSection = ({ 
-  children
-} : {
-  children: React.ReactNode;
-}) => {
-  return <div className="sidebar-section">
-    {children}
-  </div>;
-};
-
-export const SidebarField = ({ 
-  label,
-  inline = true,
-  children
-} : {
-  label?: React.ReactNode;
-  inline?: boolean;
-  children: React.ReactNode;
-}) => {
-  return <div className={clsx("sidebar-field", inline && "inline")}>
-    {label && <span className="sidebar-field__label">{label}</span>}
-    <span className="sidebar-field__content">{children}</span>
-  </div>;
-};
-
-type SidebarContainerProps = {
-  children?: React.ReactNode;
-};
-
-const SlotDefs = {
-  Header: createSlot(),
-  Body: createSlot(),
-  Footer: createSlot(),
-};
-
-type SidebarContainerCompound = React.FC<SidebarContainerProps> & {
-  Header: typeof SlotDefs.Header;
-  Body: typeof SlotDefs.Body;
-  Footer: typeof SlotDefs.Footer;
-};
-
-export const SidebarContainer: SidebarContainerCompound = ({
-  children
-}: SidebarContainerProps) => {
-  const { setIsOpen } = useSidebar();
-  const closeSidebar = useCallback(() => setIsOpen(false), [setIsOpen]);
-
+function SidebarContainer({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className="sidebar-container">
-      {createHost(children, (Slots) => {
-        const header = Slots.get(SlotDefs.Header);
-        const footer = Slots.get(SlotDefs.Footer);
-        const body = Slots.get(SlotDefs.Body);
+    <div
+      data-slot="sidebar-container"
+      className={cn(
+        "pt-[4.25rem] pr-9 pb-9 pl-5 flex flex-col gap-10",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-        return (<>
-          <div className="sidebar-container__header">
-            <div className="sidebar-container__header-title">
-              {header}
-            </div>
+function SidebarHeader({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      data-slot="sidebar-header"
+      className={cn(
+        "flex items-start justify-between gap-2 border-b border-border pb-6",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-            <Button 
-              className="sidebar-container__header-close small ghost icon-only"
-              onPress={closeSidebar}
-            >
-              <CloseIcon />
-            </Button>
-          </div>
+function SidebarTitle({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLHeadingElement>) {
+  return (
+    <h2
+      data-slot="sidebar-title"
+      className={cn(
+        "text-xl font-semibold leading-none tracking-tight",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-          <div className="sidebar-container__body">
-            {body}
-          </div>
+function SidebarDescription({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
+  return (
+    <p
+      data-slot="sidebar-description"
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  );
+}
 
-          <div className="sidebar-container__footer">
-            {footer}
-          </div>
-        </>)
-      })}
+function SidebarClose({
+  className,
+  ...props
+}: Omit<React.ComponentProps<typeof Button>, "onClick">) {
+  const { setOpen } = usePageSidebar();
+  return (
+    <Button
+      data-slot="sidebar-close"
+      variant="ghost"
+      size="icon"
+      className={cn("-mr-2 shrink-0 text-muted-foreground", className)}
+      aria-label="Close sidebar"
+      onClick={() => setOpen(false)}
+      {...props}
+    >
+      <CloseIcon className="size-4" />
+    </Button>
+  );
+}
+
+function SidebarBody({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      data-slot="sidebar-body"
+      className={cn("flex flex-col gap-4", className)}
+      {...props}
+    />
+  );
+}
+
+function SidebarFooter({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      data-slot="sidebar-footer"
+      className={cn("mt-2", className)}
+      {...props}
+    />
+  );
+}
+
+function SidebarSection({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLElement>) {
+  return (
+    <section
+      data-slot="sidebar-section"
+      className={cn("flex flex-col gap-4 pb-6", className)}
+      {...props}
+    />
+  );
+}
+
+function SidebarField({
+  className,
+  inline = true,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & {
+  inline?: boolean;
+}) {
+  return (
+    <div
+      data-slot="sidebar-field"
+      data-inline={inline}
+      className={cn(
+        "grid gap-1",
+        inline ? "[grid-template-columns:4fr_6fr] gap-2" : "grid-cols-1",
+        className,
+      )}
+      {...props}
+    >
+      {children}
     </div>
   );
+}
+
+function SidebarFieldLabel({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      data-slot="sidebar-field-label"
+      className={cn("self-center text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  );
+}
+
+function SidebarFieldContent({
+  className,
+  full = false,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { full?: boolean }) {
+  return (
+    <div
+      data-slot="sidebar-field-content"
+      data-full={full}
+      className={cn("flex flex-col gap-1", full && "col-span-2", className)}
+      {...props}
+    />
+  );
+}
+
+export {
+  SidebarBody,
+  SidebarClose,
+  SidebarContainer,
+  SidebarDescription,
+  SidebarField,
+  SidebarFieldContent,
+  SidebarFieldLabel,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarSection,
+  SidebarTitle
 };
 
-SidebarContainer.Header = SlotDefs.Header;
-SidebarContainer.Footer = SlotDefs.Footer;
-SidebarContainer.Body = SlotDefs.Body;

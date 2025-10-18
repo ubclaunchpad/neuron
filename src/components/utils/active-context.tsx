@@ -8,7 +8,7 @@ export type ActiveContextRenderProps = {
 };
 
 type ActiveContextProps = {
-  href: string;
+  url: string;
   type?: "exact" | "startsWith" | "endsWith";
   children?:
     | React.ReactNode
@@ -18,7 +18,7 @@ type ActiveContextProps = {
 export function ActiveContext({
   children,
   type = "startsWith",
-  href,
+  url,
 }: ActiveContextProps) {
   const pathname = usePathname();
   const norm = (p: string) =>
@@ -27,19 +27,19 @@ export function ActiveContext({
   const isActive = useMemo(() => {
     switch (type) {
       case "exact":
-        return norm(pathname) === norm(href);
+        return norm(pathname) === norm(url);
       case "startsWith":
         return (
-          norm(pathname) === norm(href) ||
-          norm(pathname).startsWith(norm(href) + "/")
+          norm(pathname) === norm(url) ||
+          norm(pathname).startsWith(norm(url) + "/")
         );
       case "endsWith":
         return (
-          norm(pathname) === norm(href) ||
-          norm(pathname).endsWith(norm(href) + "/")
+          norm(pathname) === norm(url) ||
+          norm(pathname).endsWith(norm(url) + "/")
         );
     }
-  }, [pathname, href, type]);
+  }, [pathname, url, type]);
 
   return typeof children === "function" ? children({ isActive }) : children;
 }

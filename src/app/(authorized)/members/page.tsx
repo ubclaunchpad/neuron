@@ -1,5 +1,21 @@
 "use client";
 
+import { PageLayout, PageLayoutHeader, PageLayoutHeaderContent, PageLayoutHeaderLeft, PageLayoutHeaderTitle } from "@/components/page-layout";
+
 export default function MembersPage() {
-  return <div>Member Management</div>;
+  return (
+    <>
+      <PageLayout>
+        <PageLayoutHeader>
+          <PageLayoutHeaderContent>
+            <PageLayoutHeaderLeft>
+              <PageLayoutHeaderTitle>
+                Member Management
+              </PageLayoutHeaderTitle>
+            </PageLayoutHeaderLeft>
+          </PageLayoutHeaderContent>
+        </PageLayoutHeader>
+      </PageLayout>
+    </>
+  );
 }

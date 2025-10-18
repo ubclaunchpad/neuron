@@ -36,8 +36,6 @@ export default function ProfilePage() {
               name={user?.name}
               userId={user?.id}
               onImageChange={(file) => {
-                // getPresignedUrlMutation.mutate({ fileType: file.type });
-                // updateProfileImageMutation.mutate({ imageUrl: file.name, userId: user?.id });
                 toast.success("Profile picture updated successfully");
 
               }}

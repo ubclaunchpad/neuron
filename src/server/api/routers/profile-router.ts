@@ -10,23 +10,21 @@ export const profileRouter = createTRPCRouter({
   getPresignedUrl: authorizedProcedure({ permission: { profile: ["update"] } })
     .input(GetPresignedUrlInput)
     .mutation(async ({ input, ctx }) => {
-        await ctx.profileService.getPresignedUrl(input.fileType);
+      const result = await ctx.profileService.getPresignedUrl(input.userId, input.fileExtension);
+      return { ok: true, url: result };
+    }),
+    update: authorizedProcedure({
+      permission: { profile: ["update"] },
+    })
+      .input(UpdateProfileImageInput)
+      .mutation(async ({ input, ctx }) => {
+        await ctx.profileService.updateProfileImage(input.userId, input.imageUrl);
+        return { ok: true };
+      }),
+    get: authorizedProcedure({
+      permission: { profile: ["view"] },
+    }).query(async ({ ctx }) => {
+      // TODO: getProfile
       return { ok: true };
     }),
-  update: authorizedProcedure({
-    permission: { profile: ["update"] },
-  })
-    .input(UpdateProfileImageInput)
-    .mutation(async ({ input, ctx }) => {
-      console.log("Updating profile image for user:", input.userId);
-      console.log("Image URL:", input.imageUrl);
-      await ctx.profileService.updateProfileImage(input.userId, input.imageUrl);
-      return { ok: true };
-    }),
-  get: authorizedProcedure({
-    permission: { profile: ["view"] },
-  }).query(async ({ ctx }) => {
-    // TODO: getProfile
-    return { ok: true };
-  }),
-});
+  });

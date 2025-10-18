@@ -5,6 +5,7 @@ import { clientApi } from "@/trpc/client";
 import { useRef, useState } from "react";
 import EditIcon from "@public/assets/icons/edit.svg";
 import "./index.scss";
+import { toast } from "sonner";
 
 interface ProfilePictureUploadProps {
   currentImage?: string;
@@ -26,6 +27,11 @@ export function ProfilePictureUpload({
 
   // Use the mutation hook at component level
   const updateProfileMutation = clientApi.profile.update.useMutation();
+  const getPresignedUrlMutation = clientApi.profile.getPresignedUrl.useMutation();
+  const getPresignedUrl = async (userId: string, fileExtension: string) => {
+    const response = await getPresignedUrlMutation.mutateAsync({ userId, fileExtension });
+    return response.url;
+  }
 
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -34,6 +40,8 @@ export function ProfilePictureUpload({
     if (!file) {
       return;
     }
+    const fileExtension = file.name.split(".").pop() ?? "";
+    const presignedUrl = await getPresignedUrl(userId ?? "", fileExtension);
     // Create image element and wait for it to load
     const img = new Image();
 
@@ -85,10 +93,14 @@ export function ProfilePictureUpload({
             const url = URL.createObjectURL(blob);
             setPreviewUrl(url);
             onImageChange?.(new File([blob], file.name, { type: file.type }));
-          
+
+            if (presignedUrl) {
+              uploadFileToMinIO(presignedUrl, blob);
+            }
+
             updateProfileMutation.mutate({
               userId: userId ?? "",
-              imageUrl: url,  
+              imageUrl: `user_${userId}/profile-picture.${fileExtension}`,  
             });
           }
         },
@@ -97,6 +109,21 @@ export function ProfilePictureUpload({
       );
     }
   };
+
+  const uploadFileToMinIO = async (presignedUrl: string, blob: Blob) => {
+    const response = await fetch(presignedUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": blob.type,
+      },
+      body: blob,
+    });
+    if (response.ok) {
+      toast.success("Profile picture updated successfully");
+    } else {
+      toast.error("Failed to update profile picture");
+    }
+  }
 
   const handleUploadClick = () => {
     if (!disabled) {

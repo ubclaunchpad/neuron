@@ -114,11 +114,13 @@ export class ClassService {
         throw new NeuronError("Failed to update Class", NeuronErrorCodes.INTERNAL_SERVER_ERROR);
       }
 
-      // schedules can not be changed if class is published
       const courseRow = await tx.query.course.findFirst({
         where: eq(course.id, id)
       });
-      if (courseRow?.published) return;
+      
+      if (courseRow?.published) {
+        throw new NeuronError("Schedules can not be changed for a published class.", NeuronErrorCodes.INTERNAL_SERVER_ERROR);
+      }
 
       // Insert schedules
       await this.insertSchedules(tx, id, addedSchedules);

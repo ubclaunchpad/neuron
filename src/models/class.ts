@@ -4,6 +4,7 @@ import type { Term } from "./term";
 
 export type Class = {
   id: string;
+  termId: string;
   name: string;
   description?: string;
   image?: string;
@@ -22,6 +23,7 @@ export function buildClass(
 ): Class {
   return {
     id: classDB.id,
+    termId: classDB.termId,
     name: classDB.name,
     description: classDB.description ?? undefined,
     image: classDB.image ?? undefined,

@@ -35,10 +35,6 @@ export default function ProfilePage() {
               currentImage={user?.image || undefined}
               name={user?.name}
               userId={user?.id}
-              onImageChange={(file) => {
-                toast.success("Profile picture updated successfully");
-
-              }}
             />
             <div className="profile-info">
               <h2>Welcome back, {user?.name}</h2>

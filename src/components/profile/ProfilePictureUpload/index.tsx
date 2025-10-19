@@ -3,14 +3,15 @@
 import { FallbackImage } from "@/components/utils/FallbackImage";
 import { clientApi } from "@/trpc/client";
 import { useRef, useState } from "react";
+import { useAuth } from "@/providers/client-auth-provider";
+import { hasPermission } from "@/lib/auth/extensions/permissions";
+import { toast } from "sonner";
 import EditIcon from "@public/assets/icons/edit.svg";
 import "./index.scss";
-import { toast } from "sonner";
 
 interface ProfilePictureUploadProps {
   currentImage?: string;
   name?: string;
-  onImageChange?: (file: File) => void;
   disabled?: boolean;
   userId?: string;
 }
@@ -18,14 +19,13 @@ interface ProfilePictureUploadProps {
 export function ProfilePictureUpload({
   currentImage,
   name,
-  onImageChange,
   disabled = false,
   userId,
 }: ProfilePictureUploadProps) {
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // Use the mutation hook at component level
   const updateProfileMutation = clientApi.profile.update.useMutation();
   const getPresignedUrlMutation = clientApi.profile.getPresignedUrl.useMutation();
   const getPresignedUrl = async (userId: string, fileExtension: string) => {
@@ -33,81 +33,98 @@ export function ProfilePictureUpload({
     return response.url;
   }
 
+  const createCanvas = (width: number, height: number) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  }
+
+  const createContext = (canvas: HTMLCanvasElement) => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return;
+    }
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    return ctx;
+  }
+
+  const centerImage = (img: HTMLImageElement, targetSize: number) => {
+    const sourceWidth = img.width;
+    const sourceHeight = img.height;
+    const cropSize = Math.min(sourceWidth, sourceHeight);
+    const sourceX = (sourceWidth - cropSize) / 2;
+    const sourceY = (sourceHeight - cropSize) / 2;
+    return { sourceX, sourceY, cropSize };
+  }
+
+  const hasAccessToUpdateProfile = () => {
+    return hasPermission({...{ permission: { profile: ["update"] } }, user});
+  }
+
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const file = event.target.files?.[0];
-    if (!file) {
+    if (!hasAccessToUpdateProfile()) {
+      toast.error("You do not have permission to update your profile");
       return;
     }
+
+    const file = event.target.files?.[0];
+    if (!file) {
+      toast.error("No file selected");
+      return;
+    }
+
+    const targetSize = 120;
     const fileExtension = file.name.split(".").pop() ?? "";
     const presignedUrl = await getPresignedUrl(userId ?? "", fileExtension);
-    // Create image element and wait for it to load
     const img = new Image();
 
-    // Wait for image to load before processing
     await new Promise((resolve, reject) => {
       img.onload = resolve;
       img.onerror = reject;
       img.src = URL.createObjectURL(file);
     });
 
-    // Create canvas for resizing
-    const canvas = document.createElement("canvas");
-    canvas.width = 120;
-    canvas.height = 120;
+    const canvas = createCanvas(targetSize, targetSize);
+    const ctx = createContext(canvas);
+    if (!ctx) return;
 
-    // Use high-quality native canvas resize
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
+    const { sourceX, sourceY, cropSize } = centerImage(img, targetSize);
 
-      // Calculate aspect ratio and crop to square
-      const sourceWidth = img.width;
-      const sourceHeight = img.height;
-      const targetSize = 120;
+    ctx.drawImage(
+      img,
+      sourceX,
+      sourceY,
+      cropSize,
+      cropSize,
+      0,
+      0,
+      targetSize,
+      targetSize,
+    );
 
-      // Find the smaller dimension to create a square crop
-      const cropSize = Math.min(sourceWidth, sourceHeight);
-      const sourceX = (sourceWidth - cropSize) / 2;
-      const sourceY = (sourceHeight - cropSize) / 2;
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        setPreviewUrl(URL.createObjectURL(blob));
 
-      // Draw the cropped and resized image
-      ctx.drawImage(
-        img,
-        sourceX,
-        sourceY,
-        cropSize,
-        cropSize,
-        0,
-        0,
-        targetSize,
-        targetSize,
-      );
-
-      // Convert to blob
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            setPreviewUrl(url);
-            onImageChange?.(new File([blob], file.name, { type: file.type }));
-
-            if (presignedUrl) {
-              uploadFileToMinIO(presignedUrl, blob);
-            }
-
-            updateProfileMutation.mutate({
-              userId: userId ?? "",
-              imageUrl: `user_${userId}/profile-picture.${fileExtension}`,  
-            });
-          }
-        },
-        file.type,
-        0.9,
-      );
-    }
+        if (!presignedUrl) {
+          toast.error("Failed to get presigned URL");
+          return;
+        }
+        
+        uploadFileToMinIO(presignedUrl, blob);
+        updateProfileMutation.mutate({
+          userId: userId ?? "",
+          imageUrl: `user_${userId}/profile-picture.${fileExtension}`,  
+        });
+      },
+      file.type,
+      0.9,
+    );
   };
 
   const uploadFileToMinIO = async (presignedUrl: string, blob: Blob) => {

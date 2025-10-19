@@ -21,10 +21,10 @@ export const profileRouter = createTRPCRouter({
         await ctx.profileService.updateProfileImage(input.userId, input.imageUrl);
         return { ok: true };
       }),
-    get: authorizedProcedure({
-      permission: { profile: ["view"] },
-    }).query(async ({ ctx }) => {
-      // TODO: getProfile
-      return { ok: true };
-    }),
+    // get: authorizedProcedure({
+    //   permission: { profile: ["view"] },
+    // }).query(async ({ ctx }) => {
+    //   // TODO: getProfile
+    //   return { ok: true };
+    // }),
   });

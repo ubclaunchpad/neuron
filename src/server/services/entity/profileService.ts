@@ -1,9 +1,5 @@
-import type { ListRequest } from "@/models/api/common";
-import type { ListResponse } from "@/models/list-response";
 import { type Drizzle } from "@/server/db";
-import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { inArray, sql } from "drizzle-orm";
 import { user } from "../../db/schema/user";
 import { eq } from "drizzle-orm";
 import * as Minio from "minio";
@@ -25,7 +21,7 @@ export class ProfileService {
       // TODO: CHANGE on deploy
       endPoint: "localhost",
       port: 9000,
-      useSSL: false,
+      useSSL: process.env.MINIO_USE_SSL === "true",
       accessKey: process.env.MINIO_ROOT_USER,
       secretKey: process.env.MINIO_ROOT_PASSWORD,
       },

@@ -59,7 +59,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@svgr/webpack": "^8.1.0",
-    "@types/minio": "^7.1.1",
     "@types/node": "^20.14.10",
     "@types/nodemailer": "^7.0.1",
     "@types/react": "^19.0.0",

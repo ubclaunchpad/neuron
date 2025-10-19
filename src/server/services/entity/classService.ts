@@ -5,19 +5,18 @@ import { RRuleTemporal } from "rrule-temporal";
 import type { ClassRequest, CreateClassInput, UpdateClassInput } from "@/models/api/class";
 import type { CreateScheduleInput, ScheduleRule, UpdateScheduleInput, Weekday } from "@/models/api/schedule";
 import { buildClass, type Class, type ClassResponse } from "@/models/class";
+import { ScheduleType } from "@/models/interfaces";
 import type { ListResponse } from "@/models/list-response";
 import { buildSchedule } from "@/models/schedule";
+import type { Term } from "@/models/term";
 import { type Drizzle, type Transaction } from "@/server/db";
-import { course, schedule, volunteerToSchedule, instructorToSchedule } from "@/server/db/schema";
+import { course, instructorToSchedule, schedule, volunteerToSchedule } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap } from "@/utils/arrayUtils";
 import { InstructorService } from "./instructorService";
 import { ShiftService } from "./shiftService";
 import type { TermService } from "./termService";
 import { VolunteerService } from "./volunteerService";
-import { CreateShiftInput } from "@/models/api/shift";
-import type { Term } from "@/models/term";
-import { ScheduleType } from "@/models/interfaces";
 
 export class ClassService {
   private readonly db: Drizzle;
@@ -119,7 +118,7 @@ export class ClassService {
       });
       
       if (courseRow?.published) {
-        throw new NeuronError("Schedules can not be changed for a published class.", NeuronErrorCodes.INTERNAL_SERVER_ERROR);
+        throw new NeuronError("Schedules can not be changed for a published class.", NeuronErrorCodes.BAD_REQUEST);
       }
 
       // Insert schedules

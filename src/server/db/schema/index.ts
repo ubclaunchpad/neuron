@@ -5,5 +5,7 @@
 export * from "./auth";
 export * from "./course";
 export * from "./log";
+export * from "./schedule";
 export * from "./shift";
 export * from "./user";
+

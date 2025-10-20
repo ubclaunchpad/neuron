@@ -4,9 +4,13 @@ import { createTRPCRouter } from "@/server/api/trpc";
 
 export const termRouter = createTRPCRouter({
   all: authorizedProcedure({ permission: { terms: ["view"] } })
-    .query(async ({ input, ctx }) => {
+    .query(async ({ ctx }) => {
       const terms = await ctx.termService.getAllTerms();
       return terms;
+    }),
+  current: authorizedProcedure({ permission: { terms: ["view"] } })
+    .query(async ({ ctx }) => {
+      return await ctx.termService.getCurrentTerm();
     }),
   create: authorizedProcedure({ permission: { terms: ["create"] } })
     .input(CreateTermInput)

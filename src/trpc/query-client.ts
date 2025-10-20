@@ -31,10 +31,10 @@ export const createQueryClient = () =>
         staleTime: 30 * 1000,
         retry: (attempt, error) => {
           if (error instanceof TRPCError && 
-              (error.code === "TOO_MANY_REQUESTS" 
-                || error.code === "GATEWAY_TIMEOUT" 
-                || error.code === "TIMEOUT"
-                || error.code === "INTERNAL_SERVER_ERROR")) {
+              (error?.code === "TOO_MANY_REQUESTS" 
+                || error?.code === "GATEWAY_TIMEOUT" 
+                || error?.code === "TIMEOUT"
+                || error?.code === "INTERNAL_SERVER_ERROR")) {
             return attempt < 3;
           }
           return false;

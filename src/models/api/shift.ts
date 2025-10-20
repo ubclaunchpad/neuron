@@ -1,34 +1,29 @@
-import { DateYMD, Uuid } from "@/models/api/common";
-import {
-  AbsenceRequestCategoryEnum,
-  CoverageStatusEnum,
-} from "@/models/interfaces";
+import { AbsenceRequestCategoryEnum, CoverageStatusEnum } from "@/models/interfaces";
 import { z } from "zod";
 
-export const CreateShiftInput = z.object({
-  volunteerUserId: Uuid,
-  shiftDate: DateYMD,
-  scheduleId: z.number().int().nonnegative(),
-});
-
 export const GetShiftsInput = z.object({
-  volunteerUserId: Uuid.optional(),
-  before: z.string().datetime().optional(),
-  after: z.string().datetime().optional(),
+  volunteerUserId: z.uuid().optional(),
+  before: z.iso.datetime().optional(),
+  after: z.iso.datetime().optional(),
   status: CoverageStatusEnum.optional(),
 });
 
 export const ShiftIdInput = z.object({
-  shiftId: Uuid,
+  shiftId: z.uuid(),
 });
+export type ShiftIdInput = z.infer<typeof ShiftIdInput>;
 
-export const UpdateShiftInput = z.object({
-  volunteerUserId: Uuid.optional(),
-  shiftDate: DateYMD.optional(),
-});
 
 export const AbsenceRequestInput = z.object({
   details: z.string(),
   comments: z.string().optional(),
   category: AbsenceRequestCategoryEnum,
 });
+
+export const CreateShiftInput = z.object({
+  scheduleId: z.uuid(),
+  date: z.iso.date(),
+  startAt: z.iso.datetime(),
+  endAt: z.iso.datetime(),
+});
+export type CreateShiftInput = z.infer<typeof CreateShiftInput>;

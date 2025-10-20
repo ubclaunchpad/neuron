@@ -92,7 +92,7 @@ $time-col-w: 64px; // adjust to taste
 
   &__slot {
     height: 100%;
-    transition: background-color $transition-fast, transform $transition-fast;
+    transition: background-color $transition-hover, transform $transition-hover;
     padding: 0;
     border-bottom: 1px solid #F7F7F7;
     border-right: 1px solid #E0E0E0;

@@ -10,7 +10,7 @@ import { redirect } from "next/navigation";
 // Utility functions
 function defaultRedirectForUser(user?: User | null): string {
   if (!user) return "/auth/login";
-  if (user.status === Status.pending) return "/unverified";
+  if (user.status === Status.unverified) return "/unverified";
   if (user.status === Status.inactive) return "/inactive";
   return "/";
 }

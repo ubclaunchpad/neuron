@@ -50,10 +50,7 @@ const errorMessages: ErrorMessages = {
     "An account with this email already exists. Please use a different email address.",
 };
 
-export function getBetterAuthErrorMessage(code: ErrorCode): string {
-  console.log(code);
-  return (
-    errorMessages[code] ??
-    "An unexpected error occurred. Please try again later."
-  );
+export function getBetterAuthErrorMessage(code: ErrorCode | undefined): string {
+  const message = code ? errorMessages[code] : undefined;
+  return message ?? "An unexpected error occurred. Please try again later.";
 }

@@ -92,3 +92,7 @@ $transition-regular: 0.3s ease-in-out;
 $transition-slow: 0.5s ease-in-out;
 
 $transition-hover: 0.1s linear;
+
+/* ANIMATION */
+$animation-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+@keyframes pulse { 50% { opacity: 0.5; } }

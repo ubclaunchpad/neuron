@@ -1,5 +1,5 @@
 {
-  "id": "531c475f-ad6c-4e2c-b802-05fde820583f",
+  "id": "a24b0d00-e825-491b-bc47-c3f87fd1e2ce",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -355,6 +355,141 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.blackout": {
+      "name": "blackout",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "term_id": {
+          "name": "term_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "starts_on": {
+          "name": "starts_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ends_on": {
+          "name": "ends_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "blackout_term_id_starts_on_ends_on_index": {
+          "name": "blackout_term_id_starts_on_ends_on_index",
+          "columns": [
+            {
+              "expression": "term_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "starts_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ends_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "blackout_schedule_id_starts_on_ends_on_index": {
+          "name": "blackout_schedule_id_starts_on_ends_on_index",
+          "columns": [
+            {
+              "expression": "schedule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "starts_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ends_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "blackout_term_id_term_id_fk": {
+          "name": "blackout_term_id_term_id_fk",
+          "tableFrom": "blackout",
+          "tableTo": "term",
+          "columnsFrom": [
+            "term_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "blackout_schedule_id_schedule_id_fk": {
+          "name": "blackout_schedule_id_schedule_id_fk",
+          "tableFrom": "blackout",
+          "tableTo": "schedule",
+          "columnsFrom": [
+            "schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chk_blackout_owner_xor": {
+          "name": "chk_blackout_owner_xor",
+          "value": "( \"blackout\".\"term_id\" IS NOT NULL ) <> ( \"blackout\".\"schedule_id\" IS NOT NULL )"
+        },
+        "chk_blackout_range_valid": {
+          "name": "chk_blackout_range_valid",
+          "value": "\"blackout\".\"ends_on\" >= \"blackout\".\"starts_on\""
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.course": {
       "name": "course",
       "schema": "",
@@ -402,18 +537,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "start_date": {
-          "name": "start_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "end_date": {
-          "name": "end_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
         },
         "category": {
           "name": "category",
@@ -492,168 +615,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {
-        "chk_course_date_ok": {
-          "name": "chk_course_date_ok",
-          "value": "\"course\".\"end_date\" >= \"course\".\"start_date\""
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.schedule": {
-      "name": "schedule",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "course_id": {
-          "name": "course_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "day_of_week": {
-          "name": "day_of_week",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "start_time": {
-          "name": "start_time",
-          "type": "time with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "duration_minutes": {
-          "name": "duration_minutes",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "interval_weeks": {
-          "name": "interval_weeks",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "week_offset": {
-          "name": "week_offset",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "instructor_user_id": {
-          "name": "instructor_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "schedule_course_id_index": {
-          "name": "schedule_course_id_index",
-          "columns": [
-            {
-              "expression": "course_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "schedule_instructor_user_id_index": {
-          "name": "schedule_instructor_user_id_index",
-          "columns": [
-            {
-              "expression": "instructor_user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_schedule_day_time": {
-          "name": "idx_schedule_day_time",
-          "columns": [
-            {
-              "expression": "day_of_week",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "start_time",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "schedule_course_id_course_id_fk": {
-          "name": "schedule_course_id_course_id_fk",
-          "tableFrom": "schedule",
-          "tableTo": "course",
-          "columnsFrom": [
-            "course_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "schedule_instructor_user_id_user_id_fk": {
-          "name": "schedule_instructor_user_id_user_id_fk",
-          "tableFrom": "schedule",
-          "tableTo": "user",
-          "columnsFrom": [
-            "instructor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "chk_schedule_day": {
-          "name": "chk_schedule_day",
-          "value": "\"schedule\".\"day_of_week\" BETWEEN 0 AND 6"
-        },
-        "chk_interval_weeks": {
-          "name": "chk_interval_weeks",
-          "value": "\"schedule\".\"interval_weeks\" IN (1,2)"
-        },
-        "chk_week_offset": {
-          "name": "chk_week_offset",
-          "value": "\"schedule\".\"week_offset\" IN (0,1)"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.term": {
@@ -713,97 +675,6 @@
           "value": "\"term\".\"end_date\" >= \"term\".\"start_date\""
         }
       },
-      "isRLSEnabled": false
-    },
-    "public.volunteer_to_schedule": {
-      "name": "volunteer_to_schedule",
-      "schema": "",
-      "columns": {
-        "volunteer_user_id": {
-          "name": "volunteer_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "schedule_id": {
-          "name": "schedule_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "volunteer_to_schedule_volunteer_user_id_index": {
-          "name": "volunteer_to_schedule_volunteer_user_id_index",
-          "columns": [
-            {
-              "expression": "volunteer_user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "volunteer_to_schedule_schedule_id_index": {
-          "name": "volunteer_to_schedule_schedule_id_index",
-          "columns": [
-            {
-              "expression": "schedule_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "volunteer_to_schedule_volunteer_user_id_volunteer_user_id_fk": {
-          "name": "volunteer_to_schedule_volunteer_user_id_volunteer_user_id_fk",
-          "tableFrom": "volunteer_to_schedule",
-          "tableTo": "volunteer",
-          "columnsFrom": [
-            "volunteer_user_id"
-          ],
-          "columnsTo": [
-            "user_id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "volunteer_to_schedule_schedule_id_schedule_id_fk": {
-          "name": "volunteer_to_schedule_schedule_id_schedule_id_fk",
-          "tableFrom": "volunteer_to_schedule",
-          "tableTo": "schedule",
-          "columnsFrom": [
-            "schedule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "pk_volunteer_schedule": {
-          "name": "pk_volunteer_schedule",
-          "columns": [
-            "volunteer_user_id",
-            "schedule_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.log": {
@@ -945,6 +816,220 @@
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.schedule": {
+      "name": "schedule",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "course_id": {
+          "name": "course_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_minutes": {
+          "name": "duration_minutes",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_start": {
+          "name": "effective_start",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "effective_end": {
+          "name": "effective_end",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rrule": {
+          "name": "rrule",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "instructor_user_id": {
+          "name": "instructor_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "schedule_course_id_index": {
+          "name": "schedule_course_id_index",
+          "columns": [
+            {
+              "expression": "course_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "schedule_instructor_user_id_index": {
+          "name": "schedule_instructor_user_id_index",
+          "columns": [
+            {
+              "expression": "instructor_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "schedule_course_id_course_id_fk": {
+          "name": "schedule_course_id_course_id_fk",
+          "tableFrom": "schedule",
+          "tableTo": "course",
+          "columnsFrom": [
+            "course_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "schedule_instructor_user_id_user_id_fk": {
+          "name": "schedule_instructor_user_id_user_id_fk",
+          "tableFrom": "schedule",
+          "tableTo": "user",
+          "columnsFrom": [
+            "instructor_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chk_schedule_duration_positive": {
+          "name": "chk_schedule_duration_positive",
+          "value": "\"schedule\".\"duration_minutes\" > 0"
+        },
+        "chk_schedule_effective_range_valid": {
+          "name": "chk_schedule_effective_range_valid",
+          "value": "\"schedule\".\"effective_end\" IS NULL\n             OR \"schedule\".\"effective_start\" IS NULL\n             OR \"schedule\".\"effective_end\" >= \"schedule\".\"effective_start\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.volunteer_to_schedule": {
+      "name": "volunteer_to_schedule",
+      "schema": "",
+      "columns": {
+        "volunteer_user_id": {
+          "name": "volunteer_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "volunteer_to_schedule_volunteer_user_id_index": {
+          "name": "volunteer_to_schedule_volunteer_user_id_index",
+          "columns": [
+            {
+              "expression": "volunteer_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "volunteer_to_schedule_schedule_id_index": {
+          "name": "volunteer_to_schedule_schedule_id_index",
+          "columns": [
+            {
+              "expression": "schedule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "volunteer_to_schedule_volunteer_user_id_volunteer_user_id_fk": {
+          "name": "volunteer_to_schedule_volunteer_user_id_volunteer_user_id_fk",
+          "tableFrom": "volunteer_to_schedule",
+          "tableTo": "volunteer",
+          "columnsFrom": [
+            "volunteer_user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "volunteer_to_schedule_schedule_id_schedule_id_fk": {
+          "name": "volunteer_to_schedule_schedule_id_schedule_id_fk",
+          "tableFrom": "volunteer_to_schedule",
+          "tableTo": "schedule",
+          "columnsFrom": [
+            "schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "pk_volunteer_schedule": {
+          "name": "pk_volunteer_schedule",
+          "columns": [
+            "volunteer_user_id",
+            "schedule_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},

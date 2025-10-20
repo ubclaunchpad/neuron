@@ -39,14 +39,20 @@ export const volunteerRouter = createTRPCRouter({
     }),
   activate: authorizedProcedure({ permission: { users: ["activate"] } })
     .input(VolunteerIdInput.merge(AdminSignoffInput))
-    .mutation(async ({ input }) => {
-      // TODO: verifyVolunteer
+    .mutation(async ({ input, ctx }) => {
+      await ctx.volunteerService.verifyVolunteer(input.volunteerUserId);
       return { ok: true };
     }),
   deactivate: authorizedProcedure({ permission: { users: ["deactivate"] } })
     .input(VolunteerIdInput.merge(AdminSignoffInput))
-    .mutation(async ({ input }) => {
-      // TODO: deactivateVolunteer
+    .mutation(async ({ input, ctx }) => {
+      await ctx.volunteerService.deactivateVolunteer(input.volunteerUserId);
+      return { ok: true };
+    }),
+  reject: authorizedProcedure({ permission: { users: ["activate"] } })
+    .input(VolunteerIdInput.merge(AdminSignoffInput))
+    .mutation(async ({ input, ctx }) => {
+      await ctx.volunteerService.rejectVolunteer(input.volunteerUserId);
       return { ok: true };
     }),
 });

@@ -22,7 +22,7 @@ const getQueryClient = () => {
   return clientQueryClientSingleton;
 };
 
-export const api = createTRPCReact<AppRouter>();
+export const clientApi = createTRPCReact<AppRouter>();
 
 /**
  * Inference helper for inputs.
@@ -42,17 +42,19 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
   const [trpcClient] = useState(() =>
-    api.createClient({
+    clientApi.createClient({
       links: [
         loggerLink({
           enabled: (op) => {
             if (process.env.NODE_ENV !== "development" || op.direction !== "down") {
               return false;
             }
+
             if (op.result instanceof TRPCClientError) {
-              const code = op.result.data?.code ?? (op.result.data as any).code;
+              const code = op.result.data?.code;
               return code === 'INTERNAL_SERVER_ERROR';
             }
+
             return true;
           }
         }),
@@ -71,9 +73,9 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <api.Provider client={trpcClient} queryClient={queryClient}>
+      <clientApi.Provider client={trpcClient} queryClient={queryClient}>
         {props.children}
-      </api.Provider>
+      </clientApi.Provider>
     </QueryClientProvider>
   );
 }

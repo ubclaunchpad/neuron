@@ -26,6 +26,7 @@
     "@fullcalendar/core": "^6.1.19",
     "@fullcalendar/daygrid": "^6.1.19",
     "@fullcalendar/react": "^6.1.19",
+    "@fullcalendar/timegrid": "^6.1.19",
     "@hookform/resolvers": "^5.2.1",
     "@internationalized/date": "^3.9.0",
     "@react-aria/i18n": "^3.12.12",

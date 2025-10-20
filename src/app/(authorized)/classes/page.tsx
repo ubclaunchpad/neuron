@@ -15,6 +15,7 @@ import {
   ClassesGrid,
 } from "@/components/classes/classes-grid-view";
 import { ClassesPageProvider } from "@/components/classes/context";
+import { TermForm } from "@/components/classes/forms/term-form";
 import {
   PageLayout,
   PageLayoutAside,
@@ -26,7 +27,6 @@ import {
   PageLayoutHeaderTitle,
 } from "@/components/page-layout";
 import { Button } from "@/components/primitives/button";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/primitives/dialog";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/primitives/empty";
 import {
   Select,
@@ -199,25 +199,11 @@ export default function ClassesPageClient() {
                         </EmptyDescription>
                       </EmptyHeader>
                       <EmptyContent>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline">Create Term</Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Create Term</DialogTitle>
-                            </DialogHeader>
-                            
-                            some content
-
-                            <DialogFooter>
-                              <DialogClose asChild>
-                                <Button variant="outline">Cancel</Button>
-                              </DialogClose>
-                              <Button type="submit">Save changes</Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
+                        <TermForm>
+                          <Button variant="outline">
+                            Create Term
+                          </Button>
+                        </TermForm>
                       </EmptyContent>
                     </Empty>
                   ) : !classListData?.classes?.length ? (

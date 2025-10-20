@@ -29,7 +29,6 @@ video,
 canvas,
 svg {
   display: block;
-  max-width: 100%;
   flex: 0 0 auto;
 }
 
@@ -112,7 +111,7 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 
   /* Theme */
   --background: oklch(1 0 0);

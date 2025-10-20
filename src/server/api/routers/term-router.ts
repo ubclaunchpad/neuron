@@ -8,6 +8,12 @@ export const termRouter = createTRPCRouter({
       const terms = await ctx.termService.getAllTerms();
       return terms;
     }),
+  byId: authorizedProcedure({ permission: { terms: ["view"] } })
+    .input(TermIdInput)
+    .query(async ({ input, ctx }) => {
+      const term = await ctx.termService.getTerm(input.termId);
+      return term;
+    }),
   current: authorizedProcedure({ permission: { terms: ["view"] } })
     .query(async ({ ctx }) => {
       return await ctx.termService.getCurrentTerm();

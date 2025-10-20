@@ -1,0 +1,14 @@
+.fc-day-mon,
+.fc-day-wed,
+.fc-day-fri,
+.fc-day-sun {
+    background-color: rgba(217, 217, 217, 0.15);
+}
+
+.fc-col-header-cell {
+    height: 80px;
+
+    .fc-scrollgrid-sync-inner {
+        display: flex;
+    }
+}

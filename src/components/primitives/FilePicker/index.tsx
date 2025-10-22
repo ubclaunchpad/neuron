@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ObjectType } from "@/models/interfaces";
 import type { ReactNode } from "react";
+import { useFileUpload } from "@/hooks/use-file-upload";
 
 interface FilePickerProps {
   objectType: ObjectType; // "user" | "class"
@@ -20,10 +21,14 @@ export function FilePicker({ objectType, id, disabled = false, targetSize = 120,
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const getPresignedUrlMutation = clientApi.profile.getPresignedUrl.useMutation();
-  const getPresignedUrl = async (objectTypeArg: ObjectType, objectId: string, fileExtension: string) => {
-    const response = await getPresignedUrlMutation.mutateAsync({ objectType: objectTypeArg, id: objectId, fileExtension });
-    return response.url;
-  };
+  const uploader = useFileUpload({
+    getPresignedUrl: async (file) => {
+      const fileExtension = file.name.split(".").pop() ?? "";
+      const { url } = await getPresignedUrlMutation.mutateAsync({ objectType, id, fileExtension });
+      const key = `${objectType}/${objectType}_${id}/profile-picture.${fileExtension}`;
+      return { url, key, contentType: file.type };
+    },
+  });
 
   const createCanvas = (width: number, height: number) => {
     const canvas = document.createElement("canvas");
@@ -58,8 +63,6 @@ export function FilePicker({ objectType, id, disabled = false, targetSize = 120,
       return;
     }
 
-    const fileExtension = file.name.split(".").pop() ?? "";
-    const presignedUrl = await getPresignedUrl(objectType, id, fileExtension);
     const img = new Image();
 
     await new Promise((resolve, reject) => {
@@ -79,16 +82,12 @@ export function FilePicker({ objectType, id, disabled = false, targetSize = 120,
       async (blob) => {
         if (!blob) return;
         setPreviewUrl(URL.createObjectURL(blob));
-
-        if (!presignedUrl) {
-          toast.error("Failed to get presigned URL");
-          return;
-        }
-
-        const ok = await uploadFileToMinIO(presignedUrl, blob);
-        if (ok) {
-          const objectKey = `${objectType}/${objectType}_${id}/profile-picture.${fileExtension}`;
-          onUploaded?.(objectKey);
+        try {
+          const key = await uploader.upload({ file, data: blob, contentType: file.type });
+          onUploaded?.(key);
+          toast.success("Image uploaded successfully");
+        } catch (e) {
+          toast.error("Failed to upload image");
         }
       },
       file.type,
@@ -96,21 +95,7 @@ export function FilePicker({ objectType, id, disabled = false, targetSize = 120,
     );
   };
 
-  const uploadFileToMinIO = async (presignedUrl: string, blob: Blob) => {
-    const response = await fetch(presignedUrl, {
-      method: "PUT",
-      headers: {
-        "Content-Type": blob.type,
-      },
-      body: blob,
-    });
-    if (response.ok) {
-      toast.success("Image uploaded successfully");
-      return true;
-    }
-    toast.error("Failed to upload image");
-    return false;
-  };
+  // expose abort/reset via ref in future if needed
 
   const handleUploadClick = () => {
     console.log("handleUploadClick");

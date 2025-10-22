@@ -11,22 +11,22 @@ interface FilePickerProps {
   objectType: ObjectType; // "user" | "class"
   id: string; // user id or class id
   disabled?: boolean;
-  targetSize?: number; // default 120x120
+  targetSize?: number; // default 250x250
   onUploaded?: (objectKey: string) => void;
   children?: ReactNode; // clickable trigger content
 }
 
-export function FilePicker({ objectType, id, disabled = false, targetSize = 120, onUploaded, children }: FilePickerProps) {
+export function FilePicker({ objectType, id, disabled = false, targetSize = 250, onUploaded, children }: FilePickerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const getPresignedUrlMutation = clientApi.profile.getPresignedUrl.useMutation();
   const uploader = useFileUpload({
     getPresignedUrl: async (file) => {
-      const fileExtension = file.name.split(".").pop() ?? "";
+      const fileExtension = "webp";
       const { url } = await getPresignedUrlMutation.mutateAsync({ objectType, id, fileExtension });
       const key = `${objectType}/${objectType}_${id}/profile-picture.${fileExtension}`;
-      return { url, key, contentType: file.type };
+      return { url, key, contentType: "image/webp" };
     },
   });
 
@@ -83,19 +83,17 @@ export function FilePicker({ objectType, id, disabled = false, targetSize = 120,
         if (!blob) return;
         setPreviewUrl(URL.createObjectURL(blob));
         try {
-          const key = await uploader.upload({ file, data: blob, contentType: file.type });
+          const key = await uploader.upload({ file, data: blob, contentType: "image/webp" });
           onUploaded?.(key);
           toast.success("Image uploaded successfully");
         } catch (e) {
           toast.error("Failed to upload image");
         }
       },
-      file.type,
-      0.9,
+      "image/webp",
+      0.8,
     );
   };
-
-  // expose abort/reset via ref in future if needed
 
   const handleUploadClick = () => {
     console.log("handleUploadClick");

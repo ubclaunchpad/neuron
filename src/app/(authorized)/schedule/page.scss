@@ -5,10 +5,32 @@
     background-color: rgba(217, 217, 217, 0.15);
 }
 
-.fc-col-header-cell {
-    height: 80px;
+.fc-timeGridDay-view .fc-col-header {
+    display: none;
+}
 
-    .fc-scrollgrid-sync-inner {
-        display: flex;
+.dayview-header {
+    display: flex;
+    justify-content: "space-between";
+    margin-bottom: "0.5rem";
+    border-bottom: "1px solid #ddd";
+
+    .dayview-header-date {
+        flex: 1;
+        padding: 0.5rem 0;
+    
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #ddd;
+        transition: all 0.2s ease;
+    
+        text-align: center;
+        font-weight: normal;
+        cursor: pointer;
+    
+        &-selected {
+            color: #4385ac;
+            font-weight: bold;
+            border-bottom: 2px solid #4385ac;
+        }
     }
 }

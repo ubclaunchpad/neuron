@@ -1,5 +1,5 @@
 {
-  "id": "a24b0d00-e825-491b-bc47-c3f87fd1e2ce",
+  "id": "7902e915-8800-4474-88a3-d26a2be028a3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1504,42 +1504,21 @@
           "primaryKey": false,
           "notNull": true
         },
-        "schedule_id": {
-          "name": "schedule_id",
+        "course_id": {
+          "name": "course_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "course_rank": {
-          "name": "course_rank",
-          "type": "integer",
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "now()"
         }
       },
-      "indexes": {
-        "course_preference_volunteer_user_id_course_rank_index": {
-          "name": "course_preference_volunteer_user_id_course_rank_index",
-          "columns": [
-            {
-              "expression": "volunteer_user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "course_rank",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "course_preference_volunteer_user_id_volunteer_user_id_fk": {
           "name": "course_preference_volunteer_user_id_volunteer_user_id_fk",
@@ -1554,12 +1533,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "course_preference_schedule_id_schedule_id_fk": {
-          "name": "course_preference_schedule_id_schedule_id_fk",
+        "course_preference_course_id_course_id_fk": {
+          "name": "course_preference_course_id_course_id_fk",
           "tableFrom": "course_preference",
-          "tableTo": "schedule",
+          "tableTo": "course",
           "columnsFrom": [
-            "schedule_id"
+            "course_id"
           ],
           "columnsTo": [
             "id"
@@ -1573,18 +1552,13 @@
           "name": "pk_course_preferences",
           "columns": [
             "volunteer_user_id",
-            "schedule_id"
+            "course_id"
           ]
         }
       },
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {
-        "chk_course_rank_positive": {
-          "name": "chk_course_rank_positive",
-          "value": "\"course_preference\".\"course_rank\" > 0"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.user": {
@@ -1650,7 +1624,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'pending'"
+          "default": "'unverified'"
         },
         "last_name": {
           "name": "last_name",
@@ -1894,7 +1868,8 @@
       "name": "status",
       "schema": "public",
       "values": [
-        "pending",
+        "unverified",
+        "rejected",
         "active",
         "inactive"
       ]
@@ -1966,7 +1941,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'pending'"
+          "default": "'unverified'"
         },
         "last_name": {
           "name": "last_name",
@@ -2014,7 +1989,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'pending'"
+          "default": "'unverified'"
         },
         "created_at": {
           "name": "created_at",

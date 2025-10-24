@@ -8,6 +8,13 @@
       "when": 1758679420572,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1761290628208,
+      "tag": "0001_fancy_frightful_four",
+      "breakpoints": true
     }
   ]
 }

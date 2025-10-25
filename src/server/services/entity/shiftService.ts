@@ -1,9 +1,9 @@
 import type { CreateShiftInput, ShiftIdInput } from "@/models/api/shift";
 import { type Drizzle } from "@/server/db";
-import { schedule } from "@/server/db/schema/schedule";
+import { schedule, volunteerToSchedule } from "@/server/db/schema/schedule";
 import { shift } from "@/server/db/schema/shift";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export class ShiftService {
   private readonly db: Drizzle;
@@ -53,6 +53,41 @@ export class ShiftService {
         `Shift with id ${input.shiftId} was not found`,
         NeuronErrorCodes.NOT_FOUND,
       );
+    }
+  }
+  
+  async assertValidShift(volunteerId: string, shiftId: string): Promise<void> {
+    const [shiftRow] = await this.db
+      .select({
+        shiftId: shift.id,
+        startAt: shift.startAt,
+        volunteerId: volunteerToSchedule.volunteerUserId,
+      })
+      .from(shift)
+      .innerJoin(
+        volunteerToSchedule,
+        eq(shift.scheduleId, volunteerToSchedule.scheduleId),
+      )
+      .where(
+        and(
+          eq(shift.id, shiftId),
+          eq(volunteerToSchedule.volunteerUserId, volunteerId),
+        )
+      )
+      .limit(1);
+
+    if (!shiftRow) {
+        throw new NeuronError(
+          `Could not find a shift with id ${shiftId} assigned to volunteer with id ${volunteerId}.`, 
+          NeuronErrorCodes.NOT_FOUND,
+        );
+    }
+
+    if (shiftRow.startAt <= new Date()) {
+      throw new NeuronError(
+        "Coverage request can not be created for a past shift.",
+        NeuronErrorCodes.BAD_REQUEST,
+      )
     }
   }
 }

@@ -4,16 +4,24 @@ import type { Drizzle } from "@/server/db";
 import { coverageRequest, type CoverageRequestDB } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
-import { and, eq, inArray } from "drizzle-orm/sql";
+import { eq, inArray, and } from "drizzle-orm/sql";
 import type { VolunteerService } from "./volunteerService";
+import { shift } from "@/server/db/schema";
+import type { ShiftService } from "./shiftService";
 
 export class CoverageService {
     private readonly db: Drizzle;
     private readonly volunteerService: VolunteerService;
+    private readonly shiftService: ShiftService;
   
-    constructor(db: Drizzle, volunteerService: VolunteerService) {
+    constructor(
+        db: Drizzle, 
+        volunteerService: VolunteerService,
+        shiftService: ShiftService,
+    ) {
         this.db = db;
         this.volunteerService = volunteerService;
+        this.shiftService = shiftService;
     }
 
     async getCoverageRequestsForShift(shiftId: string): Promise<CoverageRequest[]>  {
@@ -34,36 +42,67 @@ export class CoverageService {
             .where(inArray(coverageRequest.id, ids));
 
         if (coverageRequestDBs.length !== ids.length) {
-            throw new NeuronError("Unable to find coverage request", "BAD_REQUEST");
+            throw new NeuronError("Unable to find coverage request", NeuronErrorCodes.BAD_REQUEST);
         }
 
         return this.formatCoverageRequests(coverageRequestDBs);
     }
 
-    async createCoverageRequest(volunteerUserId: string, requestData: CreateCoverageRequest): Promise<string> {
+    async createCoverageRequest(requestingVolunteerUserId: string, requestData: CreateCoverageRequest): Promise<string> {
+        await this.shiftService.assertValidShift(requestingVolunteerUserId, requestData.shiftId);
+
         const [created] = await this.db.insert(coverageRequest).values({
                 shiftId: requestData.shiftId,
                 category: requestData.category,
                 details: requestData.details,
                 comments: requestData.comments,
-                requestingVolunteerUserId: volunteerUserId,
+                requestingVolunteerUserId: requestingVolunteerUserId,
             })
             .returning({ id: coverageRequest.id });
 
         return created!.id;
     }
 
-    async cancelCoverageRequest(volunteerUserId: string, shiftId: string): Promise<void> {
-        // ensure current coverage request status is open, not resolved
+    async cancelCoverageRequest(requestingVolunteerUserId: string, coverageRequestId: string): Promise<void> {
+        const [request] = await this.db
+            .select({
+                status: coverageRequest.status,
+                shiftStartAt: shift.startAt,
+            })
+            .from(coverageRequest)
+            .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
+            .where(
+                and(
+                    eq(coverageRequest.id, coverageRequestId),
+                    eq(coverageRequest.requestingVolunteerUserId, requestingVolunteerUserId),
+                )
+            );
+
+        if (!request) {
+            throw new NeuronError(
+                `Could not find coverage request with id ${coverageRequestId} requested by volunteer with id ${requestingVolunteerUserId}.`, 
+                NeuronErrorCodes.NOT_FOUND,
+            );
+        }
+
+        if (request.status != CoverageStatus.open) {
+            throw new NeuronError(
+                "Coverage request is not open.", 
+                NeuronErrorCodes.BAD_REQUEST,
+            );
+        }
+
+        if (request.shiftStartAt <= new Date()) {
+            throw new NeuronError(
+                "Can not cancel a coverage request for a past shift.", 
+                NeuronErrorCodes.BAD_REQUEST,
+            );
+        }
 
         const affected = await this.db.update(coverageRequest).set({
             status: CoverageStatus.withdrawn,
-        }).where(
-            and(
-                eq(coverageRequest.coveredByVolunteerUserId, volunteerUserId), 
-                eq(coverageRequest.shiftId, shiftId),
-            )
-        )
+        })
+        .where(eq(coverageRequest.id, coverageRequestId))
         .returning();
 
         if (affected.length < 1) {
@@ -71,13 +110,40 @@ export class CoverageService {
         }
     }
 
-    async fulfillCoverageRequest(volunteerUserId: string, coverageRequestId: string): Promise<void> {
-        // Grab the current state of the coverageRequest, make sure the current state is open
-        // Grab the shift via the coverageRequest.shiftId, ensure that this user isnt working this shift already
+    async fulfillCoverageRequest(coveredByVolunteerUserId: string, coverageRequestId: string): Promise<void> {
+        const [request] = await this.db
+            .select({
+                status: coverageRequest.status,
+                shiftStartAt: shift.startAt,
+            })
+            .from(coverageRequest)
+            .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
+            .where(eq(coverageRequest.id, coverageRequestId));
 
+        if (!request) {
+            throw new NeuronError(
+                `Could not find coverage request with id ${coverageRequestId}.`, 
+                NeuronErrorCodes.NOT_FOUND,
+            );
+        }
+
+        if (request.status != CoverageStatus.open) {
+            throw new NeuronError(
+                "Coverage request is not open.", 
+                NeuronErrorCodes.BAD_REQUEST,
+            );
+        }
+
+        if (request.shiftStartAt <= new Date()) {
+            throw new NeuronError(
+                "Can not fulfill a coverage request for a past shift.", 
+                NeuronErrorCodes.BAD_REQUEST,
+            );
+        }
+    
         const affected = await this.db.update(coverageRequest).set({
             status: CoverageStatus.resolved,
-            coveredByVolunteerUserId: volunteerUserId
+            coveredByVolunteerUserId: coveredByVolunteerUserId
         }).where(
             eq(coverageRequest.id, coverageRequestId)
         )
@@ -85,6 +151,48 @@ export class CoverageService {
 
         if (affected.length < 1) {
             throw new NeuronError("Failed to fill coverage request", NeuronErrorCodes.BAD_REQUEST);
+        }
+    }
+
+    async unassignCoverage(coveredByVolunteerUserId: string, coverageRequestId: string): Promise<void> {
+        const [request] = await this.db
+            .select({
+                status: coverageRequest.status,
+                shiftStartAt: shift.startAt,
+            })
+            .from(coverageRequest)
+            .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
+            .where(
+                and(
+                    eq(coverageRequest.id, coverageRequestId),
+                    eq(coverageRequest.coveredByVolunteerUserId, coveredByVolunteerUserId),
+                )
+            );
+
+        if (!request) {
+            throw new NeuronError(
+                `Could not find coverage request with id ${coverageRequestId} covered by volunteer with id ${coveredByVolunteerUserId}.`, 
+                NeuronErrorCodes.NOT_FOUND,
+            );
+        }
+
+        if (request.shiftStartAt <= new Date()) {
+            throw new NeuronError(
+                "Can not unassign coverage to a coverage request for a past shift.", 
+                NeuronErrorCodes.BAD_REQUEST,
+            );
+        }
+
+        const affected = await this.db.update(coverageRequest).set({
+            status: CoverageStatus.open,
+            coveredByVolunteerUserId: null,
+        }).where(
+            eq(coverageRequest.id, coverageRequestId)
+        )
+        .returning();
+
+        if (affected.length < 1) {
+            throw new NeuronError("Failed to unassign coverage.", NeuronErrorCodes.BAD_REQUEST);
         }
     }
 

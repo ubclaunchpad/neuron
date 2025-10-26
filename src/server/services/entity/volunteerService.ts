@@ -7,7 +7,7 @@ import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { inArray, sql } from "drizzle-orm";
 import { volunteerUserView, user } from "../../db/schema/user";
 import { Status } from "@/models/interfaces";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 export class VolunteerService {
   private readonly db: Drizzle;
@@ -16,23 +16,33 @@ export class VolunteerService {
   }
 
   async getVolunteersForRequest(listRequest: ListRequest): Promise<ListResponse<Volunteer>> {
-    const page = listRequest.page ?? 0;
-    const perPage = listRequest.perPage ?? 10;
-    const offset = page * perPage;
+    const { perPage, offset } = this.getPagination(listRequest);
+    const queryInput = listRequest.queryInput?.trim() ?? "";
 
-    // Get count and ids
-    const data = await this.db
-      .select({
-        count: sql<number>`count(*)`,
-        ...getViewColumns(volunteerUserView),
-      })
-      .from(volunteerUserView)
-      .limit(perPage)
-      .offset(offset);
+    const similarity = queryInput.length > 0
+      ? this.buildSimilarityExpression(queryInput)
+      : undefined;
+
+    const baseSelect = {
+      count: sql<number>`count(*)`,
+      ...getViewColumns(volunteerUserView),
+    } as const;
+
+    const builder = queryInput.length > 0
+      ? this.db
+          .select({ ...baseSelect, similarity: similarity! })
+          .from(volunteerUserView)
+          .where(this.buildSearchCondition(queryInput))
+          .orderBy(desc(similarity!))
+      : this.db
+          .select(baseSelect)
+          .from(volunteerUserView);
+
+    const rows = await builder.limit(perPage).offset(offset);
 
     return {
-      data: data.map((d) => buildVolunteer(d)),
-      total: data[0]?.count ?? 0,
+      data: rows.map((d) => buildVolunteer(d)),
+      total: rows[0]?.count ?? 0,
     };
   }
 
@@ -80,4 +90,23 @@ export class VolunteerService {
     await this.db.update(user).set({ status: Status.inactive }).where(eq(user.id, id));
   }
 
+  // HELPER FUNCTIONS
+  private getPagination(listRequest: ListRequest) {
+    const page = listRequest.page ?? 0;
+    const perPage = listRequest.perPage ?? 10;
+    const offset = page * perPage;
+    return { page, perPage, offset } as const;
+  }
+
+  private buildSimilarityExpression(queryInput: string) {
+    return sql<number>`((similarity(${volunteerUserView.name}, ${queryInput}) * 3) +
+      (similarity(${volunteerUserView.lastName}, ${queryInput}) * 2) +
+      (similarity(${volunteerUserView.email}, ${queryInput}) * 1))`;
+  }
+
+  private buildSearchCondition(queryInput: string) {
+    return sql`(LOWER(${volunteerUserView.name}) % LOWER(${queryInput}) OR
+          LOWER(${volunteerUserView.lastName}) % LOWER(${queryInput}) OR
+          LOWER(${volunteerUserView.email}) %> LOWER(${queryInput}))`;
+  }
 }

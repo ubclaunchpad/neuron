@@ -4,8 +4,8 @@ import type { ListResponse } from "@/models/list-response";
 import { type Drizzle } from "@/server/db";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { inArray, sql } from "drizzle-orm";
-import { instructorUserView } from "../../db/schema/user";
+import { desc, inArray, sql } from "drizzle-orm";
+import { instructorUserView, volunteerUserView } from "../../db/schema/user";
 
 export class InstructorService {
   private readonly db: Drizzle;
@@ -14,23 +14,33 @@ export class InstructorService {
   }
 
   async getInstructorsForRequest(listRequest: ListRequest): Promise<ListResponse<Instructor>> {
-    const page = listRequest.page ?? 0;
-    const perPage = listRequest.perPage ?? 10;
-    const offset = page * perPage;
+    const { perPage, offset } = this.getPagination(listRequest);
+    const queryInput = listRequest.queryInput?.trim() ?? "";
 
-    // Get count and ids
-    const data = await this.db
-      .select({
-        count: sql<number>`count(*)`,
-        ...getViewColumns(instructorUserView),
-      })
-      .from(instructorUserView)
-      .limit(perPage)
-      .offset(offset);
+    const similarity = queryInput.length > 0
+      ? this.buildSimilarityExpression(queryInput)
+      : undefined;
+
+    const baseSelect = {
+      count: sql<number>`count(*)`,
+      ...getViewColumns(instructorUserView),
+    } as const;
+
+    const builder = queryInput.length > 0
+      ? this.db
+          .select({ ...baseSelect, similarity: similarity! })
+          .from(instructorUserView)
+          .where(this.buildSearchCondition(queryInput))
+          .orderBy(desc(similarity!))
+      : this.db
+          .select(baseSelect)
+          .from(instructorUserView);
+
+    const rows = await builder.limit(perPage).offset(offset);
 
     return {
-      data: data.map((d) => buildInstructor(d)),
-      total: data[0]?.count ?? 0,
+      data: rows.map((d) => buildInstructor(d)),
+      total: rows[0]?.count ?? 0,
     };
   }
 
@@ -54,5 +64,25 @@ export class InstructorService {
 
   async inviteInstructor(): Promise<void> {
     
+  }
+
+  // HELPER FUNCTIONS
+  private getPagination(listRequest: ListRequest) {
+    const page = listRequest.page ?? 0;
+    const perPage = listRequest.perPage ?? 10;
+    const offset = page * perPage;
+    return { page, perPage, offset } as const;
+  }
+
+  private buildSimilarityExpression(queryInput: string) {
+    return sql<number>`((similarity(${instructorUserView.name}, ${queryInput}) * 3) +
+      (similarity(${instructorUserView.lastName}, ${queryInput}) * 2) +
+      (similarity(${instructorUserView.email}, ${queryInput}) * 1))`;
+  }
+
+  private buildSearchCondition(queryInput: string) {
+    return sql`(LOWER(${instructorUserView.name}) % LOWER(${queryInput}) OR
+          LOWER(${instructorUserView.lastName}) % LOWER(${queryInput}) OR
+          LOWER(${instructorUserView.email}) %> LOWER(${queryInput}))`;
   }
 }

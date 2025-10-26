@@ -4,6 +4,9 @@ import { z } from "zod";
 
 export const GetVolunteersInput = z.object({
   unverified: z.boolean().optional(),
+  page: z.number().int().optional(),
+  perPage: z.number().int().optional(),
+  queryInput: z.string().optional(),
 });
 
 export const ShiftCheckInInput = z.object({

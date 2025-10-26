@@ -4,8 +4,9 @@ import type { ListResponse } from "@/models/list-response";
 import { type Drizzle } from "@/server/db";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { inArray, sql } from "drizzle-orm";
+import { desc, inArray, sql } from "drizzle-orm";
 import { instructorUserView } from "../../db/schema/user";
+import { buildSimilarityExpression, buildSearchCondition, getPagination } from "@/utils/searchUtils";
 
 export class InstructorService {
   private readonly db: Drizzle;
@@ -14,23 +15,33 @@ export class InstructorService {
   }
 
   async getInstructorsForRequest(listRequest: ListRequest): Promise<ListResponse<Instructor>> {
-    const page = listRequest.page ?? 0;
-    const perPage = listRequest.perPage ?? 10;
-    const offset = page * perPage;
+    const { perPage, offset } = getPagination(listRequest);
+    const queryInput = listRequest.queryInput?.trim() ?? "";
 
-    // Get count and ids
-    const data = await this.db
-      .select({
-        count: sql<number>`count(*)`,
-        ...getViewColumns(instructorUserView),
-      })
-      .from(instructorUserView)
-      .limit(perPage)
-      .offset(offset);
+    const similarity = queryInput.length > 0
+      ? buildSimilarityExpression(instructorUserView.name.toString(), instructorUserView.lastName.toString(), instructorUserView.email.toString(), queryInput)
+      : undefined;
+
+    const baseSelect = {
+      count: sql<number>`count(*)`,
+      ...getViewColumns(instructorUserView),
+    } as const;
+
+    const builder = queryInput.length > 0
+      ? this.db
+          .select({ ...baseSelect, similarity: similarity! })
+          .from(instructorUserView)
+          .where(buildSearchCondition(instructorUserView.name.toString(), instructorUserView.lastName.toString(), instructorUserView.email.toString(), queryInput))
+          .orderBy(desc(similarity!))
+      : this.db
+          .select(baseSelect)
+          .from(instructorUserView);
+
+    const rows = await builder.limit(perPage).offset(offset);
 
     return {
-      data: data.map((d) => buildInstructor(d)),
-      total: data[0]?.count ?? 0,
+      data: rows.map((d) => buildInstructor(d)),
+      total: rows[0]?.count ?? 0,
     };
   }
 
@@ -55,4 +66,6 @@ export class InstructorService {
   async inviteInstructor(): Promise<void> {
     
   }
+
+  
 }

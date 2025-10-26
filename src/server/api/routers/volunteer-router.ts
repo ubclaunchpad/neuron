@@ -1,17 +1,17 @@
 import {
   AdminSignoffInput,
-  GetVolunteersInput,
   VolunteerIdInput,
 } from "@/models/api/volunteer";
+import { ListRequest } from "@/models/api/common";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 
 export const volunteerRouter = createTRPCRouter({
   list: authorizedProcedure({ permission: { users: ["view-volunteer"] } })
-    .input(GetVolunteersInput)
-    .query(async ({ input }) => {
-      // TODO: getVolunteers
-      return [];
+    .input(ListRequest)
+    .query(async ({ input, ctx }) => {
+      const volunteers = await ctx.volunteerService.getVolunteersForRequest(input);
+      return volunteers;
     }),
   updateClassPreferences: authorizedProcedure({
     permission: { profile: ["update"] },

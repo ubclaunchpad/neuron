@@ -8,6 +8,7 @@ import { inArray, sql } from "drizzle-orm";
 import { volunteerUserView, user } from "../../db/schema/user";
 import { Status } from "@/models/interfaces";
 import { eq, desc } from "drizzle-orm";
+import { buildSimilarityExpression, buildSearchCondition, getPagination } from "@/utils/searchUtils";
 
 export class VolunteerService {
   private readonly db: Drizzle;
@@ -16,11 +17,11 @@ export class VolunteerService {
   }
 
   async getVolunteersForRequest(listRequest: ListRequest): Promise<ListResponse<Volunteer>> {
-    const { perPage, offset } = this.getPagination(listRequest);
+    const { perPage, offset } = getPagination(listRequest);
     const queryInput = listRequest.queryInput?.trim() ?? "";
 
     const similarity = queryInput.length > 0
-      ? this.buildSimilarityExpression(queryInput)
+      ? buildSimilarityExpression(volunteerUserView.name.toString(), volunteerUserView.lastName.toString(), volunteerUserView.email.toString(), queryInput)
       : undefined;
 
     const baseSelect = {
@@ -32,7 +33,7 @@ export class VolunteerService {
       ? this.db
           .select({ ...baseSelect, similarity: similarity! })
           .from(volunteerUserView)
-          .where(this.buildSearchCondition(queryInput))
+          .where(buildSearchCondition(volunteerUserView.name.toString(), volunteerUserView.lastName.toString(), volunteerUserView.email.toString(), queryInput))
           .orderBy(desc(similarity!))
       : this.db
           .select(baseSelect)
@@ -88,25 +89,5 @@ export class VolunteerService {
     }
 
     await this.db.update(user).set({ status: Status.inactive }).where(eq(user.id, id));
-  }
-
-  // HELPER FUNCTIONS
-  private getPagination(listRequest: ListRequest) {
-    const page = listRequest.page ?? 0;
-    const perPage = listRequest.perPage ?? 10;
-    const offset = page * perPage;
-    return { page, perPage, offset } as const;
-  }
-
-  private buildSimilarityExpression(queryInput: string) {
-    return sql<number>`((similarity(${volunteerUserView.name}, ${queryInput}) * 3) +
-      (similarity(${volunteerUserView.lastName}, ${queryInput}) * 2) +
-      (similarity(${volunteerUserView.email}, ${queryInput}) * 1))`;
-  }
-
-  private buildSearchCondition(queryInput: string) {
-    return sql`(LOWER(${volunteerUserView.name}) % LOWER(${queryInput}) OR
-          LOWER(${volunteerUserView.lastName}) % LOWER(${queryInput}) OR
-          LOWER(${volunteerUserView.email}) %> LOWER(${queryInput}))`;
   }
 }

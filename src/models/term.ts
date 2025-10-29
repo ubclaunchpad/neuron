@@ -1,14 +1,17 @@
 import type { BlackoutDB, TermDB } from "@/server/db/schema";
 
+export type Holiday = {
+  id: string;
+  startsOn: string;
+  endsOn: string;
+}
+
 export type Term = {
   id: string;
   name: string;
   startDate: string;
   endDate: string;
-  holidays: {
-    startsOn: string;
-    endsOn: string;
-  }[];
+  holidays: Holiday[];
 };
 
 export function buildTerm(
@@ -20,6 +23,7 @@ export function buildTerm(
     startDate: termDB.startDate,
     endDate: termDB.endDate,
     holidays: termDB.blackouts?.map((b) => ({
+      id: b.id,
       startsOn: b.startsOn,
       endsOn: b.endsOn,
     })) ?? [],

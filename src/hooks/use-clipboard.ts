@@ -49,7 +49,7 @@ export const useClipboard = (): UseClipboardReturnType => {
       const success = document.execCommand("copy");
       textArea.remove();
 
-      setCopied(id || true);
+      setCopied(id ?? true);
       setTimeout(() => setCopied(false), DEFAULT_TIMEOUT);
 
       return success
@@ -68,7 +68,7 @@ export const useClipboard = (): UseClipboardReturnType => {
       try {
         await navigator.clipboard.writeText(text);
 
-        setCopied(id || true);
+        setCopied(id ?? true);
         setTimeout(() => setCopied(false), DEFAULT_TIMEOUT);
 
         return { success: true };

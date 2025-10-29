@@ -1,6 +1,7 @@
 "use client";
 
-import { PageLayout } from "@/components/PageLayout";
+import { PageLayout, PageLayoutContent, PageLayoutHeader, PageLayoutHeaderContent, PageLayoutHeaderTitle } from "@/components/page-layout";
+import { AvailabilityInput } from "@/components/profile/availability-input";
 import { useAuth } from "@/providers/client-auth-provider";
 
 export default function DashboardPage() {
@@ -8,10 +9,26 @@ export default function DashboardPage() {
 
   return (
     <>
-      <PageLayout title="Overview">
-        <div>
-          <span>Welcome back, {user?.name}</span>
-        </div>
+      <PageLayout>
+        <PageLayoutHeader>
+          <PageLayoutHeaderContent>
+            <PageLayoutHeaderTitle>
+              Dashboard
+            </PageLayoutHeaderTitle>
+          </PageLayoutHeaderContent>
+        </PageLayoutHeader>
+
+        <PageLayoutContent>
+          <div>
+            <span>Welcome back, {user?.name}</span>
+          </div>
+
+          <AvailabilityInput
+            availability={"0".repeat(140)}
+            editable
+            className="m-4"
+          ></AvailabilityInput>
+        </PageLayoutContent>
       </PageLayout>
     </>
   );

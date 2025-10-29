@@ -1,11 +1,8 @@
-import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { eq } from "drizzle-orm";
-import { user } from "@/server/db/schema/user";
-import { type Drizzle } from "@/server/db";
 import { ObjectType } from "@/models/interfaces";
+import { type Drizzle } from "@/server/db";
+import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 
 import * as Minio from "minio";
-
 
 export class ImageService {
   private readonly db: Drizzle;

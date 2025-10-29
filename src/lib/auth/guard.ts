@@ -4,15 +4,16 @@ import {
   type Permissions,
 } from "@/lib/auth/extensions/permissions";
 import { Status } from "@/models/interfaces";
+import type { Route } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 // Utility functions
-function defaultRedirectForUser(user?: User | null): string {
+function defaultRedirectForUser(user?: User | null, fallback?: Route): Route {
   if (!user) return "/auth/login";
   if (user.status === Status.unverified) return "/unverified";
   if (user.status === Status.inactive) return "/inactive";
-  return "/";
+  return fallback ?? "/";
 }
 
 async function getActiveUser(): Promise<User | null> {
@@ -47,12 +48,12 @@ export async function redirectToUserDefault(): Promise<void> {
   redirect(defaultRedirectForUser(session?.user));
 }
 
-export async function requireStatus(status: Status): Promise<User> {
+export async function requireStatus(status: Status, fallback?: Route): Promise<User> {
   const session = await getSession();
   if (session?.user?.status === status) {
     return session.user;
   }
-  redirect(defaultRedirectForUser(session?.user));
+  redirect(defaultRedirectForUser(session?.user, fallback));
 }
 
 export async function checkPermissions(
@@ -64,8 +65,9 @@ export async function checkPermissions(
 
 export async function requirePermission(
   permission: Permissions,
+  fallback?: Route,
 ): Promise<User> {
   const { user, allowed } = await resolveActiveUserAndPermission(permission);
-  if (!user || !allowed) redirect(defaultRedirectForUser(user));
+  if (!user || !allowed) redirect(defaultRedirectForUser(user, fallback));
   return user;
 }

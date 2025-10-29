@@ -10,17 +10,22 @@ import { TypographyTitle } from "./primitives/typography";
 
 function SidebarContainer({
   className,
+  children,
+  hideClose,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement> & { hideClose?: boolean }) {
   return (
     <div
       data-slot="sidebar-container"
       className={cn(
-        "pt-[4.25rem] pr-9 pb-9 pl-5 flex flex-col gap-5",
+        "pt-[4.25rem] pr-9 pb-9 pl-5 flex flex-col gap-5 relative",
         className,
       )}
       {...props}
-    />
+    >
+      {!hideClose && <SidebarClose className="absolute top-8 right-6"/>}
+      {children}
+    </div>
   );
 }
 
@@ -74,7 +79,7 @@ function SidebarClose({
       data-slot="sidebar-close"
       variant="ghost"
       size="icon"
-      className={cn("-mr-2 shrink-0 text-muted-foreground", className)}
+      className={cn("shrink-0 text-muted-foreground", className)}
       aria-label="Close sidebar"
       onClick={() => setOpen(false)}
       {...props}

@@ -84,7 +84,7 @@ function PageLayout({
         className={cn(
           "bg-background relative flex min-h-dvh flex-col",
           "transition-[margin-right] duration-200",
-          "mr-[var(--main-offset)]",
+          "mr-(--main-offset) min-w-(--main-min)",
           className,
         )}
         {...props}
@@ -125,7 +125,7 @@ function PageLayoutHeaderContent({
     <div
       className={cn(
         "mx-auto w-full",
-        "flex justify-auto items-center gap-2 pt-5 pb-7 px-9 md:px-6 sm:px-4",
+        "flex flex-wrap justify-auto items-center gap-2 pt-5 pb-7 px-9 md:px-6 sm:px-4",
         className
       )}
       {...props}

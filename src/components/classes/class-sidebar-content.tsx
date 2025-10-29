@@ -133,7 +133,7 @@ export function ClassSidebarContent() {
             </Button>
           </WithPermission>
           <WithPermission permissions={{ permission: { classes: ["delete"] } }}>
-            <Button>Delete Class</Button>
+            <Button variant="destructive">Delete Class</Button>
           </WithPermission>
         </div>
       </SidebarFooter>

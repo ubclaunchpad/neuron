@@ -2,6 +2,7 @@ import "@/styles/globals.css";
 import type { Metadata, Viewport } from "next";
 import { Montserrat, Roboto } from "next/font/google";
 
+import { ModalProvider } from "@/components/modal-wrapper";
 import HydrationGate from "@/components/utils/hydration-gate";
 import { Toaster } from "@/components/utils/toaster";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -40,15 +41,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${fontBody.variable} ${fontDisplay.variable} scroll-smooth`}>
+    <html
+      lang="en"
+      className={`${fontBody.variable} ${fontDisplay.variable} scroll-smooth`}
+    >
       <body>
         <Toaster />
-        <HydrationGate/>
+        <HydrationGate />
         <RouteProvider>
           <NuqsAdapter>
             <TRPCReactProvider>
               <AuthProvider>
-                <NavigateEventProvider>{children}</NavigateEventProvider>
+                <NavigateEventProvider>
+                  <ModalProvider>{children}</ModalProvider>
+                </NavigateEventProvider>
               </AuthProvider>
             </TRPCReactProvider>
           </NuqsAdapter>

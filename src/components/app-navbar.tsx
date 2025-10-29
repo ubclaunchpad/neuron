@@ -77,7 +77,6 @@ const navbarItems = [
   },
 ];
 
-
 function ProfileCard() {
   const { user } = useAuth();
   const userFullname = `${user?.name} ${user?.lastName}`

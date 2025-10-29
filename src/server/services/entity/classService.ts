@@ -5,7 +5,6 @@ import { RRuleTemporal } from "rrule-temporal";
 import type { ClassRequest, CreateClassOutput, UpdateClassOutput } from "@/models/api/class";
 import { ScheduleType, type CreateScheduleInput, type UpdateScheduleInput, type Weekday } from "@/models/api/schedule";
 import { buildClass, type Class, type ClassResponse } from "@/models/class";
-import type { ListResponse } from "@/models/list-response";
 import { buildSchedule, type ScheduleRule } from "@/models/schedule";
 import type { Term } from "@/models/term";
 import { type Drizzle, type Transaction } from "@/server/db";
@@ -55,7 +54,7 @@ export class ClassService {
       termData = await this.termService.getTerm(termId);
     }
 
-    const { data: classes, total } = await this.retrieveFullClasses({
+    const classes = await this.retrieveFullClasses({
       // Filter by term
       where: eq(course.termId, termData.id),
       withTotalCount: true,
@@ -68,15 +67,34 @@ export class ClassService {
   }
 
   async getClasses(ids: string[]): Promise<Class[]> {
-    return await this.retrieveFullClasses({
+    const classes = await this.retrieveFullClasses({
       where: inArray(course.id, ids)
-    }).then(c => c.data);
+    });
+
+    if (classes.length !== ids.length) {
+      const firstMissing = ids.find((id) => !classes.some((d) => d.id === id));
+      throw new NeuronError(
+        `Could not find Class with id ${firstMissing}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+
+    return classes;
   }
 
   async getClass(id: string): Promise<Class> {
-    return await this.retrieveFullClasses({
+    const classes = await this.retrieveFullClasses({
       where: eq(course.id, id)
-    }).then(c => c.data[0]!);
+    });
+
+    if (classes.length !== 1) {
+      throw new NeuronError(
+        `Could not find Class with id ${id}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+
+    return classes[0]!;
   }
 
   async createClass(classCreate: CreateClassOutput): Promise<string> {
@@ -153,58 +171,59 @@ export class ClassService {
     const classToPublish = await this.getClass(classId);
     const term = await this.termService.getTerm(classToPublish.termId);
 
-    const schedulesToPublish = classToPublish.schedules;
-    for (const schedule of schedulesToPublish) {
+    return await this.db.transaction(async (tx: Transaction) => {
+      const schedulesToPublish = classToPublish.schedules;
+      for (const schedule of schedulesToPublish) {
 
-      // schedule start/end dates override term start/end dates
-      const startDate = schedule.effectiveStart ?? term.startDate;
-      const endDate = schedule.effectiveEnd ?? term.endDate;
+        // schedule start/end dates override term start/end dates
+        const startDate = schedule.effectiveStart ?? term.startDate;
+        const endDate = schedule.effectiveEnd ?? term.endDate;
 
-      const rule = schedule.rule;
-      const dtstart = this.toTemporalZonedDateTime(startDate, rule);
-      const until = this.toTemporalZonedDateTime(endDate, rule);
+        const rule = schedule.rule;
+        const dtstart = this.toTemporalZonedDateTime(startDate, rule);
+        const until = this.toTemporalZonedDateTime(endDate, rule);
 
-      const rrule = this.buildRRuleFromScheduleRule(rule);
-      const exDate = this.getExDate(term, rule, dtstart);
+        const rrule = this.buildRRuleFromScheduleRule(rule);
+        const exDate = this.getExDate(term, rule, dtstart);
 
-      const finishedRule = new RRuleTemporal({
-        ...rrule.options(),
-        dtstart,
-        until,
-        exDate,
-      })
-
-      // create shifts for all dates in rrule
-      const occurrences = finishedRule.all();
-      const durationMinutes = schedule.durationMinutes;
-
-      for (const dt of occurrences) {
-        const shiftDate = dt.toPlainDate();
-
-        const startAt = dt.toInstant().toString();
-        const endAt = dt.add({ minutes: durationMinutes }).toInstant().toString();
-
-        // store start/end times in UTC
-        await this.shiftService.createShift({
-          scheduleId: schedule.id,
-          date: shiftDate.toString(),
-          startAt,
-          endAt,
-        });
-      }
-
-      // update class to published
-      const row = await this.db
-        .update(course)
-        .set({
-          published: true
+        const finishedRule = new RRuleTemporal({
+          ...rrule.options(),
+          dtstart,
+          until,
+          exDate,
         })
-        .where(eq(course.id, classId))
-        .returning({ id: course.id });
-      if (row.length !== 1) {
-        throw new NeuronError("Failed to update Class", NeuronErrorCodes.INTERNAL_SERVER_ERROR);
+
+        // create shifts for all dates in rrule
+        const occurrences = finishedRule.all();
+        const durationMinutes = schedule.durationMinutes;
+
+        for (const dt of occurrences) {
+          const shiftDate = dt.toPlainDate();
+
+          const startAt = dt.toInstant().toString();
+          const endAt = dt.add({ minutes: durationMinutes }).toInstant().toString();
+
+          // store start/end times in UTC
+          await this.shiftService.createShift({
+            scheduleId: schedule.id,
+            date: shiftDate.toString(),
+            startAt,
+            endAt,
+          });
+        }
+
+        // update class to published
+        const row = await this.db
+          .update(course)
+          .set({ published: true })
+          .where(eq(course.id, classId))
+          .returning({ id: course.id });
+
+        if (row.length !== 1) {
+          throw new NeuronError("Failed to update Class", NeuronErrorCodes.INTERNAL_SERVER_ERROR);
+        }
       }
-    }
+    });
   }
 
   private getExDate(term: Term, rule: ScheduleRule, startDate: Temporal.ZonedDateTime) {
@@ -244,8 +263,7 @@ export class ClassService {
 
 
   async retrieveFullClasses({ 
-    where, 
-    withTotalCount, 
+    where,
     limit, 
     offset 
   }: { 
@@ -253,7 +271,7 @@ export class ClassService {
     withTotalCount?: boolean, 
     limit?: number, 
     offset?: number 
-  }): Promise<ListResponse<Class>> {
+  }): Promise<Class[]> {
     const courses = await this.db.query.course.findMany({
       where,
       with: {
@@ -263,9 +281,6 @@ export class ClassService {
             instructors: true,
           },
         },
-      },
-      extras: {
-        ...(withTotalCount ? { count: sql<number>`count(*) over()`.as('count') } : {})
       },
       limit,
       offset,
@@ -283,8 +298,7 @@ export class ClassService {
     );
     const volunteers = toMap(await this.volunteerService.getVolunteers(volunteerIds));
 
-    return {
-      data: courses.map((course) =>
+    return courses.map((course) =>
         buildClass(
           course,
           course.schedules.map((schedule) =>
@@ -296,9 +310,7 @@ export class ClassService {
             ),
           ),
         ),
-      ),
-      total: courses.length ?? 0,
-    };
+      );
   }
 
   private async updateSchedules(

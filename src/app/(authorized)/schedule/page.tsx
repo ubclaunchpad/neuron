@@ -4,8 +4,7 @@ import {
   PageLayout,
   PageLayoutHeader,
   PageLayoutHeaderContent,
-  PageLayoutHeaderLeft,
-  PageLayoutHeaderTitle,
+  PageLayoutHeaderTitle
 } from "@/components/page-layout";
 
 export default function SchedulePage() {
@@ -14,9 +13,7 @@ export default function SchedulePage() {
       <PageLayout>
         <PageLayoutHeader>
           <PageLayoutHeaderContent>
-            <PageLayoutHeaderLeft>
-              <PageLayoutHeaderTitle>Schedule</PageLayoutHeaderTitle>
-            </PageLayoutHeaderLeft>
+            <PageLayoutHeaderTitle>Schedule</PageLayoutHeaderTitle>
           </PageLayoutHeaderContent>
         </PageLayoutHeader>
       </PageLayout>

@@ -2,7 +2,11 @@ import { createStringEnum } from "@/utils/typeUtils";
 import { z } from "zod";
 import { toPlainTime } from "../extensions/Transformations";
 
-export const ScheduleTypeEnum = z.enum(["single", "weekly", "monthly"] as const);
+export const ScheduleTypeEnum = z.enum({
+  "Single": "single",
+  "Weekly": "weekly",
+  "Monthly": "monthly",
+} as const);
 export type ScheduleType = z.infer<typeof ScheduleTypeEnum>;
 export const ScheduleType = createStringEnum(ScheduleTypeEnum);
 
@@ -14,7 +18,7 @@ export const WeekdayEnum = z.enum({
   "Thursday": "TH",
   "Friday": "FR",
   "Saturday": "SA",
-} as const);
+} as const, "Please fill out this field.");
 export type Weekday = z.infer<typeof WeekdayEnum>;
 export const Weekday = createStringEnum(WeekdayEnum);
 

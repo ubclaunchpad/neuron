@@ -1,6 +1,6 @@
 {
-  "id": "4b9599ae-1351-41b3-8dd1-2b13d79cec28",
-  "prevId": "a24b0d00-e825-491b-bc47-c3f87fd1e2ce",
+  "id": "d0219c72-256a-46a1-bb2e-8ff081fb02c9",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -505,7 +505,7 @@
           "name": "term_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "image": {
           "name": "image",
@@ -542,7 +542,7 @@
           "name": "category",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "subcategory": {
           "name": "subcategory",

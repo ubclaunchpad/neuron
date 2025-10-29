@@ -48,7 +48,7 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="field-group"
       className={cn(
-        "group/field-group @container/field-group flex w-full flex-col gap-5 data-[slot=checkbox-group]:gap-3 [&>[data-slot=field-group]]:gap-4",
+        "group/field-group @container/field-group flex w-full flex-col gap-3 data-[slot=checkbox-group]:gap-3 [&>[data-slot=field-group]]:gap-4",
         className
       )}
       {...props}
@@ -56,8 +56,8 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-const fieldVariants = cva(
-  "group/field  flex w-full gap-2",
+export const fieldVariants = cva(
+  "group/field  flex w-full gap-2 min-w-0",
   {
     variants: {
       orientation: {
@@ -101,7 +101,7 @@ function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="field-content"
       className={cn(
-        "group/field-content flex flex-1 flex-col gap-1.5 leading-snug",
+        "group/field-content flex flex-col gap-1.5 leading-snug",
         className
       )}
       {...props}
@@ -200,11 +200,11 @@ function FieldError({
        return children 
     } 
   
-    if (!errors) { 
+    if (!errors || (Array.isArray(errors) && errors.length === 0)) { 
       return null 
     } 
 
-    errors = wrapIfNotArray(errors); 
+    errors = wrapIfNotArray(errors);
     if (errors?.length === 1 && errors[0]?.message) {
       return (
         <span className="inline-flex items-center gap-1">
@@ -216,9 +216,9 @@ function FieldError({
 
     return (
       <ul className="ml-4 flex list-disc flex-col gap-1">
+        <Icon className="h-4 w-4" />
         {errors.filter(e => !!e).map((e, i) => (
           <li key={i} className="inline-flex items-center gap-1">
-            <Icon className="h-4 w-4" />
             {e.message}
           </li>
         ))}

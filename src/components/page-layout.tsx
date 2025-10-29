@@ -6,6 +6,7 @@ import { Button } from "@/components/primitives/button";
 import { TypographyPageTitle } from "@/components/primitives/typography";
 import { cn } from "@/lib/utils";
 import CaretLeftIcon from "@public/assets/icons/caret-left.svg";
+import { useRouter } from "next/navigation";
 import { SidebarTrigger } from "./primitives/sidebar";
 
 type PageLayoutContextValue = {
@@ -113,76 +114,31 @@ function PageLayoutHeader({
 
 function PageLayoutHeaderContent({
   className,
+  showBackButton,
   children,
   ...props
-}: React.ComponentProps<"header"> & { border?: boolean }) {
+}: React.ComponentProps<"div"> & { 
+  showBackButton?: boolean;
+}) {
+  const router = useRouter();
   return (
     <div
       className={cn(
         "mx-auto w-full",
-        "grid grid-cols-[auto_1fr_auto] items-start gap-2 pt-5 pb-7 px-9 md:px-6 sm:px-4",
+        "flex justify-auto items-center gap-2 pt-5 pb-7 px-9 md:px-6 sm:px-4",
         className
       )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function PageLayoutHeaderLeft({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="page-header-left"
-      className={cn("flex items-center gap-2 shrink-0", className)}
-      {...props}
-    />
-  );
-}
-
-function PageLayoutHeaderTitle({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="page-header-title"
-      className={cn("flex min-w-0 items-center gap-2", className)}
       {...props}
     >
-      <TypographyPageTitle className="truncate">{children}</TypographyPageTitle>
-    </div>
-  );
-}
-
-function PageLayoutHeaderRight({
-  className,
-  showBackButton,
-  children,
-  ...props
-}: React.ComponentProps<"div"> & {
-  showBackButton?: boolean
-}) {
-  return (
-    <div
-      data-slot="page-header-right"
-      className={cn(
-        "flex items-center gap-2 shrink-0 justify-self-end",
-        className,
-      )}
-      {...props}
-    >
-      <SidebarTrigger className="md:hidden"></SidebarTrigger>
+      <SidebarTrigger className="md:hidden self-justify-start"></SidebarTrigger>
 
       {showBackButton && (
         <Button
           variant="ghost"
           size="icon"
-          className="size-7"
+          className="size-7 self-justify-start"
           aria-label="Go back"
+          onClick={() => router.back()}
         >
           <CaretLeftIcon />
         </Button>
@@ -190,6 +146,19 @@ function PageLayoutHeaderRight({
 
       {children}
     </div>
+  );
+}
+
+function PageLayoutHeaderTitle({
+  className,
+  ...props
+}: React.ComponentProps<"h3">) {
+  return (
+    <TypographyPageTitle
+      data-slot="page-header-title"
+      className={cn("truncate self-justify-start", className)}
+      {...props}
+    />
   );
 }
 
@@ -280,7 +249,7 @@ function PageSidebarTrigger({
 
 export {
   PageLayout, PageLayoutAside, PageLayoutContent, PageLayoutHeader, PageLayoutHeaderContent,
-  PageLayoutHeaderLeft, PageLayoutHeaderRight, PageLayoutHeaderTitle, PageSidebarTrigger,
+  PageLayoutHeaderTitle, PageSidebarTrigger,
   usePageSidebar
 };
 

@@ -42,8 +42,9 @@
     "**/*.tsx",
     "**/*.cjs",
     "**/*.js",
-    ".next/types/**/*.ts"
-, "src/components/form/TextInput"  ],
+    ".next/types/**/*.ts",
+    "src/components/form/TextInput"
+  ],
   "exclude": [
     "node_modules"
   ]

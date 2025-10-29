@@ -1,6 +1,6 @@
 "use client";
 
-import { PageLayout, PageLayoutContent, PageLayoutHeader, PageLayoutHeaderContent, PageLayoutHeaderLeft, PageLayoutHeaderTitle } from "@/components/page-layout";
+import { PageLayout, PageLayoutContent, PageLayoutHeader, PageLayoutHeaderContent, PageLayoutHeaderTitle } from "@/components/page-layout";
 import { AvailabilityInput } from "@/components/profile/availability-input";
 import { useAuth } from "@/providers/client-auth-provider";
 
@@ -12,11 +12,9 @@ export default function DashboardPage() {
       <PageLayout>
         <PageLayoutHeader>
           <PageLayoutHeaderContent>
-            <PageLayoutHeaderLeft>
-              <PageLayoutHeaderTitle>
-                Dashboard
-              </PageLayoutHeaderTitle>
-            </PageLayoutHeaderLeft>
+            <PageLayoutHeaderTitle>
+              Dashboard
+            </PageLayoutHeaderTitle>
           </PageLayoutHeaderContent>
         </PageLayoutHeader>
 
@@ -30,7 +28,7 @@ export default function DashboardPage() {
             editable
             className="m-4"
           ></AvailabilityInput>
-          </PageLayoutContent>
+        </PageLayoutContent>
       </PageLayout>
     </>
   );

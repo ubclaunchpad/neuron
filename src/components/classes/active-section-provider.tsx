@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/primitives/button";
+import { cn } from "@/lib/utils";
 import React from "react";
 
 const ActiveSectionContext = React.createContext<{
@@ -197,7 +198,7 @@ export function SectionLink({
       unstyled
       ref={setRef}
       onClick={scrollTo}
-      className={className}
+      className={cn("text-muted-foreground", className)}
     >
       {children}
     </Button>

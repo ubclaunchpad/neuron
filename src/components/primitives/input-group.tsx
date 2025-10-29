@@ -7,6 +7,7 @@ import { Button } from "@/components/primitives/button"
 import { Input } from "@/components/primitives/input"
 import { Textarea } from "@/components/primitives/textarea"
 import { cn } from "@/lib/utils"
+import { Slot } from "@radix-ui/react-slot"
 
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -130,10 +131,14 @@ function InputGroupText({ className, ...props }: React.ComponentProps<"span">) {
 
 function InputGroupInput({
   className,
+  asChild,
   ...props
-}: React.ComponentProps<"input">) {
+}: React.ComponentProps<"input"> & {
+  asChild?: boolean
+}) {
+  const Comp = asChild ? Slot : Input
   return (
-    <Input
+    <Comp
       data-slot="input-group-control"
       className={cn(
         "flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent",

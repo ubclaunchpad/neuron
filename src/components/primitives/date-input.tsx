@@ -1,162 +1,204 @@
-import * as React from "react";
+'use client'
 
-import { CalendarIcon } from "lucide-react";
-import { Calendar } from "./calendar";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "./input-group";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import { cn } from '@/lib/utils'
+import { CalendarIcon } from 'lucide-react'
+import * as React from 'react'
 
+import type { DateRange } from 'react-day-picker'
+import { Button } from './button'
+import { Calendar } from './calendar'
+import { Popover, PopoverContent, PopoverTrigger } from './popover'
 
-type DateInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "value" | "defaultValue" | "onChange"> & {
-  /** Controlled date value */
-  value?: string | Date | null
-  /** Uncontrolled initial date */
-  defaultValue?: Date | null
-  /** Change handler for controlled usage */
-  onChange?: (date: Date | null) => void
-  /** Name used for hidden ISO input value (yyyy-mm-dd) in HTML form posts */
-  name?: string
-  /** Display formatting options */
-  displayFormat?: Intl.DateTimeFormatOptions
+const defaultDateFormat: Intl.DateTimeFormatOptions = {
+  day: '2-digit',
+  month: 'long',
+  year: 'numeric',
 }
 
-
-const defaultFormat: Intl.DateTimeFormatOptions = {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
+function defaultFormatDateLabel(date: Date, fmt = defaultDateFormat, locale = 'en-US') {
+  return date.toLocaleDateString(locale, fmt)
 }
 
-function isValidDate(d: unknown): d is Date {
-  return d instanceof Date && !isNaN(d.getTime())
+type CalendarOwnProps = Omit<React.ComponentProps<typeof Calendar>, 'mode' | 'selected' | 'onSelect'>
+
+export type DatePickerProps = Omit<React.ComponentProps<typeof Button>, 'children' | 'id' | 'value' | 'defaultValue' | 'onChange' | 'onBlur'> & {
+  /** Controlled value. If provided, component is controlled. */
+  value?: Date | null
+  /** Uncontrolled initial value. */
+  defaultValue?: Date
+  /** Change handler (fires for both controlled & uncontrolled). */
+  onChange?: (date: Date | undefined) => void
+  /** Called when the popover closes. */
+  onBlur?: () => void
+  /** Optional id for accessibility wiring. */
+  id?: string
+  /** Placeholder text when no date is selected. */
+  placeholder?: string
+  /** Custom formatter for the button label. */
+  formatDateLabel?: (date: Date) => string
+  /** Pass-through props to the internal Calendar. */
+  calendarProps?: CalendarOwnProps
 }
 
-function formatDate(d: Date | null | undefined, fmt = defaultFormat, locale = "en-US") {
-  return d ? d.toLocaleDateString(locale, fmt) : ""
-}
-
-function parseLooseDate(input: string): Date | null {
-  const s = input.trim()
-  if (!s) return null
-  const dt = new Date(s)
-  return isValidDate(dt) ? dt : null
-}
-
-export function DateInput({
-  value: controlledDate,
-  defaultValue = null,
+export function DatePicker({
+  value,
+  defaultValue,
   onChange,
-  displayFormat = defaultFormat,
+  onBlur,
   id,
-  placeholder = "Select a date",
+  placeholder = 'Pick a date',
   disabled,
-  ...rest
-}: DateInputProps) {
-  const isControlled = controlledDate !== undefined
+  className,
+  formatDateLabel = defaultFormatDateLabel,
+  calendarProps,
+  ...buttonProps
+}: DatePickerProps) {
+  const isControlled = value !== undefined
   const [open, setOpen] = React.useState(false)
 
-  // Internal date for uncontrolled usage
-  const [uncontrolledDate, setUncontrolledDate] = React.useState<Date | null>(defaultValue)
-  controlledDate = typeof controlledDate === "string" ? new Date(controlledDate) : controlledDate
-  const date = (isControlled ? controlledDate : uncontrolledDate) ?? null
+  const [internal, setInternal] = React.useState<Date | undefined>(defaultValue)
+  const selected = (isControlled ? value ?? undefined : internal)
 
-  // Track calendar month separately so changing months doesn’t mutate selected date
-  const [month, setMonth] = React.useState<Date | undefined>(date ?? undefined)
-
-  // Input text value (what the user sees / types)
-  const [text, setText] = React.useState<string>(formatDate(date, displayFormat))
-
-  // Keep input text in sync when the external date changes
-  React.useEffect(() => {
-    setText(formatDate(date, displayFormat))
-    if (date) setMonth(date)
-  }, [date, displayFormat])
-
-  const commitDate = (next: Date | null) => {
-    if (isControlled) {
-      onChange?.(next ?? null)
-    } else {
-      setUncontrolledDate(next ?? null)
-      onChange?.(next ?? null)
-    }
+  const setSelected = (next: Date | undefined) => {
+    if (!isControlled) setInternal(next)
+    onChange?.(next)
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setText(e.target.value)
-  }
-
-  const tryParseAndCommit = () => {
-    console.log('blur')
-    const parsed = parseLooseDate(text)
-    console.log('parsed', parsed)
-    if (parsed) {
-      commitDate(parsed)
-      setText(formatDate(parsed, displayFormat))
-      setMonth(parsed)
-      return true
-    }
-
-    // Revert to last valid date text if parse fails
-    setText(formatDate(date, displayFormat))
-    return false
-  }
+  const label = selected
+    ? formatDateLabel(selected)
+    : undefined
 
   return (
-    <InputGroup>
-      <InputGroupInput
-        id={id}
-        role="combobox"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls={id ? `${id}-popover` : undefined}
-        placeholder={placeholder}
-        disabled={disabled}
-        value={text}
-        onChange={handleInputChange}
-        onBlurCapture={tryParseAndCommit}
-        {...rest}
-      />
-
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton size="icon-xs">
-                <CalendarIcon className="size-3.5" />
-                <span className="sr-only">Select date</span>
-              </InputGroupButton>
-            </InputGroupAddon>
-          </PopoverTrigger>
-          <PopoverContent
-            id={id ? `${id}-popover` : undefined}
-            className="w-auto overflow-hidden p-0"
-            align="end"
-            alignOffset={-8}
-            sideOffset={10}
-          >
-            <Calendar
-              mode="single"
-              captionLayout="dropdown"
-              className="rounded-md border shadow-sm"
-              selected={date ?? undefined}
-              month={month}
-              onMonthChange={setMonth}
-              onSelect={(d) => {
-                // react-day-picker gives undefined when clicking the already-selected date
-                // so guard it
-                if (!d) return
-                commitDate(d)
-                setText(formatDate(d, displayFormat))
-                setMonth(d)
-                console.log('select')
-                setOpen(false)
-              }}
-            />
-          </PopoverContent>
-        </Popover>
-    </InputGroup>
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o)
+        if (!o) onBlur?.()
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          id={id}
+          disabled={disabled}
+          className={cn('w-[240px] justify-start font-normal', !selected && 'text-muted-foreground', className)}
+          {...buttonProps}
+        >
+          <CalendarIcon className="size-4" />
+          <span className="text-base">{label ?? placeholder}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={selected}
+          onSelect={(d) => {
+            // react-day-picker sends undefined when toggling the same day
+            setSelected(d)
+            setOpen(false)
+          }}
+          autoFocus
+          captionLayout="dropdown"
+          {...calendarProps}
+        />
+      </PopoverContent>
+    </Popover>
   )
 }
+
+export type DateRangePickerProps = Omit<React.ComponentProps<typeof Button>, 'children' | 'id' | 'value' | 'defaultValue' | 'onChange' | 'onBlur'> & {
+  /** Controlled value. If provided, component is controlled. */
+  value?: DateRange
+  /** Uncontrolled initial value. */
+  defaultValue?: DateRange
+  /** Change handler (fires for both controlled & uncontrolled). */
+  onChange?: (range: DateRange | undefined) => void
+  /** Called when the popover closes. */
+  onBlur?: () => void
+  /** Optional id for accessibility wiring. */
+  id?: string
+  /** Placeholder when no range is selected. */
+  placeholder?: string
+  /** Number of months to render in the calendar. */
+  numberOfMonths?: number
+  /** Custom formatter for the button label. */
+  formatRangeLabel?: (from: Date, to: Date) => string
+  /** Pass-through props to the internal Calendar. */
+  calendarProps?: Omit<CalendarOwnProps, 'numberOfMonths'>
+}
+
+export function DateRangePicker({
+  value,
+  defaultValue,
+  onChange,
+  onBlur,
+  id,
+  placeholder = 'Select a date or date range',
+  numberOfMonths = 1,
+  disabled,
+  className,
+  formatRangeLabel,
+  calendarProps,
+  ...buttonProps
+}: DateRangePickerProps) {
+  const isControlled = value !== undefined
+  const [open, setOpen] = React.useState(false)
+
+  const [internal, setInternal] = React.useState<DateRange | undefined>(defaultValue)
+  const selected = isControlled ? value : internal
+
+  const setSelected = (next: DateRange | undefined) => {
+    if (!isControlled) setInternal(next)
+    onChange?.(next)
+  }
+
+  formatRangeLabel = formatRangeLabel ?? ((from: Date, to: Date): string => {
+    const fromLabel = defaultFormatDateLabel(from);
+    const toLabel = defaultFormatDateLabel(to);
+    if (fromLabel === toLabel) return fromLabel;
+    return `${fromLabel} - ${toLabel}`;
+  })
+
+  const label = selected?.from && selected?.to
+    ? formatRangeLabel(selected.from, selected.to)
+    : undefined
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o)
+        if (!o) onBlur?.()
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          id={id}
+          disabled={disabled}
+          className={cn('w-[260px] justify-start font-normal', !label && 'text-muted-foreground', className)}
+          {...buttonProps}
+        >
+          <CalendarIcon className="size-4" />
+          <span className="text-base">{label ?? placeholder}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+        <Calendar
+          mode="range"
+          selected={selected}
+          onSelect={(r) => setSelected(r)}
+          numberOfMonths={numberOfMonths}
+          autoFocus
+          disabled={disabled}
+          captionLayout="dropdown"
+          {...calendarProps}
+        />
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+export { DatePicker as DateInput, DateRangePicker as DateRangeInput }

@@ -2,7 +2,7 @@ import { ScheduleType, Weekday, type MonthlyRule, type SingleRule, type WeeklyRu
 import type { EmbeddedSchedule } from "@/models/schedule";
 import { Temporal } from "@js-temporal/polyfill";
 
-const WEEKDAY_TO_TITLE: Record<typeof Weekday.values[number], string> = {
+export const WEEKDAY_TO_TITLE: Record<typeof Weekday.values[number], string> = {
   MO: "Monday",
   TU: "Tuesday",
   WE: "Wednesday",

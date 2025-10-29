@@ -5,7 +5,8 @@ import * as React from "react";
 import { Button } from "@/components/primitives/button";
 import { cn } from "@/lib/utils";
 import CloseIcon from "@public/assets/icons/close.svg";
-import { usePageSidebar } from "../page-layout";
+import { usePageSidebar } from "./page-layout";
+import { TypographyTitle } from "./primitives/typography";
 
 function SidebarContainer({
   className,
@@ -15,7 +16,7 @@ function SidebarContainer({
     <div
       data-slot="sidebar-container"
       className={cn(
-        "pt-[4.25rem] pr-9 pb-9 pl-5 flex flex-col gap-10",
+        "pt-[4.25rem] pr-9 pb-9 pl-5 flex flex-col gap-5",
         className,
       )}
       {...props}
@@ -40,16 +41,11 @@ function SidebarHeader({
 }
 
 function SidebarTitle({
-  className,
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h2
+    <TypographyTitle
       data-slot="sidebar-title"
-      className={cn(
-        "text-xl font-semibold leading-none tracking-tight",
-        className,
-      )}
       {...props}
     />
   );
@@ -121,7 +117,33 @@ function SidebarSection({
   return (
     <section
       data-slot="sidebar-section"
-      className={cn("flex flex-col gap-4 pb-6", className)}
+      className={cn("flex flex-col gap-4", className)}
+      {...props}
+    />
+  );
+}
+
+function SidebarSectionHeader({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLElement>) {
+  return (
+    <div
+      data-slot="sidebar-section"
+      className={cn("flex flex-row gap-2", className)}
+      {...props}
+    />
+  );
+}
+
+function SidebarSectionContent({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLElement>) {
+  return (
+    <div
+      data-slot="sidebar-section"
+      className={cn("flex flex-col gap-3", className)}
       {...props}
     />
   );
@@ -190,6 +212,8 @@ export {
   SidebarFooter,
   SidebarHeader,
   SidebarSection,
+  SidebarSectionContent,
+  SidebarSectionHeader,
   SidebarTitle
 };
 

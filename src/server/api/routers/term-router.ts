@@ -1,4 +1,4 @@
-import { CreateTermInput, TermIdInput } from "@/models/api/term";
+import { CreateTermInput, TermIdInput, UpdateTermInput } from "@/models/api/term";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 
@@ -23,6 +23,11 @@ export const termRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const id = await ctx.termService.createTerm(input);
       return id;
+    }),
+  update: authorizedProcedure({ permission: { terms: ["create"] } })
+    .input(UpdateTermInput)
+    .mutation(async ({ input, ctx }) => {
+      await ctx.termService.updateTerm(input);
     }),
   delete: authorizedProcedure({ permission: { terms: ["delete"] } })
     .input(TermIdInput)

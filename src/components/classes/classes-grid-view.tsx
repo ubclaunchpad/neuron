@@ -12,6 +12,7 @@ import { useClassesPage } from "@/components/classes/context";
 import { cn } from "@/lib/utils";
 import type { ListClass } from "@/models/class";
 import { useMemo } from "react";
+import { TypographyTitle } from "../primitives/typography";
 
 export const CLASS_CATEGORIES = [
   "Online Exercise",
@@ -27,7 +28,7 @@ export const DEFAULT_CLASS_CATEGORY: typeof CLASS_CATEGORIES[number] = "Other Op
 
 export function CategoriesNav() {
   const { activeSectionId } = useActiveSection();
-  
+
   return (
     <div
       className={cn(
@@ -63,9 +64,9 @@ export function CategorySection({
 }) {
   return (
     <section className="flex flex-col gap-7 scroll-mt-9 items-stretch">
-      <h3 className="text-foreground pt-4 pb-2 border-b border-border font-semibold">
+      <TypographyTitle className="pt-4 pb-2 border-b border-border">
         {title}
-      </h3>
+      </TypographyTitle>
       {children}
     </section>
   );

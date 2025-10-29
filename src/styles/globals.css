@@ -64,11 +64,6 @@ h6 {
   text-wrap: balance;
 }
 
-/* Remove underline from links */
-a {
-  color: currentColor;
-}
-
 /* Create a root stacking context */
 #root,
 #__next {
@@ -254,4 +249,16 @@ input[type="search"]::-webkit-search-cancel-button {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer utilities {
+  .justify-auto { display: flex; }
+  .justify-auto::before {
+    content: "";
+    flex: 1 1 auto;
+    order: 1;
+  }
+
+  .self-justify-start { order: 0 }
+  .self-justify-end { order: 1 }
 }

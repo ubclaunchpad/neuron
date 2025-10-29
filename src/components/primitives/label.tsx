@@ -21,4 +21,20 @@ function Label({
   )
 }
 
-export { Label }
+function LabelRequiredMarker({
+  className,
+  ...props
+}: Omit<React.ComponentProps<"i">, "children">) {
+  return (
+    <span
+      data-slot="label-required-marker"
+      className={cn(
+        "text-destructive",
+        className
+      )}
+      {...props}
+    >*</span>
+  )
+}
+
+export { Label, LabelRequiredMarker }

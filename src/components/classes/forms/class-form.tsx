@@ -35,7 +35,7 @@ import {
   ItemTitle,
 } from "@/components/primitives/item";
 import { SelectItem } from "@/components/primitives/select";
-import { Weekday } from "@/models/api/schedule";
+import type { Weekday } from "@/models/api/schedule";
 import { WEEKDAY_TO_TITLE } from "@/utils/scheduleUtils";
 import NiceModal from "@ebay/nice-modal-react";
 import { Calendar, Pencil, Plus, Trash2 } from "lucide-react";
@@ -146,7 +146,7 @@ export function ClassForm({
     <>
       <form
         id="class-form"
-        onSubmit={(e) => { console.log("submit"); handleSubmit(onSubmit)(e) }}
+        onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col gap-8 p-9 pt-0"
       >
         <Card className="w-full">
@@ -235,8 +235,7 @@ export function ClassForm({
                 <ItemGroup className="border divide-y &[*]:border-0 rounded-md">
                   {schedules.map((field, index) => {
                     const schedule = getValues(`schedules.${index}`) as ScheduleEditSchemaOutput;
-                    const { frequencyText, timeText, tzid } =
-                      getScheduleSummary(schedule);
+                    const { frequencyText, timeText } = getScheduleSummary(schedule);
 
                     return (
                       <Item key={field.key} variant="noBorder" className="rounded-none">

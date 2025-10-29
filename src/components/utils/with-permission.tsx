@@ -15,11 +15,11 @@ export function WithPermission({
   fallback?: React.ReactNode;
   children?: React.ReactNode;
 }) {
+  const { user } = useAuth();
   if (permissions === undefined) {
     return children;
   }
 
-  const { user } = useAuth();
   if (!user) {
     return fallback;
   }

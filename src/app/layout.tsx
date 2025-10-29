@@ -7,7 +7,6 @@ import HydrationGate from "@/components/utils/hydration-gate";
 import { Toaster } from "@/components/utils/toaster";
 import { AuthProvider } from "@/providers/auth-provider";
 import { NavigateEventProvider } from "@/providers/navigate-event-provider";
-import { RouteProvider } from "@/providers/route-provider";
 import { TRPCReactProvider } from "@/trpc/client";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
@@ -48,17 +47,15 @@ export default function RootLayout({
       <body>
         <Toaster />
         <HydrationGate />
-        <RouteProvider>
-          <NuqsAdapter>
-            <TRPCReactProvider>
-              <AuthProvider>
-                <NavigateEventProvider>
-                  <ModalProvider>{children}</ModalProvider>
-                </NavigateEventProvider>
-              </AuthProvider>
-            </TRPCReactProvider>
-          </NuqsAdapter>
-        </RouteProvider>
+        <NuqsAdapter>
+          <TRPCReactProvider>
+            <AuthProvider>
+              <NavigateEventProvider>
+                <ModalProvider>{children}</ModalProvider>
+              </NavigateEventProvider>
+            </AuthProvider>
+          </TRPCReactProvider>
+        </NuqsAdapter>
       </body>
     </html>
   );

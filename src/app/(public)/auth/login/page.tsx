@@ -114,7 +114,7 @@ export default function LoginForm() {
       </form>
 
       <p className="text-center text-foreground">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{" "}
         <Button asChild variant="link" className="p-0">
           <Link href="/auth/signup">
             <strong>Sign Up</strong>

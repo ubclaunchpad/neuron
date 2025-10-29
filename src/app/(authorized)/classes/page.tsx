@@ -51,7 +51,7 @@ import { Edit, Plus } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
-export function TermSelect({
+function TermSelect({
   terms,
   selectedKey,
   onChange,
@@ -71,7 +71,7 @@ export function TermSelect({
   const handleValueChange = React.useCallback(
     (id: string) => {
       // Prefetch classes for the selected term to speed up nav
-      apiUtils.class.list.prefetch({ term: id }).catch(() => {});
+      apiUtils.class.list.prefetch({ term: id }).catch();
       onChange(id);
     },
     [apiUtils.class.list, onChange],
@@ -81,7 +81,7 @@ export function TermSelect({
   if (isLoading) return <Skeleton className="h-10 w-30" />;
 
   const isDisabled =
-    (disableIfSingle && (terms?.length ?? 0) <= 1) || isLoading;
+    (disableIfSingle && (terms?.length ?? 0) <= 1) ?? isLoading;
 
   return (
     <ButtonGroup className={className}>
@@ -152,10 +152,10 @@ export default function ClassesPageClient() {
   }, [classListData, queryTerm]);
 
   const handleSelectTerm = useCallback(
-    (uuid: string) => {
-      setQueryTerm(uuid);
-      setSelectedTermId(uuid);
-      apiUtils.class.list.prefetch({ term: uuid }).catch(() => {});
+    async (uuid: string) => {
+      await setQueryTerm(uuid);
+      await setSelectedTermId(uuid);
+      await apiUtils.class.list.prefetch({ term: uuid }).catch();
     },
     [setQueryTerm, apiUtils.class.list],
   );

@@ -62,7 +62,7 @@ const AvatarFallback = React.forwardRef<
   const bgColor = useMemo(() => {
     const prng = createPrng(children);
     return prng.shuffle(backgroundColors)[0]!;
-  }, []);
+  }, [children]);
   
 
   return <AvatarPrimitive.Fallback

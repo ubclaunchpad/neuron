@@ -1,11 +1,11 @@
 "use client";
 
-import { clientApi } from "@/trpc/client";
-import { useRef, useState } from "react";
-import { toast } from "sonner";
-import type { ObjectType } from "@/models/interfaces";
-import type { ReactNode } from "react";
 import { useFileUpload } from "@/hooks/use-file-upload";
+import type { ObjectType } from "@/models/interfaces";
+import { clientApi } from "@/trpc/client";
+import type { ReactNode } from "react";
+import { useRef } from "react";
+import { toast } from "sonner";
 
 interface FilePickerProps {
   objectType: ObjectType; // "user" | "class"
@@ -13,16 +13,23 @@ interface FilePickerProps {
   disabled?: boolean;
   targetSize?: number; // default 250x250
   onUploaded?: (objectKey: string) => void;
+  onPreviewUrl?: (url: string) => void;
   children?: ReactNode; // clickable trigger content
 }
 
-export function FilePicker({ objectType, id, disabled = false, targetSize = 250, onUploaded, children }: FilePickerProps) {
+export function FilePicker({ 
+  objectType, 
+  id, 
+  disabled = false, 
+  targetSize = 250, 
+  onUploaded, 
+  onPreviewUrl,
+  children 
+}: FilePickerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
   const getPresignedUrlMutation = clientApi.profile.getPresignedUrl.useMutation();
   const uploader = useFileUpload({
-    getPresignedUrl: async (file) => {
+    getPresignedUrl: async () => {
       const fileExtension = "webp";
       const { url } = await getPresignedUrlMutation.mutateAsync({ objectType, id, fileExtension });
       const key = `${objectType}/${objectType}_${id}/profile-picture.${fileExtension}`;
@@ -81,12 +88,13 @@ export function FilePicker({ objectType, id, disabled = false, targetSize = 250,
     canvas.toBlob(
       async (blob) => {
         if (!blob) return;
-        setPreviewUrl(URL.createObjectURL(blob));
+        onPreviewUrl?.(URL.createObjectURL(blob));
+
         try {
           const key = await uploader.upload({ file, data: blob, contentType: "image/webp" });
           onUploaded?.(key);
           toast.success("Image uploaded successfully");
-        } catch (e) {
+        } catch {
           toast.error("Failed to upload image");
         }
       },
@@ -96,7 +104,6 @@ export function FilePicker({ objectType, id, disabled = false, targetSize = 250,
   };
 
   const handleUploadClick = () => {
-    console.log("handleUploadClick");
     if (!disabled) {
       fileInputRef.current?.click();
     }

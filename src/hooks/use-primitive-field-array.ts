@@ -138,10 +138,6 @@ export type PrimitiveFieldArray<
       ? U
       : never;
 
-function setOptions() {
-  return { shouldDirty: true, shouldTouch: true, shouldValidate: true } as const;
-}
-
 /**
  * usePrimitiveFieldArray
  * - Mirrors most of useFieldArray’s mutators but for primitive arrays (e.g., string[]).

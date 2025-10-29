@@ -79,7 +79,7 @@ export function ClassesGrid({ classes }: { classes: ListClass[] }) {
   const classesByCategory = useMemo(() => {
     return classes.reduce((rec, c) => {
       const category = c.category ?? DEFAULT_CLASS_CATEGORY;
-      rec[category] = [...(rec[category] || []), c];
+      rec[category] = [...(rec[category] ?? []), c];
       return rec;
     }, {} as Record<string, ListClass[]>);
   }, [classes]);

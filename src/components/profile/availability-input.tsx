@@ -180,7 +180,7 @@ export function AvailabilityInput({
       setEnd(start);
       setDragging(true);
     },
-    [editMode, localAvailability],
+    [pointToSlot, editMode, localAvailability],
   );
 
   const overlayProps = mergeProps(moveProps, {

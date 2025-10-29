@@ -11,6 +11,7 @@ import type { CreateClassInput, UpdateClassInput } from "@/models/api/class"
 import type { SingleClass } from "@/models/class"
 import { clientApi } from "@/trpc/client"
 import { diffArray, diffEntityArray } from "@/utils/formUtils"
+import { useRouter } from "next/navigation"
 
 function toFormValues(cls?: SingleClass): ClassEditSchemaType {
   return {
@@ -42,6 +43,7 @@ function toFormValues(cls?: SingleClass): ClassEditSchemaType {
 export default function ClassesEditView() {
   const [queryClassId, setQueryClassId] = useQueryState("class", parseAsString);
   const [queryTermId] = useQueryState("term", parseAsString);
+  const router = useRouter();
   const apiUtils = clientApi.useUtils();
   const isEditing = !!queryClassId;
 
@@ -58,25 +60,25 @@ export default function ClassesEditView() {
 
   const { mutate: createClass, isPending: isCreatingClass } =
     clientApi.class.create.useMutation({
-      onSuccess: (createdId) => {
-        setQueryClassId(createdId);
-        apiUtils.class.list.invalidate();
+      onSuccess: async (createdId) => {
+        await setQueryClassId(createdId);
+        await apiUtils.class.list.invalidate();
+        router.back();
       },
     });
 
   const { mutate: updateClass, isPending: isUpdatingClass } =
     clientApi.class.update.useMutation({
-      onSuccess: (_, { id }) => {
-        apiUtils.class.byId.invalidate({ classId: id });
-        apiUtils.class.list.invalidate();
+      onSuccess: async (_, { id }) => {
+        await apiUtils.class.byId.invalidate({ classId: id });
+        await apiUtils.class.list.invalidate();
+        router.back();
       },
     });
 
   const isSubmitting = isCreatingClass || isUpdatingClass;
   const loading = isEditing ? isLoadingEditingClass : isLoadingCurrentTerm;
-  const initial = toFormValues(
-    isEditing ? (editingClassData as SingleClass | undefined) : undefined,
-  );
+  const initial = toFormValues(editingClassData);
 
   const onSubmit = (data: ClassEditSchemaType) => {
     if (isEditing) {
@@ -84,7 +86,7 @@ export default function ClassesEditView() {
       const originalSchedules = initial?.schedules ?? [];
 
       const originalIdToSchedule = new Map<string, ScheduleEditSchemaOutput>(
-        originalSchedules.map((s) => [s.id as string, s]),
+        originalSchedules.map((s) => [s.id!, s]),
       );
 
       const { added, edited, deletedIds } = diffEntityArray(
@@ -94,12 +96,12 @@ export default function ClassesEditView() {
       );
 
       updateClass({
-        id: queryClassId!,
+        id: queryClassId,
         addedSchedules: added as any,
         updatedSchedules: edited.map((schedule) => {
           const { volunteerUserIds, id, ...rest } = schedule;
           const originalIds =
-            originalIdToSchedule.get(id!)?.volunteerUserIds ?? [];
+            originalIdToSchedule.get(id)?.volunteerUserIds ?? [];
           const { added: addedIds, deleted: removedIds } = diffArray(
             originalIds,
             volunteerUserIds,
@@ -107,7 +109,7 @@ export default function ClassesEditView() {
 
           return {
             ...rest,
-            id: id!,
+            id: id,
             addedVolunteerUserIds: addedIds,
             removedVolunteerUserIds: removedIds,
           };

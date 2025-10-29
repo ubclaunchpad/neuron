@@ -2,7 +2,7 @@ import { isoDateToJSDate, jsDateToIsoDate } from "@/utils/dateUtils"
 import { DateInput } from "../primitives/date-input"
 import { FormBase, type FormControlFunc } from "./FormBase"
 
-export const FormDatePicker: FormControlFunc<string | undefined, { placeholder?: string }> = ({
+export const FormDatePicker: FormControlFunc<{ placeholder?: string }> = ({
   placeholder = "Select date",
   ...props
 }) => {

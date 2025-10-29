@@ -1,7 +1,7 @@
 import { Textarea } from "../primitives/textarea";
 import { FormBase, type FormControlFunc } from "./FormBase";
 
-export const FormTextarea: FormControlFunc<string | undefined, { 
+export const FormTextarea: FormControlFunc<{ 
   placeholder?: string;
   rows?: number;
   resizable?: boolean;

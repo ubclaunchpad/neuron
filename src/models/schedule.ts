@@ -1,6 +1,6 @@
 import type { ScheduleDB } from "@/server/db/schema";
 import { Temporal } from "@js-temporal/polyfill";
-import { ScheduleType, type Weekday } from "./api/schedule";
+import type { ScheduleType, Weekday } from "./api/schedule";
 import { getEmbeddedInstructor, type Instructor } from "./instructor";
 import { getEmbeddedVolunteer, type Volunteer } from "./volunteer";
 
@@ -57,7 +57,7 @@ export function buildSchedule(
 }
 
 export function getSingleSchedule(s: Schedule) {
-  const { tzid, localStartTime, ...restRule } = s.rule;
+  const { tzid, ...restRule } = s.rule;
 
   return {
     id: s.id,
@@ -75,7 +75,7 @@ export function getSingleSchedule(s: Schedule) {
 }
 
 export function getEmbeddedSchedule(s: Schedule) {
-  const { tzid, localStartTime, ...restRule } = s.rule;
+  const { tzid, ...restRule } = s.rule;
 
   return {
     id: s.id,

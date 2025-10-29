@@ -86,7 +86,6 @@ function formatMonthDayGroups(isoDates: string[], locale = "en-US"): string {
 
 export function describeScheduleTime(
   input: EmbeddedSchedule,
-  locale = "en-US",
 ): string {
   const timeRange = formatTimeRange(input.localStartTime, input.localEndTime);
   return timeRange;

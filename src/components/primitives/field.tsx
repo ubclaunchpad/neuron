@@ -204,12 +204,12 @@ function FieldError({
       return null 
     } 
 
-    errors = wrapIfNotArray(errors);
-    if (errors?.length === 1 && errors[0]?.message) {
+    const errorArray = wrapIfNotArray(errors);
+    if (errorArray?.length === 1 && errorArray[0]?.message) {
       return (
         <span className="inline-flex items-center gap-1">
           <Icon className="h-4 w-4" />
-          {errors[0].message}
+          {errorArray[0].message}
         </span>
       );
     }
@@ -217,7 +217,7 @@ function FieldError({
     return (
       <ul className="ml-4 flex list-disc flex-col gap-1">
         <Icon className="h-4 w-4" />
-        {errors.filter(e => !!e).map((e, i) => (
+        {errorArray.filter(e => !!e).map((e, i) => (
           <li key={i} className="inline-flex items-center gap-1">
             {e.message}
           </li>

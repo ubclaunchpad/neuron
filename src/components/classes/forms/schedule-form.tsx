@@ -137,9 +137,9 @@ export const ScheduleFormDialog = NiceModal.create(
     });
 
     const onSubmit = useCallback(
-      (data: ScheduleEditSchemaOutput) => {
-        modal.resolve(data);
-        modal.hide();
+      async (data: ScheduleEditSchemaOutput) => {
+        await modal.resolve(data);
+        await modal.hide();
       },
       [modal],
     );
@@ -147,11 +147,13 @@ export const ScheduleFormDialog = NiceModal.create(
     return (
       <Dialog
         open={modal.visible}
-        onOpenChange={(open) => {
-          if (open) modal.show();
+        onOpenChange={async (open) => {
+          if (open) {
+            await modal.show();
+          }
           else {
-            modal.hide();
-            modal.reject();
+            await modal.hide();
+            await modal.reject();
           }
         }}
       >

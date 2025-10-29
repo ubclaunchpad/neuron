@@ -24,8 +24,8 @@ export const diffArray = <T extends Primitive>(
     deleted: Array<T>;
 } => {
     const changes = diff(beforeArray, afterArray);
-    const added: Array<T> = changes.filter(c => c.type === "CREATE" || c.type === "CHANGE").map(c => c.value);
-    const deleted: Array<T> = changes.filter(c => c.type === "REMOVE" || c.type === "CHANGE").map(c => c.oldValue);
+    const added: Array<T> = changes.filter(c => c.type === "CREATE" || c.type === "CHANGE").map(c => c.value as T);
+    const deleted: Array<T> = changes.filter(c => c.type === "REMOVE" || c.type === "CHANGE").map(c => c.oldValue as T);
     return { added, deleted };
 }
 

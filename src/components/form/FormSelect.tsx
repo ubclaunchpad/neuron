@@ -1,7 +1,7 @@
 import { Select, SelectContent, SelectTrigger, SelectValue } from "../primitives/select"
 import { FormBase, type FormControlFunc } from "./FormBase"
 
-export const FormSelect: FormControlFunc<string | number | undefined, { 
+export const FormSelect: FormControlFunc<{ 
   placeholder?: string,
   className?: string,
   children: React.ReactNode

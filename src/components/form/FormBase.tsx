@@ -12,7 +12,7 @@ import {
   FieldDescription,
   FieldError,
   FieldLabel,
-  fieldVariants,
+  type fieldVariants,
 } from "../primitives/field";
 import { LabelRequiredMarker } from "../primitives/label";
 
@@ -53,14 +53,13 @@ export type FormBaseProps<
 };
 
 export type FormControlFunc<
-  Expected,
   ExtraProps extends Record<string, unknown> = Record<never, never>,
 > = <
   TFieldValues extends FieldValues = FieldValues,
   TTransformedValues = TFieldValues,
-  TName extends FieldPathByValue<TFieldValues, Expected | unknown> = FieldPathByValue<
+  TName extends FieldPathByValue<TFieldValues, any> = FieldPathByValue<
     TFieldValues,
-    Expected
+    any
   >,
 >(
   props: FormControlProps<TFieldValues, TName, TTransformedValues> & ExtraProps,
@@ -116,7 +115,7 @@ export function FormBase<
             {controlFirst ? (
               <>
                 {control}
-                {(label || errorElem) && (
+                {(label || errorElem) ?? (
                   <FieldContent>
                     {labelElement}
                     {errorElem}

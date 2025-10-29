@@ -31,7 +31,7 @@ function hashSeed(seed: string) {
     return hash;
 }
 
-export function createPrng(seed: string = ''): Prng {
+export function createPrng(seed = ""): Prng {
     // Ensure that seed is a string
     seed = seed.toString();
 
@@ -46,7 +46,7 @@ export function createPrng(seed: string = ''): Prng {
     return {
         seed,
         next,
-        bool(likelihood: number = 50) {
+        bool(likelihood = 50) {
             return integer(1, 100) <= likelihood;
         },
         integer(min: number, max: number) {
@@ -81,7 +81,7 @@ export function createPrng(seed: string = ''): Prng {
         },
         string(
             length: number,
-            characters: string = 'abcdefghijklmnopqrstuvwxyz1234567890',
+            characters = 'abcdefghijklmnopqrstuvwxyz1234567890',
         ): string {
             // Each method call should call the `next` function only once.
             // Therefore, we use a separate instance of the PRNG here.

@@ -23,7 +23,7 @@ import {
   FieldSet,
 } from "@/components/primitives/field";
 import { Spinner } from "@/components/primitives/spinner";
-import type { Holiday, Term } from "@/models/term";
+import type { Term } from "@/models/term";
 import { clientApi } from "@/trpc/client";
 import { isoDateToJSDate, jsDateToIsoDate } from "@/utils/dateUtils";
 import { diffEntityArray } from "@/utils/formUtils";
@@ -253,25 +253,25 @@ export const TermForm = NiceModal.create(
 
     const { mutate: createTermMutation, isPending: isUpdatingTerm } =
       clientApi.term.create.useMutation({
-        onSuccess: () => {
-          apiUtils.term.all.invalidate();
-          modal.hide();
+        onSuccess: async () => {
+          await apiUtils.term.all.invalidate();
+          await modal.hide();
         },
       });
 
     const { mutate: updateTermMutation, isPending: isCreatingTerm } =
       clientApi.term.update.useMutation({
-        onSuccess: (_, { id }) => {
-          apiUtils.term.byId.invalidate({ termId: id });
-          apiUtils.term.all.invalidate();
-          modal.hide();
+        onSuccess: async (_, { id }) => {
+          await apiUtils.term.byId.invalidate({ termId: id });
+          await apiUtils.term.all.invalidate();
+          await modal.hide();
         },
       });
 
     const onSubmit = (data: TermEditSchemaOutput) => {
       if (editing) {
         const { holidays, ...updateData } = data;
-        const originalHolidays = (termData?.holidays ?? []) as Holiday[];
+        const originalHolidays = termData?.holidays ?? [];
         const { added, edited, deletedIds } = diffEntityArray(
           originalHolidays,
           holidays.map((h) => ({
@@ -283,7 +283,7 @@ export const TermForm = NiceModal.create(
         );
 
         updateTermMutation({
-          id: editingId!,
+          id: editingId,
           addedHolidays: added,
           updatedHolidays: edited,
           deletedHolidays: deletedIds,

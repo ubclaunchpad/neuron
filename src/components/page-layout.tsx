@@ -65,7 +65,7 @@ function PageLayout({
       sidebarWidth,
       mainMinWidth,
     }),
-    [isOpen, registerAside, hasAside, sidebarWidth, mainMinWidth],
+    [toggle, isOpen, registerAside, hasAside, sidebarWidth, mainMinWidth],
   );
 
   return (

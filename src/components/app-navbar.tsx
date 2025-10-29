@@ -138,7 +138,7 @@ function ProfileCard() {
 }
 
 export function AppNavbar() {
-  const { state, isMobile, open, toggleSidebar } = useSidebar();
+  const { isMobile, open, toggleSidebar } = useSidebar();
 
   return (
     <Sidebar collapsible="icon">

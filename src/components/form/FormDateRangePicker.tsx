@@ -2,12 +2,7 @@ import { isoDateToJSDate, jsDateToIsoDate } from "@/utils/dateUtils"
 import { DateRangeInput } from "../primitives/date-input"
 import { FormBase, type FormControlFunc } from "./FormBase"
 
-type FormDateRange = {
-  from: string | undefined,
-  to?: string | undefined
-}
-
-export const FormDateRangePicker: FormControlFunc<FormDateRange, { placeholder?: string }> = ({
+export const FormDateRangePicker: FormControlFunc<{ placeholder?: string }> = ({
   placeholder,
   ...props
 }) => {

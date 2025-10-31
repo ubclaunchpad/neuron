@@ -36,6 +36,10 @@ export const AttendanceStatusEnum = z.enum([
 export type AttendanceStatus = z.infer<typeof AttendanceStatusEnum>;
 export const AttendanceStatus = createStringEnum(AttendanceStatusEnum);
 
+export const ObjectTypeEnum = z.enum(["user", "class"] as const);
+export type ObjectType = z.infer<typeof ObjectTypeEnum>;
+export const ObjectType = createStringEnum(ObjectTypeEnum);
+
 export const ScheduleTypeEnum = z.enum(["single", "rrule"] as const);
 export type ScheduleType = z.infer<typeof ScheduleTypeEnum>;
 export const ScheduleType = createStringEnum(ScheduleTypeEnum);

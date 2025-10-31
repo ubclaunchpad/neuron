@@ -20,6 +20,20 @@ services:
     volumes:
       - redisdata:/data
 
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: ["minio", "server", "--console-address", ":9001", "/data"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Console
+    volumes:
+      - miniodata:/data
+
 volumes:
   pgdata:
   redisdata:
+  miniodata:

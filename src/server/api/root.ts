@@ -5,6 +5,7 @@ import { logRouter } from "@/server/api/routers/log-router";
 import { shiftRouter } from "@/server/api/routers/shift-router";
 import { termRouter } from "@/server/api/routers/term-router";
 import { volunteerRouter } from "@/server/api/routers/volunteer-router";
+import { profileRouter } from "@/server/api/routers/profile-router";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 
 /**
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
   log: logRouter,
   instructor: instructorRouter,
   term: termRouter,
+  profile: profileRouter,
 });
 
 // export type definition of API

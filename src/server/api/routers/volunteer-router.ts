@@ -37,6 +37,8 @@ export const volunteerRouter = createTRPCRouter({
         /* volunteer */
       };
     }),
+
+  // Verification
   activate: authorizedProcedure({ permission: { users: ["activate"] } })
     .input(VolunteerIdInput.merge(AdminSignoffInput))
     .mutation(async ({ input, ctx }) => {

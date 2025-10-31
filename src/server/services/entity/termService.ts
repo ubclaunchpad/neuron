@@ -1,7 +1,7 @@
 import { type CreateTermInput } from "@/models/api/term";
 import { buildTerm, type Term } from "@/models/term";
 import { type Drizzle } from "@/server/db";
-import { term, blackout } from "@/server/db/schema/course";
+import { blackout, term } from "@/server/db/schema/course";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
 // import { P } from "node_modules/better-auth/dist/shared/better-auth.jwa4Tx7v";
@@ -22,16 +22,16 @@ export class TermService {
       with: {blackouts: true},
       orderBy: [desc(term.startDate)],
     });
-    if (active) {
+    if (active)
       return buildTerm(active);
-    }
 
     // Most recent past term
     const past = await this.db.query.term.findFirst({
       where: lte(term.endDate, nowDate),
       orderBy: [desc(term.endDate)],
     });
-    if (past) return buildTerm(past);
+    if (past) 
+      return buildTerm(past);
 
     const future = await this.db.query.term.findFirst({
       with: { blackouts: true },
@@ -44,7 +44,7 @@ export class TermService {
 
   async getAllTerms(): Promise<Term[]> {
     const term = await this.db.query.term.findMany({
-      with: {blackouts: true},
+      with: { blackouts: true },
     });
     return term.map((d) => buildTerm(d));
   }
@@ -68,40 +68,41 @@ export class TermService {
       where: eq(term.id, id),
       with: {blackouts: true},
     });
-    // return await this.getTerms([id]).then(([term]) => term!);
+
     if (!termData) throw new NeuronError(
-      'Could not find Term with id ${id}', NeuronErrorCodes.NOT_FOUND,
+      'Could not find Term with id ${id}', 
+      NeuronErrorCodes.NOT_FOUND,
     );
+
     return buildTerm(termData);
   }
 
   async createTerm(input: CreateTermInput): Promise<string> {
-
-    const {holidays, ...termData} = input;
+    const { holidays, ...termData } = input;
 
     return await this.db.transaction(async (tx) => {
+      const [createdTerm] = await tx
+        .insert(term)
+        .values(termData)
+        .returning({id: term.id});
+
+      if(!createdTerm) {
+        throw new Error("Failed to create term")
+      }
+
+      const termId = createdTerm.id; 
+
+      if (holidays.length > 0) {
+        await tx.insert(blackout).values(
+          holidays.map((h) => ({
+            termId,
+            startsOn: h.startsOn,
+            endsOn: h.endsOn,
+          }))
+        );
+      }
       
-    const [createdTerm] = await tx
-    .insert(term)
-    .values(termData)
-    .returning({id: term.id});
-
-    if(!createdTerm) {
-      throw new Error("Failed to create term")
-    }
-
-    const termId = createdTerm.id; 
-
-    if (holidays.length > 0) {
-      await tx.insert(blackout).values(
-        holidays.map((h) => ({
-          termId,
-          startsOn: h.startsOn,
-          endsOn: h.endsOn,
-        }))
-      );
-    }
-    return termId;
+      return termId;
     });
   }
 

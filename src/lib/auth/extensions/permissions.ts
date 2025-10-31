@@ -52,6 +52,7 @@ const admin = accessControl.newRole({
     "delete-instructor",
   ],
   logs: ["view"],
+  profile: ["view", "update"],
 });
 
 const volunteer = accessControl.newRole({
@@ -66,6 +67,7 @@ const instructor = accessControl.newRole({
   terms: ["view"],
   shifts: ["view"],
   users: ["view-volunteer"],
+  profile: ["view", "update"],
 });
 
 const roleToAccessControlRole: Record<Role, AccessRole> = {

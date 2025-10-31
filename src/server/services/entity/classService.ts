@@ -5,13 +5,16 @@ import { RRuleTemporal } from "rrule-temporal";
 import type { ClassRequest, CreateClassInput, UpdateClassInput } from "@/models/api/class";
 import type { CreateScheduleInput, ScheduleRule, UpdateScheduleInput, Weekday } from "@/models/api/schedule";
 import { buildClass, type Class, type ClassResponse } from "@/models/class";
+import { ScheduleType } from "@/models/interfaces";
 import type { ListResponse } from "@/models/list-response";
 import { buildSchedule } from "@/models/schedule";
+import type { Term } from "@/models/term";
 import { type Drizzle, type Transaction } from "@/server/db";
-import { course, schedule, volunteerToSchedule } from "@/server/db/schema";
+import { course, instructorToSchedule, schedule, volunteerToSchedule } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap } from "@/utils/arrayUtils";
 import { InstructorService } from "./instructorService";
+import { ShiftService } from "./shiftService";
 import type { TermService } from "./termService";
 import { VolunteerService } from "./volunteerService";
 
@@ -20,12 +23,20 @@ export class ClassService {
   private readonly instructorService: InstructorService;
   private readonly volunteerService: VolunteerService;
   private readonly termService: TermService;
+  private readonly shiftService: ShiftService;
 
-  constructor(db: Drizzle, instructorService: InstructorService, volunteerService: VolunteerService, termService: TermService) {
+  constructor(
+    db: Drizzle,
+    instructorService: InstructorService,
+    volunteerService: VolunteerService,
+    termService: TermService,
+    shiftService: ShiftService,
+  ) {
     this.db = db;
     this.instructorService = instructorService;
     this.volunteerService = volunteerService;
     this.termService = termService;
+    this.shiftService = shiftService;
   }
 
   async getClassesForRequest(
@@ -102,6 +113,14 @@ export class ClassService {
         throw new NeuronError("Failed to update Class", NeuronErrorCodes.INTERNAL_SERVER_ERROR);
       }
 
+      const courseRow = await tx.query.course.findFirst({
+        where: eq(course.id, id)
+      });
+      
+      if (courseRow?.published) {
+        throw new NeuronError("Schedules can not be changed for a published class.", NeuronErrorCodes.BAD_REQUEST);
+      }
+
       // Insert schedules
       await this.insertSchedules(tx, id, addedSchedules);
 
@@ -132,12 +151,98 @@ export class ClassService {
   }
 
   async publishClass(classId: string): Promise<void> {
-    throw new Error("Not implemented");
+    const classToPublish = await this.getClass(classId);
+    const term = await this.termService.getTerm(classToPublish.termId);
+
+    const schedulesToPublish = classToPublish.schedules;
+    for (const schedule of schedulesToPublish) {
+
+      // schedule start/end dates override term start/end dates
+      const startDate = schedule.effectiveStart ?? term.startDate;
+      const endDate = schedule.effectiveEnd ?? term.endDate;
+
+      const rule = schedule.rule;
+      const dtstart = this.toTemporalZonedDateTime(startDate, rule);
+      const until = this.toTemporalZonedDateTime(endDate, rule);
+
+      const rrule = this.buildRRuleFromScheduleRule(rule);
+      const exDate = this.getExDate(term, rule, dtstart);
+
+      const finishedRule = new RRuleTemporal({
+        ...rrule.options(),
+        dtstart,
+        until,
+        exDate,
+      })
+
+      // create shifts for all dates in rrule
+      const occurrences = finishedRule.all();
+      const durationMinutes = schedule.durationMinutes;
+
+      for (const dt of occurrences) {
+        const shiftDate = dt.toPlainDate();
+
+        const startAt = dt.toInstant().toString();
+        const endAt = dt.add({ minutes: durationMinutes }).toInstant().toString();
+
+        // store start/end times in UTC
+        await this.shiftService.createShift({
+          scheduleId: schedule.id,
+          date: shiftDate.toString(),
+          startAt,
+          endAt,
+        });
+      }
+
+      // update class to published
+      const row = await this.db
+        .update(course)
+        .set({
+          published: true
+        })
+        .where(eq(course.id, classId))
+        .returning({ id: course.id });
+      if (row.length !== 1) {
+        throw new NeuronError("Failed to update Class", NeuronErrorCodes.INTERNAL_SERVER_ERROR);
+      }
+    }
+  }
+
+  private getExDate(term: Term, rule: ScheduleRule, startDate: Temporal.ZonedDateTime) {
+    const exDate: Temporal.ZonedDateTime[] = [];
+    for (const holiday of term.holidays) {
+      const start = Temporal.PlainDate.from(holiday.startsOn);
+      const end = Temporal.PlainDate.from(holiday.endsOn);
+
+      for (let d = start; Temporal.PlainDate.compare(d, end) <= 0; d = d.add({ days: 1 })) {
+        exDate.push(
+          d.toZonedDateTime({
+            plainTime: Temporal.PlainTime.from(rule.localStartTime),
+            timeZone: rule.tzid
+          })
+        );
+      }
+    }
+    // prevent start dates from being included in singles
+    if (rule.type == ScheduleType.single) {
+      exDate.push(startDate)
+    }
+    return exDate;
   }
 
   async publishAllClasses(): Promise<void> {
-    throw new Error("Not implemented");
+    const courseIds = await this.db
+      .select({ id: course.id })
+      .from(course)
+      .where(sql`published = false`);
+
+    if (courseIds.length === 0) return;
+
+    await Promise.allSettled(
+      courseIds.map(({ id }) => this.publishClass(id))
+    );
   }
+
 
   async retrieveFullClasses({ 
     where, 
@@ -156,6 +261,7 @@ export class ClassService {
         schedules: {
           with: {
             volunteers: true,
+            instructors: true,
           },
         },
       },
@@ -170,7 +276,7 @@ export class ClassService {
 
     // Get instructors and volunteers for schedules
     const instructorIds = courses.flatMap((course) =>
-      course.schedules.flatMap((schedule) => schedule.instructorUserId ?? []),
+      course.schedules.flatMap((schedule) => schedule.instructors.map((i) => i.instructorUserId)),
     );
     const instructors = toMap(await this.instructorService.getInstructors(instructorIds));
     const volunteerIds = courses.flatMap((course) =>
@@ -188,12 +294,8 @@ export class ClassService {
             buildSchedule(
               schedule,
               this.buildScheduleRuleFromRRule(schedule.rrule),
-              schedule.instructorUserId
-                ? instructors.get(schedule.instructorUserId)!
-                : undefined,
-              schedule.volunteers.map(
-                (volunteer) => volunteers.get(volunteer.volunteerUserId)!,
-              ),
+              schedule.instructors.map((ins) => instructors.get(ins.instructorUserId)!),
+              schedule.volunteers.map((volunteer) => volunteers.get(volunteer.volunteerUserId)!),
             ),
           ),
         ),
@@ -213,6 +315,8 @@ export class ClassService {
         rule,
         addedVolunteerUserIds,
         removedVolunteerUserIds,
+        addedInstructorUserIds,
+        removedInstructorUserIds,
         ...scheduleUpdate
       } = updateSchedule;
 
@@ -248,6 +352,31 @@ export class ClassService {
             ),
           );
       }
+
+      // Insert instructors to schedule
+      if (addedInstructorUserIds) {
+        await tx.insert(instructorToSchedule).values(
+          addedInstructorUserIds?.map((instructorId) => ({
+            scheduleId,
+            instructorUserId: instructorId,
+          })),
+        );
+      }
+
+      // Remove instructors from schedule
+      if (removedInstructorUserIds) {
+        await tx
+          .delete(instructorToSchedule)
+          .where(
+            and(
+              eq(instructorToSchedule.scheduleId, scheduleId),
+              inArray(
+                instructorToSchedule.instructorUserId,
+                removedInstructorUserIds,
+              ),
+            ),
+          );
+      }
     }
   }
 
@@ -258,7 +387,7 @@ export class ClassService {
   ): Promise<void> {
     // Insert schedules
     for (const createSchedule of schedules) {
-      const { volunteerUserIds, rule, ...scheduleCreate } = createSchedule;
+      const { volunteerUserIds, instructorUserIds, rule, ...scheduleCreate } = createSchedule;
       const rruleObject = this.buildRRuleFromScheduleRule(rule);
 
       const row = await tx
@@ -272,12 +401,24 @@ export class ClassService {
       }
 
       // Insert volunteers to schedule
-      await tx.insert(volunteerToSchedule).values(
-        volunteerUserIds.map((volunteerId) => ({
-          scheduleId: row.id,
-          volunteerUserId: volunteerId,
-        })),
-      );
+      if (volunteerUserIds.length > 0) {
+        await tx.insert(volunteerToSchedule).values(
+          volunteerUserIds.map((volunteerId) => ({
+            scheduleId: row.id,
+            volunteerUserId: volunteerId,
+          })),
+        );
+      }
+
+      // Insert instructors to schedule
+      if (instructorUserIds.length > 0) {
+        await tx.insert(instructorToSchedule).values(
+          instructorUserIds.map((instructorId) => ({
+            scheduleId: row.id,
+            instructorUserId: instructorId,
+          })),
+        );
+      }
     }
   }
 
@@ -314,13 +455,17 @@ export class ClassService {
           freq: "YEARLY",
           count: rule.extraDates.length,
           rDate: rule.extraDates.map(
-            (date) => Temporal.PlainDate.from(date).toZonedDateTime({ 
-              timeZone: rule.tzid,
-              plainTime: Temporal.PlainTime.from(rule.localStartTime)
-            })
+            (date) => this.toTemporalZonedDateTime(date, rule)
           ),
         });
     }
+  }
+
+  private toTemporalZonedDateTime(date: string, rule: ScheduleRule): Temporal.ZonedDateTime {
+    return Temporal.PlainDate.from(date).toZonedDateTime({
+      timeZone: rule.tzid,
+      plainTime: Temporal.PlainTime.from(rule.localStartTime)
+    });
   }
 
   private buildScheduleRuleFromRRule(rruleString: string): ScheduleRule {

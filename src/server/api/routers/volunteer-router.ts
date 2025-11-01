@@ -5,6 +5,7 @@ import {
 } from "@/models/api/volunteer";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
+import { z } from "zod";
 
 export const volunteerRouter = createTRPCRouter({
   list: authorizedProcedure({ permission: { users: ["view-volunteer"] } })
@@ -13,21 +14,20 @@ export const volunteerRouter = createTRPCRouter({
       // TODO: getVolunteers
       return [];
     }),
-  updateClassPreferences: authorizedProcedure({
+  setClassPreference: authorizedProcedure({
     permission: { profile: ["update"] },
   })
-    .input(VolunteerIdInput)
-    .mutation(async ({ input }) => {
-      // TODO: updatePreferredClassesById
+    .input(VolunteerIdInput.merge(z.object({classId: z.string().uuid(), preferred: z.boolean()})))
+    .mutation(async ({ input, ctx }) => {
+      await ctx.volunteerService.setClassPreference(input.volunteerUserId, input.classId, input.preferred)
       return { ok: true };
     }),
-  getClassPreferences: authorizedProcedure({
+  getClassPreference: authorizedProcedure({
     permission: { profile: ["update"] },
   })
-    .input(VolunteerIdInput)
-    .query(async ({ input }) => {
-      // TODO: getClassPreferences
-      return { ok: true };
+    .input(VolunteerIdInput.merge(z.object({classId: z.string().uuid()})))
+    .query(async ({ input, ctx }) => {
+      return await ctx.volunteerService.getClassPreference(input.volunteerUserId, input.classId)
     }),
   byId: authorizedProcedure({ permission: { users: ["view-volunteer"] } })
     .input(VolunteerIdInput)

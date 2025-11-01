@@ -7,7 +7,10 @@ import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { inArray, sql } from "drizzle-orm";
 import { volunteerUserView, user } from "../../db/schema/user";
 import { Status } from "@/models/interfaces";
-import { eq } from "drizzle-orm";
+import { coursePreference } from "@/server/db/schema/user";
+import { and, eq } from "drizzle-orm";
+import { course } from "@/server/db/schema";
+
 
 export class VolunteerService {
   private readonly db: Drizzle;
@@ -52,6 +55,34 @@ export class VolunteerService {
 
   async getVolunteer(id: string): Promise<Volunteer> {
     return await this.getVolunteers([id]).then(([volunteer]) => volunteer!);
+  }
+
+  // set the preferred status for the current volunteer
+  async setClassPreference(volunteerUserId: string, classId: string, preferred: boolean): Promise<void> {
+    const existing = await this.db
+    .select()
+    .from(coursePreference)
+    .where(and(eq(coursePreference.volunteerUserId, volunteerUserId), eq(coursePreference.courseId, classId)));
+
+    if (preferred && existing.length === 0) {
+      await this.db.insert(coursePreference).values({
+        volunteerUserId,
+        courseId: classId,
+      });
+    } else if (!preferred && existing.length > 0) {
+      await this.db
+      .delete(coursePreference)
+      .where(and(eq(coursePreference.volunteerUserId, volunteerUserId), eq(coursePreference.courseId, classId)));
+    }
+  }
+
+  async getClassPreference(volunteerUserId: string, classId: string): Promise<{ preferred: boolean}> {
+    const result = await this.db
+      .select()
+      .from(coursePreference)
+      .where(and(eq(coursePreference.volunteerUserId, volunteerUserId), eq(coursePreference.courseId, classId)));
+      
+    return {preferred: result.length > 0};
   }
 
   // any -> active

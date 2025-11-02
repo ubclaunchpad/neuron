@@ -6,6 +6,7 @@ import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { desc, inArray, sql } from "drizzle-orm";
 import { instructorUserView } from "../../db/schema/user";
+import type { InstructorUserViewDB } from "@/server/db/schema";
 import { buildSimilarityExpression, buildSearchCondition, getPagination } from "@/utils/searchUtils";
 
 export class InstructorService {
@@ -19,25 +20,31 @@ export class InstructorService {
     const queryInput = listRequest.queryInput?.trim() ?? "";
 
     const similarity = queryInput.length > 0
-      ? buildSimilarityExpression(instructorUserView.name.toString(), instructorUserView.lastName.toString(), instructorUserView.email.toString(), queryInput)
+      ? buildSimilarityExpression([instructorUserView.name, instructorUserView.lastName, instructorUserView.email], queryInput)
       : undefined;
 
     const baseSelect = {
-      count: sql<number>`count(*)`,
+      count: sql<number>`count(*) over()`,
       ...getViewColumns(instructorUserView),
     } as const;
 
-    const builder = queryInput.length > 0
-      ? this.db
-          .select({ ...baseSelect, similarity: similarity! })
-          .from(instructorUserView)
-          .where(buildSearchCondition(instructorUserView.name.toString(), instructorUserView.lastName.toString(), instructorUserView.email.toString(), queryInput))
-          .orderBy(desc(similarity!))
-      : this.db
-          .select(baseSelect)
-          .from(instructorUserView);
+    const selectShape = queryInput.length > 0
+      ? { ...baseSelect, similarity: similarity! }
+      : baseSelect;
 
-    const rows = await builder.limit(perPage).offset(offset);
+    let builder: any = this.db
+      .select(selectShape)
+      .from(instructorUserView);
+
+    if (queryInput.length > 0) {
+      builder = builder
+        .where(buildSearchCondition([instructorUserView.name, instructorUserView.lastName, instructorUserView.email], queryInput))
+        .orderBy(desc(similarity!));
+    }
+
+    const rows = await builder
+      .limit(perPage)
+      .offset(offset) as Array<InstructorUserViewDB & { count: number; similarity?: number }>;
 
     return {
       data: rows.map((d) => buildInstructor(d)),

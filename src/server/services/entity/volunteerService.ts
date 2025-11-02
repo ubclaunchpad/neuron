@@ -6,6 +6,7 @@ import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { inArray, sql } from "drizzle-orm";
 import { volunteerUserView, user } from "../../db/schema/user";
+import type { VolunteerUserViewDB } from "@/server/db/schema";
 import { Status } from "@/models/interfaces";
 import { eq, desc } from "drizzle-orm";
 import { buildSimilarityExpression, buildSearchCondition, getPagination } from "@/utils/searchUtils";
@@ -21,25 +22,31 @@ export class VolunteerService {
     const queryInput = listRequest.queryInput?.trim() ?? "";
 
     const similarity = queryInput.length > 0
-      ? buildSimilarityExpression(volunteerUserView.name.toString(), volunteerUserView.lastName.toString(), volunteerUserView.email.toString(), queryInput)
+      ? buildSimilarityExpression([volunteerUserView.name, volunteerUserView.lastName, volunteerUserView.email], queryInput)
       : undefined;
 
     const baseSelect = {
-      count: sql<number>`count(*)`,
+      count: sql<number>`count(*) over()`,
       ...getViewColumns(volunteerUserView),
     } as const;
 
-    const builder = queryInput.length > 0
-      ? this.db
-          .select({ ...baseSelect, similarity: similarity! })
-          .from(volunteerUserView)
-          .where(buildSearchCondition(volunteerUserView.name.toString(), volunteerUserView.lastName.toString(), volunteerUserView.email.toString(), queryInput))
-          .orderBy(desc(similarity!))
-      : this.db
-          .select(baseSelect)
-          .from(volunteerUserView);
+    const selectShape = queryInput.length > 0
+      ? { ...baseSelect, similarity: similarity! }
+      : baseSelect;
 
-    const rows = await builder.limit(perPage).offset(offset);
+    let builder: any = this.db
+      .select(selectShape)
+      .from(volunteerUserView);
+
+    if (queryInput.length > 0) {
+      builder = builder
+        .where(buildSearchCondition([volunteerUserView.name, volunteerUserView.lastName, volunteerUserView.email], queryInput))
+        .orderBy(desc(similarity!));
+    }
+
+    const rows = await builder
+      .limit(perPage)
+      .offset(offset) as Array<VolunteerUserViewDB & { count: number; similarity?: number }>;
 
     return {
       data: rows.map((d) => buildVolunteer(d)),

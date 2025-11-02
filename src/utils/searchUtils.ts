@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, type AnyColumn } from "drizzle-orm";
 import { ListRequest } from "@/models/api/common";
 
 export const getPagination = (listRequest: ListRequest) => {
@@ -8,14 +8,35 @@ export const getPagination = (listRequest: ListRequest) => {
   return { page, perPage, offset } as const;
 };
 
-export const buildSimilarityExpression = (name: string, lastName: string, email: string, queryInput: string) => {
-  return sql<number>`((similarity(${name}, ${queryInput}) * 3) +
-      (similarity(${lastName}, ${queryInput}) * 2) +
-      (similarity(${email}, ${queryInput}) * 1))`;
+// Order columns by most important first to least important
+export const buildSimilarityExpression = (columns: AnyColumn[], queryInput: string) => {
+  if (columns.length === 0) {
+    return sql<number>`0`;
+  }
+
+  const total = columns.length;
+  let expression = sql<number>`(similarity(${columns[0]}, ${queryInput}) * ${total})`;
+
+  for (let i = 1; i < columns.length; i++) {
+    const weight = total - i;
+    const part = sql<number>`(similarity(${columns[i]}, ${queryInput}) * ${weight})`;
+    expression = sql<number>`(${expression} + ${part})`;
+  }
+
+  return expression;
 };
 
-export const buildSearchCondition = (name: string, lastName: string, email: string, queryInput: string) => {
-  return sql`(LOWER(${name}) % LOWER(${queryInput}) OR
-          LOWER(${lastName}) % LOWER(${queryInput}) OR
-          LOWER(${email}) %> LOWER(${queryInput}))`;
+export const buildSearchCondition = (columns: AnyColumn[], queryInput: string) => {
+  if (columns.length === 0) {
+    return sql`false`;
+  }
+
+  let expression = sql`(LOWER(${columns[0]}) % LOWER(${queryInput}))`;
+
+  for (let i = 1; i < columns.length; i++) {
+    const part = sql`(LOWER(${columns[i]}) % LOWER(${queryInput}))`;
+    expression = sql`(${expression} OR ${part})`;
+  }
+
+  return expression;
 };

@@ -1,5 +1,5 @@
 import type { CreateShiftInput, ShiftIdInput } from "@/models/api/shift";
-import { type Drizzle } from "@/server/db";
+import { type Drizzle, type Transaction } from "@/server/db";
 import { schedule } from "@/server/db/schema/schedule";
 import { shift } from "@/server/db/schema/shift";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
@@ -12,8 +12,10 @@ export class ShiftService {
     this.db = db;
   }
 
-  async createShift(input: CreateShiftInput): Promise<string> {
-    const scheduleRow = await this.db.query.schedule.findFirst({
+  async createShift(input: CreateShiftInput, tx?: Transaction): Promise<string> {
+    const transaction = tx ?? this.db;
+
+    const scheduleRow = await transaction.query.schedule.findFirst({
       where: eq(schedule.id, input.scheduleId),
       columns: {
         id: true,
@@ -28,7 +30,7 @@ export class ShiftService {
       );
     }
 
-    const [row] = await this.db
+    const [row] = await transaction
       .insert(shift)
       .values({
         courseId: scheduleRow.courseId,

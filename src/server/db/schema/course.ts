@@ -51,7 +51,7 @@ export const course = pgTable("course", {
     published: boolean("published").notNull().default(false),
     description: text("description"),
     meetingURL: text("meeting_url"),
-    category: text("category"),
+    category: text("category").notNull(),
     subcategory: text("subcategory"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

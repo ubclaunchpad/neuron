@@ -67,7 +67,7 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          switch ((user as BaseUser).role as any) {
+          switch ((user as BaseUser).role) {
             case Role.volunteer:
               await db.insert(volunteer).values({ userId: user.id });
               return;

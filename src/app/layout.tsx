@@ -6,7 +6,6 @@ import { ModalProvider } from "@/components/modal-wrapper";
 import HydrationGate from "@/components/utils/hydration-gate";
 import { Toaster } from "@/components/utils/toaster";
 import { AuthProvider } from "@/providers/auth-provider";
-import { NavigateEventProvider } from "@/providers/navigate-event-provider";
 import { TRPCReactProvider } from "@/trpc/client";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
@@ -50,9 +49,7 @@ export default function RootLayout({
         <NuqsAdapter>
           <TRPCReactProvider>
             <AuthProvider>
-              <NavigateEventProvider>
-                <ModalProvider>{children}</ModalProvider>
-              </NavigateEventProvider>
+              <ModalProvider>{children}</ModalProvider>
             </AuthProvider>
           </TRPCReactProvider>
         </NuqsAdapter>

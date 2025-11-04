@@ -22,7 +22,6 @@ import {
   useSidebar,
 } from "@/components/primitives/sidebar";
 
-import { Button } from "@/components/primitives/button";
 import { ActiveContext } from "@/components/utils/active-context";
 import { WithPermission } from "@/components/utils/with-permission";
 import type { Permissions } from "@/lib/auth/extensions/permissions";
@@ -38,6 +37,7 @@ import LogIcon from "@public/assets/icons/nav/log.svg";
 import MemberIcon from "@public/assets/icons/nav/member.svg";
 import ScheduleIcon from "@public/assets/icons/nav/schedule.svg";
 import Logo from "@public/assets/logo.svg";
+import { SettingsDropdown } from "./settings/settings-dropdown";
 
 const navbarItems = [
   {
@@ -82,9 +82,7 @@ function ProfileCard() {
   const userFullname = `${user?.name} ${user?.lastName}`
 
   return (
-    <Button
-      type="button"
-      variant="secondary"
+    <SettingsDropdown
       className={cn(
         "flex w-full min-w-0 flex-1 items-center justify-between",
         "bg-card shadow rounded-lg",
@@ -133,7 +131,7 @@ function ProfileCard() {
           "group-data-[state=collapsed]:size-0 group-data-[state=collapsed]:opacity-0"
         )}
       />
-    </Button>
+    </SettingsDropdown>
   );
 }
 

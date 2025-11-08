@@ -1,14 +1,13 @@
 import type { ListRequest } from "@/models/api/common";
 import type { ListResponse } from "@/models/list-response";
+import { Status } from "@/models/interfaces";
 import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { inArray, sql } from "drizzle-orm";
-import { volunteerUserView, user } from "../../db/schema/user";
+import { eq, desc, inArray, sql } from "drizzle-orm";
+import { volunteer, volunteerUserView, user } from "../../db/schema/user";
 import type { VolunteerUserViewDB } from "@/server/db/schema";
-import { Status } from "@/models/interfaces";
-import { eq, desc } from "drizzle-orm";
 import { buildSimilarityExpression, buildSearchCondition, getPagination } from "@/utils/searchUtils";
 
 export class VolunteerService {
@@ -70,6 +69,68 @@ export class VolunteerService {
 
   async getVolunteer(id: string): Promise<Volunteer> {
     return await this.getVolunteers([id]).then(([volunteer]) => volunteer!);
+  }
+
+  async updateVolunteerProfile(input: {
+    volunteerUserId: string;
+    preferredName?: string;
+    bio?: string;
+    pronouns?: string;
+    phoneNumber?: string;
+    city?: string;
+    province?: string;
+    preferredTimeCommitmentHours?: number;
+  }): Promise<void> {
+    const { volunteerUserId, ...rest } = input;
+
+    const updateData: Partial<typeof volunteer.$inferInsert> = {};
+    if (rest.preferredName !== undefined) {
+      updateData.preferredName = rest.preferredName;
+    }
+    if (rest.bio !== undefined) {
+      updateData.bio = rest.bio;
+    }
+    if (rest.pronouns !== undefined) {
+      updateData.pronouns = rest.pronouns;
+    }
+    if (rest.phoneNumber !== undefined) {
+      updateData.phoneNumber = rest.phoneNumber;
+    }
+    if (rest.city !== undefined) {
+      updateData.city = rest.city;
+    }
+    if (rest.province !== undefined) {
+      updateData.province = rest.province;
+    }
+    if (rest.preferredTimeCommitmentHours !== undefined) {
+      updateData.preferredTimeCommitmentHours = rest.preferredTimeCommitmentHours;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      throw new NeuronError("No volunteer profile fields provided to update.", NeuronErrorCodes.BAD_REQUEST);
+    }
+
+    const [updated] = await this.db
+      .update(volunteer)
+      .set(updateData)
+      .where(eq(volunteer.userId, volunteerUserId))
+      .returning({ userId: volunteer.userId });
+
+    if (!updated) {
+      throw new NeuronError(`Could not find Volunteer with id ${volunteerUserId}`, NeuronErrorCodes.NOT_FOUND);
+    }
+  }
+
+  async updateVolunteerAvailability(volunteerUserId: string, availability: string): Promise<void> {
+    const [updated] = await this.db
+      .update(volunteer)
+      .set({ availability })
+      .where(eq(volunteer.userId, volunteerUserId))
+      .returning({ userId: volunteer.userId });
+
+    if (!updated) {
+      throw new NeuronError(`Could not find Volunteer with id ${volunteerUserId}`, NeuronErrorCodes.NOT_FOUND);
+    }
   }
 
   // any -> active

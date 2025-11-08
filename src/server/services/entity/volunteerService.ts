@@ -57,26 +57,50 @@ export class VolunteerService {
     return await this.getVolunteers([id]).then(([volunteer]) => volunteer!);
   }
 
-  // set the preferred status for the current volunteer
+
   async setClassPreference(volunteerUserId: string, classId: string, preferred: boolean): Promise<void> {
     const existing = await this.db
     .select()
     .from(coursePreference)
-    .where(and(eq(coursePreference.volunteerUserId, volunteerUserId), eq(coursePreference.courseId, classId)));
+    .where(and(
+      eq(coursePreference.volunteerUserId, volunteerUserId), 
+      eq(coursePreference.courseId, classId)));
+    
+    const alreadyPreferred = existing.length > 0;
 
-    if (preferred && existing.length === 0) {
-      await this.db.insert(coursePreference).values({
-        volunteerUserId,
-        courseId: classId,
-      });
-    } else if (!preferred && existing.length > 0) {
+    if (preferred && alreadyPreferred) {
+      throw new NeuronError(`Course ${classId} already starred by volunteer ${volunteerUserId}`, NeuronErrorCodes.BAD_REQUEST);
+    }
+
+    if (!preferred && !alreadyPreferred) {
+      throw new NeuronError(`Course ${classId} not starred by volunteer ${volunteerUserId}`, NeuronErrorCodes.BAD_REQUEST)
+    }
+
+    if (preferred) {
+      await this.db.insert(coursePreference).values({volunteerUserId, courseId: classId});
+    } else {
       await this.db
       .delete(coursePreference)
-      .where(and(eq(coursePreference.volunteerUserId, volunteerUserId), eq(coursePreference.courseId, classId)));
+      .where(and(
+        eq(coursePreference.volunteerUserId, volunteerUserId), 
+        eq(coursePreference.courseId, classId)));
     }
   }
 
-  async getClassPreference(volunteerUserId: string, classId: string): Promise<{ preferred: boolean}> {
+  async getClassPreference(volunteerUserId: string, classId: string): Promise<{ preferred: boolean}> {   
+    const courseExists = await this.db
+    .select({ id: course.id })
+    .from(course)
+    .where(eq(course.id, classId))
+    .then(r => r.length > 0);
+
+    if (!courseExists) {
+      throw new NeuronError(
+        `Course with id ${classId} not found`,
+        NeuronErrorCodes.NOT_FOUND
+      );
+    }
+    
     const result = await this.db
       .select()
       .from(coursePreference)

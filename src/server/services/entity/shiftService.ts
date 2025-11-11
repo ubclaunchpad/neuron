@@ -8,7 +8,7 @@ import { type Drizzle, type Transaction } from "@/server/db";
 import { course } from "@/server/db/schema/course";
 import { instructorToSchedule, schedule } from "@/server/db/schema/schedule";
 import { coverageRequest, shift, shiftAttendance } from "@/server/db/schema/shift";
-import { instructorUserView, volunteer, volunteerUserView } from "@/server/db/schema/user";
+import { instructorUserView, instructorUserViewFields, volunteer, volunteerUserView, volunteerUserViewFields } from "@/server/db/schema/user";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, eq, gte, lte, or, sql } from "drizzle-orm";
 
@@ -26,8 +26,10 @@ export class ShiftService {
   }> {
     const { userId, before, after, limit, cursor, direction } = input;
 
+    // Build WHERE conditions
     const conditions = [eq(shift.canceled, false)];
 
+    // Date range filtering
     if (before) {
       conditions.push(lte(shift.startAt, new Date(before)));
     }
@@ -35,6 +37,7 @@ export class ShiftService {
       conditions.push(gte(shift.startAt, new Date(after)));
     }
 
+    // Cursor-based pagination
     if (cursor) {
       if (direction === "forward") {
         conditions.push(gte(shift.startAt, new Date(cursor)));
@@ -43,8 +46,10 @@ export class ShiftService {
       }
     }
 
+    // User filtering requires subqueries
     let userFilterSql = null;
     if (userId) {
+      // Check if user is volunteer or instructor
       const [volunteerRow] = await this.db
         .select({ userId: volunteer.userId })
         .from(volunteer)
@@ -60,11 +65,13 @@ export class ShiftService {
       if (volunteerRow) {
         // For volunteers: check shift_attendance OR resolved coverage requests
         userFilterSql = or(
+          // Assigned to shift
           sql`EXISTS (
             SELECT 1 FROM ${shiftAttendance}
             WHERE ${shiftAttendance.shiftId} = ${shift.id}
             AND ${shiftAttendance.userId} = ${userId}
           )`,
+          // Covering for someone else
           sql`EXISTS (
             SELECT 1 FROM ${coverageRequest}
             WHERE ${coverageRequest.shiftId} = ${shift.id}
@@ -73,6 +80,7 @@ export class ShiftService {
           )`
         );
       } else if (instructorRow) {
+        // For instructors: check if they teach the schedule
         userFilterSql = sql`EXISTS (
           SELECT 1 FROM ${instructorToSchedule}
           WHERE ${instructorToSchedule.scheduleId} = ${shift.scheduleId}
@@ -85,6 +93,7 @@ export class ShiftService {
       }
     }
 
+    // Fetch shifts with relations
     const shifts = await this.db
       .select({
         shift: shift,
@@ -101,6 +110,7 @@ export class ShiftService {
     const hasMore = shifts.length > limit;
     const items = shifts.slice(0, limit);
 
+    // Fetch volunteers and coverage info for each shift
     const shiftIds = items.map((s) => s.shift.id);
 
     if (shiftIds.length === 0) {
@@ -115,7 +125,7 @@ export class ShiftService {
       .select({
         shiftId: shiftAttendance.shiftId,
         userId: shiftAttendance.userId,
-        user: volunteerUserView._.selectedFields,
+        user: volunteerUserViewFields,
       })
       .from(shiftAttendance)
       .innerJoin(volunteerUserView, eq(shiftAttendance.userId, volunteerUserView.id))
@@ -135,12 +145,12 @@ export class ShiftService {
         )
       );
 
-    // Get instructors for schedules
+    // Get instructors for schedules (many-to-many relationship)
     const scheduleIds = [...new Set(items.map((s) => s.schedule.id))];
     const instructorRecords = await this.db
       .select({
         scheduleId: instructorToSchedule.scheduleId,
-        instructor: instructorUserView._.selectedFields,
+        instructor: instructorUserViewFields,
       })
       .from(instructorToSchedule)
       .innerJoin(instructorUserView, eq(instructorToSchedule.instructorUserId, instructorUserView.id))
@@ -154,7 +164,7 @@ export class ShiftService {
       attendanceByShift.set(record.shiftId, volunteers);
     }
 
-    // Map coverage by shift
+    // Map coverage by shift - track who's requesting off and who's covering
     const coverageByShift = new Map<string, { requestingUserIds: Set<string>; coveringUserIds: Set<string> }>();
     for (const record of coverageRecords) {
       if (!coverageByShift.has(record.shiftId)) {
@@ -182,17 +192,22 @@ export class ShiftService {
 
     // Build shift models
     const result: ListShift[] = items.map((item) => {
+      // Get all volunteers assigned to attendance
       const assignedVolunteers = attendanceByShift.get(item.shift.id) || [];
       
+      // Get coverage info for this shift
       const coverage = coverageByShift.get(item.shift.id);
       
+      // Filter out volunteers who requested off and add covering volunteers
       const actualVolunteers = assignedVolunteers
         .filter((v) => !coverage?.requestingUserIds.has(v.id))
         .map(buildVolunteer);
       
-      // Add covering volunteers
+      // Add covering volunteers (they're working the shift instead)
       if (coverage) {
         for (const coveringUserId of coverage.coveringUserIds) {
+          // Find the covering volunteer in our attendance records
+          // (they should be in attendance records if they're covering)
           const coveringVolunteer = assignedVolunteers.find((v) => v.id === coveringUserId);
           if (coveringVolunteer && !actualVolunteers.some((v) => v.id === coveringUserId)) {
             actualVolunteers.push(buildVolunteer(coveringVolunteer));
@@ -200,15 +215,17 @@ export class ShiftService {
         }
       }
 
+      // A schedule can have multiple instructors
       const instructorDBs = instructorsBySchedule.get(item.schedule.id) || [];
       const instructors = instructorDBs.map(buildInstructor);
 
+      // Parse schedule rule from JSON
       const scheduleRule = item.schedule.rrule as unknown as ScheduleRule;
       const scheduleModel = buildSchedule(
         item.schedule,
         scheduleRule,
         instructors,
-        [] 
+        [] // No volunteers at schedule level for this query
       );
 
       const classModel = buildClass(item.course, [scheduleModel]);

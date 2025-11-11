@@ -9,6 +9,8 @@ import { eq, desc, inArray, sql } from "drizzle-orm";
 import { volunteer, volunteerUserView, user } from "../../db/schema/user";
 import type { VolunteerUserViewDB } from "@/server/db/schema";
 import { buildSimilarityExpression, buildSearchCondition, getPagination } from "@/utils/searchUtils";
+import type { z } from "zod";
+import { UpdateVolunteerProfileInput } from "@/models/api/volunteer";
 
 export class VolunteerService {
   private readonly db: Drizzle;
@@ -71,53 +73,22 @@ export class VolunteerService {
     return await this.getVolunteers([id]).then(([volunteer]) => volunteer!);
   }
 
-  async updateVolunteerProfile(input: {
-    volunteerUserId: string;
-    preferredName?: string;
-    bio?: string;
-    pronouns?: string;
-    phoneNumber?: string;
-    city?: string;
-    province?: string;
-    preferredTimeCommitmentHours?: number;
-  }): Promise<void> {
+  async updateVolunteerProfile(
+    input: z.infer<typeof UpdateVolunteerProfileInput>,
+  ): Promise<void> {
     const { volunteerUserId, ...rest } = input;
-
-    const updateData: Partial<typeof volunteer.$inferInsert> = {};
-    if (rest.preferredName !== undefined) {
-      updateData.preferredName = rest.preferredName;
-    }
-    if (rest.bio !== undefined) {
-      updateData.bio = rest.bio;
-    }
-    if (rest.pronouns !== undefined) {
-      updateData.pronouns = rest.pronouns;
-    }
-    if (rest.phoneNumber !== undefined) {
-      updateData.phoneNumber = rest.phoneNumber;
-    }
-    if (rest.city !== undefined) {
-      updateData.city = rest.city;
-    }
-    if (rest.province !== undefined) {
-      updateData.province = rest.province;
-    }
-    if (rest.preferredTimeCommitmentHours !== undefined) {
-      updateData.preferredTimeCommitmentHours = rest.preferredTimeCommitmentHours;
-    }
-
-    if (Object.keys(updateData).length === 0) {
-      throw new NeuronError("No volunteer profile fields provided to update.", NeuronErrorCodes.BAD_REQUEST);
-    }
 
     const [updated] = await this.db
       .update(volunteer)
-      .set(updateData)
+      .set(rest)
       .where(eq(volunteer.userId, volunteerUserId))
       .returning({ userId: volunteer.userId });
 
     if (!updated) {
-      throw new NeuronError(`Could not find Volunteer with id ${volunteerUserId}`, NeuronErrorCodes.NOT_FOUND);
+      throw new NeuronError(
+        `Could not find Volunteer with id ${volunteerUserId}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
     }
   }
 

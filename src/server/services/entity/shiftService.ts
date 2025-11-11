@@ -26,10 +26,8 @@ export class ShiftService {
   }> {
     const { userId, before, after, limit, cursor, direction } = input;
 
-    // Build WHERE conditions
     const conditions = [eq(shift.canceled, false)];
 
-    // Date range filtering
     if (before) {
       conditions.push(lte(shift.startAt, new Date(before)));
     }
@@ -37,7 +35,6 @@ export class ShiftService {
       conditions.push(gte(shift.startAt, new Date(after)));
     }
 
-    // Cursor-based pagination
     if (cursor) {
       if (direction === "forward") {
         conditions.push(gte(shift.startAt, new Date(cursor)));
@@ -117,26 +114,8 @@ export class ShiftService {
     const attendanceRecords = await this.db
       .select({
         shiftId: shiftAttendance.shiftId,
-        user: {
-          id: volunteerUserView.id,
-          name: volunteerUserView.name,
-          lastName: volunteerUserView.lastName,
-          email: volunteerUserView.email,
-          status: volunteerUserView.status,
-          createdAt: volunteerUserView.createdAt,
-          updatedAt: volunteerUserView.updatedAt,
-          emailVerified: volunteerUserView.emailVerified,
-          image: volunteerUserView.image,
-          role: volunteerUserView.role,
-          preferredName: volunteerUserView.preferredName,
-          bio: volunteerUserView.bio,
-          pronouns: volunteerUserView.pronouns,
-          phoneNumber: volunteerUserView.phoneNumber,
-          city: volunteerUserView.city,
-          province: volunteerUserView.province,
-          availability: volunteerUserView.availability,
-          preferredTimeCommitmentHours: volunteerUserView.preferredTimeCommitmentHours,
-        },
+        userId: shiftAttendance.userId,
+        user: volunteerUserView._.selectedFields,
       })
       .from(shiftAttendance)
       .innerJoin(volunteerUserView, eq(shiftAttendance.userId, volunteerUserView.id))
@@ -145,30 +124,10 @@ export class ShiftService {
     const coverageRecords = await this.db
       .select({
         shiftId: coverageRequest.shiftId,
-        coveringUser: {
-          id: volunteerUserView.id,
-          name: volunteerUserView.name,
-          lastName: volunteerUserView.lastName,
-          email: volunteerUserView.email,
-          status: volunteerUserView.status,
-          createdAt: volunteerUserView.createdAt,
-          updatedAt: volunteerUserView.updatedAt,
-          emailVerified: volunteerUserView.emailVerified,
-          image: volunteerUserView.image,
-          role: volunteerUserView.role,
-          preferredName: volunteerUserView.preferredName,
-          bio: volunteerUserView.bio,
-          pronouns: volunteerUserView.pronouns,
-          phoneNumber: volunteerUserView.phoneNumber,
-          city: volunteerUserView.city,
-          province: volunteerUserView.province,
-          availability: volunteerUserView.availability,
-          preferredTimeCommitmentHours: volunteerUserView.preferredTimeCommitmentHours,
-        },
+        requestingUserId: coverageRequest.requestingVolunteerUserId,
+        coveringUserId: coverageRequest.coveredByVolunteerUserId,
       })
       .from(coverageRequest)
-      .innerJoin(volunteer, eq(coverageRequest.coveredByVolunteerUserId, volunteer.userId))
-      .innerJoin(volunteerUserView, eq(volunteer.userId, volunteerUserView.id))
       .where(
         and(
           sql`${coverageRequest.shiftId} = ANY(${shiftIds})`,
@@ -176,23 +135,12 @@ export class ShiftService {
         )
       );
 
-    // Get instructors for schedules (many-to-many relationship)
+    // Get instructors for schedules
     const scheduleIds = [...new Set(items.map((s) => s.schedule.id))];
     const instructorRecords = await this.db
       .select({
         scheduleId: instructorToSchedule.scheduleId,
-        instructor: {
-          id: instructorUserView.id,
-          name: instructorUserView.name,
-          lastName: instructorUserView.lastName,
-          email: instructorUserView.email,
-          status: instructorUserView.status,
-          createdAt: instructorUserView.createdAt,
-          updatedAt: instructorUserView.updatedAt,
-          image: instructorUserView.image,
-          role: instructorUserView.role,
-          emailVerified: instructorUserView.emailVerified,
-        },
+        instructor: instructorUserView._.selectedFields,
       })
       .from(instructorToSchedule)
       .innerJoin(instructorUserView, eq(instructorToSchedule.instructorUserId, instructorUserView.id))
@@ -207,9 +155,21 @@ export class ShiftService {
     }
 
     // Map coverage by shift
-    const coverageByShift = new Map<string, typeof coverageRecords[0]["coveringUser"]>();
+    const coverageByShift = new Map<string, { requestingUserIds: Set<string>; coveringUserIds: Set<string> }>();
     for (const record of coverageRecords) {
-      coverageByShift.set(record.shiftId, record.coveringUser);
+      if (!coverageByShift.has(record.shiftId)) {
+        coverageByShift.set(record.shiftId, { 
+          requestingUserIds: new Set(), 
+          coveringUserIds: new Set() 
+        });
+      }
+      const coverage = coverageByShift.get(record.shiftId)!;
+      if (record.requestingUserId) {
+        coverage.requestingUserIds.add(record.requestingUserId);
+      }
+      if (record.coveringUserId) {
+        coverage.coveringUserIds.add(record.coveringUserId);
+      }
     }
 
     // Map instructors by schedule (can be multiple instructors per schedule)
@@ -220,11 +180,25 @@ export class ShiftService {
       instructorsBySchedule.set(record.scheduleId, instructors);
     }
 
+    // Build shift models
     const result: ListShift[] = items.map((item) => {
-      const volunteers = (attendanceByShift.get(item.shift.id) || []).map(buildVolunteer);
-      const coveringVolunteer = coverageByShift.has(item.shift.id)
-        ? buildVolunteer(coverageByShift.get(item.shift.id)!)
-        : undefined;
+      const assignedVolunteers = attendanceByShift.get(item.shift.id) || [];
+      
+      const coverage = coverageByShift.get(item.shift.id);
+      
+      const actualVolunteers = assignedVolunteers
+        .filter((v) => !coverage?.requestingUserIds.has(v.id))
+        .map(buildVolunteer);
+      
+      // Add covering volunteers
+      if (coverage) {
+        for (const coveringUserId of coverage.coveringUserIds) {
+          const coveringVolunteer = assignedVolunteers.find((v) => v.id === coveringUserId);
+          if (coveringVolunteer && !actualVolunteers.some((v) => v.id === coveringUserId)) {
+            actualVolunteers.push(buildVolunteer(coveringVolunteer));
+          }
+        }
+      }
 
       const instructorDBs = instructorsBySchedule.get(item.schedule.id) || [];
       const instructors = instructorDBs.map(buildInstructor);
@@ -243,8 +217,7 @@ export class ShiftService {
         item.shift,
         classModel,
         scheduleModel,
-        volunteers,
-        coveringVolunteer
+        actualVolunteers
       );
 
       return getListShift(shiftModel);

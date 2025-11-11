@@ -14,7 +14,6 @@ export type Shift = {
   class: Class;
   schedule: Schedule;
   volunteers: Volunteer[];
-  coveringVolunteer?: Volunteer;
 };
 
 export function buildShift(
@@ -22,7 +21,6 @@ export function buildShift(
   classData: Class,
   schedule: Schedule,
   volunteers: Volunteer[] = [],
-  coveringVolunteer?: Volunteer,
 ): Shift {
   return {
     id: shiftDB.id,
@@ -35,7 +33,6 @@ export function buildShift(
     class: classData,
     schedule: schedule,
     volunteers: volunteers,
-    coveringVolunteer: coveringVolunteer,
   } as const;
 }
 
@@ -51,7 +48,6 @@ export function getListShift(s: Shift) {
     class: getListClass(s.class),
     schedule: getEmbeddedSchedule(s.schedule),
     volunteers: s.volunteers.map(getListVolunteer),
-    coveringVolunteer: s.coveringVolunteer ? getEmbeddedVolunteer(s.coveringVolunteer) : undefined,
   } as const;
 }
 
@@ -67,7 +63,6 @@ export function getSingleShift(s: Shift) {
     class: getListClass(s.class),
     schedule: getSingleSchedule(s.schedule),
     volunteers: s.volunteers.map(getListVolunteer),
-    coveringVolunteer: s.coveringVolunteer ? getEmbeddedVolunteer(s.coveringVolunteer) : undefined,
   } as const;
 }
 

@@ -1,7 +1,7 @@
 import { AVAILABILITY_SLOTS } from "@/constants";
 import { Role, Status } from "@/models/interfaces";
 import { schedule } from "@/server/db/schema/schedule";
-import { eq, getTableColumns, relations, sql } from "drizzle-orm";
+import { eq, relations, sql } from "drizzle-orm";
 import { bit, boolean, check, index, integer, pgEnum, pgTable, pgView, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 export const role = pgEnum("role", Role.values);
@@ -82,42 +82,37 @@ export const coursePreferenceRelations = relations(coursePreference, ({ one }) =
     }),
 }));
 
-export const volunteerUserViewFields = {
-    id: user.id,
-    name: user.name,
-    lastName: user.lastName,
-    email: user.email,
-    status: user.status,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-    emailVerified: user.emailVerified,
-    image: user.image,
-    role: user.role,
-    preferredName: volunteer.preferredName,
-    bio: volunteer.bio,
-    pronouns: volunteer.pronouns,
-    phoneNumber: volunteer.phoneNumber,
-    city: volunteer.city,
-    province: volunteer.province,
-    availability: volunteer.availability,
-    preferredTimeCommitmentHours: volunteer.preferredTimeCommitmentHours,
-};
-
 export const volunteerUserView = pgView("vw_volunteer_user").as(qb =>
     qb
-        .select(volunteerUserViewFields)
+        .select({
+            id: user.id,
+            name: user.name,
+            lastName: user.lastName,
+            email: user.email,
+            status: user.status,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+            emailVerified: user.emailVerified,
+            image: user.image,
+            role: user.role,
+            preferredName: volunteer.preferredName,
+            bio: volunteer.bio,
+            pronouns: volunteer.pronouns,
+            phoneNumber: volunteer.phoneNumber,
+            city: volunteer.city,
+            province: volunteer.province,
+            availability: volunteer.availability,
+            preferredTimeCommitmentHours: volunteer.preferredTimeCommitmentHours,
+        })
         .from(user)
         .innerJoin(volunteer, eq(volunteer.userId, user.id))
         .where(eq(user.role, 'volunteer'))
     );
 export type VolunteerUserViewDB = typeof volunteerUserView.$inferSelect;
 
-// Export instructor user view fields
-export const instructorUserViewFields = getTableColumns(user);
-
 export const instructorUserView = pgView("vw_instructor_user").as(qb =>
     qb
-        .select(instructorUserViewFields)
+        .select()
         .from(user)
         .where(eq(user.role, 'instructor'))
     );

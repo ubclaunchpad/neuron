@@ -8,7 +8,8 @@ import { type Drizzle, type Transaction } from "@/server/db";
 import { course } from "@/server/db/schema/course";
 import { instructorToSchedule, schedule } from "@/server/db/schema/schedule";
 import { coverageRequest, shift, shiftAttendance } from "@/server/db/schema/shift";
-import { instructorUserView, instructorUserViewFields, volunteer, volunteerUserView, volunteerUserViewFields } from "@/server/db/schema/user";
+import { instructorUserView, volunteer, volunteerUserView } from "@/server/db/schema/user";
+import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, eq, gte, lte, or, sql } from "drizzle-orm";
 
@@ -125,7 +126,7 @@ export class ShiftService {
       .select({
         shiftId: shiftAttendance.shiftId,
         userId: shiftAttendance.userId,
-        user: volunteerUserViewFields,
+        user: getViewColumns(volunteerUserView),
       })
       .from(shiftAttendance)
       .innerJoin(volunteerUserView, eq(shiftAttendance.userId, volunteerUserView.id))
@@ -150,7 +151,7 @@ export class ShiftService {
     const instructorRecords = await this.db
       .select({
         scheduleId: instructorToSchedule.scheduleId,
-        instructor: instructorUserViewFields,
+        instructor: getViewColumns(instructorUserView),
       })
       .from(instructorToSchedule)
       .innerJoin(instructorUserView, eq(instructorToSchedule.instructorUserId, instructorUserView.id))

@@ -1,15 +1,16 @@
 import type { ListRequest } from "@/models/api/common";
 import type { ListResponse } from "@/models/list-response";
+import { Status } from "@/models/interfaces";
 import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { inArray, sql } from "drizzle-orm";
-import { volunteerUserView, user } from "../../db/schema/user";
+import { eq, desc, inArray, sql } from "drizzle-orm";
+import { volunteer, volunteerUserView, user } from "../../db/schema/user";
 import type { VolunteerUserViewDB } from "@/server/db/schema";
-import { Status } from "@/models/interfaces";
-import { eq, desc } from "drizzle-orm";
 import { buildSimilarityExpression, buildSearchCondition, getPagination } from "@/utils/searchUtils";
+import type { z } from "zod";
+import { UpdateVolunteerProfileInput } from "@/models/api/volunteer";
 
 export class VolunteerService {
   private readonly db: Drizzle;
@@ -70,6 +71,37 @@ export class VolunteerService {
 
   async getVolunteer(id: string): Promise<Volunteer> {
     return await this.getVolunteers([id]).then(([volunteer]) => volunteer!);
+  }
+
+  async updateVolunteerProfile(
+    input: z.infer<typeof UpdateVolunteerProfileInput>,
+  ): Promise<void> {
+    const { volunteerUserId, ...rest } = input;
+
+    const [updated] = await this.db
+      .update(volunteer)
+      .set(rest)
+      .where(eq(volunteer.userId, volunteerUserId))
+      .returning({ userId: volunteer.userId });
+
+    if (!updated) {
+      throw new NeuronError(
+        `Could not find Volunteer with id ${volunteerUserId}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+  }
+
+  async updateVolunteerAvailability(volunteerUserId: string, availability: string): Promise<void> {
+    const [updated] = await this.db
+      .update(volunteer)
+      .set({ availability })
+      .where(eq(volunteer.userId, volunteerUserId))
+      .returning({ userId: volunteer.userId });
+
+    if (!updated) {
+      throw new NeuronError(`Could not find Volunteer with id ${volunteerUserId}`, NeuronErrorCodes.NOT_FOUND);
+    }
   }
 
   // any -> active

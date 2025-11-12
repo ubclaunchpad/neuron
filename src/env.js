@@ -7,7 +7,7 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.url(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -16,7 +16,7 @@ export const env = createEnv({
     SMTP_USER: z.string(),
     SMTP_PASS: z.string(),
     MAIL_FROM: z.string(),
-    REDIS_URL: z.string().url(),
+    REDIS_URL: z.url(),
   },
 
   /**

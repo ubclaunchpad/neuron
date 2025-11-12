@@ -6,6 +6,7 @@ export const IntId1Plus = z.number().int().positive();
 export const ListRequest = z.object({
   page: z.number().int().positive().optional(),
   perPage: z.number().int().positive().optional(),
+  queryInput: z.string().optional(),
 });
 export type ListRequest = z.infer<typeof ListRequest>;
 

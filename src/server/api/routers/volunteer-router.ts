@@ -1,18 +1,20 @@
 import {
   AdminSignoffInput,
-  GetVolunteersInput,
   VolunteerIdInput,
+  UpdateVolunteerAvailabilityInput,
+  UpdateVolunteerProfileInput,
 } from "@/models/api/volunteer";
+import { ListRequest } from "@/models/api/common";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 import { z } from "zod";
 
 export const volunteerRouter = createTRPCRouter({
   list: authorizedProcedure({ permission: { users: ["view-volunteer"] } })
-    .input(GetVolunteersInput)
-    .query(async ({ input }) => {
-      // TODO: getVolunteers
-      return [];
+    .input(ListRequest)
+    .query(async ({ input, ctx }) => {
+      const volunteers = await ctx.volunteerService.getVolunteersForRequest(input);
+      return volunteers;
     }),
   setClassPreference: authorizedProcedure({
     permission: { profile: ["update"] },
@@ -36,6 +38,22 @@ export const volunteerRouter = createTRPCRouter({
       return {
         /* volunteer */
       };
+    }),
+  updateVolunteerProfile: authorizedProcedure({
+    permission: { profile: ["update"] },
+  })
+    .input(UpdateVolunteerProfileInput)
+    .mutation(async ({ input, ctx }) => {
+      await ctx.volunteerService.updateVolunteerProfile(input);
+      return { ok: true };
+    }),
+  updateVolunteerAvailability: authorizedProcedure({
+    permission: { profile: ["update"] },
+  })
+    .input(UpdateVolunteerAvailabilityInput)
+    .mutation(async ({ input, ctx }) => {
+      await ctx.volunteerService.updateVolunteerAvailability(input.volunteerUserId, input.availability);
+      return { ok: true };
     }),
 
   // Verification

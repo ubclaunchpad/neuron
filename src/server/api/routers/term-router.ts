@@ -1,4 +1,4 @@
-import { CreateTermInput, TermIdInput } from "@/models/api/term";
+import { CreateTermInput, TermIdInput, UpdateTermInput } from "@/models/api/term";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 
@@ -7,6 +7,12 @@ export const termRouter = createTRPCRouter({
     .query(async ({ ctx }) => {
       const terms = await ctx.termService.getAllTerms();
       return terms;
+    }),
+  byId: authorizedProcedure({ permission: { terms: ["view"] } })
+    .input(TermIdInput)
+    .query(async ({ input, ctx }) => {
+      const term = await ctx.termService.getTerm(input.termId);
+      return term;
     }),
   current: authorizedProcedure({ permission: { terms: ["view"] } })
     .query(async ({ ctx }) => {
@@ -17,6 +23,11 @@ export const termRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const id = await ctx.termService.createTerm(input);
       return id;
+    }),
+  update: authorizedProcedure({ permission: { terms: ["create"] } })
+    .input(UpdateTermInput)
+    .mutation(async ({ input, ctx }) => {
+      await ctx.termService.updateTerm(input);
     }),
   delete: authorizedProcedure({ permission: { terms: ["delete"] } })
     .input(TermIdInput)

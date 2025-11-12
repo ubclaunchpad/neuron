@@ -1,5 +1,5 @@
 {
-  "id": "7902e915-8800-4474-88a3-d26a2be028a3",
+  "id": "d0219c72-256a-46a1-bb2e-8ff081fb02c9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -505,7 +505,7 @@
           "name": "term_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "image": {
           "name": "image",
@@ -542,7 +542,7 @@
           "name": "category",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "subcategory": {
           "name": "subcategory",
@@ -821,6 +821,97 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.instructor_to_schedule": {
+      "name": "instructor_to_schedule",
+      "schema": "",
+      "columns": {
+        "instructor_user_id": {
+          "name": "instructor_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schedule_id": {
+          "name": "schedule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "instructor_to_schedule_instructor_user_id_index": {
+          "name": "instructor_to_schedule_instructor_user_id_index",
+          "columns": [
+            {
+              "expression": "instructor_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "instructor_to_schedule_schedule_id_index": {
+          "name": "instructor_to_schedule_schedule_id_index",
+          "columns": [
+            {
+              "expression": "schedule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "instructor_to_schedule_instructor_user_id_user_id_fk": {
+          "name": "instructor_to_schedule_instructor_user_id_user_id_fk",
+          "tableFrom": "instructor_to_schedule",
+          "tableTo": "user",
+          "columnsFrom": [
+            "instructor_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "instructor_to_schedule_schedule_id_schedule_id_fk": {
+          "name": "instructor_to_schedule_schedule_id_schedule_id_fk",
+          "tableFrom": "instructor_to_schedule",
+          "tableTo": "schedule",
+          "columnsFrom": [
+            "schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "pk_instructor_schedule": {
+          "name": "pk_instructor_schedule",
+          "columns": [
+            "instructor_user_id",
+            "schedule_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.schedule": {
       "name": "schedule",
       "schema": "",
@@ -861,12 +952,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "instructor_user_id": {
-          "name": "instructor_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -875,21 +960,6 @@
           "columns": [
             {
               "expression": "course_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "schedule_instructor_user_id_index": {
-          "name": "schedule_instructor_user_id_index",
-          "columns": [
-            {
-              "expression": "instructor_user_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -913,19 +983,6 @@
             "id"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "schedule_instructor_user_id_user_id_fk": {
-          "name": "schedule_instructor_user_id_user_id_fk",
-          "tableFrom": "schedule",
-          "tableTo": "user",
-          "columnsFrom": [
-            "instructor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },

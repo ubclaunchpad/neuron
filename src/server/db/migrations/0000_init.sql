@@ -52,13 +52,13 @@ CREATE TABLE "blackout" (
 --> statement-breakpoint
 CREATE TABLE "course" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"term_id" uuid,
+	"term_id" uuid NOT NULL,
 	"image" text,
 	"name" text NOT NULL,
 	"published" boolean DEFAULT false NOT NULL,
 	"description" text,
 	"meeting_url" text,
-	"category" text,
+	"category" text NOT NULL,
 	"subcategory" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -82,6 +82,12 @@ CREATE TABLE "log" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "instructor_to_schedule" (
+	"instructor_user_id" uuid NOT NULL,
+	"schedule_id" uuid NOT NULL,
+	CONSTRAINT "pk_instructor_schedule" PRIMARY KEY("instructor_user_id","schedule_id")
+);
+--> statement-breakpoint
 CREATE TABLE "schedule" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"course_id" uuid NOT NULL,
@@ -89,7 +95,6 @@ CREATE TABLE "schedule" (
 	"effective_start" date,
 	"effective_end" date,
 	"rrule" text NOT NULL,
-	"instructor_user_id" uuid,
 	CONSTRAINT "chk_schedule_duration_positive" CHECK ("schedule"."duration_minutes" > 0),
 	CONSTRAINT "chk_schedule_effective_range_valid" CHECK ("schedule"."effective_end" IS NULL
              OR "schedule"."effective_start" IS NULL
@@ -175,8 +180,9 @@ ALTER TABLE "blackout" ADD CONSTRAINT "blackout_schedule_id_schedule_id_fk" FORE
 ALTER TABLE "course" ADD CONSTRAINT "course_term_id_term_id_fk" FOREIGN KEY ("term_id") REFERENCES "public"."term"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "log" ADD CONSTRAINT "log_volunteer_user_id_volunteer_user_id_fk" FOREIGN KEY ("volunteer_user_id") REFERENCES "public"."volunteer"("user_id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "log" ADD CONSTRAINT "log_course_id_course_id_fk" FOREIGN KEY ("course_id") REFERENCES "public"."course"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "instructor_to_schedule" ADD CONSTRAINT "instructor_to_schedule_instructor_user_id_user_id_fk" FOREIGN KEY ("instructor_user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "instructor_to_schedule" ADD CONSTRAINT "instructor_to_schedule_schedule_id_schedule_id_fk" FOREIGN KEY ("schedule_id") REFERENCES "public"."schedule"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "schedule" ADD CONSTRAINT "schedule_course_id_course_id_fk" FOREIGN KEY ("course_id") REFERENCES "public"."course"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "schedule" ADD CONSTRAINT "schedule_instructor_user_id_user_id_fk" FOREIGN KEY ("instructor_user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "volunteer_to_schedule" ADD CONSTRAINT "volunteer_to_schedule_volunteer_user_id_volunteer_user_id_fk" FOREIGN KEY ("volunteer_user_id") REFERENCES "public"."volunteer"("user_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "volunteer_to_schedule" ADD CONSTRAINT "volunteer_to_schedule_schedule_id_schedule_id_fk" FOREIGN KEY ("schedule_id") REFERENCES "public"."schedule"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "coverage_request" ADD CONSTRAINT "coverage_request_shift_id_shift_id_fk" FOREIGN KEY ("shift_id") REFERENCES "public"."shift"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -204,8 +210,9 @@ CREATE INDEX "idx_logs_volunteer" ON "log" USING btree ("volunteer_user_id");-->
 CREATE INDEX "idx_logs_course" ON "log" USING btree ("course_id");--> statement-breakpoint
 CREATE INDEX "idx_logs_created_at" ON "log" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "idx_logs_page" ON "log" USING btree ("page");--> statement-breakpoint
+CREATE INDEX "instructor_to_schedule_instructor_user_id_index" ON "instructor_to_schedule" USING btree ("instructor_user_id");--> statement-breakpoint
+CREATE INDEX "instructor_to_schedule_schedule_id_index" ON "instructor_to_schedule" USING btree ("schedule_id");--> statement-breakpoint
 CREATE INDEX "schedule_course_id_index" ON "schedule" USING btree ("course_id");--> statement-breakpoint
-CREATE INDEX "schedule_instructor_user_id_index" ON "schedule" USING btree ("instructor_user_id");--> statement-breakpoint
 CREATE INDEX "volunteer_to_schedule_volunteer_user_id_index" ON "volunteer_to_schedule" USING btree ("volunteer_user_id");--> statement-breakpoint
 CREATE INDEX "volunteer_to_schedule_schedule_id_index" ON "volunteer_to_schedule" USING btree ("schedule_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "coverage_request_shift_id_requesting_volunteer_user_id_index" ON "coverage_request" USING btree ("shift_id","requesting_volunteer_user_id") WHERE "coverage_request"."status" = 'open'::coverage_status;--> statement-breakpoint

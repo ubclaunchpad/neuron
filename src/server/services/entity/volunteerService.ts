@@ -5,9 +5,11 @@ import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { eq, desc, inArray, sql } from "drizzle-orm";
-import { volunteer, volunteerUserView, user } from "../../db/schema/user";
+import { eq, desc, inArray, sql, and } from "drizzle-orm";
+import { volunteer, volunteerUserView, user, coursePreference } from "../../db/schema/user";
 import type { VolunteerUserViewDB } from "@/server/db/schema";
+import { Status } from "@/models/interfaces";
+import { course } from "@/server/db/schema";
 import { buildSimilarityExpression, buildSearchCondition, getPagination } from "@/utils/searchUtils";
 import type { z } from "zod";
 import { UpdateVolunteerProfileInput } from "@/models/api/volunteer";
@@ -73,6 +75,56 @@ export class VolunteerService {
     return await this.getVolunteers([id]).then(([volunteer]) => volunteer!);
   }
 
+
+  async setClassPreference(volunteerUserId: string, classId: string, preferred: boolean): Promise<void> {
+    const existing = await this.db
+    .select()
+    .from(coursePreference)
+    .where(and(
+      eq(coursePreference.volunteerUserId, volunteerUserId), 
+      eq(coursePreference.courseId, classId)));
+    
+    const alreadyPreferred = existing.length > 0;
+
+    if (preferred && alreadyPreferred) {
+      throw new NeuronError(`Course ${classId} already starred by volunteer ${volunteerUserId}`, NeuronErrorCodes.BAD_REQUEST);
+    }
+
+    if (!preferred && !alreadyPreferred) {
+      throw new NeuronError(`Course ${classId} not starred by volunteer ${volunteerUserId}`, NeuronErrorCodes.BAD_REQUEST)
+    }
+
+    if (preferred) {
+      await this.db.insert(coursePreference).values({volunteerUserId, courseId: classId});
+    } else {
+      await this.db
+      .delete(coursePreference)
+      .where(and(
+        eq(coursePreference.volunteerUserId, volunteerUserId), 
+        eq(coursePreference.courseId, classId)));
+    }
+  }
+
+  async getClassPreference(volunteerUserId: string, classId: string): Promise<{ preferred: boolean}> {   
+    const courseExists = await this.db
+    .select({ id: course.id })
+    .from(course)
+    .where(eq(course.id, classId))
+    .then(r => r.length > 0);
+
+    if (!courseExists) {
+      throw new NeuronError(
+        `Course with id ${classId} not found`,
+        NeuronErrorCodes.NOT_FOUND
+      );
+    }
+    
+    const result = await this.db
+      .select()
+      .from(coursePreference)
+      .where(and(eq(coursePreference.volunteerUserId, volunteerUserId), eq(coursePreference.courseId, classId)));
+      
+    return {preferred: result.length > 0};
   async updateVolunteerProfile(
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void> {

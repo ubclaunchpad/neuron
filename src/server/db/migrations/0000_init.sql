@@ -142,10 +142,9 @@ CREATE TABLE "shift_attendance" (
 --> statement-breakpoint
 CREATE TABLE "course_preference" (
 	"volunteer_user_id" uuid NOT NULL,
-	"schedule_id" uuid NOT NULL,
-	"course_rank" integer NOT NULL,
-	CONSTRAINT "pk_course_preferences" PRIMARY KEY("volunteer_user_id","schedule_id"),
-	CONSTRAINT "chk_course_rank_positive" CHECK ("course_preference"."course_rank" > 0)
+	"course_id" uuid NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "pk_course_preferences" PRIMARY KEY("volunteer_user_id","course_id")
 );
 --> statement-breakpoint
 CREATE TABLE "user" (
@@ -194,7 +193,7 @@ ALTER TABLE "shift" ADD CONSTRAINT "shift_schedule_id_schedule_id_fk" FOREIGN KE
 ALTER TABLE "shift_attendance" ADD CONSTRAINT "shift_attendance_shift_id_shift_id_fk" FOREIGN KEY ("shift_id") REFERENCES "public"."shift"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "shift_attendance" ADD CONSTRAINT "shift_attendance_user_id_volunteer_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."volunteer"("user_id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "course_preference" ADD CONSTRAINT "course_preference_volunteer_user_id_volunteer_user_id_fk" FOREIGN KEY ("volunteer_user_id") REFERENCES "public"."volunteer"("user_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "course_preference" ADD CONSTRAINT "course_preference_schedule_id_schedule_id_fk" FOREIGN KEY ("schedule_id") REFERENCES "public"."schedule"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "course_preference" ADD CONSTRAINT "course_preference_course_id_course_id_fk" FOREIGN KEY ("course_id") REFERENCES "public"."course"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "volunteer" ADD CONSTRAINT "volunteer_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_user_id_index" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "account_provider_id_account_id_index" ON "account" USING btree ("provider_id","account_id");--> statement-breakpoint
@@ -226,7 +225,6 @@ CREATE INDEX "idx_shift_date" ON "shift" USING btree ("date","class_id") WHERE n
 CREATE INDEX "idx_shift_start" ON "shift" USING btree ("start_at") WHERE not "shift"."canceled";--> statement-breakpoint
 CREATE INDEX "idx_shift_slot" ON "shift" USING btree ("schedule_id");--> statement-breakpoint
 CREATE INDEX "shift_attendance_user_id_index" ON "shift_attendance" USING btree ("user_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "course_preference_volunteer_user_id_course_rank_index" ON "course_preference" USING btree ("volunteer_user_id","course_rank");--> statement-breakpoint
 CREATE INDEX "idx_user_email" ON "user" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "idx_user_role" ON "user" USING btree ("role");--> statement-breakpoint
 CREATE INDEX "idx_user_status" ON "user" USING btree ("status");--> statement-breakpoint

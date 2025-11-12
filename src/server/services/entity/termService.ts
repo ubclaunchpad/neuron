@@ -4,6 +4,8 @@ import { type Drizzle, type Transaction } from "@/server/db";
 import { blackout, term } from "@/server/db/schema/course";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
+// import { P } from "node_modules/better-auth/dist/shared/better-auth.jwa4Tx7v";
+// import { text } from "stream/consumers";
 
 export class TermService {
   private readonly db: Drizzle;

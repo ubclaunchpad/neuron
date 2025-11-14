@@ -4,7 +4,7 @@ import React, { useRef, useState, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import type { EventClickArg } from "@fullcalendar/core";
+import type { EventClickArg, DayHeaderContentArg } from "@fullcalendar/core";
 import "./page.scss";
 
 // Below this width in px our calendar will switch to a day view
@@ -28,8 +28,11 @@ export default function SchedulePage() {
   useEffect(() => {
     const calendarApi = calendarRef.current?.getApi();
     if (!calendarApi) return;
-    if (isDayView) calendarApi.changeView("timeGridDay", selectedDate);
-    else           calendarApi.changeView("timeGridWeek", selectedDate);
+
+    queueMicrotask(() => {
+      if (isDayView) calendarApi.changeView("timeGridDay", selectedDate);
+      else           calendarApi.changeView("timeGridWeek", selectedDate);
+    });
   }, [isDayView, selectedDate]);
 
   const handleEventClick = (info: EventClickArg) => {
@@ -45,7 +48,7 @@ export default function SchedulePage() {
     calendarApi.changeView("timeGridDay", date);
   };
 
-  const renderCustomHeader = () => {
+  const renderDayViewHeader = () => {
     // Begin on MONDAY of the current week
     const startOfWeek = new Date();
     startOfWeek.setDate(startOfWeek.getDate() - ((startOfWeek.getDay() + 6) % 7));
@@ -62,7 +65,8 @@ export default function SchedulePage() {
                          curDate.getDate() === selectedDate.getDate();
 
       return (
-        <div key={i}
+        <div 
+          key={i}
           onClick={() => handleDayClick(curDate)}
           className={`
             fc-col-header-cell 
@@ -83,22 +87,40 @@ export default function SchedulePage() {
     );
   };
 
+  const renderDayHeader = (arg: DayHeaderContentArg) => {
+    const date: Date = arg.date;
+    const dayName: string = date.toLocaleDateString("en-US", { weekday: "long" });
+    const dayNum: number = date.getDate();
+
+    const today = new Date();
+    const isToday = 
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+
+    return (
+      <div className={`test ${isToday ? "test-current-day" : ""}`}>
+        <div style={{ fontSize: "24px" }}>{dayNum}</div>
+        <div style={{ fontSize: "14px" }}>{dayName}</div>
+      </div>
+    )
+  };
+
   return (
     <div style={{ padding: "1rem" }}>
-      {isDayView && renderCustomHeader()}
+      <p style={{ fontWeight: 700, fontSize: "28px", paddingBottom: "1rem" }}>Schedule</p>
+
+      {isDayView && renderDayViewHeader()}
 
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin]}
         initialView="timeGridWeek"
-        headerToolbar={
-          isDayView ? false : 
-              {
-                left: "",
-                center: "title",
-                right: "",
-              }
-        }
+        headerToolbar={false}
+        dayHeaderContent={(arg) => {
+          if (isDayView) return;
+          return renderDayHeader(arg);
+        }}
         height="auto"
         slotMinTime="09:00:00"
         allDaySlot={false}

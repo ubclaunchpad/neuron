@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 const screens = {
   sm: "640px",
@@ -18,26 +18,24 @@ const screens = {
  *
  * @returns A boolean indicating whether the viewport size applies.
  */
-export const useBreakpoint = (
-  size: "sm" | "md" | "lg" | "xl" | "2xl",
+export function useBreakpoint(
+  size: keyof typeof screens,
   onChange?: (args: { up: boolean }) => void,
-) => {
-  // IMPORTANT: start with a stable default so SSR and the first client render match.
-  const [matches, setMatches] = useState(true);
+) {
+  const query = `(min-width: ${screens[size]})`;
+  const [matches, setMatches] = useState(false); // SSR & first client render match
 
-  useEffect(() => {
-    const breakpoint = window.matchMedia(`(min-width: ${screens[size]})`);
-
-    setMatches(breakpoint.matches);
-
-    const handleChange = (value: MediaQueryListEvent) => {
-      setMatches(value.matches);
-      if (onChange) onChange({ up: value.matches });
+  useLayoutEffect(() => {
+    const mql = window.matchMedia(query);
+    setMatches(mql.matches); // before first paint
+    const handler = (e: MediaQueryListEvent) => {
+      setMatches(e.matches);
+      onChange?.({ up: e.matches });
     };
-
-    breakpoint.addEventListener("change", handleChange);
-    return () => breakpoint.removeEventListener("change", handleChange);
-  }, [size, onChange]);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, [query, onChange]);
 
   return matches;
-};
+}
+

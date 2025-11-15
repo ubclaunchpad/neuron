@@ -52,6 +52,7 @@ const admin = accessControl.newRole({
     "delete-instructor",
   ],
   logs: ["view"],
+  profile: ["view", "update"],
 });
 
 const volunteer = accessControl.newRole({
@@ -66,6 +67,7 @@ const instructor = accessControl.newRole({
   terms: ["view"],
   shifts: ["view"],
   users: ["view-volunteer"],
+  profile: ["view", "update"],
 });
 
 const roleToAccessControlRole: Record<Role, AccessRole> = {
@@ -101,7 +103,7 @@ export const hasPermission = (
   }
 
   const roleToCheck = input.user ? input.user.role : input.role;
-  const role = roleToAccessControlRole[roleToCheck as Role]; // We know this is safe because we check above
+  const role = roleToAccessControlRole[roleToCheck!]; // We know this is safe because we check above
 
   if (input.permissions) {
     return role?.authorize(

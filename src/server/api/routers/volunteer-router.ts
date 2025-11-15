@@ -1,33 +1,35 @@
 import {
   AdminSignoffInput,
-  GetVolunteersInput,
   VolunteerIdInput,
+  UpdateVolunteerAvailabilityInput,
+  UpdateVolunteerProfileInput,
 } from "@/models/api/volunteer";
+import { ListRequest } from "@/models/api/common";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
+import { z } from "zod";
 
 export const volunteerRouter = createTRPCRouter({
   list: authorizedProcedure({ permission: { users: ["view-volunteer"] } })
-    .input(GetVolunteersInput)
-    .query(async ({ input }) => {
-      // TODO: getVolunteers
-      return [];
+    .input(ListRequest)
+    .query(async ({ input, ctx }) => {
+      const volunteers = await ctx.volunteerService.getVolunteersForRequest(input);
+      return volunteers;
     }),
-  updateClassPreferences: authorizedProcedure({
+  setClassPreference: authorizedProcedure({
     permission: { profile: ["update"] },
   })
-    .input(VolunteerIdInput)
-    .mutation(async ({ input }) => {
-      // TODO: updatePreferredClassesById
+    .input(VolunteerIdInput.merge(z.object({classId: z.string().uuid(), preferred: z.boolean()})))
+    .mutation(async ({ input, ctx }) => {
+      await ctx.volunteerService.setClassPreference(input.volunteerUserId, input.classId, input.preferred)
       return { ok: true };
     }),
-  getClassPreferences: authorizedProcedure({
+  getClassPreference: authorizedProcedure({
     permission: { profile: ["update"] },
   })
-    .input(VolunteerIdInput)
-    .query(async ({ input }) => {
-      // TODO: getClassPreferences
-      return { ok: true };
+    .input(VolunteerIdInput.merge(z.object({classId: z.string().uuid()})))
+    .query(async ({ input, ctx }) => {
+      return await ctx.volunteerService.getClassPreference(input.volunteerUserId, input.classId)
     }),
   byId: authorizedProcedure({ permission: { users: ["view-volunteer"] } })
     .input(VolunteerIdInput)
@@ -37,6 +39,24 @@ export const volunteerRouter = createTRPCRouter({
         /* volunteer */
       };
     }),
+  updateVolunteerProfile: authorizedProcedure({
+    permission: { profile: ["update"] },
+  })
+    .input(UpdateVolunteerProfileInput)
+    .mutation(async ({ input, ctx }) => {
+      await ctx.volunteerService.updateVolunteerProfile(input);
+      return { ok: true };
+    }),
+  updateVolunteerAvailability: authorizedProcedure({
+    permission: { profile: ["update"] },
+  })
+    .input(UpdateVolunteerAvailabilityInput)
+    .mutation(async ({ input, ctx }) => {
+      await ctx.volunteerService.updateVolunteerAvailability(input.volunteerUserId, input.availability);
+      return { ok: true };
+    }),
+
+  // Verification
   activate: authorizedProcedure({ permission: { users: ["activate"] } })
     .input(VolunteerIdInput.merge(AdminSignoffInput))
     .mutation(async ({ input, ctx }) => {

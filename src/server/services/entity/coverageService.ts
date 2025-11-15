@@ -185,6 +185,7 @@ export class CoverageService {
 
         const affected = await this.db.update(coverageRequest).set({
             status: CoverageStatus.open,
+            requestingVolunteerUserId: coveredByVolunteerUserId,
             coveredByVolunteerUserId: null,
         }).where(
             eq(coverageRequest.id, coverageRequestId)

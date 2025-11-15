@@ -10,7 +10,7 @@ import type { Term } from "@/models/term";
 import { type Drizzle, type Transaction } from "@/server/db";
 import { course, instructorToSchedule, schedule, volunteerToSchedule } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { toMap } from "@/utils/arrayUtils";
+import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import { InstructorService } from "./instructorService";
 import { ShiftService } from "./shiftService";
 import type { TermService } from "./termService";
@@ -291,11 +291,11 @@ export class ClassService {
       course.schedules.flatMap((schedule) => schedule.instructors.map((i) => i.instructorUserId)),
     );
     const instructors = toMap(await this.instructorService.getInstructors(instructorIds));
-    const volunteerIds = courses.flatMap((course) =>
+    const volunteerIds = uniqueDefined(courses.flatMap((course) =>
       course.schedules.flatMap((schedule) =>
         schedule.volunteers.map((volunteer) => volunteer.volunteerUserId),
       ),
-    );
+    ));
     const volunteers = toMap(await this.volunteerService.getVolunteers(volunteerIds));
 
     return courses.map((course) =>

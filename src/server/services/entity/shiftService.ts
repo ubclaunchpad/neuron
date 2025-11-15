@@ -6,7 +6,7 @@ import { buildShift, getListShift, type ListShift } from "@/models/shift";
 import { buildVolunteer } from "@/models/volunteer";
 import { type Drizzle, type Transaction } from "@/server/db";
 import { course } from "@/server/db/schema/course";
-import { instructorToSchedule, schedule } from "@/server/db/schema/schedule";
+import { instructorToSchedule, schedule, volunteerToSchedule } from "@/server/db/schema/schedule";
 import { coverageRequest, shift, shiftAttendance } from "@/server/db/schema/shift";
 import { instructorUserView, volunteer, volunteerUserView } from "@/server/db/schema/user";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
@@ -299,6 +299,41 @@ export class ShiftService {
         `Shift with id ${input.shiftId} was not found`,
         NeuronErrorCodes.NOT_FOUND,
       );
+    }
+  }
+  
+  async assertValidShift(volunteerId: string, shiftId: string): Promise<void> {
+    const [shiftRow] = await this.db
+      .select({
+        shiftId: shift.id,
+        startAt: shift.startAt,
+        volunteerId: volunteerToSchedule.volunteerUserId,
+      })
+      .from(shift)
+      .innerJoin(
+        volunteerToSchedule,
+        eq(shift.scheduleId, volunteerToSchedule.scheduleId),
+      )
+      .where(
+        and(
+          eq(shift.id, shiftId),
+          eq(volunteerToSchedule.volunteerUserId, volunteerId),
+        )
+      )
+      .limit(1);
+
+    if (!shiftRow) {
+        throw new NeuronError(
+          `Could not find a shift with id ${shiftId} assigned to volunteer with id ${volunteerId}.`, 
+          NeuronErrorCodes.NOT_FOUND,
+        );
+    }
+
+    if (shiftRow.startAt <= new Date()) {
+      throw new NeuronError(
+        "Coverage request can not be created for a past shift.",
+        NeuronErrorCodes.BAD_REQUEST,
+      )
     }
   }
 }

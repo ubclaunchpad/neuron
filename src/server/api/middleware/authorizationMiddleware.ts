@@ -2,12 +2,13 @@ import {
   hasPermission,
   type Permissions,
 } from "@/lib/auth/extensions/permissions";
+import { Status } from "@/models/interfaces";
 import { createTRPCMiddleware } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 
 const authMiddleware = (permissions?: Permissions) =>
   createTRPCMiddleware(({ ctx, next }) => {
-    if (!ctx.session) {
+    if (!ctx.session || ctx.session.user.status !== Status.active) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
 

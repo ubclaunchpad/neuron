@@ -1,3 +1,7 @@
+export function uniqueDefined<T>(arr: Array<T | null | undefined>): T[] {
+  return Array.from(new Set(arr.filter((x): x is T => x != null)));
+}
+
 export function wrapIfNotArray<T>(value: T | T[]): T[] {
   return Array.isArray(value) ? value : [value];
 }

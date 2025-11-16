@@ -43,7 +43,7 @@ function formatDuration(ms: number, fmt: string): string {
   };
 
   // Replace only valid tokens
-  return fmt.replace(/\b(hh|h|mm|m|ss|s)\b/g, (t) => tokens[t]);
+  return fmt.replace(/\b(hh|h|mm|m|ss|s)\b/g, (t) => tokens[t]!);
 }
 
 const calculateInitialTime = ({ minutes, seconds }: Time): number => {

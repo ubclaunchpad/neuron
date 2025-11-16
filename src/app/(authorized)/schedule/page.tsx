@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  PageLayout,
+  PageLayoutHeader,
+  PageLayoutHeaderContent,
+  PageLayoutHeaderTitle
+} from "@/components/page-layout";
+
 import React, { useRef, useState, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -140,5 +147,16 @@ export default function SchedulePage() {
         ]}
       />
     </div>
+  );
+  return (
+    <>
+      <PageLayout>
+        <PageLayoutHeader>
+          <PageLayoutHeaderContent>
+            <PageLayoutHeaderTitle>Schedule</PageLayoutHeaderTitle>
+          </PageLayoutHeaderContent>
+        </PageLayoutHeader>
+      </PageLayout>
+    </>
   );
 }

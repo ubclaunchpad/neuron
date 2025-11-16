@@ -1,59 +1,66 @@
 "use client";
 
-import { authClient } from "@/lib/auth/client";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle, CheckCircle2, ChevronLeft } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Form } from "react-aria-components";
 import { useForm } from "react-hook-form";
-import * as Yup from "yup";
-import "../index.scss";
+import { z } from "zod";
 
-import { Button } from "@/components/primitives/Button";
-import { Card } from "@/components/primitives/Card";
-import { RootError } from "@/components/primitives/FormErrors/RootError";
-import { TextInput } from "@/components/primitives/TextInput";
+import { authClient } from "@/lib/auth/client";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
-import BackIcon from "@public/assets/icons/caret-left.svg";
 
-const PasswordResetSchema = Yup.object().shape({
-  password: Yup.string()
-    .min(8, "Password must be at least 8 characters long.")
-    .required("Please fill out this field."),
-  confirmPassword: Yup.string()
-    .required("Please fill out this field.")
-    .oneOf([Yup.ref("password")], "Passwords don't match."),
-});
+import { Alert, AlertDescription, AlertTitle } from "@/components/primitives/alert";
+import { Button } from "@/components/primitives/button";
+import { Field, FieldError, FieldLabel } from "@/components/primitives/field";
+import { PasswordInput } from "@/components/primitives/input";
+import { Spinner } from "@/components/primitives/spinner";
 
-type PasswordResetSchemaType = Yup.InferType<typeof PasswordResetSchema>;
+const PasswordResetSchema = z
+  .object({
+    password: z
+      .string()
+      .nonempty("Please fill out this field.")
+      .min(8, "Password must be at least 8 characters long."),
+    confirmPassword: z.string().nonempty("Please fill out this field."),
+  })
+  .superRefine((val, ctx) => {
+    if (val.password !== val.confirmPassword) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["confirmPassword"],
+        message: "Passwords don't match.",
+      });
+    }
+  });
+
+type PasswordResetSchemaType = z.infer<typeof PasswordResetSchema>;
 
 export default function PasswordResetForm() {
   const router = useRouter();
-  const [successMessage, setSuccessMessage] = useState<React.ReactNode>(null);
   const params = useSearchParams();
-  const token = params.get("token");
-  const error = params.get("error")
+  const token = params.get("token") ?? undefined;
+  const tokenError = params.get("error")
     ? "Invalid or expired token. Please try resetting your password again."
     : null;
+
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: yupResolver(PasswordResetSchema),
+  } = useForm<PasswordResetSchemaType>({
+    resolver: zodResolver(PasswordResetSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
-    defaultValues: {
-      password: "",
-      confirmPassword: "",
-    },
   });
 
   const onSubmit = async (data: PasswordResetSchemaType) => {
     const { error } = await authClient.resetPassword({
-      token: token ?? undefined,
+      token,
       newPassword: data.password,
     });
 
@@ -62,60 +69,92 @@ export default function PasswordResetForm() {
         type: "custom",
         message: getBetterAuthErrorMessage(error?.code),
       });
-    } else {
-      setSuccessMessage("Password successfully reset!");
-      setTimeout(() => router.replace("/auth/login"), 3000);
+      return;
     }
+
+    setSuccessMessage("Password successfully reset!");
+    setTimeout(() => router.replace("/auth/login"), 3000);
   };
 
   return (
-    <div className="form-container">
-      <h1 className="form-title">Set your new password</h1>
+    <div className="w-full max-w-3xl space-y-8 p-8">
+      <h1 className="text-2xl font-display font-medium leading-none text-primary">
+        Set your new password
+      </h1>
 
-      <Form
-        onSubmit={handleSubmit(onSubmit)}
-        validationBehavior="aria"
-        className="form-content"
-      >
-        <RootError id="form-error" message={error || errors.root?.message} />
+      {/* Token error from query param */}
+      {tokenError && (
+        <Alert variant="destructive" role="alert" aria-live="assertive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Couldn’t reset your password</AlertTitle>
+          <AlertDescription>{tokenError}</AlertDescription>
+        </Alert>
+      )}
 
-        {successMessage && (
-          <Card variant="success" size="small" role="alert">
-            {successMessage}
-          </Card>
-        )}
+      {/* Root error from submit */}
+      {errors.root?.message && !tokenError && (
+        <Alert variant="destructive" role="alert" aria-live="assertive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Couldn’t reset your password</AlertTitle>
+          <AlertDescription>{errors.root.message}</AlertDescription>
+        </Alert>
+      )}
 
-        <TextInput
-          type="password"
-          disabled={!!error}
-          label="Create password (at least 8 characters)"
-          placeholder="Create a password"
-          errorMessage={errors.password?.message}
-          autoComplete="new-password"
-          {...register("password")}
-        />
+      {/* Success */}
+      {successMessage && (
+        <Alert variant="success" role="status" aria-live="polite">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
+      )}
 
-        <TextInput
-          type="password"
-          disabled={!!error}
-          label="Confirm password"
-          placeholder="Confirm your password"
-          errorMessage={errors.confirmPassword?.message}
-          autoComplete="new-password"
-          {...register("confirmPassword")}
-        />
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+        <Field data-invalid={!!errors.password} className="gap-1">
+          <FieldLabel htmlFor="password">Create password (at least 8 characters)</FieldLabel>
+          <PasswordInput
+            id="password"
+            autoComplete="new-password"
+            placeholder="•••••••••••••"
+            aria-invalid={!!errors.password}
+            disabled={!!tokenError}
+            {...register("password")}
+          />
+          <FieldError errors={errors.password} />
+        </Field>
 
-        <Button type="submit" isDisabled={!!error}>
-          {isSubmitting ? "Resetting..." : "Reset Password"}
+        <Field data-invalid={!!errors.confirmPassword} className="gap-1">
+          <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
+          <PasswordInput
+            id="confirmPassword"
+            autoComplete="new-password"
+            placeholder="•••••••••••••"
+            aria-invalid={!!errors.confirmPassword}
+            disabled={!!tokenError}
+            {...register("confirmPassword")}
+          />
+          <FieldError errors={errors.confirmPassword} />
+        </Field>
+
+        <Button type="submit" disabled={!!tokenError || isSubmitting} className="w-full">
+          {isSubmitting ? (
+            <>
+              <Spinner /> Resetting...
+            </>
+          ) : (
+            "Reset Password"
+          )}
         </Button>
+      </form>
 
-        <p className="form-footer">
-          <Button variant="link" href="/auth/login">
-            <BackIcon />
-            <span>Back to login</span>
-          </Button>
-        </p>
-      </Form>
+      <p className="text-center text-foreground">
+        <Button asChild variant="link" className="p-0">
+          <Link href="/auth/login">
+            <ChevronLeft className="me-1 h-4 w-4" />
+            <strong>Back to login</strong>
+          </Link>
+        </Button>
+      </p>
     </div>
   );
 }

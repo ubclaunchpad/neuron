@@ -2,7 +2,7 @@ import { ScheduleType, Weekday, type MonthlyRule, type SingleRule, type WeeklyRu
 import type { EmbeddedSchedule } from "@/models/schedule";
 import { Temporal } from "@js-temporal/polyfill";
 
-const WEEKDAY_TO_TITLE: Record<typeof Weekday.values[number], string> = {
+export const WEEKDAY_TO_TITLE: Record<typeof Weekday.values[number], string> = {
   MO: "Monday",
   TU: "Tuesday",
   WE: "Wednesday",
@@ -35,9 +35,9 @@ function time12(t: Temporal.PlainTime, withPeriod: boolean): string {
   return withPeriod ? `${h}:${mm}${p}` : `${h}:${mm}`;
 }
 
-function formatTimeRange(localStartTime: string | Temporal.PlainTime, durationMinutes: number): string {
+function formatTimeRange(localStartTime: string | Temporal.PlainTime, localEndTime: string | Temporal.PlainTime): string {
   const start = typeof localStartTime === "string" ? Temporal.PlainTime.from(localStartTime) : localStartTime;
-  const end = start.add({ minutes: durationMinutes });
+  const end = typeof localEndTime === "string" ? Temporal.PlainTime.from(localEndTime) : localEndTime;
   const samePeriod = (start.hour < 12) === (end.hour < 12);
   return samePeriod
     ? `${time12(start, false)}-${time12(end, true)}` // e.g., 9:00-10:30AM
@@ -45,8 +45,9 @@ function formatTimeRange(localStartTime: string | Temporal.PlainTime, durationMi
 }
 
 function formatEffectiveDates(effectiveStart?: string, effectiveEnd?: string, locale = "en-US"): string {
-  if (!effectiveStart && !effectiveEnd) 
+  if (!effectiveStart && !effectiveEnd) {
     return "";
+  }
 
   const fmt = (d: string) => Temporal.PlainDate.from(d).toLocaleString(locale, { month: "short", day: "numeric" });
   if (effectiveStart && effectiveEnd) {
@@ -83,28 +84,34 @@ function formatMonthDayGroups(isoDates: string[], locale = "en-US"): string {
   return parts.join(", ");
 }
 
-/**
- * Describe a single schedule in a human-readable format.
- */
-export function describeSchedule(
+export function describeScheduleTime(
+  input: EmbeddedSchedule,
+): string {
+  const timeRange = formatTimeRange(input.localStartTime, input.localEndTime);
+  return timeRange;
+}
+
+export function describeScheduleDates(
   input: EmbeddedSchedule,
   locale = "en-US",
 ): string {
-  const timeRange = formatTimeRange(input.rule.localStartTime, input.durationMinutes);
   const tailDates = formatEffectiveDates(input.effectiveStart, input.effectiveEnd, locale);
+  return tailDates;
+}
 
-  let out = "";
+export function describeScheduleOccurrence(
+  input: EmbeddedSchedule,
+  locale = "en-US",
+): string {
   switch (input.rule.type) {
     case ScheduleType.weekly: {
       const r = input.rule as WeeklyRule;
-      out = `${weekdayPlural(r.weekday)} ${freqLabelWeekly(r.interval)}`;
-      break;
+      return `${weekdayPlural(r.weekday)} ${freqLabelWeekly(r.interval)}`;
     }
 
     case ScheduleType.monthly: {
       const r = input.rule as MonthlyRule;
-      out = `${ordinal(r.nth, locale)} ${weekdayPlural(r.weekday)} monthly`;
-      break;
+      return `${ordinal(r.nth, locale)} ${weekdayPlural(r.weekday)} monthly`;
     }
 
     case ScheduleType.single: {
@@ -133,19 +140,25 @@ export function describeSchedule(
         datesPart = pieces.join(", ");
       }
 
-      out = `${datesPart}`;
-      break;
+      return `${datesPart}`;
     }
   }
-    
-  // Add time range and tail dates
-  return `${out} from ${timeRange}${tailDates}`;
 }
 
-type TimeKey = `${string}|${number}`;
-function getInfoFromTimeKey(key: TimeKey): [Temporal.PlainTime, number] {
-  const [localStartTime, durationMinutes] = key.split("|");
-  return [Temporal.PlainTime.from(localStartTime!), parseInt(durationMinutes!, 10)];
+export function describeSchedule(
+  input: EmbeddedSchedule,
+  locale = "en-US",
+): string {
+  const timeRange = formatTimeRange(input.localStartTime, input.localEndTime);
+  const tailDates = formatEffectiveDates(input.effectiveStart, input.effectiveEnd, locale);
+  const occurrence = describeScheduleOccurrence(input, locale);
+  return `${occurrence} from ${timeRange}${tailDates}`;
+}
+
+type TimeKey = `${string}|${string}`;
+function getInfoFromTimeKey(key: TimeKey): [Temporal.PlainTime, Temporal.PlainTime] {
+  const [localStartTime, localEndTime] = key.split("|");
+  return [Temporal.PlainTime.from(localStartTime!), Temporal.PlainTime.from(localEndTime!)];
 }
 
 function dayList(days: Weekday[]): string {
@@ -194,13 +207,15 @@ export function consolidateSchedules(
   const wGroups = new Map<WKey, EmbeddedSchedule[]>();
   for (const w of weekly) {
     const r = w.rule as WeeklyRule;
-    const key = `${w.effectiveStart}|${w.effectiveEnd}|${r.tzid}|${r.interval}`;
+    const key = `${w.effectiveStart}|${w.effectiveEnd}|${w.tzid}|${r.interval}`;
     (wGroups.get(key) ?? (wGroups.set(key, []), wGroups.get(key)!)).push(w);
   }
 
   for (const [groupKey, schedules] of wGroups) {
-    const [effectiveStart, effectiveEnd, _, intervalStr] = groupKey.split("|");
+    const [effectiveStartStr, effectiveEndStr, _, intervalStr] = groupKey.split("|");
     const interval = parseInt(intervalStr!, 10);
+    const effectiveStart = effectiveStartStr === "undefined" ? undefined : effectiveStartStr;
+    const effectiveEnd = effectiveEndStr === "undefined" ? undefined : effectiveEndStr;
 
     // Build time -> Set<weekday> and weekday -> Set<time>
     const timeToDays = new Map<TimeKey, Set<Weekday>>();
@@ -208,7 +223,7 @@ export function consolidateSchedules(
 
     for (const s of schedules) {
       const r = s.rule as WeeklyRule;
-      const timeKey = `${r.localStartTime}|${s.durationMinutes}` as TimeKey;
+      const timeKey = `${s.localStartTime}|${s.localEndTime}` as TimeKey;
       (timeToDays.get(timeKey) ?? (timeToDays.set(timeKey, new Set()), timeToDays.get(timeKey)!)).add(r.weekday);
       (dayToTimes.get(r.weekday) ?? (dayToTimes.set(r.weekday, new Set()), dayToTimes.get(r.weekday)!)).add(timeKey);
     }
@@ -225,7 +240,7 @@ export function consolidateSchedules(
         consumed.add(`${d}|${tKey}`);
       const [localStartTime, durationMinutes] = getInfoFromTimeKey(tKey);
       const headline = `${dayList(days)} ${freqLabelWeekly(interval)} from ${formatTimeRange(localStartTime, durationMinutes)}`;
-      const tail = formatEffectiveDates(effectiveStart || undefined, effectiveEnd || undefined, locale);
+      const tail = formatEffectiveDates(effectiveStart, effectiveEnd, locale);
       out.push(`${headline}${tail}`);
     }
 
@@ -238,7 +253,7 @@ export function consolidateSchedules(
 
       const timesStr = timeList(remaining);
       const headline = `${weekdayPlural(d)} ${freqLabelWeekly(interval)} from ${timesStr}`;
-      const tail = formatEffectiveDates(effectiveStart || undefined, effectiveEnd || undefined, locale);
+      const tail = formatEffectiveDates(effectiveStart, effectiveEnd, locale);
       out.push(`${headline}${tail}`);
     }
   }
@@ -248,20 +263,22 @@ export function consolidateSchedules(
   const mGroups = new Map<MKey, EmbeddedSchedule[]>();
   for (const m of monthly) {
     const r = m.rule as MonthlyRule;
-    const key = `${m.effectiveStart}|${m.effectiveEnd}|${r.tzid}|${r.nth}`;
+    const key = `${m.effectiveStart}|${m.effectiveEnd}|${m.tzid}|${r.nth}`;
     (mGroups.get(key) ?? (mGroups.set(key, []), mGroups.get(key)!)).push(m);
   }
 
   for (const [groupKey, schedules] of mGroups) {
-    const [effectiveStart, effectiveEnd, _, nthStr] = groupKey.split("|");
+    const [effectiveStartStr, effectiveEndStr, _, nthStr] = groupKey.split("|");
     const nth = parseInt(nthStr!, 10);
+    const effectiveStart = effectiveStartStr === "undefined" ? undefined : effectiveStartStr;
+    const effectiveEnd = effectiveEndStr === "undefined" ? undefined : effectiveEndStr;
 
     const timeToDays = new Map<TimeKey, Set<Weekday>>();
     const dayToTimes = new Map<Weekday, Set<TimeKey>>();
 
     for (const s of schedules) {
       const r = s.rule as MonthlyRule;
-      const timeKey = `${r.localStartTime}|${s.durationMinutes}` as TimeKey;
+      const timeKey = `${s.localStartTime}|${s.localEndTime}` as TimeKey;
       (timeToDays.get(timeKey) ?? (timeToDays.set(timeKey, new Set()), timeToDays.get(timeKey)!)).add(r.weekday);
       (dayToTimes.get(r.weekday) ?? (dayToTimes.set(r.weekday, new Set()), dayToTimes.get(r.weekday)!)).add(timeKey);
     }
@@ -278,7 +295,7 @@ export function consolidateSchedules(
       const headDays = dayList(days);
       const [localStartTime, durationMinutes] = getInfoFromTimeKey(tKey);
       const headline = `${ordinal(nth, locale)} ${headDays} monthly from ${formatTimeRange(localStartTime, durationMinutes)}`;
-      const tail = formatEffectiveDates(effectiveStart || undefined, effectiveEnd || undefined, locale);
+      const tail = formatEffectiveDates(effectiveStart, effectiveEnd, locale);
       out.push(`${headline}${tail}`);
     }
 
@@ -291,7 +308,7 @@ export function consolidateSchedules(
 
       const timesStr = timeList(remaining);
       const headline = `${ordinal(nth, locale)} ${weekdayPlural(d)} monthly from ${timesStr}`;
-      const tail = formatEffectiveDates(effectiveStart || undefined, effectiveEnd || undefined, locale);
+      const tail = formatEffectiveDates(effectiveStart, effectiveEnd, locale);
       out.push(`${headline}${tail}`);
     }
   }

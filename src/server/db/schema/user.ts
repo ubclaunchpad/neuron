@@ -3,6 +3,7 @@ import { Role, Status } from "@/models/interfaces";
 import { schedule } from "@/server/db/schema/schedule";
 import { eq, relations, sql } from "drizzle-orm";
 import { bit, boolean, check, index, integer, pgEnum, pgTable, pgView, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { course } from "./course";
 
 export const role = pgEnum("role", Role.values);
 export const status = pgEnum("status", Status.values);
@@ -62,12 +63,10 @@ export const volunteerRelations = relations(volunteer, ({ one, many }) => ({
 
 export const coursePreference = pgTable("course_preference", {
     volunteerUserId: uuid("volunteer_user_id").notNull().references(() => volunteer.userId, { onDelete: "cascade" }),
-    scheduleId: uuid("schedule_id").notNull().references(() => schedule.id, { onDelete: "cascade" }),
-    courseRank: integer("course_rank").notNull(),
+    courseId: uuid("course_id").notNull().references(() => course.id, {onDelete: "cascade"}),
+    createdAt: timestamp("created_at", {withTimezone: true}).defaultNow().notNull(),
 }, (table) => [
-    primaryKey({ name: "pk_course_preferences", columns: [table.volunteerUserId, table.scheduleId] }),
-    uniqueIndex().on(table.volunteerUserId, table.courseRank),
-    check("chk_course_rank_positive", sql`${table.courseRank} > 0`),
+    primaryKey({ name: "pk_course_preferences", columns: [table.volunteerUserId, table.courseId] }),
 ]);
 export type CoursePreferenceDB = typeof coursePreference.$inferSelect;
 
@@ -76,9 +75,9 @@ export const coursePreferenceRelations = relations(coursePreference, ({ one }) =
         fields: [coursePreference.volunteerUserId],
         references: [volunteer.userId],
     }),
-    schedule: one(schedule, {
-        fields: [coursePreference.scheduleId],
-        references: [schedule.id],
+    course: one(course, {
+        fields: [coursePreference.courseId],
+        references: [course.id],
     }),
 }));
 

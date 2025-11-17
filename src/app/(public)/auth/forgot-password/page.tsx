@@ -49,12 +49,16 @@ export default function ForgotPasswordForm() {
   };
 
   return (
-    <div className="w-full max-w-3xl space-y-8 p-8">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate
+      className="w-full max-w-3xl space-y-8 p-8"
+    >
       <h1 className="text-2xl font-display font-medium leading-none text-primary">
         {isSubmitSuccessful ? "Check your mail" : "Reset your password"}
       </h1>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      <div className="space-y-5">
         {!isSubmitSuccessful ? (
           <Field data-invalid={!!errors.email} className="gap-1">
             <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -77,7 +81,9 @@ export default function ForgotPasswordForm() {
             resend instructions.
           </p>
         )}
+      </div>
 
+      <div className="space-y-5">
         <Button
           type="submit"
           disabled={cooldown.isActive || isSubmitting}
@@ -96,16 +102,16 @@ export default function ForgotPasswordForm() {
             "Send Instructions"
           )}
         </Button>
-      </form>
 
-      <p className="text-center text-foreground">
-        <Button asChild variant="link" className="p-0">
-          <Link prefetch href="/auth/login">
-            <ChevronLeft className="h-4 w-4" />
-            Back to login
-          </Link>
-        </Button>
-      </p>
-    </div>
+        <p className="text-center text-foreground">
+          <Button asChild variant="link" className="p-0">
+            <Link prefetch href="/auth/login">
+              <ChevronLeft className="h-4 w-4" />
+              Back to login
+            </Link>
+          </Button>
+        </p>
+      </div>
+    </form>
   );
 }

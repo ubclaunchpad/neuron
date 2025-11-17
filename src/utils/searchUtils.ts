@@ -1,11 +1,10 @@
+import type { ListRequest } from "@/models/api/common";
 import { sql, type AnyColumn } from "drizzle-orm";
-import { ListRequest } from "@/models/api/common";
 
 export const getPagination = (listRequest: ListRequest) => {
-  const page = listRequest.page ?? 0;
   const perPage = listRequest.perPage ?? 10;
-  const offset = page * perPage;
-  return { page, perPage, offset } as const;
+  const offset = listRequest.cursor ?? 0;
+  return { perPage, offset } as const;
 };
 
 // Order columns by most important first to least important

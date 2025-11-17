@@ -121,7 +121,7 @@ export const SettingsDialog = NiceModal.create(() => {
                   <DialogDescription>{item.description}</DialogDescription>
                 )}
               </DialogHeader>
-              This is the {item.id} page
+              <item.content/>
             </TabsContent>
           ))}
         </Tabs>

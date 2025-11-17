@@ -1,5 +1,5 @@
 {
-  "id": "d0219c72-256a-46a1-bb2e-8ff081fb02c9",
+  "id": "c3041314-94c0-4a8a-a288-8bed11b5ab7a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -550,6 +550,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "lower_level": {
+          "name": "lower_level",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "upper_level": {
+          "name": "upper_level",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -615,7 +627,16 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "chk_lower_level_bounds": {
+          "name": "chk_lower_level_bounds",
+          "value": "\"course\".\"lower_level\" >= 1 AND \"course\".\"lower_level\" <= 4"
+        },
+        "chk_upper_level_bounds": {
+          "name": "chk_upper_level_bounds",
+          "value": "\"course\".\"upper_level\" >= 1 AND \"course\".\"upper_level\" <= 4"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.term": {
@@ -1140,7 +1161,7 @@
           "name": "requesting_volunteer_user_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "covered_by_volunteer_user_id": {
           "name": "covered_by_volunteer_user_id",
@@ -1167,7 +1188,7 @@
             }
           ],
           "isUnique": true,
-          "where": "\"coverage_request\".\"status\" = 'open'::coverage_status",
+          "where": "not \"coverage_request\".\"status\" = 'withdrawn'::coverage_status",
           "concurrently": false,
           "method": "btree",
           "with": {}

@@ -8,11 +8,14 @@ export type ClassIdInput = z.input<typeof ClassIdInput>;
 
 export const CreateClass = z.object({
   termId: z.uuid(),
-  image: z.url().optional(),
+  image: z.string().optional(),
   name: z.string().nonempty(),
   description: z.string().optional(),
   meetingURL : z.url().optional(),
+  lowerLevel: z.int().min(1).max(4),
+  upperLevel: z.int().min(1).max(4),
   category: z.string(),
+  subcategory: z.string().optional(),
   schedules: z.array(CreateSchedule).default([]),
 });
 export type CreateClassInput = z.input<typeof CreateClass>;
@@ -20,11 +23,14 @@ export type CreateClassOutput= z.output<typeof CreateClass>;
 
 export const UpdateClass = z.object({
   id: z.uuid(),
-  image: z.url().optional(),
+  image: z.string().nullish(),
   name: z.string().optional(),
   description: z.string().nullish(),
   meetingURL: z.url().nullish(),
   category: z.string().optional(),
+  subcategory: z.string().nullish(),
+  lowerLevel: z.int().optional(),
+  upperLevel: z.int().optional(),
   addedSchedules: z.array(CreateSchedule).default([]),
   updatedSchedules: z.array(UpdateSchedule).default([]),
   deletedSchedules: z.array(z.uuid()).default([]),

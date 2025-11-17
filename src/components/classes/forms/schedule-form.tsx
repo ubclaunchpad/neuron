@@ -39,8 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/primitives/dialog";
-import { isoDateToJSDate, jsDateToIsoDate } from "@/utils/dateUtils";
-import { WEEKDAY_TO_TITLE } from "@/utils/scheduleUtils";
+import { isoDateToJSDate, jsDateToIsoDate } from "@/lib/temporal-conversions";
 import type { DeepAllUnionFields } from "@/utils/typeUtils";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -72,8 +71,8 @@ const Monthly = z.object({
     .number("Please fill out this field.")
     .int("Please enter only whole numbers.")
     .min(1)
-    .max(5)
-})
+    .max(5),
+});
 
 export const ScheduleRuleEditSchema = z.discriminatedUnion("type", [
   Single,
@@ -86,7 +85,6 @@ export const ScheduleEditSchema = z.object({
   id: z.uuid().optional(),
   localStartTime: z.iso.time("Please fill out this field."),
   localEndTime: z.iso.time("Please fill out this field."),
-  tzid: z.string().nonempty("Please fill out this field."),
   volunteerUserIds: z.array(z.uuid()).default([]),
   instructorUserIds: z.array(z.uuid()).default([]),
   effectiveStart: z.iso.date().optional(),
@@ -95,18 +93,6 @@ export const ScheduleEditSchema = z.object({
 });
 export type ScheduleEditSchemaInput = z.input<typeof ScheduleEditSchema>;
 export type ScheduleEditSchemaOutput = z.output<typeof ScheduleEditSchema>;
-
-const TIMEZONES = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Phoenix",
-  "Europe/London",
-  "Europe/Paris",
-  "Asia/Tokyo",
-  "Australia/Sydney",
-];
 
 export const ScheduleFormDialog = NiceModal.create(
   ({
@@ -118,7 +104,7 @@ export const ScheduleFormDialog = NiceModal.create(
   }) => {
     const modal = useModal();
 
-    const { control, handleSubmit, formState } = useForm({
+    const { control, formState, handleSubmit, reset } = useForm({
       resolver: zodResolver(ScheduleEditSchema),
       values: initial,
       mode: "onSubmit",
@@ -133,7 +119,7 @@ export const ScheduleFormDialog = NiceModal.create(
     const ruleType = useWatch({
       control,
       name: "rule.type",
-      defaultValue: initial.rule.type
+      defaultValue: initial.rule.type,
     });
 
     const onSubmit = useCallback(
@@ -149,9 +135,9 @@ export const ScheduleFormDialog = NiceModal.create(
         open={modal.visible}
         onOpenChange={async (open) => {
           if (open) {
+            reset(initial);
             await modal.show();
-          }
-          else {
+          } else {
             await modal.hide();
             await modal.reject();
           }
@@ -169,7 +155,6 @@ export const ScheduleFormDialog = NiceModal.create(
             </DialogHeader>
 
             <FieldGroup>
-              {/* Times + Timezone */}
               <FieldGroup className="flex-row">
                 {/* Start time */}
                 <FormInput
@@ -188,21 +173,6 @@ export const ScheduleFormDialog = NiceModal.create(
                   label="End Time"
                   required
                 />
-
-                {/* Timezone */}
-                <FormSelect
-                  control={control}
-                  name="tzid"
-                  label="Timezone"
-                  placeholder="Select timezone"
-                  required
-                >
-                  {TIMEZONES.map((tz) => (
-                    <SelectItem key={tz} value={tz}>
-                      {tz}
-                    </SelectItem>
-                  ))}
-                </FormSelect>
               </FieldGroup>
 
               {/* Recurrence type */}
@@ -263,8 +233,8 @@ export const ScheduleFormDialog = NiceModal.create(
                         className="flex-1"
                         hideErrors
                       >
-                        {Object.entries(WEEKDAY_TO_TITLE).map(
-                          ([value, label]) => (
+                        {Object.entries(WeekdayEnum.def.entries).map(
+                          ([label, value]) => (
                             <SelectItem key={value} value={value}>
                               {label}
                             </SelectItem>
@@ -311,8 +281,8 @@ export const ScheduleFormDialog = NiceModal.create(
                         className="flex-1"
                         hideErrors
                       >
-                        {Object.entries(WEEKDAY_TO_TITLE).map(
-                          ([value, label]) => (
+                        {Object.entries(WeekdayEnum.def.entries).map(
+                          ([label, value]) => (
                             <SelectItem key={value} value={value}>
                               {label}
                             </SelectItem>

@@ -1,18 +1,16 @@
-import type { ListRequest } from "@/models/api/common";
-import type { ListResponse } from "@/models/list-response";
+import type { ListRequestWithSearch } from "@/models/api/common";
+import { UpdateVolunteerProfileInput } from "@/models/api/volunteer";
 import { Status } from "@/models/interfaces";
+import type { ListResponse } from "@/models/list-response";
 import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
-import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { eq, desc, inArray, sql, and } from "drizzle-orm";
-import { volunteer, volunteerUserView, user, coursePreference } from "../../db/schema/user";
-import type { VolunteerUserViewDB } from "@/server/db/schema";
-import { Status } from "@/models/interfaces";
 import { course } from "@/server/db/schema";
-import { buildSimilarityExpression, buildSearchCondition, getPagination } from "@/utils/searchUtils";
+import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import { buildSearchCondition, buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { z } from "zod";
-import { UpdateVolunteerProfileInput } from "@/models/api/volunteer";
+import { coursePreference, user, volunteer, volunteerUserView } from "../../db/schema/user";
 
 export class VolunteerService {
   private readonly db: Drizzle;
@@ -20,11 +18,12 @@ export class VolunteerService {
     this.db = db;
   }
 
-  async getVolunteersForRequest(listRequest: ListRequest): Promise<ListResponse<Volunteer>> {
+  async getVolunteersForRequest(listRequest: ListRequestWithSearch): Promise<ListResponse<Volunteer>> {
     const { perPage, offset } = getPagination(listRequest);
-    const queryInput = listRequest.queryInput?.trim() ?? "";
+    const queryInput = listRequest.search?.trim();
+    const hasQuery = !!queryInput
 
-    const similarity = queryInput.length > 0
+    const similarity = hasQuery
       ? buildSimilarityExpression([volunteerUserView.name, volunteerUserView.lastName, volunteerUserView.email], queryInput)
       : undefined;
 
@@ -33,15 +32,16 @@ export class VolunteerService {
       ...getViewColumns(volunteerUserView),
     } as const;
 
-    const selectShape = queryInput.length > 0
+    const selectShape = hasQuery
       ? { ...baseSelect, similarity: similarity! }
       : baseSelect;
 
-    let builder: any = this.db
+    let builder = this.db
       .select(selectShape)
-      .from(volunteerUserView);
+      .from(volunteerUserView)
+      .$dynamic();
 
-    if (queryInput.length > 0) {
+    if (hasQuery) {
       builder = builder
         .where(buildSearchCondition([volunteerUserView.name, volunteerUserView.lastName, volunteerUserView.email], queryInput))
         .orderBy(desc(similarity!));
@@ -49,11 +49,17 @@ export class VolunteerService {
 
     const rows = await builder
       .limit(perPage)
-      .offset(offset) as Array<VolunteerUserViewDB & { count: number; similarity?: number }>;
+      .offset(offset)
+      .execute();
 
+    const total = rows[0]?.count ?? 0;
+    const loadedSoFar = offset + rows.length;
+    const nextCursor = loadedSoFar < total ? loadedSoFar : null;
+    
     return {
       data: rows.map((d) => buildVolunteer(d)),
-      total: rows[0]?.count ?? 0,
+      total,
+      nextCursor,
     };
   }
 
@@ -125,6 +131,8 @@ export class VolunteerService {
       .where(and(eq(coursePreference.volunteerUserId, volunteerUserId), eq(coursePreference.courseId, classId)));
       
     return {preferred: result.length > 0};
+  }
+  
   async updateVolunteerProfile(
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void> {

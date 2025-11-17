@@ -15,17 +15,19 @@ type PageLayoutContextValue = {
   toggle: () => void;
   registerAside: () => () => void;
   hasAside: boolean;
-  sidebarWidth: string;
+  asideWidth: string;
   mainMinWidth: string;
+  isPageScrolled: boolean;
+  setIsPageScrolled: (isScrolled: boolean) => void;
 };
 
 const PageLayoutContext = React.createContext<PageLayoutContextValue | null>(
   null,
 );
 
-function usePageSidebar() {
+function usePageAside() {
   const ctx = React.useContext(PageLayoutContext);
-  if (!ctx) throw new Error("usePageSidebar must be used within PageLayout");
+  if (!ctx) throw new Error("usePageAside must be used within PageLayout");
   return ctx;
 }
 
@@ -33,16 +35,17 @@ function PageLayout({
   className,
   style,
   children,
-  sidebarWidth = "448px",
+  asideWidth = "448px",
   mainMinWidth = "412px",
   defaultOpen = false,
   ...props
 }: React.ComponentProps<"div"> & {
-  sidebarWidth?: string;
+  asideWidth?: string;
   mainMinWidth?: string;
   defaultOpen?: boolean;
 }) {
   const [isOpen, setIsOpen] = React.useState(defaultOpen);
+  const [isPageScrolled, setIsPageScrolled] = React.useState(false);
   const [asideCount, setAsideCount] = React.useState(0);
 
   const registerAside = React.useCallback(() => {
@@ -62,10 +65,12 @@ function PageLayout({
       toggle,
       registerAside,
       hasAside,
-      sidebarWidth,
+      asideWidth: asideWidth,
       mainMinWidth,
+      setIsPageScrolled,
+      isPageScrolled
     }),
-    [toggle, isOpen, registerAside, hasAside, sidebarWidth, mainMinWidth],
+    [toggle, isOpen, registerAside, hasAside, asideWidth, mainMinWidth, setIsPageScrolled, isPageScrolled],
   );
 
   return (
@@ -75,14 +80,14 @@ function PageLayout({
         data-state={state}
         style={
           {
-            "--sidebar-w": sidebarWidth,
+            "--aside-w": asideWidth,
             "--main-min": mainMinWidth,
-            "--main-offset": hasAside && isOpen ? "var(--sidebar-w)" : "0px",
+            "--main-offset": hasAside && isOpen ? "var(--aside-w)" : "0px",
             ...style,
           } as React.CSSProperties
         }
         className={cn(
-          "bg-background relative flex min-h-dvh flex-col",
+          "bg-background relative flex min-h-svh max-h-svh overflow-auto flex-col",
           "transition-[margin-right] duration-200",
           "mr-(--main-offset) min-w-(--main-min)",
           className,
@@ -98,13 +103,21 @@ function PageLayout({
 function PageLayoutHeader({
   className,
   children,
-  border = true,
+  border = "always",
   ...props
-}: React.ComponentProps<"header"> & { border?: boolean }) {
+}: React.ComponentProps<"header"> & { border?: "always" | "never" | "scroll" }) {
+  const { isPageScrolled } = usePageAside();
+  const hideBorder = border === "never" || (border === "scroll" && !isPageScrolled);
+
   return (
     <header
       data-slot="page-header"
-      className={cn("bg-background", border && "border-b", className)}
+      className={cn(
+        "bg-background sticky top-0 z-40 border-b transition-[border-color] shadow-bottom", 
+        !isPageScrolled && "shadow-none",
+        hideBorder && "border-transparent", 
+        className
+      )}
       {...props}
     >
       {children}
@@ -166,8 +179,26 @@ function PageLayoutContent({
   className,
   ...props
 }: React.ComponentProps<"main">) {
+  const { setIsPageScrolled } = usePageAside();
+  const mainRef = React.useRef<HTMLElement>(null);
+
+  React.useEffect(() => {
+    const element = mainRef.current;
+    if (!element) return;
+
+    const handleScroll = () => {
+      setIsPageScrolled(element.scrollTop > 0);
+    };
+
+    element.addEventListener("scroll", handleScroll);
+    handleScroll(); // Check initial state
+
+    return () => element.removeEventListener("scroll", handleScroll);
+  }, [setIsPageScrolled]);
+
   return (
     <main
+      ref={mainRef}
       data-slot="page-main"
       className={cn(
         "h-full min-h-0 overflow-y-auto",
@@ -184,14 +215,14 @@ function PageLayoutAside({
   className,
   style,
   side = "right",
-  ariaLabel = "Page sidebar",
+  ariaLabel = "Page aside",
   children,
   ...props
 }: React.ComponentProps<"aside"> & {
   side?: "right" | "left";
   ariaLabel?: string;
 }) {
-  const { isOpen, registerAside } = usePageSidebar();
+  const { isOpen, registerAside } = usePageAside();
 
   React.useEffect(() => registerAside(), [registerAside]);
 
@@ -203,9 +234,9 @@ function PageLayoutAside({
       role="complementary"
       aria-hidden={!isOpen}
       aria-label={ariaLabel}
-      data-slot="page-sidebar"
+      data-slot="page-aside"
       data-state={isOpen ? "open" : "closed"}
-      style={{ width: "min(var(--sidebar-w), 100dvw)", ...style }}
+      style={{ width: "min(var(--aside-w), 100dvw)", ...style }}
       className={cn(
         "fixed top-0 z-40 h-dvh border bg-background shadow-lg",
         side === "right" ? "right-0 border-l" : "left-0 border-r",
@@ -222,17 +253,17 @@ function PageLayoutAside({
   );
 }
 
-function PageSidebarTrigger({
+function PageAsideTrigger({
   className,
   onClick,
   children,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { toggle } = usePageSidebar();
+  const { toggle } = usePageAside();
 
   return (
     <Button
-      data-slot="page-sidebar-trigger"
+      data-slot="page-aside-trigger"
       variant="ghost"
       size="icon"
       className={cn("size-7", className)}
@@ -242,14 +273,13 @@ function PageSidebarTrigger({
       }}
       {...props}
     >
-      {children ?? <span className="sr-only">Toggle Page Sidebar</span>}
+      {children ?? <span className="sr-only">Toggle Page Aside</span>}
     </Button>
   );
 }
 
 export {
-  PageLayout, PageLayoutAside, PageLayoutContent, PageLayoutHeader, PageLayoutHeaderContent,
-  PageLayoutHeaderTitle, PageSidebarTrigger,
-  usePageSidebar
+  PageAsideTrigger, PageLayout, PageLayoutAside, PageLayoutContent, PageLayoutHeader, PageLayoutHeaderContent,
+  PageLayoutHeaderTitle, usePageAside
 };
 

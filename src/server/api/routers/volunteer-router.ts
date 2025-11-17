@@ -1,17 +1,17 @@
+import { ListRequestWithSearch } from "@/models/api/common";
 import {
   AdminSignoffInput,
-  VolunteerIdInput,
   UpdateVolunteerAvailabilityInput,
   UpdateVolunteerProfileInput,
+  VolunteerIdInput,
 } from "@/models/api/volunteer";
-import { ListRequest } from "@/models/api/common";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 import { z } from "zod";
 
 export const volunteerRouter = createTRPCRouter({
   list: authorizedProcedure({ permission: { users: ["view-volunteer"] } })
-    .input(ListRequest)
+    .input(ListRequestWithSearch)
     .query(async ({ input, ctx }) => {
       const volunteers = await ctx.volunteerService.getVolunteersForRequest(input);
       return volunteers;
@@ -19,7 +19,10 @@ export const volunteerRouter = createTRPCRouter({
   setClassPreference: authorizedProcedure({
     permission: { profile: ["update"] },
   })
-    .input(VolunteerIdInput.merge(z.object({classId: z.string().uuid(), preferred: z.boolean()})))
+    .input(VolunteerIdInput.extend({ 
+      classId: z.uuid(), 
+      preferred: z.boolean() 
+    }))
     .mutation(async ({ input, ctx }) => {
       await ctx.volunteerService.setClassPreference(input.volunteerUserId, input.classId, input.preferred)
       return { ok: true };
@@ -27,17 +30,16 @@ export const volunteerRouter = createTRPCRouter({
   getClassPreference: authorizedProcedure({
     permission: { profile: ["update"] },
   })
-    .input(VolunteerIdInput.merge(z.object({classId: z.string().uuid()})))
+    .input(VolunteerIdInput.extend({ 
+      classId: z.uuid() 
+    }))
     .query(async ({ input, ctx }) => {
       return await ctx.volunteerService.getClassPreference(input.volunteerUserId, input.classId)
     }),
   byId: authorizedProcedure({ permission: { users: ["view-volunteer"] } })
     .input(VolunteerIdInput)
-    .query(async ({ input }) => {
-      // TODO: getVolunteerById
-      return {
-        /* volunteer */
-      };
+    .query(async ({ input, ctx }) => {
+      return await ctx.volunteerService.getVolunteer(input.volunteerUserId);
     }),
   updateVolunteerProfile: authorizedProcedure({
     permission: { profile: ["update"] },

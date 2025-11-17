@@ -1,13 +1,12 @@
-import type { ListRequest } from "@/models/api/common";
+import type { ListRequestWithSearch } from "@/models/api/common";
 import { buildInstructor, type Instructor } from "@/models/instructor";
 import type { ListResponse } from "@/models/list-response";
 import { type Drizzle } from "@/server/db";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import { buildSearchCondition, buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
 import { desc, inArray, sql } from "drizzle-orm";
 import { instructorUserView } from "../../db/schema/user";
-import type { InstructorUserViewDB } from "@/server/db/schema";
-import { buildSimilarityExpression, buildSearchCondition, getPagination } from "@/utils/searchUtils";
 
 export class InstructorService {
   private readonly db: Drizzle;
@@ -15,11 +14,12 @@ export class InstructorService {
     this.db = db;
   }
 
-  async getInstructorsForRequest(listRequest: ListRequest): Promise<ListResponse<Instructor>> {
+  async getInstructorsForRequest(listRequest: ListRequestWithSearch): Promise<ListResponse<Instructor>> {
     const { perPage, offset } = getPagination(listRequest);
-    const queryInput = listRequest.queryInput?.trim() ?? "";
+    const queryInput = listRequest.search?.trim();
+    const hasQuery = !!queryInput
 
-    const similarity = queryInput.length > 0
+    const similarity = hasQuery
       ? buildSimilarityExpression([instructorUserView.name, instructorUserView.lastName, instructorUserView.email], queryInput)
       : undefined;
 
@@ -28,15 +28,16 @@ export class InstructorService {
       ...getViewColumns(instructorUserView),
     } as const;
 
-    const selectShape = queryInput.length > 0
+    const selectShape = hasQuery
       ? { ...baseSelect, similarity: similarity! }
       : baseSelect;
 
-    let builder: any = this.db
+    let builder = this.db
       .select(selectShape)
-      .from(instructorUserView);
+      .from(instructorUserView)
+      .$dynamic();
 
-    if (queryInput.length > 0) {
+    if (hasQuery) {
       builder = builder
         .where(buildSearchCondition([instructorUserView.name, instructorUserView.lastName, instructorUserView.email], queryInput))
         .orderBy(desc(similarity!));
@@ -44,11 +45,17 @@ export class InstructorService {
 
     const rows = await builder
       .limit(perPage)
-      .offset(offset) as Array<InstructorUserViewDB & { count: number; similarity?: number }>;
+      .offset(offset)
+      .execute();
 
+    const total = rows[0]?.count ?? 0;
+    const loadedSoFar = offset + rows.length;
+    const nextCursor = loadedSoFar < total ? loadedSoFar : null;
+    
     return {
       data: rows.map((d) => buildInstructor(d)),
-      total: rows[0]?.count ?? 0,
+      total,
+      nextCursor,
     };
   }
 

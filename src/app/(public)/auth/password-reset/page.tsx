@@ -11,7 +11,11 @@ import { z } from "zod";
 import { authClient } from "@/lib/auth/client";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/primitives/alert";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/primitives/alert";
 import { Button } from "@/components/primitives/button";
 import { Field, FieldError, FieldLabel } from "@/components/primitives/field";
 import { PasswordInput } from "@/components/primitives/input";
@@ -77,7 +81,11 @@ export default function PasswordResetForm() {
   };
 
   return (
-    <div className="w-full max-w-3xl space-y-8 p-8">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate
+      className="w-full max-w-3xl space-y-8 p-8"
+    >
       <h1 className="text-2xl font-display font-medium leading-none text-primary">
         Set your new password
       </h1>
@@ -109,9 +117,11 @@ export default function PasswordResetForm() {
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      <div className="space-y-5">
         <Field data-invalid={!!errors.password} className="gap-1">
-          <FieldLabel htmlFor="password">Create password (at least 8 characters)</FieldLabel>
+          <FieldLabel htmlFor="password">
+            Create password (at least 8 characters)
+          </FieldLabel>
           <PasswordInput
             id="password"
             autoComplete="new-password"
@@ -135,8 +145,14 @@ export default function PasswordResetForm() {
           />
           <FieldError errors={errors.confirmPassword} />
         </Field>
+      </div>
 
-        <Button type="submit" disabled={!!tokenError || isSubmitting} className="w-full">
+      <div className="space-y-5">
+        <Button
+          type="submit"
+          disabled={!!tokenError || isSubmitting}
+          className="w-full"
+        >
           {isSubmitting ? (
             <>
               <Spinner /> Resetting...
@@ -145,16 +161,15 @@ export default function PasswordResetForm() {
             "Reset Password"
           )}
         </Button>
-      </form>
-
-      <p className="text-center text-foreground">
-        <Button asChild variant="link" className="p-0">
-          <Link href="/auth/login">
-            <ChevronLeft className="me-1 h-4 w-4" />
-            <strong>Back to login</strong>
-          </Link>
-        </Button>
-      </p>
-    </div>
+        <p className="text-center text-foreground">
+          <Button asChild variant="link" className="p-0">
+            <Link href="/auth/login">
+              <ChevronLeft className="me-1 h-4 w-4" />
+              <strong>Back to login</strong>
+            </Link>
+          </Button>
+        </p>
+      </div>
+    </form>
   );
 }

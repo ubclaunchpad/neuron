@@ -60,8 +60,12 @@ CREATE TABLE "course" (
 	"meeting_url" text,
 	"category" text NOT NULL,
 	"subcategory" text,
+	"lower_level" integer NOT NULL,
+	"upper_level" integer NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "chk_lower_level_bounds" CHECK ("course"."lower_level" >= 1 AND "course"."lower_level" <= 4),
+	CONSTRAINT "chk_upper_level_bounds" CHECK ("course"."upper_level" >= 1 AND "course"."upper_level" <= 4)
 );
 --> statement-breakpoint
 CREATE TABLE "term" (
@@ -114,7 +118,7 @@ CREATE TABLE "coverage_request" (
 	"details" text NOT NULL,
 	"comments" text,
 	"status" "coverage_status" DEFAULT 'open' NOT NULL,
-	"requesting_volunteer_user_id" uuid,
+	"requesting_volunteer_user_id" uuid NOT NULL,
 	"covered_by_volunteer_user_id" uuid
 );
 --> statement-breakpoint
@@ -215,7 +219,7 @@ CREATE INDEX "instructor_to_schedule_schedule_id_index" ON "instructor_to_schedu
 CREATE INDEX "schedule_course_id_index" ON "schedule" USING btree ("course_id");--> statement-breakpoint
 CREATE INDEX "volunteer_to_schedule_volunteer_user_id_index" ON "volunteer_to_schedule" USING btree ("volunteer_user_id");--> statement-breakpoint
 CREATE INDEX "volunteer_to_schedule_schedule_id_index" ON "volunteer_to_schedule" USING btree ("schedule_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "coverage_request_shift_id_requesting_volunteer_user_id_index" ON "coverage_request" USING btree ("shift_id","requesting_volunteer_user_id") WHERE "coverage_request"."status" = 'open'::coverage_status;--> statement-breakpoint
+CREATE UNIQUE INDEX "coverage_request_shift_id_requesting_volunteer_user_id_index" ON "coverage_request" USING btree ("shift_id","requesting_volunteer_user_id") WHERE not "coverage_request"."status" = 'withdrawn'::coverage_status;--> statement-breakpoint
 CREATE INDEX "coverage_request_shift_id_status_index" ON "coverage_request" USING btree ("shift_id","status");--> statement-breakpoint
 CREATE INDEX "coverage_request_covered_by_volunteer_user_id_index" ON "coverage_request" USING btree ("covered_by_volunteer_user_id");--> statement-breakpoint
 CREATE INDEX "coverage_request_requesting_volunteer_user_id_index" ON "coverage_request" USING btree ("requesting_volunteer_user_id");--> statement-breakpoint

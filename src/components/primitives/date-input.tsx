@@ -100,6 +100,8 @@ export function DatePicker({
           }}
           autoFocus
           captionLayout="dropdown"
+          startMonth={new Date(new Date().getFullYear() - 5, 11, 31)}
+          endMonth={new Date(new Date().getFullYear() + 5, 11, 31)}
           {...calendarProps}
         />
       </PopoverContent>

@@ -52,7 +52,6 @@ export type ScheduleRuleInput = z.infer<typeof ScheduleRule>;
 export const CreateSchedule = z.object({
   localStartTime: z.iso.time().transform(toPlainTime),
   localEndTime: z.iso.time().transform(toPlainTime),
-  tzid: z.string(),
   volunteerUserIds: z.array(z.uuid()).default([]),
   instructorUserIds: z.array(z.uuid()).default([]),
   effectiveStart: z.iso.date().optional(),
@@ -65,13 +64,12 @@ export const UpdateSchedule = z.object({
   id: z.uuid(),
   localStartTime: z.iso.time().transform(toPlainTime),
   localEndTime: z.iso.time().transform(toPlainTime),
-  tzid: z.string(),
   addedVolunteerUserIds: z.array(z.uuid()).default([]),
   removedVolunteerUserIds: z.array(z.uuid()).default([]),
   addedInstructorUserIds: z.array(z.uuid()).default([]),
   removedInstructorUserIds: z.array(z.uuid()).default([]),
-  effectiveStart: z.iso.date().optional(),
-  effectiveEnd: z.iso.date().optional(),
+  effectiveStart: z.iso.date().nullish(),
+  effectiveEnd: z.iso.date().nullish(),
   rule: ScheduleRule,
 });
 export type UpdateScheduleInput = z.infer<typeof UpdateSchedule>;

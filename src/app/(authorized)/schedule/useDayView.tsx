@@ -1,35 +1,13 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import type { CalendarControls } from "./useCalendarApi";
+import { getMonday, isSameDay } from "./dateUtils";
 
 // Below this width in px our calendar will switch to a day view
 const DAYVIEW_TRIGGER = 600;
 
-// Returns the first Monday before the given date, used for the week header
-function getMonday(date: Date): Date {
-    const monday = new Date(date);
-    const dayOfWeek = date.getDay();
-    const diff = (dayOfWeek + 6) % 7;
-
-    monday.setDate(date.getDate() - diff);
-    return monday;
-};
-
-function isSameDay(day1: Date, day2: Date): boolean {
-    return (
-        day1.getFullYear() === day2.getFullYear() &&
-        day1.getMonth() === day2.getMonth() &&
-        day1.getDate() === day2.getDate()
-    );
-}
-
 export function useDayView({ 
     calendarApi,
-    next,
-    prev, 
-    changeView, 
-    getDate, 
-    goToDate 
 }: CalendarControls) 
 {
     const [isDayView, setIsDayView] = useState(false);
@@ -61,7 +39,7 @@ export function useDayView({
     };
 
     const renderDayViewHeader = () => {
-        return <div className="dayView-header">{
+        return <div className="dayview-header">{
             Array.from({ length: 7 }, (_, i) => {
                 const curDate = new Date(weekStart);
                 curDate.setDate(weekStart.getDate() + i);
@@ -89,5 +67,5 @@ export function useDayView({
         }</div>
     };
         
-    return { isDayView, setSelectedDate, renderDayViewHeader };
+    return { isDayView, selectedDate, setSelectedDate, renderDayViewHeader };
 }

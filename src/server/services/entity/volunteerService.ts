@@ -8,7 +8,6 @@ import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { eq, desc, inArray, sql, and } from "drizzle-orm";
 import { volunteer, volunteerUserView, user, coursePreference } from "../../db/schema/user";
 import type { VolunteerUserViewDB } from "@/server/db/schema";
-import { Status } from "@/models/interfaces";
 import { course } from "@/server/db/schema";
 import { buildSimilarityExpression, buildSearchCondition, getPagination } from "@/utils/searchUtils";
 import type { z } from "zod";
@@ -125,6 +124,7 @@ export class VolunteerService {
       .where(and(eq(coursePreference.volunteerUserId, volunteerUserId), eq(coursePreference.courseId, classId)));
       
     return {preferred: result.length > 0};
+  }
   async updateVolunteerProfile(
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void> {

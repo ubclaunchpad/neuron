@@ -1,92 +1,85 @@
 "use client";
 
-import type { DayHeaderContentArg, EventClickArg } from "@fullcalendar/core";
-import dayGridPlugin from "@fullcalendar/daygrid";
+import {
+  PageLayout,
+  PageLayoutHeader,
+  PageLayoutHeaderContent,
+  PageLayoutHeaderTitle
+} from "@/components/page-layout";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/primitives/select";
+
+import { Button } from "@/components/primitives/button";
+import { ButtonGroup } from "@/components/primitives/button-group";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
+import CaretLeftIcon from "@public/assets/icons/caret-left.svg";
+import CaretRightIcon from "@public/assets/icons/caret-right.svg";
+import { useRef, useState } from "react";
 import "./page.scss";
-
-// Below this width in px our calendar will switch to a day view
-const DAYVIEW_TRIGGER = 600;
+import { useCalendarApi } from "./useCalendarApi";
+import { useDayView } from "./useDayView";
 
 export default function SchedulePage() {
   // State
   const calendarRef = useRef<FullCalendar | null>(null);
-  const [isDayView, setIsDayView]       = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-
-  // Day view effects
-  useEffect(() => {
-    const checkWidth = () => setIsDayView(window.innerWidth < DAYVIEW_TRIGGER);
-    checkWidth();
-    window.addEventListener("resize", checkWidth);
-    return () => window.removeEventListener("resize", checkWidth);
-  }, []);
-
-  // Re-render our calendar view in resize or date change
-  useEffect(() => {
-    const calendarApi = calendarRef.current?.getApi();
-    if (!calendarApi) return;
-
-    queueMicrotask(() => {
-      if (isDayView) calendarApi.changeView("timeGridDay", selectedDate);
-      else           calendarApi.changeView("timeGridWeek", selectedDate);
-    });
-  }, [isDayView, selectedDate]);
+  const [currentMonthYear, setCurrentMonthYear] = useState(new Date());
+  const { calendarApi, next, prev, changeView, getDate, goToDate } = useCalendarApi(calendarRef);
+  const { isDayView, setSelectedDate, renderDayViewHeader } = useDayView({ calendarApi, next, prev, changeView, getDate, goToDate });
 
   const handleEventClick = (info: EventClickArg) => {
     alert(`Clicked on event: ${info.event.title}`);
   };
 
-  // Only triggered in day view
-  const handleDayClick = (date: Date) => {
+  // // Re-render calendar view in resize or date change
+  // useEffect(() => {
+  //     if (!calendarApi) return;
+
+  //     queueMicrotask(() => {
+  //     if (isDayView) calendarApi.changeView("timeGridDay", selectedDate);
+  //     else           calendarApi.changeView("timeGridWeek", selectedDate);
+  //     });
+  // }, [isDayView, selectedDate]);
+
+  const handleNavAction = (navAction: "today" | "prev" | "next") => {
     const calendarApi = calendarRef.current?.getApi();
     if (!calendarApi) return;
 
-    setSelectedDate(date);
-    calendarApi.changeView("timeGridDay", date);
+    calendarApi[navAction]();
+    setSelectedDate(calendarApi.getDate());
   };
 
-  const renderDayViewHeader = () => {
-    // Begin on MONDAY of the current week
-    const startOfWeek = new Date();
-    startOfWeek.setDate(startOfWeek.getDate() - ((startOfWeek.getDay() + 6) % 7));
-
-    // Array of clickable date buttons for the header
-    const days = Array.from({ length: 7 }, (_, i) => {
-      const curDate = new Date(startOfWeek);
-      curDate.setDate(startOfWeek.getDate() + i);
-      const dayName = curDate.toLocaleDateString("en-US", { weekday: "short" });
-      const dayNum  = curDate.getDate();
-
-      const isSelected = curDate.getFullYear() === selectedDate.getFullYear() &&
-                         curDate.getMonth() === selectedDate.getMonth() &&
-                         curDate.getDate() === selectedDate.getDate();
-
-      return (
-        <div 
-          key={i}
-          onClick={() => handleDayClick(curDate)}
-          className={`
-            fc-col-header-cell 
-            dayview-header-date 
-            ${isSelected ? "dayview-header-date-selected" : ""}
-          `}
-        >
-          <div style={{ fontSize: "24px" }}>{dayNum}</div>
-          <div style={{ fontSize: "14px" }}>{dayName}</div>
+  const renderNavBar = () => {
+    return <div className="flex flex-row justify-between items-center w-full">
+        <div className="flex flex-row items-center">
+          <ButtonGroup>
+            <Button variant="ghost" onClick={() => handleNavAction("today")}>Today</Button>
+            <Button variant="ghost" onClick={() => handleNavAction("prev")}><CaretLeftIcon/></Button>
+            <Button variant="ghost" onClick={() => handleNavAction("next")}><CaretRightIcon/></Button>
+          </ButtonGroup>
+          {currentMonthYear.toLocaleDateString("en-US", {month: "long", year: "numeric"})}
         </div>
-      );
-    });
-
-    return (
-      <div className="dayview-header">
-        {days}
+        <div>
+          {!isDayView && <Select onValueChange={(v) => queueMicrotask(() => calendarRef.current?.getApi().changeView(v))}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Choose view" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="dayGridMonth">Month</SelectItem>
+              <SelectItem value="timeGridWeek">Week</SelectItem>
+            </SelectContent>
+          </Select>}
+        </div>
       </div>
-    );
   };
 
-  const renderDayHeader = (arg: DayHeaderContentArg) => {
+  const renderWeekHeader = (arg: DayHeaderContentArg) => {
     const date: Date = arg.date;
     const dayName: string = date.toLocaleDateString("en-US", { weekday: "long" });
     const dayNum: number = date.getDate();
@@ -106,8 +99,14 @@ export default function SchedulePage() {
   };
 
   return (
-    <div style={{ padding: "1rem" }}>
-      <p style={{ fontWeight: 700, fontSize: "28px", paddingBottom: "1rem" }}>Schedule</p>
+    <>
+      <PageLayout>
+        <PageLayoutHeader>
+          <PageLayoutHeaderContent>
+              <PageLayoutHeaderTitle>Schedule</PageLayoutHeaderTitle>
+          </PageLayoutHeaderContent>
+              {renderNavBar()}
+        </PageLayoutHeader>
 
       {isDayView && renderDayViewHeader()}
 
@@ -117,27 +116,33 @@ export default function SchedulePage() {
         initialView="timeGridWeek"
         headerToolbar={false}
         dayHeaderContent={(arg) => {
-          if (isDayView) return;
-          return renderDayHeader(arg);
+          if (isDayView) return null;
+          if (arg.view.type === "dayGridMonth") return <div>{arg.text}</div>;
+
+          return renderWeekHeader(arg);
         }}
         height="auto"
         slotMinTime="09:00:00"
         allDaySlot={false}
         eventClick={handleEventClick}
         firstDay={1}
+        datesSet={() => {
+          setCurrentMonthYear(calendarApi?.getDate() ?? new Date());
+        }}
         events={[
           {
             title: "Dummy Event",
-            start: "2025-10-19T13:00:00",
-            end: "2025-10-19T15:00:00",
+            start: "2025-11-15T13:00:00",
+            end: "2025-11-15T15:00:00",
           },
           {
             title: "Another Event",
-            start: "2025-10-20T10:00:00",
-            end: "2025-10-20T11:30:00",
+            start: "2025-11-15T10:00:00",
+            end: "2025-11-15T11:30:00",
           },
         ]}
       />
-    </div>
+      </PageLayout>
+    </>
   );
 }

@@ -1,9 +1,6 @@
 import { z } from "zod";
-import { ObjectTypeEnum } from "../interfaces";
 
 export const GetPresignedUrlInput = z.object({
-  objectType: ObjectTypeEnum,
-  id: z.uuid(),
   fileExtension: z.string(),
 });
 

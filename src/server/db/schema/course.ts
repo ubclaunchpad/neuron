@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { boolean, check, date, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, date, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { schedule } from "./schedule";
 
 export const term = pgTable("term", {
@@ -51,13 +51,17 @@ export const course = pgTable("course", {
     published: boolean("published").notNull().default(false),
     description: text("description"),
     meetingURL: text("meeting_url"),
-    category: text("category"),
+    category: text("category").notNull(),
     subcategory: text("subcategory"),
+    lowerLevel: integer("lower_level").notNull(),
+    upperLevel: integer("upper_level").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
     index().on(table.termId),
     index().on(table.name),
+    check("chk_lower_level_bounds", sql`${table.lowerLevel} >= 1 AND ${table.lowerLevel} <= 4`),
+    check("chk_upper_level_bounds", sql`${table.upperLevel} >= 1 AND ${table.upperLevel} <= 4`)
 ]);
 export type CourseDB = typeof course.$inferSelect;
 

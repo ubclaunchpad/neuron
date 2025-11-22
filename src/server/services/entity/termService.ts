@@ -1,6 +1,6 @@
-import { type CreateTermInput } from "@/models/api/term";
+import { UpdateTermInput, type CreateTermInput, type Holiday, type UpdatedHoliday } from "@/models/api/term";
 import { buildTerm, type Term } from "@/models/term";
-import { type Drizzle } from "@/server/db";
+import { type Drizzle, type Transaction } from "@/server/db";
 import { blackout, term } from "@/server/db/schema/course";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
@@ -84,25 +84,59 @@ export class TermService {
       const [createdTerm] = await tx
         .insert(term)
         .values(termData)
-        .returning({id: term.id});
+        .returning({ id: term.id });
 
-      if(!createdTerm) {
-        throw new Error("Failed to create term")
-      }
+      if (!createdTerm) throw new NeuronError(
+        'Failed to create term', 
+        NeuronErrorCodes.INTERNAL_SERVER_ERROR
+      );
 
       const termId = createdTerm.id; 
 
       if (holidays.length > 0) {
-        await tx.insert(blackout).values(
-          holidays.map((h) => ({
-            termId,
-            startsOn: h.startsOn,
-            endsOn: h.endsOn,
-          }))
-        );
+        this.insertHolidays(tx, termId, holidays);
       }
       
       return termId;
+    });
+  }
+
+  async updateTerm(input: UpdateTermInput): Promise<string> {
+    const { addedHolidays, updatedHolidays, deletedHolidays, id, ...termData } = input;
+
+    return await this.db.transaction(async (tx) => {
+      const [updatedTerm] = await tx
+        .update(term)
+        .set(termData)
+        .where(eq(term.id, id))
+        .returning();
+
+      if (!updatedTerm) throw new NeuronError(
+        'Failed to update term', 
+        NeuronErrorCodes.INTERNAL_SERVER_ERROR
+      );
+
+      if (addedHolidays.length > 0) {
+        await this.insertHolidays(tx, id, addedHolidays);
+      }
+      
+      if (updatedHolidays.length > 0) {
+        await this.updateHolidays(tx, updatedHolidays);
+      }
+
+      
+      if (deletedHolidays.length > 0) {
+        const affected = await tx.delete(blackout)
+          .where(inArray(blackout.id, deletedHolidays))
+          .returning();
+
+        if (affected.length != deletedHolidays.length) throw new NeuronError(
+          'Failed to update term', 
+          NeuronErrorCodes.INTERNAL_SERVER_ERROR
+        );
+      }
+
+      return id;
     });
   }
 
@@ -112,10 +146,32 @@ export class TermService {
       .where(eq(term.id, id))
       .returning();
 
-    if (deleted.length === 0) {
-      throw new NeuronError(
-        `Could not find Term with id ${id}`,
-        NeuronErrorCodes.NOT_FOUND,
+    if (deleted.length === 0) throw new NeuronError(
+      `Could not find Term with id ${id}`,
+      NeuronErrorCodes.NOT_FOUND,
+    );
+  }
+
+  private async insertHolidays(tx: Transaction, termId: string, holidays: Holiday[]) {
+    await tx.insert(blackout).values(
+      holidays.map((h) => ({
+        termId,
+        startsOn: h.startsOn,
+        endsOn: h.endsOn,
+      }))
+    );
+  }
+
+  private async updateHolidays(tx: Transaction, holidays: UpdatedHoliday[]) {
+    for (const { id, ...holidayData } of holidays) {
+      const updated = await tx.update(blackout)
+        .set(holidayData)
+        .where(eq(blackout.id, id))
+        .returning();
+
+      if (updated.length === 0) throw new NeuronError(
+        `Failed to update term`,
+        NeuronErrorCodes.INTERNAL_SERVER_ERROR,
       );
     }
   }

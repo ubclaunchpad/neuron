@@ -11,6 +11,7 @@ import {
 export const log = pgTable("log", {
     id: bigserial("id", { mode: "bigint" }).primaryKey(),
     page: text("page").notNull(),
+    page2: text("page2").notNull(),
     signoff: text("signoff").notNull(),
     description: text("description").notNull(),
     volunteerUserId: uuid("volunteer_user_id").references(() => volunteer.userId, { onDelete: "set null" }),

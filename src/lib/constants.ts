@@ -1,0 +1,1 @@
+export const NEURON_TIMEZONE = "America/Vancouver" as const; // All of our users are in Vancouver, no need to over complicate

@@ -1,23 +1,25 @@
-import { AbsenceRequestCategoryEnum, CoverageStatusEnum } from "@/models/interfaces";
 import { z } from "zod";
+import { CoverageStatusEnum } from "./coverage";
 
 export const GetShiftsInput = z.object({
-  volunteerUserId: z.uuid().optional(),
+  userId: z.uuid().optional(),
   before: z.iso.datetime().optional(),
   after: z.iso.datetime().optional(),
-  status: CoverageStatusEnum.optional(),
+  status: CoverageStatusEnum.optional(),  
+  limit: z.number().min(1).max(100).default(20),
+  cursor: z.iso.datetime().optional(), // ISO datetime string for cursor
+  direction: z.enum(["forward", "backward"]).default("forward"),
 });
+export type GetShiftsInput = z.infer<typeof GetShiftsInput>;
 
 export const ShiftIdInput = z.object({
   shiftId: z.uuid(),
 });
 export type ShiftIdInput = z.infer<typeof ShiftIdInput>;
 
-
 export const AbsenceRequestInput = z.object({
   details: z.string(),
   comments: z.string().optional(),
-  category: AbsenceRequestCategoryEnum,
 });
 
 export const CreateShiftInput = z.object({

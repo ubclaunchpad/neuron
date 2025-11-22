@@ -1,10 +1,11 @@
-import type { ListRequest } from "@/models/api/common";
+import type { ListRequestWithSearch } from "@/models/api/common";
 import { buildInstructor, type Instructor } from "@/models/instructor";
 import type { ListResponse } from "@/models/list-response";
 import { type Drizzle } from "@/server/db";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { inArray, sql } from "drizzle-orm";
+import { buildSearchCondition, buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
+import { desc, inArray, sql } from "drizzle-orm";
 import { instructorUserView } from "../../db/schema/user";
 import { user } from "@/server/db/schema/user";
 import { eq } from "drizzle-orm";
@@ -16,24 +17,48 @@ export class InstructorService {
     this.db = db;
   }
 
-  async getInstructorsForRequest(listRequest: ListRequest): Promise<ListResponse<Instructor>> {
-    const page = listRequest.page ?? 0;
-    const perPage = listRequest.perPage ?? 10;
-    const offset = page * perPage;
+  async getInstructorsForRequest(listRequest: ListRequestWithSearch): Promise<ListResponse<Instructor>> {
+    const { perPage, offset } = getPagination(listRequest);
+    const queryInput = listRequest.search?.trim();
+    const hasQuery = !!queryInput
 
-    // Get count and ids
-    const data = await this.db
-      .select({
-        count: sql<number>`count(*)`,
-        ...getViewColumns(instructorUserView),
-      })
+    const similarity = hasQuery
+      ? buildSimilarityExpression([instructorUserView.name, instructorUserView.lastName, instructorUserView.email], queryInput)
+      : undefined;
+
+    const baseSelect = {
+      count: sql<number>`count(*) over()`,
+      ...getViewColumns(instructorUserView),
+    } as const;
+
+    const selectShape = hasQuery
+      ? { ...baseSelect, similarity: similarity! }
+      : baseSelect;
+
+    let builder = this.db
+      .select(selectShape)
       .from(instructorUserView)
-      .limit(perPage)
-      .offset(offset);
+      .$dynamic();
 
+    if (hasQuery) {
+      builder = builder
+        .where(buildSearchCondition([instructorUserView.name, instructorUserView.lastName, instructorUserView.email], queryInput))
+        .orderBy(desc(similarity!));
+    }
+
+    const rows = await builder
+      .limit(perPage)
+      .offset(offset)
+      .execute();
+
+    const total = rows[0]?.count ?? 0;
+    const loadedSoFar = offset + rows.length;
+    const nextCursor = loadedSoFar < total ? loadedSoFar : null;
+    
     return {
-      data: data.map((d) => buildInstructor(d)),
-      total: data[0]?.count ?? 0,
+      data: rows.map((d) => buildInstructor(d)),
+      total,
+      nextCursor,
     };
   }
 

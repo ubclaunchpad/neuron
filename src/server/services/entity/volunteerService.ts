@@ -1,16 +1,16 @@
-import type { ListRequest } from "@/models/api/common";
+import type { ListRequestWithSearch } from "@/models/api/common";
+import { UpdateVolunteerProfileInput } from "@/models/api/volunteer";
+import { Status } from "@/models/interfaces";
 import type { ListResponse } from "@/models/list-response";
 import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
-import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { inArray, sql } from "drizzle-orm";
-import { volunteerUserView, user } from "../../db/schema/user";
-import { Status } from "@/models/interfaces";
-import { coursePreference } from "@/server/db/schema/user";
-import { and, eq } from "drizzle-orm";
 import { course } from "@/server/db/schema";
-
+import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import { buildSearchCondition, buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import type { z } from "zod";
+import { coursePreference, user, volunteer, volunteerUserView } from "../../db/schema/user";
 
 export class VolunteerService {
   private readonly db: Drizzle;
@@ -18,24 +18,48 @@ export class VolunteerService {
     this.db = db;
   }
 
-  async getVolunteersForRequest(listRequest: ListRequest): Promise<ListResponse<Volunteer>> {
-    const page = listRequest.page ?? 0;
-    const perPage = listRequest.perPage ?? 10;
-    const offset = page * perPage;
+  async getVolunteersForRequest(listRequest: ListRequestWithSearch): Promise<ListResponse<Volunteer>> {
+    const { perPage, offset } = getPagination(listRequest);
+    const queryInput = listRequest.search?.trim();
+    const hasQuery = !!queryInput
 
-    // Get count and ids
-    const data = await this.db
-      .select({
-        count: sql<number>`count(*)`,
-        ...getViewColumns(volunteerUserView),
-      })
+    const similarity = hasQuery
+      ? buildSimilarityExpression([volunteerUserView.name, volunteerUserView.lastName, volunteerUserView.email], queryInput)
+      : undefined;
+
+    const baseSelect = {
+      count: sql<number>`count(*) over()`,
+      ...getViewColumns(volunteerUserView),
+    } as const;
+
+    const selectShape = hasQuery
+      ? { ...baseSelect, similarity: similarity! }
+      : baseSelect;
+
+    let builder = this.db
+      .select(selectShape)
       .from(volunteerUserView)
-      .limit(perPage)
-      .offset(offset);
+      .$dynamic();
 
+    if (hasQuery) {
+      builder = builder
+        .where(buildSearchCondition([volunteerUserView.name, volunteerUserView.lastName, volunteerUserView.email], queryInput))
+        .orderBy(desc(similarity!));
+    }
+
+    const rows = await builder
+      .limit(perPage)
+      .offset(offset)
+      .execute();
+
+    const total = rows[0]?.count ?? 0;
+    const loadedSoFar = offset + rows.length;
+    const nextCursor = loadedSoFar < total ? loadedSoFar : null;
+    
     return {
-      data: data.map((d) => buildVolunteer(d)),
-      total: data[0]?.count ?? 0,
+      data: rows.map((d) => buildVolunteer(d)),
+      total,
+      nextCursor,
     };
   }
 
@@ -108,6 +132,37 @@ export class VolunteerService {
       
     return {preferred: result.length > 0};
   }
+  
+  async updateVolunteerProfile(
+    input: z.infer<typeof UpdateVolunteerProfileInput>,
+  ): Promise<void> {
+    const { volunteerUserId, ...rest } = input;
+
+    const [updated] = await this.db
+      .update(volunteer)
+      .set(rest)
+      .where(eq(volunteer.userId, volunteerUserId))
+      .returning({ userId: volunteer.userId });
+
+    if (!updated) {
+      throw new NeuronError(
+        `Could not find Volunteer with id ${volunteerUserId}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+  }
+
+  async updateVolunteerAvailability(volunteerUserId: string, availability: string): Promise<void> {
+    const [updated] = await this.db
+      .update(volunteer)
+      .set({ availability })
+      .where(eq(volunteer.userId, volunteerUserId))
+      .returning({ userId: volunteer.userId });
+
+    if (!updated) {
+      throw new NeuronError(`Could not find Volunteer with id ${volunteerUserId}`, NeuronErrorCodes.NOT_FOUND);
+    }
+  }
 
   // any -> active
   async verifyVolunteer(id: string): Promise<void> {
@@ -134,5 +189,4 @@ export class VolunteerService {
 
     await this.db.update(user).set({ status: Status.inactive }).where(eq(user.id, id));
   }
-
 }

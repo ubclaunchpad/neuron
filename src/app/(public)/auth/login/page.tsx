@@ -1,26 +1,33 @@
 "use client";
 
-import { authClient } from "@/lib/auth/client";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { Form } from "react-aria-components";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
-import * as Yup from "yup";
-import "../index.scss";
-
-import { Button } from "@/components/primitives/Button";
-import { RootError } from "@/components/primitives/FormErrors/RootError";
-import { TextInput } from "@/components/primitives/TextInput";
-import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 import { toast } from "sonner";
+import { z } from "zod";
 
-const LoginSchema = Yup.object().shape({
-  email: Yup.string()
-    .email("Please enter a valid email address.")
-    .required("Please fill out this field."),
-  password: Yup.string().required("Please fill out this field."),
+import { authClient } from "@/lib/auth/client";
+import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
+
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/primitives/alert";
+import { Button } from "@/components/primitives/button";
+import { Field, FieldError, FieldLabel } from "@/components/primitives/field";
+import { Input, PasswordInput } from "@/components/primitives/input";
+import { Spinner } from "@/components/primitives/spinner";
+
+const LoginSchema = z.object({
+  email: z
+    .string()
+    .nonempty("Please fill out this field.")
+    .email("Please enter a valid email address."),
+  password: z.string().nonempty("Please fill out this field."),
 });
-
-type LoginSchemaType = Yup.InferType<typeof LoginSchema>;
+type LoginSchemaType = z.infer<typeof LoginSchema>;
 
 export default function LoginForm() {
   const {
@@ -28,14 +35,10 @@ export default function LoginForm() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: yupResolver(LoginSchema),
+  } = useForm<LoginSchemaType>({
+    resolver: zodResolver(LoginSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
-    defaultValues: {
-      email: "",
-      password: "",
-    },
   });
 
   const onSubmit = async (data: LoginSchemaType) => {
@@ -49,55 +52,82 @@ export default function LoginForm() {
         type: "custom",
         message: getBetterAuthErrorMessage(error?.code),
       });
-    } else {
-      toast.success("Signed in successfully");
+      return;
     }
+
+    toast.success("Signed in successfully");
   };
 
   return (
-    <div className="form-container">
-      <h1 className="form-title">Welcome!</h1>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate 
+      className="w-full max-w-3xl space-y-8 p-8"
+    >
+      <h1 className="text-2xl font-display font-medium leading-none text-primary">
+        Welcome!
+      </h1>
 
-      <Form
-        onSubmit={handleSubmit(onSubmit)}
-        validationBehavior="aria"
-        className="form-content"
-      >
-        <RootError id="form-error" message={errors.root?.message} />
+      {/* Root error */}
+      {errors.root?.message && (
+        <Alert variant="destructive" role="alert" aria-live="assertive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Couldn’t sign you in</AlertTitle>
+          <AlertDescription>{errors.root.message}</AlertDescription>
+        </Alert>
+      )}
 
-        <TextInput
-          type="email"
-          label="Email"
-          placeholder="Enter your email"
-          errorMessage={errors.email?.message}
-          {...register("email")}
-        />
+      <div className="space-y-5">
+        <Field data-invalid={!!errors.email}>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="john.doe@example.com"
+            aria-invalid={!!errors.email}
+            {...register("email")}
+          />
+          <FieldError errors={errors.email} />
+        </Field>
 
-        <TextInput
-          type="password"
-          label="Password"
-          description={
-            <Button variant="link" href="/auth/forgot-password">
-              Forgot password?
+        <Field data-invalid={!!errors.password}>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <PasswordInput
+            id="password"
+            autoComplete="current-password"
+            placeholder="•••••••••••••"
+            aria-invalid={!!errors.password}
+            {...register("password")}
+          />
+          <div className="flex items-center justify-between">
+            <FieldError errors={errors.password} />
+            <Button asChild variant="link" size="sm" className="ms-auto">
+              <Link href="/auth/forgot-password">Forgot password?</Link>
             </Button>
-          }
-          inlineDescription={true}
-          placeholder="Enter your password"
-          errorMessage={errors.password?.message}
-          {...register("password")}
-        />
+          </div>
+        </Field>
+      </div>
 
-        <Button type="submit">
-          {isSubmitting ? "Signing in..." : "Log In"}
-        </Button>
-
-        <p className="form-footer">
-          Don't have an account?{" "}
-          <Button variant="link" href="/auth/signup">
-            <strong>Sign Up</strong>
+        <div className="space-y-5">
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? (
+              <>
+                <Spinner /> Signing in...
+              </>
+            ) : (
+              "Log In"
+            )}
           </Button>
-        </p>
-      </Form>
-    </div>
+          <p className="text-center text-foreground">
+            Don&apos;t have an account?{" "}
+            <Button asChild variant="link" className="p-0">
+              <Link href="/auth/signup">
+                <strong>Sign Up</strong>
+              </Link>
+            </Button>
+          </p>
+        </div>
+    </form>
   );
 }

@@ -1,59 +1,124 @@
+import { env } from "@/env";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { eq } from "drizzle-orm";
-import { user } from "@/server/db/schema/user";
-import { type Drizzle } from "@/server/db";
-import { ObjectType } from "@/models/interfaces";
 
+import { randomUUID } from "crypto";
 import * as Minio from "minio";
 
-
 export class ImageService {
-  private readonly db: Drizzle;
   private readonly minio: Minio.Client;
-  private readonly expiration: number = 60 * 60; // 1 hour
-  private readonly fileName: string = "profile-picture";
-  private readonly endpoint: string = process.env.MINIO_ENDPOINT ?? "http://localhost:9000";
-  private readonly bucket: string = process.env.MINIO_BUCKET ?? "neuron";
+  private readonly expiration = 5 * 60; // 5 mins, may be too generous
+  private readonly bucket = env.MINIO_BUCKET ?? "neuron";
+  private readonly bucketReady: Promise<void>;
 
+  constructor() {
+    const accessKey = env.MINIO_ROOT_USER;
+    const secretKey = env.MINIO_ROOT_PASSWORD;
 
-  constructor(db: Drizzle) {
-    this.db = db;
-    this.minio = new Minio.Client({ 
-      // TODO: CHANGE on deploy
-      endPoint: "localhost",
-      port: 9000,
-      useSSL: process.env.MINIO_USE_SSL === "true",
-      accessKey: process.env.MINIO_ROOT_USER,
-      secretKey: process.env.MINIO_ROOT_PASSWORD,
-      },
-    );
+    if (!accessKey || !secretKey) {
+      throw new Error(
+        "MinIO credentials missing: set MINIO_ROOT_USER and MINIO_ROOT_PASSWORD",
+      );
+    }
+
+    const host = env.MINIO_HOST ?? "localhost";
+    const port = env.MINIO_PORT ?? 9000;
+    const useSSL = env.MINIO_USE_SSL ?? true;
+
+    this.minio = new Minio.Client({
+      endPoint: host,
+      port,
+      useSSL,
+      accessKey,
+      secretKey,
+    });
+
+    this.bucketReady = this.ensureBucket();
   }
 
-  /**
-   * 
-   * @param id - ID of object the image is used for, e.g. user_id, class_id
-   * @param fileExtension - Extension of the file, e.g. "jpg", "png", "jpeg"
-   * @returns 
-   */
-  async getPresignedUrl(objectType: ObjectType, id: string, fileExtension: string): Promise<string> {
+  private async ensureBucket(): Promise<void> {
     try {
-      const url = await this.minio.presignedPutObject(
-        this.bucket,
-        `${objectType}/${objectType}_${id}/${this.fileName}.${fileExtension}`,
-        this.expiration
+      const exists = await this.minio.bucketExists(this.bucket);
+
+      if (!exists) {
+        await this.minio.makeBucket(this.bucket);
+        await this.minio.setBucketPolicy(this.bucket, this.buildNeuronBucketPolicy())
+      }
+    } catch (error) {
+      console.error("Error Ensuring Bucket: ", error);
+      throw new NeuronError(
+        "Storage bucket not available",
+        NeuronErrorCodes.INTERNAL_SERVER_ERROR,
       );
-      return url;
-    } catch (err) {
-      console.error("Error getting presigned PUT URL:", err);
-      throw new NeuronError("Error getting presigned PUT URL", NeuronErrorCodes.INTERNAL_SERVER_ERROR);
     }
   }
 
-  // TODO: update image for class and user in DB
-//   async updateImage(objectType: ObjectType, id: string, imageUrl: string): Promise<void> {
-//     const accessUrl = `${this.endpoint}/${this.bucket}/${imageUrl}`;
-//     await this.db.update(user).set({ image: accessUrl }).where(eq(user.id, userId));
-//   }
+  /**
+   * Get a presigned PUT URL for uploading an image.
+   *
+   * @param fileExtension - Extension of the file, e.g. "jpg", "png"
+   * @returns `{ url, key }` where `key` is the MinIO object key
+   */
+  async getPresignedUrl(
+    fileExtension: string,
+  ): Promise<{ url: string; key: string }> {
+    try {
+      await this.bucketReady;
 
+      const safeExt = (fileExtension ?? "").replace(/^\./, "");
+      const key = safeExt ? `${randomUUID()}.${safeExt}` : randomUUID();
 
+      const url = await this.minio.presignedUrl(
+        'PUT',
+        this.bucket,
+        key,
+        this.expiration,
+      );
+
+      return { url, key };
+    } catch (error) {
+      console.error("Error getting presigned PUT URL", error);
+      throw new NeuronError(
+        "Error getting presigned PUT URL",
+        NeuronErrorCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Delete an image from storage by its object key.
+   *
+   * @param key - MinIO object key to delete
+   */
+  async deleteImage(key: string): Promise<void> {
+    try {
+      await this.bucketReady;
+
+      await this.minio.removeObject(this.bucket, key);
+    } catch (error: any) {
+      // If you want "delete is idempotent", you can swallow not-found errors:
+      if (error?.code === "NoSuchKey" || error?.code === "NotFound") {
+        return;
+      }
+
+      console.error("Error deleting image from storage", error);
+      throw new NeuronError(
+        "Error deleting image from storage",
+        NeuronErrorCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private buildNeuronBucketPolicy() {
+    return JSON.stringify({
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Effect: "Allow",
+          Principal: { AWS: ["*"] },
+          Action: ["s3:GetObject"],
+          Resource: [`arn:aws:s3:::${this.bucket}/*`],
+        },
+      ],
+    });
+  }
 }

@@ -10,8 +10,10 @@ export type Class = {
   image?: string;
   published: boolean;
   meetingURL?: string;
-  category?: string;
+  category: string;
   subcategory?: string;
+  lowerLevel: number;
+  upperLevel: number;
   schedules: Schedule[];
   createdAt: Date;
   updatedAt: Date;
@@ -29,8 +31,10 @@ export function buildClass(
     image: classDB.image ?? undefined,
     published: classDB.published,
     meetingURL: classDB.meetingURL ?? undefined,
-    category: classDB.category ?? undefined,
+    category: classDB.category,
     subcategory: classDB.subcategory ?? undefined,
+    lowerLevel: classDB.lowerLevel,
+    upperLevel: classDB.upperLevel,
     schedules: schedules,
     createdAt: classDB.createdAt,
     updatedAt: classDB.updatedAt,
@@ -47,6 +51,8 @@ export function getSingleClass(c: Class) {
     meetingURL: c.meetingURL,
     category: c.category,
     subcategory: c.subcategory,
+    lowerLevel: c.lowerLevel,
+    upperLevel: c.upperLevel,
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
     schedules: c.schedules.map(getSingleSchedule),
@@ -60,6 +66,8 @@ export function getListClass(c: Class) {
     image: c.image,
     category: c.category,
     subcategory: c.subcategory,
+    lowerLevel: c.lowerLevel,
+    upperLevel: c.upperLevel,
     schedules: c.schedules.map(getEmbeddedSchedule),
   } as const;
 }

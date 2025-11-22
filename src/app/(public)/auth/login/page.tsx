@@ -16,11 +16,7 @@ import {
   AlertTitle,
 } from "@/components/primitives/alert";
 import { Button } from "@/components/primitives/button";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/primitives/field";
+import { Field, FieldError, FieldLabel } from "@/components/primitives/field";
 import { Input, PasswordInput } from "@/components/primitives/input";
 import { Spinner } from "@/components/primitives/spinner";
 
@@ -42,7 +38,7 @@ export default function LoginForm() {
   } = useForm<LoginSchemaType>({
     resolver: zodResolver(LoginSchema),
     mode: "onSubmit",
-    reValidateMode: "onChange"
+    reValidateMode: "onChange",
   });
 
   const onSubmit = async (data: LoginSchemaType) => {
@@ -63,7 +59,11 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-3xl space-y-8 p-8">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate 
+      className="w-full max-w-3xl space-y-8 p-8"
+    >
       <h1 className="text-2xl font-display font-medium leading-none text-primary">
         Welcome!
       </h1>
@@ -77,7 +77,7 @@ export default function LoginForm() {
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      <div className="space-y-5">
         <Field data-invalid={!!errors.email}>
           <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input
@@ -88,7 +88,7 @@ export default function LoginForm() {
             aria-invalid={!!errors.email}
             {...register("email")}
           />
-          <FieldError errors={errors.email}/>
+          <FieldError errors={errors.email} />
         </Field>
 
         <Field data-invalid={!!errors.password}>
@@ -101,26 +101,33 @@ export default function LoginForm() {
             {...register("password")}
           />
           <div className="flex items-center justify-between">
-            <FieldError errors={errors.password}/>
+            <FieldError errors={errors.password} />
             <Button asChild variant="link" size="sm" className="ms-auto">
               <Link href="/auth/forgot-password">Forgot password?</Link>
             </Button>
           </div>
         </Field>
+      </div>
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? <><Spinner /> Signing in...</> : "Log In"}
-        </Button>
-      </form>
-
-      <p className="text-center text-foreground">
-        Don&apos;t have an account?{" "}
-        <Button asChild variant="link" className="p-0">
-          <Link href="/auth/signup">
-            <strong>Sign Up</strong>
-          </Link>
-        </Button>
-      </p>
-    </div>
+        <div className="space-y-5">
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? (
+              <>
+                <Spinner /> Signing in...
+              </>
+            ) : (
+              "Log In"
+            )}
+          </Button>
+          <p className="text-center text-foreground">
+            Don&apos;t have an account?{" "}
+            <Button asChild variant="link" className="p-0">
+              <Link href="/auth/signup">
+                <strong>Sign Up</strong>
+              </Link>
+            </Button>
+          </p>
+        </div>
+    </form>
   );
 }

@@ -1,17 +1,13 @@
-import {
-  GetPresignedUrlInput
-} from "@/models/api/image";
-import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 
 
 export const profileRouter = createTRPCRouter({
-  getPresignedUrl: authorizedProcedure({ permission: { profile: ["update"] } })
-    .input(GetPresignedUrlInput)
-    .mutation(async ({ input, ctx }) => {
-      const result = await ctx.imageService.getPresignedUrl(input.objectType, input.id, input.fileExtension);
-      return { ok: true, url: result };
-    }),
+  // getPresignedUrl: authorizedProcedure({ permission: { profile: ["update"] } })
+  //   .input(GetPresignedUrlInput)
+  //   .mutation(async ({ input, ctx }) => {
+  //     const result = await ctx.imageService.getPresignedUrl(input.objectType, input.id, input.fileExtension);
+  //     return { ok: true, url: result };
+  //   }),
 
      // TODO: update image for user in DB
     // updateProfileImage: authorizedProcedure({

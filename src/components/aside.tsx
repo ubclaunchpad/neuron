@@ -5,10 +5,10 @@ import * as React from "react";
 import { Button } from "@/components/primitives/button";
 import { cn } from "@/lib/utils";
 import CloseIcon from "@public/assets/icons/close.svg";
-import { usePageSidebar } from "./page-layout";
+import { usePageAside } from "./page-layout";
 import { TypographyTitle } from "./primitives/typography";
 
-function SidebarContainer({
+function AsideContainer({
   className,
   children,
   hideClose,
@@ -16,28 +16,28 @@ function SidebarContainer({
 }: React.HTMLAttributes<HTMLDivElement> & { hideClose?: boolean }) {
   return (
     <div
-      data-slot="sidebar-container"
+      data-slot="aside-container"
       className={cn(
-        "pt-[4.25rem] pr-9 pb-9 pl-5 flex flex-col gap-5 relative",
+        "pt-[4.25rem] pr-9 pb-9 pl-5 gap-6 space-y-8 relative",
         className,
       )}
       {...props}
     >
-      {!hideClose && <SidebarClose className="absolute top-8 right-6"/>}
+      {!hideClose && <AsideClose className="absolute top-8 right-6"/>}
       {children}
     </div>
   );
 }
 
-function SidebarHeader({
+function AsideHeader({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      data-slot="sidebar-header"
+      data-slot="aside-header"
       className={cn(
-        "flex items-start justify-between gap-2 border-b border-border pb-6",
+        "space-y-2",
         className,
       )}
       {...props}
@@ -45,42 +45,44 @@ function SidebarHeader({
   );
 }
 
-function SidebarTitle({
+function AsideTitle({
+  className,
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <TypographyTitle
-      data-slot="sidebar-title"
+      data-slot="aside-title"
+      className={cn("inline-block text-lg font-semibold", className)}
       {...props}
     />
   );
 }
 
-function SidebarDescription({
+function AsideDescription({
   className,
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      data-slot="sidebar-description"
+      data-slot="aside-description"
       className={cn("text-sm text-muted-foreground", className)}
       {...props}
     />
   );
 }
 
-function SidebarClose({
+function AsideClose({
   className,
   ...props
 }: Omit<React.ComponentProps<typeof Button>, "onClick">) {
-  const { setOpen } = usePageSidebar();
+  const { setOpen } = usePageAside();
   return (
     <Button
-      data-slot="sidebar-close"
+      data-slot="aside-close"
       variant="ghost"
       size="icon"
       className={cn("shrink-0 text-muted-foreground", className)}
-      aria-label="Close sidebar"
+      aria-label="Close aside"
       onClick={() => setOpen(false)}
       {...props}
     >
@@ -89,72 +91,70 @@ function SidebarClose({
   );
 }
 
-function SidebarBody({
+function AsideBody({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      data-slot="sidebar-body"
-      className={cn("flex flex-col gap-4", className)}
+      data-slot="aside-body"
+      className={cn("space-y-6", className)}
       {...props}
     />
   );
 }
 
-function SidebarFooter({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      data-slot="sidebar-footer"
-      className={cn("mt-2", className)}
-      {...props}
-    />
-  );
-}
-
-function SidebarSection({
+function AsideSection({
   className,
   ...props
 }: React.HTMLAttributes<HTMLElement>) {
   return (
     <section
-      data-slot="sidebar-section"
+      data-slot="aside-section"
       className={cn("flex flex-col gap-4", className)}
       {...props}
     />
   );
 }
 
-function SidebarSectionHeader({
+function AsideSectionHeader({
   className,
   ...props
 }: React.HTMLAttributes<HTMLElement>) {
   return (
     <div
-      data-slot="sidebar-section"
-      className={cn("flex flex-row gap-2", className)}
+      data-slot="aside-section"
+      className={cn("flex flex-col gap-2", className)}
       {...props}
     />
   );
 }
 
-function SidebarSectionContent({
+function AsideSectionTitle({
+  ...props
+}: React.HTMLAttributes<HTMLElement>) {
+  return (
+    <TypographyTitle
+      data-slot="aside-section"
+      {...props}
+    />
+  );
+}
+
+function AsideSectionContent({
   className,
   ...props
 }: React.HTMLAttributes<HTMLElement>) {
   return (
     <div
-      data-slot="sidebar-section"
+      data-slot="aside-section"
       className={cn("flex flex-col gap-3", className)}
       {...props}
     />
   );
 }
 
-function SidebarField({
+function AsideField({
   className,
   inline = true,
   children,
@@ -164,7 +164,7 @@ function SidebarField({
 }) {
   return (
     <div
-      data-slot="sidebar-field"
+      data-slot="aside-field"
       data-inline={inline}
       className={cn(
         "grid gap-1",
@@ -178,47 +178,47 @@ function SidebarField({
   );
 }
 
-function SidebarFieldLabel({
+function AsideFieldLabel({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      data-slot="sidebar-field-label"
-      className={cn("self-center text-sm text-muted-foreground", className)}
+    <h3
+      data-slot="aside-field-label"
+      className={cn("self-center font-medium", className)}
       {...props}
     />
   );
 }
 
-function SidebarFieldContent({
+function AsideFieldContent({
   className,
   full = false,
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { full?: boolean }) {
   return (
-    <div
-      data-slot="sidebar-field-content"
+    <p
+      data-slot="aside-field-content"
       data-full={full}
-      className={cn("flex flex-col gap-1", full && "col-span-2", className)}
+      className={cn("flex flex-col align-center justify-center text-sm text-muted-foreground gap-1", full && "col-span-2", className)}
       {...props}
     />
   );
 }
 
 export {
-  SidebarBody,
-  SidebarClose,
-  SidebarContainer,
-  SidebarDescription,
-  SidebarField,
-  SidebarFieldContent,
-  SidebarFieldLabel,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarSection,
-  SidebarSectionContent,
-  SidebarSectionHeader,
-  SidebarTitle
+  AsideBody,
+  AsideClose,
+  AsideContainer,
+  AsideDescription,
+  AsideField,
+  AsideFieldContent,
+  AsideFieldLabel,
+  AsideHeader,
+  AsideSection,
+  AsideSectionContent,
+  AsideSectionHeader,
+  AsideSectionTitle,
+  AsideTitle
 };
 

@@ -1,11 +1,13 @@
-import { isoDateToJSDate, jsDateToIsoDate } from "@/utils/dateUtils"
-import { DateInput } from "../primitives/date-input"
-import { FormBase, type FormControlFunc } from "./FormBase"
+import { isoDateToJSDate, jsDateToIsoDate } from "@/lib/temporal-conversions";
+import { DateInput } from "../primitives/date-input";
+import { FormBase, type FormControlFunc } from "./FormBase";
 
 export const FormDatePicker: FormControlFunc<{ placeholder?: string }> = ({
   placeholder = "Select date",
   ...props
 }) => {
+  const currentYear = new Date().getFullYear();
+
   return (
     <FormBase {...props}>
       {({ onChange, value, ...field }) => (

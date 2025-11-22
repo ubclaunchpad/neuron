@@ -13,7 +13,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppNavbar/>
-      <div className="flex-1 max-h-svh overflow-auto">
+      <div className="flex-1">
         {children}
       </div>
     </SidebarProvider>

@@ -198,7 +198,7 @@ export function SectionLink({
       unstyled
       ref={setRef}
       onClick={scrollTo}
-      className={cn("text-muted-foreground", className)}
+      className={cn("text-muted-foreground scroll-m-10", className)}
     >
       {children}
     </Button>

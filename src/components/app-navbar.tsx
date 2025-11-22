@@ -18,8 +18,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
-  useSidebar,
+  useSidebar
 } from "@/components/primitives/sidebar";
 
 import { ActiveContext } from "@/components/utils/active-context";
@@ -105,7 +104,7 @@ function ProfileCard() {
             className="rounded-md object-cover"
           />
           <AvatarFallback className="rounded-md">
-            {user?.name.slice(0, 2)}
+            {user?.name.slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
 
@@ -219,9 +218,6 @@ export function AppNavbar() {
       <SidebarFooter className="p-5">
         <ProfileCard />
       </SidebarFooter>
-
-      {/* Optional slim rail to expand/collapse on hover/click */}
-      <SidebarRail />
     </Sidebar>
   );
 }

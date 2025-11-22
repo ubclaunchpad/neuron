@@ -7,66 +7,55 @@ import { TermForm } from "@/components/classes/forms/term-form";
 import { Button } from "@/components/primitives/button";
 import { ButtonGroup } from "@/components/primitives/button-group";
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/primitives/select";
 import { Skeleton } from "@/components/primitives/skeleton";
-import type { Term } from "@/models/term";
+import { cn } from "@/lib/utils";
 import NiceModal from "@ebay/nice-modal-react";
 import { Edit, Plus } from "lucide-react";
-import React from "react";
+import { useClassesPage } from "./classes-view";
 
 export function TermSelect({
-  terms,
-  selectedKey,
-  onChange,
-  isLoading,
   disableIfSingle,
   className,
 }: {
-  terms: Term[] | undefined;
-  selectedKey?: string;
-  onChange: (id: string) => void;
-  isLoading?: boolean;
   disableIfSingle?: boolean;
   className?: string;
 }) {
-  const apiUtils = clientApi.useUtils();
+  const { selectedTermId, setSelectedTermId } = useClassesPage();
+  const { data: terms, isPending: isLoadingTerms } =
+    clientApi.term.all.useQuery();
 
-  const handleValueChange = React.useCallback(
-    (id: string) => {
-      // Prefetch classes for the selected term to speed up nav
-      apiUtils.class.list.prefetch({ term: id }).catch();
-      onChange(id);
-    },
-    [apiUtils.class.list, onChange],
-  );
+  // Show loading skeleton while terms are loading
+  if (isLoadingTerms || !selectedTermId) {
+    return <Skeleton className={cn("h-10 w-60", className)} />;
+  }
 
-  // Load via skeleton
-  if (isLoading) return <Skeleton className="h-10 w-30" />;
+  // Don't render if no terms
+  if (!terms?.length) {
+    return null;
+  }
 
-  const isDisabled =
-    (disableIfSingle && (terms?.length ?? 0) <= 1) ?? isLoading;
+  const isDisabled = disableIfSingle && terms.length <= 1;
 
   return (
     <ButtonGroup className={className}>
       <Select
-        value={selectedKey}
-        onValueChange={handleValueChange}
+        value={selectedTermId ?? undefined}
+        onValueChange={setSelectedTermId}
         disabled={isDisabled}
       >
         <SelectTrigger className={"min-w-[180px] w-auto"}>
-          <SelectValue
-            placeholder={terms?.length ? "Select term" : "No terms"}
-          />
+          <SelectValue placeholder="Select term" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            {(terms ?? []).map((t) => (
+            {terms.map((t) => (
               <SelectItem key={t.id} value={t.id}>
                 {t.name}
               </SelectItem>
@@ -77,7 +66,9 @@ export function TermSelect({
 
       <WithPermission permissions={{ permission: { terms: ["create"] } }}>
         <Button
-          onClick={() => NiceModal.show(TermForm, { editingId: selectedKey })}
+          onClick={() =>
+            NiceModal.show(TermForm, { editingId: selectedTermId })
+          }
           variant="outline"
         >
           <Edit />

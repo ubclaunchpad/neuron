@@ -63,7 +63,6 @@ const AvatarFallback = React.forwardRef<
     const prng = createPrng(children);
     return prng.shuffle(backgroundColors)[0]!;
   }, [children]);
-  
 
   return <AvatarPrimitive.Fallback
     ref={ref}

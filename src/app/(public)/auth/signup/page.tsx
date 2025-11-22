@@ -7,12 +7,15 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/primitives/alert";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/primitives/alert";
 import { Button } from "@/components/primitives/button";
 import {
   Field,
   FieldError,
-  FieldGroup,
   FieldLabel
 } from "@/components/primitives/field";
 import { Input, PasswordInput } from "@/components/primitives/input";
@@ -22,13 +25,15 @@ import { Spinner } from "@/components/primitives/spinner";
 import { authClient } from "@/lib/auth/client";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 
-const SignupSchema = z.object({
+const SignupSchema = z
+  .object({
     firstName: z.string().nonempty("Please fill out this field."),
     lastName: z.string().nonempty("Please fill out this field."),
     email: z
       .email("Please enter a valid email address.")
       .nonempty("Please fill out this field."),
-    password: z.string()
+    password: z
+      .string()
       .nonempty("Please fill out this field.")
       .min(8, "Password must be at least 8 characters long."),
     confirmPassword: z.string().nonempty("Please fill out this field."),
@@ -77,7 +82,7 @@ export default function SignupForm() {
     }
 
     setSuccessMessage(
-      "Your account has been successfully created! Please check your email to verify your account."
+      "Your account has been successfully created! Please check your email to verify your account.",
     );
 
     // Redirect to login page after 5 seconds on success
@@ -85,7 +90,11 @@ export default function SignupForm() {
   };
 
   return (
-    <div className="w-full max-w-3xl space-y-8 p-8">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate
+      className="w-full max-w-3xl space-y-8 p-8"
+    >
       <h1 className="text-2xl font-display font-medium leading-none text-primary">
         Welcome!
       </h1>
@@ -108,87 +117,93 @@ export default function SignupForm() {
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <FieldGroup>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-3">
-            <Field data-invalid={!!errors.firstName} className="gap-1">
-              <FieldLabel htmlFor="firstName">First name</FieldLabel>
-              <Input
-                id="firstName"
-                placeholder="John"
-                aria-invalid={!!errors.firstName}
-                {...register("firstName")}
-              />
-              <FieldError errors={errors.firstName}/>
-            </Field>
-
-            <Field data-invalid={!!errors.lastName} className="gap-1">
-              <FieldLabel htmlFor="lastName">Last name</FieldLabel>
-              <Input
-                id="lastName"
-                placeholder="Doe"
-                aria-invalid={!!errors.lastName}
-                {...register("lastName")}
-              />
-              <FieldError errors={errors.lastName}/>
-            </Field>
-          </div>
-
-          <Field data-invalid={!!errors.email} className="gap-1">
-            <FieldLabel htmlFor="email">Email</FieldLabel>
+      <div className="space-y-5">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-3">
+          <Field data-invalid={!!errors.firstName} className="gap-1">
+            <FieldLabel htmlFor="firstName">First name</FieldLabel>
             <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              placeholder="john.doe@example.com"
-              aria-invalid={!!errors.email}
-              {...register("email")}
+              id="firstName"
+              placeholder="John"
+              aria-invalid={!!errors.firstName}
+              {...register("firstName")}
             />
-            <FieldError errors={errors.email}/>
+            <FieldError errors={errors.firstName} />
           </Field>
 
-          <Field data-invalid={!!errors.password} className="gap-1">
-            <FieldLabel htmlFor="password">
-              Create password (at least 8 characters)
-            </FieldLabel>
-            <PasswordInput
-              id="password"
-              autoComplete="new-password"
-              placeholder="•••••••••••••"
-              aria-invalid={!!errors.password}
-              {...register("password")}
+          <Field data-invalid={!!errors.lastName} className="gap-1">
+            <FieldLabel htmlFor="lastName">Last name</FieldLabel>
+            <Input
+              id="lastName"
+              placeholder="Doe"
+              aria-invalid={!!errors.lastName}
+              {...register("lastName")}
             />
-            <FieldError errors={errors.password}/>
+            <FieldError errors={errors.lastName} />
           </Field>
+        </div>
 
-          <Field data-invalid={!!errors.confirmPassword} className="gap-1">
-            <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
-            <PasswordInput
-              id="confirmPassword"
-              autoComplete="new-password"
-              placeholder="•••••••••••••"
-              aria-invalid={!!errors.confirmPassword}
-              {...register("confirmPassword")}
-            />
-            <FieldError errors={errors.confirmPassword}/>
-          </Field>
+        <Field data-invalid={!!errors.email} className="gap-1">
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="john.doe@example.com"
+            aria-invalid={!!errors.email}
+            {...register("email")}
+          />
+          <FieldError errors={errors.email} />
+        </Field>
 
-          <Field orientation="horizontal">
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? <><Spinner /> Creating...</> : "Create an Account"}
-            </Button>
-          </Field>
-        </FieldGroup>
-      </form>
+        <Field data-invalid={!!errors.password} className="gap-1">
+          <FieldLabel htmlFor="password">
+            Create password (at least 8 characters)
+          </FieldLabel>
+          <PasswordInput
+            id="password"
+            autoComplete="new-password"
+            placeholder="•••••••••••••"
+            aria-invalid={!!errors.password}
+            {...register("password")}
+          />
+          <FieldError errors={errors.password} />
+        </Field>
 
-      <p className="text-center text-foreground">
-        Already have an account?{" "}
-        <Button asChild variant="link" className="p-0">
-          <Link href="/auth/login">
-            <strong>Log In</strong>
-          </Link>
-        </Button>
-      </p>
-    </div>
+        <Field data-invalid={!!errors.confirmPassword} className="gap-1">
+          <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
+          <PasswordInput
+            id="confirmPassword"
+            autoComplete="new-password"
+            placeholder="•••••••••••••"
+            aria-invalid={!!errors.confirmPassword}
+            {...register("confirmPassword")}
+          />
+          <FieldError errors={errors.confirmPassword} />
+        </Field>
+      </div>
+
+      <div className="space-y-5">
+        <Field orientation="horizontal">
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? (
+              <>
+                <Spinner /> Creating...
+              </>
+            ) : (
+              "Create an Account"
+            )}
+          </Button>
+        </Field>
+
+        <p className="text-center text-foreground">
+          Already have an account?{" "}
+          <Button asChild variant="link" className="p-0">
+            <Link href="/auth/login">
+              <strong>Log In</strong>
+            </Link>
+          </Button>
+        </p>
+      </div>
+    </form>
   );
 }

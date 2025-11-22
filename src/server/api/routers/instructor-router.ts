@@ -1,3 +1,4 @@
+import { ListRequestWithSearch } from "@/models/api/common";
 import {
   CreateInstructorInput,
   DeleteInstructorInput,
@@ -9,10 +10,11 @@ import { createTRPCRouter } from "@/server/api/trpc";
 export const instructorRouter = createTRPCRouter({
   list: authorizedProcedure({
     permission: { users: ["view-instructor"] },
-  }).query(async () => {
-    // TODO: getInstructors
-    return [];
-  }),
+  })
+    .input(ListRequestWithSearch)
+    .query(async ({ input, ctx }) => {
+      return await ctx.instructorService.getInstructorsForRequest(input);
+    }),
   create: authorizedProcedure({ permission: { users: ["create-instructor"] } })
     .input(CreateInstructorInput)
     .mutation(async ({ input, ctx }) => {

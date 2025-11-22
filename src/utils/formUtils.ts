@@ -1,5 +1,5 @@
 import diff from "microdiff";
-import type { ControllerRenderProps, FieldNamesMarkedBoolean, FieldPath, FieldPathValue, FieldValues } from "react-hook-form";
+import type { FieldNamesMarkedBoolean, FieldValues } from "react-hook-form";
 import type { Primitive } from "zod/v3";
 
 export const filterFormFields = <T extends FieldValues>(
@@ -72,73 +72,3 @@ export const diffEntityArray = <
 
     return { added, edited, deletedIds };
 };
-
-type OnChangeValue<UI> = (value: UI) => void;
-
-type AdaptFieldCore<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>, UI> = {
-    toUI: (formValue: FieldPathValue<TFieldValues, TName>) => UI;
-    toForm: (uiValue: UI) => FieldPathValue<TFieldValues, TName>;
-};
-
-// Overload 1: target component has value-onChange signature: onChange(UI)
-export function adaptField<
-    TFieldValues extends FieldValues,
-    TName extends FieldPath<TFieldValues>,
-    UI
->(
-    field: ControllerRenderProps<TFieldValues, TName>,
-    opts: AdaptFieldCore<TFieldValues, TName, UI>
-): Omit<ControllerRenderProps<TFieldValues, TName>, "value" | "onChange"> & {
-    value: UI;
-    onChange: OnChangeValue<UI>;
-};
-
-// Overload 2: target component fires DOM events: onChange(event)
-export function adaptField<
-    TFieldValues extends FieldValues,
-    TName extends FieldPath<TFieldValues>,
-    UI
->(
-    field: ControllerRenderProps<TFieldValues, TName>,
-    opts: AdaptFieldCore<TFieldValues, TName, UI> & {
-        fromEvent: (...args: any[]) => UI;
-    }
-): Omit<ControllerRenderProps<TFieldValues, TName>, "value" | "onChange"> & {
-    onChange: (...args: any[]) => void;
-    value: UI;
-};
-
-export function adaptField<
-    TFieldValues extends FieldValues,
-    TName extends FieldPath<TFieldValues>,
-    UI
->(
-    field: ControllerRenderProps<TFieldValues, TName>,
-    opts: AdaptFieldCore<TFieldValues, TName, UI> & { fromEvent?: (...args: any[]) => UI }
-) {
-    const { toUI, toForm, fromEvent } = opts;
-
-    const base = {
-        name: field.name,
-        ref: field.ref,
-        onBlur: field.onBlur,
-        disabled: field.disabled,
-    } as const;
-
-    if (fromEvent) {
-        return {
-            ...base,
-            value: toUI(field.value as FieldPathValue<TFieldValues, TName>),
-            onChange: (...args: any[]) => {
-                const ui = fromEvent(...args);
-                field.onChange(toForm(ui));
-            },
-        };
-    }
-
-    return {
-        ...base,
-        value: toUI(field.value as FieldPathValue<TFieldValues, TName>),
-        onChange: (ui: UI) => field.onChange(toForm(ui)),
-    };
-}

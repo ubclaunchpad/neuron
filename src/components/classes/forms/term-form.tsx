@@ -23,9 +23,9 @@ import {
   FieldSet,
 } from "@/components/primitives/field";
 import { Spinner } from "@/components/primitives/spinner";
+import { isoDateToJSDate, jsDateToIsoDate } from "@/lib/temporal-conversions";
 import type { Term } from "@/models/term";
 import { clientApi } from "@/trpc/client";
-import { isoDateToJSDate, jsDateToIsoDate } from "@/utils/dateUtils";
 import { diffEntityArray } from "@/utils/formUtils";
 import { getUpcomingSemester } from "@/utils/miscUtils";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";

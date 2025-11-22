@@ -1,5 +1,4 @@
 import { checkPermissions, requirePermission } from "@/lib/auth/guard";
-import { HydrateClient, ssrApi } from "@/trpc/server";
 import { redirect } from "next/navigation";
 
 export default async function ClassesTemplate({
@@ -21,10 +20,5 @@ export default async function ClassesTemplate({
     redirect("/classes");
   }
 
-  // Prefetch the class
-  if (queryClassId) {
-    await ssrApi.class.byId.prefetch({ classId: queryClassId });
-  }
-
-  return <HydrateClient>{children}</HydrateClient>;
+  return children;
 }

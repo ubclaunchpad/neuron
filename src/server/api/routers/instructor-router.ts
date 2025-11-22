@@ -16,19 +16,27 @@ export const instructorRouter = createTRPCRouter({
   create: authorizedProcedure({ permission: { users: ["create-instructor"] } })
     .input(CreateInstructorInput)
     .mutation(async ({ input, ctx }) => {
-      // TODO: insertInstructor
+      await ctx.instructorService.createInstructor(
+        input.firstName,
+        input.lastName,
+        input.email
+      )
       return { ok: true };
     }),
   update: authorizedProcedure({ permission: { users: ["update-instructor"] } })
     .input(UpdateInstructorInput)
     .mutation(async ({ input, ctx }) => {
-      // TODO: editInstructor
+      await ctx.instructorService.updateInstructor(input.instructorId, {
+        firstName: input.firstName,
+        lastName: input.lastName,
+        email: input.email,
+      });
       return { ok: true };
     }),
   delete: authorizedProcedure({ permission: { users: ["delete-instructor"] } })
     .input(DeleteInstructorInput)
     .mutation(async ({ input, ctx }) => {
-      // TODO: deleteInstructor
+      await ctx.instructorService.deleteInstructor(input.instructorId);
       return { ok: true };
     }),
 });

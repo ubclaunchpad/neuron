@@ -25,27 +25,28 @@ import { useRef, useState } from "react";
 import "./page.scss";
 import { useCalendarApi } from "./useCalendarApi";
 import { useDayView } from "./useDayView";
+import { isSameDay } from "./dateUtils";
 
 export default function SchedulePage() {
   // State
   const calendarRef = useRef<FullCalendar | null>(null);
   const [currentMonthYear, setCurrentMonthYear] = useState(new Date());
   const { calendarApi, next, prev, changeView, getDate, goToDate } = useCalendarApi(calendarRef);
-  const { isDayView, setSelectedDate, renderDayViewHeader } = useDayView({ calendarApi, next, prev, changeView, getDate, goToDate });
+  const { isDayView, selectedDate, setSelectedDate, renderDayViewHeader } = useDayView({ calendarApi, next, prev, changeView, getDate, goToDate });
 
   const handleEventClick = (info: EventClickArg) => {
     alert(`Clicked on event: ${info.event.title}`);
   };
 
-  // // Re-render calendar view in resize or date change
-  // useEffect(() => {
-  //     if (!calendarApi) return;
+  // Render calendar in appropriate view
+  useEffect(() => {
+    if (!calendarApi) return;
 
-  //     queueMicrotask(() => {
-  //     if (isDayView) calendarApi.changeView("timeGridDay", selectedDate);
-  //     else           calendarApi.changeView("timeGridWeek", selectedDate);
-  //     });
-  // }, [isDayView, selectedDate]);
+    queueMicrotask(() => {
+    if (isDayView) calendarApi.changeView("timeGridDay", selectedDate);
+    else           calendarApi.changeView("timeGridWeek", selectedDate);
+    });
+  }, [isDayView, selectedDate]);
 
   const handleNavAction = (navAction: "today" | "prev" | "next") => {
     const calendarApi = calendarRef.current?.getApi();
@@ -85,13 +86,15 @@ export default function SchedulePage() {
     const dayNum: number = date.getDate();
 
     const today = new Date();
-    const isToday = 
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear();
+    // const isToday = 
+    //   date.getDate() === today.getDate() &&
+    //   date.getMonth() === today.getMonth() &&
+    //   date.getFullYear() === today.getFullYear();
+
+    const isToday = isSameDay(date, new Date());
 
     return (
-      <div className={`test ${isToday ? "test-current-day" : ""}`}>
+      <div className={`week-header ${isToday ? "week-header-current-day" : ""}`}>
         <div style={{ fontSize: "24px" }}>{dayNum}</div>
         <div style={{ fontSize: "14px" }}>{dayName}</div>
       </div>

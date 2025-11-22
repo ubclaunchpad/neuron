@@ -40,7 +40,7 @@
     text-align: left;
 }
 
-.test {
+.week-header {
     flex: 0;
     display: flex;
     flex-direction: column;
@@ -52,5 +52,6 @@
     
     &-current-day {
         font-weight: bold;
+        color: #4385AC;
     }
 }

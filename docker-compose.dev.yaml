@@ -10,6 +10,8 @@ services:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - dokploy-network
 
   redis:
     image: redis:7-alpine
@@ -19,6 +21,8 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redisdata:/data
+    networks:
+      - dokploy-network
 
   minio:
     image: minio/minio:latest
@@ -32,8 +36,14 @@ services:
       - "9001:9001" # Console
     volumes:
       - miniodata:/data
+    networks:
+      - dokploy-network
 
 volumes:
   pgdata:
   redisdata:
   miniodata:
+
+networks:
+  dokploy-network:
+    external: true

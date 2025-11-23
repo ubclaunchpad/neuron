@@ -1,29 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
+import Image from "next/image";
 
 export interface FallbackImageProps
-  extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> {
+  extends Omit<React.ComponentProps<typeof Image>, "src" | "alt"> {
   src?: string | null;
   name?: string | null;
   fallbackUrl?: string;
+  alt?: string;
 }
 
 export const FallbackImage = React.forwardRef<HTMLImageElement, FallbackImageProps>(
-  ({ src, name, fallbackUrl,className, alt, ...rest }, ref) => {
-    fallbackUrl ??= `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(name || "")}`;
+  ({ src, name, fallbackUrl, className, alt, ...rest }, ref) => {
+    const defaultFallback = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(name ?? "")}`;
+    const finalFallbackUrl = fallbackUrl ?? defaultFallback;
+    
+    const [imgSrc, setImgSrc] = useState<string>(src ?? finalFallbackUrl);
 
-    const handleImageError = (
-      e: React.SyntheticEvent<HTMLImageElement, Event>,
-    ) => {
-      if (e.currentTarget.src !== fallbackUrl) {
-        e.currentTarget.src = fallbackUrl;
+    const handleImageError = () => {
+      if (imgSrc !== finalFallbackUrl) {
+        setImgSrc(finalFallbackUrl);
       }
     };
 
     return (
-      <img
+      <Image
         ref={ref}
         className={className}
-        src={src ?? fallbackUrl}
+        src={imgSrc}
         alt={alt ?? name ?? ""}
         onError={handleImageError}
         {...rest}

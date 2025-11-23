@@ -32,7 +32,7 @@ export default function ProfilePage() {
         <div className="profile-content">
           <div className="profile-header">
             <ProfilePictureUpload
-              currentImage={user?.image || undefined}
+              currentImage={user?.image ?? undefined}
               name={user?.name}
               userId={user?.id}
             />

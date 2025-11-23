@@ -16,6 +16,8 @@ import {
   type SessionWithRole,
   type UserWithRole,
 } from "./extensions/role-plugin";
+import { TRPCError } from "@trpc/server";
+import { env } from "@/env";
 
 /**
  * We define BaseAuthConfig before using it in the type annotation to avoid circular dependencies.
@@ -48,6 +50,7 @@ export type BaseSession = {
 };
 
 export const auth = betterAuth({
+  secret: env.BETTER_AUTH_SECRET,
   user: baseAuthConfig.user,
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -67,7 +70,7 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          switch ((user as BaseUser).role as any) {
+          switch ((user as BaseUser).role) {
             case Role.volunteer:
               await db.insert(volunteer).values({ userId: user.id });
               return;
@@ -76,7 +79,10 @@ export const auth = betterAuth({
               return;
           }
 
-          throw new Error(`Unknown role: ${user.role}`);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Unknown role: ${String(user.role)}`,
+          });
         },
       },
     },

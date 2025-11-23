@@ -53,6 +53,7 @@ export class InstructorService {
   }
 
   async inviteInstructor(): Promise<void> {
-    
+    // TODO: invite instructor
+    return;
   }
 }

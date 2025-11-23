@@ -3,19 +3,14 @@ import { HydrateClient, ssrApi } from "@/trpc/server";
 
 export default async function ClassesLayout({
   children,
-  searchParams,
 }: {
   children: React.ReactNode;
-  searchParams: {
-    term?: string;
-  };
 }) {
   await requirePermission({ permission: { classes: ["view"] } });
-  const resolvedTermId = searchParams?.term ?? "current";
 
-  // Prefetch terms
+  // Prefetch terms and current classes
   await ssrApi.term.all.prefetch();
-  await ssrApi.class.list.prefetch({ term: resolvedTermId });
+  await ssrApi.class.list.prefetch({ term: "current" });
 
   return <HydrateClient>{children}</HydrateClient>;
 }

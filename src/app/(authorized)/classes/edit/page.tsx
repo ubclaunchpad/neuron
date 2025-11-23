@@ -22,15 +22,15 @@ export default function ClassesEditView() {
 
   const { mutate: createClass, isPending: isCreatingClass, isError: isCreatingClassError } = clientApi.class.create.useMutation({
     onSuccess: (createdId) => {
-      setQueryClassId(createdId);
-      apiUtils.class.list.invalidate();
+      void setQueryClassId(createdId);
+      void apiUtils.class.list.invalidate();
     },
   });
 
   const { mutate: updateClass, isPending: isUpdatingClass, isError: isUpdatingClassError } = clientApi.class.update.useMutation({
     onSuccess: (_, { id }) => {
-      apiUtils.class.byId.invalidate({ classId: id });
-      apiUtils.class.list.invalidate();
+      void apiUtils.class.byId.invalidate({ classId: id });
+      void apiUtils.class.list.invalidate();
     },
   });
 

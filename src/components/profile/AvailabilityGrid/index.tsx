@@ -92,14 +92,14 @@ export function AvailabilityGrid({
     isBetween(day, end.day, anchor.day) &&
     isBetween(time, end.time, anchor.time);
 
-  const clampToGrid = (el: HTMLElement, pt: { x: number; y: number }) => {
+  const clampToGrid = useCallback((el: HTMLElement, pt: { x: number; y: number }) => {
     const r = el.getBoundingClientRect();
     const x = Math.min(Math.max(pt.x - r.left, 0), r.width - 1);
     const y = Math.min(Math.max(pt.y - r.top, 0), r.height - 1);
     return { x, y, rect: r };
-  };
+  }, []);
 
-  const pointToSlot = (clientX: number, clientY: number): Slot => {
+  const pointToSlot = useCallback((clientX: number, clientY: number): Slot => {
     const { x, y, rect } = clampToGrid(daysAreaRef.current!, {
       x: clientX,
       y: clientY,
@@ -109,7 +109,7 @@ export function AvailabilityGrid({
     const day = Math.min(DAYS_PER_WEEK - 1, Math.max(0, Math.floor(x / colW)));
     const time = Math.min(SLOTS_PER_DAY - 1, Math.max(0, Math.floor(y / rowH)));
     return { day, time };
-  };
+  }, [clampToGrid]);
 
   const applyRectToBitstring = (
     bitstring: string[],
@@ -187,7 +187,7 @@ export function AvailabilityGrid({
       setEnd(start);
       setDragging(true);
     },
-    [editMode, localAvailability],
+    [editMode, localAvailability, pointToSlot],
   );
 
   const overlayProps = mergeProps(moveProps, {

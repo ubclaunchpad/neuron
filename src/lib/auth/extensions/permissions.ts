@@ -103,7 +103,7 @@ export const hasPermission = (
   }
 
   const roleToCheck = input.user ? input.user.role : input.role;
-  const role = roleToAccessControlRole[roleToCheck as Role]; // We know this is safe because we check above
+  const role = roleToAccessControlRole[roleToCheck!];
 
   if (input.permissions) {
     return role?.authorize(

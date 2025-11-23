@@ -1,8 +1,6 @@
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { eq } from "drizzle-orm";
-import { user } from "@/server/db/schema/user";
 import { type Drizzle } from "@/server/db";
-import { ObjectType } from "@/models/interfaces";
+import type { ObjectType } from "@/models/interfaces";
 
 import * as Minio from "minio";
 
@@ -19,8 +17,7 @@ export class ImageService {
   constructor(db: Drizzle) {
     this.db = db;
     this.minio = new Minio.Client({ 
-      // TODO: CHANGE on deploy
-      endPoint: "localhost",
+      endPoint: process.env.MINIO_ENDPOINT ?? "localhost",
       port: 9000,
       useSSL: process.env.MINIO_USE_SSL === "true",
       accessKey: process.env.MINIO_ROOT_USER,

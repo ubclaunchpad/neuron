@@ -79,16 +79,18 @@ export function FilePicker({ objectType, id, disabled = false, targetSize = 250,
     ctx.drawImage(img, sourceX, sourceY, cropSize, cropSize, 0, 0, targetSize, targetSize);
 
     canvas.toBlob(
-      async (blob) => {
+      (blob: Blob | null) => {
         if (!blob) return;
         setPreviewUrl(URL.createObjectURL(blob));
-        try {
-          const key = await uploader.upload({ file, data: blob, contentType: "image/webp" });
-          onUploaded?.(key);
-          toast.success("Image uploaded successfully");
-        } catch (e) {
-          toast.error("Failed to upload image");
-        }
+        void (async () => {
+          try {
+            const key = await uploader.upload({ file, data: blob, contentType: "image/webp" });
+            onUploaded?.(key);
+            toast.success("Image uploaded successfully");
+          } catch (e) {
+            toast.error("Failed to upload image");
+          }
+        })();
       },
       "image/webp",
       0.8,

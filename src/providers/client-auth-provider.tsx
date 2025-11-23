@@ -36,7 +36,7 @@ export default function ClientAuthProvider({
 
   // Start from the server value so first paint is correct
   const [bootstrapped, setBootstrapped] = useState(
-    (initialSession || initialSession === null) as boolean,
+    (initialSession ?? initialSession === null) as boolean,
   );
   const stableRef = useRef<Session | undefined>(initialSession);
 
@@ -56,7 +56,7 @@ export default function ClientAuthProvider({
       }
       setBootstrapped(true);
     }
-  }, [isPending, liveSession]);
+  }, [isPending, liveSession, bootstrapped, router]);
 
   const session =
     isPending && bootstrapped
@@ -71,7 +71,7 @@ export default function ClientAuthProvider({
       session,
       user: session?.user,
     }),
-    [session, role, isPending],
+    [session],
   );
 
   // While page is loading

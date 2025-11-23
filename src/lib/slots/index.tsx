@@ -47,17 +47,22 @@ export const HostSlots = ({
 }
 
 export const createHost = (children: React.ReactNode, callback: Callback) => {
+  // eslint-disable-next-line react/no-children-prop
   return <HostSlots children={children} callback={callback} />
 }
 
 export const createSlot = <T extends React.ElementType>(Fallback?: T) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ForwardRef = (props: any, ref: any) => {
     const Slots = React.useContext(SlotsContext)
     if (!Slots) 
       return Fallback
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         ? <Fallback ref={ref} {...props} /> 
+        // eslint-disable-next-line react/no-children-prop, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
         : <React.Fragment key={props.key} children={props.children} />;
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const element = <Slot ref={ref} {...props} />
     /* eslint-disable react-hooks/rules-of-hooks */
     React.useState(() => Slots.register(Slot, element))
@@ -71,6 +76,7 @@ export const createSlot = <T extends React.ElementType>(Fallback?: T) => {
     ? `Slot(${getComponentName(Fallback)})`
     : 'Slot';
   const Slot = React.forwardRef(ForwardRef) as unknown as T;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
   (Slot as any)[SLOT_MARK] = true;
 
   return Fallback ? hoistStatics(Slot, Fallback) : Slot;

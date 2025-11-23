@@ -8,8 +8,8 @@ import "./src/env.js";
 const nextConfig = {
   output: "standalone",
   
-  webpack(config) {
-    const fileLoaderRule = config.module.rules.find((rule) =>
+  webpack(config: any) {
+    const fileLoaderRule = config.module.rules.find((rule: any) =>
       rule.test?.test?.(".svg"),
     );
 
@@ -50,3 +50,4 @@ const nextConfig = {
 };
 
 export default nextConfig;
+

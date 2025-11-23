@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type * as React from 'react';
 
 type Slot = React.ElementType
 
@@ -27,7 +27,9 @@ export const createSlotsManager = (onChange: (slot: Slot) => void) => {
       const element = elementMap.get(slot)
       if (!element) 
         return undefined;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
       const { ref, props } = element as any;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
       return (ref ? { ...props, ref } : props) as React.ComponentProps<T>;
     },
     getRest() {

@@ -45,7 +45,7 @@ function ClassesList({
     const defaultCategory = "Other Opportunities";
     return classes.reduce((rec, c) => {
       const category = c.category ?? defaultCategory;
-      rec[category] = [...(rec[category] || []), c];
+      rec[category] = [...(rec[category] ?? []), c];
       return rec;
     }, {} as Record<string, ListClass[]>);
   }, [classes]);
@@ -82,7 +82,7 @@ function EmptyClassesList() {
   </>);
 }
 
-export function ClassHeaderCategories() {
+function ClassHeaderCategories() {
   const { activeSectionId } = useActiveSection();
 
   return (
@@ -106,7 +106,7 @@ const ClassesPageContext = React.createContext<{
   setSelectedClassId: (classId: string | null) => void;
 } | null>(null);
 
-export const useClassesPage = () => {
+const useClassesPage = () => {
   const ctx = React.useContext(ClassesPageContext);
   if (!ctx) throw new Error("useClassesPage must be used within the <ClassesPage> component");
   return ctx;
@@ -134,18 +134,20 @@ export default function ClassesPage() {
     if (queryTerm == "current") {
       setSelectedTermId(classListData?.term.id ?? null);
     }
-  }, [classListData]);
+  }, [classListData, queryTerm]);
 
   const [selectedTermId, setSelectedTermId] = useState<string | null>(
     queryTerm !== "current" ? queryTerm : null
   );
 
   const handleSelectTerm = useCallback((uuid: string) => {
-    setQueryTerm(uuid);
-    setSelectedTermId(uuid);
+    void setQueryTerm(uuid);
+    void setSelectedTermId(uuid);
 
     // prefetch the classes for the selected term
-    apiUtils.class.list.prefetch({ term: uuid }).catch(() => {});
+    apiUtils.class.list.prefetch({ term: uuid }).catch(() => {
+      console.error(`Failed to prefetch classes for term ${uuid}`);
+    });
   }, [setQueryTerm, apiUtils.class.list]);
 
   // Wire in the scroll ref to the content to keep track of the active category
@@ -203,13 +205,12 @@ export default function ClassesPage() {
               <WithPermission 
                 permissions={{ permission: { classes: ["create"] }}}
                 fallback={<>
-                  { !classListData?.classes.length && <EmptyClassesList /> }
-                  { !!classListData?.classes.length && <ClassesList classes={classListData?.classes!} /> }
+                  {!classListData?.classes?.length ? <EmptyClassesList /> : <ClassesList classes={classListData.classes} />}
                 </>}
               >
-                { terms?.length === 0 && <div>Create your first term</div> }
-                { !classListData?.classes || classListData?.classes.length === 0 && <div>Create your first class</div> }
-                { classListData?.classes && classListData?.classes.length > 0 && <ClassesList classes={classListData?.classes!} /> }
+                {terms?.length === 0 ? <div>Create your first term</div> : (
+                  !classListData?.classes?.length ? <div>Create your first class</div> : <ClassesList classes={classListData.classes} />
+                )}
               </WithPermission>
             </Loader>
           </div>

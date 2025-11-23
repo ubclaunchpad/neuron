@@ -1,11 +1,13 @@
+import type { JSXElementConstructor } from 'react';
 import * as React from 'react';
 
 export const SLOT_MARK = Symbol.for('create-slots.slot')
-export const isSlotType = (type: any): boolean => !!(type && type[SLOT_MARK])
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const isSlotType = (type: string | JSXElementConstructor<any>): boolean => !!(type && (type as unknown as Record<symbol, unknown>)[SLOT_MARK])
 
 export function splitChildrenTopLevel(children: React.ReactNode) {
   const rest: React.ReactNode[] = [];
-  const slotChildren: React.ReactElement[] = [];
+  const slotChildren: React.ReactElement[] = [];  
 
   for (const child of React.Children.toArray(children)) {
     if (React.isValidElement(child) && isSlotType(child.type)) {
@@ -31,7 +33,7 @@ export const createSlotsContext = <T>(defaultValue: T) => {
 export const getComponentName = (Component: React.ElementType) => {
   if (typeof Component === 'string') return Component
   // istanbul ignore next
-  return Component.displayName || Component.name || 'Component'
+  return Component.displayName ?? Component.name ?? 'Component'
 }
 
 const REACT_STATICS = ['$$typeof', 'render', 'displayName', 'defaultProps']
@@ -44,10 +46,10 @@ export const hoistStatics = <T extends React.ElementType>(
 
   const statics = Object.getOwnPropertyNames(source).reduce((obj, key) => {
     if (!REACT_STATICS.includes(key)) {
-      obj[key] = (source as any)[key]
+      obj[key] = (source as unknown as Record<string, unknown>)[key]
     }
     return obj
-  }, {} as Record<string, any>)
+  }, {} as Record<string, unknown>)
 
   return Object.assign(target, statics)
 }

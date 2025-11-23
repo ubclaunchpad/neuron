@@ -17,11 +17,11 @@ export function RouteProvider({ children }: PropsWithChildren) {
 
   return (
     <RouterProvider
-      navigate={(to, options) => {
+      navigate={(to: string, options: NextPushOptions) => {
         if (options && "replace" in options && options.replace) {
-          router.replace(to as any, options as any);
+          router.replace(to, options);
         } else {
-          router.push(to as any, options as any);
+          router.push(to, options);
         }
       }}
     >

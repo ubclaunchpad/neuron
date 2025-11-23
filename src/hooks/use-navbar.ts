@@ -33,13 +33,13 @@ export function useNavbar() {
   // Close when page loads on small or medium screens after mounting
   useEffect(() => {
     if (mounted && !isLargeScreen) close();
-  }, [mounted]);
+  }, [mounted, isLargeScreen, close]);
 
   // Close when navigating on small screen
   useOnNavChange(
     useCallback(() => {
       if (mounted && !isLargeScreen && !collapsed) close();
-    }, [mounted, isMediumScreen, collapsed, close]),
+    }, [mounted, isLargeScreen, collapsed, close]),
   );
 
   // Update displacement CSS var for desktop only

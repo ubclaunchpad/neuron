@@ -49,7 +49,7 @@ export const Button = forwardRef<
               href={href}
               className={classes}
               aria-current={isActive ? "page" : undefined}
-              {...props as any}
+              {...(props as AriaLinkProps)}
             >
               {children}
             </AriaLink>

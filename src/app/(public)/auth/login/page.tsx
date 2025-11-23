@@ -92,7 +92,7 @@ export default function LoginForm() {
         </Button>
 
         <p className="form-footer">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Button variant="link" href="/auth/signup">
             <strong>Sign Up</strong>
           </Button>

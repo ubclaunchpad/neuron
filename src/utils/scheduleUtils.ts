@@ -96,19 +96,19 @@ export function describeSchedule(
   let out = "";
   switch (input.rule.type) {
     case ScheduleType.weekly: {
-      const r = input.rule as WeeklyRule;
+      const r: WeeklyRule = input.rule;
       out = `${weekdayPlural(r.weekday)} ${freqLabelWeekly(r.interval)}`;
       break;
     }
 
     case ScheduleType.monthly: {
-      const r = input.rule as MonthlyRule;
+      const r: MonthlyRule = input.rule;
       out = `${ordinal(r.nth, locale)} ${weekdayPlural(r.weekday)} monthly`;
       break;
     }
 
     case ScheduleType.single: {
-      const r = input.rule as SingleRule;
+      const r: SingleRule = input.rule;
 
       // Group singles by weekday
       const byWeekday = new Map<Weekday, string[]>();
@@ -208,7 +208,7 @@ export function consolidateSchedules(
 
     for (const s of schedules) {
       const r = s.rule as WeeklyRule;
-      const timeKey = `${r.localStartTime}|${s.durationMinutes}` as TimeKey;
+      const timeKey: TimeKey = `${r.localStartTime}|${s.durationMinutes}`;
       (timeToDays.get(timeKey) ?? (timeToDays.set(timeKey, new Set()), timeToDays.get(timeKey)!)).add(r.weekday);
       (dayToTimes.get(r.weekday) ?? (dayToTimes.set(r.weekday, new Set()), dayToTimes.get(r.weekday)!)).add(timeKey);
     }
@@ -225,7 +225,7 @@ export function consolidateSchedules(
         consumed.add(`${d}|${tKey}`);
       const [localStartTime, durationMinutes] = getInfoFromTimeKey(tKey);
       const headline = `${dayList(days)} ${freqLabelWeekly(interval)} from ${formatTimeRange(localStartTime, durationMinutes)}`;
-      const tail = formatEffectiveDates(effectiveStart || undefined, effectiveEnd || undefined, locale);
+      const tail = formatEffectiveDates(effectiveStart ?? undefined, effectiveEnd ?? undefined, locale);
       out.push(`${headline}${tail}`);
     }
 
@@ -238,7 +238,7 @@ export function consolidateSchedules(
 
       const timesStr = timeList(remaining);
       const headline = `${weekdayPlural(d)} ${freqLabelWeekly(interval)} from ${timesStr}`;
-      const tail = formatEffectiveDates(effectiveStart || undefined, effectiveEnd || undefined, locale);
+      const tail = formatEffectiveDates(effectiveStart ?? undefined, effectiveEnd ?? undefined, locale);
       out.push(`${headline}${tail}`);
     }
   }
@@ -261,7 +261,7 @@ export function consolidateSchedules(
 
     for (const s of schedules) {
       const r = s.rule as MonthlyRule;
-      const timeKey = `${r.localStartTime}|${s.durationMinutes}` as TimeKey;
+      const timeKey: TimeKey = `${r.localStartTime}|${s.durationMinutes}`;
       (timeToDays.get(timeKey) ?? (timeToDays.set(timeKey, new Set()), timeToDays.get(timeKey)!)).add(r.weekday);
       (dayToTimes.get(r.weekday) ?? (dayToTimes.set(r.weekday, new Set()), dayToTimes.get(r.weekday)!)).add(timeKey);
     }
@@ -278,7 +278,7 @@ export function consolidateSchedules(
       const headDays = dayList(days);
       const [localStartTime, durationMinutes] = getInfoFromTimeKey(tKey);
       const headline = `${ordinal(nth, locale)} ${headDays} monthly from ${formatTimeRange(localStartTime, durationMinutes)}`;
-      const tail = formatEffectiveDates(effectiveStart || undefined, effectiveEnd || undefined, locale);
+      const tail = formatEffectiveDates(effectiveStart ?? undefined, effectiveEnd ?? undefined, locale);
       out.push(`${headline}${tail}`);
     }
 
@@ -291,7 +291,7 @@ export function consolidateSchedules(
 
       const timesStr = timeList(remaining);
       const headline = `${ordinal(nth, locale)} ${weekdayPlural(d)} monthly from ${timesStr}`;
-      const tail = formatEffectiveDates(effectiveStart || undefined, effectiveEnd || undefined, locale);
+      const tail = formatEffectiveDates(effectiveStart ?? undefined, effectiveEnd ?? undefined, locale);
       out.push(`${headline}${tail}`);
     }
   }

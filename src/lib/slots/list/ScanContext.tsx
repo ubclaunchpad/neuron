@@ -1,7 +1,7 @@
 import * as React from 'react'
 
-// istanbul ignore next
-export const ScanContext = React.createContext({ rescan: () => {} })
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export const ScanContext = React.createContext<{ rescan: () => void }>({ rescan: () => {} })
 
 export const ScanProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, rescan] = React.useReducer(() => [], [])

@@ -6,6 +6,7 @@ import { buildVolunteer } from "@/models/volunteer";
 import { db } from "@/server/db";
 import { volunteerUserView } from "@/server/db/schema";
 import type { BaseAuthConfig, BaseSession, BaseUser } from "..";
+import { TRPCError } from "@trpc/server";
 
 type VolunteerUser = BaseUser & {
   role: typeof Role.volunteer;
@@ -59,6 +60,9 @@ export const rolePlugin = customSession<SessionWithRole, BaseAuthConfig>(
         };
     }
 
-    throw new Error(`Unknown role: ${baseUser.role}`);
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: `Unknown role: ${String(baseUser.role)}`,
+    });
   },
 );

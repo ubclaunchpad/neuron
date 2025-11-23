@@ -61,13 +61,17 @@ export const HostSlots = ({
 }
 
 export const createHost = (children: React.ReactNode, callback: Callback) => {
-  return <HostSlots children={children} callback={callback} />
+  return <HostSlots callback={callback}>
+    {children}
+  </HostSlots>
 }
 
 export const createSlot = <T extends React.ElementType>(Fallback?: T) => {
   const genId = createIdGenerator(genSlotId())
 
+  // eslint-disable-next-line react/display-name
   const Slot = React.forwardRef(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ({ $slot_key$: key, ...props }: any, ref: any) => {
       const Slots = React.useContext(SlotsContext)
       // istanbul ignore next
@@ -75,16 +79,19 @@ export const createSlot = <T extends React.ElementType>(Fallback?: T) => {
       /* eslint-disable react-hooks/rules-of-hooks */
       const Scan = React.useContext(ScanContext)
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const element = <SlotWithKey key={key} ref={ref} {...props} />
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       Slots.register(key, element)
       React.useEffect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions, @typescript-eslint/no-unsafe-argument
         Slots.has(key) && Slots.update(key, element)
       })
       useIsomorphicEffect(() => {
         Slots.clear()
         Scan.rescan()
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return () => Slots.unmount(key)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [Slots])
       /* eslint-enable react-hooks/rules-of-hooks */
 
@@ -93,12 +100,15 @@ export const createSlot = <T extends React.ElementType>(Fallback?: T) => {
   ) as unknown as T
 
   // provide stable key in StrictMode
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ForwardRef = (props: any, ref: any) => {
     const Slots = React.useContext(SlotsContext)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     if (!Slots) return Fallback ? <Fallback ref={ref} {...props} /> : null
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [key] = React.useState(genId)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     return <Slot ref={ref} $slot_key$={key} {...props} />
   }
   ForwardRef.displayName = Fallback

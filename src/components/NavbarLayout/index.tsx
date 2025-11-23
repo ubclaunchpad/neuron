@@ -19,41 +19,48 @@ const navbarItems: NavbarItem[] = [
   {
     href: "/",
     label: "Overview",
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     icon: DashboardIcon,
   },
   {
     href: "/schedule",
     label: "Schedule",
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     icon: ScheduleIcon,
     permissions: { permission: { shifts: ["view"] } },
   },
   {
     href: "/coverage",
     label: "Coverage Requests",
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     icon: CoverageIcon,
     permissions: { permission: { coverage: ["view"] } },
   },
   {
     href: "/classes",
     label: "Classes",
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     icon: ClassesIcon,
     permissions: { permission: { classes: ["view"] } },
   },
   {
     href: "/members",
     label: "Member Management",
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     icon: MemberIcon,
     permissions: { permission: { users: ["view-volunteer"] } },
   },
   {
     href: "/logs",
     label: "Log History",
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     icon: LogIcon,
     permissions: { permission: { logs: ["view"] } },
   },
   {
     href: "/settings",
     label: "Settings",
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     icon: SettingsIcon,
   },
 ];

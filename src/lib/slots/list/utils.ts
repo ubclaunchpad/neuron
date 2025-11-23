@@ -1,5 +1,6 @@
-import * as React from 'react'
+import type * as React from 'react'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SlotElement<T extends React.ElementType = any> = React.ReactElement<
   React.ComponentPropsWithRef<T>,
   T
@@ -48,8 +49,11 @@ export const getSlotProps = <
 >(
   slotElement: T
 ): Props => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
   if (!slotElement) return undefined as any
 
-  const { key, ref, props } = slotElement
-  return { ...props, key, ref }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { key, ref, props } = slotElement;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+  return { ...props, key, ref };
 }

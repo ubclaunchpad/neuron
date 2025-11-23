@@ -73,7 +73,7 @@ export function DatePicker({
               <AriaButton
                 slot="trigger"
                 className="datepicker__field datepicker__field-trigger"
-                aria-label={label || placeholder || "Open calendar"}
+                aria-label={label ?? placeholder ?? "Open calendar"}
               >
                 <span className="datepicker__input">
                   {formatDisplay(picker.state.value as DateValue | null)}
@@ -87,7 +87,7 @@ export function DatePicker({
             <AriaGroup className="datepicker__field">
               <AriaDateInput
                 className="datepicker__input"
-                aria-label={label || placeholder || "Date"}
+                aria-label={label ?? placeholder ?? "Date"}
               >
                 {(segment) => (
                   <AriaDateSegment

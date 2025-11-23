@@ -77,7 +77,7 @@ export default function PasswordResetForm() {
         validationBehavior="aria"
         className="form-content"
       >
-        <RootError id="form-error" message={error || errors.root?.message} />
+        <RootError id="form-error" message={error ?? errors.root?.message} />
 
         {successMessage && (
           <Card variant="success" size="small" role="alert">

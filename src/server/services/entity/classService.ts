@@ -1,5 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { and, eq, inArray, sql, SQL } from "drizzle-orm";
+import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { RRuleTemporal } from "rrule-temporal";
 
 import type { ClassRequest, CreateClassInput, UpdateClassInput } from "@/models/api/class";
@@ -13,10 +13,10 @@ import { type Drizzle, type Transaction } from "@/server/db";
 import { course, instructorToSchedule, schedule, volunteerToSchedule } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap } from "@/utils/arrayUtils";
-import { InstructorService } from "./instructorService";
-import { ShiftService } from "./shiftService";
+import type { InstructorService } from "./instructorService";
+import type { ShiftService } from "./shiftService";
 import type { TermService } from "./termService";
-import { VolunteerService } from "./volunteerService";
+import type { VolunteerService } from "./volunteerService";
 
 export class ClassService {
   private readonly db: Drizzle;
@@ -42,7 +42,7 @@ export class ClassService {
   async getClassesForRequest(
     listRequest: ClassRequest,
   ): Promise<ClassResponse<Class>> {
-    let termId = listRequest.term;
+    const termId = listRequest.term;
 
     // If term is "current", find the current term
     let termData;
@@ -56,7 +56,7 @@ export class ClassService {
       termData = await this.termService.getTerm(termId);
     }
 
-    const { data: classes, total } = await this.retrieveFullClasses({
+    const { data: classes } = await this.retrieveFullClasses({
       // Filter by term
       where: eq(course.termId, termData.id),
       withTotalCount: true,
@@ -426,7 +426,7 @@ export class ClassService {
   private buildRRuleFromScheduleRule(rule: ScheduleRule): RRuleTemporal {
     // Build base RRule parameters
     const { hour, minute, second } = Temporal.PlainTime.from(rule.localStartTime);
-    let baseRRuleParams = {
+    const baseRRuleParams = {
       dtstart: this.PlaceholderDate,
       byHour: [hour],
       byMinute: [minute],

@@ -39,11 +39,11 @@ export const PageLayout: PageLayoutCompound = ({
   contentRef,
 }) => {
   const [isOpen, setIsOpen] = React.useState(true);
-  const toggleSidebar = useCallback(() => setIsOpen(!isOpen), [setIsOpen]);
+  const toggleSidebar = useCallback(() => setIsOpen(!isOpen), [isOpen]);
 
   const vars: React.CSSProperties = {
-    ["--sidebar-w" as any]: `${sidebarWidth}px`,
-    ["--main-min" as any]: `${mainMinWidth}px`,
+    ["--sidebar-w" as keyof React.CSSProperties]: `${sidebarWidth}px`,
+    ["--main-min" as keyof React.CSSProperties]: `${mainMinWidth}px`,
   };
 
   return (

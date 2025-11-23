@@ -1,0 +1,54 @@
+services:
+  myapp:
+    image: jjohngrey/neuron:v1.0.0
+    restart: unless-stopped
+    networks:
+      - dokploy-network
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: neuron
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - dokploy-network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - dokploy-network
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: ["minio", "server", "--console-address", ":9001", "/data"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Console
+    volumes:
+      - miniodata:/data
+    networks:
+      - dokploy-network
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+
+networks:
+  dokploy-network:
+    external: true

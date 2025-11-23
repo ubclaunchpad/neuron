@@ -9,7 +9,7 @@ import type { ListClass } from "@/models/class";
 import EditIcon from "@public/assets/icons/edit.svg";
 import Link from "next/link";
 import type { MouseEventHandler } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "../primitives/avatar";
+import { Avatar } from "../avatar";
 import { TypographyRegBold, TypographySmall } from "../primitives/typography";
 
 export function ClassCard({
@@ -53,16 +53,11 @@ export function ClassCard({
       </WithPermission>
 
       <CardContent className="flex flex-col gap-2">
-        <Avatar className="aspect-square shrink-0 h-auto w-full rounded-md pointer-events-none [container-type:inline-size]">
-          <AvatarImage
-            src={getImageUrlFromKey(classData.image)}
-            alt={classData.name}
-            className="rounded-md object-cover"
-          />
-          <AvatarFallback className="rounded-md text-[50cqw]">
-            {classData.name.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <Avatar 
+          className="w-full"
+          src={getImageUrlFromKey(classData.image)}
+          fallbackText={classData.name}
+        />
 
         <div className="flex flex-col items-start">
           <TypographySmall className="text-primary-muted mb-1">

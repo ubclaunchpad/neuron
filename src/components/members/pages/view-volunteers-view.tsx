@@ -1,0 +1,143 @@
+import { Avatar } from "@/components/avatar";
+import { Button } from "@/components/primitives/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/primitives/dropdown-menu";
+import { getImageUrlFromKey } from "@/lib/build-image-url";
+import { Role, Status } from "@/models/interfaces";
+import type { ListUser, User } from "@/models/user";
+import { useAuth } from "@/providers/client-auth-provider";
+import { clientApi } from "@/trpc/client";
+import NiceModal from "@ebay/nice-modal-react";
+import { Ban, MoreHorizontalIcon, Power } from "lucide-react";
+import { ListItem } from "../list";
+import { StatusBadge } from "../status-badge";
+import { UserProfileDialog } from "../user-profile-dialog";
+import { ShellHeader, ShellSearchInput, UsersList, UsersViewShell } from "./users-view-shell";
+
+export function ViewVolunteersView({ className } : { className?: string }) {
+  return (
+    <UsersViewShell 
+      className={className}
+      rolesToInclude={[Role.volunteer]}
+      statusesToInclude={[Status.active, Status.inactive]}
+    >
+      <ShellHeader>
+        <ShellSearchInput/>
+      </ShellHeader>
+
+      <UsersList>
+        {(user) => <ViewVolunteerListItem key={user.id} user={user} />}
+      </UsersList>
+    </UsersViewShell>
+  );
+}
+
+export function ViewVolunteerListItem({ user: initialUser }: { user: ListUser }) {
+  const { user: ownUser } = useAuth();
+  const apiUtils = clientApi.useUtils();
+  const { data: user } = clientApi.user.byId.useQuery(
+    { userId: initialUser.id },
+    {
+      staleTime: 0,
+      initialData: initialUser as User,
+      placeholderData: (prev) => prev,
+    },
+  );
+
+  const { mutate: activateMutation } = clientApi.user.activate.useMutation({
+    onSuccess: async ({ userId }) => {
+      await apiUtils.user.byId.invalidate({ userId });
+    },
+  });
+  const { mutate: deactivateMutation } = clientApi.user.deactivate.useMutation({
+    onSuccess: async ({ userId }) => {
+      await apiUtils.user.byId.invalidate({ userId });
+    },
+  });
+
+  console.log(user)
+  return (
+    <ListItem
+      leadingContent={
+        <Avatar
+          src={getImageUrlFromKey(user.image)}
+          fallbackText={user.name}
+          className="size-10.5"
+        />
+      }
+      mainContent={
+        <>
+          <div className="flex gap-2 items-center">
+            <span className="truncate">
+              {user.name} {user.lastName}
+            </span>
+          </div>
+          <span className="block text-sm text-muted-foreground truncate">
+            {user.email}
+          </span>
+        </>
+      }
+      endContent={
+        <>
+          <StatusBadge
+            status={user.status}
+            className="not-xs:hidden self-center"
+          />
+
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" aria-label="Open menu" size="icon-sm">
+                <MoreHorizontalIcon />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent className="w-60" align="end">
+              <DropdownMenuLabel>User Actions</DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    void NiceModal.show(UserProfileDialog, {
+                      userId: user.id,
+                      initialUser: initialUser,
+                    });
+                  }}
+                >
+                  View Profile...
+                </DropdownMenuItem>
+                <DropdownMenuItem>Reset Password</DropdownMenuItem>
+                {ownUser?.id !== user.id && (
+                  <>
+                    <DropdownMenuSeparator />
+                    {user.status === "active" ? (
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onSelect={() => deactivateMutation({ userId: user.id })}
+                      >
+                        <Ban />
+                        <span>Disable Neuron Access</span>
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        onSelect={() => activateMutation({ userId: user.id })}
+                      >
+                        <Power />
+                        <span>Re-enable Neuron Access</span>
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      }
+    />
+  );
+}

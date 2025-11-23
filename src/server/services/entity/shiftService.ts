@@ -1,15 +1,15 @@
 import type { CreateShiftInput, GetShiftsInput, ShiftIdInput } from "@/models/api/shift";
 import { buildClass } from "@/models/class";
-import { buildInstructor } from "@/models/instructor";
 import { buildSchedule, type ScheduleRule } from "@/models/schedule";
 import { buildShift, getListShift, type ListShift } from "@/models/shift";
+import { buildUser } from "@/models/user";
 import { buildVolunteer } from "@/models/volunteer";
 import { type Drizzle, type Transaction } from "@/server/db";
+import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { course } from "@/server/db/schema/course";
 import { instructorToSchedule, schedule, volunteerToSchedule } from "@/server/db/schema/schedule";
 import { coverageRequest, shift, shiftAttendance } from "@/server/db/schema/shift";
 import { instructorUserView, volunteer, volunteerUserView } from "@/server/db/schema/user";
-import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, eq, gte, lte, or, sql } from "drizzle-orm";
 
@@ -218,7 +218,7 @@ export class ShiftService {
 
       // A schedule can have multiple instructors
       const instructorDBs = instructorsBySchedule.get(item.schedule.id) || [];
-      const instructors = instructorDBs.map(buildInstructor);
+      const instructors = instructorDBs.map(buildUser);
 
       // Parse schedule rule from JSON
       const scheduleRule = item.schedule.rrule as unknown as ScheduleRule;

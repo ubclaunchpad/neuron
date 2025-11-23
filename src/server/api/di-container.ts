@@ -13,9 +13,9 @@ import { CacheService } from "../services/cacheService";
 import { EmailService } from "../services/emailService";
 import { ClassService } from "../services/entity/classService";
 import { CoverageService } from "../services/entity/coverageService";
-import { InstructorService } from "../services/entity/instructorService";
 import { ShiftService } from "../services/entity/shiftService";
 import { TermService } from "../services/entity/termService";
+import { UserService } from "../services/entity/userService";
 import { VolunteerService } from "../services/entity/volunteerService";
 import { ImageService } from "../services/imageService";
 
@@ -35,7 +35,7 @@ export type NeuronCradle = {
   emailService: EmailService;
   classService: ClassService;
   cacheService: CacheService;
-  instructorService: InstructorService;
+  userService: UserService;
   volunteerService: VolunteerService;
   termService: TermService;
   shiftService: ShiftService;
@@ -67,7 +67,7 @@ const registerServices = (container: NeuronContainer) => {
     emailService: asClass<EmailService>(EmailService).singleton(),
     classService: asClass<ClassService>(ClassService).singleton(),
     shiftService: asClass<ShiftService>(ShiftService).singleton(),
-    instructorService: asClass<InstructorService>(InstructorService).singleton(),
+    userService: asClass<UserService>(UserService).singleton(),
     volunteerService: asClass<VolunteerService>(VolunteerService).singleton(),
     termService: asClass<TermService>(TermService).singleton(),
     coverageService: asClass<CoverageService>(CoverageService).singleton(),

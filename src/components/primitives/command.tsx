@@ -6,6 +6,7 @@ import { Search } from "lucide-react"
 import * as React from "react"
 
 import { Dialog, DialogContent } from "@/components/primitives/dialog"
+import { type InfiniteQueryLike, useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import { cn } from "@/lib/utils"
 import { Spinner } from "./spinner"
 
@@ -68,12 +69,6 @@ const CommandList = React.forwardRef<
 
 CommandList.displayName = CommandPrimitive.List.displayName
 
-export type InfiniteQueryLike = {
-  hasNextPage?: boolean;
-  isFetchingNextPage: boolean;
-  fetchNextPage: () => Promise<unknown> | void;
-};
-
 export const InfiniteCommandList = React.forwardRef<
   React.ElementRef<typeof CommandList>,
   React.ComponentPropsWithoutRef<typeof CommandList> & {
@@ -92,34 +87,22 @@ export const InfiniteCommandList = React.forwardRef<
   },
   ref,
 ) => {
+  const infiniteScroll = useInfiniteScroll(query, { threshold });
+
   const handleScroll: React.UIEventHandler<HTMLDivElement> =
     React.useCallback(
       (event) => {
         // keep user-provided onScroll working too
         onScroll?.(event);
-
-        const target = event.currentTarget;
-
-        if (!query.hasNextPage || query.isFetchingNextPage) return;
-
-        const reachedBottom =
-          target.scrollTop + target.clientHeight >=
-          target.scrollHeight - threshold;
-
-        if (reachedBottom) {
-          void query.fetchNextPage();
-        }
+        infiniteScroll(event);
       },
-      [onScroll, query, threshold],
+      [onScroll, infiniteScroll],
     );
 
   return (
     <CommandList ref={ref} onScroll={handleScroll} {...rest}>
       {children}
 
-      <div className="flex items-center justify-center px-3 py-2 text-xs text-muted-foreground">
-          {loader ?? <Spinner/>}
-        </div>
       {query.isFetchingNextPage && (
         <div className="flex items-center justify-center px-3 py-2 text-xs text-muted-foreground">
           {loader ?? <Spinner/>}

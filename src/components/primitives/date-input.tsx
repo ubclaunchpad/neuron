@@ -53,7 +53,7 @@ export function DatePicker({
   calendarProps,
   ...buttonProps
 }: DatePickerProps) {
-  const isControlled = value !== undefined
+  const isControlled = onChange !== undefined
   const [open, setOpen] = React.useState(false)
 
   const [internal, setInternal] = React.useState<Date | undefined>(defaultValue)
@@ -63,6 +63,11 @@ export function DatePicker({
     if (!isControlled) setInternal(next)
     onChange?.(next)
   }
+
+  // Keep in sync
+  React.useEffect(() => {
+    if (!isControlled) setInternal(value ?? undefined);
+  }, [value])
 
   const label = selected
     ? formatDateLabel(selected)
@@ -82,11 +87,11 @@ export function DatePicker({
           variant="outline"
           id={id}
           disabled={disabled}
-          className={cn('w-[240px] justify-start font-normal', !selected && 'text-muted-foreground', className)}
+          className={cn('justify-start min-w-0 shrink-1 font-normal', !selected && 'text-muted-foreground', className)}
           {...buttonProps}
         >
           <CalendarIcon className="size-4" />
-          <span className="text-base">{label ?? placeholder}</span>
+          <span className="text-base truncate">{label ?? placeholder}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto overflow-hidden p-0" align="start">
@@ -180,7 +185,7 @@ export function DateRangePicker({
           variant="outline"
           id={id}
           disabled={disabled}
-          className={cn('w-[260px] justify-start font-normal', !label && 'text-muted-foreground', className)}
+          className={cn('justify-start min-w-0 shrink-1 font-normal', !label && 'text-muted-foreground', className)}
           {...buttonProps}
         >
           <CalendarIcon className="size-4" />

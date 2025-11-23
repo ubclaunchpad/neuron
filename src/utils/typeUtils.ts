@@ -1,20 +1,24 @@
 import { z } from "zod";
 
-type EnumRecordFromUnion<V extends string> = { [K in V]: K } & { readonly values: [V, ...V[]] };
-type EnumRecordFromTuple<T extends readonly string[]> = { [K in T[number]]: K } & { values: T };
-export function createStringEnum<const T extends readonly [string, ...string[]]>(
-  values: T,
-): EnumRecordFromTuple<T>;
+type EnumRecordFromUnion<
+  TEnum extends z.ZodEnum<any>,
+  TValue = TEnum['options'][number]
+> = {
+  [K in TValue extends string ? TValue : never]: K
+} & {
+  readonly values: [TValue, ...TValue[]],
+  getName: (value: TValue) => string
+};
+
 export function createStringEnum<E extends z.ZodEnum<any>>(
   e: E,
-): EnumRecordFromUnion<z.infer<E>>;
-
-export function createStringEnum(arg: unknown) {
-  const values: readonly string[] = Array.isArray(arg)
-    ? arg
-    : ((arg as any).options ?? Object.values((arg as any).enum)) as readonly string[];
-  const record = Object.fromEntries(values.map((v) => [v, v])) as Record<string, string>;
-  return Object.assign(record, { values });
+): EnumRecordFromUnion<E> {
+  const record = Object.fromEntries(e.options.map((v) => [v, v]));
+  
+  return Object.assign(record, { 
+    values: e.options,
+    getName: (value: E['def']['entries'][keyof E['def']['entries']]) => e.def.entries,
+  }) as EnumRecordFromUnion<E>;
 }
 
 export type Prettify<T> = {

@@ -4,6 +4,7 @@ import { parseAsString, useQueryState } from "nuqs";
 
 import {
   ClassForm,
+  scheduleRuleToFormValues,
   type ClassEditSchemaType,
   type ClassFormValues,
 } from "@/components/classes/forms/class-form";
@@ -43,13 +44,7 @@ function toFormValues(cls?: SingleClass): ClassEditSchemaType {
         tzid: s.tzid,
         volunteerUserIds: s.volunteers.map((v) => v.id),
         instructorUserIds: s.instructors.map((i) => i.id),
-        rule: {
-          type: s.rule.type,
-          extraDates: s.rule.type === "single" ? s.rule.extraDates : [],
-          weekday: s.rule.type !== "single" ? s.rule.weekday : "MO",
-          nth: s.rule.type === "monthly" ? s.rule.nth : 1,
-          interval: s.rule.type === "weekly" ? s.rule.interval : 1,
-        },
+        rule: scheduleRuleToFormValues(s.rule),
         effectiveStart: s.effectiveStart,
         effectiveEnd: s.effectiveEnd,
       })) ?? [],

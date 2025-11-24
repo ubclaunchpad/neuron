@@ -1,13 +1,32 @@
+import { StringEnum } from "@/lib/base-enum";
 import { createStringEnum } from "@/utils/typeUtils";
 import { z } from "zod";
 
-export const RoleEnum = z.enum(["admin", "instructor", "volunteer"] as const);
+export const RoleEnum = z.enum([
+  "admin", 
+  "instructor", 
+  "volunteer"
+] as const);
 export type Role = z.infer<typeof RoleEnum>;
-export const Role = createStringEnum(RoleEnum);
+export const Role = StringEnum.createFromType<Role>({
+  admin: "Admin",
+  instructor: "Instructor",
+  volunteer: "Volunteer"
+});
 
-export const StatusEnum = z.enum(["unverified", "rejected", "active", "inactive"] as const);
+export const StatusEnum = z.enum([
+  "unverified", 
+  "rejected", 
+  "active",
+  "inactive"
+] as const);
 export type Status = z.infer<typeof StatusEnum>;
-export const Status = createStringEnum(StatusEnum);
+export const Status = StringEnum.createFromType<Status>({
+  unverified: "Unverified",
+  rejected: "Rejected",
+  active: "Active",
+  inactive: "Disabled"
+});
 
 export const AttendanceStatusEnum = z.enum([
   "present",
@@ -17,10 +36,6 @@ export const AttendanceStatusEnum = z.enum([
 ] as const);
 export type AttendanceStatus = z.infer<typeof AttendanceStatusEnum>;
 export const AttendanceStatus = createStringEnum(AttendanceStatusEnum);
-
-export const ObjectTypeEnum = z.enum(["user", "class"] as const);
-export type ObjectType = z.infer<typeof ObjectTypeEnum>;
-export const ObjectType = createStringEnum(ObjectTypeEnum);
 
 export const ScheduleTypeEnum = z.enum(["single", "rrule"] as const);
 export type ScheduleType = z.infer<typeof ScheduleTypeEnum>;

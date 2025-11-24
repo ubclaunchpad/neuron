@@ -1,10 +1,10 @@
 import { classRouter } from "@/server/api/routers/class-router";
 import { coverageRouter } from "@/server/api/routers/coverage-router";
-import { instructorRouter } from "@/server/api/routers/instructor-router";
 import { logRouter } from "@/server/api/routers/log-router";
 import { profileRouter } from "@/server/api/routers/profile-router";
 import { shiftRouter } from "@/server/api/routers/shift-router";
 import { termRouter } from "@/server/api/routers/term-router";
+import { userRouter } from "@/server/api/routers/user-router";
 import { volunteerRouter } from "@/server/api/routers/volunteer-router";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { storageRouter } from "./routers/storage-router";
@@ -20,7 +20,7 @@ export const appRouter = createTRPCRouter({
   shift: shiftRouter,
   coverage: coverageRouter,
   log: logRouter,
-  instructor: instructorRouter,
+  user: userRouter,
   term: termRouter,
   profile: profileRouter,
   storage: storageRouter,

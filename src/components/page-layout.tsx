@@ -19,13 +19,15 @@ type PageLayoutContextValue = {
   mainMinWidth: string;
   isPageScrolled: boolean;
   setIsPageScrolled: (isScrolled: boolean) => void;
+  headerHeight: number;
+  setHeaderHeight: (height: number) => void;
 };
 
 const PageLayoutContext = React.createContext<PageLayoutContextValue | null>(
   null,
 );
 
-function usePageAside() {
+function usePageLayout() {
   const ctx = React.useContext(PageLayoutContext);
   if (!ctx) throw new Error("usePageAside must be used within PageLayout");
   return ctx;
@@ -47,6 +49,7 @@ function PageLayout({
   const [isOpen, setIsOpen] = React.useState(defaultOpen);
   const [isPageScrolled, setIsPageScrolled] = React.useState(false);
   const [asideCount, setAsideCount] = React.useState(0);
+  const [headerHeight, setHeaderHeight] = React.useState(0);
 
   const registerAside = React.useCallback(() => {
     setAsideCount((c) => c + 1);
@@ -68,9 +71,23 @@ function PageLayout({
       asideWidth: asideWidth,
       mainMinWidth,
       setIsPageScrolled,
-      isPageScrolled
+      isPageScrolled,
+      headerHeight,
+      setHeaderHeight,
     }),
-    [toggle, isOpen, registerAside, hasAside, asideWidth, mainMinWidth, setIsPageScrolled, isPageScrolled],
+    [
+      isOpen,
+      setIsOpen,
+      toggle,
+      registerAside,
+      hasAside,
+      asideWidth,
+      mainMinWidth,
+      setIsPageScrolled,
+      isPageScrolled,
+      headerHeight,
+      setHeaderHeight,
+    ],
   );
 
   return (
@@ -83,6 +100,7 @@ function PageLayout({
             "--aside-w": asideWidth,
             "--main-min": mainMinWidth,
             "--main-offset": hasAside && isOpen ? "var(--aside-w)" : "0px",
+            "--page-header-h": `${headerHeight}px`,
             ...style,
           } as React.CSSProperties
         }
@@ -106,11 +124,31 @@ function PageLayoutHeader({
   border = "always",
   ...props
 }: React.ComponentProps<"header"> & { border?: "always" | "never" | "scroll" }) {
-  const { isPageScrolled } = usePageAside();
+  const { isPageScrolled, setHeaderHeight } = usePageLayout();
   const hideBorder = border === "never" || (border === "scroll" && !isPageScrolled);
+
+  const headerRef = React.useRef<HTMLElement | null>(null);
+  React.useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+
+    const update = () => {
+      setHeaderHeight(el.offsetHeight);
+    };
+
+    update();
+
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+
+    return () => {
+      ro.disconnect();
+    };
+  }, [setHeaderHeight]);
 
   return (
     <header
+      ref={headerRef}
       data-slot="page-header"
       className={cn(
         "bg-background sticky top-0 z-40 border-b transition-[border-color] shadow-bottom", 
@@ -138,7 +176,7 @@ function PageLayoutHeaderContent({
     <div
       className={cn(
         "mx-auto w-full",
-        "flex flex-wrap justify-auto items-center gap-2 pt-5 pb-7 px-9 md:px-6 sm:px-4",
+        "flex flex-wrap justify-auto items-center gap-2 pt-5 pb-7 px-9",
         className
       )}
       {...props}
@@ -179,7 +217,7 @@ function PageLayoutContent({
   className,
   ...props
 }: React.ComponentProps<"main">) {
-  const { setIsPageScrolled } = usePageAside();
+  const { setIsPageScrolled } = usePageLayout();
   const mainRef = React.useRef<HTMLElement>(null);
 
   React.useEffect(() => {
@@ -222,7 +260,7 @@ function PageLayoutAside({
   side?: "right" | "left";
   ariaLabel?: string;
 }) {
-  const { isOpen, registerAside } = usePageAside();
+  const { isOpen, registerAside } = usePageLayout();
 
   React.useEffect(() => registerAside(), [registerAside]);
 
@@ -259,7 +297,7 @@ function PageAsideTrigger({
   children,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { toggle } = usePageAside();
+  const { toggle } = usePageLayout();
 
   return (
     <Button
@@ -280,6 +318,6 @@ function PageAsideTrigger({
 
 export {
   PageAsideTrigger, PageLayout, PageLayoutAside, PageLayoutContent, PageLayoutHeader, PageLayoutHeaderContent,
-  PageLayoutHeaderTitle, usePageAside
+  PageLayoutHeaderTitle, usePageLayout as usePageAside
 };
 

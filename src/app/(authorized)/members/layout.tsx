@@ -5,6 +5,6 @@ export default async function MembersLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requirePermission({ permission: { users: ["view-volunteer"] } });
+  await requirePermission({ permission: { users: ["view"] } });
   return <>{children}</>;
 }

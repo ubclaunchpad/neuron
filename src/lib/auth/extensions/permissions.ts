@@ -24,14 +24,12 @@ const accessControl = createAccessControl({
   coverage: ["view", "request", "fill", "notify"],
   profile: ["view", "update"],
   users: [
-    "view-volunteer",
+    "view",
+    "create",
+    "update",
     "invite",
     "activate",
     "deactivate",
-    "view-instructor",
-    "create-instructor",
-    "update-instructor",
-    "delete-instructor",
   ],
   logs: ["view"],
 } as const);
@@ -42,14 +40,12 @@ const admin = accessControl.newRole({
   shifts: ["view", "view-all", "cancel", "override-check-in"],
   coverage: ["view", "notify"],
   users: [
-    "view-volunteer",
+    "view",
+    "create",
+    "update",
     "invite",
     "activate",
     "deactivate",
-    "view-instructor",
-    "create-instructor",
-    "update-instructor",
-    "delete-instructor",
   ],
   logs: ["view"],
   profile: ["view", "update"],
@@ -66,7 +62,6 @@ const instructor = accessControl.newRole({
   classes: ["view", "update"],
   terms: ["view"],
   shifts: ["view"],
-  users: ["view-volunteer"],
   profile: ["view", "update"],
 });
 

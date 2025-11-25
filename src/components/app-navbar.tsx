@@ -4,10 +4,8 @@ import type { Route } from "next";
 import Link from "next/link";
 
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/primitives/avatar";
+  Avatar
+} from "@/components/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -66,7 +64,7 @@ const navbarItems = [
     href: "/members",
     label: "Member Management",
     icon: MemberIcon,
-    permissions: { permission: { users: ["view-volunteer"] } },
+    permissions: { permission: { users: ["view"] } },
   },
   {
     href: "/logs",
@@ -97,16 +95,11 @@ function ProfileCard() {
           "group-data-[state=collapsed]:gap-0"
         )}
       >
-        <Avatar className={cn("size-10 shrink-0 rounded-md group-data-[state=collapsed]:rounded-sm")}>
-          <AvatarImage
-            src={user?.image ?? undefined}
-            alt={userFullname ?? "User avatar"}
-            className="rounded-md object-cover"
-          />
-          <AvatarFallback className="rounded-md">
-            {user?.name.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <Avatar
+          className="size-10 shrink-0 group-data-[state=collapsed]:rounded-sm"
+          src={user?.image ?? undefined}
+          fallbackText={userFullname}
+        />
 
         <div
           className={cn(

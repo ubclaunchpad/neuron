@@ -14,10 +14,6 @@ export const ShiftCheckInInput = z.object({
   shiftId: z.uuid(),
 });
 
-export const VolunteerIdInput = z.object({
-  volunteerUserId: z.uuid(),
-});
-
 export const UpdateVolunteerProfileInput = z.object({
   volunteerUserId: z.uuid(),
   preferredName: z.string().optional(),

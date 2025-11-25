@@ -1,6 +1,5 @@
 "use client";
 
-import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useRef } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
@@ -63,7 +62,6 @@ import { cropImageToSquare } from "@/lib/crop-image";
 import { formatScheduleRecurrence, formatTimeRange } from "@/lib/schedule-fmt";
 import { cn } from "@/lib/utils";
 import type { UpdateClassInput } from "@/models/api/class";
-import type { Weekday } from "@/models/api/schedule";
 import { diffArray, diffEntityArray } from "@/utils/formUtils";
 import NiceModal from "@ebay/nice-modal-react";
 import { Calendar, Copy, Pencil, Plus, Trash2, Upload } from "lucide-react";
@@ -73,6 +71,7 @@ import {
   ScheduleFormDialog,
   type ScheduleEditSchemaInput,
   type ScheduleEditSchemaOutput,
+  type ScheduleRuleEditSchemaType,
 } from "./schedule-form";
 
 export const ClassEditSchema = z
@@ -93,21 +92,29 @@ export const ClassEditSchema = z
 
 export type ClassEditSchemaType = z.infer<typeof ClassEditSchema>;
 
-const recurranceFormatOptions = {};
-
 const buildEmptySchedule = (): ScheduleEditSchemaInput => ({
   localStartTime: "",
   localEndTime: "",
   volunteerUserIds: [],
   instructorUserIds: [],
   rule: {
-    type: "weekly",
-    weekday: "" as Weekday,
+    type: "monthly",
+    weekday: "",
     interval: "",
     nth: "",
     extraDates: [],
   } as any,
 });
+
+export function scheduleRuleToFormValues(rule: ScheduleRuleEditSchemaType): any {
+  return {
+    type: rule.type,
+    extraDates: rule.type === "single" ? rule.extraDates : [],
+    weekday: rule.type !== "single" ? rule.weekday : "",
+    nth: rule.type === "monthly" ? rule.nth.toString() : "",
+    interval: rule.type === "weekly" ? rule.interval.toString() : "",
+  }
+}
 
 export type ClassFormValues = Omit<UpdateClassInput, "id">;
 
@@ -182,7 +189,10 @@ export function ClassForm({
   const handleEditSchedule = useCallback(
     async (index: number, schedule: ScheduleEditSchemaOutput) => {
       const updatedScheduleData = await NiceModal.show(ScheduleFormDialog, {
-        initial: schedule,
+        initial: {
+          ...schedule,
+          rule: scheduleRuleToFormValues(schedule.rule),
+        },
         isEditing: true,
       });
       replaceSchedule(index, updatedScheduleData as ScheduleEditSchemaOutput);
@@ -195,7 +205,6 @@ export function ClassForm({
       const schedule = getValues(
         `schedules.${index}`,
       ) as ScheduleEditSchemaOutput;
-      console.log(schedule);
 
       // Drop the id so this is treated as a new schedule
       const { id, ...rest } = schedule;
@@ -295,71 +304,71 @@ export function ClassForm({
   };
 
   return (
-    <>
-      <DevTool control={control} />
-      <form
-        id="class-form"
-        onSubmit={handleSubmit(handleFormSubmit)}
-        className="flex flex-col gap-8 p-9 pt-4"
-      >
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>Class Info</CardTitle>
-            <CardDescription>Basic details about the class.</CardDescription>
-          </CardHeader>
+    <form
+      id="class-form"
+      onSubmit={handleSubmit(handleFormSubmit)}
+      className="flex flex-col gap-8 p-9 pt-4"
+    >
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Class Info</CardTitle>
+          <CardDescription>Basic details about the class.</CardDescription>
+        </CardHeader>
 
-          <CardContent>
-            <FieldGroup>
+        <CardContent>
+          <FieldGroup>
+            <FormInput
+              control={control}
+              name="name"
+              label="Title"
+              placeholder="e.g. Art from the Heart"
+              required
+            />
+
+            <FieldGroup className="sm:flex-row">
+              <FormSelect
+                control={control}
+                name="category"
+                label="Category"
+                placeholder="Select Category"
+                required
+              >
+                {CLASS_CATEGORIES.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </FormSelect>
+
               <FormInput
                 control={control}
-                name="name"
-                label="Title"
-                placeholder="Enter Title"
-                required
+                name="subcategory"
+                label="Subcategory"
+                placeholder="Enter Subcategory"
               />
+            </FieldGroup>
 
-              <FieldGroup className="sm:flex-row">
-                <FormSelect
-                  control={control}
-                  name="category"
-                  label="Category"
-                  placeholder="Select Category"
-                  required
-                >
-                  {CLASS_CATEGORIES.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </FormSelect>
+            <FormField control={control} name="levelRange">
+              {({ onChange, value, ...field }) => (
+                <>
+                  <FieldLabel className="flex justify-between items-end">
+                    <span>
+                      Levels <LabelRequiredMarker />
+                    </span>
+                    <span className="text-sm">
+                      Level {value[0]}{" "}
+                      {value[0] !== value[1] && `- ${value[1]}`}
+                    </span>
+                  </FieldLabel>
 
-                <FormInput
-                  control={control}
-                  name="subcategory"
-                  label="Subcategory"
-                  placeholder="Enter Subcategory"
-                />
-              </FieldGroup>
-
-              <FormField control={control} name="levelRange">
-                {({ onChange, value, ...field }) => (
-                  <>
-                    <FieldLabel className="flex justify-between items-end">
-                      <span>
-                        Levels <LabelRequiredMarker />
-                      </span>
-                      <span className="text-sm">
-                        Level {value[0]}{" "}
-                        {value[0] !== value[1] && `- ${value[1]}`}
-                      </span>
-                    </FieldLabel>
-
+                  <div>
                     <Slider
                       min={1}
                       max={4}
                       step={1}
                       value={value}
                       onValueChange={onChange}
+                      className="my-2"
                       {...field}
                     />
 
@@ -370,227 +379,223 @@ export function ClassForm({
                       <span>Level 3</span>
                       <span>Level 4</span>
                     </div>
+                  </div>
 
-                    <FormErrors />
-                  </>
-                )}
-              </FormField>
+                  <FormErrors />
+                </>
+              )}
+            </FormField>
 
-              <FormTextarea
-                control={control}
-                name="description"
-                label="Description"
-                placeholder="Enter Description"
-                description="Add additional context for volunteers."
-              />
+            <FormTextarea
+              control={control}
+              name="description"
+              label="Description"
+              placeholder="Enter Description"
+              description="Provide a brief overview for users"
+            />
 
-              <FormInput
-                control={control}
-                name="meetingURL"
-                label="Meeting Link"
-                placeholder="https://zoom.us/j/..."
-                description="Optional video conferencing link for online classes"
-              />
+            <FormInput
+              control={control}
+              name="meetingURL"
+              label="Meeting Link"
+              placeholder="https://zoom.us/j/..."
+              description="Add a video conferencing link for online classes"
+            />
 
-              <FormField
-                control={control}
-                label="Cover Image"
-                description="Choose a cover image for the class which will be shown to volunteers"
-                name="image"
-              >
-                {({ onChange, value }) => (
-                  <>
-                    <FieldContent>
-                      <FormLabel />
-                    </FieldContent>
+            <FormField
+              control={control}
+              label="Cover Image"
+              description="Choose a cover image to represent this class."
+              name="image"
+            >
+              {({ onChange, value }) => (
+                <>
+                  <FieldContent>
+                    <FormLabel />
+                  </FieldContent>
 
-                    <Dropzone
-                      accept="image/*"
-                      multiple={false}
-                      maxSize={4 * 1024 * 1024 /* 4MB */}
-                      onFilesChange={async (files) => {
-                        const file = files[0]?.file;
-                        if (file instanceof File) {
-                          // Crop image
-                          const { previewUrl } = await cropImageToSquare(file, {
-                            size: 512,
-                            mimeType: "image/webp",
-                            quality: 0.8,
-                          });
+                  <Dropzone
+                    accept="image/*"
+                    multiple={false}
+                    maxSize={4 * 1024 * 1024 /* 4MB */}
+                    onFilesChange={async (files) => {
+                      const file = files[0]?.file;
+                      if (file instanceof File) {
+                        // Crop image
+                        const { previewUrl } = await cropImageToSquare(file, {
+                          size: 512,
+                          mimeType: "image/webp",
+                          quality: 0.8,
+                        });
 
-                          onChange(previewUrl);
-                        } else if (!file) {
-                          onChange(null);
-                        }
-                      }}
-                      onError={(errors) => {
-                        toast.error(errors[0]);
-                      }}
+                        onChange(previewUrl);
+                      } else if (!file) {
+                        onChange(null);
+                      }
+                    }}
+                    onError={(errors) => {
+                      toast.error(errors[0]);
+                    }}
+                  >
+                    <div
+                      className={cn(
+                        "grid gap-4 [grid-template-columns:min-content_1fr]",
+                        "[grid-template-areas:'img_btn''drp_drp']",
+                        "sm:[grid-template-areas:'img_drp''btn_drp']",
+                      )}
                     >
-                      <div
+                      <Avatar className="[grid-area:img] aspect-square size-[140px] shrink-0 rounded-md pointer-events-none [container-type:inline-size]">
+                        <AvatarImage
+                          src={value ?? undefined}
+                          alt={currentClassName}
+                          className="rounded-md object-cover"
+                        />
+                        <AvatarFallback className="rounded-md text-[50cqw]">
+                          {currentClassName.slice(0, 2).toUpperCase() || "CL"}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onChange(null)}
+                        className="[grid-area:btn] self-center not-sm:w-min text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 />
+                        <span>Clear Image</span>
+                      </Button>
+                      <DropzoneArea
                         className={cn(
-                          "grid gap-4 [grid-template-columns:min-content_1fr]",
-                          "[grid-template-areas:'img_btn''drp_drp']",
-                          "sm:[grid-template-areas:'img_drp''btn_drp']",
+                          "min-w-[260px] [grid-area:drp]",
+                          false ? "opacity-60 pointer-events-none" : "",
                         )}
                       >
-                        <Avatar className="[grid-area:img] aspect-square size-[140px] shrink-0 rounded-md pointer-events-none [container-type:inline-size]">
-                          <AvatarImage
-                            src={value ?? undefined}
-                            alt={currentClassName}
-                            className="rounded-md object-cover"
-                          />
-                          <AvatarFallback className="rounded-md text-[50cqw]">
-                            {currentClassName.slice(0, 2).toUpperCase() || "CL"}
-                          </AvatarFallback>
-                        </Avatar>
+                        <DropzoneHeader>
+                          <DropzoneMedia variant="icon">
+                            <Upload />
+                          </DropzoneMedia>
 
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onChange(null)}
-                          className="[grid-area:btn] self-center not-sm:w-min text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 />
-                          <span>Clear Image</span>
-                        </Button>
-                        <DropzoneArea
-                          className={cn(
-                            "min-w-[260px] [grid-area:drp]",
-                            false ? "opacity-60 pointer-events-none" : "",
-                          )}
-                        >
-                          <DropzoneHeader>
-                            <DropzoneMedia variant="icon">
-                              <Upload />
-                            </DropzoneMedia>
+                          <DropzoneDescription>
+                            Drag and drop or{" "}
+                            <DropzoneLabel>click to upload</DropzoneLabel>
+                          </DropzoneDescription>
 
-                            <DropzoneDescription>
-                              Drag and drop or{" "}
-                              <DropzoneLabel>click to upload</DropzoneLabel>
-                            </DropzoneDescription>
+                          <DropzoneHint>
+                            SVG, PNG, JPG, or other supported image formats
+                            (max. 4MB)
+                          </DropzoneHint>
+                        </DropzoneHeader>
+                      </DropzoneArea>
+                    </div>
+                  </Dropzone>
+                </>
+              )}
+            </FormField>
+          </FieldGroup>
+        </CardContent>
+      </Card>
 
-                            <DropzoneHint>
-                              SVG, PNG, JPG, or other supported image formats
-                              (max. 4MB)
-                            </DropzoneHint>
-                          </DropzoneHeader>
-                        </DropzoneArea>
-                      </div>
-                    </Dropzone>
-                  </>
-                )}
-              </FormField>
-            </FieldGroup>
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Schedules</CardTitle>
+          <CardDescription>
+            Set up the recurring or one-time sessions for this class.
+          </CardDescription>
+        </CardHeader>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Schedules</CardTitle>
-            <CardDescription>
-              Add one or more schedules for this class
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent>
-            {schedules.length === 0 ? (
-              <Empty className="border border-dashed">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <Calendar />
-                  </EmptyMedia>
-                  <EmptyTitle>No Schedules Yet</EmptyTitle>
-                  <EmptyDescription>
-                    You haven&apos;t created any schedules yet. Click the button
-                    below to add your first schedule.
-                  </EmptyDescription>
-                </EmptyHeader>
-                <EmptyContent>
-                  <Button
-                    type="button"
-                    onClick={() => handleAddSchedule()}
-                    size="sm"
-                  >
-                    <Plus />
-                    Create a schedule
-                  </Button>
-                </EmptyContent>
-              </Empty>
-            ) : (
-              <>
-                <ItemGroup className="border divide-y &[*]:border-0 rounded-md">
-                  {schedules.map((field, index) => {
-                    const schedule = getValues(
-                      `schedules.${index}`,
-                    ) as ScheduleEditSchemaOutput;
-
-                    return (
-                      <Item
-                        key={field.key}
-                        variant="noBorder"
-                        className="rounded-none"
-                      >
-                        <ItemContent className="gap-1">
-                          <ItemTitle>
-                            {formatScheduleRecurrence(schedule.rule)} from{" "}
-                            {formatTimeRange(
-                              schedule.localStartTime,
-                              schedule.localEndTime,
-                              {
-                                rangeSeparator: " to ",
-                              },
-                            )}
-                          </ItemTitle>
-                          <ItemDescription>
-                            Taught by: Test user
-                          </ItemDescription>
-                        </ItemContent>
-                        <ItemActions>
-                          <ButtonGroup>
-                            <Button
-                              variant="outline"
-                              onClick={() => removeSchedule(index)}
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                              <Trash2 />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() =>
-                                handleEditSchedule(index, schedule)
-                              }
-                            >
-                              <Pencil />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => handleDuplicateSchedule(index)}
-                            >
-                              <Copy />
-                            </Button>
-                          </ButtonGroup>
-                        </ItemActions>
-                      </Item>
-                    );
-                  })}
-                </ItemGroup>
-
+        <CardContent>
+          {schedules.length === 0 ? (
+            <Empty className="border border-dashed">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Calendar />
+                </EmptyMedia>
+                <EmptyTitle>No Schedules Yet</EmptyTitle>
+                <EmptyDescription>
+                  You haven&apos;t created any schedules yet. Click the button
+                  below to add your first schedule.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
                 <Button
                   type="button"
                   onClick={() => handleAddSchedule()}
-                  variant="ghost"
                   size="sm"
-                  className="mt-6"
                 >
                   <Plus />
-                  Add a schedule
+                  Create a schedule
                 </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </form>
-    </>
+              </EmptyContent>
+            </Empty>
+          ) : (
+            <>
+              <ItemGroup className="border divide-y &[*]:border-0 rounded-md">
+                {schedules.map((field, index) => {
+                  const schedule = getValues(
+                    `schedules.${index}`,
+                  ) as ScheduleEditSchemaOutput;
+
+                  return (
+                    <Item
+                      key={field.key}
+                      variant="noBorder"
+                      className="rounded-none"
+                    >
+                      <ItemContent className="gap-1">
+                        <ItemTitle>
+                          {formatScheduleRecurrence(schedule.rule)} from{" "}
+                          {formatTimeRange(
+                            schedule.localStartTime,
+                            schedule.localEndTime,
+                            {
+                              rangeSeparator: " to ",
+                            },
+                          )}
+                        </ItemTitle>
+                        <ItemDescription>Taught by: Test user</ItemDescription>
+                      </ItemContent>
+                      <ItemActions>
+                        <ButtonGroup>
+                          <Button
+                            variant="outline"
+                            onClick={() => removeSchedule(index)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => handleEditSchedule(index, schedule)}
+                          >
+                            <Pencil />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => handleDuplicateSchedule(index)}
+                          >
+                            <Copy />
+                          </Button>
+                        </ButtonGroup>
+                      </ItemActions>
+                    </Item>
+                  );
+                })}
+              </ItemGroup>
+
+              <Button
+                type="button"
+                onClick={() => handleAddSchedule()}
+                variant="ghost"
+                size="sm"
+                className="mt-6"
+              >
+                <Plus />
+                Add a schedule
+              </Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </form>
   );
 }

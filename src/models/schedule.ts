@@ -1,7 +1,7 @@
 import type { ScheduleDB } from "@/server/db/schema";
 import { Temporal } from "@js-temporal/polyfill";
 import type { ScheduleType, Weekday } from "./api/schedule";
-import { getEmbeddedInstructor, type Instructor } from "./instructor";
+import { getEmbeddedUser, type User } from "./user";
 import { getEmbeddedVolunteer, type Volunteer } from "./volunteer";
 
 export type WeeklyRule = {
@@ -35,14 +35,14 @@ export type Schedule = {
   effectiveStart?: string;
   effectiveEnd?: string;
   rule: ScheduleRule;
-  instructors: Instructor[];
+  instructors: User[];
   volunteers: Volunteer[];
 };
 
 export function buildSchedule(
   scheduleDB: ScheduleDB,
   rule: ScheduleRule,
-  instructors: Instructor[] = [],
+  instructors: User[] = [],
   volunteers: Volunteer[] = [],
 ): Schedule {
   return {
@@ -70,7 +70,7 @@ export function getSingleSchedule(s: Schedule) {
     effectiveEnd: s.effectiveEnd,
     rule: restRule,
     volunteers: s.volunteers.map(getEmbeddedVolunteer),
-    instructors: s.instructors.map(getEmbeddedInstructor),
+    instructors: s.instructors.map(getEmbeddedUser),
   } as const;
 }
 

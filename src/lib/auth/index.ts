@@ -3,27 +3,11 @@ import { createRequestScope } from "@/server/api/di-container";
 import { db } from "@/server/db";
 import { account, session, verification } from "@/server/db/schema/auth";
 import { user, volunteer } from "@/server/db/schema/user";
-import {
-  betterAuth,
-  type BetterAuthOptions,
-  type InferSession,
-  type InferUser,
-} from "better-auth";
+import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import {
-  rolePlugin,
-  type SessionWithRole,
-  type UserWithRole,
-} from "./extensions/role-plugin";
 
-/**
- * We define BaseAuthConfig before using it in the type annotation to avoid circular dependencies.
- * TypeScript needs to know the shape of baseAuthConfig before we can use `typeof baseAuthConfig`
- * in the type definition, so we must declare the config object first, then reference its type.
- */
-export type BaseAuthConfig = typeof baseAuthConfig;
-const baseAuthConfig = {
+export const auth = betterAuth({
   user: {
     additionalFields: {
       role: {
@@ -39,16 +23,6 @@ const baseAuthConfig = {
       lastName: { type: "string" },
     },
   },
-} as const satisfies BetterAuthOptions;
-
-export type BaseUser = InferUser<BaseAuthConfig>;
-export type BaseSession = {
-  session: InferSession<BaseAuthConfig>;
-  user: InferUser<BaseAuthConfig>;
-};
-
-export const auth = betterAuth({
-  user: baseAuthConfig.user,
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
@@ -67,7 +41,7 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          switch ((user as BaseUser).role) {
+          switch (user.role) {
             case Role.volunteer:
               await db.insert(volunteer).values({ userId: user.id });
               return;
@@ -108,10 +82,8 @@ export const auth = betterAuth({
   },
   plugins: [
     nextCookies(),
-    // Need to add rolePlugin after to avoid circular dependency on the user type
-    rolePlugin,
   ],
-});
+} satisfies BetterAuthOptions);
 
-export type Session = SessionWithRole;
-export type User = UserWithRole;
+export type Session = typeof auth.$Infer.Session;
+export type User = Session["user"];

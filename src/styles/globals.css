@@ -124,7 +124,7 @@ input[type="search"]::-webkit-search-cancel-button {
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(43.975% 0.15408 28.967);
+  --destructive: oklch(0.5405 0.2222 27.82);
   --success: oklch(52.185% 0.15235 145.574);
   --border: oklch(0.8853 0 0);
   --input: oklch(0.8853 0 0);

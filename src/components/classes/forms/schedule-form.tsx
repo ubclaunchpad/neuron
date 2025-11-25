@@ -45,7 +45,7 @@ import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import AddIcon from "@public/assets/icons/add.svg";
 import { DialogClose } from "@radix-ui/react-dialog";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import z from "zod";
 import { FormDatePicker } from "../../form/FormDatePicker";
 import { FormSelect } from "../../form/FormSelect";
@@ -57,7 +57,10 @@ const Single = z.object({
 
 const Weekly = z.object({
   type: z.literal("weekly"),
-  weekday: z.string().min(1, "Please select a weekday.").pipe(WeekdayEnum),
+  weekday: z
+    .string("Please select a weekday.")
+    .min(1, "Please select a weekday.")
+    .pipe(WeekdayEnum),
   interval: z.coerce
     .number("Please fill out this field.")
     .int("Please enter only whole numbers.")
@@ -66,7 +69,10 @@ const Weekly = z.object({
 
 const Monthly = z.object({
   type: z.literal("monthly"),
-  weekday: z.string().min(1, "Please select a weekday.").pipe(WeekdayEnum),
+  weekday: z
+    .string("Please select a weekday.")
+    .min(1, "Please select a weekday.")
+    .pipe(WeekdayEnum),
   nth: z.coerce
     .number("Please fill out this field.")
     .int("Please enter only whole numbers.")
@@ -111,6 +117,11 @@ export const ScheduleFormDialog = NiceModal.create(
       reValidateMode: "onChange",
     });
 
+    // Reset the form on open
+    useEffect(() => {
+      if (modal.visible) reset(initial);
+    }, [modal.visible]);
+
     // Deep union to get all type combinations for errors
     const fullErrors: FieldErrors<DeepAllUnionFields<ScheduleEditSchemaInput>> =
       formState.errors;
@@ -135,7 +146,6 @@ export const ScheduleFormDialog = NiceModal.create(
         open={modal.visible}
         onOpenChange={async (open) => {
           if (open) {
-            reset(initial);
             await modal.show();
           } else {
             await modal.hide();

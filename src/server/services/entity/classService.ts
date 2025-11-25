@@ -13,14 +13,14 @@ import { course, instructorToSchedule, schedule, volunteerToSchedule } from "@/s
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import type { ImageService } from "../imageService";
-import { InstructorService } from "./instructorService";
 import { ShiftService } from "./shiftService";
 import type { TermService } from "./termService";
+import { UserService } from "./userService";
 import { VolunteerService } from "./volunteerService";
 
 export class ClassService {
   private readonly db: Drizzle;
-  private readonly instructorService: InstructorService;
+  private readonly userService: UserService;
   private readonly volunteerService: VolunteerService;
   private readonly termService: TermService;
   private readonly shiftService: ShiftService;
@@ -28,14 +28,14 @@ export class ClassService {
 
   constructor(
     db: Drizzle,
-    instructorService: InstructorService,
+    userService: UserService,
     volunteerService: VolunteerService,
     termService: TermService,
     shiftService: ShiftService,
     imageService: ImageService,
   ) {
     this.db = db;
-    this.instructorService = instructorService;
+    this.userService = userService;
     this.volunteerService = volunteerService;
     this.termService = termService;
     this.shiftService = shiftService;
@@ -142,8 +142,7 @@ export class ClassService {
         .set(dbClassUpdate)
         .where(eq(course.id, id))
         .returning({ 
-          id: course.id,
-          oldImageKey: sql<string>`OLD.${course.image}`
+          id: course.id
         });
       if (row.length !== 1) {
         throw new NeuronError("Failed to update Class", NeuronErrorCodes.INTERNAL_SERVER_ERROR);
@@ -315,7 +314,7 @@ export class ClassService {
     const instructorIds = courses.flatMap((course) =>
       course.schedules.flatMap((schedule) => schedule.instructors.map((i) => i.instructorUserId)),
     );
-    const instructors = toMap(await this.instructorService.getInstructors(instructorIds));
+    const instructors = toMap(await this.userService.getUsers(instructorIds));
     const volunteerIds = uniqueDefined(courses.flatMap((course) =>
       course.schedules.flatMap((schedule) =>
         schedule.volunteers.map((volunteer) => volunteer.volunteerUserId),

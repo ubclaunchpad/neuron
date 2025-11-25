@@ -240,11 +240,28 @@ function FieldError({
   );
 }
 
+function ReadonlyField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Field className="gap-1.5" orientation="horizontal">
+      <FieldLabel className="text-sm font-medium">{label}</FieldLabel>
+      <div className="flex h-10 items-center rounded-md px-3 text-sm text-foreground overflow-hidden">
+        {children}
+      </div>
+    </Field>
+  );
+}
+
 export {
   Field, FieldContent, FieldDescription,
   FieldError,
   FieldGroup, FieldLabel, FieldLegend,
   FieldSeparator,
-  FieldSet, FieldTitle
+  FieldSet, FieldTitle, ReadonlyField
 }
 

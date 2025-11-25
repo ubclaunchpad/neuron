@@ -7,7 +7,7 @@ import { useClassesPage } from "@/components/classes/classes-view";
 import { Scrollspy } from "@/components/primitives/scrollspy";
 import { cn } from "@/lib/utils";
 import type { ListClass } from "@/models/class";
-import { PlusIcon } from "lucide-react";
+import AddIcon from "@public/assets/icons/add.svg";
 import Link from "next/link";
 import { useMemo } from "react";
 import { Button } from "../primitives/button";
@@ -102,7 +102,7 @@ export function ClassesGrid({ classes }: { classes: ListClass[] }) {
               query: { termId: selectedTermId },
             }}
           >
-            <PlusIcon />
+            <AddIcon />
             Create Class
           </Link>
         </Button>
@@ -127,7 +127,6 @@ export function ClassesGrid({ classes }: { classes: ListClass[] }) {
             );
           }, [classesForCategory]);
 
-          console.log(classesBySubcategory)
           return (
             <CategorySection key={category} id={sectionId} title={category}>
               {classesWithoutSubCategory.length > 0 && <div className="grid gap-6 px-5 [grid-template-columns:repeat(auto-fit,minmax(180px,258px))] justify-stretch">

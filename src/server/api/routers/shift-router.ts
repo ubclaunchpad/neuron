@@ -5,9 +5,8 @@ import { createTRPCRouter } from "@/server/api/trpc";
 export const shiftRouter = createTRPCRouter({
   list: authorizedProcedure({ permission: { shifts: ["view"] } })
     .input(GetShiftsInput)
-    .query(async ({ input }) => {
-      // TODO: getShifts
-      return [];
+    .query(({ input, ctx }) => {
+      return ctx.shiftService.getShifts(input);
     }),
   checkIn: authorizedProcedure({
     permissions: {
@@ -22,8 +21,7 @@ export const shiftRouter = createTRPCRouter({
     }),
   byId: authorizedProcedure({ permission: { shifts: ["view"] } })
     .input(ShiftIdInput)
-    .query(async ({ input }) => {
-      // TODO: getShift
+    .query(async ({ input, ctx }) => {
       return {
         /* shift */
       };

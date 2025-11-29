@@ -123,7 +123,7 @@ export function ScheduleCalendarView({
             </SelectContent>
           </Select> */}
         </div>
-        <div className="ml-auto">
+        {/* <div className="ml-auto">
           <Select value={currentView} onValueChange={(value) => handleViewChange(value as CalendarView)}>
             <SelectTrigger className="w-[150px]">
               <SelectValue />
@@ -133,7 +133,7 @@ export function ScheduleCalendarView({
               <SelectItem value={CalendarView.Day}>Day view</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
         {/* <div>
           {!isDayView && <Select onValueChange={(v) => queueMicrotask(() => calendarRef.current?.getApi().changeView(v))}>
             <SelectTrigger className="w-[150px]">

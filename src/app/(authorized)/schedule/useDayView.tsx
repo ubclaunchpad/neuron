@@ -8,19 +8,34 @@ const DAYVIEW_TRIGGER = 600;
 
 export function useDayView({ 
     calendarApi,
-}: CalendarControls) 
+    calendarContainerRef,
+}: CalendarControls & { calendarContainerRef: React.RefObject<HTMLElement | null> }) 
 {
     const [isDayView, setIsDayView] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
 
     // isDayView
+    // useEffect(() => {
+    //     const checkWidth = () => setIsDayView(window.innerWidth < DAYVIEW_TRIGGER);
+    //     checkWidth();
+    //     window.addEventListener("resize", checkWidth);
+    //     return () => window.removeEventListener("resize", checkWidth);
+    // }, []);
     useEffect(() => {
-        const checkWidth = () => setIsDayView(window.innerWidth < DAYVIEW_TRIGGER);
-        checkWidth();
-        window.addEventListener("resize", checkWidth);
-        return () => window.removeEventListener("resize", checkWidth);
-    }, []);
+        const el = calendarContainerRef.current;
+        if (!el) return;
+
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const width = entry.contentRect.width;
+                setIsDayView(width < DAYVIEW_TRIGGER);
+            }
+        });
+
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [calendarContainerRef]);
 
     // weekStart
     useEffect(() => {

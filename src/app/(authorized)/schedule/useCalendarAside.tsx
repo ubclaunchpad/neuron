@@ -51,19 +51,32 @@ export function CalendarAside({ shift }: CalendarAsideProps) {
 
       <AsideBody>
         <AsideSection className="grid grid-cols-2 gap-4">
+            {/* Status */}
             <div className="aside-label">Status</div><div>test</div>
 
+            {/* Instructor(s) */}
             <div className="aside-label">{"Instructor" + (shift.schedule.instructors.length > 1 ? "s" : "")}</div>
             <div>
                 {shift.schedule.instructors.map(instructor => 
-                <div key={instructor.id} className="mb-3">
-                    {/* TODO: add image for instructor */}
-                    {instructor.name} {instructor.lastName}
-                    <div className="text-xs">{instructor.email}</div>
-                </div>)}
+                    <div key={instructor.id} className="mb-3">
+                        {/* TODO: add image for instructor */}
+                        {instructor.name} {instructor.lastName}
+                        <div className="text-xs">{instructor.email}</div>
+                    </div>)}
             </div>
             
-            <div className="aside-label">Volunteers</div><div>test</div>
+            {/* Volunteer(s) */}
+            <div className="aside-label">Volunteers</div>
+            <div>
+                {shift.volunteers.map(volunteer => 
+                    <div key={volunteer.id} className="mb-3">
+                        {/* TODO: add images for volunteers */}
+                        {volunteer.name} {volunteer.lastName}
+                    </div>
+                )}
+            </div>
+
+            {/* Zoom Link */}
             <div className="aside-label">Zoom link</div><div>test</div>
         </AsideSection>
         <AsideSection>

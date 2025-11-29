@@ -15,13 +15,6 @@ export function useDayView({
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
 
-    // isDayView
-    // useEffect(() => {
-    //     const checkWidth = () => setIsDayView(window.innerWidth < DAYVIEW_TRIGGER);
-    //     checkWidth();
-    //     window.addEventListener("resize", checkWidth);
-    //     return () => window.removeEventListener("resize", checkWidth);
-    // }, []);
     useEffect(() => {
         const el = calendarContainerRef.current;
         if (!el) return;

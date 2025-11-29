@@ -9,6 +9,24 @@
     display: none;
 }
 
+.navbar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+
+    &-left {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    button {
+        cursor: pointer;
+    }
+}
+
 .dayview-header {
     display: flex;
     justify-content: "space-between";

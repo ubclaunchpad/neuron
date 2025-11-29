@@ -10,6 +10,7 @@ import {
   AsideBody,
   AsideSection,
 } from "@/components/aside";
+import "./page.scss";
 
 export interface CalendarAsideProps {
   shift?: Shift;
@@ -49,11 +50,25 @@ export function CalendarAside({ shift }: CalendarAsideProps) {
       </AsideHeader>
 
       <AsideBody>
-        <AsideSection>
-            Test
+        <AsideSection className="grid grid-cols-2 gap-4">
+            <div className="aside-label">Status</div><div>test</div>
+
+            <div className="aside-label">{"Instructor" + (shift.schedule.instructors.length > 1 ? "s" : "")}</div>
+            <div>
+                {shift.schedule.instructors.map(instructor => 
+                <div key={instructor.id} className="mb-3">
+                    {/* TODO: add image for instructor */}
+                    {instructor.name} {instructor.lastName}
+                    <div className="text-xs">{instructor.email}</div>
+                </div>)}
+            </div>
+            
+            <div className="aside-label">Volunteers</div><div>test</div>
+            <div className="aside-label">Zoom link</div><div>test</div>
         </AsideSection>
         <AsideSection>
-            Test
+            <div>Description</div>
+            <div>A full-body workout focused on improving balance, strength, and postural alignment for those that typically require a walking aid or need support to balance. Participants are encouraged to stand by holding onto a chair for balance support, however, seated options are always offered. Dumbbells or other hand weights are encouraged but not</div>
         </AsideSection>
       </AsideBody>
     </AsideContainer>

@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import type { CalendarControls } from "./useCalendarApi";
-import { getMonday, isSameDay } from "./dateUtils";
+import { CalendarView, getMonday, isSameDay } from "./dateUtils";
 
 // Below this width in px our calendar will switch to a day view
 const DAYVIEW_TRIGGER = 600;
@@ -9,13 +9,19 @@ const DAYVIEW_TRIGGER = 600;
 export function useDayView({ 
     calendarApi,
     calendarContainerRef,
-}: CalendarControls & { calendarContainerRef: React.RefObject<HTMLElement | null> }) 
+    preferredView,
+}: CalendarControls & { calendarContainerRef: React.RefObject<HTMLElement | null>; preferredView?: CalendarView }) 
 {
-    const [isDayView, setIsDayView] = useState(false);
+    const [isDayView, setIsDayView] = useState(() => preferredView === CalendarView.Day);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
 
     useEffect(() => {
+        if (preferredView) {
+            setIsDayView(preferredView === CalendarView.Day);
+            return;
+        }
+
         const el = calendarContainerRef.current;
         if (!el) return;
 
@@ -28,7 +34,7 @@ export function useDayView({
 
         observer.observe(el);
         return () => observer.disconnect();
-    }, [calendarContainerRef]);
+    }, [calendarContainerRef, preferredView]);
 
     // weekStart
     useEffect(() => {

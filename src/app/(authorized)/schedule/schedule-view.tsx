@@ -3,6 +3,7 @@
 import {
   PageLayout,
   PageLayoutAside,
+  PageLayoutContent,
   PageLayoutHeader,
   PageLayoutHeaderContent,
   PageLayoutHeaderTitle,
@@ -19,7 +20,7 @@ import {
 } from "@/components/primitives/select";
 
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, Suspense } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -168,8 +169,9 @@ export const dummyShifts: Shift[] = [
 
 export function ScheduleView() {
   const calendarRef = useRef<FullCalendar | null>(null);
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
   const { calendarApi, next, prev, changeView, getDate, goToDate } = useCalendarApi(calendarRef);
-  const { isDayView, selectedDate, setSelectedDate, renderDayViewHeader } = useDayView({ calendarApi, next, prev, changeView, getDate, goToDate });
+  const { isDayView, selectedDate, setSelectedDate, renderDayViewHeader } = useDayView({ calendarApi, next, prev, changeView, getDate, goToDate, calendarContainerRef });
   const [currentView, setCurrentView] = useState<CalendarView>(CalendarView.Week);
   const [selectedShift, setSelectedShift] = useState<Shift | undefined>(undefined);
   const { setOpen } = usePageAside();
@@ -259,42 +261,48 @@ export function ScheduleView() {
 
   return (
     <>
-        <PageLayoutHeader>
-          <PageLayoutHeaderContent>
-              <PageLayoutHeaderTitle>Schedule</PageLayoutHeaderTitle>
-          </PageLayoutHeaderContent>
-              {renderNavBar()}
-        </PageLayoutHeader>
+      <PageLayoutHeader>
+        <PageLayoutHeaderContent>
+            <PageLayoutHeaderTitle>Schedule</PageLayoutHeaderTitle>
+        </PageLayoutHeaderContent>
+            {renderNavBar()}
+      </PageLayoutHeader>
       
       <PageLayoutAside>
-        <CalendarAside shift={selectedShift} />
+        <Suspense fallback={<div>Loading shift details...</div>}>
+          <CalendarAside shift={selectedShift} />
+        </Suspense>
       </PageLayoutAside>
 
-      {isDayView && renderDayViewHeader()}
+      <PageLayoutContent>
+        {isDayView && renderDayViewHeader()}
 
-      <FullCalendar
-        ref={calendarRef}
-        plugins={[dayGridPlugin, timeGridPlugin]}
-        initialView={CalendarView.Week}
-        headerToolbar={false}
-        dayHeaderContent={(arg) => {
-          if (isDayView) return null;
-          if (arg.view.type === CalendarView.Month) return <div>{arg.text}</div>;
+        <div ref={calendarContainerRef}>
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, timeGridPlugin]}
+            initialView={CalendarView.Week}
+            headerToolbar={false}
+            dayHeaderContent={(arg) => {
+              if (isDayView) return null;
+              if (arg.view.type === CalendarView.Month) return <div>{arg.text}</div>;
 
-          return renderWeekHeader(arg);
-        }}
-        height="auto"
-        slotMinTime="09:00:00"
-        allDaySlot={false}
-        eventClick={handleEventClick}
-        firstDay={1}
-        events={dummyShifts.map((shift) => ({
-          id: shift.id,
-          title: shift.class?.name ?? "Unnamed shift",
-          start: shift.startAt,
-          end: shift.endAt,
-        }))}
-      />
+              return renderWeekHeader(arg);
+            }}
+            height="auto"
+            slotMinTime="09:00:00"
+            allDaySlot={false}
+            eventClick={handleEventClick}
+            firstDay={1}
+            events={dummyShifts.map((shift) => ({
+              id: shift.id,
+              title: shift.class?.name ?? "Unnamed shift",
+              start: shift.startAt,
+              end: shift.endAt,
+            }))}
+          />
+        </div>
+      </PageLayoutContent>
     </>
   );
 }

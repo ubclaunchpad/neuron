@@ -11,6 +11,9 @@ import {
   AsideSection,
 } from "@/components/aside";
 import "./page.scss";
+import { Button } from "@/components/primitives/button";
+import Link from "next/link";
+import { Video } from 'lucide-react';
 
 export interface CalendarAsideProps {
   shift?: Shift;
@@ -77,7 +80,14 @@ export function CalendarAside({ shift }: CalendarAsideProps) {
             </div>
 
             {/* Zoom Link */}
-            <div className="aside-label">Zoom link</div><div>test</div>
+            {shift.class.meetingURL && <>
+                <div className="aside-label">Zoom link</div>
+                <Button asChild className="cursor-pointer" variant="outline">
+                    <Link href={new URL(shift.class.meetingURL)}>
+                        <Video /> Join Class
+                    </Link>
+                </Button>
+            </>}
         </AsideSection>
         <AsideSection>
             <div>Description</div>

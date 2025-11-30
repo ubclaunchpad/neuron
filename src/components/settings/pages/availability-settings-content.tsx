@@ -1,5 +1,5 @@
-import { Button } from "@/components/primitives/button";
-import { ButtonGroup } from "@/components/primitives/button-group";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function AvailabilitySettingsContent() {

@@ -3,9 +3,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 
-import {
-  Avatar
-} from "@/components/avatar";
+import { Avatar } from "@/components/primitives/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -16,8 +14,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar
-} from "@/components/primitives/sidebar";
+  useSidebar,
+} from "@/components/ui/sidebar";
 
 import { ActiveContext } from "@/components/utils/active-context";
 import { WithPermission } from "@/components/utils/with-permission";
@@ -36,7 +34,7 @@ import ScheduleIcon from "@public/assets/icons/nav/schedule.svg";
 import Logo from "@public/assets/logo.svg";
 import { SettingsDropdown } from "./settings/settings-dropdown";
 
-const navbarItems = [
+export const navbarItems = [
   {
     href: "/",
     label: "Overview",
@@ -66,17 +64,17 @@ const navbarItems = [
     icon: MemberIcon,
     permissions: { permission: { users: ["view"] } },
   },
-  {
-    href: "/logs",
-    label: "Log History",
-    icon: LogIcon,
-    permissions: { permission: { logs: ["view"] } },
-  },
+  // {
+  //   href: "/logs",
+  //   label: "Log History",
+  //   icon: LogIcon,
+  //   permissions: { permission: { logs: ["view"] } },
+  // },
 ];
 
 function ProfileCard() {
   const { user } = useAuth();
-  const userFullname = `${user?.name} ${user?.lastName}`
+  const userFullname = `${user?.name} ${user?.lastName}`;
 
   return (
     <SettingsDropdown
@@ -86,13 +84,13 @@ function ProfileCard() {
         "p-3 transition-[padding,margin]",
         "focus-visible:ring-2 focus-visible:ring-ring/50",
         "group-data-[state=collapsed]:!p-0.5 group-data-[state=collapsed]:my-2.5 group-data-[state=collapsed]:rounded-lg",
-        "group-data-[state=collapsed]:shrink-0 group-data-[state=collapsed]:gap-0 group-data-[state=collapsed]:min-w-max"
+        "group-data-[state=collapsed]:shrink-0 group-data-[state=collapsed]:gap-0 group-data-[state=collapsed]:min-w-max",
       )}
     >
       <div
         className={cn(
           "flex h-10 min-w-0 items-center gap-2",
-          "group-data-[state=collapsed]:gap-0"
+          "group-data-[state=collapsed]:gap-0",
         )}
       >
         <Avatar
@@ -104,7 +102,7 @@ function ProfileCard() {
         <div
           className={cn(
             "flex min-w-0 flex-col items-start justify-center transition-opacity duration-200",
-            "group-data-[state=collapsed]:w-0 group-data-[state=collapsed]:h-0 group-data-[state=collapsed]:overflow-hidden group-data-[state=collapsed]:opacity-0"
+            "group-data-[state=collapsed]:w-0 group-data-[state=collapsed]:h-0 group-data-[state=collapsed]:overflow-hidden group-data-[state=collapsed]:opacity-0",
           )}
         >
           <span className="truncate text-base text-foreground max-w-full">
@@ -120,7 +118,7 @@ function ProfileCard() {
         aria-hidden="true"
         className={cn(
           "size-4 transition-opacity duration-200 text-muted-foreground",
-          "group-data-[state=collapsed]:size-0 group-data-[state=collapsed]:opacity-0"
+          "group-data-[state=collapsed]:size-0 group-data-[state=collapsed]:opacity-0",
         )}
       />
     </SettingsDropdown>
@@ -146,14 +144,22 @@ export function AppNavbar() {
             >
               <div className="inline-flex items-center gap-3">
                 <Logo className="h-10 w-10 shrink-0" />
-                <span className="font-light text-primary text-[1.5rem] shrink-0">BC BWP</span>
+                <span className="font-light text-primary text-[1.5rem] shrink-0">
+                  BC BWP
+                </span>
               </div>
 
               <div className="ml-auto">
-                <SidebarMenuButton onClick={toggleSidebar} aria-label="Toggle sidebar" className="h-10">
-                  {(isMobile && open)
-                    ? <CloseIcon className="size-5 text-muted-foreground" />
-                    : <NavToggleIcon className="size-5 text-muted-foreground" />}
+                <SidebarMenuButton
+                  onClick={toggleSidebar}
+                  aria-label="Toggle sidebar"
+                  className="h-10"
+                >
+                  {isMobile && open ? (
+                    <CloseIcon className="size-5 text-muted-foreground" />
+                  ) : (
+                    <NavToggleIcon className="size-5 text-muted-foreground" />
+                  )}
                 </SidebarMenuButton>
               </div>
             </div>
@@ -167,7 +173,11 @@ export function AppNavbar() {
               )}
               aria-hidden={false}
             >
-              <SidebarMenuButton onClick={toggleSidebar} aria-label="Toggle sidebar" className="h-10">
+              <SidebarMenuButton
+                onClick={toggleSidebar}
+                aria-label="Toggle sidebar"
+                className="h-10"
+              >
                 <NavToggleIcon className="size-5 text-muted-foreground" />
               </SidebarMenuButton>
             </div>
@@ -180,7 +190,10 @@ export function AppNavbar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-0">
               {navbarItems.map((item) => (
-                <WithPermission key={item.href} permissions={item.permissions as Permissions}>
+                <WithPermission
+                  key={item.href}
+                  permissions={item.permissions as Permissions}
+                >
                   <ActiveContext url={item.href}>
                     {({ isActive }) => (
                       <SidebarMenuItem>
@@ -194,8 +207,10 @@ export function AppNavbar() {
                           )}
                         >
                           <Link href={item.href as Route}>
-                            <item.icon className="size-5"/>
-                            <span className="text-base truncate">{item.label}</span>
+                            <item.icon className="size-5" />
+                            <span className="text-base truncate">
+                              {item.label}
+                            </span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

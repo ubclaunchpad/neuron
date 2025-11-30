@@ -2,12 +2,12 @@
 
 import * as React from "react";
 
-import { Button } from "@/components/primitives/button";
-import { TypographyPageTitle } from "@/components/primitives/typography";
+import { Button } from "@/components/ui/button";
+import { TypographyPageTitle } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 import CaretLeftIcon from "@public/assets/icons/caret-left.svg";
 import { useRouter } from "next/navigation";
-import { SidebarTrigger } from "./primitives/sidebar";
+import { SidebarTrigger } from "./ui/sidebar";
 
 type PageLayoutContextValue = {
   isOpen: boolean;

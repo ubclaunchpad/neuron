@@ -1,8 +1,8 @@
 "use client";
 
-import { FormInput } from "@/components/form/FormInput";
-import { FormSelect } from "@/components/form/FormSelect";
-import { Button } from "@/components/primitives/button";
+import { FormInputField } from "@/components/form/FormInput";
+import { FormSelectField } from "@/components/form/FormSelect";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -11,10 +11,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/primitives/dialog";
-import { FieldGroup } from "@/components/primitives/field";
-import { SelectItem } from "@/components/primitives/select";
-import { Spinner } from "@/components/primitives/spinner";
+} from "@/components/ui/dialog";
+import { FieldGroup } from "@/components/ui/field";
+import { SelectItem } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { CreateUserInput } from "@/models/api/user";
 import { Role, RoleEnum } from "@/models/interfaces";
 import { clientApi } from "@/trpc/client";
@@ -76,7 +76,7 @@ export const CreateUserDialog = NiceModal.create(() => {
           onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
-            <FormSelect
+            <FormSelectField
               control={form.control}
               name="role"
               label="Role"
@@ -88,17 +88,17 @@ export const CreateUserDialog = NiceModal.create(() => {
                   {Role.getName(roleValue)}
                 </SelectItem>
               ))}
-            </FormSelect>
+            </FormSelectField>
 
             <FieldGroup className="sm:flex-row">
-              <FormInput
+              <FormInputField
                 control={form.control}
                 name="name"
                 label="First Name"
                 placeholder="Jane"
                 required
               />
-              <FormInput
+              <FormInputField
                 control={form.control}
                 name="lastName"
                 label="Last Name"
@@ -107,7 +107,7 @@ export const CreateUserDialog = NiceModal.create(() => {
               />
             </FieldGroup>
 
-            <FormInput
+            <FormInputField
               control={form.control}
               name="email"
               label="Email Address"

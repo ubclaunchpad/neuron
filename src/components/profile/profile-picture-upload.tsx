@@ -1,7 +1,7 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/primitives/avatar";
 import { FilePicker } from "@/components/primitives/file-picker";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/client-auth-provider";
 import EditIcon from "@public/assets/icons/edit.svg";

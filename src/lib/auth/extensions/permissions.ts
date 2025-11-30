@@ -11,7 +11,7 @@ import {
  * These statements are used by the access control system to create roles with specific permissions.
  */
 const accessControl = createAccessControl({
-  classes: ["view", "create", "update", "delete"],
+  classes: ["view", "create", "update", "delete", "prefer"],
   terms: ["view", "create", "delete"],
   shifts: [
     "view",
@@ -52,14 +52,14 @@ const admin = accessControl.newRole({
 });
 
 const volunteer = accessControl.newRole({
-  classes: ["view"],
+  classes: ["view", "prefer"],
   terms: ["view"],
   shifts: ["view", "view-coverage", "check-in"],
   profile: ["view", "update"],
 });
 
 const instructor = accessControl.newRole({
-  classes: ["view", "update"],
+  classes: ["view"],
   terms: ["view"],
   shifts: ["view"],
   profile: ["view", "update"],

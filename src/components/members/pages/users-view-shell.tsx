@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/components/primitives/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { cn } from "@/lib/utils";
 import { Role, Status } from "@/models/interfaces";

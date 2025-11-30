@@ -3,6 +3,7 @@ import type { Status } from "./interfaces";
 
 export type Volunteer = {
   id: string;
+  role: "volunteer";
   name: string;
   lastName: string;
   preferredName?: string;
@@ -24,6 +25,7 @@ export type Volunteer = {
 export function buildVolunteer(volunteerDB: VolunteerUserViewDB): Volunteer {
   return {
     id: volunteerDB.id,
+    role: "volunteer",
     name: volunteerDB.name,
     lastName: volunteerDB.lastName,
     preferredName: volunteerDB.preferredName ?? undefined,

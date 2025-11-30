@@ -11,15 +11,14 @@ import { z } from "zod";
 import { authClient } from "@/lib/auth/client";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 
+import { FormInputField } from "@/components/form/FormInput";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@/components/primitives/alert";
-import { Button } from "@/components/primitives/button";
-import { Field, FieldError, FieldLabel } from "@/components/primitives/field";
-import { PasswordInput } from "@/components/primitives/input";
-import { Spinner } from "@/components/primitives/spinner";
+} from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 const PasswordResetSchema = z
   .object({
@@ -52,7 +51,7 @@ export default function PasswordResetForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const {
-    register,
+    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
@@ -60,6 +59,10 @@ export default function PasswordResetForm() {
     resolver: zodResolver(PasswordResetSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
+    defaultValues: {
+      password: "",
+      confirmPassword: ""
+    }
   });
 
   const onSubmit = async (data: PasswordResetSchemaType) => {
@@ -118,33 +121,27 @@ export default function PasswordResetForm() {
       )}
 
       <div className="space-y-5">
-        <Field data-invalid={!!errors.password} className="gap-1">
-          <FieldLabel htmlFor="password">
-            Create password (at least 8 characters)
-          </FieldLabel>
-          <PasswordInput
-            id="password"
-            autoComplete="new-password"
-            placeholder="•••••••••••••"
-            aria-invalid={!!errors.password}
-            disabled={!!tokenError}
-            {...register("password")}
-          />
-          <FieldError errors={errors.password} />
-        </Field>
+        <FormInputField
+          control={control}
+          type="password"
+          name="password"
+          label="Create password (at least 8 characters)"
+          autoComplete="new-password"
+          placeholder="•••••••••••••"
+          disabled={!!tokenError}
+          className="gap-1"
+        />
 
-        <Field data-invalid={!!errors.confirmPassword} className="gap-1">
-          <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
-          <PasswordInput
-            id="confirmPassword"
-            autoComplete="new-password"
-            placeholder="•••••••••••••"
-            aria-invalid={!!errors.confirmPassword}
-            disabled={!!tokenError}
-            {...register("confirmPassword")}
-          />
-          <FieldError errors={errors.confirmPassword} />
-        </Field>
+        <FormInputField
+          control={control}
+          type="password"
+          name="password"
+          label="Confirm password"
+          autoComplete="new-password"
+          placeholder="•••••••••••••"
+          disabled={!!tokenError}
+          className="gap-1"
+        />
       </div>
 
       <div className="space-y-5">

@@ -11,17 +11,15 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@/components/primitives/alert";
-import { Button } from "@/components/primitives/button";
+} from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
-  Field,
-  FieldError,
-  FieldLabel
-} from "@/components/primitives/field";
-import { Input, PasswordInput } from "@/components/primitives/input";
+  Field
+} from "@/components/ui/field";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
-import { Spinner } from "@/components/primitives/spinner";
+import { FormInputField } from "@/components/form/FormInput";
+import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth/client";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 
@@ -55,14 +53,21 @@ export default function SignupForm() {
   const router = useRouter();
 
   const {
-    register,
     handleSubmit,
     setError,
+    control,
     formState: { errors, isSubmitting },
-  } = useForm<SignupSchemaType>({
+  } = useForm({
     resolver: zodResolver(SignupSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: ""
+    }
   });
 
   const onSubmit = async (data: SignupSchemaType) => {
@@ -119,67 +124,51 @@ export default function SignupForm() {
 
       <div className="space-y-5">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-3">
-          <Field data-invalid={!!errors.firstName} className="gap-1">
-            <FieldLabel htmlFor="firstName">First name</FieldLabel>
-            <Input
-              id="firstName"
-              placeholder="John"
-              aria-invalid={!!errors.firstName}
-              {...register("firstName")}
-            />
-            <FieldError errors={errors.firstName} />
-          </Field>
+          <FormInputField
+            control={control}
+            name="firstName"
+            placeholder="John"
+            label="First name"
+            className="gap-1"
+          />
 
-          <Field data-invalid={!!errors.lastName} className="gap-1">
-            <FieldLabel htmlFor="lastName">Last name</FieldLabel>
-            <Input
-              id="lastName"
-              placeholder="Doe"
-              aria-invalid={!!errors.lastName}
-              {...register("lastName")}
-            />
-            <FieldError errors={errors.lastName} />
-          </Field>
+          <FormInputField
+            control={control}
+            name="lastName"
+            placeholder="Doe"
+            label="Last name"
+            className="gap-1"
+          />
         </div>
 
-        <Field data-invalid={!!errors.email} className="gap-1">
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="john.doe@example.com"
-            aria-invalid={!!errors.email}
-            {...register("email")}
-          />
-          <FieldError errors={errors.email} />
-        </Field>
+        <FormInputField
+          control={control}
+          type="email"
+          name="email"
+          placeholder="john.doe@example.com"
+          label="Email"
+          className="gap-1"
+        />
 
-        <Field data-invalid={!!errors.password} className="gap-1">
-          <FieldLabel htmlFor="password">
-            Create password (at least 8 characters)
-          </FieldLabel>
-          <PasswordInput
-            id="password"
-            autoComplete="new-password"
-            placeholder="•••••••••••••"
-            aria-invalid={!!errors.password}
-            {...register("password")}
-          />
-          <FieldError errors={errors.password} />
-        </Field>
+        <FormInputField
+          control={control}
+          type="password"
+          name="password"
+          autoComplete="new-password"
+          placeholder="•••••••••••••"
+          label="Create password (at least 8 characters)"
+          className="gap-1"
+        />
 
-        <Field data-invalid={!!errors.confirmPassword} className="gap-1">
-          <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
-          <PasswordInput
-            id="confirmPassword"
-            autoComplete="new-password"
-            placeholder="•••••••••••••"
-            aria-invalid={!!errors.confirmPassword}
-            {...register("confirmPassword")}
-          />
-          <FieldError errors={errors.confirmPassword} />
-        </Field>
+        <FormInputField
+          control={control}
+          type="password"
+          name="confirmPassword"
+          autoComplete="new-password"
+          placeholder="•••••••••••••"
+          label="Confirm password"
+          className="gap-1"
+        />
       </div>
 
       <div className="space-y-5">

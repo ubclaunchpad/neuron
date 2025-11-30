@@ -1,9 +1,9 @@
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { asValue } from "awilix";
 
 import { auth, type Session } from "@/lib/auth";
-import { asValue } from "awilix";
 import { createRequestScope } from "./di-container";
 
 /**

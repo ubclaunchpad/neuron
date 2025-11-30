@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/primitives/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth/client";
 import { useAuth } from "@/providers/client-auth-provider";
 import NiceModal from "@ebay/nice-modal-react";

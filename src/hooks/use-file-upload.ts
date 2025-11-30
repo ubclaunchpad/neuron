@@ -18,10 +18,12 @@ export type UploadFnArgs = {
   file?: File;
   data?: Blob; // optional processed data; defaults to file
   contentType?: string; // override content-type for upload
-}
+};
 
 export type UploadFn = (args: UploadFnArgs) => Promise<string>;
-export type GetPresignedUrlFn = (args: UploadFnArgs) => Promise<GetPresignedUrlResult>;
+export type GetPresignedUrlFn = (
+  args: UploadFnArgs,
+) => Promise<GetPresignedUrlResult>;
 export type AbortFn = () => void;
 export type ResetFn = () => void;
 
@@ -106,8 +108,6 @@ export function useFileUpload({
 
         setState({ phase: "uploading", progress: 0 });
 
-        console.log("url", url);
-        console.log("key", key);
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhrRef.current = xhr;
@@ -127,9 +127,7 @@ export function useFileUpload({
             if (xhr.status >= 200 && xhr.status < 300) {
               resolve();
             } else {
-              reject(
-                new Error(`Upload failed with status ${xhr.status}`),
-              );
+              reject(new Error(`Upload failed with status ${xhr.status}`));
             }
           };
 
@@ -164,11 +162,9 @@ export function useFileUpload({
         setState({ phase: "idle" });
         onSuccess?.(key);
 
-        console.log(key);
         return key;
       } catch (err) {
-        const error =
-          err instanceof Error ? err : new Error("Upload failed");
+        const error = err instanceof Error ? err : new Error("Upload failed");
 
         // If this was a controlled abort, we already set state to "idle"
         // in abort() and we don't want to show an error UI.

@@ -1,19 +1,19 @@
 "use client";
 
-import { Button } from "@/components/primitives/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/primitives/dialog";
+} from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { TabsTrigger } from "@radix-ui/react-tabs";
 import { Bell, Clock, LockKeyhole, User, X } from "lucide-react";
-import { Tabs, TabsContent, TabsList } from "../primitives/tabs";
+import { Tabs, TabsContent, TabsList } from "../ui/tabs";
 import { AvailabilitySettingsContent } from "./pages/availability-settings-content";
 import { NotificationsSettingsContent } from "./pages/notifications-settings-content";
 import { ProfileSettingsContent } from "./pages/profile-settings-content";

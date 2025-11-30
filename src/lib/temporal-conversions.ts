@@ -1,7 +1,8 @@
 import { Temporal } from "@js-temporal/polyfill";
+import { nullthy } from "./nullthy";
 
-export function isoDateToJSDate(iso?: string): Date | undefined {
-    if (!iso) return undefined;
+export function isoDateToJSDate(iso?: string | null): Date | undefined {
+    if (nullthy(iso)) return undefined;
     const pd = Temporal.PlainDate.from(iso);
     return new Date(pd.year, pd.month - 1, pd.day);
 }

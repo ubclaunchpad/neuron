@@ -1,5 +1,5 @@
 import { AppNavbar } from "@/components/app-navbar";
-import { SIDEBAR_COOKIE_NAME, SidebarProvider } from "@/components/primitives/sidebar";
+import { SIDEBAR_COOKIE_NAME, SidebarProvider } from "@/components/ui/sidebar";
 import { requireStatus } from "@/lib/auth/guard";
 import { Status } from "@/models/interfaces";
 import { cookies } from "next/headers";

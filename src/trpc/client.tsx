@@ -6,6 +6,7 @@ import { createTRPCReact } from "@trpc/react-query";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import { useState } from "react";
 import superjson from "superjson";
+import cleanDeep from "clean-deep";
 
 import { type AppRouter } from "@/server/api/root";
 import { createQueryClient } from "./query-client";
@@ -46,20 +47,32 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
       links: [
         loggerLink({
           enabled: (op) => {
-            if (process.env.NODE_ENV !== "development" || op.direction !== "down") {
+            if (
+              process.env.NODE_ENV !== "development" ||
+              op.direction !== "down"
+            ) {
               return false;
             }
 
             if (op.result instanceof TRPCClientError) {
               const code = op.result.data?.code;
-              return code === 'INTERNAL_SERVER_ERROR';
+              return code === "INTERNAL_SERVER_ERROR";
             }
 
             return true;
-          }
+          },
         }),
         httpBatchStreamLink({
-          transformer: superjson,
+          transformer: {
+            deserialize: (object: any) => superjson.deserialize(object),
+            serialize: (object: any) => {
+              object = cleanDeep(object, {
+                nullValues: false,
+                emptyStrings: false,
+              });
+              return superjson.serialize(object);
+            },
+          },
           url: getBaseUrl() + "/api",
           headers: () => {
             const headers = new Headers();

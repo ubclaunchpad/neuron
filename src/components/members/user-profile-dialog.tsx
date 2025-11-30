@@ -1,22 +1,22 @@
 "use client";
 
-import { Avatar } from "@/components/avatar";
-import { Badge } from "@/components/primitives/badge";
-import { Button } from "@/components/primitives/button";
+import { Avatar } from "@/components/primitives/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/primitives/dialog";
-import { Separator } from "@/components/primitives/separator";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { getImageUrlFromKey } from "@/lib/build-image-url";
 import { Role } from "@/models/interfaces";
 import type { ListUser, User } from "@/models/user";
 import { clientApi } from "@/trpc/client";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
-import { ReadonlyField } from "../primitives/field";
+import { ReadonlyField } from "../ui/field";
 import { StatusBadge } from "./status-badge";
 
 type UserProfileDialogProps = {

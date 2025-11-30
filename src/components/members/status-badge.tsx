@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Status } from "@/models/interfaces";
-import { Badge } from "../primitives/badge";
+import { Badge } from "../ui/badge";
 
 export function StatusBadge({
   status,

@@ -30,7 +30,6 @@ export function ScheduleCalendarView({
   const calendarRef = useRef<FullCalendar | null>(null);
   const calendarContainerRef = useRef<HTMLDivElement>(null);
   const { calendarApi, next, prev, changeView, getDate, goToDate } = useCalendarApi(calendarRef);
-  const [currentView, setCurrentView] = useState<CalendarView>(CalendarView.Week);
   const { isDayView, selectedDate, setSelectedDate, renderDayViewHeader } = useDayView({
     calendarApi,
     next,
@@ -39,7 +38,6 @@ export function ScheduleCalendarView({
     getDate,
     goToDate,
     calendarContainerRef,
-    preferredView: currentView,
   });
 
   // Render calendar in appropriate view
@@ -47,9 +45,13 @@ export function ScheduleCalendarView({
     if (!calendarApi) return;
 
     queueMicrotask(() => {
-      calendarApi.changeView(currentView, selectedDate);
+      if (isDayView) {
+        calendarApi.changeView(CalendarView.Day, selectedDate);
+      } else {
+        calendarApi.changeView(CalendarView.Week);
+      }
     });
-  }, [calendarApi, currentView, selectedDate]);
+  }, [calendarApi, selectedDate, isDayView]);
 
   // Keep FullCalendar width in sync with layout changes (e.g. opening/closing the aside).
   // ResizeObserver picks up the PageLayout aside animation and we debounce via rAF
@@ -95,10 +97,6 @@ export function ScheduleCalendarView({
 
     calendarApi[navAction]();
     setSelectedDate(calendarApi.getDate());
-  };
-
-  const handleViewChange = (view: CalendarView) => {
-    setCurrentView(view);
   };
 
   const renderNavBar = () => {
@@ -166,6 +164,7 @@ export function ScheduleCalendarView({
 
   const handleEventClick = (info: EventClickArg) => {
     onSelectShift(info.event.id);
+    setSelectedDate(info.event.start!);
   };
 
   return (

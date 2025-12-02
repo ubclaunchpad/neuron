@@ -9,19 +9,13 @@ const DAYVIEW_TRIGGER = 600;
 export function useDayView({ 
     calendarApi,
     calendarContainerRef,
-    preferredView,
-}: CalendarControls & { calendarContainerRef: React.RefObject<HTMLElement | null>; preferredView?: CalendarView }) 
+}: CalendarControls & { calendarContainerRef: React.RefObject<HTMLElement | null> }) 
 {
-    const [isDayView, setIsDayView] = useState(() => preferredView === CalendarView.Day);
+    const [isDayView, setIsDayView] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
 
     useEffect(() => {
-        if (preferredView) {
-            setIsDayView(preferredView === CalendarView.Day);
-            return;
-        }
-
         const el = calendarContainerRef.current;
         if (!el) return;
 
@@ -34,7 +28,7 @@ export function useDayView({
 
         observer.observe(el);
         return () => observer.disconnect();
-    }, [calendarContainerRef, preferredView]);
+    }, [calendarContainerRef]);
 
     // weekStart
     useEffect(() => {
@@ -49,7 +43,6 @@ export function useDayView({
     const handleDayClick = (date: Date) => {
         if (!calendarApi) return;
         setSelectedDate(date);
-        calendarApi.changeView("timeGridDay", date);
     };
 
     const renderDayViewHeader = () => {

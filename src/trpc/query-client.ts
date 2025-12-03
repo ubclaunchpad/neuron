@@ -30,16 +30,18 @@ export const createQueryClient = () =>
         // above 0 to avoid refetching immediately on the client
         staleTime: 30 * 1000,
         retry: (attempt, error) => {
-          if (error instanceof TRPCError && 
-              (error?.code === "TOO_MANY_REQUESTS" 
-                || error?.code === "GATEWAY_TIMEOUT" 
-                || error?.code === "TIMEOUT"
-                || error?.code === "INTERNAL_SERVER_ERROR")) {
+          if (
+            error instanceof TRPCError &&
+            (error?.code === "TOO_MANY_REQUESTS" ||
+              error?.code === "GATEWAY_TIMEOUT" ||
+              error?.code === "TIMEOUT" ||
+              error?.code === "INTERNAL_SERVER_ERROR")
+          ) {
             return attempt < 3;
           }
           return false;
         },
-        retryDelay: attempt => 1000 * 2 ** attempt,
+        retryDelay: (attempt) => 1000 * 2 ** attempt,
         meta: { suppressToast: false },
       },
       dehydrate: {

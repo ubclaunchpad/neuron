@@ -56,17 +56,15 @@ export function ClassList({ classes }: { classes: ListClass[] }) {
             );
 
             // Group classes by subcategory
-            const classesBySubcategory = useMemo(() => {
-              return classesForCategory.reduce(
-                (rec, c) => {
-                  if (!c.subcategory) return rec; // Skip those without subcategory
-                  const subcategory = c.subcategory;
-                  rec[subcategory] = [...(rec[subcategory] ?? []), c];
-                  return rec;
-                },
-                {} as Record<string, ListClass[]>,
-              );
-            }, [classesForCategory]);
+            const classesBySubcategory = classesForCategory.reduce(
+              (rec, c) => {
+                if (!c.subcategory) return rec; // Skip those without subcategory
+                const subcategory = c.subcategory;
+                rec[subcategory] = [...(rec[subcategory] ?? []), c];
+                return rec;
+              },
+              {} as Record<string, ListClass[]>,
+            );
 
             return (
               <ClassCategorySection

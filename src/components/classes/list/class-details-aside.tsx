@@ -43,7 +43,11 @@ export function ClassDetailsAside() {
   const { data: classData, isPending: isLoadingClassData } =
     clientApi.class.byId.useQuery(
       { classId: selectedClassId ?? "" },
-      { enabled: !!selectedClassId, suspense: !!selectedClassId },
+      {
+        enabled: !!selectedClassId,
+        suspense: !!selectedClassId,
+        meta: { suppressToast: true },
+      },
     );
 
   const scheduleViews = useMemo(() => {
@@ -87,7 +91,9 @@ export function ClassDetailsAside() {
             <AsideField inline={false}>
               <AsideFieldLabel>Description</AsideFieldLabel>
               <AsideFieldContent>
-                {!!classData.description || "No description"}
+                {!classData.description
+                  ? "No description"
+                  : classData.description}
               </AsideFieldContent>
             </AsideField>
           </AsideSectionContent>

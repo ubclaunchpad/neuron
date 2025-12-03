@@ -10,17 +10,23 @@ export function DeleteClassButton({
   onSuccess,
   ...props
 }: Omit<React.ComponentProps<typeof Button>, "children" | "variant"> & {
-  classId: string,
-  onSuccess?: () => void | Promise<void>,
+  classId: string;
+  onSuccess?: () => void | Promise<void>;
 }) {
   const apiUtils = clientApi.useUtils();
-  const { mutate: deleteClass, isPending } = clientApi.class.delete.useMutation({
-    onSuccess: (_, { classId }) => {
-      void apiUtils.class.byId.invalidate({ classId });
-      void apiUtils.class.list.invalidate();
-      onSuccess?.();
+  const { mutate: deleteClass, isPending } = clientApi.class.delete.useMutation(
+    {
+      onSuccess: (_, { classId }) => {
+        onSuccess?.();
+        apiUtils.class.byId.setData({ classId }, undefined);
+        void apiUtils.class.byId.invalidate(
+          { classId },
+          { refetchType: "none" },
+        );
+        void apiUtils.class.list.invalidate();
+      },
     },
-  });
+  );
 
   return (
     <WithPermission permissions={{ permission: { classes: ["delete"] } }}>
@@ -28,7 +34,7 @@ export function DeleteClassButton({
         variant="outline"
         className={cn(
           "text-destructive hover:text-destructive hover:bg-destructive/10",
-          className
+          className,
         )}
         startIcon={<Trash2 />}
         pending={isPending}
@@ -38,5 +44,5 @@ export function DeleteClassButton({
         Delete
       </Button>
     </WithPermission>
-  )
+  );
 }

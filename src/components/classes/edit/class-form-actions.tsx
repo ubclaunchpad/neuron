@@ -7,6 +7,7 @@ import {
 import ClassIcon from "@public/assets/icons/nav/classes.svg";
 import { PublishClassButton } from "../primitives/publish-class-button";
 import { useClassForm } from "./class-form-provider";
+import { useRouter } from "next/navigation";
 
 export function ClassFormActions({
   isPending,
@@ -21,6 +22,7 @@ export function ClassFormActions({
     isEditing,
     editingClassId,
   } = useClassForm();
+  const router = useRouter();
   const isDirty = formState.isDirty;
 
   const canPublish = !isEditing || !isClassPublished;
@@ -58,6 +60,7 @@ export function ClassFormActions({
             size="icon-sm"
             classId={editingClassId!}
             tooltip="Delete"
+            onSuccess={() => router.push("/classes")}
           />
         )}
       </ButtonGroup>

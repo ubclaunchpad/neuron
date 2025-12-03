@@ -23,6 +23,7 @@ export function ClassEditView() {
     {
       enabled: isEditing,
       retry: false,
+      meta: { suppressToast: true },
     },
   );
 
@@ -36,7 +37,6 @@ export function ClassEditView() {
   // Navigate user how if class doesn't exist
   useEffect(() => {
     if (isEditing && isErrorFetchingClass) {
-      toast.error("Class not found");
       router.replace("/classes");
     }
   }, [queryClassId, isErrorFetchingClass, router]);

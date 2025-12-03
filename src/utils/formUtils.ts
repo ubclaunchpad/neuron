@@ -94,7 +94,6 @@ export function getFormValues<TFieldValues extends FieldValues>(
   dirtyFields: DirtyFields<TFieldValues> | undefined,
   editMode: boolean,
 ): Partial<TFieldValues> {
-  console.log(dirtyFields);
   return getFormValuesRecursive(
     allValues,
     dirtyFields,

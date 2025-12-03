@@ -33,6 +33,7 @@ import { ShiftService } from "./shiftService";
 import type { TermService } from "./termService";
 import { UserService } from "./userService";
 import { VolunteerService } from "./volunteerService";
+import { tryCatch } from "@/lib/try-catch";
 
 export class ClassService {
   private readonly db: Drizzle;
@@ -177,10 +178,10 @@ export class ClassService {
         }
       }
 
-      // Clean up image if we deleted it
+      // Try and clean up image if we deleted it, ignore errors
       const oldImageKey = originalClass.image;
       if (!!oldImageKey && !!dbClassUpdate.image) {
-        await this.imageService.deleteImage(oldImageKey);
+        await tryCatch(this.imageService.deleteImage(oldImageKey));
       }
 
       // Cannot add, delete, or update recurrances
@@ -202,8 +203,6 @@ export class ClassService {
           NeuronErrorCodes.BAD_REQUEST,
         );
       }
-
-      console.log(updatedSchedules);
 
       // Update schedules
       await this.updateSchedules(tx, updatedSchedules);
@@ -370,9 +369,11 @@ export class ClassService {
     });
 
     // Get instructors and volunteers for schedules
-    const instructorIds = courses.flatMap((course) =>
-      course.schedules.flatMap((schedule) =>
-        schedule.instructors.map((i) => i.instructorUserId),
+    const instructorIds = uniqueDefined(
+      courses.flatMap((course) =>
+        course.schedules.flatMap((schedule) =>
+          schedule.instructors.map((i) => i.instructorUserId),
+        ),
       ),
     );
     const instructors = toMap(await this.userService.getUsers(instructorIds));
@@ -470,7 +471,6 @@ export class ClassService {
         durationMinutes = newStartTime.until(newEndTime).total("minutes");
       }
 
-      console.log(scheduleUpdate);
       const updated = await tx
         .update(schedule)
         .set({

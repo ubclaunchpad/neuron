@@ -27,7 +27,6 @@ export function useClassUpsert({
   const submitHandler = async (data: ClassFormValues): Promise<string> => {
     const payload = { ...data };
 
-    console.log(data);
     // Handle image upload
     if (data.image) {
       payload.image = await uploadImage(data.image);
@@ -46,15 +45,15 @@ export function useClassUpsert({
 
     const createdId = await createClass({
       termId,
-      name: data.name!,
-      lowerLevel: data.lowerLevel!,
-      upperLevel: data.upperLevel!,
-      category: data.category!,
-      subcategory: data.subcategory ?? undefined,
-      image: data.image ?? undefined,
-      meetingURL: data.meetingURL ?? undefined,
-      description: data.description ?? undefined,
-      schedules: data.addedSchedules,
+      name: payload.name!,
+      lowerLevel: payload.lowerLevel!,
+      upperLevel: payload.upperLevel!,
+      category: payload.category!,
+      subcategory: payload.subcategory ?? undefined,
+      image: payload.image ?? undefined,
+      meetingURL: payload.meetingURL ?? undefined,
+      description: payload.description ?? undefined,
+      schedules: payload.addedSchedules,
     } satisfies CreateClassInput);
 
     return createdId;

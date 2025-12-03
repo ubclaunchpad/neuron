@@ -3,29 +3,32 @@ import { z } from "zod";
 import { toPlainTime } from "../extensions/Transformations";
 
 export const ScheduleTypeEnum = z.enum({
-  "Single": "single",
-  "Weekly": "weekly",
-  "Monthly": "monthly",
+  Single: "single",
+  Weekly: "weekly",
+  Monthly: "monthly",
 } as const);
 export type ScheduleType = z.infer<typeof ScheduleTypeEnum>;
 export const ScheduleType = createStringEnum(ScheduleTypeEnum);
 
-export const WeekdayEnum = z.enum({
-  "Sunday": "SU",
-  "Monday": "MO",
-  "Tuesday": "TU",
-  "Wednesday": "WE",
-  "Thursday": "TH",
-  "Friday": "FR",
-  "Saturday": "SA",
-} as const, "Please fill out this field.");
+export const WeekdayEnum = z.enum(
+  {
+    Sunday: "SU",
+    Monday: "MO",
+    Tuesday: "TU",
+    Wednesday: "WE",
+    Thursday: "TH",
+    Friday: "FR",
+    Saturday: "SA",
+  } as const,
+  "Please fill out this field.",
+);
 export type Weekday = z.infer<typeof WeekdayEnum>;
 export const Weekday = createStringEnum(WeekdayEnum);
 
 const WeeklyRule = z.object({
   type: z.literal(ScheduleType.weekly),
   weekday: WeekdayEnum,
-  interval: z.number().int().min(1).default(1),  
+  interval: z.number().int().min(1).default(1),
 });
 export type WeeklyRule = z.infer<typeof WeeklyRule>;
 
@@ -53,6 +56,7 @@ export const CreateSchedule = z.object({
   localStartTime: z.iso.time().transform(toPlainTime),
   localEndTime: z.iso.time().transform(toPlainTime),
   volunteerUserIds: z.array(z.uuid()).default([]),
+  preferredVolunteerCount: z.number().int().min(1),
   instructorUserIds: z.array(z.uuid()).default([]),
   effectiveStart: z.iso.date().optional(),
   effectiveEnd: z.iso.date().optional(),
@@ -62,14 +66,15 @@ export type CreateScheduleInput = z.infer<typeof CreateSchedule>;
 
 export const UpdateSchedule = z.object({
   id: z.uuid(),
-  localStartTime: z.iso.time().transform(toPlainTime),
-  localEndTime: z.iso.time().transform(toPlainTime),
+  localStartTime: z.iso.time().transform(toPlainTime).optional(),
+  localEndTime: z.iso.time().transform(toPlainTime).optional(),
   addedVolunteerUserIds: z.array(z.uuid()).default([]),
   removedVolunteerUserIds: z.array(z.uuid()).default([]),
   addedInstructorUserIds: z.array(z.uuid()).default([]),
   removedInstructorUserIds: z.array(z.uuid()).default([]),
+  preferredVolunteerCount: z.number().int().min(1).optional(),
   effectiveStart: z.iso.date().nullish(),
   effectiveEnd: z.iso.date().nullish(),
-  rule: ScheduleRule,
+  rule: ScheduleRule.optional(),
 });
 export type UpdateScheduleInput = z.infer<typeof UpdateSchedule>;

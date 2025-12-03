@@ -1,5 +1,5 @@
-import { Avatar } from "@/components/avatar";
-import { Button } from "@/components/primitives/button";
+import { Avatar } from "@/components/primitives/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,7 +8,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/primitives/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import { getImageUrlFromKey } from "@/lib/build-image-url";
 import { Role, Status } from "@/models/interfaces";
 import type { ListUser, User } from "@/models/user";
@@ -19,17 +19,22 @@ import { Ban, MoreHorizontalIcon, Power } from "lucide-react";
 import { ListItem } from "../list";
 import { StatusBadge } from "../status-badge";
 import { UserProfileDialog } from "../user-profile-dialog";
-import { ShellHeader, ShellSearchInput, UsersList, UsersViewShell } from "./users-view-shell";
+import {
+  ShellHeader,
+  ShellSearchInput,
+  UsersList,
+  UsersViewShell,
+} from "./users-view-shell";
 
-export function ViewVolunteersView({ className } : { className?: string }) {
+export function ViewVolunteersView({ className }: { className?: string }) {
   return (
-    <UsersViewShell 
+    <UsersViewShell
       className={className}
       rolesToInclude={[Role.volunteer]}
       statusesToInclude={[Status.active, Status.inactive]}
     >
       <ShellHeader>
-        <ShellSearchInput/>
+        <ShellSearchInput />
       </ShellHeader>
 
       <UsersList>
@@ -39,7 +44,11 @@ export function ViewVolunteersView({ className } : { className?: string }) {
   );
 }
 
-export function ViewVolunteerListItem({ user: initialUser }: { user: ListUser }) {
+export function ViewVolunteerListItem({
+  user: initialUser,
+}: {
+  user: ListUser;
+}) {
   const { user: ownUser } = useAuth();
   const apiUtils = clientApi.useUtils();
   const { data: user } = clientApi.user.byId.useQuery(
@@ -62,7 +71,6 @@ export function ViewVolunteerListItem({ user: initialUser }: { user: ListUser })
     },
   });
 
-  console.log(user)
   return (
     <ListItem
       leadingContent={

@@ -6,10 +6,9 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/primitives/button";
-import { Field, FieldError, FieldLabel } from "@/components/primitives/field";
-import { Input } from "@/components/primitives/input";
-import { Spinner } from "@/components/primitives/spinner";
+import { FormInputField } from "@/components/form/FormInput";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import useCountdown from "@/hooks/use-countdown";
 import { authClient } from "@/lib/auth/client";
 
@@ -26,14 +25,17 @@ export default function ForgotPasswordForm() {
   const cooldown = useCountdown({ minutes: 1 });
 
   const {
-    register,
+    control,
     handleSubmit,
     getValues,
-    formState: { errors, isSubmitSuccessful, isSubmitting },
+    formState: { isSubmitSuccessful, isSubmitting },
   } = useForm<ForgotPasswordSchemaType>({
     resolver: zodResolver(ForgotPasswordSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
+    defaultValues: {
+      email: "",
+    }
   });
 
   const onSubmit = async (data: ForgotPasswordSchemaType) => {
@@ -60,18 +62,15 @@ export default function ForgotPasswordForm() {
 
       <div className="space-y-5">
         {!isSubmitSuccessful ? (
-          <Field data-invalid={!!errors.email} className="gap-1">
-            <FieldLabel htmlFor="email">Email</FieldLabel>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              placeholder="john.doe@example.com"
-              aria-invalid={!!errors.email}
-              {...register("email")}
-            />
-            <FieldError errors={errors.email} />
-          </Field>
+          <FormInputField
+            control={control}
+            name="email"
+            type="email"
+            autoComplete="email"
+            label="Email"
+            placeholder="john.doe@example.com"
+            className="gap-1"
+          />
         ) : (
           <p aria-live="polite" className="text-foreground">
             We’ve sent password reset instructions to{" "}

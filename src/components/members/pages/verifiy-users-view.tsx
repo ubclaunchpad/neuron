@@ -1,6 +1,6 @@
-import { Button } from "@/components/primitives/button";
-import { Checkbox } from "@/components/primitives/checkbox";
-import { Label } from "@/components/primitives/label";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Status } from "@/models/interfaces";
 import type { ListUser } from "@/models/user";
 import { clientApi } from "@/trpc/client";

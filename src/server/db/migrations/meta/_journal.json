@@ -15,6 +15,13 @@
       "when": 1763191035536,
       "tag": "0001_pgtgrm",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764314350750,
+      "tag": "0002_add_pref_volunteer_cnt",
+      "breakpoints": true
     }
   ]
 }

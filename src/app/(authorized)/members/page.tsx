@@ -10,13 +10,13 @@ import {
   PageLayoutHeaderContent,
   PageLayoutHeaderTitle,
 } from "@/components/page-layout";
-import { Badge } from "@/components/primitives/badge";
+import { Badge } from "@/components/ui/badge";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/primitives/tabs";
+} from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { clientApi } from "@/trpc/client";
 import { parseAsStringEnum, useQueryState } from "nuqs";

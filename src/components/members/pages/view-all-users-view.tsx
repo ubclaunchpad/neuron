@@ -1,6 +1,6 @@
-import { Avatar } from "@/components/avatar";
-import { Badge } from "@/components/primitives/badge";
-import { Button } from "@/components/primitives/button";
+import { Avatar } from "@/components/primitives/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/primitives/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import { getImageUrlFromKey } from "@/lib/build-image-url";
 import { Role, Status } from "@/models/interfaces";
 import type { ListUser, User } from "@/models/user";
@@ -22,21 +22,23 @@ import { CreateUserDialog } from "../create-user-dialog";
 import { ListItem } from "../list";
 import { StatusBadge } from "../status-badge";
 import { UserProfileDialog } from "../user-profile-dialog";
-import { ShellHeader, ShellSearchInput, UsersList, UsersViewShell } from "./users-view-shell";
+import {
+  ShellHeader,
+  ShellSearchInput,
+  UsersList,
+  UsersViewShell,
+} from "./users-view-shell";
 
-export function ViewUsersView({ className } : { className?: string }) {
+export function ViewUsersView({ className }: { className?: string }) {
   return (
-    <UsersViewShell 
+    <UsersViewShell
       className={className}
       statusesToInclude={[Status.active, Status.inactive]}
     >
       <ShellHeader>
-        <ShellSearchInput/>
+        <ShellSearchInput />
 
-        <Button onClick={() => {
-          NiceModal.show(CreateUserDialog)
-          console.log('show')
-        }}>
+        <Button onClick={() => NiceModal.show(CreateUserDialog)}>
           <AddIcon />
           <span>Add User</span>
         </Button>

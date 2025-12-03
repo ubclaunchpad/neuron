@@ -10,15 +10,16 @@ import { z } from "zod";
 import { authClient } from "@/lib/auth/client";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 
+import { FormFieldController } from "@/components/form/FormField";
+import { FormInput, FormInputField } from "@/components/form/FormInput";
+import { FormError, FormField, FormLabel } from "@/components/form/FormLayout";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@/components/primitives/alert";
-import { Button } from "@/components/primitives/button";
-import { Field, FieldError, FieldLabel } from "@/components/primitives/field";
-import { Input, PasswordInput } from "@/components/primitives/input";
-import { Spinner } from "@/components/primitives/spinner";
+} from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 const LoginSchema = z.object({
   email: z
@@ -31,7 +32,7 @@ type LoginSchemaType = z.infer<typeof LoginSchema>;
 
 export default function LoginForm() {
   const {
-    register,
+    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
@@ -39,6 +40,10 @@ export default function LoginForm() {
     resolver: zodResolver(LoginSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+    }
   });
 
   const onSubmit = async (data: LoginSchemaType) => {
@@ -78,35 +83,35 @@ export default function LoginForm() {
       )}
 
       <div className="space-y-5">
-        <Field data-invalid={!!errors.email}>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="john.doe@example.com"
-            aria-invalid={!!errors.email}
-            {...register("email")}
-          />
-          <FieldError errors={errors.email} />
-        </Field>
+        <FormInputField
+          control={control}
+          name="email"
+          type="email"
+          autoComplete="email"
+          label="Email"
+          placeholder="john.doe@example.com"
+          className="gap-1"
+        />
 
-        <Field data-invalid={!!errors.password}>
-          <FieldLabel htmlFor="password">Password</FieldLabel>
-          <PasswordInput
-            id="password"
-            autoComplete="current-password"
-            placeholder="•••••••••••••"
-            aria-invalid={!!errors.password}
-            {...register("password")}
-          />
-          <div className="flex items-center justify-between">
-            <FieldError errors={errors.password} />
-            <Button asChild variant="link" size="sm" className="ms-auto">
-              <Link href="/auth/forgot-password">Forgot password?</Link>
-            </Button>
-          </div>
-        </Field>
+        <FormFieldController name="password" control={control}>
+          {(field) => (
+            <FormField>
+              <FormLabel>Password</FormLabel>
+              <FormInput
+                type="password"
+                autoComplete="current-password"
+                placeholder="•••••••••••••"
+                {...field}
+              />
+              <div className="flex items-center justify-between">
+                <FormError />
+                <Button asChild variant="link" size="sm" className="ms-auto">
+                  <Link href="/auth/forgot-password">Forgot password?</Link>
+                </Button>
+              </div>
+            </FormField>
+          )}
+        </FormFieldController>
       </div>
 
         <div className="space-y-5">

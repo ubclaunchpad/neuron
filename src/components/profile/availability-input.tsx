@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import React, { useEffect, useRef, useState } from "react";
 import { mergeProps, useMove } from "react-aria";
 
-import { Button } from "@/components/primitives/button";
-import { Card, CardContent, CardHeader } from "@/components/primitives/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -13,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/primitives/table";
+} from "@/components/ui/table";
 import { DAYS_PER_WEEK, SLOTS_PER_DAY } from "@/constants";
 import {
   getSlotIndex,
@@ -21,7 +21,7 @@ import {
   isValidAvailabilityBitstring,
 } from "@/utils/availabilityUtils";
 import EditIcon from "@public/assets/icons/edit.svg";
-import { TypographyTitle } from "../primitives/typography";
+import { TypographyTitle } from "../ui/typography";
 
 export type AvailabilityGridProps = {
   availability: string;

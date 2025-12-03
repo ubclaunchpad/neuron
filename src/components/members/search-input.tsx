@@ -7,8 +7,8 @@ import {
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "../primitives/input-group";
-import { Spinner } from "../primitives/spinner";
+} from "../ui/input-group";
+import { Spinner } from "../ui/spinner";
 
 export function SearchInput({
   query,

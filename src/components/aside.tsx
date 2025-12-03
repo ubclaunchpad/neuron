@@ -2,11 +2,11 @@
 
 import * as React from "react";
 
-import { Button } from "@/components/primitives/button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import CloseIcon from "@public/assets/icons/close.svg";
 import { usePageAside } from "./page-layout";
-import { TypographyTitle } from "./primitives/typography";
+import { TypographyTitle } from "./ui/typography";
 
 function AsideContainer({
   className,
@@ -18,12 +18,12 @@ function AsideContainer({
     <div
       data-slot="aside-container"
       className={cn(
-        "pt-[4.25rem] pr-9 pb-9 pl-5 gap-6 space-y-8 relative",
+        "pt-[4.25rem] pr-9 pb-9 pl-5 gap-6 space-y-5 relative",
         className,
       )}
       {...props}
     >
-      {!hideClose && <AsideClose className="absolute top-8 right-6"/>}
+      {!hideClose && <AsideClose className="absolute top-8 right-6" />}
       {children}
     </div>
   );
@@ -36,10 +36,7 @@ function AsideHeader({
   return (
     <div
       data-slot="aside-header"
-      className={cn(
-        "space-y-2",
-        className,
-      )}
+      className={cn("space-y-2", className)}
       {...props}
     />
   );
@@ -52,7 +49,7 @@ function AsideTitle({
   return (
     <TypographyTitle
       data-slot="aside-title"
-      className={cn("inline-block text-lg font-semibold", className)}
+      className={cn("inline-block", className)}
       {...props}
     />
   );
@@ -65,7 +62,7 @@ function AsideDescription({
   return (
     <p
       data-slot="aside-description"
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-muted-foreground", className)}
       {...props}
     />
   );
@@ -130,15 +127,8 @@ function AsideSectionHeader({
   );
 }
 
-function AsideSectionTitle({
-  ...props
-}: React.HTMLAttributes<HTMLElement>) {
-  return (
-    <TypographyTitle
-      data-slot="aside-section"
-      {...props}
-    />
-  );
+function AsideSectionTitle({ ...props }: React.HTMLAttributes<HTMLElement>) {
+  return <TypographyTitle data-slot="aside-section" {...props} />;
 }
 
 function AsideSectionContent({
@@ -148,7 +138,7 @@ function AsideSectionContent({
   return (
     <div
       data-slot="aside-section"
-      className={cn("flex flex-col gap-3", className)}
+      className={cn("space-y-3", className)}
       {...props}
     />
   );
@@ -167,8 +157,8 @@ function AsideField({
       data-slot="aside-field"
       data-inline={inline}
       className={cn(
-        "grid gap-1",
-        inline ? "[grid-template-columns:4fr_6fr] gap-2" : "grid-cols-1",
+        "grid gap-2",
+        inline ? "[grid-template-columns:40%_minmax(0,1fr)]" : "grid-cols-1",
         className,
       )}
       {...props}
@@ -185,7 +175,7 @@ function AsideFieldLabel({
   return (
     <h3
       data-slot="aside-field-label"
-      className={cn("self-center font-medium", className)}
+      className={cn("self-center text-muted-foreground", className)}
       {...props}
     />
   );
@@ -197,10 +187,14 @@ function AsideFieldContent({
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { full?: boolean }) {
   return (
-    <p
+    <div
       data-slot="aside-field-content"
       data-full={full}
-      className={cn("flex flex-col align-center justify-center text-sm text-muted-foreground gap-1", full && "col-span-2", className)}
+      className={cn(
+        "flex flex-col align-center overflow-auto justify-center gap-1",
+        full && "col-span-2",
+        className,
+      )}
       {...props}
     />
   );
@@ -219,6 +213,5 @@ export {
   AsideSectionContent,
   AsideSectionHeader,
   AsideSectionTitle,
-  AsideTitle
+  AsideTitle,
 };
-

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { JSX } from "react";
-import { Card } from "../primitives/card";
+import { Card } from "../ui/card";
 
 export function ListItem({
   leadingContent,

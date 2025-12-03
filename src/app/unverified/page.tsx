@@ -2,7 +2,7 @@
 
 import { authClient } from "@/lib/auth/client";
 
-import { Button } from "@/components/primitives/button";
+import { Button } from "@/components/ui/button";
 import UnverifiedGraphic from "@public/assets/graphics/unverified-graphic.svg";
 import LogOutIcon from "@public/assets/icons/log-out.svg";
 

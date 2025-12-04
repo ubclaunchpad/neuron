@@ -10,7 +10,7 @@ import {
   usePageAside,
 } from "@/components/page-layout";
 import { Button } from "@/components/primitives/button";
-import { ButtonGroup } from "@/components/primitives/button-group";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { CalendarRange, List } from "lucide-react";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { dummyShifts } from "./mockShifts";

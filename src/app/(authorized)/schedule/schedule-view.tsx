@@ -1,26 +1,19 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import { Button } from "@/components/primitives/button";
+import { ButtonGroup } from "@/components/ui/button-group";
+import type { DayHeaderContentArg, EventClickArg } from "@fullcalendar/core";
+import dayGridPlugin from "@fullcalendar/daygrid";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import type { EventClickArg, DayHeaderContentArg } from "@fullcalendar/core";
-import "./page.scss";
-import { ButtonGroup } from "@/components/primitives/button-group";
-import { Button } from "@/components/primitives/button";
 import CaretLeftIcon from "@public/assets/icons/caret-left.svg";
 import CaretRightIcon from "@public/assets/icons/caret-right.svg";
+import { useEffect, useRef } from "react";
+import { CalendarView, isSameDay } from "./dateUtils";
+import { dummyShifts } from "./mockShifts";
+import "./page.scss";
 import { useCalendarApi } from "./useCalendarApi";
 import { useDayView } from "./useDayView";
-import { isSameDay, CalendarView } from "./dateUtils";
-import { dummyShifts } from "./mockShifts";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/primitives/select";
 
 export function ScheduleCalendarView({
   onSelectShift,

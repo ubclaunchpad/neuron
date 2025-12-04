@@ -1,22 +1,21 @@
 "use client";
 
+import { ShiftCard, type ScheduleShift } from "@/components/schedule/shift-card";
 import {
   Card,
   CardContent,
   CardDescription,
   CardTitle,
-} from "@/components/primitives/card";
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/primitives/select";
-import { TypographyTitle } from "@/components/primitives/typography";
-import { ShiftCard, type ScheduleShift } from "@/components/schedule/shift-card";
+} from "@/components/ui/select";
+import { TypographyTitle } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
-import { listViewMockShifts } from "./mockShifts";
 import {
   compareAsc,
   format,
@@ -27,6 +26,7 @@ import {
   startOfToday,
 } from "date-fns";
 import { useMemo, useState } from "react";
+import { listViewMockShifts } from "./mockShifts";
 
 type StatusFilter = "all" | "mine" | "requested" | "needs";
 

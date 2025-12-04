@@ -42,6 +42,7 @@ export const dummyShifts: MockShift[] = [
       durationMinutes: 120,
       effectiveStart: "2025-03-01",
       effectiveEnd: "2025-12-31",
+      preferredVolunteerCount: 2,
       rule: {
         type: "weekly",
         weekday: "MO",
@@ -81,6 +82,7 @@ export const dummyShifts: MockShift[] = [
         name: "Alice",
         lastName: "Johnson",
         preferredName: "Ali",
+        role: "volunteer",
         bio: "Enthusiastic volunteer and mentor.",
         pronouns: "she/her",
         phoneNumber: "555-123-4567",
@@ -129,6 +131,7 @@ export const dummyShifts: MockShift[] = [
     },
     schedule: {
       id: "schedule-2",
+      preferredVolunteerCount: 2,
       durationMinutes: 120,
       effectiveStart: "2025-03-01",
       effectiveEnd: "2025-12-31",
@@ -148,6 +151,7 @@ export const dummyShifts: MockShift[] = [
         name: "Brian",
         lastName: "Lee",
         preferredName: "Bri",
+        role: "volunteer",
         pronouns: "he/him",
         bio: "Volunteer passionate about robotics and education.",
         phoneNumber: "555-888-9999",
@@ -196,6 +200,7 @@ export const dummyShifts: MockShift[] = [
     },
     schedule: {
       id: "schedule-3",
+      preferredVolunteerCount: 2,
       durationMinutes: 120,
       effectiveStart: "2025-04-01",
       effectiveEnd: "2025-12-31",
@@ -215,6 +220,7 @@ export const dummyShifts: MockShift[] = [
         name: "Carmen",
         lastName: "Smith",
         preferredName: "Carm",
+        role: "volunteer",
         bio: "Yoga enthusiast and community volunteer.",
         pronouns: "she/her",
         phoneNumber: "555-777-1111",
@@ -263,6 +269,7 @@ export const dummyShifts: MockShift[] = [
     },
     schedule: {
       id: "schedule-4",
+      preferredVolunteerCount: 2,
       durationMinutes: 120,
       effectiveStart: "2025-05-01",
       effectiveEnd: "2025-12-31",
@@ -310,6 +317,7 @@ export const dummyShifts: MockShift[] = [
     },
     schedule: {
       id: "schedule-5",
+      preferredVolunteerCount: 2,
       durationMinutes: 90,
       effectiveStart: "2025-06-01",
       effectiveEnd: "2025-12-31",
@@ -357,6 +365,7 @@ export const dummyShifts: MockShift[] = [
     },
     schedule: {
       id: "schedule-6",
+      preferredVolunteerCount: 2,
       durationMinutes: 90,
       effectiveStart: "2025-06-15",
       effectiveEnd: "2025-12-31",
@@ -404,6 +413,7 @@ export const dummyShifts: MockShift[] = [
     },
     schedule: {
       id: "schedule-7",
+      preferredVolunteerCount: 2,
       durationMinutes: 90,
       effectiveStart: "2025-07-01",
       effectiveEnd: "2025-12-31",
@@ -451,6 +461,7 @@ export const dummyShifts: MockShift[] = [
     },
     schedule: {
       id: "schedule-8",
+      preferredVolunteerCount: 2,
       durationMinutes: 120,
       effectiveStart: "2025-07-15",
       effectiveEnd: "2025-12-31",

@@ -24,7 +24,7 @@ export const buildSimilarityExpression = (
   const term = (column: AnyColumn) =>
     sql<number>`similarity(LOWER(${column}), LOWER(${queryInput}))`;
 
-  let expression = term(columns[0] as AnyColumn);
+  let expression = term(columns[0]!);
   columns.forEach((column) => {
     expression = sql<number>`(${expression} + ${term(column)})`;
   });
@@ -47,7 +47,7 @@ export const buildSearchCondition = (
   const term = (column: AnyColumn) =>
     sql`similarity(LOWER(${column}), LOWER(${queryInput})) > ${minThreshold}`;
 
-  let expression = term(columns[0] as AnyColumn);
+  let expression = term(columns[0]!);
   columns.forEach((column) => {
     expression = sql`(${expression} OR ${term(column)})`;
   });

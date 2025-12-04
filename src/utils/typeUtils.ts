@@ -1,4 +1,4 @@
-import { z } from "zod";
+import type { z } from "zod";
 
 type EnumRecordFromUnion<
   TEnum extends z.ZodEnum<any>,
@@ -17,7 +17,7 @@ export function createStringEnum<E extends z.ZodEnum<any>>(
   
   return Object.assign(record, { 
     values: e.options,
-    getName: (value: E['def']['entries'][keyof E['def']['entries']]) => e.def.entries,
+    getName: (value: E['def']['entries'][keyof E['def']['entries']]) => e.def.entries[value],
   }) as EnumRecordFromUnion<E>;
 }
 

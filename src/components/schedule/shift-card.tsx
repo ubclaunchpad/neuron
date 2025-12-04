@@ -1,12 +1,12 @@
 "use client";
 
-import { Badge } from "@/components/primitives/badge";
 import { Button } from "@/components/primitives/button";
-import { Card, CardContent } from "@/components/primitives/card";
-import { TypographyRegBold, TypographySmall } from "@/components/primitives/typography";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { TypographyRegBold, TypographySmall } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
-import { Clock, MapPin, Plus } from "lucide-react";
 import { differenceInMinutes, format, parseISO } from "date-fns";
+import { Clock, MapPin, Plus } from "lucide-react";
 
 export type ShiftStatus =
   | "upcoming"

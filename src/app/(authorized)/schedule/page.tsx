@@ -12,29 +12,26 @@ import {
 import { Button } from "@/components/primitives/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { CalendarRange, List } from "lucide-react";
-import { Suspense, useCallback, useMemo, useState } from "react";
-import { dummyShifts } from "./mockShifts";
+import { Suspense, useCallback, useState } from "react";
+import { clientApi } from "@/trpc/client";
 import { ScheduleCalendarView } from "./schedule-view";
 import { CalendarAside } from "./useCalendarAside";
 import { ScheduleListView } from "./useListView";
 
 function SchedulePageContent() {
-  const [currentView, setCurrentView] = useState<"list" | "calendar">(
-    "list",
-  );
+  const [currentView, setCurrentView] = useState<"list" | "calendar">("list");
   const [selectedShiftId, setSelectedShiftId] = useState<string | undefined>();
   const { setOpen } = usePageAside();
 
-  const selectedShift = useMemo(
-    () => dummyShifts.find((shift) => shift.id === selectedShiftId),
-    [selectedShiftId],
+  const { data: selectedShift } = clientApi.shift.byId.useQuery(
+    { shiftId: selectedShiftId ?? "00000000-0000-0000-0000-000000000000" },
+    { enabled: Boolean(selectedShiftId) },
   );
 
   const handleSelectShift = useCallback(
     (shiftId: string) => {
-      const hasShift = dummyShifts.some((shift) => shift.id === shiftId);
-      setSelectedShiftId(hasShift ? shiftId : undefined);
-      if (hasShift) setOpen(true);
+      setSelectedShiftId(shiftId);
+      setOpen(true);
     },
     [setOpen],
   );
@@ -79,7 +76,7 @@ function SchedulePageContent() {
         {currentView === "calendar" ? (
           <ScheduleCalendarView onSelectShift={handleSelectShift} />
         ) : (
-          <ScheduleListView onSelectShift={handleSelectShift} />
+          <ScheduleListView onSelectShiftAction={handleSelectShift} />
         )}
       </PageLayoutContent>
     </>

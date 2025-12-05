@@ -8,9 +8,11 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import CaretLeftIcon from "@public/assets/icons/caret-left.svg";
 import CaretRightIcon from "@public/assets/icons/caret-right.svg";
-import { useEffect, useRef } from "react";
+import { endOfMonth, startOfMonth } from "date-fns";
+import { useEffect, useMemo, useRef } from "react";
+import { useShiftRange } from "@/components/schedule/use-shift-range";
+import { mapListShiftToScheduleShift } from "./shift-mappers";
 import { CalendarView, isSameDay } from "./dateUtils";
-import { dummyShifts } from "./mockShifts";
 import "./page.scss";
 import { useCalendarApi } from "./useCalendarApi";
 import { useDayView } from "./useDayView";
@@ -22,16 +24,33 @@ export function ScheduleCalendarView({
 }) {
   const calendarRef = useRef<FullCalendar | null>(null);
   const calendarContainerRef = useRef<HTMLDivElement>(null);
-  const { calendarApi, next, prev, changeView, getDate, goToDate } = useCalendarApi(calendarRef);
-  const { isDayView, selectedDate, setSelectedDate, renderDayViewHeader } = useDayView({
-    calendarApi,
-    next,
-    prev,
-    changeView,
-    getDate,
-    goToDate,
-    calendarContainerRef,
+  const { calendarApi, next, prev, changeView, getDate, goToDate } =
+    useCalendarApi(calendarRef);
+  const { isDayView, selectedDate, setSelectedDate, renderDayViewHeader } =
+    useDayView({
+      calendarApi,
+      next,
+      prev,
+      changeView,
+      getDate,
+      goToDate,
+      calendarContainerRef,
+    });
+
+  const rangeStart = useMemo(
+    () => startOfMonth(selectedDate ?? new Date()),
+    [selectedDate],
+  );
+  const rangeEnd = useMemo(() => endOfMonth(rangeStart), [rangeStart]);
+
+  const { shifts: rawShifts } = useShiftRange({
+    start: rangeStart,
+    end: rangeEnd,
   });
+  const scheduleShifts = useMemo(
+    () => rawShifts.map(mapListShiftToScheduleShift),
+    [rawShifts],
+  );
 
   // Render calendar in appropriate view
   useEffect(() => {
@@ -93,14 +112,26 @@ export function ScheduleCalendarView({
   };
 
   const renderNavBar = () => {
-    return <div className="navbar">
+    return (
+      <div className="navbar">
         <div className="navbar-left">
           <ButtonGroup className="navbar-buttons">
-            <Button variant="ghost" onClick={() => handleNavAction("today")}>Today</Button>
-            <Button variant="ghost" onClick={() => handleNavAction("prev")}><CaretLeftIcon/></Button>
-            <Button variant="ghost" onClick={() => handleNavAction("next")}><CaretRightIcon/></Button>
+            <Button variant="ghost" onClick={() => handleNavAction("today")}>
+              Today
+            </Button>
+            <Button variant="ghost" onClick={() => handleNavAction("prev")}>
+              <CaretLeftIcon />
+            </Button>
+            <Button variant="ghost" onClick={() => handleNavAction("next")}>
+              <CaretRightIcon />
+            </Button>
           </ButtonGroup>
-          <div className="pl-4">{selectedDate.toLocaleDateString("en-US", {month: "long", year: "numeric"})}</div>
+          <div className="pl-4">
+            {selectedDate.toLocaleDateString("en-US", {
+              month: "long",
+              year: "numeric",
+            })}
+          </div>
           {/* <Select>
             <SelectTrigger>
               <SelectValue placeholder={selectedDate.toLocaleDateString("en-US", {month: "long", year: "numeric"})} />
@@ -138,21 +169,26 @@ export function ScheduleCalendarView({
           </Select>}
         </div> */}
       </div>
+    );
   };
 
   const renderWeekHeader = (arg: DayHeaderContentArg) => {
     const date: Date = arg.date;
     const isToday = isSameDay(date, new Date());
 
-    const dayName: string = date.toLocaleDateString("en-US", { weekday: "long" });
+    const dayName: string = date.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
     const dayNum: number = date.getDate();
 
     return (
-      <div className={`week-header ${isToday ? "week-header-current-day" : ""}`}>
+      <div
+        className={`week-header ${isToday ? "week-header-current-day" : ""}`}
+      >
         <div style={{ fontSize: "24px" }}>{dayNum}</div>
         <div style={{ fontSize: "14px" }}>{dayName}</div>
       </div>
-    )
+    );
   };
 
   const handleEventClick = (info: EventClickArg) => {
@@ -172,7 +208,8 @@ export function ScheduleCalendarView({
           headerToolbar={false}
           dayHeaderContent={(arg) => {
             if (isDayView) return null;
-            if (arg.view.type === CalendarView.Month) return <div>{arg.text}</div>;
+            if (arg.view.type === CalendarView.Month)
+              return <div>{arg.text}</div>;
 
             return renderWeekHeader(arg);
           }}
@@ -181,11 +218,11 @@ export function ScheduleCalendarView({
           allDaySlot={false}
           eventClick={handleEventClick}
           firstDay={1}
-          events={dummyShifts.map((shift) => ({
+          events={scheduleShifts.map((shift) => ({
             id: shift.id,
-            title: shift.class?.name ?? "Unnamed shift",
-            start: shift.startAt,
-            end: shift.endAt,
+            title: shift.title ?? "Unnamed shift",
+            start: shift.start,
+            end: shift.end,
           }))}
         />
       </div>

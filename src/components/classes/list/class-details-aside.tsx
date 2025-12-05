@@ -127,7 +127,10 @@ export function ClassDetailsAside() {
                         <span>No instructors assigned</span>
                       ) : (
                         instructors.map((user) => (
-                          <div className="inline-flex items-end gap-1">
+                          <div
+                            key={user.id}
+                            className="inline-flex items-end gap-1"
+                          >
                             <Avatar
                               className="size-8 rounded-[0.25rem]"
                               src={user.image}
@@ -157,7 +160,10 @@ export function ClassDetailsAside() {
                           <span>No volunteers assigned</span>
                         ) : (
                           volunteers.map((user) => (
-                            <div className="inline-flex items-baseline gap-1">
+                            <div
+                              key={user.id}
+                              className="inline-flex items-end gap-1"
+                            >
                               <Avatar
                                 className="size-8 rounded-[0.25rem]"
                                 src={user.image}

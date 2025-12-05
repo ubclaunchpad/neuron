@@ -1,6 +1,9 @@
 "use client";
 
-import { ShiftCard, type ScheduleShift } from "@/components/schedule/shift-card";
+import {
+  ShiftCard,
+  type ScheduleShift,
+} from "@/components/schedule/shift-card";
 import {
   Card,
   CardContent,
@@ -18,6 +21,7 @@ import { TypographyTitle } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 import {
   compareAsc,
+  endOfMonth,
   format,
   isSameMonth,
   isToday,
@@ -26,7 +30,8 @@ import {
   startOfToday,
 } from "date-fns";
 import { useMemo, useState } from "react";
-import { listViewMockShifts } from "./mockShifts";
+import { useShiftRange } from "@/components/schedule/use-shift-range";
+import { mapListShiftToScheduleShift } from "./shift-mappers";
 
 type StatusFilter = "all" | "mine" | "requested" | "needs";
 
@@ -48,8 +53,6 @@ type StatusFilter = "all" | "mine" | "requested" | "needs";
 //   { id: "needs", label: "Needs Coverage", dotClass: "bg-destructive", dotColor: "var(--color-destructive)" },
 // ];
 
-const MOCK_SHIFTS: ScheduleShift[] = listViewMockShifts;
-
 type DayGroup = { date: Date; shifts: ScheduleShift[] };
 
 function groupByDay(shifts: ScheduleShift[]): DayGroup[] {
@@ -63,36 +66,43 @@ function groupByDay(shifts: ScheduleShift[]): DayGroup[] {
     groups.set(key, group);
   });
 
-  return Array.from(groups.values()).sort((a, b) =>
-    compareAsc(a.date, b.date),
-  );
+  return Array.from(groups.values()).sort((a, b) => compareAsc(a.date, b.date));
 }
 
 export function ScheduleListView({
   className,
-  onSelectShift,
+  onSelectShiftAction: onSelectShift,
 }: {
   className?: string;
-  onSelectShift: (shiftId: string) => void;
+  onSelectShiftAction: (shiftId: string) => void;
 }) {
-  const initialMonth = useMemo(() => {
-    const uniqueMonths = new Set<string>();
-    MOCK_SHIFTS.forEach((shift) => {
-      uniqueMonths.add(format(parseISO(shift.start), "yyyy-MM"));
-    });
-    return uniqueMonths.values().next().value ?? format(startOfToday(), "yyyy-MM");
-  }, []);
+  const today = startOfToday();
+  const statusFilter: StatusFilter = "all";
+  const [monthKey, setMonthKey] = useState<string>(format(today, "yyyy-MM"));
 
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [monthKey, setMonthKey] = useState<string>(initialMonth);
+  const rangeStart = useMemo(
+    () => startOfMonth(parseISO(`${monthKey}-01T00:00:00`)),
+    [monthKey],
+  );
+  const rangeEnd = useMemo(() => endOfMonth(rangeStart), [rangeStart]);
+
+  const { shifts: rawShifts, query } = useShiftRange({
+    start: rangeStart,
+    end: rangeEnd,
+    enabled: true,
+  });
+  const mappedShifts = useMemo(
+    () => rawShifts.map(mapListShiftToScheduleShift),
+    [rawShifts],
+  );
 
   const availableMonths = useMemo(() => {
     const months = new Map<string, Date>();
-    if (MOCK_SHIFTS.length === 0) {
+    if (mappedShifts.length === 0) {
       const today = startOfToday();
       months.set(format(today, "yyyy-MM"), startOfMonth(today));
     }
-    MOCK_SHIFTS.forEach((shift) => {
+    mappedShifts.forEach((shift) => {
       const start = parseISO(shift.start);
       const key = format(start, "yyyy-MM");
       months.set(key, startOfMonth(start));
@@ -105,34 +115,22 @@ export function ScheduleListView({
   const monthOptions = useMemo(() => {
     const combined = new Set<string>([...availableMonths, monthKey]);
     return Array.from(combined).sort((a, b) =>
-      compareAsc(
-        parseISO(`${a}-01T00:00:00`),
-        parseISO(`${b}-01T00:00:00`),
-      ),
+      compareAsc(parseISO(`${a}-01T00:00:00`), parseISO(`${b}-01T00:00:00`)),
     );
   }, [availableMonths, monthKey]);
 
   const filteredShifts = useMemo(() => {
-    return MOCK_SHIFTS.filter((shift) => {
-      if (statusFilter === "mine") return shift.isMine;
-      if (statusFilter === "requested")
-        return shift.status === "requesting_coverage";
-      if (statusFilter === "needs") return shift.status === "needs_coverage";
-      return true;
-    }).sort((a, b) => compareAsc(parseISO(a.start), parseISO(b.start)));
-  }, [statusFilter]);
-
-  const monthStart = useMemo(
-    () => startOfMonth(parseISO(`${monthKey}-01T00:00:00`)),
-    [monthKey],
-  );
+    return mappedShifts.sort((a, b) =>
+      compareAsc(parseISO(a.start), parseISO(b.start)),
+    );
+  }, [mappedShifts, statusFilter]);
 
   const monthShifts = useMemo(
     () =>
       filteredShifts.filter((shift) =>
-        isSameMonth(parseISO(shift.start), monthStart),
+        isSameMonth(parseISO(shift.start), rangeStart),
       ),
-    [filteredShifts, monthStart],
+    [filteredShifts, rangeStart],
   );
 
   const dayGroups = useMemo(() => groupByDay(monthShifts), [monthShifts]);
@@ -144,7 +142,10 @@ export function ScheduleListView({
       <div className={cn(containerClass, "py-4")}>
         <div className="flex w-full flex-wrap items-center gap-4 pb-4">
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Select value={monthKey} onValueChange={(value) => setMonthKey(value)}>
+            <Select
+              value={monthKey}
+              onValueChange={(value) => setMonthKey(value)}
+            >
               <SelectTrigger className="w-[180px] rounded-xl">
                 <SelectValue placeholder="Month" />
               </SelectTrigger>
@@ -196,7 +197,18 @@ export function ScheduleListView({
         </div>
 
         <div className="space-y-6 pb-18">
-          {dayGroups.length === 0 && (
+          {query.isLoading && (
+            <Card className="border-dashed">
+              <CardContent className="py-8">
+                <CardTitle>Loading shifts…</CardTitle>
+                <CardDescription>
+                  Fetching your schedule for this month.
+                </CardDescription>
+              </CardContent>
+            </Card>
+          )}
+
+          {!query.isLoading && dayGroups.length === 0 && (
             <Card className="border-dashed">
               <CardContent className="py-8">
                 <CardTitle>No shifts found</CardTitle>

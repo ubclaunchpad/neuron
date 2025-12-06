@@ -1,5 +1,5 @@
 import type { ListRequestWithSearch } from "@/models/api/common";
-import { UpdateVolunteerProfileInput } from "@/models/api/volunteer";
+import type { UpdateVolunteerInput } from "@/models/api/volunteer";
 import type { ListResponse } from "@/models/list-response";
 import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
@@ -8,7 +8,7 @@ import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { buildSearchCondition, buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { z } from "zod";
-import { coursePreference, volunteer, volunteerUserView } from "../../db/schema/user";
+import { coursePreference, volunteer, volunteerUserView, user } from "../../db/schema/user";
 
 export class VolunteerService {
   private readonly db: Drizzle;
@@ -123,23 +123,53 @@ export class VolunteerService {
   }
   
   async updateVolunteerProfile(
-    input: z.infer<typeof UpdateVolunteerProfileInput>,
+    input: z.infer<typeof UpdateVolunteerInput>,
   ): Promise<void> {
-    const { volunteerUserId, ...rest } = input;
+    await this.db.transaction(async (tx) => {
+      const { volunteerUserId, ...rest } = input;
 
-    const [updated] = await this.db
-      .update(volunteer)
-      .set(rest)
-      .where(eq(volunteer.userId, volunteerUserId))
-      .returning({ userId: volunteer.userId });
+      const userUpdate = {
+        name: rest.firstName,
+        lastName: rest.lastName,
+        email: rest.email,
+      };
 
-    if (!updated) {
-      throw new NeuronError(
-        `Could not find Volunteer with id ${volunteerUserId}`,
-        NeuronErrorCodes.NOT_FOUND,
-      );
-    }
+      const volunteerUpdate = {
+        preferredName: rest.preferredName,
+        bio: rest.bio,
+        pronouns: rest.pronouns,
+        city: rest.city,
+        province: rest.province,
+      };
+
+      const [updatedUser] = await tx
+        .update(user)
+        .set(userUpdate)
+        .where(eq(user.id, volunteerUserId))
+        .returning({ id: user.id });
+
+      if (!updatedUser) {
+        throw new NeuronError(
+          `Could not update user record for volunteer id ${volunteerUserId}`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      const [updatedVolunteer] = await tx
+        .update(volunteer)
+        .set(volunteerUpdate)
+        .where(eq(volunteer.userId, volunteerUserId))
+        .returning({ userId: volunteer.userId });
+
+      if (!updatedVolunteer) {
+        throw new NeuronError(
+          `Could not find volunteer with id ${volunteerUserId}`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+    });
   }
+
 
   async updateVolunteerAvailability(volunteerUserId: string, availability: string): Promise<void> {
     const [updated] = await this.db

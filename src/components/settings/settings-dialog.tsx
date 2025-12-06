@@ -60,7 +60,7 @@ export const SettingsDialog = NiceModal.create(() => {
       >
         <Tabs
           defaultValue="profile"
-          className="md:grid md:grid-cols-[180px_1fr]"
+          className="md:grid md:grid-cols-[180px_1fr] overflow-auto"
         >
           <header className="md:hidden flex items-center justify-between h-13 px-3">
             <DialogTitle>Settings</DialogTitle>
@@ -111,7 +111,7 @@ export const SettingsDialog = NiceModal.create(() => {
 
           {settingsItems.map((item) => (
             <TabsContent
-              className="px-4 flex flex-col gap-6"
+              className="px-4 flex flex-col gap-4"
               key={item.id}
               value={item.id}
             >

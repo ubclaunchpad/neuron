@@ -8,9 +8,10 @@ import { Skeleton } from "../ui/skeleton";
 import { Spinner } from "../ui/spinner";
 
 type LinkProps = React.ComponentProps<typeof Link>;
-type ButtonComponentProps = Omit<LinkProps, "href"> &
-  Omit<React.ComponentProps<typeof UIButton>, ""> &
-  React.ComponentProps<typeof TooltipWrapper> & {
+type ButtonComponentProps = Omit<LinkProps, "href" | "children"> &
+  Omit<React.ComponentProps<typeof UIButton>, "children"> &
+  Omit<React.ComponentProps<typeof TooltipWrapper>, "children"> & {
+    children?: React.ReactNode;
     href?: LinkProps["href"];
     pending?: boolean;
     startIcon?: React.ReactNode;

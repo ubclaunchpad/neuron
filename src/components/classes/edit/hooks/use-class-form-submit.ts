@@ -40,7 +40,7 @@ export function useClassFormSubmit({
         instructors.map((i) => i.id),
       );
 
-      return {
+      const updatedValues = {
         id,
         addedVolunteerUserIds,
         removedVolunteerUserIds,
@@ -48,6 +48,13 @@ export function useClassFormSubmit({
         removedInstructorUserIds,
         ...getFormValues(rest, dirtyFields, isEditing),
       };
+
+      // If any part of the rule is dirty, send the whole thing
+      if (updatedValues.rule && Object.keys(updatedValues.rule).length > 0) {
+        updatedValues.rule = values.rule;
+      }
+
+      return updatedValues;
     },
     [],
   );

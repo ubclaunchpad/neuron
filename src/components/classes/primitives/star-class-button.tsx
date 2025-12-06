@@ -69,6 +69,7 @@ export function StarClassButton({
         {...props}
       >
         <Toggle
+          unstyled
           data-toggle-state={preferenceData?.preferred ? "on" : "off"}
           pressed={preferenceData?.preferred}
           onPressedChange={(next) =>

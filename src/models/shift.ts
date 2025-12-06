@@ -239,12 +239,12 @@ export function getSingleShiftWithRosterContext(s: Shift) {
   } satisfies SingleShiftWithRosterContext;
 }
 
-export type ListShiftSummary = ReturnType<typeof getListShift>;
-export type ListShiftWithPersonalStatus = ListShiftSummary & {
+export type ListShift = ReturnType<typeof getListShift>;
+export type ListShiftWithPersonalStatus = ListShift & {
   attendance?: ShiftAttendanceSummary;
   coverageRequest?: ShiftCoverageSummary;
 };
-export type ListShiftWithRosterStatus = ListShiftSummary & {
+export type ListShiftWithRosterStatus = ListShift & {
   attendance: {
     volunteer: ReturnType<typeof getEmbeddedVolunteer>;
     attendance: ShiftAttendanceSummary | null;
@@ -252,8 +252,8 @@ export type ListShiftWithRosterStatus = ListShiftSummary & {
   coverageRequests: ShiftCoverageSummary[];
 };
 
-export type SingleShiftSummary = ReturnType<typeof getSingleShift>;
-export type SingleShiftWithPersonalContext = SingleShiftSummary & {
+export type SingleShift = ReturnType<typeof getSingleShift>;
+export type SingleShiftWithPersonalContext = SingleShift & {
   volunteers: Array<
     ReturnType<typeof getEmbeddedVolunteer> & {
       coveringFor?: ReturnType<typeof getEmbeddedVolunteer>;
@@ -262,7 +262,7 @@ export type SingleShiftWithPersonalContext = SingleShiftSummary & {
   >;
   coverageRequests: ShiftCoverageSummary[];
 };
-export type SingleShiftWithRosterContext = SingleShiftSummary & {
+export type SingleShiftWithRosterContext = SingleShift & {
   volunteers: Array<
     ReturnType<typeof getEmbeddedVolunteer> & {
       coveringFor?: ReturnType<typeof getEmbeddedVolunteer>;

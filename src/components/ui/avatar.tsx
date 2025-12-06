@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { createPrng } from "@/utils/prngUtils";
 import { useMemo } from "react";
 
-const backgroundColors = [
+export const backgroundColors = [
   "#00acc1",
   "#1e88e5",
   "#5e35b1",

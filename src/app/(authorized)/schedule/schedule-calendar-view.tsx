@@ -1,69 +1,88 @@
 "use client";
 
 import { Button } from "@/components/primitives/button";
+import { useShiftRange } from "@/components/schedule/use-shift-range";
 import { ButtonGroup } from "@/components/ui/button-group";
-import type { DayHeaderContentArg, EventClickArg } from "@fullcalendar/core";
+import { useBreakpoint } from "@/hooks/use-breakpoint";
+import { cn } from "@/lib/utils";
+import {
+  formatRange,
+  type DayHeaderContentArg,
+  type EventClickArg,
+  type SlotLabelContentArg,
+} from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import CaretLeftIcon from "@public/assets/icons/caret-left.svg";
 import CaretRightIcon from "@public/assets/icons/caret-right.svg";
-import { endOfMonth, startOfMonth } from "date-fns";
+import { endOfMonth, format, startOfMonth } from "date-fns";
 import { useEffect, useMemo, useRef } from "react";
-import { useShiftRange } from "@/components/schedule/use-shift-range";
-import { mapListShiftToScheduleShift } from "./shift-mappers";
-import { CalendarView, isSameDay } from "./dateUtils";
+import { CalendarView, isSameDay, isOddDay } from "./dateUtils";
 import "./page.scss";
+import { useSchedulePage } from "./schedule-page-context";
 import { useCalendarApi } from "./useCalendarApi";
 import { useDayView } from "./useDayView";
+import { Clock } from "lucide-react";
+import { formatTimeRange } from "@/lib/schedule-fmt";
+import { createPrng } from "@/utils/prngUtils";
+import { backgroundColors } from "@/components/ui/avatar";
 
-export function ScheduleCalendarView({
-  onSelectShift,
-}: {
-  onSelectShift: (shiftId: string) => void;
-}) {
+const FIRST_DAY_OF_WEEK = 1;
+
+export function ScheduleCalendarView() {
   const calendarRef = useRef<FullCalendar | null>(null);
   const calendarContainerRef = useRef<HTMLDivElement>(null);
+  const isMdUp = useBreakpoint("md");
   const { calendarApi, next, prev, changeView, getDate, goToDate } =
     useCalendarApi(calendarRef);
-  const { isDayView, selectedDate, setSelectedDate, renderDayViewHeader } =
-    useDayView({
-      calendarApi,
-      next,
-      prev,
-      changeView,
-      getDate,
-      goToDate,
-      calendarContainerRef,
-    });
+  const { openAsideFor, selectedDate, setSelectedDate } = useSchedulePage();
+  const { isDayView, renderDayViewHeader } = useDayView({
+    calendarApi,
+    next,
+    prev,
+    changeView,
+    getDate,
+    goToDate,
+    calendarContainerRef,
+    selectedDate,
+    setSelectedDate,
+  });
 
-  const rangeStart = useMemo(
-    () => startOfMonth(selectedDate ?? new Date()),
-    [selectedDate],
-  );
+  const rangeStart = useMemo(() => startOfMonth(selectedDate), [selectedDate]);
   const rangeEnd = useMemo(() => endOfMonth(rangeStart), [rangeStart]);
 
-  const { shifts: rawShifts } = useShiftRange({
+  const { shifts: scheduleShifts } = useShiftRange({
     start: rangeStart,
     end: rangeEnd,
   });
-  const scheduleShifts = useMemo(
-    () => rawShifts.map(mapListShiftToScheduleShift),
-    [rawShifts],
-  );
+  // const scheduleShifts = useMemo(
+  //   () => rawShifts.map(mapListShiftToScheduleShift),
+  //   [rawShifts],
+  // );
 
   // Render calendar in appropriate view
   useEffect(() => {
-    if (!calendarApi) return;
+    const api = calendarRef.current?.getApi();
+    if (!api) return;
+
+    queueMicrotask(() => {
+      api.gotoDate(selectedDate);
+    });
+  }, [selectedDate]);
+
+  useEffect(() => {
+    const api = calendarRef.current?.getApi();
+    if (!api) return;
 
     queueMicrotask(() => {
       if (isDayView) {
-        calendarApi.changeView(CalendarView.Day, selectedDate);
+        api.changeView(CalendarView.Day, selectedDate);
       } else {
-        calendarApi.changeView(CalendarView.Week);
+        api.changeView(CalendarView.Week);
       }
     });
-  }, [calendarApi, selectedDate, isDayView]);
+  }, [selectedDate, isDayView]);
 
   // Keep FullCalendar width in sync with layout changes (e.g. opening/closing the aside).
   // ResizeObserver picks up the PageLayout aside animation and we debounce via rAF
@@ -113,9 +132,9 @@ export function ScheduleCalendarView({
 
   const renderNavBar = () => {
     return (
-      <div className="navbar">
-        <div className="navbar-left">
-          <ButtonGroup className="navbar-buttons">
+      <div className="flex w-full items-center justify-between border-b">
+        <div className="flex items-center gap-4">
+          <ButtonGroup>
             <Button variant="ghost" onClick={() => handleNavAction("today")}>
               Today
             </Button>
@@ -126,7 +145,7 @@ export function ScheduleCalendarView({
               <CaretRightIcon />
             </Button>
           </ButtonGroup>
-          <div className="pl-4">
+          <div>
             {selectedDate.toLocaleDateString("en-US", {
               month: "long",
               year: "numeric",
@@ -179,20 +198,41 @@ export function ScheduleCalendarView({
     const dayName: string = date.toLocaleDateString("en-US", {
       weekday: "long",
     });
+    const dayNameShort: string = date.toLocaleDateString("en-US", {
+      weekday: "short",
+    });
     const dayNum: number = date.getDate();
 
     return (
-      <div
-        className={`week-header ${isToday ? "week-header-current-day" : ""}`}
-      >
-        <div style={{ fontSize: "24px" }}>{dayNum}</div>
-        <div style={{ fontSize: "14px" }}>{dayName}</div>
+      <div className={cn("p-2 pt-3 text-left font-normal w-full")}>
+        <div
+          className={cn(
+            "font-display text-lg",
+            isToday && "font-bold text-primary",
+          )}
+        >
+          {dayNum}
+        </div>
+        <div className={cn("truncate", isToday && "font-bold text-primary")}>
+          {isMdUp ? dayName : dayNameShort}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSlotLabel = (ctx: SlotLabelContentArg) => {
+    return (
+      <div className="pl-2 pr-2">
+        <span className={cn("font-medium")}>{format(ctx.date, "h")}</span>
+        <span className="pl-0.5 align-[0.5px] text-muted-foreground text-xs">
+          {format(ctx.date, "a")}
+        </span>
       </div>
     );
   };
 
   const handleEventClick = (info: EventClickArg) => {
-    onSelectShift(info.event.id);
+    openAsideFor(info.event.id);
     setSelectedDate(info.event.start!);
   };
 
@@ -200,9 +240,24 @@ export function ScheduleCalendarView({
     <>
       {renderNavBar()}
       {isDayView && renderDayViewHeader()}
-      <div ref={calendarContainerRef}>
+      <div
+        style={
+          {
+            "--fc-event-bg-color": "var(--card)",
+            "--fc-event-border-color": "var(--border)",
+            "--fc-event-text-color": "var(--card-foregroud)",
+            "--fc-event-selected-overlay-color": "rgba(0, 0, 0, 0.05)",
+            "--fc-now-indicator-color": "#FF4146",
+            "--fc-today-bg-color":
+              "color-mix(in srgb, var(--primary) 10%, transparent)",
+          } as React.CSSProperties
+        }
+        className={cn(isDayView ? "pl-3" : "pl-9")}
+        ref={calendarContainerRef}
+      >
         <FullCalendar
           ref={calendarRef}
+          eventDisplay="list-item"
           plugins={[dayGridPlugin, timeGridPlugin]}
           initialView={CalendarView.Week}
           headerToolbar={false}
@@ -213,16 +268,71 @@ export function ScheduleCalendarView({
 
             return renderWeekHeader(arg);
           }}
+          slotLabelContent={renderSlotLabel}
+          dayHeaderClassNames={(ctx) =>
+            cn(
+              "overflow-hidden [&>*_>*]:!p-0 [&>*_>*]:!block [&>*_>*]:!max-w-full",
+              isSameDay(ctx.date, new Date()) &&
+                "!border-b-2 !border-b-primary",
+              !isDayView && "[&:nth-child(2)]:!border-l-0",
+              !isDayView &&
+                isOddDay(ctx.date.getDay(), FIRST_DAY_OF_WEEK) &&
+                "bg-muted",
+            )
+          }
+          dayCellClassNames={(ctx) =>
+            cn(
+              !isDayView && "[&:nth-child(2)]:!border-l-0",
+              !isDayView &&
+                isOddDay(ctx.date.getDay(), FIRST_DAY_OF_WEEK) &&
+                "bg-muted",
+            )
+          }
+          eventClassNames={"!shadow mr-[2px] my-[1px] !rounded-sm"}
+          eventContent={(ctx) => {
+            const prng = createPrng(ctx.event.title);
+            const color = prng.shuffle(backgroundColors)[0]!;
+            return (
+              <div className="flex flex-row max-w-full gap-1 h-full p-1 pb-3">
+                <div
+                  style={{ "--avatar-bg": color } as React.CSSProperties}
+                  className={cn(
+                    "w-1.5 h-[min(90%,4rem)] translate-0 shrink-0 rounded bg-primary",
+                    "bg-(--avatar-bg)",
+                  )}
+                />
+                <div className="flex flex-col min-w-0 text-foreground">
+                  <span className="line-clamp-2 text-sm">
+                    {ctx.event.title}
+                  </span>
+                  <div className="flex gap-1 text-muted-foreground">
+                    <Clock className="inline size-3" />
+                    <span className="truncate leading-3 text-xs">
+                      {formatTimeRange(ctx.event.start!, ctx.event.end!)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          }}
           height="auto"
-          slotMinTime="09:00:00"
+          slotMinTime="07:00:00"
+          nowIndicator
+          nowIndicatorClassNames={(ctx) =>
+            cn(
+              ctx.isAxis &&
+                "!m-0 !border-none -translate-y-[calc(50%-1px)] bg-(--fc-now-indicator-color) px-1.5 text-sm text-primary-foreground rounded-full right-1 !left-[unset]",
+            )
+          }
+          nowIndicatorContent={(ctx) => ctx.isAxis && format(ctx.date, "h:mm")}
           allDaySlot={false}
           eventClick={handleEventClick}
-          firstDay={1}
+          firstDay={FIRST_DAY_OF_WEEK}
           events={scheduleShifts.map((shift) => ({
             id: shift.id,
-            title: shift.title ?? "Unnamed shift",
-            start: shift.start,
-            end: shift.end,
+            title: shift.className,
+            start: shift.startAt,
+            end: shift.endAt,
           }))}
         />
       </div>

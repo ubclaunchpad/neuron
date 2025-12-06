@@ -175,7 +175,7 @@ function AsideFieldLabel({
   return (
     <h3
       data-slot="aside-field-label"
-      className={cn("self-center text-muted-foreground", className)}
+      className={cn("self-start text-muted-foreground", className)}
       {...props}
     />
   );

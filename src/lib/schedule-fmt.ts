@@ -13,38 +13,34 @@ export interface BaseFormatOptions {
 }
 
 export interface TimeRangeFormatOptions extends BaseFormatOptions {
-  sameMeridiemStartPattern?: string; // e.g. "h:mm"
-  fullTimePattern?: string; // e.g. "h:mm a"
+  meridiemSeparator?: string;
   rangeSeparator?: string; // e.g. " - " or " to " or "–"
 }
 
 export function formatTimeRange(
-  start: string,
-  end: string,
+  start: Date | string,
+  end: Date | string,
   options: TimeRangeFormatOptions = {},
 ): string {
-  const {
-    locale,
-    sameMeridiemStartPattern = "h:mm",
-    fullTimePattern = "h:mm a",
-    rangeSeparator = "–",
-  } = options;
-  const startTime = timeToJSDate(start)!;
-  const endTime = timeToJSDate(end)!;
+  const { locale, rangeSeparator = "–", meridiemSeparator = "" } = options;
+  const startTime = typeof start === "string" ? timeToJSDate(start)! : start;
+  const endTime = typeof end === "string" ? timeToJSDate(end)! : end;
 
   if (startTime.getTime() === endTime.getTime()) {
-    return format(start, fullTimePattern, { locale });
+    return format(start, "h:mm a", { locale });
   }
 
-  const sameMeridiem =
-    format(startTime, "a", { locale }) === format(endTime, "a", { locale });
+  let startPattern = "h";
+  if (startTime.getMinutes() !== 0) startPattern += ":mm";
+  if (format(startTime, "a", { locale }) !== format(endTime, "a", { locale }))
+    startPattern += meridiemSeparator + "a";
 
-  const startPattern = sameMeridiem
-    ? sameMeridiemStartPattern
-    : fullTimePattern;
+  let endPattern = "h";
+  if (endTime.getMinutes() !== 0) endPattern += ":mm";
+  endPattern += meridiemSeparator + "a";
 
   const startStr = format(startTime, startPattern, { locale });
-  const endStr = format(endTime, fullTimePattern, { locale });
+  const endStr = format(endTime, endPattern, { locale });
 
   return `${startStr}${rangeSeparator}${endStr}`;
 }

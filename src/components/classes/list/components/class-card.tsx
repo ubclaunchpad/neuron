@@ -78,10 +78,7 @@ export function ClassCard({
             {classData.schedules.length > 0 ? (
               <>
                 {classData.schedules.slice(0, 2).map((schedule, idx) => (
-                  <span
-                    key={idx}
-                    className="after:mx-1 after:content-['·'] last:after:content-['']"
-                  >
+                  <span key={idx} className="block">
                     {formatScheduleRecurrence(schedule.rule, {
                       style: "short",
                     })}{" "}

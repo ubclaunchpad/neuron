@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import {
   AsideBody,
@@ -12,8 +12,6 @@ import {
   AsideHeader,
   AsideSection,
   AsideSectionContent,
-  AsideSectionHeader,
-  AsideSectionTitle,
   AsideTitle,
 } from "@/components/aside";
 import { useClassesPage } from "@/components/classes/list/class-list-view";
@@ -22,7 +20,6 @@ import { Separator } from "@/components/ui/separator";
 import { WithPermission } from "@/components/utils/with-permission";
 import {
   formatCompressedDateList,
-  formatScheduleRecurrence,
   formatTimeRange,
   getFrequencyLabel,
   weekdayLabel,
@@ -35,7 +32,7 @@ import { TypographyTitle } from "../../ui/typography";
 import { DeleteClassButton } from "../primitives/delete-class-button";
 import { PublishClassButton } from "../primitives/publish-class-button";
 import { StarClassButton } from "../primitives/star-class-button";
-import { Avatar } from "@/components/primitives/avatar";
+import { UserList } from "@/components/users/user-list";
 
 export function ClassDetailsAside() {
   const { selectedClassId, closeAside } = useClassesPage();
@@ -49,6 +46,13 @@ export function ClassDetailsAside() {
         meta: { suppressToast: true },
       },
     );
+
+  // Close aside if no shiftId is selected
+  useEffect(() => {
+    if (!selectedClassId) {
+      closeAside();
+    }
+  }, [selectedClassId, closeAside]);
 
   const scheduleViews = useMemo(() => {
     return (classData?.schedules ?? []).map((s) => ({
@@ -123,30 +127,10 @@ export function ClassDetailsAside() {
                   <AsideField inline>
                     <AsideFieldLabel>Instructors</AsideFieldLabel>
                     <AsideFieldContent>
-                      {instructors.length === 0 ? (
-                        <span>No instructors assigned</span>
-                      ) : (
-                        instructors.map((user) => (
-                          <div
-                            key={user.id}
-                            className="inline-flex items-end gap-1"
-                          >
-                            <Avatar
-                              className="size-8 rounded-[0.25rem]"
-                              src={user.image}
-                              fallbackText={user.fullName}
-                            />
-                            <div>
-                              <div className="text-sm truncate font-medium leading-none">
-                                {user.fullName}
-                              </div>
-                              <div className="text-xs truncate text-muted-foreground">
-                                {user.email}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
+                      <UserList
+                        users={instructors}
+                        emptyLabel="No instructors assigned"
+                      />
                     </AsideFieldContent>
                   </AsideField>
 
@@ -156,30 +140,10 @@ export function ClassDetailsAside() {
                     <AsideField inline>
                       <AsideFieldLabel>Volunteers</AsideFieldLabel>
                       <AsideFieldContent>
-                        {volunteers.length === 0 ? (
-                          <span>No volunteers assigned</span>
-                        ) : (
-                          volunteers.map((user) => (
-                            <div
-                              key={user.id}
-                              className="inline-flex items-end gap-1"
-                            >
-                              <Avatar
-                                className="size-8 rounded-[0.25rem]"
-                                src={user.image}
-                                fallbackText={user.fullName}
-                              />
-                              <div>
-                                <div className="text-sm truncate font-medium leading-none">
-                                  {user.fullName}
-                                </div>
-                                <div className="text-xs truncate text-muted-foreground">
-                                  {user.email}
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        )}
+                        <UserList
+                          users={volunteers}
+                          emptyLabel="No volunteers assigned"
+                        />
                       </AsideFieldContent>
                     </AsideField>
                   </WithPermission>

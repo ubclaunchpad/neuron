@@ -1,5 +1,7 @@
 import type { VolunteerUserViewDB } from "@/server/db/schema";
 import type { Status } from "./interfaces";
+import { em } from "node_modules/@fullcalendar/core/internal-common";
+import { email } from "node_modules/zod/v4/core/regexes.cjs";
 
 export type Volunteer = {
   id: string;
@@ -51,6 +53,7 @@ export function getEmbeddedVolunteer(v: Volunteer) {
     id: v.id,
     name: v.name,
     lastName: v.lastName,
+    email: v.email,
     image: v.image,
   } as const;
 }

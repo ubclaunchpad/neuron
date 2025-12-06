@@ -13,7 +13,6 @@ import {
 } from "react";
 
 import { Loader } from "@/components/utils/loader";
-import { WithPermission } from "@/components/utils/with-permission";
 import { usePermission } from "@/hooks/use-permission";
 import { clientApi } from "@/trpc/client";
 

@@ -22,7 +22,7 @@ export function ClassCategoriesNav() {
       targetRef={contentScrollRef}
       dataAttribute="section"
       className={cn(
-        "flex gap-5 px-9 overflow-x-auto border-b border-border",
+        "flex gap-5 px-9 overflow-x-auto border-b border-border max-w-[100vw]",
         "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
       )}
     >

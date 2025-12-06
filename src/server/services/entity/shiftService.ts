@@ -13,11 +13,11 @@ import {
   getSingleShift,
   getSingleShiftWithPersonalContext,
   getSingleShiftWithRosterContext,
-  type ListShiftSummary,
+  type ListShift,
   type ListShiftWithPersonalStatus,
   type ListShiftWithRosterStatus,
   type Shift,
-  type SingleShiftSummary,
+  type SingleShift,
   type SingleShiftWithPersonalContext,
   type SingleShiftWithRosterContext,
 } from "@/models/shift";
@@ -54,12 +54,12 @@ type ShiftRow = {
 };
 
 type ListShiftView =
-  | ListShiftSummary
+  | ListShift
   | ListShiftWithPersonalStatus
   | ListShiftWithRosterStatus;
 
 type SingleShiftView =
-  | SingleShiftSummary
+  | SingleShift
   | SingleShiftWithPersonalContext
   | SingleShiftWithRosterContext;
 

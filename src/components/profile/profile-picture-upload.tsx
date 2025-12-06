@@ -11,6 +11,7 @@ interface ProfilePictureUploadProps {
   name?: string;
   disabled?: boolean;
   userId?: string;
+  onUploaded?: (objectKey: string) => void;
 }
 
 export function ProfilePictureUpload({
@@ -18,6 +19,7 @@ export function ProfilePictureUpload({
   name,
   disabled = false,
   userId,
+  onUploaded,
 }: ProfilePictureUploadProps) {
   const { user } = useAuth();
 
@@ -32,6 +34,7 @@ export function ProfilePictureUpload({
         id={userId ?? user?.id ?? ""}
         disabled={disabled}
         targetSize={120}
+        onUploaded={onUploaded}
         // onUploaded={(objectKey) => {
         //   const base = process.env.NEXT_PUBLIC_MINIO_PUBLIC_URL!;
         //   const bucket = process.env.NEXT_PUBLIC_MINIO_BUCKET!;

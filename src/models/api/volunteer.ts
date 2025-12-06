@@ -18,23 +18,12 @@ export const VolunteerIdInput = z.object({
   volunteerUserId: z.uuid(),
 });
 
-export const UpdateVolunteerProfileInput = z.object({
-  volunteerUserId: z.uuid(),
-  preferredName: z.string().optional(),
-  bio: z.string().optional(),
-  pronouns: z.string().optional(),
-  phoneNumber: z.string().optional(),
-  city: z.string().optional(),
-  province: z.string().optional(),
-  preferredTimeCommitmentHours: z.number().int().min(0).optional(),
-});
-
 export const UpdateVolunteerAvailabilityInput = z.object({
   volunteerUserId: z.uuid(),
   availability: BitString(AVAILABILITY_SLOTS),
 });
 
-export const UpdateVolunteerInput = z.object({
+export const UpdateVolunteerProfileInput = z.object({
   volunteerUserId: z.uuid(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),

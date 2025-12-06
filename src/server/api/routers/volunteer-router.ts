@@ -31,13 +31,12 @@ export const volunteerRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       return await ctx.volunteerService.getClassPreference(input.volunteerUserId, input.classId)
     }),
-  byId: authorizedProcedure({ permission: { users: ["view-volunteer"] } })
+  byId: authorizedProcedure({ 
+    permission: { profile: ["view"] } }
+  )
     .input(VolunteerIdInput)
-    .query(async ({ input }) => {
-      // TODO: getVolunteerById
-      return {
-        /* volunteer */
-      };
+    .query(async ({ input, ctx }) => {
+      return await ctx.volunteerService.getVolunteer(input.volunteerUserId);
     }),
   updateVolunteerProfile: authorizedProcedure({
     permission: { profile: ["update"] },

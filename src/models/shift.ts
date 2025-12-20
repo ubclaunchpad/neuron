@@ -37,6 +37,7 @@ export type Shift = {
   startAt: Date;
   endAt: Date;
   canceled: boolean;
+  cancelledByUser?: User;
   cancelReason?: string;
   canceledAt?: Date;
   class: EmbeddedClass;
@@ -64,6 +65,7 @@ export type ShiftCoverageSummary = {
 export function buildShift(
   shiftDB: ShiftDB,
   classDB: CourseDB,
+  cancelledByUser?: User,
   instructors: User[] = [],
   volunteers: ShiftVolunteer[] = [],
   coverageRequests: ShiftCoverage[] = [],
@@ -74,6 +76,7 @@ export function buildShift(
     startAt: shiftDB.startAt,
     endAt: shiftDB.endAt,
     canceled: shiftDB.canceled,
+    cancelledByUser: cancelledByUser,
     cancelReason: shiftDB.cancelReason ?? undefined,
     canceledAt: shiftDB.canceledAt ?? undefined,
     class: {
@@ -170,6 +173,7 @@ export function getSingleShift(s: Shift) {
     startAt: s.startAt,
     endAt: s.endAt,
     canceled: s.canceled,
+    cancelledByUser: s.cancelledByUser,
     cancelReason: s.cancelReason,
     canceledAt: s.canceledAt,
     class: s.class,
@@ -193,6 +197,7 @@ export function getSingleShiftWithPersonalContext(
     startAt: s.startAt,
     endAt: s.endAt,
     canceled: s.canceled,
+    cancelledByUser: s.cancelledByUser,
     cancelReason: s.cancelReason,
     canceledAt: s.canceledAt,
     class: s.class,
@@ -224,6 +229,7 @@ export function getSingleShiftWithRosterContext(s: Shift) {
     startAt: s.startAt,
     endAt: s.endAt,
     canceled: s.canceled,
+    cancelledByUser: s.cancelledByUser,
     cancelReason: s.cancelReason,
     canceledAt: s.canceledAt,
     class: s.class,

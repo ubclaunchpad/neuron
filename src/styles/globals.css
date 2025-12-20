@@ -257,7 +257,6 @@ input[type="search"]::-webkit-search-cancel-button {
 @layer utilities {
   .justify-auto {
     display: flex;
-    flex-wrap: nowrap;
   }
   .justify-auto::before {
     content: "";

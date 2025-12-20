@@ -1,10 +1,13 @@
+import type { Session } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { CoverageStatus } from "@/models/api/coverage";
 import type {
+  CancelShiftInput,
   CreateShiftInput,
   GetShiftsInput,
   ShiftIdInput,
 } from "@/models/api/shift";
-import { Role } from "@/models/interfaces";
+import { AttendanceStatus, Role } from "@/models/interfaces";
 import {
   buildShift,
   getListShift,
@@ -17,6 +20,7 @@ import {
   type ListShiftWithPersonalStatus,
   type ListShiftWithRosterStatus,
   type Shift,
+  type ShiftAttendanceSummary,
   type SingleShift,
   type SingleShiftWithPersonalContext,
   type SingleShiftWithRosterContext,
@@ -45,7 +49,6 @@ import {
 } from "@/server/db/schema/user";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
-import type { CoverageService } from "./coverageService";
 
 type ShiftRow = {
   shift: ShiftDB;
@@ -65,9 +68,11 @@ type SingleShiftView =
 
 export class ShiftService {
   private readonly db: Drizzle;
+  private readonly session: Session;
 
-  constructor(db: Drizzle) {
+  constructor(db: Drizzle, session: Session) {
     this.db = db;
+    this.session = session;
   }
 
   private async getViewer(
@@ -130,9 +135,18 @@ export class ShiftService {
       return [];
     }
 
+    // Gather references up front so the rest of the method can use cheap lookups.
     const shiftIds = rows.map((row) => row.shift.id);
     const scheduleIds = [...new Set(rows.map((s) => s.schedule.id))];
+    const cancelledByUserIds = [
+      ...new Set(
+        rows
+          .map((row) => row.shift.cancelledByUserId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
 
+    // Pull the latest roster assignments per schedule to avoid per-row queries.
     const volunteerAssignments = await this.db
       .select({
         scheduleId: volunteerToSchedule.scheduleId,
@@ -182,6 +196,18 @@ export class ShiftService {
       )
       .where(inArray(instructorToSchedule.scheduleId, scheduleIds));
 
+    // Only load cancel authors if at least one shift was cancelled.
+    const cancelledByUsers = cancelledByUserIds.length
+      ? await this.db
+          .select()
+          .from(user)
+          .where(inArray(user.id, cancelledByUserIds))
+      : [];
+    const cancelledByUsersById = new Map(
+      cancelledByUsers.map((u) => [u.id, buildUser(u)] as const),
+    );
+
+    // Build reusable maps so we can merge roster, attendance, and coverage data.
     const volunteersById = new Map<string, ReturnType<typeof buildVolunteer>>();
     const volunteersBySchedule = new Map<string, string[]>();
     for (const record of volunteerAssignments) {
@@ -193,6 +219,7 @@ export class ShiftService {
       volunteersBySchedule.set(record.scheduleId, scheduleVolunteers);
     }
 
+    // Coverage requests may reference volunteers not on the base schedule roster.
     const coverageVolunteerIds = new Set<string>();
     for (const record of coverageRecords) {
       coverageVolunteerIds.add(record.requestingVolunteerUserId);
@@ -201,6 +228,7 @@ export class ShiftService {
       }
     }
 
+    // Attendance rows similarly reference volunteers; capture everyone involved.
     const attendanceVolunteerIds = new Set(
       attendanceRecords.map((attendance) => attendance.userId),
     );
@@ -223,6 +251,7 @@ export class ShiftService {
       }
     }
 
+    // Create a dense map keyed by shift + volunteer to speed up lookups below.
     const attendanceByShiftUser = new Map<
       string,
       {
@@ -244,6 +273,7 @@ export class ShiftService {
       });
     }
 
+    // Group every coverage request with its shift so we can hydrate in one pass.
     const coverageByShift = new Map<string, Shift["coverageRequests"]>();
     for (const record of coverageRecords) {
       const requestingVolunteer = volunteersById.get(
@@ -290,9 +320,14 @@ export class ShiftService {
     }
 
     return rows.map((row) => {
+      // Start with the roster that comes directly from the schedule assignment.
       const baseVolunteerIds = volunteersBySchedule.get(row.schedule.id) ?? [];
       const coverageForShift = coverageByShift.get(row.shift.id) ?? [];
+      const cancelledByUser = row.shift.cancelledByUserId
+        ? cancelledByUsersById.get(row.shift.cancelledByUserId)
+        : undefined;
 
+      // Track volunteers by id so coverage replacements can override originals.
       const roster = new Map<string, Shift["volunteers"][number]>();
 
       for (const volunteerId of baseVolunteerIds) {
@@ -336,6 +371,7 @@ export class ShiftService {
       return buildShift(
         row.shift,
         row.course,
+        cancelledByUser,
         instructors,
         Array.from(roster.values()),
         coverageForShift,
@@ -359,6 +395,92 @@ export class ShiftService {
       .orderBy(shift.startAt);
 
     return this.hydrateShiftRows(rows);
+  }
+
+  async checkIn(
+    shiftId: string,
+    volunteerId: string,
+  ): Promise<ShiftAttendanceSummary> {
+    const hasOverride = hasPermission({
+      user: this.session.user,
+      permission: { shifts: ["override-check-in"] },
+    });
+
+    const [shiftModel] = await this.loadShiftModels([eq(shift.id, shiftId)]);
+
+    if (!shiftModel) {
+      throw new NeuronError(
+        `Shift with id ${shiftId} was not found`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+
+    const rosterVolunteer = shiftModel.volunteers.find(
+      (volunteer) => volunteer.id === volunteerId,
+    );
+
+    if (!rosterVolunteer) {
+      throw new NeuronError(
+        "Volunteer is not assigned to this shift",
+        NeuronErrorCodes.FORBIDDEN,
+      );
+    }
+
+    const now = new Date();
+    const checkInTime = now.getTime();
+    const shiftStart = shiftModel.startAt.getTime();
+    const fifteenMinutes = 15 * 60 * 1000;
+    const thirtyMinutes = 30 * 60 * 1000;
+
+    const earliestOnTime = shiftStart - fifteenMinutes;
+    const latestOnTime = shiftStart + fifteenMinutes;
+    const latestLate = shiftStart + thirtyMinutes;
+
+    let attendanceStatus: AttendanceStatus;
+
+    if (checkInTime >= earliestOnTime && checkInTime <= latestOnTime) {
+      attendanceStatus = AttendanceStatus.present;
+    } else if (checkInTime > latestOnTime && checkInTime <= latestLate) {
+      attendanceStatus = AttendanceStatus.late;
+    } else {
+      if (!hasOverride) {
+        throw new NeuronError(
+          "Check-in is not allowed at this time",
+          NeuronErrorCodes.FORBIDDEN,
+        );
+      }
+
+      attendanceStatus = AttendanceStatus.excused;
+    }
+
+    const [attendance] = await this.db
+      .insert(shiftAttendance)
+      .values({
+        shiftId: shiftId,
+        userId: volunteerId,
+        status: attendanceStatus,
+        checkedInAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [shiftAttendance.shiftId, shiftAttendance.userId],
+        set: {
+          status: attendanceStatus,
+          checkedInAt: now,
+        },
+      })
+      .returning({
+        status: shiftAttendance.status,
+        checkedInAt: shiftAttendance.checkedInAt,
+        minutesWorked: shiftAttendance.minutesWorked,
+      });
+
+    return {
+      shiftId,
+      volunteerUserId: volunteerId,
+      status: attendance?.status ?? attendanceStatus,
+      checkedInAt: attendance?.checkedInAt ?? now,
+      minutesWorked: attendance?.minutesWorked ?? undefined,
+    };
   }
 
   async listWindow(input: GetShiftsInput): Promise<{
@@ -491,6 +613,57 @@ export class ShiftService {
       throw new NeuronError(
         `Shift with id ${input.shiftId} was not found`,
         NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+  }
+
+  async cancelShift({
+    shiftId,
+    cancelReason,
+  }: CancelShiftInput): Promise<void> {
+    const [shiftRow] = await this.db
+      .select({
+        id: shift.id,
+        startAt: shift.startAt,
+        canceled: shift.canceled,
+      })
+      .from(shift)
+      .where(eq(shift.id, shiftId))
+      .limit(1);
+
+    if (!shiftRow) {
+      throw new NeuronError(
+        `Shift with id ${shiftId} was not found`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+
+    if (shiftRow.startAt <= new Date()) {
+      throw new NeuronError(
+        "Cannot cancel a shift that has already started",
+        NeuronErrorCodes.BAD_REQUEST,
+      );
+    }
+
+    if (shiftRow.canceled) {
+      return;
+    }
+
+    const [updated] = await this.db
+      .update(shift)
+      .set({
+        canceled: true,
+        cancelledByUserId: this.session?.user?.id ?? null,
+        canceledAt: new Date(),
+        cancelReason,
+      })
+      .where(eq(shift.id, shiftId))
+      .returning({ id: shift.id });
+
+    if (!updated) {
+      throw new NeuronError(
+        `Failed to cancel shift with id ${shiftId}`,
+        NeuronErrorCodes.BAD_REQUEST,
       );
     }
   }

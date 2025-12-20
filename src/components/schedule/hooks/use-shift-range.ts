@@ -5,9 +5,7 @@ import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { clientApi, type RouterOutputs } from "@/trpc/client";
-
-type ShiftListPage = RouterOutputs["shift"]["list"];
-type ShiftListItem = ShiftListPage["shifts"][number];
+import type { ListShift } from "@/models/shift";
 
 type UseShiftRangeOptions = {
   start: Date;
@@ -87,6 +85,7 @@ export function useShiftRange({
     ],
     enabled: enabled && requiredMonths.length > 0,
     queryFn: async () => {
+      console.log(userId, courseId, scheduleId);
       const pages = await Promise.all(
         requiredMonths.map((cursor) =>
           utils.shift.list.fetch({ cursor, userId, courseId, scheduleId }),
@@ -129,7 +128,7 @@ export function useShiftRange({
   ]);
 
   const shifts = useMemo(() => {
-    if (!shiftQuery.data) return [] as ShiftListItem[];
+    if (!shiftQuery.data) return [] as ListShift[];
 
     const rangeStart =
       Temporal.Instant.compare(toInstant(start), toInstant(end)) <= 0
@@ -137,7 +136,7 @@ export function useShiftRange({
         : end;
     const rangeEnd = rangeStart === start ? end : start;
 
-    const byId = new Map<string, ShiftListItem>();
+    const byId = new Map<string, ListShift>();
 
     for (const page of shiftQuery.data) {
       for (const shift of page.shifts ?? []) {

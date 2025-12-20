@@ -15,6 +15,16 @@ export const ShiftIdInput = z.object({
 });
 export type ShiftIdInput = z.infer<typeof ShiftIdInput>;
 
+export const CheckInInput = ShiftIdInput.extend({
+  volunteerId: z.uuid().optional(),
+});
+export type CheckInInput = z.infer<typeof CheckInInput>;
+
+export const CancelShiftInput = ShiftIdInput.extend({
+  cancelReason: z.string(),
+});
+export type CancelShiftInput = z.infer<typeof CancelShiftInput>;
+
 export const AbsenceRequestInput = z.object({
   details: z.string(),
   comments: z.string().optional(),

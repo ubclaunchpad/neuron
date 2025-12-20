@@ -1,14 +1,17 @@
 "use client";
 
 import { Button } from "@/components/primitives/button";
-import { useShiftRange } from "@/components/schedule/use-shift-range";
+import { useShiftRange } from "@/components/schedule/hooks/use-shift-range";
+import { backgroundColors } from "@/components/ui/avatar";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
+import { formatTimeRange } from "@/lib/schedule-fmt";
 import { cn } from "@/lib/utils";
+import { createPrng } from "@/utils/prngUtils";
 import {
-  formatRange,
   type DayHeaderContentArg,
   type EventClickArg,
+  type EventContentArg,
   type SlotLabelContentArg,
 } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -17,16 +20,14 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import CaretLeftIcon from "@public/assets/icons/caret-left.svg";
 import CaretRightIcon from "@public/assets/icons/caret-right.svg";
 import { endOfMonth, format, startOfMonth } from "date-fns";
-import { useEffect, useMemo, useRef } from "react";
-import { CalendarView, isSameDay, isOddDay } from "./dateUtils";
+import { Clock } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import useMeasure from "react-use-measure";
+import { useSchedulePage } from "../../../components/schedule/schedule-page-context";
+import { CalendarView, isOddDay, isSameDay } from "./dateUtils";
 import "./page.scss";
-import { useSchedulePage } from "./schedule-page-context";
 import { useCalendarApi } from "./useCalendarApi";
 import { useDayView } from "./useDayView";
-import { Clock } from "lucide-react";
-import { formatTimeRange } from "@/lib/schedule-fmt";
-import { createPrng } from "@/utils/prngUtils";
-import { backgroundColors } from "@/components/ui/avatar";
 
 const FIRST_DAY_OF_WEEK = 1;
 
@@ -51,15 +52,10 @@ export function ScheduleCalendarView() {
 
   const rangeStart = useMemo(() => startOfMonth(selectedDate), [selectedDate]);
   const rangeEnd = useMemo(() => endOfMonth(rangeStart), [rangeStart]);
-
   const { shifts: scheduleShifts } = useShiftRange({
     start: rangeStart,
     end: rangeEnd,
   });
-  // const scheduleShifts = useMemo(
-  //   () => rawShifts.map(mapListShiftToScheduleShift),
-  //   [rawShifts],
-  // );
 
   // Render calendar in appropriate view
   useEffect(() => {
@@ -289,32 +285,7 @@ export function ScheduleCalendarView() {
             )
           }
           eventClassNames={"!shadow mr-[2px] my-[1px] !rounded-sm"}
-          eventContent={(ctx) => {
-            const prng = createPrng(ctx.event.title);
-            const color = prng.shuffle(backgroundColors)[0]!;
-            return (
-              <div className="flex flex-row max-w-full gap-1 h-full p-1 pb-3">
-                <div
-                  style={{ "--avatar-bg": color } as React.CSSProperties}
-                  className={cn(
-                    "w-1.5 h-[min(90%,4rem)] translate-0 shrink-0 rounded bg-primary",
-                    "bg-(--avatar-bg)",
-                  )}
-                />
-                <div className="flex flex-col min-w-0 text-foreground">
-                  <span className="line-clamp-2 text-sm">
-                    {ctx.event.title}
-                  </span>
-                  <div className="flex gap-1 text-muted-foreground">
-                    <Clock className="inline size-3" />
-                    <span className="truncate leading-3 text-xs">
-                      {formatTimeRange(ctx.event.start!, ctx.event.end!)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          }}
+          eventContent={(ctx) => <CalendarEventContext ctx={ctx} />}
           height="auto"
           slotMinTime="07:00:00"
           nowIndicator
@@ -337,5 +308,76 @@ export function ScheduleCalendarView() {
         />
       </div>
     </>
+  );
+}
+
+function CalendarEventContext({ ctx: { event } }: { ctx: EventContentArg }) {
+  const color = useMemo(() => {
+    const prng = createPrng(event.title);
+    return prng.shuffle(backgroundColors)[0]!;
+  }, [event.title]);
+
+  const [innerEventRef, innerEventBounds] = useMeasure();
+  const [titleRef, titleBounds] = useMeasure();
+  const [innerEventHeight, setInnerEventHeight] = useState(0);
+  const [titleHeight, setTitleHeight] = useState(0);
+  useEffect(() => {
+    console.log(innerEventBounds.height);
+    if (innerEventBounds.height) setInnerEventHeight(innerEventBounds.height);
+  }, [innerEventBounds.height]);
+  useEffect(() => {
+    if (titleBounds.height) setTitleHeight(titleBounds.height);
+  }, [titleBounds.height]);
+
+  const titleLineHeight =
+    16 /* 1rem */ * 0.875 /* font-size */ * 1.35; /* line-height */
+  const mostTitleLines = Math.floor(innerEventHeight / titleLineHeight);
+
+  const timeLineHeight = 3 /* size-3 */ * 4; /* 0.25rem */
+  const hideTime = innerEventHeight < titleHeight + timeLineHeight;
+
+  return (
+    <div className={cn("flex flex-row max-w-full gap-1 h-full p-1 pb-3")}>
+      <div
+        style={{ "--avatar-bg": color } as React.CSSProperties}
+        className={cn(
+          "w-1.5 h-[min(90%,4rem)] translate-0 shrink-0 rounded bg-primary",
+          "bg-(--avatar-bg)",
+        )}
+      />
+      <div
+        ref={innerEventRef}
+        className="flex flex-col min-w-0 text-foreground w-full @container-[size]"
+      >
+        <span
+          ref={titleRef}
+          style={
+            {
+              "--line-clamp": mostTitleLines,
+            } as React.CSSProperties
+          }
+          lang="en"
+          className={cn(
+            "shrink-0 text-sm break-words hyphens-auto",
+            // This is the equialent of line-clamp-[--line-clamp]
+            // however, this is not legal in tailwind so we have to do this workaround
+            "overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:var(--line-clamp)]",
+          )}
+        >
+          {event.title}
+        </span>
+        <div
+          className={cn(
+            "flex gap-1 text-muted-foreground",
+            hideTime && "hidden",
+          )}
+        >
+          <Clock className="inline size-3" />
+          <span className="truncate leading-3 text-xs">
+            {formatTimeRange(event.start!, event.end!)}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }

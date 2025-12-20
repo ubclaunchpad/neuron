@@ -65,12 +65,12 @@ const registerServices = (container: NeuronContainer) => {
   container.register({
     imageService: asClass<ImageService>(ImageService).singleton(),
     emailService: asClass<EmailService>(EmailService).singleton(),
-    classService: asClass<ClassService>(ClassService).singleton(),
-    shiftService: asClass<ShiftService>(ShiftService).singleton(),
+    classService: asClass<ClassService>(ClassService).scoped(),
+    shiftService: asClass<ShiftService>(ShiftService).scoped(),
     userService: asClass<UserService>(UserService).singleton(),
     volunteerService: asClass<VolunteerService>(VolunteerService).singleton(),
     termService: asClass<TermService>(TermService).singleton(),
-    coverageService: asClass<CoverageService>(CoverageService).singleton(),
+    coverageService: asClass<CoverageService>(CoverageService).scoped(),
     cacheService: asClass<CacheService>(CacheService).scoped(),
   });
 };

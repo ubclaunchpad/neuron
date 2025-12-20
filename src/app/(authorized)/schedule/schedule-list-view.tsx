@@ -1,10 +1,11 @@
 "use client";
 
-import { ShiftItem } from "@/components/schedule/shift-item";
-import { useShiftRange } from "@/components/schedule/use-shift-range";
 import { ListLoadingState, ListStateWrapper } from "@/components/members/list";
+import { useShiftRange } from "@/components/schedule/hooks/use-shift-range";
+import { ShiftItem } from "@/components/schedule/shift-item";
 import { TypographyTitle } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
+import type { ListShift } from "@/models/shift";
 import {
   compareAsc,
   endOfMonth,
@@ -14,8 +15,7 @@ import {
   startOfMonth,
 } from "date-fns";
 import { useMemo } from "react";
-import { useSchedulePage } from "./schedule-page-context";
-import type { ListShift } from "@/models/shift";
+import { useSchedulePage } from "../../../components/schedule/schedule-page-context";
 
 type StatusFilter = "all" | "mine" | "requested" | "needs";
 

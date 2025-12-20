@@ -17,8 +17,8 @@ export interface FormInputProps
   onChange: (value: string) => void;
 }
 
-function FormInput({ value, onChange, type, ...props }: FormInputProps) {
-  const InputComp = type === "password" ? PasswordInput : Input;
+function FormInput({ value, onChange, ...props }: FormInputProps) {
+  const InputComp = props.type === "password" ? PasswordInput : Input;
   return (
     <InputComp
       value={value}

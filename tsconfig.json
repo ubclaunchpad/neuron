@@ -18,7 +18,7 @@
     "noEmit": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "plugins": [
       {
         "name": "next"
@@ -43,7 +43,8 @@
     "**/*.cjs",
     "**/*.js",
     ".next/types/**/*.ts",
-    "src/components/form/TextInput"
+    "src/components/form/TextInput",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

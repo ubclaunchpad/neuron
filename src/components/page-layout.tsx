@@ -105,7 +105,7 @@ function PageLayout({
           } as React.CSSProperties
         }
         className={cn(
-          "bg-background relative flex min-h-svh max-h-svh overflow-auto flex-col",
+          "bg-background relative flex min-h-svh max-h-svh max-w-svw overflow-auto flex-col",
           "transition-[margin-right] duration-200",
           "mr-(--main-offset) min-w-(--main-min)",
           className,
@@ -123,9 +123,12 @@ function PageLayoutHeader({
   children,
   border = "always",
   ...props
-}: React.ComponentProps<"header"> & { border?: "always" | "never" | "scroll" }) {
+}: React.ComponentProps<"header"> & {
+  border?: "always" | "never" | "scroll";
+}) {
   const { isPageScrolled, setHeaderHeight } = usePageLayout();
-  const hideBorder = border === "never" || (border === "scroll" && !isPageScrolled);
+  const hideBorder =
+    border === "never" || (border === "scroll" && !isPageScrolled);
 
   const headerRef = React.useRef<HTMLElement | null>(null);
   React.useLayoutEffect(() => {
@@ -151,10 +154,10 @@ function PageLayoutHeader({
       ref={headerRef}
       data-slot="page-header"
       className={cn(
-        "bg-background sticky top-0 z-40 border-b transition-[border-color] shadow-bottom", 
+        "bg-background sticky top-0 z-40 border-b transition-[border-color] shadow-bottom",
         !isPageScrolled && "shadow-none",
-        hideBorder && "border-transparent", 
-        className
+        hideBorder && "border-transparent",
+        className,
       )}
       {...props}
     >
@@ -168,7 +171,7 @@ function PageLayoutHeaderContent({
   showBackButton,
   children,
   ...props
-}: React.ComponentProps<"div"> & { 
+}: React.ComponentProps<"div"> & {
   showBackButton?: boolean;
 }) {
   const router = useRouter();
@@ -177,7 +180,7 @@ function PageLayoutHeaderContent({
       className={cn(
         "mx-auto w-full",
         "flex flex-wrap justify-auto items-center gap-2 pt-5 pb-7 px-9",
-        className
+        className,
       )}
       {...props}
     >
@@ -317,7 +320,12 @@ function PageAsideTrigger({
 }
 
 export {
-  PageAsideTrigger, PageLayout, PageLayoutAside, PageLayoutContent, PageLayoutHeader, PageLayoutHeaderContent,
-  PageLayoutHeaderTitle, usePageLayout as usePageAside
+  PageAsideTrigger,
+  PageLayout,
+  PageLayoutAside,
+  PageLayoutContent,
+  PageLayoutHeader,
+  PageLayoutHeaderContent,
+  PageLayoutHeaderTitle,
+  usePageLayout as usePageAside,
 };
-

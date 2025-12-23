@@ -1,5 +1,6 @@
 "use client";
 
+import { FullCalendarNavbar, FullCalendarProvider } from "@/components/fullcalendar";
 import {
   PageLayout,
   PageLayoutAside,
@@ -31,49 +32,52 @@ export default function SchedulePage() {
   return (
     <PageLayout>
       <SchedulePageProvider>
-        <PageLayoutHeader>
-          <PageLayoutHeaderContent className="items-center">
-            <PageLayoutHeaderTitle>Schedule</PageLayoutHeaderTitle>
-            <ToggleGroup
-              type="single"
-              className="self-justify-end"
-              value={currentView}
-              onValueChange={(value) =>
-                value && setCurrentView(value as ScheduleView)
-              }
-              variant="outline"
+        <FullCalendarProvider>
+          <PageLayoutHeader hideShadow border="always">
+            <PageLayoutHeaderContent className="items-center">
+              <PageLayoutHeaderTitle>Schedule</PageLayoutHeaderTitle>
+              <ToggleGroup
+                type="single"
+                className="self-justify-end"
+                value={currentView}
+                onValueChange={(value) =>
+                  value && setCurrentView(value as ScheduleView)
+                }
+                variant="outline"
+              >
+                <ToggleGroupItem value="list" aria-label="List view">
+                  List View
+                </ToggleGroupItem>
+                <ToggleGroupItem value="week" aria-label="Week view">
+                  Week View
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </PageLayoutHeaderContent>
+            <div className="flex px-9 w-full items-center gap-2">
+              {currentView === "list" && <ScheduleMonthSelect />}
+            </div>
+            {currentView === "week" && <FullCalendarNavbar className="border-t"/>}
+          </PageLayoutHeader>
+
+          <PageLayoutAside>
+            <Suspense fallback={<>Loading shift...</>}>
+              <ShiftDetailsAside />
+            </Suspense>
+          </PageLayoutAside>
+
+          <PageLayoutContent>
+            <div
+              className={cn(currentView === "week" ? "block" : "hidden")}
+              aria-hidden={currentView !== "week"}
             >
-              <ToggleGroupItem value="list" aria-label="List view">
-                List View
-              </ToggleGroupItem>
-              <ToggleGroupItem value="week" aria-label="Week view">
-                Week View
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </PageLayoutHeaderContent>
-          <div className="flex px-9 w-full items-center gap-2">
-            {currentView === "list" && <ScheduleMonthSelect />}
-          </div>
-        </PageLayoutHeader>
+              <ScheduleCalendarView />
+            </div>
 
-        <PageLayoutAside>
-          <Suspense fallback={<>Loading shift...</>}>
-            <ShiftDetailsAside />
-          </Suspense>
-        </PageLayoutAside>
-
-        <PageLayoutContent>
-          <div
-            className={cn(currentView === "week" ? "block" : "hidden")}
-            aria-hidden={currentView !== "week"}
-          >
-            <ScheduleCalendarView />
-          </div>
-
-          <Activity mode={currentView === "list" ? "visible" : "hidden"}>
-            <ScheduleListView />
-          </Activity>
-        </PageLayoutContent>
+            <Activity mode={currentView === "list" ? "visible" : "hidden"}>
+              <ScheduleListView />
+            </Activity>
+          </PageLayoutContent>
+        </FullCalendarProvider>
       </SchedulePageProvider>
     </PageLayout>
   );

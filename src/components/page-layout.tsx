@@ -122,9 +122,11 @@ function PageLayoutHeader({
   className,
   children,
   border = "always",
+  hideShadow = false,
   ...props
 }: React.ComponentProps<"header"> & {
   border?: "always" | "never" | "scroll";
+  hideShadow?: boolean;
 }) {
   const { isPageScrolled, setHeaderHeight } = usePageLayout();
   const hideBorder =
@@ -155,7 +157,7 @@ function PageLayoutHeader({
       data-slot="page-header"
       className={cn(
         "bg-background sticky top-0 z-40 border-b transition-[border-color] shadow-bottom",
-        !isPageScrolled && "shadow-none",
+        (hideShadow || !isPageScrolled) && "shadow-none",
         hideBorder && "border-transparent",
         className,
       )}
@@ -327,5 +329,6 @@ export {
   PageLayoutHeader,
   PageLayoutHeaderContent,
   PageLayoutHeaderTitle,
-  usePageLayout as usePageAside,
+  usePageLayout as usePageAside
 };
+

@@ -1,27 +1,28 @@
 "use client";
 
 import {
-  AsideContainer,
-  AsideHeader,
-  AsideTitle,
-  AsideDescription,
   AsideBody,
-  AsideSection,
-  AsideSectionContent,
+  AsideContainer,
+  AsideDescription,
   AsideField,
   AsideFieldContent,
   AsideFieldLabel,
+  AsideHeader,
+  AsideSection,
+  AsideSectionContent,
+  AsideTitle,
 } from "@/components/aside";
 import { Button } from "@/components/primitives/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { UserList } from "@/components/users/user-list";
-import Link from "next/link";
+import { clientApi } from "@/trpc/client";
 import { Video } from "lucide-react";
 import type { Route } from "next";
-import { clientApi } from "@/trpc/client";
-import { useSchedulePage } from "./schedule-page-context";
+import Link from "next/link";
 import { useEffect } from "react";
-import { Separator } from "@/components/ui/separator";
+import { CancelShiftButton } from "./cancel-shift-button";
+import { useSchedulePage } from "./schedule-page-context";
 
 export function ShiftDetailsAside() {
   const { selectedShiftId, closeAside } = useSchedulePage();
@@ -160,6 +161,12 @@ export function ShiftDetailsAside() {
             </AsideField>
           </AsideSectionContent>
         </AsideSection>
+
+        <Separator />
+
+        <div className="flex gap-2">
+          <CancelShiftButton shift={shift}/>
+        </div>
       </AsideBody>
     </AsideContainer>
   );

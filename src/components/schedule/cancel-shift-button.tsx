@@ -3,7 +3,7 @@
 import { Button } from "@/components/primitives/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { ListShift } from "@/models/shift";
+import type { SingleShift } from "@/models/shift";
 import NiceModal from "@ebay/nice-modal-react";
 import { X } from "lucide-react";
 import { CancelShiftModal } from "./modals/cancel-shift-modal";
@@ -12,7 +12,7 @@ export function CancelShiftButton({
   shift,
   className,
 }: {
-  shift: ListShift;
+  shift: SingleShift;
   className?: string;
 }) {
   if (shift.canceled) {

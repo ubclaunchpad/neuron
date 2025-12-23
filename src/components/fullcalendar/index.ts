@@ -1,9 +1,11 @@
 import { FullCalendar } from "./fullcalendar-component";
-import { FullCalendarProvider } from "./fullcalendar-context";
-import { FullCalendarNavbar } from "./fullcalendar-navbar";
+import { FullCalendarProvider, useFullCalendarContext } from "./fullcalendar-context";
+import { FullCalendarControls } from "./fullcalendar-navbar";
 
 export {
-    FullCalendar,
-    FullCalendarNavbar,
-    FullCalendarProvider
+  FullCalendar,
+  FullCalendarControls,
+  FullCalendarProvider,
+  useFullCalendarContext
 };
+

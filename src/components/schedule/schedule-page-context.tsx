@@ -27,7 +27,6 @@ export function useSchedulePage() {
   if (!ctx) {
     throw new Error("useSchedulePage must be used within SchedulePageProvider");
   }
-
   return ctx;
 }
 

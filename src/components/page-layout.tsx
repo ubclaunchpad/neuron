@@ -281,7 +281,7 @@ function PageLayoutAside({
       data-state={isOpen ? "open" : "closed"}
       style={{ width: "min(var(--aside-w), 100dvw)", ...style }}
       className={cn(
-        "fixed top-0 z-40 h-dvh border bg-background shadow-lg",
+        "fixed top-0 z-40 h-dvh border-0 bg-background shadow-lg",
         side === "right" ? "right-0 border-l" : "left-0 border-r",
         closedTransform,
         "data-[state=open]:translate-x-0 transition-transform duration-200 will-change-transform",

@@ -9,7 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import type { ListShift } from "@/models/shift";
+import type { SingleShift } from "@/models/shift";
 import { clientApi } from "@/trpc/client";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -85,7 +85,7 @@ function CancelShiftForm({
   );
 }
 
-export const CancelShiftModal = NiceModal.create(({ shift }: { shift: ListShift }) => {
+export const CancelShiftModal = NiceModal.create(({ shift }: { shift: SingleShift }) => {
   const modal = useModal();
 
   const apiUtils = clientApi.useUtils();

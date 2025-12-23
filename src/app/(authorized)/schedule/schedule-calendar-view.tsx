@@ -17,19 +17,20 @@ export function ScheduleCalendarView() {
 
   useEffect(() => {
     calendarApi?.on('datesSet', ({ start, end }) => {
-      queueMicrotask(() => {
-        setDateRange({ start, end });
-      });
+      setDateRange({ start, end });
+      setSelectedDate(start);
     });
-  }, [calendarApi, setDateRange]);
+  }, [calendarApi, setDateRange, setSelectedDate]);
 
   // Render calendar in appropriate view
   useEffect(() => {
     if (!calendarApi) return;
 
-    queueMicrotask(() => {
-      calendarApi.gotoDate(selectedDate);
-    });
+    if (calendarApi.getDate().toISOString() !== selectedDate.toISOString()) {
+      queueMicrotask(() => {
+        calendarApi.gotoDate(selectedDate);
+      });
+    }
   }, [selectedDate]);
 
   const { shifts: scheduleShifts } = useShiftRange(dateRange);

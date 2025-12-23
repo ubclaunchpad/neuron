@@ -1,11 +1,11 @@
 "use client";
 
 import { Temporal } from "@js-temporal/polyfill";
-import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
 
-import { clientApi, type RouterOutputs } from "@/trpc/client";
 import type { ListShift } from "@/models/shift";
+import { clientApi } from "@/trpc/client";
 
 type UseShiftRangeOptions = {
   start: Date;
@@ -85,10 +85,11 @@ export function useShiftRange({
     ],
     enabled: enabled && requiredMonths.length > 0,
     queryFn: async () => {
-      console.log(userId, courseId, scheduleId);
       const pages = await Promise.all(
         requiredMonths.map((cursor) =>
-          utils.shift.list.fetch({ cursor, userId, courseId, scheduleId }),
+          utils.shift.list.fetch({ cursor, userId, courseId, scheduleId }, {
+            staleTime: 5 * 60 * 1000, // 5 min, these change not very often
+          }),
         ),
       );
       return pages;

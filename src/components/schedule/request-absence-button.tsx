@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/primitives/button";
-import type { ListShift } from "@/models/shift";
+import type { SingleShift } from "@/models/shift";
 import NiceModal from "@ebay/nice-modal-react";
 import { RequestCoverageModal } from "./modals/request-coverage-modal";
 
@@ -9,7 +9,7 @@ export function RequestCoverageButton({
   shift,
   className,
 }: {
-  shift: ListShift;
+  shift: SingleShift;
   className?: string;
 }) {
   return (

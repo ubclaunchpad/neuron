@@ -16,13 +16,17 @@ import {
   startOfToday,
 } from "date-fns";
 import { useMemo } from "react";
-import { useSchedulePage } from "./schedule-page-context";
 
-export function ScheduleMonthSelect({ className }: { className?: string }) {
-  const { selectedDate, setSelectedDate } = useSchedulePage();
+export function MonthSelect({
+  value,
+  onValueChange,
+}: {
+  value: Date;
+  onValueChange: (date: Date) => void;
+}) {
   const monthKey = useMemo(
-    () => format(selectedDate, "yyyy-MM"),
-    [selectedDate],
+    () => format(value, "yyyy-MM"),
+    [value],
   );
 
   const monthOptions = useMemo(() => {
@@ -43,12 +47,12 @@ export function ScheduleMonthSelect({ className }: { className?: string }) {
     <Select
       value={monthKey}
       onValueChange={(value) =>
-        setSelectedDate(parseISO(`${value}-01T00:00:00`))
+        onValueChange?.(parseISO(`${value}-01T00:00:00`))
       }
     >
       <SelectTrigger
         className={cn(
-          "w-[180px] -mx-4 rounded-b-none border-none shadow-none !ring-0 outline-0",
+          "w-[180px] rounded-b-none border-none shadow-none !ring-0 outline-0",
           "enabled:hover:bg-accent enabled:hover:text-accent-foreground cursor-pointer",
         )}
       >

@@ -16,7 +16,7 @@ import {
   CoverageRequestCategory,
   CoverageRequestCategoryEnum,
 } from "@/models/api/coverage";
-import type { ListShift } from "@/models/shift";
+import type { SingleShift } from "@/models/shift";
 import { clientApi } from "@/trpc/client";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -129,7 +129,7 @@ function RequestCoverageSchemaForm({
 }
 
 export const RequestCoverageModal = NiceModal.create(
-  ({ shift }: { shift: ListShift }) => {
+  ({ shift }: { shift: SingleShift }) => {
     const modal = useModal();
 
     const apiUtils = clientApi.useUtils();
@@ -163,7 +163,7 @@ export const RequestCoverageModal = NiceModal.create(
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Request Coverage for {shift.className}</DialogTitle>
+            <DialogTitle>Request Coverage for {shift.class.name}</DialogTitle>
             <DialogDescription>
               {day} {startTime} {endTime}
             </DialogDescription>

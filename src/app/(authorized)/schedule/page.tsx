@@ -1,6 +1,6 @@
 "use client";
 
-import { FullCalendarNavbar, FullCalendarProvider } from "@/components/fullcalendar";
+import { FullCalendarProvider } from "@/components/fullcalendar";
 import {
   PageLayout,
   PageLayoutAside,
@@ -9,17 +9,17 @@ import {
   PageLayoutHeaderContent,
   PageLayoutHeaderTitle,
 } from "@/components/page-layout";
+import { SchedulePageControls } from "@/components/schedule/schedule-page-controls";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { parseAsStringEnum, useQueryState } from "nuqs";
 import { Activity, Suspense } from "react";
-import { ScheduleMonthSelect } from "../../../components/schedule/schedule-month-select";
 import { SchedulePageProvider } from "../../../components/schedule/schedule-page-context";
 import { ShiftDetailsAside } from "../../../components/schedule/shift-details-aside";
 import { ScheduleCalendarView } from "./schedule-calendar-view";
 import { ScheduleListView } from "./schedule-list-view";
 
-type ScheduleView = "list" | "week";
+export type ScheduleView = "list" | "week";
 
 export default function SchedulePage() {
   const [currentView, setCurrentView] = useQueryState(
@@ -53,10 +53,7 @@ export default function SchedulePage() {
                 </ToggleGroupItem>
               </ToggleGroup>
             </PageLayoutHeaderContent>
-            <div className="flex px-9 w-full items-center gap-2">
-              {currentView === "list" && <ScheduleMonthSelect />}
-            </div>
-            {currentView === "week" && <FullCalendarNavbar className="border-t"/>}
+            <SchedulePageControls currentView={currentView} />
           </PageLayoutHeader>
 
           <PageLayoutAside>

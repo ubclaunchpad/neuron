@@ -23,6 +23,11 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { CancelShiftButton } from "./cancel-shift-button";
 import { useSchedulePage } from "./schedule-page-context";
+import { WithPermission } from "../utils/with-permission";
+import { CheckInButton } from "./check-in-button";
+import { ShiftStatus } from "@/models/shift";
+import { RequestCoverageButton } from "./request-coverage-button";
+import { ShiftStatusBadge } from "./shift-status-badge";
 
 export function ShiftDetailsAside() {
   const { selectedShiftId, closeAside } = useSchedulePage();
@@ -89,12 +94,10 @@ export function ShiftDetailsAside() {
             <AsideField inline>
               <AsideFieldLabel>Status</AsideFieldLabel>
               <AsideFieldContent className="w-auto">
-                <Badge
-                  variant={shift.canceled ? "destructive" : "default"}
+                <ShiftStatusBadge
+                  status={shift.status}
                   className="w-fit pointer-events-none"
-                >
-                  {shift.canceled ? "Canceled" : "Scheduled"}
-                </Badge>
+                />
               </AsideFieldContent>
             </AsideField>
           </AsideSectionContent>
@@ -165,7 +168,15 @@ export function ShiftDetailsAside() {
         <Separator />
 
         <div className="flex gap-2">
-          <CancelShiftButton shift={shift}/>
+          <WithPermission permissions={{ permission: { shifts: ["cancel"] } }}>
+            <CancelShiftButton shift={shift} />
+          </WithPermission>
+          <WithPermission
+            permissions={{ permission: { shifts: ["check-in"] } }}
+          >
+            <CheckInButton shift={shift} />
+            <RequestCoverageButton shift={shift} />
+          </WithPermission>
         </div>
       </AsideBody>
     </AsideContainer>

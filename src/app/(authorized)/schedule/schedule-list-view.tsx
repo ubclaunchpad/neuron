@@ -7,35 +7,17 @@ import { TypographyTitle } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 import type { ListShift } from "@/models/shift";
 import {
-  compareAsc,
-  endOfMonth,
-  format,
-  isSameMonth,
-  isToday,
-  startOfMonth,
+    compareAsc,
+    endOfMonth,
+    format,
+    isSameMonth,
+    isToday,
+    startOfMonth,
 } from "date-fns";
 import { useMemo } from "react";
 import { useSchedulePage } from "../../../components/schedule/schedule-page-context";
 
 type StatusFilter = "all" | "mine" | "requested" | "needs";
-
-// const STATUS_FILTERS: Array<{
-//   id: StatusFilter;
-//   label: string;
-//   dotClass: string;
-//   dotColor: string;
-//   description?: string;
-// }> = [
-//   { id: "all", label: "All Shifts", dotClass: "bg-muted-foreground/50", dotColor: "var(--color-muted-foreground)" },
-//   { id: "mine", label: "My Shifts", dotClass: "bg-success", dotColor: "var(--color-success)" },
-//   {
-//     id: "requested",
-//     label: "Requested Coverage",
-//     dotClass: "bg-amber-400",
-//     dotColor: "#f59e0b",
-//   },
-//   { id: "needs", label: "Needs Coverage", dotClass: "bg-destructive", dotColor: "var(--color-destructive)" },
-// ];
 
 type DayGroup = { date: Date; shifts: ListShift[] };
 

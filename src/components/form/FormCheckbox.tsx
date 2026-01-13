@@ -1,9 +1,8 @@
 import type { ComponentProps } from "react";
 import type {
   Control,
-  ControllerProps,
   FieldPath,
-  FieldValues,
+  FieldValues
 } from "react-hook-form";
 import { Checkbox } from "../ui/checkbox";
 import { FormFieldController } from "./FormField";
@@ -54,7 +53,7 @@ function FormCheckboxField<
     <FormFieldController name={name} control={control}>
       {({ value, onChange, ...field }) => (
         <FormFieldLayout
-          label={label}
+          label={<span className="leading-5">{label}</span>}
           description={description}
           required={required}
           hideErrors={hideErrors}

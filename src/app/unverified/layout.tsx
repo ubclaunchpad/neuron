@@ -1,11 +1,11 @@
 import { requireStatus } from "@/lib/auth/guard";
-import { Status } from "@/models/interfaces";
+import { UserStatus } from "@/models/interfaces";
 
 export default async function UnverifiedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireStatus(Status.unverified);
+  await requireStatus(UserStatus.unverified);
   return children;
 }

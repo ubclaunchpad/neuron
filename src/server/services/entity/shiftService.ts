@@ -66,6 +66,21 @@ type SingleShiftView =
   | SingleShiftWithPersonalContext
   | SingleShiftWithRosterContext;
 
+const coverageStatusPriority = {
+  [CoverageStatus.open]: 0,
+  [CoverageStatus.resolved]: 1,
+  [CoverageStatus.withdrawn]: 2,
+} as const;
+
+function sortCoverageRequestsByStatus(
+  coverages: Shift["coverageRequests"],
+): Shift["coverageRequests"] {
+  return [...coverages].sort(
+    (a, b) =>
+      coverageStatusPriority[a.status] - coverageStatusPriority[b.status],
+  );
+}
+
 export class ShiftService {
   private readonly db: Drizzle;
   private readonly session: Session;
@@ -322,7 +337,9 @@ export class ShiftService {
     return rows.map((row) => {
       // Start with the roster that comes directly from the schedule assignment.
       const baseVolunteerIds = volunteersBySchedule.get(row.schedule.id) ?? [];
-      const coverageForShift = coverageByShift.get(row.shift.id) ?? [];
+      const coverageForShift = sortCoverageRequestsByStatus(
+        coverageByShift.get(row.shift.id) ?? [],
+      );
       const cancelledByUser = row.shift.cancelledByUserId
         ? cancelledByUsersById.get(row.shift.cancelledByUserId)
         : undefined;

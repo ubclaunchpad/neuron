@@ -1,21 +1,19 @@
 import type { UserDB } from "@/server/db/schema";
-import type { Role, Status } from "./interfaces";
+import type { Role, UserStatus } from "./interfaces";
 
 export type User = {
   id: string;
   name: string;
   lastName: string;
   email: string;
-  status: Status;
+  status: UserStatus;
   role: Role;
   image?: string;
   createdAt: Date;
   updatedAt: Date;
 };
 
-export function buildUser(
-  userDB: UserDB,
-): User {
+export function buildUser(userDB: UserDB): User {
   return {
     id: userDB.id,
     name: userDB.name,

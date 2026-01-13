@@ -19,10 +19,10 @@ const screens = {
  * @returns A boolean indicating whether the viewport size applies.
  */
 export function useBreakpoint(
-  size: keyof typeof screens,
+  size: keyof typeof screens | number,
   onChange?: (args: { up: boolean }) => void,
 ) {
-  const query = `(min-width: ${screens[size]})`;
+  const query = `(min-width: ${typeof size === "number" ? `${size}px` : screens[size]})`;
   const [matches, setMatches] = useState(false); // SSR & first client render match
 
   useLayoutEffect(() => {
@@ -38,4 +38,3 @@ export function useBreakpoint(
 
   return matches;
 }
-

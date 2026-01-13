@@ -67,14 +67,22 @@ export function TermSelect({
       <WithPermission permissions={{ permission: { terms: ["create"] } }}>
         <Button
           onClick={() =>
-            NiceModal.show(TermForm, { editingId: selectedTermId })
+            NiceModal.show(TermForm, {
+              editingId: selectedTermId,
+              onCreated: setSelectedTermId,
+            })
           }
           variant="outline"
         >
           <Edit />
         </Button>
         <Button
-          onClick={() => NiceModal.show(TermForm, { editingId: null })}
+          onClick={() =>
+            NiceModal.show(TermForm, {
+              editingId: null,
+              onCreated: setSelectedTermId,
+            })
+          }
           variant="outline"
         >
           <Plus />

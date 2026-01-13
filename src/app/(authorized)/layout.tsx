@@ -1,7 +1,7 @@
 import { AppNavbar } from "@/components/app-navbar";
 import { SIDEBAR_COOKIE_NAME, SidebarProvider } from "@/components/ui/sidebar";
 import { requireStatus } from "@/lib/auth/guard";
-import { Status } from "@/models/interfaces";
+import { UserStatus } from "@/models/interfaces";
 import { cookies } from "next/headers";
 
 export default async function ProtectedLayout({
@@ -9,7 +9,7 @@ export default async function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireStatus(Status.active);
+  await requireStatus(UserStatus.active);
 
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get(SIDEBAR_COOKIE_NAME)?.value === "true";

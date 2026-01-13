@@ -46,9 +46,9 @@ export interface FormFieldProps<
 > {
   name: TName;
   control: Control<TFieldValues, any, TTransformedValues>;
-  children: (
+  children: React.ReactNode | ((
     field: FormFieldProp<TFieldValues, TName, TTransformedValues>,
-  ) => React.ReactNode;
+  ) => React.ReactNode);
 }
 
 export function FormFieldController<
@@ -84,7 +84,7 @@ export function FormFieldController<
               fieldState,
             }}
           >
-            {children(fieldWithMeta)}
+            {typeof children === "function" ? children(fieldWithMeta) : children}
           </FormFieldContext.Provider>
         );
       }}

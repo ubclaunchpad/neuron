@@ -15,13 +15,6 @@ export function ScheduleCalendarView() {
     end: new Date(),
   });
 
-  useEffect(() => {
-    calendarApi?.on('datesSet', ({ start, end }) => {
-      setDateRange({ start, end });
-      setSelectedDate(start);
-    });
-  }, [calendarApi, setDateRange, setSelectedDate]);
-
   // Render calendar in appropriate view
   useEffect(() => {
     if (!calendarApi) return;
@@ -49,6 +42,10 @@ export function ScheduleCalendarView() {
         start: shift.startAt,
         end: shift.endAt,
       }))}
+      datesSet={({ start, end }) => {
+        setDateRange({ start, end });
+        setSelectedDate(start);
+      }}
     />
   );
 }

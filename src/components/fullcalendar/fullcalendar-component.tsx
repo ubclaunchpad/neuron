@@ -14,9 +14,9 @@ import {
 import dayGridPlugin from "@fullcalendar/daygrid";
 import FullCalendarComponent from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { format } from "date-fns";
+import { format, addHours } from "date-fns";
 import { Clock } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import useMeasure from "react-use-measure";
 import {
   CalendarView,
@@ -26,12 +26,15 @@ import {
 import { DAYVIEW_TRIGGER_WIDTH_PX, FIRST_DAY_OF_WEEK } from "./constants";
 import { DayViewHeader } from "./day-view-header";
 import { useFullCalendarContext } from "./fullcalendar-context";
-import "./fullcalendar.scss";
+import { FullCalendarDropShadowStyleOverrides } from "./fullcalendar.css.tsx";
+import "./fullcalendar.css";
 
 export function FullCalendar({
   onDateChange,
+  className,
   ...opts
 }: CalendarOptions & {
+  className?: string;
   onDateChange?: (date: Date) => void;
 }) {
   const { calendarRef, calendarApi } = useFullCalendarContext();
@@ -64,7 +67,9 @@ export function FullCalendar({
       // Wait until the next animation frame so updateSize runs once per frame
       // instead of every tiny resize while the aside animates
       if (frameId) cancelAnimationFrame(frameId);
-      frameId = requestAnimationFrame(() => api.updateSize());
+      frameId = requestAnimationFrame(() => {
+        api.updateSize();
+      });
     });
 
     observer.observe(container);
@@ -120,13 +125,23 @@ export function FullCalendar({
             "color-mix(in srgb, var(--primary) 10%, transparent)",
         } as React.CSSProperties
       }
+      className={cn("h-full", className)}
       ref={calendarContainerRef}
     >
+      <FullCalendarDropShadowStyleOverrides />
       <FullCalendarComponent
         ref={calendarRef}
         eventDisplay="list-item"
         plugins={[dayGridPlugin, timeGridPlugin]}
         initialView={CalendarView.Week}
+        scrollTimeReset={false}
+        scrollTime={
+          // Initialize the view to 2hr before the now indicator
+          addHours(new Date(), -2).toLocaleTimeString("en-US", {
+            hourCycle: "h24",
+          })
+        }
+        height={"100%"}
         headerToolbar={false}
         dayHeaderContent={(ctx) => {
           if (ctx.view.type === CalendarView.Month)
@@ -145,12 +160,13 @@ export function FullCalendar({
         dayHeaderClassNames={(ctx) =>
           cn(
             "overflow-hidden [&>*_>*]:!p-0 [&>*_>*]:!block [&>*_>*]:!max-w-full",
-            isSameDay(ctx.date, new Date()) && "!border-b-2 !border-b-primary",
             ctx.view.type !== CalendarView.Day &&
-              "[&:nth-child(2)]:!border-l-0",
-            ctx.view.type !== CalendarView.Day &&
-              isOddDay(ctx.date.getDay(), FIRST_DAY_OF_WEEK) &&
-              "bg-muted",
+              cn(
+                "[&:nth-child(2)]:!border-l-0",
+                isSameDay(ctx.date, new Date()) &&
+                  "overflow-visible relative after:content-[''] after:absolute after:left-[-1px] after:right-[-1px] after:bottom-[-1px] after:h-[2px] after:bg-primary after:pointer-events-none",
+                isOddDay(ctx.date.getDay(), FIRST_DAY_OF_WEEK) && "bg-muted",
+              ),
           )
         }
         dayCellClassNames={(ctx) =>
@@ -164,7 +180,6 @@ export function FullCalendar({
         }
         eventClassNames={"!shadow !border mr-[2px] my-[1px] !rounded-sm"}
         eventContent={(ctx) => <CalendarEventContent ctx={ctx} />}
-        height="auto"
         nowIndicator
         nowIndicatorClassNames={(ctx) =>
           cn(
@@ -242,7 +257,7 @@ function CalendarEventContent({ ctx: { event } }: { ctx: EventContentArg }) {
     <div
       className={cn(
         "flex flex-row max-w-full gap-1 h-full px-1 overflow-hidden",
-        innerEventBounds.top === 0 && "invisible",
+        innerEventHeight === 0 && "opacity-0",
         mostTitleLines === 1 ? "py-0.5" : "pt-1 pb-3",
       )}
     >

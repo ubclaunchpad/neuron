@@ -173,7 +173,9 @@ export function ClassDetailsAside() {
           <PublishClassButton
             classId={classData.id}
             disabled={classData.published}
-            tooltip="Class already published"
+            tooltip={
+              classData.published ? "Class already published" : undefined
+            }
           />
           <DeleteClassButton
             classId={classData.id}

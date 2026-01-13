@@ -1,5 +1,5 @@
 import type { VolunteerUserViewDB } from "@/server/db/schema";
-import type { Status } from "./interfaces";
+import type { UserStatus } from "./interfaces";
 import { em } from "node_modules/@fullcalendar/core/internal-common";
 import { email } from "node_modules/zod/v4/core/regexes.cjs";
 
@@ -17,7 +17,7 @@ export type Volunteer = {
   availability?: string;
   preferredTimeCommitmentHours?: number;
   email: string;
-  status: Status;
+  status: UserStatus;
   image?: string;
   createdAt: Date;
   updatedAt: Date;

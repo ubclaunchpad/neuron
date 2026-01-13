@@ -60,7 +60,7 @@ export function Button({
     </>
   );
 
-  const buttonContent = props.href ? (
+  let buttonContent = props.href ? (
     <UIButton asChild {...props}>
       <Link href={props.href}>{content}</Link>
     </UIButton>
@@ -74,19 +74,21 @@ export function Button({
     <UIButton {...props}>{content}</UIButton>
   );
 
-  return tooltip ? (
-    <TooltipWrapper
-      tooltip={tooltip}
-      tooltipSide={tooltipSide}
-      tooltipOffset={tooltipOffset}
-      tooltipClassName={tooltipClassName}
-      tooltipHideArrow={tooltipHideArrow}
-    >
-      {buttonContent}
-    </TooltipWrapper>
-  ) : (
-    buttonContent
-  );
+  if (tooltip) {
+    buttonContent = (
+      <TooltipWrapper
+        tooltip={tooltip}
+        tooltipSide={tooltipSide}
+        tooltipOffset={tooltipOffset}
+        tooltipClassName={tooltipClassName}
+        tooltipHideArrow={tooltipHideArrow}
+      >
+        {buttonContent}
+      </TooltipWrapper>
+    );
+  }
+
+  return buttonContent;
 }
 
 type ButtonTooltipProps = {

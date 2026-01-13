@@ -1,11 +1,11 @@
 import { requireStatus } from "@/lib/auth/guard";
-import { Status } from "@/models/interfaces";
+import { UserStatus } from "@/models/interfaces";
 
 export default async function InactiveLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireStatus(Status.inactive);
+  await requireStatus(UserStatus.inactive);
   return children;
 }

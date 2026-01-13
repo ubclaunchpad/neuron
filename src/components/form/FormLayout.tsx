@@ -1,4 +1,7 @@
+import { isReactNodeNullthy } from "@/lib/nullthy";
+import { wrapIfNotArray } from "@/utils/arrayUtils";
 import type { VariantProps } from "class-variance-authority";
+import type { ComponentProps } from "react";
 import {
   Field,
   FieldContent,
@@ -9,9 +12,6 @@ import {
 } from "../ui/field";
 import { LabelRequiredMarker } from "../ui/label";
 import { useFormFieldContext } from "./FormField";
-import { isReactNodeNullthy } from "@/lib/nullthy";
-import type { ComponentProps } from "react";
-import { wrapIfNotArray } from "@/utils/arrayUtils";
 
 export interface FormFieldLayoutProps {
   label?: React.ReactNode;
@@ -115,7 +115,7 @@ function FormError({
   hideErrors?: boolean;
   errors?: FieldErrorsType;
 }) {
-  const { fieldState, name } = useFormFieldContext();
+  const { fieldState } = useFormFieldContext();
   if (
     hideErrors ||
     (!fieldState.invalid && !wrapIfNotArray(errors).filter((e) => !!e).length)
@@ -126,10 +126,9 @@ function FormError({
 }
 
 export {
-  FormDescription,
-  FormError,
-  FormContent,
-  FormField,
+  FormContent, FormDescription,
+  FormError, FormField,
   FormFieldLayout,
-  FormLabel,
+  FormLabel
 };
+

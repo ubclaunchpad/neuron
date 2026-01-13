@@ -31,8 +31,8 @@ export default function SchedulePage() {
 
   return (
     <PageLayout>
-      <SchedulePageProvider>
-        <FullCalendarProvider>
+      <FullCalendarProvider>
+        <SchedulePageProvider>
           <PageLayoutHeader hideShadow border="always">
             <PageLayoutHeaderContent className="items-center">
               <PageLayoutHeaderTitle>Schedule</PageLayoutHeaderTitle>
@@ -62,20 +62,19 @@ export default function SchedulePage() {
             </Suspense>
           </PageLayoutAside>
 
-          <PageLayoutContent>
-            <div
-              className={cn(currentView === "week" ? "block" : "hidden")}
-              aria-hidden={currentView !== "week"}
-            >
-              <ScheduleCalendarView />
-            </div>
+          <PageLayoutContent className="flex-1">
+            {currentView === "week" && (
+              <div className={cn("h-[calc(100dvh-var(--page-header-h))]")}>
+                <ScheduleCalendarView />
+              </div>
+            )}
 
             <Activity mode={currentView === "list" ? "visible" : "hidden"}>
               <ScheduleListView />
             </Activity>
           </PageLayoutContent>
-        </FullCalendarProvider>
-      </SchedulePageProvider>
+        </SchedulePageProvider>
+      </FullCalendarProvider>
     </PageLayout>
   );
 }

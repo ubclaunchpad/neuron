@@ -19,7 +19,7 @@ export function ClassesEmptyView() {
   const canCreateClasses = usePermission({
     permission: { classes: ["create"] },
   });
-  const { selectedTermId, hasTerms } = useClassesPage();
+  const { selectedTermId, hasTerms, setSelectedTermId } = useClassesPage();
 
   if (!canCreateClasses) {
     return "No classes found.";
@@ -55,6 +55,7 @@ export function ClassesEmptyView() {
             onClick={() =>
               NiceModal.show(TermForm, {
                 editingId: null,
+                onCreated: setSelectedTermId,
               })
             }
             variant="outline"

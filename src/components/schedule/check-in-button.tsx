@@ -4,15 +4,21 @@ import { Button } from "@/components/primitives/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { AttendanceStatus } from "@/models/interfaces";
-import type {
-  ListShiftWithPersonalStatus,
-  ShiftAttendanceSummary
+import {
+  ShiftStatus,
+  type ListShiftWithPersonalStatus,
+  type ShiftAttendanceSummary,
 } from "@/models/shift";
 import { clientApi } from "@/trpc/client";
 import { cva } from "class-variance-authority";
-import { addMinutes, subMinutes } from "date-fns";
+import {
+  addMinutes,
+  formatDuration,
+  intervalToDuration,
+  subMinutes,
+} from "date-fns";
 import { Clock4Icon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ComponentProps } from "react";
 
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
 
@@ -27,24 +33,13 @@ const statusBadgeStyles = cva("z-10", {
   },
 });
 
-function formatTimeUntil(target: Date, now: Date) {
-  const totalMinutes = Math.max(
-    Math.ceil((target.getTime() - now.getTime()) / 60_000),
-    0,
-  );
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours <= 0) return `${minutes}m`;
-  if (minutes === 0) return `${hours}h`;
-  return `${hours}h ${minutes}m`;
-}
-
 export function CheckInButton({
   shift,
+  size,
   className,
 }: {
   shift: ListShiftWithPersonalStatus;
+  size: ComponentProps<typeof Button>["size"];
   className?: string;
 }) {
   const [now, setNow] = useState(() => new Date());
@@ -54,8 +49,28 @@ export function CheckInButton({
     return () => window.clearInterval(id);
   }, []);
 
-  const checkInOpensAt = useMemo(() => subMinutes(shift.startAt, 15), [shift.startAt]);
-  const checkInClosesAt = useMemo(() => addMinutes(shift.startAt, 30), [shift.startAt]);
+  const checkInOpensAt = useMemo(
+    () => subMinutes(shift.startAt, 15),
+    [shift.startAt],
+  );
+  const checkInClosesAt = useMemo(
+    () => addMinutes(shift.startAt, 30),
+    [shift.startAt],
+  );
+  const timeUntilCheckIn = useMemo(() => {
+    if (now >= checkInOpensAt) return "0m";
+
+    const duration = intervalToDuration({
+      start: now,
+      end: checkInOpensAt,
+    });
+    const longFormat = formatDuration(duration, {
+      format: ["hours", "minutes"],
+      zero: false,
+    });
+
+    return longFormat.replace("hours", "h").replace("minutes", "m");
+  }, [checkInOpensAt, now]);
 
   const attendance =
     shift.attendance &&
@@ -73,7 +88,7 @@ export function CheckInButton({
     },
   });
 
-  if (shift.canceled) return null;
+  if (shift.status === ShiftStatus.cancelled) return null;
 
   const msUntilStart = shift.startAt.getTime() - now.getTime();
   const isBeforeWindow = now < checkInOpensAt;
@@ -133,15 +148,10 @@ export function CheckInButton({
 
   if (isBeforeWindow) {
     return (
-      <div
-        className={cn(
-          "z-10 flex items-center gap-2 text-xs text-muted-foreground",
-          className,
-        )}
-      >
-        <Clock4Icon className="h-4 w-4" aria-hidden />
-        <span>Check in: {formatTimeUntil(checkInOpensAt, now)}</span>
-      </div>
+      <Badge className={className}>
+        <Clock4Icon aria-hidden />
+        <span>Check in: {timeUntilCheckIn}</span>
+      </Badge>
     );
   }
 
@@ -149,10 +159,9 @@ export function CheckInButton({
     return (
       <Button
         variant="outline"
-        size="sm"
-        className={cn("z-10 border-primary", className)}
+        className={cn("border-primary", className)}
         pending={isPending}
-        startIcon={<Clock4Icon className="h-4 w-4" aria-hidden />}
+        startIcon={<Clock4Icon aria-hidden />}
         onClick={() => checkIn({ shiftId: shift.id })}
       >
         Check In

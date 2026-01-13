@@ -8,14 +8,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import {
-  addMonths,
-  compareAsc,
-  format,
-  parseISO,
-  startOfToday,
-} from "date-fns";
+import { addMonths, compareAsc, format, startOfToday } from "date-fns";
 import { useMemo } from "react";
+
+function monthKeyFromDate(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+function monthKeyToDate(key: string) {
+  const [yStr, mStr] = key.split("-");
+  const y = Number(yStr);
+  const m = Number(mStr);
+  return new Date(y, m - 1, 1, 12, 0, 0, 0);
+}
 
 export function MonthSelect({
   value,
@@ -24,31 +31,26 @@ export function MonthSelect({
   value: Date;
   onValueChange: (date: Date) => void;
 }) {
-  const monthKey = useMemo(
-    () => format(value, "yyyy-MM"),
-    [value],
-  );
+  const monthKey = useMemo(() => monthKeyFromDate(value), [value]);
 
   const monthOptions = useMemo(() => {
-    const selectedMonth = parseISO(`${monthKey}-01T00:00:00`);
-    const options = new Set<string>([format(startOfToday(), "yyyy-MM")]);
+    const selectedMonth = monthKeyToDate(monthKey);
+    const options = new Set<string>([monthKeyFromDate(startOfToday())]);
 
     for (let offset = -12; offset <= 12; offset += 1) {
       const date = addMonths(selectedMonth, offset);
-      options.add(format(date, "yyyy-MM"));
+      options.add(monthKeyFromDate(date));
     }
 
     return Array.from(options).sort((a, b) =>
-      compareAsc(parseISO(`${a}-01T00:00:00`), parseISO(`${b}-01T00:00:00`)),
+      compareAsc(monthKeyToDate(a), monthKeyToDate(b)),
     );
   }, [monthKey]);
 
   return (
     <Select
       value={monthKey}
-      onValueChange={(value) =>
-        onValueChange?.(parseISO(`${value}-01T00:00:00`))
-      }
+      onValueChange={(k) => onValueChange(monthKeyToDate(k))}
     >
       <SelectTrigger
         className={cn(
@@ -56,11 +58,12 @@ export function MonthSelect({
           "enabled:hover:bg-accent enabled:hover:text-accent-foreground cursor-pointer",
         )}
       >
-        <SelectValue placeholder="Month" />
+        <SelectValue>{format(value, "MMMM yyyy")}</SelectValue>
       </SelectTrigger>
+
       <SelectContent className="max-h-72">
         {monthOptions.map((key) => {
-          const date = parseISO(`${key}-01T00:00:00`);
+          const date = monthKeyToDate(key);
           return (
             <SelectItem key={key} value={key}>
               {format(date, "MMMM yyyy")}

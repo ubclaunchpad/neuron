@@ -86,7 +86,7 @@ export class StringEnum<T extends string> {
   }
 
   getSelectOptions(blankOption = false): SelectEntity[] {
-    return this.getSelectOptionsWithInterpolation((k) => k, blankOption);
+    return this.getSelectOptionsWithInterpolation((k) => this.getName(k as T), blankOption);
   }
 
   getSelectOptionsWithSearch(

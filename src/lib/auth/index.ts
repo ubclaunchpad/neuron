@@ -1,4 +1,9 @@
-import { Role, RoleEnum, Status, StatusEnum } from "@/models/interfaces";
+import {
+  Role,
+  RoleEnum,
+  UserStatus,
+  UserStatusEnum,
+} from "@/models/interfaces";
 import { createRequestScope } from "@/server/api/di-container";
 import { db } from "@/server/db";
 import { account, session, verification } from "@/server/db/schema/auth";
@@ -16,8 +21,8 @@ export const auth = betterAuth({
         input: false,
       },
       status: {
-        type: StatusEnum.options,
-        defaultValue: Status.unverified,
+        type: UserStatusEnum.options,
+        defaultValue: UserStatus.unverified,
         input: false,
       },
       lastName: { type: "string" },
@@ -80,9 +85,7 @@ export const auth = betterAuth({
       );
     },
   },
-  plugins: [
-    nextCookies(),
-  ],
+  plugins: [nextCookies()],
 } satisfies BetterAuthOptions);
 
 export type Session = typeof auth.$Infer.Session;

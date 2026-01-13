@@ -16,9 +16,19 @@
 }
 
 /**
- * Fully expanded "now" indicator line
- * @see https://github.com/fullcalendar/fullcalendar/issues/4609#issuecomment-1010706978
- */
+* Padding to give the time slots space
+*/
+.fc-timeGridDay-view .fc-scrollgrid-section-body .fc-scroller {
+  padding-left: 1rem;
+}
+.fc-timeGridWeek-view {
+  padding-left: 1.75rem;
+}
+
+/**
+* Fully expanded "now" indicator line
+* @see https://github.com/fullcalendar/fullcalendar/issues/4609#issuecomment-1010706978
+*/
 
 .fc-timeGridWeek-view .fc-timegrid-now-indicator-container {
   overflow: visible !important;
@@ -28,17 +38,17 @@
 }
 
 /**
- * The use of nth-child is to address the day columns depending on their order.
- *
- * - The 1st column does not correspond to any day, but it's the column that shows the timegrid
- *   timeline.
- * - The 2nd column corresponds to the 1st day of the week view. This is the one with 0% below.
- * - We continue with each subsequent column, incrementing its percentage in 1/7 each time.
- *
- * By addressing day columns by their order, instead of by their weekday class name
- * (e.g. .fc-day-fri) we guarantee that this solution works regardless of what the first day of the
- * week is.
- */
+* The use of nth-child is to address the day columns depending on their order.
+*
+* - The 1st column does not correspond to any day, but it's the column that shows the timegrid
+*   timeline.
+* - The 2nd column corresponds to the 1st day of the week view. This is the one with 0% below.
+* - We continue with each subsequent column, incrementing its percentage in 1/7 each time.
+*
+* By addressing day columns by their order, instead of by their weekday class name
+* (e.g. .fc-day-fri) we guarantee that this solution works regardless of what the first day of the
+* week is.
+*/
 .fc-timeGridWeek-view .fc-day:nth-child(2) .fc-timegrid-now-indicator-line {
   --fc-now-indicator-index: 1;
 }

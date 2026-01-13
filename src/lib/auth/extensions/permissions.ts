@@ -56,6 +56,7 @@ const volunteer = accessControl.newRole({
   terms: ["view"],
   shifts: ["view", "view-coverage", "check-in"],
   profile: ["view", "update"],
+  coverage: ["view", "request", "fill"],
 });
 
 const instructor = accessControl.newRole({

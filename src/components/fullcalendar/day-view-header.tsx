@@ -7,9 +7,7 @@ import {
 import { useFullCalendarContext } from "./fullcalendar-context";
 
 export function DayViewHeader() {
-  const {
-    calendarApi
-  } = useFullCalendarContext();
+  const { calendarApi } = useFullCalendarContext();
 
   if (!calendarApi) return null;
 
@@ -28,19 +26,21 @@ export function DayViewHeader() {
             variant="ghost"
             onClick={() => queueMicrotask(() => calendarApi.gotoDate(curDate))}
             className={cn(
-              "flex-1 block transition-none !h-[unset] rounded-none !p-2 !pt-3 text-center font-normal",
+              "flex-1 block transition-none !h-[unset] rounded-none !p-2 !pt-3 text-center border-border",
               isToday && "border-b-2 border-primary",
             )}
           >
             <div
               className={cn(
-                "font-display text-lg",
+                "font-normal font-display text-lg",
                 isToday && "font-bold text-primary",
               )}
             >
               {curDate.getDate()}
             </div>
-            <div className={cn(isToday && "font-bold text-primary")}>
+            <div
+              className={cn("font-normal", isToday && "font-bold text-primary")}
+            >
               {curDate.toLocaleDateString("en-US", { weekday: "short" })}
             </div>
           </Button>

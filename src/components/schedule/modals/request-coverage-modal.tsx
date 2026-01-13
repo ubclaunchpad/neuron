@@ -1,6 +1,8 @@
 "use client";
 
 import { FormCheckboxField } from "@/components/form/FormCheckbox";
+import { FormFieldController } from "@/components/form/FormField";
+import { FormError, FormLabel } from "@/components/form/FormLayout";
 import { FormSelectField } from "@/components/form/FormSelect";
 import { Button } from "@/components/primitives/button";
 import {
@@ -45,19 +47,28 @@ const RequestCoverageSchema = z.object({
   details: z.string().nonempty("Please fill out this field."),
   comments: z.string().optional(),
   ack: z.boolean().pipe(
-    z.literal(true, { error: 'Please acknowledge the statement before the form can be submitted'})
+    z.literal(true, {
+      error:
+        "Please acknowledge the statement before the form can be submitted",
+    }),
   ),
 });
 type RequestCoverageSchemaType = z.infer<typeof RequestCoverageSchema>;
 
 function RequestCoverageSchemaForm({
   onSubmit,
+  onCancel,
   isSubmitting,
 }: {
   onSubmit: (data: RequestCoverageSchemaType) => void;
   isSubmitting: boolean;
+  onCancel?: () => void;
 }) {
-  const { control, handleSubmit } = useForm({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: zodResolver(RequestCoverageSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
@@ -72,35 +83,40 @@ function RequestCoverageSchemaForm({
   return (
     <form className="flex flex-col gap-7" onSubmit={handleSubmit(onSubmit)}>
       <FieldGroup>
-        <FormSelectField
-          control={control}
-          name="category"
-          label="Category"
-          placeholder="Select a category for the request"
-          hideErrors
-        >
-          {CoverageRequestCategory.getSelectOptions().map(({ label, id }) => (
-            <SelectItem key={id} value={id}>
-              {label}
-            </SelectItem>
-          ))}
-        </FormSelectField>
+        <FormFieldController control={control} name="category">
+          <FormLabel required>Why are you requesting this absence?</FormLabel>
+          <FormSelectField
+            control={control}
+            name="category"
+            label="Category"
+            placeholder="Select category"
+            orientation="horizontal"
+            hideErrors
+          >
+            {CoverageRequestCategory.getSelectOptions().map(({ id, label }) => (
+              <SelectItem key={id} value={id}>
+                {label}
+              </SelectItem>
+            ))}
+          </FormSelectField>
 
-        <FormTextareaField
-          control={control}
-          name="details"
-          label="Details"
-          placeholder="Enter the reason for requesting coverage..."
-          rows={2}
-          required
-        />
+          <FormTextareaField
+            control={control}
+            name="details"
+            placeholder="Enter the reason for requesting coverage..."
+            rows={5}
+            hideErrors
+          />
+
+          <FormError errors={errors.details ?? errors.category} />
+        </FormFieldController>
 
         <FormTextareaField
           control={control}
           name="comments"
           label="Additionally Comments"
           placeholder="Provide any additional information..."
-          rows={5}
+          rows={3}
         />
       </FieldGroup>
 
@@ -113,14 +129,15 @@ function RequestCoverageSchemaForm({
       </FieldGroup>
 
       <DialogFooter>
-        <Button size="sm" variant="outline" disabled={isSubmitting}>
-          Close
-        </Button>
         <Button
-          type="submit"
           size="sm"
-          pending={isSubmitting}
+          variant="outline"
+          onClick={() => onCancel?.()}
+          disabled={isSubmitting}
         >
+          Cancel
+        </Button>
+        <Button type="submit" size="sm" pending={isSubmitting}>
           Request Coverage
         </Button>
       </DialogFooter>
@@ -165,7 +182,7 @@ export const RequestCoverageModal = NiceModal.create(
           <DialogHeader>
             <DialogTitle>Request Coverage for {shift.class.name}</DialogTitle>
             <DialogDescription>
-              {day} {startTime} {endTime}
+              {day} at {startTime} to {endTime}
             </DialogDescription>
           </DialogHeader>
 
@@ -173,6 +190,7 @@ export const RequestCoverageModal = NiceModal.create(
             key={shift.id}
             onSubmit={onSubmit}
             isSubmitting={isPending}
+            onCancel={() => modal.hide()}
           />
         </DialogContent>
       </Dialog>

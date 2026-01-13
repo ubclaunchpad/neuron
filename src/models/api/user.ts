@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RoleEnum, StatusEnum } from "../interfaces";
+import { RoleEnum, UserStatusEnum } from "../interfaces";
 import { ListRequestWithSearch } from "./common";
 
 export const UserIdInput = z.object({
@@ -8,7 +8,7 @@ export const UserIdInput = z.object({
 
 export const ListUsersInput = ListRequestWithSearch.extend({
   rolesToInclude: z.array(RoleEnum).optional(),
-  statusesToInclude: z.array(StatusEnum).optional(),
+  statusesToInclude: z.array(UserStatusEnum).optional(),
 });
 export type ListUsersInput = z.infer<typeof ListUsersInput>;
 

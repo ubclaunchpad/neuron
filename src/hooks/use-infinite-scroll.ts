@@ -1,20 +1,13 @@
+import type { InfiniteQueryLike } from "@/components/ui/searchable-select";
 import * as React from "react";
 
-export type InfiniteQueryLike = {
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-  fetchNextPage: () => Promise<unknown> | void;
-};
-
-export function useInfiniteScroll(
-  query: InfiniteQueryLike,
+export function useInfiniteScroll<TItem>(
+  query: InfiniteQueryLike<TItem>,
   options?: { threshold?: number },
 ) {
   const { threshold = 100 } = options ?? {};
 
-  const handleScroll = React.useCallback<
-    React.UIEventHandler<HTMLDivElement>
-  >(
+  const handleScroll = React.useCallback<React.UIEventHandler<HTMLDivElement>>(
     (event) => {
       const target = event.currentTarget;
 

@@ -4,13 +4,14 @@ import {
   AvatarImage,
   Avatar as AvatarPrimitive,
 } from "../ui/avatar";
+import { nullthy } from "@/lib/nullthy";
 
 export function Avatar({
   src,
   fallbackText,
   className,
 }: {
-  src: string | undefined;
+  src: string | nullthy;
   fallbackText: string;
   className?: string;
 }) {
@@ -21,7 +22,11 @@ export function Avatar({
         className,
       )}
     >
-      <AvatarImage src={src} alt={fallbackText} className="object-cover" />
+      <AvatarImage
+        src={src ?? undefined}
+        alt={fallbackText}
+        className="object-cover"
+      />
       <AvatarFallback className="text-[50cqw]">
         {fallbackText.slice(0, 2).toUpperCase()}
       </AvatarFallback>

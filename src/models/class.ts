@@ -59,6 +59,19 @@ export function getSingleClass(c: Class) {
   } as const;
 }
 
+export function getEmbeddedClass(c: Class | CourseDB) {
+  return {
+    id: c.id,
+    name: c.name,
+    termId: c.termId,
+    image: c.image,
+    description: c.description,
+    meetingURL: c.meetingURL,
+    category: c.category,
+    subcategory: c.subcategory,
+  } as const;
+}
+
 export function getListClass(c: Class) {
   return {
     id: c.id,
@@ -78,4 +91,5 @@ export type ClassResponse<C> = {
 };
 
 export type SingleClass = ReturnType<typeof getSingleClass>;
+export type EmbeddedClass = ReturnType<typeof getEmbeddedClass>;
 export type ListClass = ReturnType<typeof getListClass>;

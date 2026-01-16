@@ -1,0 +1,140 @@
+.fc-scrollgrid {
+  border: none !important;
+}
+
+.fc-timegrid-slot.fc-timegrid-slot-label,
+.fc-timegrid-axis {
+  border: none !important;
+}
+
+.fc-timegrid-slot.fc-timegrid-slot-lane {
+  border-left: none !important;
+}
+
+.fc-timeGridDay-view .fc-col-header .fc-timegrid-axis {
+  display: none;
+}
+
+/**
+* Padding to give the time slots space
+*/
+.fc-timeGridDay-view .fc-scrollgrid-section-body .fc-scroller {
+  padding-left: 1rem;
+}
+.fc-timeGridWeek-view {
+  padding-left: 1.75rem;
+}
+
+/**
+* Fully expanded "now" indicator line
+* @see https://github.com/fullcalendar/fullcalendar/issues/4609#issuecomment-1010706978
+*/
+
+.fc-timeGridWeek-view .fc-timegrid-now-indicator-container {
+  overflow: visible !important;
+}
+.fc-timeGridWeek-view .fc-timegrid-now-indicator-line {
+  width: calc(700% + 8px) !important;
+}
+
+/**
+* The use of nth-child is to address the day columns depending on their order.
+*
+* - The 1st column does not correspond to any day, but it's the column that shows the timegrid
+*   timeline.
+* - The 2nd column corresponds to the 1st day of the week view. This is the one with 0% below.
+* - We continue with each subsequent column, incrementing its percentage in 1/7 each time.
+*
+* By addressing day columns by their order, instead of by their weekday class name
+* (e.g. .fc-day-fri) we guarantee that this solution works regardless of what the first day of the
+* week is.
+*/
+.fc-timeGridWeek-view .fc-day:nth-child(2) .fc-timegrid-now-indicator-line {
+  --fc-now-indicator-index: 1;
+}
+.fc-timeGridWeek-view .fc-day:nth-child(3) .fc-timegrid-now-indicator-line {
+  --fc-now-indicator-index: 2;
+}
+.fc-timeGridWeek-view .fc-day:nth-child(4) .fc-timegrid-now-indicator-line {
+  --fc-now-indicator-index: 3;
+}
+.fc-timeGridWeek-view .fc-day:nth-child(5) .fc-timegrid-now-indicator-line {
+  --fc-now-indicator-index: 4;
+}
+.fc-timeGridWeek-view .fc-day:nth-child(6) .fc-timegrid-now-indicator-line {
+  --fc-now-indicator-index: 5;
+}
+.fc-timeGridWeek-view .fc-day:nth-child(7) .fc-timegrid-now-indicator-line {
+  --fc-now-indicator-index: 6;
+}
+.fc-timeGridWeek-view .fc-day:nth-child(8) .fc-timegrid-now-indicator-line {
+  --fc-now-indicator-index: 7;
+}
+
+.fc-timeGridWeek-view .fc-day .fc-timegrid-now-indicator-line {
+  transform: translateX(calc(-100% * (var(--fc-now-indicator-index) - 1) / 7));
+  position: relative;
+  border-color: color-mix(
+    in srgb,
+    var(--fc-now-indicator-color) 25%,
+    transparent
+  );
+  border-width: 2px 0px 0px;
+}
+
+.fc-timeGridWeek-view .fc-day .fc-timegrid-now-indicator-line::before {
+  content: "";
+  position: relative;
+  display: block;
+  top: -5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--fc-now-indicator-color);
+  left: calc(100% * (var(--fc-now-indicator-index) - 1) / 7 - 4.5px);
+  pointer-events: none;
+}
+
+.fc-timeGridWeek-view .fc-day .fc-timegrid-now-indicator-line::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  width: 14.29%;
+  border-color: var(--fc-now-indicator-color);
+  transform: translateX(calc(100% * (var(--fc-now-indicator-index) - 1) - 1px));
+  pointer-events: none;
+  border-style: solid;
+  border-width: 2px 0px 0px;
+}
+
+.fc-timegrid-col-events {
+  margin: 0 !important;
+}
+
+.fc-event {
+  cursor: pointer;
+  user-select: none;
+}
+
+.fc .fc-timegrid-slot {
+  height: 2.5rem;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+  padding: 0;
+}
+.fc .fc-timegrid-slot-label {
+  vertical-align: top;
+}
+
+.fc-direction-ltr .fc-timegrid-slot-label-frame {
+  text-align: left;
+}
+
+.fc-direction-rtl .fc-timegrid-slot-label-frame {
+  text-align: right;
+}
+
+.fc-timegrid-event .fc-event-main {
+  padding: 0;
+}

@@ -63,12 +63,12 @@ export const fieldVariants = cva("group/field flex w-full gap-2 min-w-0", {
       horizontal: [
         "flex-row items-center",
         "[&>[data-slot=field-label]]:flex-auto",
-        "has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px has-[>[data-slot=field-content]]:items-start",
+        "has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-[0.2em] has-[>[role=checkbox],[role=radio]]:items-start",
       ],
       responsive: [
         "@md/field-group:flex-row @md/field-group:items-center @md/field-group:[&>*]:w-auto flex-col [&>*]:w-full [&>.sr-only]:w-auto",
         "@md/field-group:[&>[data-slot=field-label]]:flex-auto",
-        "@md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
+        "@md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-[0.2em]",
       ],
     },
   },
@@ -270,5 +270,6 @@ export {
   FieldSeparator,
   FieldSet,
   FieldTitle,
-  ReadonlyField,
+  ReadonlyField
 };
+

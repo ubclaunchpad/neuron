@@ -105,7 +105,7 @@ function PageLayout({
           } as React.CSSProperties
         }
         className={cn(
-          "bg-background relative flex min-h-svh max-h-svh overflow-auto flex-col",
+          "bg-background relative flex min-h-svh max-h-svh max-w-svw overflow-auto flex-col",
           "transition-[margin-right] duration-200",
           "mr-(--main-offset) min-w-(--main-min)",
           className,
@@ -122,10 +122,15 @@ function PageLayoutHeader({
   className,
   children,
   border = "always",
+  hideShadow = false,
   ...props
-}: React.ComponentProps<"header"> & { border?: "always" | "never" | "scroll" }) {
+}: React.ComponentProps<"header"> & {
+  border?: "always" | "never" | "scroll";
+  hideShadow?: boolean;
+}) {
   const { isPageScrolled, setHeaderHeight } = usePageLayout();
-  const hideBorder = border === "never" || (border === "scroll" && !isPageScrolled);
+  const hideBorder =
+    border === "never" || (border === "scroll" && !isPageScrolled);
 
   const headerRef = React.useRef<HTMLElement | null>(null);
   React.useLayoutEffect(() => {
@@ -151,10 +156,10 @@ function PageLayoutHeader({
       ref={headerRef}
       data-slot="page-header"
       className={cn(
-        "bg-background sticky top-0 z-40 border-b transition-[border-color] shadow-bottom", 
-        !isPageScrolled && "shadow-none",
-        hideBorder && "border-transparent", 
-        className
+        "bg-background sticky top-0 z-40 border-b transition-[border-color] shadow-bottom",
+        (hideShadow || !isPageScrolled) && "shadow-none",
+        hideBorder && "border-transparent",
+        className,
       )}
       {...props}
     >
@@ -168,7 +173,7 @@ function PageLayoutHeaderContent({
   showBackButton,
   children,
   ...props
-}: React.ComponentProps<"div"> & { 
+}: React.ComponentProps<"div"> & {
   showBackButton?: boolean;
 }) {
   const router = useRouter();
@@ -177,7 +182,7 @@ function PageLayoutHeaderContent({
       className={cn(
         "mx-auto w-full",
         "flex flex-wrap justify-auto items-center gap-2 pt-5 pb-7 px-9",
-        className
+        className,
       )}
       {...props}
     >
@@ -276,7 +281,7 @@ function PageLayoutAside({
       data-state={isOpen ? "open" : "closed"}
       style={{ width: "min(var(--aside-w), 100dvw)", ...style }}
       className={cn(
-        "fixed top-0 z-40 h-dvh border bg-background shadow-lg",
+        "fixed top-0 z-40 h-dvh border-0 bg-background shadow-lg",
         side === "right" ? "right-0 border-l" : "left-0 border-r",
         closedTransform,
         "data-[state=open]:translate-x-0 transition-transform duration-200 will-change-transform",
@@ -317,7 +322,13 @@ function PageAsideTrigger({
 }
 
 export {
-  PageAsideTrigger, PageLayout, PageLayoutAside, PageLayoutContent, PageLayoutHeader, PageLayoutHeaderContent,
-  PageLayoutHeaderTitle, usePageLayout as usePageAside
+  PageAsideTrigger,
+  PageLayout,
+  PageLayoutAside,
+  PageLayoutContent,
+  PageLayoutHeader,
+  PageLayoutHeaderContent,
+  PageLayoutHeaderTitle,
+  usePageLayout as usePageAside
 };
 

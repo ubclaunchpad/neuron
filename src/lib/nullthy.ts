@@ -1,8 +1,8 @@
 import { type ReactNode, isValidElement } from "react";
 
-export function nullthy<T>(
-  value: T | null | undefined,
-): value is null | undefined {
+export type nullthy = null | undefined;
+
+export function nullthy<T>(value: T | nullthy): value is nullthy {
   return !value;
 }
 

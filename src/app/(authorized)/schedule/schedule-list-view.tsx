@@ -1,0 +1,111 @@
+"use client";
+
+import { ListLoadingState, ListStateWrapper } from "@/components/members/list";
+import { useShiftRange } from "@/components/schedule/hooks/use-shift-range";
+import { ShiftItem } from "@/components/schedule/shift-item";
+import { TypographyTitle } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
+import type { ListShift } from "@/models/shift";
+import {
+    compareAsc,
+    endOfMonth,
+    format,
+    isSameMonth,
+    isToday,
+    startOfMonth,
+} from "date-fns";
+import { useMemo } from "react";
+import { useSchedulePage } from "../../../components/schedule/schedule-page-context";
+
+type StatusFilter = "all" | "mine" | "requested" | "needs";
+
+type DayGroup = { date: Date; shifts: ListShift[] };
+
+function toDate(value: Date | string) {
+  return value instanceof Date ? value : new Date(value);
+}
+
+function groupByDay(shifts: ListShift[]): DayGroup[] {
+  const groups = new Map<string, DayGroup>();
+
+  shifts.forEach((shift) => {
+    const start = toDate(shift.startAt);
+    const key = format(start, "yyyy-MM-dd");
+    const group = groups.get(key) ?? { date: start, shifts: [] };
+    group.shifts.push(shift);
+    groups.set(key, group);
+  });
+
+  return Array.from(groups.values()).sort((a, b) => compareAsc(a.date, b.date));
+}
+
+export function ScheduleListView({ className }: { className?: string }) {
+  const statusFilter: StatusFilter = "all";
+  const { selectedDate } = useSchedulePage();
+
+  const rangeStart = useMemo(() => startOfMonth(selectedDate), [selectedDate]);
+  const rangeEnd = useMemo(() => endOfMonth(rangeStart), [rangeStart]);
+
+  const { shifts: rawShifts, query } = useShiftRange({
+    start: rangeStart,
+    end: rangeEnd,
+    enabled: true,
+  });
+
+  const filteredShifts = useMemo(() => {
+    return [...rawShifts].sort((a, b) =>
+      compareAsc(toDate(a.startAt), toDate(b.startAt)),
+    );
+  }, [rawShifts, statusFilter]);
+
+  const monthShifts = useMemo(
+    () =>
+      filteredShifts.filter((shift) =>
+        isSameMonth(toDate(shift.startAt), rangeStart),
+      ),
+    [filteredShifts, rangeStart],
+  );
+
+  const dayGroups = useMemo(() => groupByDay(monthShifts), [monthShifts]);
+
+  return (
+    <div className="w-full px-10">
+      <div className={cn("mx-auto max-w-3xl py-4", className)}>
+        <div className="space-y-4 pb-18">
+          {query.isLoading && <ListLoadingState />}
+
+          {!query.isLoading && dayGroups.length === 0 && (
+            <ListStateWrapper>No shifts found</ListStateWrapper>
+          )}
+
+          {dayGroups.map((group) => {
+            const groupIsToday = isToday(group.date);
+            return (
+              <section key={group.date.toISOString()} className="space-y-3">
+                <div className="pt-3 pb-2">
+                  <TypographyTitle
+                    className={cn("text-md", groupIsToday && "text-primary")}
+                  >
+                    {format(group.date, "EEE d")}
+                    {groupIsToday && " | Today"}
+                  </TypographyTitle>
+                </div>
+                <div className="flex flex-col gap-3 px-5">
+                  {group.shifts.map((shift) => (
+                    <ShiftItem key={shift.id} shift={shift} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+
+          {!query.isLoading && dayGroups.length > 0 && (
+            <ListStateWrapper>No more results</ListStateWrapper>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default ScheduleListView;

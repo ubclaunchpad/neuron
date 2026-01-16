@@ -1,5 +1,5 @@
 import type { ListUsersInput } from "@/models/api/user";
-import { Status } from "@/models/interfaces";
+import { UserStatus } from "@/models/interfaces";
 import type { ListResponse } from "@/models/list-response";
 import { buildUser, type User } from "@/models/user";
 import { type Drizzle } from "@/server/db";
@@ -98,7 +98,7 @@ export class UserService {
   async verifyVolunteer(id: string): Promise<string> {
     await this.db
       .update(user)
-      .set({ status: Status.active })
+      .set({ status: UserStatus.active })
       .where(eq(user.id, id));
     return id;
   }
@@ -111,7 +111,7 @@ export class UserService {
       .where(eq(user.id, id))
       .then(([user]) => user?.status);
 
-    if (currentStatus !== Status.unverified) {
+    if (currentStatus !== UserStatus.unverified) {
       throw new NeuronError(
         `Volunteer with id ${id} is already verified. Cannot be rejected.`,
         NeuronErrorCodes.BAD_REQUEST,
@@ -119,7 +119,7 @@ export class UserService {
     }
     await this.db
       .update(user)
-      .set({ status: Status.rejected })
+      .set({ status: UserStatus.rejected })
       .where(eq(user.id, id));
 
     return id;
@@ -133,7 +133,7 @@ export class UserService {
       .where(eq(user.id, id))
       .then(([user]) => user?.status);
 
-    if (currentStatus !== Status.active) {
+    if (currentStatus !== UserStatus.active) {
       throw new NeuronError(
         `Volunteer with id ${id} is not active`,
         NeuronErrorCodes.BAD_REQUEST,
@@ -142,7 +142,7 @@ export class UserService {
 
     await this.db
       .update(user)
-      .set({ status: Status.inactive })
+      .set({ status: UserStatus.inactive })
       .where(eq(user.id, id));
 
     return id;
@@ -154,7 +154,7 @@ export class UserService {
         totalRecords: sql<number>`count(*) over()`,
       } as const)
       .from(user)
-      .where(inArray(user.status, [Status.unverified]))
+      .where(inArray(user.status, [UserStatus.unverified]))
       .limit(1);
 
     return rows[0]?.totalRecords ?? 0;
@@ -174,7 +174,7 @@ export class UserService {
           lastName: input.lastName,
           email: input.email,
           role: input.role as any,
-          status: Status.active,
+          status: UserStatus.active,
           emailVerified: false,
         })
         .returning();

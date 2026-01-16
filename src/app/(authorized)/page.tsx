@@ -9,31 +9,17 @@ import {
 } from "@/components/page-layout";
 import {
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import {
-  hasPermission,
-  type Permissions,
-} from "@/lib/auth/extensions/permissions";
 import { Role } from "@/models/interfaces";
 import { useAuth } from "@/providers/client-auth-provider";
-import Link from "next/link";
 import { Hammer } from "lucide-react";
-import type { Route } from "next/dist/build/swc/types";
-import { navbarItems } from "@/components/app-navbar";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const accessibleLinks = user
-    ? navbarItems.filter((link) =>
-        hasPermission({ user, ...(link.permissions as Permissions) }),
-      )
-    : [];
-
   return (
     <>
       <PageLayout>

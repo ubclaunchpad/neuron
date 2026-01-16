@@ -1,7 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { cn } from "@/lib/utils";
-import { Role, Status } from "@/models/interfaces";
+import { Role, UserStatus } from "@/models/interfaces";
 import type { ListUser } from "@/models/user";
 import { clientApi } from "@/trpc/client";
 import React, {
@@ -9,7 +9,7 @@ import React, {
   useContext,
   useMemo,
   useState,
-  type JSX
+  type JSX,
 } from "react";
 import {
   ListBody,
@@ -46,7 +46,7 @@ function useUsersViewShellContext() {
 }
 
 type UsersViewShellProps = {
-  statusesToInclude?: Status[];
+  statusesToInclude?: UserStatus[];
   rolesToInclude?: Role[];
 };
 
@@ -130,7 +130,10 @@ export function ShellHeader({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("flex justify-between gap-2 mb-3", className)} {...props} />
+    <div
+      className={cn("flex justify-between gap-2 mb-3", className)}
+      {...props}
+    />
   );
 }
 
@@ -168,7 +171,7 @@ export function UsersList({
   return (
     <ScrollArea onScroll={handleScroll} className="-mx-9 px-9">
       <div className="pb-10">
-        {!isReloading && <ListBody items={users} children={children}/>}
+        {!isReloading && <ListBody items={users} children={children} />}
 
         {isLoading && <ListLoadingState />}
 

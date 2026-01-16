@@ -245,7 +245,13 @@ function TermFormShell({
 }
 
 export const TermForm = NiceModal.create(
-  ({ editingId }: { editingId: string | null }) => {
+  ({
+    editingId,
+    onCreated,
+  }: {
+    editingId: string | null;
+    onCreated?: (termId: string) => void;
+  }) => {
     const modal = useModal();
     const apiUtils = clientApi.useUtils();
     const editing = !!editingId;
@@ -258,7 +264,8 @@ export const TermForm = NiceModal.create(
 
     const { mutate: createTermMutation, isPending: isUpdatingTerm } =
       clientApi.term.create.useMutation({
-        onSuccess: async () => {
+        onSuccess: async (createdTermId) => {
+          onCreated?.(createdTermId);
           await apiUtils.term.all.invalidate();
           await modal.hide();
         },

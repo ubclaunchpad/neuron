@@ -1,14 +1,12 @@
 import { z } from "zod";
-import { CoverageStatusEnum } from "./coverage";
 
 export const GetShiftsInput = z.object({
+  cursor: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Cursor must be in YYYY-MM format"),
   userId: z.uuid().optional(),
-  before: z.iso.datetime().optional(),
-  after: z.iso.datetime().optional(),
-  status: CoverageStatusEnum.optional(),  
-  limit: z.number().min(1).max(100).default(20),
-  cursor: z.iso.datetime().optional(), // ISO datetime string for cursor
-  direction: z.enum(["forward", "backward"]).default("forward"),
+  scheduleId: z.uuid().optional(),
+  courseId: z.uuid().optional(),
 });
 export type GetShiftsInput = z.infer<typeof GetShiftsInput>;
 
@@ -16,6 +14,16 @@ export const ShiftIdInput = z.object({
   shiftId: z.uuid(),
 });
 export type ShiftIdInput = z.infer<typeof ShiftIdInput>;
+
+export const CheckInInput = ShiftIdInput.extend({
+  volunteerId: z.uuid().optional(),
+});
+export type CheckInInput = z.infer<typeof CheckInInput>;
+
+export const CancelShiftInput = ShiftIdInput.extend({
+  cancelReason: z.string(),
+});
+export type CancelShiftInput = z.infer<typeof CancelShiftInput>;
 
 export const AbsenceRequestInput = z.object({
   details: z.string(),

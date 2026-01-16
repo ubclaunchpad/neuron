@@ -30,10 +30,9 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
 
 function PasswordInput(props: Omit<React.ComponentProps<"input">, "type">) {
   const [isPassVisible, setIsPassVisible] = React.useState(false);
-
   return (
     <InputGroup>
-      <InputGroupInput type={isPassVisible ? "text" : "password"} {...props} />
+      <InputGroupInput {...props} type={isPassVisible ? "text" : "password"} />
       <InputGroupAddon align="inline-end">
         <InputGroupButton
           aria-label="Toggle Password Visibility"

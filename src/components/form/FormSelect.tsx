@@ -1,9 +1,8 @@
 import type { ComponentProps } from "react";
 import type {
   Control,
-  ControllerProps,
   FieldPath,
-  FieldValues,
+  FieldValues
 } from "react-hook-form";
 import {
   Select,
@@ -12,7 +11,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { FormFieldController } from "./FormField";
-import { FormFieldLayout } from "./FormLayout";
+import { FormFieldLayout, type FormFieldLayoutProps } from "./FormLayout";
 
 export interface FormSelectProps
   extends Omit<React.ComponentProps<typeof Select>, "value" | "onValueChange"> {
@@ -60,6 +59,7 @@ export interface FormSelectFieldProps<
   control: Control<TFieldValues, any, TTransformedValues>;
   label?: React.ReactNode;
   description?: React.ReactNode;
+  orientation?: FormFieldLayoutProps["orientation"]
   required?: boolean;
   hideErrors?: boolean;
   placeholder?: string;
@@ -78,6 +78,7 @@ function FormSelectField<
   description,
   required,
   hideErrors,
+  orientation,
   placeholder,
   className,
   children,
@@ -91,6 +92,7 @@ function FormSelectField<
           description={description}
           required={required}
           hideErrors={hideErrors}
+          orientation={orientation}
         >
           <FormSelect
             value={value}

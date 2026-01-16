@@ -22,6 +22,13 @@
       "when": 1764314350750,
       "tag": "0002_add_pref_volunteer_cnt",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1765066348948,
+      "tag": "0003_add_cancelled_by_user_id_to_shifts",
+      "breakpoints": true
     }
   ]
 }

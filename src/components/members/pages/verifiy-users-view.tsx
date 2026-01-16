@@ -1,30 +1,42 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Status } from "@/models/interfaces";
+import { UserStatus } from "@/models/interfaces";
 import type { ListUser } from "@/models/user";
 import { clientApi } from "@/trpc/client";
 import { Check, X } from "lucide-react";
 import { useState } from "react";
 import { ListItem } from "../list";
 import { StatusBadge } from "../status-badge";
-import { ShellHeader, ShellSearchInput, UsersList, UsersViewShell } from "./users-view-shell";
+import {
+  ShellHeader,
+  ShellSearchInput,
+  UsersList,
+  UsersViewShell,
+} from "./users-view-shell";
 
-export function VerifyUsersView({ className } : { className?: string }) {
+export function VerifyUsersView({ className }: { className?: string }) {
   const [showRejected, setShowRejected] = useState(false);
 
   return (
-    <UsersViewShell 
+    <UsersViewShell
       className={className}
-      statusesToInclude={[Status.unverified, ...(showRejected ? [Status.rejected] : [])]}
+      statusesToInclude={[
+        UserStatus.unverified,
+        ...(showRejected ? [UserStatus.rejected] : []),
+      ]}
     >
       <ShellHeader>
-        <ShellSearchInput/>
+        <ShellSearchInput />
 
         <div className="flex items-center gap-3">
-            <Checkbox id="show-rejected" checked={showRejected} onCheckedChange={(checked) => setShowRejected(!!checked)} />
-            <Label htmlFor="show-rejected">Show Rejected</Label>
-          </div>
+          <Checkbox
+            id="show-rejected"
+            checked={showRejected}
+            onCheckedChange={(checked) => setShowRejected(!!checked)}
+          />
+          <Label htmlFor="show-rejected">Show Rejected</Label>
+        </div>
       </ShellHeader>
 
       <UsersList>
@@ -72,12 +84,20 @@ export function VerifyUserListItem({ user }: { user: ListUser }) {
       }
       endContent={
         <div className="flex gap-2">
-          <Button variant="default" size="sm" onClick={() => verifyMutation({ userId: user.id })}>
-            <Check/>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => verifyMutation({ userId: user.id })}
+          >
+            <Check />
             <span>Verify</span>
           </Button>
-          <Button variant="destructive-outline" size="sm" onClick={() => rejectMutation({ userId: user.id })}>
-            <X/>
+          <Button
+            variant="destructive-outline"
+            size="sm"
+            onClick={() => rejectMutation({ userId: user.id })}
+          >
+            <X />
             <span>Deny</span>
           </Button>
         </div>

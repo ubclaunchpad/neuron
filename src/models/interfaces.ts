@@ -2,30 +2,26 @@ import { StringEnum } from "@/lib/base-enum";
 import { createStringEnum } from "@/utils/typeUtils";
 import { z } from "zod";
 
-export const RoleEnum = z.enum([
-  "admin", 
-  "instructor", 
-  "volunteer"
-] as const);
+export const RoleEnum = z.enum(["admin", "instructor", "volunteer"] as const);
 export type Role = z.infer<typeof RoleEnum>;
 export const Role = StringEnum.createFromType<Role>({
   admin: "Admin",
   instructor: "Instructor",
-  volunteer: "Volunteer"
+  volunteer: "Volunteer",
 });
 
-export const StatusEnum = z.enum([
-  "unverified", 
-  "rejected", 
+export const UserStatusEnum = z.enum([
+  "unverified",
+  "rejected",
   "active",
-  "inactive"
+  "inactive",
 ] as const);
-export type Status = z.infer<typeof StatusEnum>;
-export const Status = StringEnum.createFromType<Status>({
+export type UserStatus = z.infer<typeof UserStatusEnum>;
+export const UserStatus = StringEnum.createFromType<UserStatus>({
   unverified: "Unverified",
   rejected: "Rejected",
   active: "Active",
-  inactive: "Disabled"
+  inactive: "Disabled",
 });
 
 export const AttendanceStatusEnum = z.enum([

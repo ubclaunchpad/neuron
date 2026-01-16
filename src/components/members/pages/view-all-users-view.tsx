@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getImageUrlFromKey } from "@/lib/build-image-url";
-import { Role, Status } from "@/models/interfaces";
+import { Role, UserStatus } from "@/models/interfaces";
 import type { ListUser, User } from "@/models/user";
 import { useAuth } from "@/providers/client-auth-provider";
 import { clientApi } from "@/trpc/client";
@@ -33,7 +33,7 @@ export function ViewUsersView({ className }: { className?: string }) {
   return (
     <UsersViewShell
       className={className}
-      statusesToInclude={[Status.active, Status.inactive]}
+      statusesToInclude={[UserStatus.active, UserStatus.inactive]}
     >
       <ShellHeader>
         <ShellSearchInput />

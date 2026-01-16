@@ -1,12 +1,32 @@
-import { GetShiftsInput, ShiftIdInput } from "@/models/api/shift";
+import { hasPermission } from "@/lib/auth/extensions/permissions";
+import {
+  ShiftIdInput,
+  GetShiftsInput,
+  CheckInInput,
+  CancelShiftInput,
+} from "@/models/api/shift";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
+import { TRPCError } from "@trpc/server";
 
 export const shiftRouter = createTRPCRouter({
   list: authorizedProcedure({ permission: { shifts: ["view"] } })
     .input(GetShiftsInput)
     .query(({ input, ctx }) => {
-      return ctx.shiftService.getShifts(input);
+      if (
+        input.userId &&
+        hasPermission({
+          user: ctx.session.user,
+          permission: { shifts: ["view-all"] },
+        })
+      ) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      return ctx.shiftService.listWindow({
+        ...input,
+        userId: input.userId ?? ctx.session.user.id,
+      });
     }),
   checkIn: authorizedProcedure({
     permissions: {
@@ -14,22 +34,32 @@ export const shiftRouter = createTRPCRouter({
       connector: "OR",
     },
   })
-    .input(ShiftIdInput)
-    .mutation(async ({ input }) => {
-      // TODO: checkInShift
-      return { ok: true };
+    .input(CheckInInput)
+    .mutation(async ({ input, ctx }) => {
+      const user = ctx.session.user;
+      const hasOverride = hasPermission({
+        user,
+        permission: { shifts: ["override-check-in"] },
+      });
+
+      if (hasOverride && !input.volunteerId) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      if (!hasOverride && input.volunteerId && input.volunteerId !== user.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      const volunteerId = hasOverride ? input.volunteerId! : user.id;
+
+      return ctx.shiftService.checkIn(input.shiftId, volunteerId);
     }),
   byId: authorizedProcedure({ permission: { shifts: ["view"] } })
     .input(ShiftIdInput)
-    .query(async ({ input, ctx }) => {
-      return {
-        /* shift */
-      };
-    }),
+    .query(({ input, ctx }) =>
+      ctx.shiftService.getShiftById(input.shiftId, ctx.session.user.id),
+    ),
   cancel: authorizedProcedure({ permission: { shifts: ["cancel"] } })
-    .input(ShiftIdInput)
-    .mutation(async ({ input }) => {
-      // TODO: cancelShift
-      return { ok: true };
-    }),
+    .input(CancelShiftInput)
+    .mutation(({ input, ctx }) => ctx.shiftService.cancelShift(input)),
 });

@@ -13,7 +13,6 @@ import {
 } from "react";
 
 import { Loader } from "@/components/utils/loader";
-import { WithPermission } from "@/components/utils/with-permission";
 import { usePermission } from "@/hooks/use-permission";
 import { clientApi } from "@/trpc/client";
 
@@ -57,7 +56,7 @@ export function ClassListView() {
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [selectedTermId, setSelectedTermId] = useState<string | null>(null);
-  const [queryTerm] = useQueryState(
+  const [queryTerm, setQueryTerm] = useQueryState(
     "term",
     parseAsString.withDefault("current"),
   );
@@ -86,19 +85,39 @@ export function ClassListView() {
       enabled: queryTerm === "current" && (terms?.length ?? 0) > 0,
     });
 
-  // Set selected term once current term loads
+  // Sync selected term once current term or query param changes
   useEffect(() => {
-    if (!selectedTermId && queryTerm === "current" && currentTerm) {
-      setSelectedTermId(currentTerm.id);
+    if (!terms?.length) return;
+
+    if (queryTerm === "current") {
+      if (!selectedTermId && currentTerm) {
+        setSelectedTermId(currentTerm.id);
+      }
+      return;
     }
-  }, [currentTerm, selectedTermId, queryTerm]);
+
+    if (
+      terms.some((term) => term.id === queryTerm) &&
+      queryTerm !== selectedTermId
+    ) {
+      setSelectedTermId(queryTerm);
+    }
+  }, [currentTerm, queryTerm, selectedTermId, terms]);
+
+  const handleSelectTerm = useCallback(
+    (termId: string) => {
+      setSelectedTermId(termId);
+      setQueryTerm(termId);
+    },
+    [setQueryTerm, setSelectedTermId],
+  );
 
   const hasTerms = (terms?.length ?? 0) > 0;
 
   // Only fetch classes if we have a selected term
   const { data: classListData, isPending: isLoadingClassList } =
     clientApi.class.list.useQuery(
-      { term: queryTerm },
+      { term: selectedTermId ?? queryTerm },
       {
         meta: { suppressToast: true },
         enabled: !!selectedTermId,
@@ -119,7 +138,7 @@ export function ClassListView() {
       queryTerm,
       hasTerms,
       setSelectedClassId,
-      setSelectedTermId,
+      setSelectedTermId: handleSelectTerm,
       openAsideFor,
       closeAside,
       contentScrollRef,
@@ -130,7 +149,7 @@ export function ClassListView() {
       queryTerm,
       hasTerms,
       setSelectedClassId,
-      setSelectedTermId,
+      handleSelectTerm,
       openAsideFor,
       closeAside,
       contentScrollRef,

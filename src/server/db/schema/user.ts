@@ -1,5 +1,5 @@
 import { AVAILABILITY_SLOTS } from "@/constants";
-import { Role, Status } from "@/models/interfaces";
+import { Role, UserStatus } from "@/models/interfaces";
 import { eq, relations } from "drizzle-orm";
 import {
   bit,
@@ -17,7 +17,7 @@ import {
 import { course } from "./course";
 
 export const role = pgEnum("role", Role.values);
-export const status = pgEnum("status", Status.values);
+export const status = pgEnum("status", UserStatus.values);
 
 export const user = pgTable(
   "user",
@@ -37,7 +37,7 @@ export const user = pgTable(
 
     // Additional fields
     role: role("role").notNull(),
-    status: status("status").notNull().default(Status.unverified),
+    status: status("status").notNull().default(UserStatus.unverified),
     lastName: text("last_name").notNull(),
   },
   (table) => [

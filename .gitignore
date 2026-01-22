@@ -5,9 +5,6 @@
 /.pnp
 .pnp.js
 
-# testing
-/coverage
-
 # database
 /prisma/db.sqlite
 /prisma/db.sqlite-journal
@@ -49,9 +46,6 @@ yarn-error.log*
 **/node_modules
 **/.pnp
 **.pnp.js
-
-# testing
-**/coverage
 
 # production
 **/build

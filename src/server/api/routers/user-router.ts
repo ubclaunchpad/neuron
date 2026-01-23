@@ -1,12 +1,13 @@
 import { CreateUserInput, ListUsersInput, UserIdInput } from "@/models/api/user";
-import { getListUser } from "@/models/user";
+import type { ListResponse } from "@/models/list-response";
+import { getListUser, type ListUser } from "@/models/user";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 
 export const userRouter = createTRPCRouter({
   list: authorizedProcedure({ permission: { users: ["view"] } })
     .input(ListUsersInput)
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input, ctx }): Promise<ListResponse<ListUser>> => {
       const request = await ctx.userService.getUsersForRequest(input);
 
       return {

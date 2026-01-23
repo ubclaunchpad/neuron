@@ -2,7 +2,7 @@ import { ListRequestWithSearch } from "@/models/api/common";
 import { UserIdInput } from "@/models/api/user";
 import {
   UpdateVolunteerAvailabilityInput,
-  UpdateVolunteerProfileInput,
+  UpdateVolunteerInput,
 } from "@/models/api/volunteer";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
@@ -35,7 +35,7 @@ export const volunteerRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       return await ctx.volunteerService.getClassPreference(input.userId, input.classId)
     }),
-  byId: authorizedProcedure({ permission: { users: ["view"] } })
+  byId: authorizedProcedure({ permission: { profile: ["view"] } })
     .input(UserIdInput)
     .query(async ({ input, ctx }) => {
       return await ctx.volunteerService.getVolunteer(input.userId);
@@ -43,7 +43,7 @@ export const volunteerRouter = createTRPCRouter({
   updateVolunteerProfile: authorizedProcedure({
     permission: { profile: ["update"] },
   })
-    .input(UpdateVolunteerProfileInput)
+    .input(UpdateVolunteerInput)
     .mutation(async ({ input, ctx }) => {
       await ctx.volunteerService.updateVolunteerProfile(input);
       return { ok: true };

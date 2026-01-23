@@ -143,18 +143,7 @@ export function ProfileSettingsContent() {
               <div className="flex flex-col gap-2 justify-start">
                 <FieldLabel>Profile Picture</FieldLabel>
                 <div className="flex">
-                  {/* <ProfilePictureUpload
-                    currentImage={undefined}
-                    name={`${user?.name ?? ""} ${user?.lastName ?? ""}`}
-                    userId={user?.id}
-                    disabled={false}
-                    onUploaded={(objectKey) => {
-                      const base = process.env.NEXT_PUBLIC_MINIO_PUBLIC_URL!;
-                      const bucket = process.env.NEXT_PUBLIC_MINIO_BUCKET!;
-                      const imageUrl = `${base}/${bucket}/${objectKey}`;
-                      setValue("profilePictureUrl", imageUrl);
-                    }}
-                  /> */}
+                  
                 </div>
               </div>
 

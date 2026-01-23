@@ -36,8 +36,10 @@ import { Check, Send } from "lucide-react";
 
 export function CoverageItem({
   item,
+  onSelect,
 }: {
   item: MockCoverageItem;
+  onSelect?: (item: MockCoverageItem) => void;
 }) {
   const { user } = useAuth();
   const { startAt, endAt } = item;
@@ -96,6 +98,7 @@ export function CoverageItem({
       className={cn(
         "relative flex w-full items-start gap-4 rounded-lg bg-card p-4 shadow-xs border transition-all hover:shadow-sm",
       )}
+      onClick={() => onSelect?.(item)}
     >
         {/* Vertical Color Bar */}
         <div

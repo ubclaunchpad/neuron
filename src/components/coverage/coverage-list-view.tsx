@@ -9,6 +9,7 @@ import { format, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import { CoverageStatus } from "@/models/api/coverage";
+import { useCoveragePage } from "./coverage-page-context";
 
 function toDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
@@ -30,6 +31,7 @@ function groupByDay(items: MockCoverageItem[]) {
 
 export function CoverageListView() {
   const { user } = useAuth();
+  const { openAsideFor } = useCoveragePage();
   
   const items = useMemo(() => {
     if (!user) return [];
@@ -59,6 +61,10 @@ export function CoverageListView() {
 
   if (!user) return null;
 
+  const handleItemClick = (item: MockCoverageItem) => {
+    openAsideFor(item);
+  }
+
   return (
     <div className="w-full px-10">
       <div className="py-4 space-y-4">
@@ -80,7 +86,11 @@ export function CoverageListView() {
                 </div>
                 <div className="flex flex-col gap-3 px-5">
                   {group.items.map((item) => (
-                    <CoverageItem key={item.coverageRequestId} item={item} />
+                    <CoverageItem 
+                      key={item.coverageRequestId} 
+                      item={item} 
+                      onSelect={handleItemClick}
+                    />
                   ))}
                 </div>
               </section>

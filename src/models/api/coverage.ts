@@ -1,6 +1,7 @@
 import { StringEnum } from "@/lib/base-enum";
 import { createStringEnum } from "@/utils/typeUtils";
 import { z } from "zod";
+import { ListRequest } from "./common";
 
 export const CoverageStatusEnum = z.enum([
   "open",
@@ -17,14 +18,17 @@ export const CoverageRequestCategoryEnum = z.enum([
   "transportation",
   "other",
 ] as const);
-export type CoverageRequestCategory = z.infer<typeof CoverageRequestCategoryEnum>;
-export const CoverageRequestCategory = StringEnum.createFromType<CoverageRequestCategory>({
-  emergency: "Emergency",
-  health: "Health",
-  conflict: "Scheduling Conflict",
-  transportation: "Transportation",
-  other: "Other",
-});
+export type CoverageRequestCategory = z.infer<
+  typeof CoverageRequestCategoryEnum
+>;
+export const CoverageRequestCategory =
+  StringEnum.createFromType<CoverageRequestCategory>({
+    emergency: "Emergency",
+    health: "Health",
+    conflict: "Scheduling Conflict",
+    transportation: "Transportation",
+    other: "Other",
+  });
 
 export const CreateCoverageRequest = z.object({
   shiftId: z.uuid(),
@@ -37,3 +41,10 @@ export type CreateCoverageRequest = z.infer<typeof CreateCoverageRequest>;
 export const CoverageRequestIdInput = z.object({
   coverageRequestId: z.uuid(),
 });
+
+export const ListCoverageRequestsInput = ListRequest.extend({
+  status: CoverageStatusEnum.optional(),
+});
+export type ListCoverageRequestsInput = z.infer<
+  typeof ListCoverageRequestsInput
+>;

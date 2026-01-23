@@ -26,7 +26,7 @@ export function buildCoverageRequest(
     details: coverageDB.details,
     comments: coverageDB.comments ?? undefined,
     requestingVolunteer: requestingVolunteer,
-    coveringVolunteer: coveringVolunteer
+    coveringVolunteer: coveringVolunteer,
   } as const;
 }
 
@@ -39,7 +39,9 @@ export function getSingleCoverageRequest(r: CoverageRequest) {
     details: r.details,
     comments: r.comments,
     requestingVolunteer: getEmbeddedVolunteer(r.requestingVolunteer),
-    coveringVolunteer: r.coveringVolunteer ? getEmbeddedVolunteer(r.coveringVolunteer) : undefined
+    coveringVolunteer: r.coveringVolunteer
+      ? getEmbeddedVolunteer(r.coveringVolunteer)
+      : undefined,
   } as const;
 }
 
@@ -49,9 +51,60 @@ export function getEmbeddedCoverageRequest(r: CoverageRequest) {
     shiftId: r.shiftId,
     status: r.status,
     requestingVolunteer: getEmbeddedVolunteer(r.requestingVolunteer),
-    coveringVolunteer: r.coveringVolunteer ? getEmbeddedVolunteer(r.coveringVolunteer) : undefined
+    coveringVolunteer: r.coveringVolunteer
+      ? getEmbeddedVolunteer(r.coveringVolunteer)
+      : undefined,
   } as const;
 }
 
 export type SingleCoverageRequest = ReturnType<typeof getSingleCoverageRequest>;
-export type EmbeddedCoverageRequest = ReturnType<typeof getEmbeddedCoverageRequest>;
+export type EmbeddedCoverageRequest = ReturnType<
+  typeof getEmbeddedCoverageRequest
+>;
+
+// Shift context for coverage list display
+export type CoverageRequestShiftContext = {
+  id: string;
+  date: string;
+  startAt: Date;
+  endAt: Date;
+  className: string;
+  classId: string;
+};
+
+// Base list item (visible to all users who can see the request)
+export function getListCoverageRequestBase(
+  r: CoverageRequest,
+  shiftContext: CoverageRequestShiftContext,
+) {
+  return {
+    id: r.id,
+    shiftId: r.shiftId,
+    status: r.status,
+    shift: shiftContext,
+    requestingVolunteer: getEmbeddedVolunteer(r.requestingVolunteer),
+    coveringVolunteer: r.coveringVolunteer
+      ? getEmbeddedVolunteer(r.coveringVolunteer)
+      : undefined,
+  } as const;
+}
+
+// Admin list item (includes reason fields: category, details, comments)
+export function getListCoverageRequestWithReason(
+  r: CoverageRequest,
+  shiftContext: CoverageRequestShiftContext,
+) {
+  return {
+    ...getListCoverageRequestBase(r, shiftContext),
+    category: r.category,
+    details: r.details,
+    comments: r.comments,
+  } as const;
+}
+
+export type ListCoverageRequestBase = ReturnType<
+  typeof getListCoverageRequestBase
+>;
+export type ListCoverageRequestWithReason = ReturnType<
+  typeof getListCoverageRequestWithReason
+>;

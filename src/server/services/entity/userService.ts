@@ -8,7 +8,24 @@ import { buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
 import { and, desc, eq, getTableColumns, gt, inArray, sql } from "drizzle-orm";
 import { user } from "../../db/schema/user";
 
-export class UserService {
+export interface IUserService {
+  getUsersForRequest(listRequest: ListUsersInput): Promise<ListResponse<User>>;
+  getUsers(ids: string[]): Promise<User[]>;
+  getUser(id: string): Promise<User>;
+  verifyVolunteer(id: string): Promise<string>;
+  rejectVolunteer(id: string): Promise<string>;
+  deactivateUser(id: string): Promise<string>;
+  getVerificationRequestCount(): Promise<number>;
+  createUser(input: {
+    name: string;
+    lastName: string;
+    email: string;
+    role: string;
+  }): Promise<User>;
+  inviteUser(): Promise<void>;
+}
+
+export class UserService implements IUserService {
   private readonly db: Drizzle;
 
   constructor(db: Drizzle) {

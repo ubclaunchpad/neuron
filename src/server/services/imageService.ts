@@ -4,7 +4,12 @@ import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { randomUUID } from "crypto";
 import * as Minio from "minio";
 
-export class ImageService {
+export interface IImageService {
+  getPresignedUrl(fileExtension: string): Promise<{ url: string; key: string }>;
+  deleteImage(key: string): Promise<void>;
+}
+
+export class ImageService implements IImageService {
   private readonly minio: Minio.Client;
   private readonly expiration = 5 * 60; // 5 mins, may be too generous
   private readonly bucket = env.MINIO_BUCKET ?? "neuron";
@@ -41,7 +46,10 @@ export class ImageService {
 
       if (!exists) {
         await this.minio.makeBucket(this.bucket);
-        await this.minio.setBucketPolicy(this.bucket, this.buildNeuronBucketPolicy())
+        await this.minio.setBucketPolicy(
+          this.bucket,
+          this.buildNeuronBucketPolicy(),
+        );
       }
     } catch (error) {
       console.error("Error Ensuring Bucket: ", error);
@@ -68,7 +76,7 @@ export class ImageService {
       const key = safeExt ? `${randomUUID()}.${safeExt}` : randomUUID();
 
       const url = await this.minio.presignedUrl(
-        'PUT',
+        "PUT",
         this.bucket,
         key,
         this.expiration,

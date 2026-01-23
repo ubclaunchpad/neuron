@@ -2,14 +2,14 @@ import {
   ClassIdInput,
   ClassRequest,
   CreateClass,
-  UpdateClass
+  UpdateClass,
 } from "@/models/api/class";
 import {
   getListClass,
   getSingleClass,
   type ClassResponse,
   type ListClass,
-  type SingleClass
+  type SingleClass,
 } from "@/models/class";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";

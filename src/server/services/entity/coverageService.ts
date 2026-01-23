@@ -25,18 +25,47 @@ import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import { getPagination } from "@/utils/searchUtils";
 import { and, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
-import type { VolunteerService } from "./volunteerService";
-import type { ShiftService } from "./shiftService";
+import type { IVolunteerService } from "./volunteerService";
+import type { IShiftService } from "./shiftService";
 
-export class CoverageService {
+export interface ICoverageService {
+  getCoverageRequestsForShift(shiftId: string): Promise<CoverageRequest[]>;
+  listCoverageRequests(
+    input: ListCoverageRequestsInput,
+    viewerUserId: string,
+    viewerRole: Role,
+  ): Promise<
+    ListResponse<ListCoverageRequestBase | ListCoverageRequestWithReason>
+  >;
+  getCoverageRequestById(id: string): Promise<CoverageRequest>;
+  getCoverageRequestByIds(ids: string[]): Promise<CoverageRequest[]>;
+  createCoverageRequest(
+    requestingVolunteerUserId: string,
+    requestData: CreateCoverageRequest,
+  ): Promise<string>;
+  cancelCoverageRequest(
+    requestingVolunteerUserId: string,
+    coverageRequestId: string,
+  ): Promise<void>;
+  fulfillCoverageRequest(
+    coveredByVolunteerUserId: string,
+    coverageRequestId: string,
+  ): Promise<void>;
+  unassignCoverage(
+    coveredByVolunteerUserId: string,
+    coverageRequestId: string,
+  ): Promise<void>;
+}
+
+export class CoverageService implements ICoverageService {
   private readonly db: Drizzle;
-  private readonly volunteerService: VolunteerService;
-  private readonly shiftService: ShiftService;
+  private readonly volunteerService: IVolunteerService;
+  private readonly shiftService: IShiftService;
 
   constructor(
     db: Drizzle,
-    volunteerService: VolunteerService,
-    shiftService: ShiftService,
+    volunteerService: IVolunteerService,
+    shiftService: IShiftService,
   ) {
     this.db = db;
     this.volunteerService = volunteerService;

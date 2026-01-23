@@ -5,24 +5,65 @@ import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { buildSearchCondition, buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
+import {
+  buildSearchCondition,
+  buildSimilarityExpression,
+  getPagination,
+} from "@/utils/searchUtils";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { z } from "zod";
-import { coursePreference, volunteer, volunteerUserView } from "../../db/schema/user";
+import {
+  coursePreference,
+  volunteer,
+  volunteerUserView,
+} from "../../db/schema/user";
 
-export class VolunteerService {
+export interface IVolunteerService {
+  getVolunteersForRequest(
+    listRequest: ListRequestWithSearch,
+  ): Promise<ListResponse<Volunteer>>;
+  getVolunteers(ids: string[]): Promise<Volunteer[]>;
+  getVolunteer(id: string): Promise<Volunteer>;
+  setClassPreference(
+    volunteerUserId: string,
+    classId: string,
+    preferred: boolean,
+  ): Promise<void>;
+  getClassPreference(
+    volunteerUserId: string,
+    classId: string,
+  ): Promise<{ preferred: boolean }>;
+  updateVolunteerProfile(
+    input: z.infer<typeof UpdateVolunteerProfileInput>,
+  ): Promise<void>;
+  updateVolunteerAvailability(
+    volunteerUserId: string,
+    availability: string,
+  ): Promise<void>;
+}
+
+export class VolunteerService implements IVolunteerService {
   private readonly db: Drizzle;
   constructor(db: Drizzle) {
     this.db = db;
   }
 
-  async getVolunteersForRequest(listRequest: ListRequestWithSearch): Promise<ListResponse<Volunteer>> {
+  async getVolunteersForRequest(
+    listRequest: ListRequestWithSearch,
+  ): Promise<ListResponse<Volunteer>> {
     const { perPage, offset } = getPagination(listRequest);
     const queryInput = listRequest.search?.trim();
-    const hasQuery = !!queryInput
+    const hasQuery = !!queryInput;
 
     const similarity = hasQuery
-      ? buildSimilarityExpression([volunteerUserView.name, volunteerUserView.lastName, volunteerUserView.email], queryInput)
+      ? buildSimilarityExpression(
+          [
+            volunteerUserView.name,
+            volunteerUserView.lastName,
+            volunteerUserView.email,
+          ],
+          queryInput,
+        )
       : undefined;
 
     const baseSelect = {
@@ -41,19 +82,25 @@ export class VolunteerService {
 
     if (hasQuery) {
       builder = builder
-        .where(buildSearchCondition([volunteerUserView.name, volunteerUserView.lastName, volunteerUserView.email], queryInput))
+        .where(
+          buildSearchCondition(
+            [
+              volunteerUserView.name,
+              volunteerUserView.lastName,
+              volunteerUserView.email,
+            ],
+            queryInput,
+          ),
+        )
         .orderBy(desc(similarity!));
     }
 
-    const rows = await builder
-      .limit(perPage)
-      .offset(offset)
-      .execute();
+    const rows = await builder.limit(perPage).offset(offset).execute();
 
     const total = rows[0]?.count ?? 0;
     const loadedSoFar = offset + rows.length;
     const nextCursor = loadedSoFar < total ? loadedSoFar : null;
-    
+
     return {
       data: rows.map((d) => buildVolunteer(d)),
       total,
@@ -69,7 +116,10 @@ export class VolunteerService {
 
     if (data.length !== ids.length) {
       const firstMissing = ids.find((id) => !data.some((d) => d.id === id));
-      throw new NeuronError(`Could not find Volunteer with id ${firstMissing}`, NeuronErrorCodes.NOT_FOUND);
+      throw new NeuronError(
+        `Could not find Volunteer with id ${firstMissing}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
     }
 
     return data.map((d) => buildVolunteer(d));
@@ -78,7 +128,6 @@ export class VolunteerService {
   async getVolunteer(id: string): Promise<Volunteer> {
     return await this.getVolunteers([id]).then(([volunteer]) => volunteer!);
   }
-
 
   async setClassPreference(
     volunteerUserId: string,
@@ -91,10 +140,7 @@ export class VolunteerService {
         .insert(coursePreference)
         .values({ volunteerUserId, courseId: classId })
         .onConflictDoNothing({
-          target: [
-            coursePreference.volunteerUserId,
-            coursePreference.courseId,
-          ],
+          target: [coursePreference.volunteerUserId, coursePreference.courseId],
         });
     } else {
       await this.db
@@ -108,20 +154,23 @@ export class VolunteerService {
     }
   }
 
-  async getClassPreference(volunteerUserId: string, classId: string): Promise<{ preferred: boolean}> {   
+  async getClassPreference(
+    volunteerUserId: string,
+    classId: string,
+  ): Promise<{ preferred: boolean }> {
     const result = await this.db
       .select()
       .from(coursePreference)
       .where(
         and(
-          eq(coursePreference.volunteerUserId, volunteerUserId), 
-          eq(coursePreference.courseId, classId)
-        )
+          eq(coursePreference.volunteerUserId, volunteerUserId),
+          eq(coursePreference.courseId, classId),
+        ),
       );
-      
+
     return { preferred: result.length > 0 };
   }
-  
+
   async updateVolunteerProfile(
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void> {
@@ -141,7 +190,10 @@ export class VolunteerService {
     }
   }
 
-  async updateVolunteerAvailability(volunteerUserId: string, availability: string): Promise<void> {
+  async updateVolunteerAvailability(
+    volunteerUserId: string,
+    availability: string,
+  ): Promise<void> {
     const [updated] = await this.db
       .update(volunteer)
       .set({ availability })
@@ -149,7 +201,10 @@ export class VolunteerService {
       .returning({ userId: volunteer.userId });
 
     if (!updated) {
-      throw new NeuronError(`Could not find Volunteer with id ${volunteerUserId}`, NeuronErrorCodes.NOT_FOUND);
+      throw new NeuronError(
+        `Could not find Volunteer with id ${volunteerUserId}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
     }
   }
 }

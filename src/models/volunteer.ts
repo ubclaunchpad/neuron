@@ -1,7 +1,5 @@
 import type { VolunteerUserViewDB } from "@/server/db/schema";
 import type { UserStatus } from "./interfaces";
-import { em } from "node_modules/@fullcalendar/core/internal-common";
-import { email } from "node_modules/zod/v4/core/regexes.cjs";
 
 export type Volunteer = {
   id: string;

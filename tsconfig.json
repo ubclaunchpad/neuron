@@ -42,8 +42,10 @@
     "**/*.tsx",
     "**/*.cjs",
     "**/*.js",
-    ".next/types/**/*.ts"
-, "src/components/primitives/TextInput"  ],
+    ".next/types/**/*.ts",
+    "src/components/primitives/TextInput",
+    ".next/dev/types/**/*.ts"
+  ],
   "exclude": [
     "node_modules"
   ]

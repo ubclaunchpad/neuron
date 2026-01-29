@@ -44,7 +44,7 @@ export const UpdateVolunteerInput = z.object({
   province: z.string().optional(),
   preferredTimeCommitment: z.number().int().min(0).optional(),
   availability: BitString(AVAILABILITY_SLOTS).optional(),
-  image: z.string().optional(),
+  image: z.string().nullish(),
 });
 
 export const AdminSignoffInput = z.object({

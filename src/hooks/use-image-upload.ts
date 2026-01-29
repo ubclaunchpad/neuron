@@ -1,7 +1,7 @@
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { clientApi } from "@/trpc/client";
 
-export function useClassImageUpload() {
+export function useImageUpload() {
   const { mutateAsync: getPresignedUrl } =
     clientApi.storage.getPresignedUrl.useMutation();
 
@@ -18,7 +18,7 @@ export function useClassImageUpload() {
         contentType: "image/webp",
       });
     } catch {
-      throw new Error("Failed to upload Class image");
+      throw new Error("Failed to upload image");
     }
   };
 

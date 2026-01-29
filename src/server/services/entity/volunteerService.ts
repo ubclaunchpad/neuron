@@ -132,6 +132,7 @@ export class VolunteerService {
         name: rest.firstName,
         lastName: rest.lastName,
         email: rest.email,
+        image: rest.image,
       };
 
       const volunteerUpdate = {

@@ -16,7 +16,7 @@ import { Bell, Clock, LockKeyhole, User, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList } from "../ui/tabs";
 import { AvailabilitySettingsContent } from "./pages/availability-settings-content";
 import { NotificationsSettingsContent } from "./pages/notifications-settings-content";
-import { ProfileSettingsContent } from "./pages/profile-settings-content";
+import { ProfileSettingsContent } from "./pages/profile/profile-settings-content";
 import { SecuritySettingsContent } from "./pages/security-settings-content";
 
 const settingsItems = [

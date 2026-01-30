@@ -48,6 +48,34 @@ const errorMessages: ErrorMessages = {
     "A password has already been set for this account.",
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL:
     "An account with this email already exists. Please use a different email address.",
+  CROSS_SITE_NAVIGATION_LOGIN_BLOCKED:
+    "This request was blocked for security reasons. Please try again from the original page.",
+  VERIFICATION_EMAIL_NOT_ENABLED:
+    "Email verification is not currently enabled. Please contact support.",
+  EMAIL_ALREADY_VERIFIED: "Your email address has already been verified.",
+  EMAIL_MISMATCH:
+    "The email address does not match. Please check and try again.",
+  SESSION_NOT_FRESH:
+    "Your session needs to be refreshed. Please sign in again to continue.",
+  LINKED_ACCOUNT_ALREADY_EXISTS:
+    "This account is already linked. Please use a different account.",
+  INVALID_ORIGIN:
+    "The request origin is not allowed. Please try again from the correct page.",
+  INVALID_CALLBACK_URL: "The callback URL provided is invalid.",
+  INVALID_REDIRECT_URL: "The redirect URL provided is invalid.",
+  INVALID_ERROR_CALLBACK_URL: "The error callback URL provided is invalid.",
+  INVALID_NEW_USER_CALLBACK_URL:
+    "The new user callback URL provided is invalid.",
+  MISSING_OR_NULL_ORIGIN:
+    "The request is missing a valid origin. Please try again.",
+  CALLBACK_URL_REQUIRED: "A callback URL is required to proceed.",
+  FAILED_TO_CREATE_VERIFICATION:
+    "We couldn't create the verification. Please try again later.",
+  FIELD_NOT_ALLOWED: "This field is not allowed to be set.",
+  ASYNC_VALIDATION_NOT_SUPPORTED: "Async validation is not supported.",
+  VALIDATION_ERROR:
+    "There was a validation error. Please check your input and try again.",
+  MISSING_FIELD: "A required field is missing. Please fill in all fields.",
 };
 
 export function getBetterAuthErrorMessage(code: ErrorCode | undefined): string {

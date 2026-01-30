@@ -31,16 +31,17 @@ const badgeVariants = cva(
     compoundVariants: [],
     defaultVariants: {
       variant: "default",
-      size: "default",
+      color: "default",
     },
   },
 );
 
 export interface BadgeProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "color">,
+  extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, "color">,
     VariantProps<typeof badgeVariants> {}
 
-function Badge({ className, variant, size, color, ...props }: BadgeProps) {
+function Badge({ className, variant, color, ...props }: BadgeProps) {
   return (
     <div
       className={cn(

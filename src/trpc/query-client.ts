@@ -43,10 +43,11 @@ export const createQueryClient = () =>
   new QueryClient({
     mutationCache: new MutationCache({
       onError: (error, _1, _2, mutation) =>
-        handleError(error, mutation.meta?.suppressToast),
+        handleError(error, mutation.meta?.suppressToast === true),
     }),
     queryCache: new QueryCache({
-      onError: (error, query) => handleError(error, query.meta?.suppressToast),
+      onError: (error, query) =>
+        handleError(error, query.meta?.suppressToast === true),
     }),
     defaultOptions: {
       queries: {

@@ -35,12 +35,12 @@ export default function ForgotPasswordForm() {
     reValidateMode: "onChange",
     defaultValues: {
       email: "",
-    }
+    },
   });
 
   const onSubmit = async (data: ForgotPasswordSchemaType) => {
     // Ignore error to prevent user enumeration
-    await authClient.forgetPassword({
+    await authClient.requestPasswordReset({
       email: data.email,
       redirectTo: "/auth/password-reset",
     });
@@ -87,7 +87,7 @@ export default function ForgotPasswordForm() {
           type="submit"
           disabled={cooldown.isActive || isSubmitting}
           data-cooldown={cooldown.isActive}
-          className="w-full data-[cooldown=true]:bg-[var(--ring)] data-[cooldown=true]:text-foreground data-[cooldown=true]:opacity-100"
+          className="w-full data-[cooldown=true]:bg-ring data-[cooldown=true]:text-foreground data-[cooldown=true]:opacity-100"
         >
           {isSubmitting ? (
             <>

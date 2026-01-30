@@ -8,8 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Bell, ChevronDown } from "lucide-react";
 import { Suspense } from "react";
 import { CoveragePageProvider } from "@/components/coverage/coverage-page-context";
+import { CoverageAside } from "@/components/coverage/coverage-aside";
+import { MonthInput } from "@/components/ui/date-input.tsx";
+import { useState } from "react";
 
 export default function CoveragePage() {
+  // Changed from month selector, pass in 1st of selected month to children
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
   return (
     <WithPermission 
       permissions={{ permission: { coverage: ["view"] } }} 
@@ -57,16 +63,18 @@ export default function CoveragePage() {
 
                 <PageLayoutAside>
                     <Suspense fallback={<>Loading coverage...</>}>
-                        Test
+                        <CoverageAside></CoverageAside>
                     </Suspense>
                 </PageLayoutAside>
 
                 <PageLayoutContent className="px-6"> 
                     <div className="flex items-center gap-2 py-4">
-                        <span className="text-sm font-medium">October 2024</span>
-                        <ChevronDown className="size-4 text-muted-foreground" />
+                        <MonthInput 
+                            onChange={(d?: Date) => d ? setSelectedDate(d) : null}
+                            value={selectedDate}
+                        ></MonthInput>
                     </div>
-                    <CoverageListView />
+                    <CoverageListView date={selectedDate}/>
                 </PageLayoutContent>
             </CoveragePageProvider>
         </PageLayout>

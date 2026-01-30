@@ -236,4 +236,142 @@ export function DateRangePicker({
   );
 }
 
-export { DatePicker as DateInput, DateRangePicker as DateRangeInput };
+export type MonthPickerProps = Omit<
+  React.ComponentProps<typeof Button>,
+  "children" | "id" | "value" | "defaultValue" | "onChange" | "onBlur"
+> & {
+  value?: Date | null;
+  defaultValue?: Date;
+  onChange?: (date: Date | undefined) => void;
+  onBlur?: () => void;
+  id?: string;
+  placeholder?: string;
+};
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+export function MonthPicker({
+  value,
+  defaultValue,
+  onChange,
+  onBlur,
+  id,
+  placeholder = "Pick a month",
+  disabled,
+  className,
+  ...buttonProps
+}: MonthPickerProps) {
+  const isControlled = onChange !== undefined;
+  const [open, setOpen] = React.useState(false);
+
+  const [internal, setInternal] = React.useState<Date | undefined>(() =>
+    defaultValue
+      ? new Date(defaultValue.getFullYear(), defaultValue.getMonth(), 1)
+      : undefined,
+  );
+
+  const selected = isControlled
+    ? value
+      ? new Date(value.getFullYear(), value.getMonth(), 1)
+      : undefined
+    : internal;
+
+  const [year, setYear] = React.useState(
+    selected?.getFullYear() ?? new Date().getFullYear(),
+  );
+
+  React.useEffect(() => {
+    if (selected) setYear(selected.getFullYear());
+  }, [selected]);
+
+  const setSelected = (month: number) => {
+    const next = new Date(year, month, 1);
+    if (!isControlled) setInternal(next);
+    onChange?.(next);
+    setOpen(false);
+  };
+
+  const label = selected
+    ? selected.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    : undefined;
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) onBlur?.();
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          id={id}
+          disabled={disabled}
+          className={cn(
+            "justify-start min-w-0 shrink-1 font-normal",
+            !label && "text-muted-foreground",
+            className,
+          )}
+          {...buttonProps}
+        >
+          <CalendarIcon className="size-4" />
+          <span className="text-base truncate">
+            {label ?? placeholder}
+          </span>
+        </Button>
+      </PopoverTrigger>
+
+      <PopoverContent className="w-64 p-3" align="start">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setYear((y) => y - 1)}
+          >
+            ‹
+          </Button>
+
+          <span className="font-medium">{year}</span>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setYear((y) => y + 1)}
+          >
+            ›
+          </Button>
+        </div>
+
+        {/* Month grid */}
+        <div className="grid grid-cols-3 gap-2">
+          {MONTHS.map((m, idx) => {
+            const isSelected =
+              selected &&
+              selected.getFullYear() === year &&
+              selected.getMonth() === idx;
+
+            return (
+              <Button
+                key={m}
+                variant={isSelected ? "outline" : "ghost"}
+                className={cn(
+                  "h-9",
+                  isSelected && "border-primary",
+                )}
+                onClick={() => setSelected(idx)}
+              >
+                {m}
+              </Button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+
+export { DatePicker as DateInput, DateRangePicker as DateRangeInput, MonthPicker as MonthInput };

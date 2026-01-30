@@ -11,6 +11,10 @@ import { useMemo } from "react";
 import { CoverageStatus } from "@/models/api/coverage";
 import { useCoveragePage } from "./coverage-page-context";
 
+type CoverageListViewProps = {
+  date: Date
+}
+
 function toDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
 }
@@ -29,7 +33,9 @@ function groupByDay(items: MockCoverageItem[]) {
   return Array.from(groups.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
-export function CoverageListView() {
+export function CoverageListView(
+  { date }: CoverageListViewProps
+) {
   const { user } = useAuth();
   const { openAsideFor } = useCoveragePage();
   

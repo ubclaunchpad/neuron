@@ -46,8 +46,8 @@ export const getMockCoverageRequests = (currentUserId: string): MockCoverageItem
   const items: MockCoverageItem[] = [
     {
       id: "shift-1",
-      startAt: createDate(1, 14, 0), // Tomorrow 2pm
-      endAt: createDate(1, 16, 0),
+      startAt: new Date(2026, 0, 31, 12),
+      endAt: new Date(2026, 0, 31, 14),
       className: "Introduction to Python",
       classDescription: "Basic concepts of Python programming",
       coverageRequestId: "req-1",
@@ -66,8 +66,8 @@ export const getMockCoverageRequests = (currentUserId: string): MockCoverageItem
     },
     {
       id: "shift-2",
-      startAt: createDate(2, 10, 0), // Day after tomorrow 10am
-      endAt: createDate(2, 12, 0),
+      startAt: new Date(2026, 2, 8, 12),
+      endAt: new Date(2026, 2, 8, 15),
       className: "Advanced React",
       classDescription: "Deep dive into hooks and context",
       coverageRequestId: "req-2",
@@ -86,8 +86,8 @@ export const getMockCoverageRequests = (currentUserId: string): MockCoverageItem
     },
     {
       id: "shift-3",
-      startAt: createDate(3, 9, 0),
-      endAt: createDate(3, 11, 0),
+      startAt: new Date(2026, 2, 21, 12),
+      endAt: new Date(2026, 2, 21, 5),
       className: "Data Structures",
       classDescription: null,
       coverageRequestId: "req-3",
@@ -111,8 +111,8 @@ export const getMockCoverageRequests = (currentUserId: string): MockCoverageItem
     },
     {
         id: "shift-4",
-        startAt: createDate(5, 13, 0),
-        endAt: createDate(5, 15, 0),
+        startAt: new Date(2026, 3, 1, 10),
+        endAt: new Date(2026, 3, 1, 12),
         className: "Machine Learning",
         classDescription: "Intro to ML",
         coverageRequestId: "req-4",
@@ -131,8 +131,8 @@ export const getMockCoverageRequests = (currentUserId: string): MockCoverageItem
     },
     {
         id: "shift-5",
-        startAt: createDate(4, 15, 0),
-        endAt: createDate(4, 17, 0),
+        startAt: new Date(2026, 3, 2, 10),
+        endAt: new Date(2026, 3, 2, 10),
         className: "Web Development",
         classDescription: "HTML & CSS",
         coverageRequestId: "req-5",

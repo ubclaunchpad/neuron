@@ -25,16 +25,15 @@ export const env = createEnv({
     MINIO_PORT: port,
     MINIO_REGION: z.string(),
     MINIO_BUCKET: z.string(),
-    MINIO_USE_SSL: z.enum(["true", "false"]).transform((val) => val === "true")
+    MINIO_USE_SSL: z.coerce.boolean(),
+    FILES_BASE_URL: z.url(),
+    FILES_BUCKET: z.string(),
   },
 
   /**
    * Client-side env vars (must start with NEXT_PUBLIC_)
    */
-  client: {
-    NEXT_PUBLIC_FILES_BASE_URL: z.string(),
-    NEXT_PUBLIC_FILES_BUCKET: z.string(),
-  },
+  client: {},
 
   /**
    * Raw runtime env mapping
@@ -57,8 +56,8 @@ export const env = createEnv({
     MINIO_BUCKET: process.env.MINIO_BUCKET,
     MINIO_USE_SSL: process.env.MINIO_USE_SSL,
 
-    NEXT_PUBLIC_FILES_BASE_URL: process.env.NEXT_PUBLIC_FILES_BASE_URL,
-    NEXT_PUBLIC_FILES_BUCKET: process.env.NEXT_PUBLIC_FILES_BUCKET,
+    FILES_BASE_URL: process.env.FILES_BASE_URL,
+    FILES_BUCKET: process.env.FILES_BUCKET,
   },
 
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

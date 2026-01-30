@@ -1,0 +1,18 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: "postgresql://postgres:${DATABASE_PASSWORD}@host.docker.internal:5432/neuron"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@host.docker.internal:6379/0"
+      MINIO_HOST: "host.docker.internal"
+      FILES_BASE_URL: "http://host.docker.internal:9000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

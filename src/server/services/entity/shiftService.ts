@@ -72,6 +72,24 @@ const coverageStatusPriority = {
   [CoverageStatus.withdrawn]: 2,
 } as const;
 
+export interface IShiftService {
+  checkIn(
+    shiftId: string,
+    volunteerId: string,
+  ): Promise<ShiftAttendanceSummary>;
+  listWindow(input: GetShiftsInput): Promise<{
+    cursor: string;
+    shifts: ListShiftView[];
+    nextCursor: string;
+    prevCursor: string;
+  }>;
+  getShiftById(shiftId: string, userId: string): Promise<SingleShiftView>;
+  createShift(input: CreateShiftInput, tx?: Transaction): Promise<string>;
+  deleteShift(input: ShiftIdInput): Promise<void>;
+  cancelShift(input: CancelShiftInput): Promise<void>;
+  assertValidShift(volunteerId: string, shiftId: string): Promise<void>;
+}
+
 function sortCoverageRequestsByStatus(
   coverages: Shift["coverageRequests"],
 ): Shift["coverageRequests"] {
@@ -81,7 +99,7 @@ function sortCoverageRequestsByStatus(
   );
 }
 
-export class ShiftService {
+export class ShiftService implements IShiftService {
   private readonly db: Drizzle;
   private readonly session: Session;
 

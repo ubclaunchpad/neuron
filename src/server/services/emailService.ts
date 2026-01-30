@@ -3,8 +3,20 @@ import nodemailer, { type Transporter } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 
 type SentMessageInfo = SMTPTransport.SentMessageInfo;
+export type EmailSendResult = Pick<SentMessageInfo, "messageId"> &
+  Partial<Omit<SentMessageInfo, "messageId">>;
 
-export class EmailService {
+export interface IEmailService {
+  send(to: string, subject: string, text: string): Promise<EmailSendResult>;
+  send(
+    to: string,
+    subject: string,
+    text: string,
+    html: string,
+  ): Promise<EmailSendResult>;
+}
+
+export class EmailService implements IEmailService {
   private readonly transporter: Transporter;
   private readonly env: typeof environment;
 
@@ -21,19 +33,19 @@ export class EmailService {
     });
   }
 
-  send(to: string, subject: string, text: string): Promise<SentMessageInfo>;
+  send(to: string, subject: string, text: string): Promise<EmailSendResult>;
   send(
     to: string,
     subject: string,
     text: string,
     html: string,
-  ): Promise<SentMessageInfo>;
+  ): Promise<EmailSendResult>;
   send(
     to: string,
     subject: string,
     text: string,
     html?: string,
-  ): Promise<SentMessageInfo> {
+  ): Promise<EmailSendResult> {
     return this.transporter.sendMail({
       from: this.env.MAIL_FROM,
       to,

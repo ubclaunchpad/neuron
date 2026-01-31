@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { AlertCircle, LogOut, Shield, Lock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { forceLogout } from "@/lib/auth/logout";
+
 
 export function SecuritySettingsContent() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -18,18 +20,8 @@ export function SecuritySettingsContent() {
   const authClient = createAuthClient()
 
   const handleLogout = async () => {
-    try {
-      setLoading(true);
-      await authClient.signOut();
-      setMessage({ type: 'success', text: 'Successfully logged out' });
-      // Redirect to login page
-      window.location.href = '/login';
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to logout. Please try again.' });
-    } finally {
-      setLoading(false);
-    }
-  };
+      await forceLogout();
+    };
 
   const handleRevokeAllSessions = async () => {
     try {
@@ -75,7 +67,7 @@ export function SecuritySettingsContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto px-1">
       <div>
         <h3 className="text-lg font-medium">Security</h3>
         <p className="text-sm text-muted-foreground">
@@ -140,7 +132,6 @@ export function SecuritySettingsContent() {
         </CardContent>
       </Card>
 
-      {/* Session Management Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -170,7 +161,6 @@ export function SecuritySettingsContent() {
         </CardContent>
       </Card>
 
-      {/* Logout Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

@@ -101,11 +101,21 @@ function sortCoverageRequestsByStatus(
 
 export class ShiftService implements IShiftService {
   private readonly db: Drizzle;
-  private readonly session: Session;
+  private readonly session?: Session;
 
-  constructor(db: Drizzle, session: Session) {
+  constructor({ db, session }: { db: Drizzle; session?: Session }) {
     this.db = db;
     this.session = session;
+  }
+
+  private requireSession(): Session {
+    if (!this.session) {
+      throw new NeuronError(
+        "Authentication required",
+        NeuronErrorCodes.UNAUTHORIZED,
+      );
+    }
+    return this.session;
   }
 
   private async getViewer(
@@ -436,8 +446,9 @@ export class ShiftService implements IShiftService {
     shiftId: string,
     volunteerId: string,
   ): Promise<ShiftAttendanceSummary> {
+    const session = this.requireSession();
     const hasOverride = hasPermission({
-      user: this.session.user,
+      user: session.user,
       permission: { shifts: ["override-check-in"] },
     });
 

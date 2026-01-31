@@ -8,10 +8,15 @@ import "./src/env.js";
 const nextConfig = {
   output: "standalone",
 
-  webpack(config) {
+  webpack(config, { isServer, dev }) {
     const fileLoaderRule = config.module.rules.find((rule) =>
       rule.test?.test?.(".svg"),
     );
+
+    // Server-side sourcemaps for production Node stack traces
+    if (!dev) {
+      config.devtool = isServer ? "source-map" : "hidden-source-map";
+    }
 
     // Exclude svg from the default loader
     fileLoaderRule.exclude = /\.svg$/;

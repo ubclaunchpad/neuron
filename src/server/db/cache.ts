@@ -8,7 +8,7 @@ export type CacheClient = RedisClientType;
 export function registerCacheClient(container: NeuronContainer) {
   container.register({
     cacheClient: asFunction<CacheClient>(
-      (env: typeof environment): CacheClient => {
+      ({ env }: { env: typeof environment }): CacheClient => {
         const g = globalThis as unknown as { __redis?: CacheClient };
 
         // Reuse the dev client across HMR updates

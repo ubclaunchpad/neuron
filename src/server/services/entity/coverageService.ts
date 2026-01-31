@@ -62,11 +62,15 @@ export class CoverageService implements ICoverageService {
   private readonly volunteerService: IVolunteerService;
   private readonly shiftService: IShiftService;
 
-  constructor(
-    db: Drizzle,
-    volunteerService: IVolunteerService,
-    shiftService: IShiftService,
-  ) {
+  constructor({
+    db,
+    volunteerService,
+    shiftService,
+  }: {
+    db: Drizzle;
+    volunteerService: IVolunteerService;
+    shiftService: IShiftService;
+  }) {
     this.db = db;
     this.volunteerService = volunteerService;
     this.shiftService = shiftService;

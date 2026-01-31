@@ -44,7 +44,8 @@ export interface IVolunteerService {
 
 export class VolunteerService implements IVolunteerService {
   private readonly db: Drizzle;
-  constructor(db: Drizzle) {
+
+  constructor({ db }: { db: Drizzle }) {
     this.db = db;
   }
 

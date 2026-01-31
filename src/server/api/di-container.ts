@@ -4,6 +4,7 @@ import {
   asClass,
   asValue,
   createContainer,
+  InjectionMode,
   type AwilixContainer,
 } from "awilix";
 import type { Sql } from "postgres";
@@ -58,7 +59,9 @@ export type NeuronContainer = AwilixContainer<NeuronCradle>;
 
 const createRootContainer = (): NeuronContainer => {
   const container = createContainer<NeuronCradle>({
-    injectionMode: "CLASSIC",
+    // PROXY is resilient to build-time minification (CLASSIC breaks when
+    // constructor/function parameter names get mangled).
+    injectionMode: InjectionMode.PROXY,
     strict: true,
   });
 

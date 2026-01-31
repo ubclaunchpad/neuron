@@ -32,7 +32,7 @@ export class CacheService implements ICacheService {
   private singleObjectMemoryCache?: Map<string, string>; // key -> serialized string
   private groupObjectMemoryCache?: Map<string, Map<string, string>>; // group -> (key -> serialized string)
 
-  constructor(cacheClient: CacheClient) {
+  constructor({ cacheClient }: { cacheClient: CacheClient }) {
     this.cacheClient = cacheClient;
   }
 

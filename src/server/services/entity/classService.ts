@@ -62,14 +62,21 @@ export class ClassService implements IClassService {
   private readonly shiftService: IShiftService;
   private readonly imageService: IImageService;
 
-  constructor(
-    db: Drizzle,
-    userService: IUserService,
-    volunteerService: IVolunteerService,
-    termService: ITermService,
-    shiftService: IShiftService,
-    imageService: IImageService,
-  ) {
+  constructor({
+    db,
+    userService,
+    volunteerService,
+    termService,
+    shiftService,
+    imageService,
+  }: {
+    db: Drizzle;
+    userService: IUserService;
+    volunteerService: IVolunteerService;
+    termService: ITermService;
+    shiftService: IShiftService;
+    imageService: IImageService;
+  }) {
     this.db = db;
     this.userService = userService;
     this.volunteerService = volunteerService;

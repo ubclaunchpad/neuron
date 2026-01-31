@@ -24,7 +24,8 @@ export interface ITermService {
 
 export class TermService implements ITermService {
   private readonly db: Drizzle;
-  constructor(db: Drizzle) {
+
+  constructor({ db }: { db: Drizzle }) {
     this.db = db;
   }
 

@@ -1,4 +1,4 @@
-import { createContainer, asValue, asClass } from "awilix";
+import { createContainer, asValue, asClass, InjectionMode } from "awilix";
 import type { NeuronCradle, NeuronContainer } from "@/server/api/di-container";
 import type { Session } from "@/lib/auth";
 import type { IEmailService } from "@/server/services/emailService";
@@ -48,7 +48,7 @@ export function createTestContainer(
   const { session, headers = new Headers() } = options;
 
   const container = createContainer<NeuronCradle>({
-    injectionMode: "CLASSIC",
+    injectionMode: InjectionMode.PROXY,
     strict: true,
   });
 

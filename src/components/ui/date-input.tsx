@@ -276,13 +276,15 @@ export function MonthPicker({
       : undefined
     : internal;
 
-  const [year, setYear] = React.useState(
-    selected?.getFullYear() ?? new Date().getFullYear(),
-  );
+  const [year, setYear] = React.useState(new Date().getFullYear());
+  const wasOpen = React.useRef(false);
 
   React.useEffect(() => {
-    if (selected) setYear(selected.getFullYear());
-  }, [selected]);
+    if (open && !wasOpen.current && selected) {
+      setYear(selected.getFullYear());
+    }
+    wasOpen.current = open;
+  }, [open, selected]);
 
   const setSelected = (month: number) => {
     const next = new Date(year, month, 1);
@@ -329,7 +331,7 @@ export function MonthPicker({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setYear((y) => y - 1)}
+            onClick={() => setYear((year) => year - 1)}
           >
             ‹
           </Button>
@@ -339,7 +341,7 @@ export function MonthPicker({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setYear((y) => y + 1)}
+            onClick={() => setYear((year) => year + 1)}
           >
             ›
           </Button>

@@ -47,10 +47,10 @@ export function CoverageListView(
   const filteredItems = useMemo(() => {
       if (!user) return [];
       if (user.role === Role.admin) {
-          // Admins see all
+          /// TODO: admins see all items in the selected month
           return items;
       } else {
-          // Volunteers see:
+          // Volunteers see for the month:
           // 1. All shifts up for coverage (status = open)
           // 2. Their own shifts that were taken (my request AND status = resolved)
           // "Volunteers do not see why a shift was put up for coverage on the sidebar" (handled in CoverageItem by not showing details)

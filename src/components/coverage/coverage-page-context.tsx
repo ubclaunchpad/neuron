@@ -7,11 +7,11 @@ import {
   useState,
   type PropsWithChildren,
 } from "react";
-import type { MockCoverageItem } from "./mock-data";
+import type { CoverageRequest } from "@/models/coverage";
 
 type CoveragePageContextValue = {
-    selectedItem: MockCoverageItem | null;
-    openAsideFor: (item: MockCoverageItem) => void;
+    selectedItem: CoverageRequest | null;
+    openAsideFor: (item: CoverageRequest) => void;
     closeAside: () => void;
 };
 
@@ -29,9 +29,9 @@ export function useCoveragePage() {
 
 export function CoveragePageProvider({ children }: PropsWithChildren) {
     const { setOpen } = usePageAside();
-    const [selectedItem, setSelectedItem] = useState<MockCoverageItem | null>(null);
+    const [selectedItem, setSelectedItem] = useState<CoverageRequest | null>(null);
 
-    const openAsideFor = (item: MockCoverageItem) => {
+    const openAsideFor = (item: CoverageRequest) => {
         setSelectedItem(item);
         setOpen(true);
     };

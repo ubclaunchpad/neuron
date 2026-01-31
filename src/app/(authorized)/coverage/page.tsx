@@ -14,7 +14,7 @@ import { useState } from "react";
 
 export default function CoveragePage() {
   // Changed from month selector, pass in 1st of selected month to children
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   return (
     <WithPermission 
@@ -70,11 +70,12 @@ export default function CoveragePage() {
                 <PageLayoutContent className="px-6"> 
                     <div className="flex items-center gap-2 py-4">
                         <MonthInput 
-                            onChange={(d?: Date) => d ? setSelectedDate(d) : null}
-                            value={selectedDate}
+                            onChange={(d?: Date) => setSelectedDate(d)}
                         ></MonthInput>
                     </div>
-                    <CoverageListView date={selectedDate}/>
+                    <CoverageListView 
+                        selectedDate={selectedDate}
+                    />
                 </PageLayoutContent>
             </CoveragePageProvider>
         </PageLayout>

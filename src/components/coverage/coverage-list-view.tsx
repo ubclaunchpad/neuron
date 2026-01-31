@@ -2,7 +2,6 @@
 
 import { useAuth } from "@/providers/client-auth-provider";
 import { Role } from "@/models/interfaces";
-import { getMockCoverageRequests, type MockCoverageItem } from "./mock-data";
 import { CoverageItem } from "./coverage-item";
 import { TypographyTitle } from "@/components/ui/typography";
 import { format, isToday } from "date-fns";
@@ -10,20 +9,23 @@ import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import { CoverageStatus } from "@/models/api/coverage";
 import { useCoveragePage } from "./coverage-page-context";
+import type { CoverageRequest } from "@/models/coverage";
+import { mockCoverageRequests } from "./mock-data";
+import { useEffect } from "react";
 
 type CoverageListViewProps = {
-  date: Date
+  selectedDate?: Date  // Optional, if passed in, will only show items from the same month
 }
 
 function toDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
 }
 
-function groupByDay(items: MockCoverageItem[]) {
-  const groups = new Map<string, { date: Date; items: MockCoverageItem[] }>();
+function groupByDay(items: CoverageRequest[]) {
+  const groups = new Map<string, { date: Date; items: CoverageRequest[] }>();
 
   items.forEach((item) => {
-    const start = toDate(item.startAt);
+    const start = toDate(item.shift.startAt);
     const key = format(start, "yyyy-MM-dd");
     const group = groups.get(key) ?? { date: start, items: [] };
     group.items.push(item);
@@ -34,40 +36,50 @@ function groupByDay(items: MockCoverageItem[]) {
 }
 
 export function CoverageListView(
-  { date }: CoverageListViewProps
+  { selectedDate }: CoverageListViewProps
 ) {
   const { user } = useAuth();
   const { openAsideFor } = useCoveragePage();
   
   const items = useMemo(() => {
     if (!user) return [];
-    return getMockCoverageRequests(user.id);
+    return mockCoverageRequests;
   }, [user]);
 
   const filteredItems = useMemo(() => {
+      const inSelectedMonth = (item: CoverageRequest) => {
+        if (!selectedDate) return true;
+
+        const start = toDate(item.shift.startAt);
+        return (
+          start.getFullYear() === selectedDate.getFullYear() &&
+          start.getMonth() === selectedDate.getMonth()
+        );
+      };
+
       if (!user) return [];
       if (user.role === Role.admin) {
-          /// TODO: admins see all items in the selected month
-          return items;
+          return items.filter(item => inSelectedMonth(item));
       } else {
           // Volunteers see for the month:
           // 1. All shifts up for coverage (status = open)
           // 2. Their own shifts that were taken (my request AND status = resolved)
           // "Volunteers do not see why a shift was put up for coverage on the sidebar" (handled in CoverageItem by not showing details)
           
-          return items.filter(item => {
-              if (item.coverageStatus === CoverageStatus.open) return true;
-              if (item.requestingVolunteer.id === user.id && item.coverageStatus === CoverageStatus.resolved) return true;
+          return items.filter((item: CoverageRequest) => {
+              if (!inSelectedMonth(item)) return false;
+              if (item.status === CoverageStatus.open) return true;
+              if (item.requestingVolunteer.id === user.id && item.status === CoverageStatus.resolved) return true;
               return false;
           });
       }
-  }, [items, user]);
+  }, [selectedDate, items, user]);
 
   const dayGroups = useMemo(() => groupByDay(filteredItems), [filteredItems]);
 
   if (!user) return null;
 
-  const handleItemClick = (item: MockCoverageItem) => {
+  const handleItemClick = (item: CoverageRequest) => {
     openAsideFor(item);
   }
 
@@ -93,7 +105,7 @@ export function CoverageListView(
                 <div className="flex flex-col gap-3 px-5">
                   {group.items.map((item) => (
                     <CoverageItem 
-                      key={item.coverageRequestId} 
+                      key={item.id} 
                       item={item} 
                       onSelect={handleItemClick}
                     />

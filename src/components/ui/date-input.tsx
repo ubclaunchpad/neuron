@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import * as React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import type { DateRange } from "react-day-picker";
 import { Button } from "./button";
@@ -240,7 +241,6 @@ export type MonthPickerProps = Omit<
   React.ComponentProps<typeof Button>,
   "children" | "id" | "value" | "defaultValue" | "onChange" | "onBlur"
 > & {
-  value?: Date | null;
   defaultValue?: Date;
   onChange?: (date: Date | undefined) => void;
   onBlur?: () => void;
@@ -251,7 +251,6 @@ export type MonthPickerProps = Omit<
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function MonthPicker({
-  value,
   defaultValue,
   onChange,
   onBlur,
@@ -261,20 +260,8 @@ export function MonthPicker({
   className,
   ...buttonProps
 }: MonthPickerProps) {
-  const isControlled = onChange !== undefined;
   const [open, setOpen] = React.useState(false);
-
-  const [internal, setInternal] = React.useState<Date | undefined>(() =>
-    defaultValue
-      ? new Date(defaultValue.getFullYear(), defaultValue.getMonth(), 1)
-      : undefined,
-  );
-
-  const selected = isControlled
-    ? value
-      ? new Date(value.getFullYear(), value.getMonth(), 1)
-      : undefined
-    : internal;
+  const [selected, setSelected] = React.useState(defaultValue);
 
   const [year, setYear] = React.useState(new Date().getFullYear());
   const wasOpen = React.useRef(false);
@@ -286,11 +273,15 @@ export function MonthPicker({
     wasOpen.current = open;
   }, [open, selected]);
 
-  const setSelected = (month: number) => {
-    const next = new Date(year, month, 1);
-    if (!isControlled) setInternal(next);
+  const onSelect = (month: number) => {
+    const next =
+      selected && selected.getFullYear() === year && selected.getMonth() === month
+        ? undefined
+        : new Date(year, month, 1);
+
+    setSelected(next);
     onChange?.(next);
-    setOpen(false);
+    // setOpen(false);
   };
 
   const label = selected
@@ -333,7 +324,7 @@ export function MonthPicker({
             size="icon"
             onClick={() => setYear((year) => year - 1)}
           >
-            ‹
+            <ChevronLeft></ChevronLeft>
           </Button>
 
           <span className="font-medium">{year}</span>
@@ -343,7 +334,7 @@ export function MonthPicker({
             size="icon"
             onClick={() => setYear((year) => year + 1)}
           >
-            ›
+            <ChevronRight></ChevronRight>
           </Button>
         </div>
 
@@ -363,7 +354,7 @@ export function MonthPicker({
                   "h-9",
                   isSelected && "border-primary",
                 )}
-                onClick={() => setSelected(idx)}
+                onClick={() => onSelect(idx)}
               >
                 {m}
               </Button>

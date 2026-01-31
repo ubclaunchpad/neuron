@@ -1,6 +1,8 @@
 import { CoverageStatus, CoverageRequestCategory } from "@/models/api/coverage";
 import { ShiftStatus } from "@/models/shift";
 import { addDays, setHours, setMinutes } from "date-fns";
+import { type Volunteer } from "@/models/volunteer";
+import { type CoverageRequest } from "@/models/coverage";
 
 const now = new Date();
 
@@ -8,149 +10,263 @@ const createDate = (daysAdd: number, hour: number, minute: number) => {
   return setMinutes(setHours(addDays(now, daysAdd), hour), minute);
 };
 
-export type MockCoverageItem = {
-  id: string; // Shift ID
-  startAt: Date;
-  endAt: Date;
-  className: string;
-  classDescription: string | null;
-  coverageRequestId: string;
-  coverageStatus: CoverageStatus;
-  category: CoverageRequestCategory;
-  details: string;
-  requestingVolunteer: {
-    id: string;
-    name: string;
-    lastName: string;
-    image?: string;
-  };
-  coveringVolunteer?: {
-    id: string;
-    name: string;
-    lastName: string;
-    image?: string;
-  };
-  instructor: {
-      name: string;
-      lastName: string;
-  };
-  volunteers: Array<{
-      name: string;
-      lastName: string;
-  }>;
-  requestedFor: string;
-  requestedOn: Date;
-};
+const makeVolunteer = (
+  id: string,
+  name: string,
+  lastName: string,
+): Volunteer => ({
+  id,
+  role: "volunteer",
+  name,
+  lastName,
+  email: `${name.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
+  status: "active",
+  createdAt: now,
+  updatedAt: now,
+  emailVerified: true,
+});
 
-export const getMockCoverageRequests = (currentUserId: string): MockCoverageItem[] => {
-  const items: MockCoverageItem[] = [
-    {
-      id: "shift-1",
-      startAt: new Date(2026, 0, 31, 12),
-      endAt: new Date(2026, 0, 31, 14),
-      className: "Introduction to Python",
-      classDescription: "Basic concepts of Python programming",
-      coverageRequestId: "req-1",
-      coverageStatus: CoverageStatus.open,
-      category: CoverageRequestCategory.conflict,
-      details: "I have a dentist appointment.",
-      requestingVolunteer: {
-        id: "other-user-1",
-        name: "Alice",
-        lastName: "Smith",
+export const mockCoverageRequests: CoverageRequest[] = [
+  {
+    id: "cr-1",
+    status: CoverageStatus.open,
+    category: "conflict",
+    details: "I have a scheduling conflict.",
+    requestingVolunteer: makeVolunteer("v-1", "Alice", "Smith"),
+    shift: {
+      id: "s-1",
+      date: "2026-01-31",
+      startAt: new Date(2026, 0, 31, 9, 0),
+      endAt: new Date(2026, 0, 31, 11, 0),
+      class: {
+        id: "c-1",
+        name: "Introduction to Python",
+        termId: "term-2026-winter",
+        image: null,
+        description: "Learn Python basics",
+        meetingURL: null,
+        category: "Programming",
+        subcategory: "Python",
       },
-      instructor: { name: "Amy", lastName: "Freedman" },
-      volunteers: [{ name: "Bonnie", lastName: "Lu" }, { name: "Martin", lastName: "Uy" }],
-      requestedFor: "This session only",
-      requestedOn: new Date(),
     },
-    {
-      id: "shift-2",
-      startAt: new Date(2026, 2, 8, 12),
-      endAt: new Date(2026, 2, 8, 15),
-      className: "Advanced React",
-      classDescription: "Deep dive into hooks and context",
-      coverageRequestId: "req-2",
-      coverageStatus: CoverageStatus.open,
-      category: CoverageRequestCategory.health,
-      details: "Not feeling well.",
-      requestingVolunteer: {
-        id: "other-user-2",
-        name: "Bob",
-        lastName: "Jones",
-      },
-      instructor: { name: "Amy", lastName: "Freedman" },
-      volunteers: [{ name: "Bonnie", lastName: "Lu" }, { name: "Bob", lastName: "Jones" }],
-      requestedFor: "This session only",
-      requestedOn: new Date(),
-    },
-    {
-      id: "shift-3",
-      startAt: new Date(2026, 2, 21, 12),
-      endAt: new Date(2026, 2, 21, 5),
-      className: "Data Structures",
-      classDescription: null,
-      coverageRequestId: "req-3",
-      coverageStatus: CoverageStatus.resolved,
-      category: CoverageRequestCategory.transportation,
-      details: "Car broke down.",
-      requestingVolunteer: {
-        id: currentUserId, // Current user requested this
-        name: "Me",
-        lastName: "Myself",
-      },
-      coveringVolunteer: {
-        id: "other-user-3",
-        name: "Charlie",
-        lastName: "Brown",
-      },
-      instructor: { name: "Jerry", lastName: "Freedman" },
-      volunteers: [{ name: "Me", lastName: "Myself" }, { name: "Martin", lastName: "Uy" }],
-      requestedFor: "This session and future recurring sessions",
-      requestedOn: addDays(new Date(), -1),
-    },
-    {
-        id: "shift-4",
-        startAt: new Date(2026, 3, 1, 10),
-        endAt: new Date(2026, 3, 1, 12),
-        className: "Machine Learning",
-        classDescription: "Intro to ML",
-        coverageRequestId: "req-4",
-        coverageStatus: CoverageStatus.withdrawn,
-        category: CoverageRequestCategory.other,
-        details: "Changed my mind.",
-        requestingVolunteer: {
-            id: "other-user-4",
-            name: "David",
-            lastName: "Wilson",
-        },
-        instructor: { name: "Amy", lastName: "Freedman" },
-        volunteers: [{ name: "Bonnie", lastName: "Lu" }, { name: "David", lastName: "Wilson" }],
-        requestedFor: "This session only",
-        requestedOn: addDays(new Date(), -2),
-    },
-    {
-        id: "shift-5",
-        startAt: new Date(2026, 3, 2, 10),
-        endAt: new Date(2026, 3, 2, 10),
-        className: "Web Development",
-        classDescription: "HTML & CSS",
-        coverageRequestId: "req-5",
-        coverageStatus: CoverageStatus.open,
-        category: CoverageRequestCategory.emergency,
-        details: "Family emergency",
-        requestingVolunteer: {
-            id: currentUserId,
-            name: "Me",
-            lastName: "Myself",
-        },
-        instructor: { name: "Jerry", lastName: "Freedman" },
-        volunteers: [{ name: "Me", lastName: "Myself" }],
-        requestedFor: "This session only",
-        requestedOn: new Date(),
-    }
+  },
 
-  ];
+  {
+    id: "cr-2",
+    status: CoverageStatus.open,
+    category: "health",
+    details: "Not feeling well.",
+    requestingVolunteer: makeVolunteer("v-2", "Bob", "Jones"),
+    shift: {
+      id: "s-2",
+      date: "2026-02-12",
+      startAt: new Date(2026, 1, 12, 10, 0),
+      endAt: new Date(2026, 1, 12, 12, 0),
+      class: {
+        id: "c-2",
+        name: "Advanced React",
+        termId: "term-2026-winter",
+        image: null,
+        description: "Hooks and context",
+        meetingURL: "https://zoom.us/react",
+        category: "Web Development",
+        subcategory: "React",
+      },
+    },
+  },
 
-  return items;
-};
+  {
+    id: "cr-3",
+    status: CoverageStatus.resolved,
+    category: "transportation",
+    details: "Car broke down.",
+    requestingVolunteer: makeVolunteer("v-3", "Charlie", "Brown"),
+    coveringVolunteer: makeVolunteer("v-4", "Dana", "White"),
+    shift: {
+      id: "s-3",
+      date: "2026-02-21",
+      startAt: new Date(2026, 1, 21, 13, 0),
+      endAt: new Date(2026, 1, 21, 15, 0),
+      class: {
+        id: "c-3",
+        name: "Data Structures",
+        termId: "term-2026-winter",
+        image: null,
+        description: "Trees and graphs",
+        meetingURL: null,
+        category: "Computer Science",
+        subcategory: null,
+      },
+    },
+  },
+
+  {
+    id: "cr-4",
+    status: CoverageStatus.open,
+    category: "emergency",
+    details: "Family emergency.",
+    requestingVolunteer: makeVolunteer("v-5", "Emily", "Clark"),
+    shift: {
+      id: "s-4",
+      date: "2026-03-10",
+      startAt: new Date(2026, 2, 10, 8, 30),
+      endAt: new Date(2026, 2, 10, 10, 0),
+      class: {
+        id: "c-4",
+        name: "Machine Learning",
+        termId: "term-2026-spring",
+        image: null,
+        description: "Intro to ML",
+        meetingURL: null,
+        category: "AI",
+        subcategory: "Machine Learning",
+      },
+    },
+  },
+
+  {
+    id: "cr-5",
+    status: CoverageStatus.withdrawn,
+    category: "other",
+    details: "Request no longer needed.",
+    requestingVolunteer: makeVolunteer("v-6", "Frank", "Wilson"),
+    shift: {
+      id: "s-5",
+      date: "2026-01-31",
+      startAt: new Date(2026, 0, 31, 14, 0),
+      endAt: new Date(2026, 0, 31, 16, 0),
+      class: {
+        id: "c-5",
+        name: "Web Development",
+        termId: "term-2026-winter",
+        image: null,
+        description: "HTML & CSS basics",
+        meetingURL: null,
+        category: "Web Development",
+        subcategory: "Frontend",
+      },
+    },
+  },
+
+  {
+    id: "cr-6",
+    status: CoverageStatus.open,
+    category: "conflict",
+    details: "Overlapping commitment.",
+    requestingVolunteer: makeVolunteer("v-7", "Grace", "Lee"),
+    shift: {
+      id: "s-6",
+      date: "2026-02-12",
+      startAt: new Date(2026, 1, 12, 16, 0),
+      endAt: new Date(2026, 1, 12, 18, 0),
+      class: {
+        id: "c-6",
+        name: "Databases 101",
+        termId: "term-2026-winter",
+        image: null,
+        description: "Relational databases",
+        meetingURL: null,
+        category: "Data",
+        subcategory: "Databases",
+      },
+    },
+  },
+
+  {
+    id: "cr-7",
+    status: CoverageStatus.resolved,
+    category: "health",
+    details: "Recovered and covered.",
+    requestingVolunteer: makeVolunteer("v-8", "Henry", "Nguyen"),
+    coveringVolunteer: makeVolunteer("v-9", "Isabel", "Martinez"),
+    shift: {
+      id: "s-7",
+      date: "2026-02-21",
+      startAt: new Date(2026, 1, 21, 9, 0),
+      endAt: new Date(2026, 1, 21, 11, 0),
+      class: {
+        id: "c-7",
+        name: "Algorithms",
+        termId: "term-2026-winter",
+        image: null,
+        description: "Sorting and searching",
+        meetingURL: null,
+        category: "Computer Science",
+        subcategory: "Algorithms",
+      },
+    },
+  },
+
+  {
+    id: "cr-8",
+    status: CoverageStatus.open,
+    category: "other",
+    details: "Personal reasons.",
+    requestingVolunteer: makeVolunteer("v-10", "Julia", "Kim"),
+    shift: {
+      id: "s-8",
+      date: "2026-03-10",
+      startAt: new Date(2026, 2, 10, 12, 0),
+      endAt: new Date(2026, 2, 10, 14, 0),
+      class: {
+        id: "c-8",
+        name: "UI/UX Basics",
+        termId: "term-2026-spring",
+        image: null,
+        description: "Design fundamentals",
+        meetingURL: null,
+        category: "Design",
+        subcategory: "UX",
+      },
+    },
+  },
+
+  {
+    id: "cr-9",
+    status: CoverageStatus.open,
+    category: "emergency",
+    details: "Unexpected situation.",
+    requestingVolunteer: makeVolunteer("v-11", "Kevin", "ONeil"),
+    shift: {
+      id: "s-9",
+      date: "2026-01-31",
+      startAt: new Date(2026, 0, 31, 18, 0),
+      endAt: new Date(2026, 0, 31, 20, 0),
+      class: {
+        id: "c-9",
+        name: "Evening JavaScript",
+        termId: "term-2026-winter",
+        image: null,
+        description: "JS for beginners",
+        meetingURL: null,
+        category: "Programming",
+        subcategory: "JavaScript",
+      },
+    },
+  },
+
+  {
+    id: "cr-10",
+    status: CoverageStatus.resolved,
+    category: "conflict",
+    details: "Travel conflict.",
+    requestingVolunteer: makeVolunteer("v-12", "Laura", "Perez"),
+    coveringVolunteer: makeVolunteer("v-13", "Michael", "Chen"),
+    shift: {
+      id: "s-10",
+      date: "2026-03-10",
+      startAt: new Date(2026, 2, 10, 15, 0),
+      endAt: new Date(2026, 2, 10, 17, 0),
+      class: {
+        id: "c-10",
+        name: "Cloud Computing",
+        termId: "term-2026-spring",
+        image: null,
+        description: "Intro to cloud services",
+        meetingURL: null,
+        category: "Infrastructure",
+        subcategory: "Cloud",
+      },
+    },
+  },
+];

@@ -19,7 +19,8 @@ import { createPrng } from "@/utils/prngUtils";
 import { backgroundColors } from "@/components/ui/avatar";
 import { differenceInMinutes, format } from "date-fns";
 import { useMemo, useState } from "react";
-import type { MockCoverageItem } from "./mock-data";
+import type { CoverageRequest } from "@/models/coverage";
+import type { Volunteer } from "@/models/volunteer";
 
 function formatDuration(start: Date, end: Date) {
   const minutes = differenceInMinutes(end, start);
@@ -38,17 +39,17 @@ export function CoverageItem({
   item,
   onSelect,
 }: {
-  item: MockCoverageItem;
-  onSelect?: (item: MockCoverageItem) => void;
+  item: CoverageRequest;
+  onSelect?: (item: CoverageRequest) => void;
 }) {
   const { user } = useAuth();
-  const { startAt, endAt } = item;
+  const { startAt, endAt } = item.shift;
   
   // Use createPrng properly - it expects a seed string
   const color = useMemo(() => {
-    const prng = createPrng(item.className);
-    return prng.shuffle(backgroundColors)[0] ?? "#1e88e5";
-  }, [item.className]);
+    const prng = createPrng(item.shift.class.name);
+    return prng.shuffle(backgroundColors)[0] ?? "#111315";
+  }, [item.shift.class.name]);
 
   // Mock mutations for demo purposes since backend endpoints don't support mock IDs
   const [isFilling, setIsFilling] = useState(false);
@@ -90,8 +91,8 @@ export function CoverageItem({
 
   const isMyRequest = user?.id === item.requestingVolunteer.id;
   const isAdmin = user?.role === Role.admin;
-  const isOpen = item.coverageStatus === CoverageStatus.open;
-  const isResolved = item.coverageStatus === CoverageStatus.resolved;
+  const isOpen = item.status === CoverageStatus.open;
+  const isResolved = item.status === CoverageStatus.resolved;
 
   return (
     <div
@@ -123,13 +124,14 @@ export function CoverageItem({
             {/* Column 2: Class Info & Metadata */}
             <div className="flex flex-col gap-1.5 overflow-hidden">
                 <div className="font-medium text-base leading-tight truncate">
-                    {item.className}
+                    {item.shift.class.name}
                 </div>
                 <div className="text-sm text-muted-foreground truncate">
-                    <span className="font-medium text-foreground">Instructor:</span> {item.instructor.name} {item.instructor.lastName}
+                    <span className="font-medium text-foreground">Instructor:</span> INSTRUCTOR_FIRST_NAME INSTRUCTOR_LAST_NAME
                 </div>
                 <div className="text-sm text-muted-foreground truncate">
-                    <span className="font-medium text-foreground">Volunteer(s):</span> {item.volunteers.map(v => `${v.name} ${v.lastName}`).join(", ")}
+                    {/* <span className="font-medium text-foreground">Volunteer(s):</span> {item.volunteers.map((v: Volunteer) => `${v.name} ${v.lastName}`).join(", ")} */}
+                    <span className="font-medium text-foreground">Volunteer(s):</span> ALL VOLUNTEERS HERE
                 </div>
             </div>
 
@@ -140,10 +142,7 @@ export function CoverageItem({
                     <span className="font-bold text-foreground">{item.requestingVolunteer.name} {item.requestingVolunteer.lastName}</span>
                 </div>
                 <div className="text-xs text-muted-foreground truncate">
-                   Requested for: {item.requestedFor}
-                </div>
-                <div className="text-xs text-muted-foreground truncate">
-                   Requested on: {format(item.requestedOn, "MMM d, yyyy")}
+                   Requested on: REQUESTED ON
                 </div>
                 
                  {/* Reason (Visible to Admin or My Request) */}
@@ -155,7 +154,7 @@ export function CoverageItem({
              </div>
 
              {/* Actions (Far Right) */}
-             <div className="flex flex-col gap-2 items-end w-full">
+             {/* <div className="flex flex-col gap-2 items-end w-full">
                  {isOpen && !isMyRequest && !isAdmin && (
                      <Button
                         size="default" // h-10
@@ -178,7 +177,6 @@ export function CoverageItem({
                      </Button>
                  )}
 
-                 {/* Admin Actions */}
                  {isAdmin && isOpen && (
                      <div className="flex items-center gap-2">
                          <Button
@@ -207,10 +205,10 @@ export function CoverageItem({
                  
                  {!isOpen && (
                       <div className="h-10 px-4 flex items-center justify-center rounded-md bg-muted text-muted-foreground text-sm font-medium border border-transparent whitespace-nowrap">
-                          {item.coverageStatus === CoverageStatus.resolved ? "Fulfilled" : "Expired/Withdrawn"}
+                          {item.status === CoverageStatus.resolved ? "Fulfilled" : "Expired/Withdrawn"}
                       </div>
                  )}
-             </div>
+             </div> */}
         </div>
     </div>
   );

@@ -284,6 +284,33 @@ export function getSingleShiftWithRosterContext(s: Shift) {
   } satisfies SingleShiftWithRosterContext;
 }
 
+export type EmbeddedShift = {
+  id: string;
+  date: string;
+  startAt: Date;
+  endAt: Date;
+  class: EmbeddedClass;
+  instructors: User[];
+};
+
+export function getEmbeddedShift(s: {
+  id: string;
+  date: string;
+  startAt: Date;
+  endAt: Date;
+  class: EmbeddedClass;
+  instructors: User[];
+}): EmbeddedShift {
+  return {
+    id: s.id,
+    date: s.date,
+    startAt: s.startAt,
+    endAt: s.endAt,
+    class: s.class,
+    instructors: s.instructors,
+  };
+}
+
 export type ListShift = ReturnType<typeof getListShift>;
 export type ListShiftWithPersonalStatus = ListShift & {
   attendance?: ShiftAttendanceSummary;

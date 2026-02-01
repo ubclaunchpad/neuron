@@ -8,19 +8,23 @@ import {
   getListCoverageRequestBase,
   getListCoverageRequestWithReason,
   type CoverageRequest,
-  type CoverageRequestShiftContext,
   type ListCoverageRequestBase,
   type ListCoverageRequestWithReason,
 } from "@/models/coverage";
 import { Role } from "@/models/interfaces";
+import type { EmbeddedShift } from "@/models/shift";
+import { buildUser } from "@/models/user";
 import type { ListResponse } from "@/models/list-response";
 import type { Drizzle } from "@/server/db";
 import { course } from "@/server/db/schema/course";
 import {
   coverageRequest,
+  instructorToSchedule,
   shift,
   type CoverageRequestDB,
 } from "@/server/db/schema";
+import { instructorUserView } from "@/server/db/schema/user";
+import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import { getPagination } from "@/utils/searchUtils";
@@ -126,10 +130,17 @@ export class CoverageService implements ICoverageService {
           date: shift.date,
           startAt: shift.startAt,
           endAt: shift.endAt,
+          scheduleId: shift.scheduleId,
         },
         course: {
           id: course.id,
           name: course.name,
+          termId: course.termId,
+          image: course.image,
+          description: course.description,
+          meetingURL: course.meetingURL,
+          category: course.category,
+          subcategory: course.subcategory,
         },
       })
       .from(coverageRequest)
@@ -142,6 +153,30 @@ export class CoverageService implements ICoverageService {
 
     if (rows.length === 0) {
       return { data: [], total: 0, nextCursor: null };
+    }
+
+    // Batch load instructors by schedule
+    const scheduleIds = [...new Set(rows.map((r) => r.shift.scheduleId))];
+    const instructorRecords = await this.db
+      .select({
+        scheduleId: instructorToSchedule.scheduleId,
+        instructor: getViewColumns(instructorUserView),
+      })
+      .from(instructorToSchedule)
+      .innerJoin(
+        instructorUserView,
+        eq(instructorToSchedule.instructorUserId, instructorUserView.id),
+      )
+      .where(inArray(instructorToSchedule.scheduleId, scheduleIds));
+
+    const instructorsBySchedule = new Map<
+      string,
+      ReturnType<typeof buildUser>[]
+    >();
+    for (const record of instructorRecords) {
+      const list = instructorsBySchedule.get(record.scheduleId) ?? [];
+      list.push(buildUser(record.instructor));
+      instructorsBySchedule.set(record.scheduleId, list);
     }
 
     // Extract volunteer IDs for batch loading
@@ -173,26 +208,36 @@ export class CoverageService implements ICoverageService {
         ? volunteers.get(row.coverageRequest.coveredByVolunteerUserId)
         : undefined;
 
-      const coverageModel = buildCoverageRequest(
-        row.coverageRequest,
-        requestingVolunteer,
-        coveringVolunteer,
-      );
-
-      const shiftContext: CoverageRequestShiftContext = {
+      const embeddedShift: EmbeddedShift = {
         id: row.shift.id,
         date: row.shift.date,
         startAt: row.shift.startAt,
         endAt: row.shift.endAt,
-        className: row.course.name,
-        classId: row.course.id,
+        class: {
+          id: row.course.id,
+          name: row.course.name,
+          termId: row.course.termId,
+          image: row.course.image,
+          description: row.course.description,
+          meetingURL: row.course.meetingURL,
+          category: row.course.category,
+          subcategory: row.course.subcategory,
+        },
+        instructors: instructorsBySchedule.get(row.shift.scheduleId) ?? [],
       };
+
+      const coverageModel = buildCoverageRequest(
+        row.coverageRequest,
+        embeddedShift,
+        requestingVolunteer,
+        coveringVolunteer,
+      );
 
       // Return admin view with reason fields, or base view for volunteers
       if (isAdmin) {
-        return getListCoverageRequestWithReason(coverageModel, shiftContext);
+        return getListCoverageRequestWithReason(coverageModel);
       }
-      return getListCoverageRequestBase(coverageModel, shiftContext);
+      return getListCoverageRequestBase(coverageModel);
     });
 
     return { data, total, nextCursor };
@@ -406,7 +451,81 @@ export class CoverageService implements ICoverageService {
   private async formatCoverageRequests(
     requestDBs: CoverageRequestDB[],
   ): Promise<CoverageRequest[]> {
-    // Dedupe and get volunteers
+    if (requestDBs.length === 0) return [];
+
+    // Batch load shift + course data
+    const shiftIds = uniqueDefined(requestDBs.map((r) => r.shiftId));
+    const shiftRows = await this.db
+      .select({
+        shift: {
+          id: shift.id,
+          date: shift.date,
+          startAt: shift.startAt,
+          endAt: shift.endAt,
+          scheduleId: shift.scheduleId,
+        },
+        course: {
+          id: course.id,
+          name: course.name,
+          termId: course.termId,
+          image: course.image,
+          description: course.description,
+          meetingURL: course.meetingURL,
+          category: course.category,
+          subcategory: course.subcategory,
+        },
+      })
+      .from(shift)
+      .innerJoin(course, eq(shift.courseId, course.id))
+      .where(inArray(shift.id, shiftIds));
+
+    // Batch load instructors by schedule
+    const scheduleIds = [...new Set(shiftRows.map((r) => r.shift.scheduleId))];
+    const instructorRecords = await this.db
+      .select({
+        scheduleId: instructorToSchedule.scheduleId,
+        instructor: getViewColumns(instructorUserView),
+      })
+      .from(instructorToSchedule)
+      .innerJoin(
+        instructorUserView,
+        eq(instructorToSchedule.instructorUserId, instructorUserView.id),
+      )
+      .where(inArray(instructorToSchedule.scheduleId, scheduleIds));
+
+    const instructorsBySchedule = new Map<
+      string,
+      ReturnType<typeof buildUser>[]
+    >();
+    for (const record of instructorRecords) {
+      const list = instructorsBySchedule.get(record.scheduleId) ?? [];
+      list.push(buildUser(record.instructor));
+      instructorsBySchedule.set(record.scheduleId, list);
+    }
+
+    // Build shift map
+    const shiftMap = new Map<string, EmbeddedShift>();
+    for (const row of shiftRows) {
+      shiftMap.set(row.shift.id, {
+        id: row.shift.id,
+        date: row.shift.date,
+        startAt: row.shift.startAt,
+        endAt: row.shift.endAt,
+        class: {
+          id: row.course.id,
+          name: row.course.name,
+          termId: row.course.termId,
+          image: row.course.image,
+          description: row.course.description,
+          meetingURL: row.course.meetingURL,
+          category: row.course.category,
+          subcategory: row.course.subcategory,
+        },
+        instructors: instructorsBySchedule.get(row.shift.scheduleId) ?? [],
+      });
+    }
+
+    // Batch load volunteers
     const volunteerIds = uniqueDefined(
       requestDBs
         .flatMap((request) => [
@@ -422,6 +541,7 @@ export class CoverageService implements ICoverageService {
     return requestDBs.map((req) =>
       buildCoverageRequest(
         req,
+        shiftMap.get(req.shiftId)!,
         volunteers.get(req.requestingVolunteerUserId)!,
         req.coveredByVolunteerUserId
           ? volunteers.get(req.coveredByVolunteerUserId)!

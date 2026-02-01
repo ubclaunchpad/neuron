@@ -76,6 +76,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
       },
       instructors: [instructors.sarah],
     },
+    comments: "Example comment here",
   },
 
   {
@@ -101,6 +102,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
       },
       instructors: [instructors.alex, instructors.priya],
     },
+    comments: "Example text here",
   },
 
   {

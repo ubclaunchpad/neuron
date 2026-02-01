@@ -77,6 +77,7 @@ export function CoverageListView(
         return filteredItems.map((item: CoverageRequest) => ({
           ...item,
           details: item.requestingVolunteer.id === user.id ? item.details : '',
+          comments: item.requestingVolunteer.id == user.id ? item.comments : undefined,
         }));
       }
   }, [selectedDate, items, user]);

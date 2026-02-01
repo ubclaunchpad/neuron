@@ -118,7 +118,7 @@ export function CoverageAside() {
               </AsideFieldContent>
             </AsideField>
 
-            {/* ONLY ADMINS SHOULD BE ABLE TO SEE THIS*/}
+            {/* Volunteers only see reason for their own requests */}
             {selectedItem.details !== '' && <AsideField inline>
               <AsideFieldLabel>Reason for request</AsideFieldLabel>
               <AsideFieldContent className="w-auto">
@@ -126,6 +126,13 @@ export function CoverageAside() {
               </AsideFieldContent>
             </AsideField>}
 
+            {/* Volunteers only see reason details for their own requests */}
+            {selectedItem.comments && <AsideField inline>
+              <AsideFieldLabel>Request Details</AsideFieldLabel>
+              <AsideFieldContent className="w-auto">
+                {selectedItem.comments}
+              </AsideFieldContent>
+            </AsideField>}
           </AsideSectionContent>
         </AsideSection>
       </AsideBody>

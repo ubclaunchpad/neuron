@@ -1,8 +1,9 @@
-import { CoverageStatus, CoverageRequestCategory } from "@/models/api/coverage";
-import { ShiftStatus } from "@/models/shift";
+import { CoverageStatus } from "@/models/api/coverage";
 import { addDays, setHours, setMinutes } from "date-fns";
 import { type Volunteer } from "@/models/volunteer";
 import { type CoverageRequest } from "@/models/coverage";
+import type { Role } from "@/models/interfaces";
+import type { User } from "@/models/user";
 
 const now = new Date();
 
@@ -26,13 +27,38 @@ const makeVolunteer = (
   emailVerified: true,
 });
 
+const makeUser = (
+  id: string,
+  name: string,
+  lastName: string,
+  role: Role = "instructor",
+): User => ({
+  id,
+  name,
+  lastName,
+  email: `${name.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
+  status: "active",
+  role,
+  createdAt: now,
+  updatedAt: now,
+});
+
+/** Reusable instructors */
+const instructors = {
+  sarah: makeUser("u-1", "Sarah", "Johnson"),
+  alex: makeUser("u-2", "Alex", "Miller"),
+  priya: makeUser("u-3", "Priya", "Shah"),
+  daniel: makeUser("u-4", "Daniel", "Ng"),
+  emma: makeUser("u-5", "Emma", "Wilson"),
+};
+
 export const mockCoverageRequests: CoverageRequest[] = [
   {
     id: "cr-1",
     status: CoverageStatus.open,
     category: "conflict",
     details: "I have a scheduling conflict.",
-    requestingVolunteer: makeVolunteer("v-1", "Alice", "Smith"),
+    requestingVolunteer: makeVolunteer("1e6d65c5-fe73-4f62-9b7b-cc784c1edff6", "Alice", "Smith"),
     shift: {
       id: "s-1",
       date: "2026-01-31",
@@ -48,6 +74,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
         category: "Programming",
         subcategory: "Python",
       },
+      instructors: [instructors.sarah],
     },
   },
 
@@ -72,6 +99,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
         category: "Web Development",
         subcategory: "React",
       },
+      instructors: [instructors.alex, instructors.priya],
     },
   },
 
@@ -97,6 +125,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
         category: "Computer Science",
         subcategory: null,
       },
+      instructors: [instructors.daniel],
     },
   },
 
@@ -121,6 +150,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
         category: "AI",
         subcategory: "Machine Learning",
       },
+      instructors: [instructors.emma],
     },
   },
 
@@ -145,6 +175,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
         category: "Web Development",
         subcategory: "Frontend",
       },
+      instructors: [instructors.alex],
     },
   },
 
@@ -169,6 +200,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
         category: "Data",
         subcategory: "Databases",
       },
+      instructors: [instructors.daniel],
     },
   },
 
@@ -194,6 +226,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
         category: "Computer Science",
         subcategory: "Algorithms",
       },
+      instructors: [instructors.sarah],
     },
   },
 
@@ -218,6 +251,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
         category: "Design",
         subcategory: "UX",
       },
+      instructors: [instructors.emma],
     },
   },
 
@@ -242,6 +276,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
         category: "Programming",
         subcategory: "JavaScript",
       },
+      instructors: [instructors.alex],
     },
   },
 
@@ -267,6 +302,7 @@ export const mockCoverageRequests: CoverageRequest[] = [
         category: "Infrastructure",
         subcategory: "Cloud",
       },
+      instructors: [instructors.priya],
     },
   },
 ];

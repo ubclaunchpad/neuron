@@ -59,19 +59,25 @@ export function CoverageListView(
 
       if (!user) return [];
       if (user.role === Role.admin) {
-          return items.filter(item => inSelectedMonth(item));
+        console.log("User role is ", user.role);
+        return items.filter(item => inSelectedMonth(item));
       } else {
-          // Volunteers see for the month:
-          // 1. All shifts up for coverage (status = open)
-          // 2. Their own shifts that were taken (my request AND status = resolved)
-          // "Volunteers do not see why a shift was put up for coverage on the sidebar" (handled in CoverageItem by not showing details)
+        // Volunteers see for the month:
+        // 1. All shifts up for coverage (status = open)
+        // 2. Their own shifts that were taken (my request AND status = resolved)
+        // "Volunteers do not see why a shift was put up for coverage on the sidebar" (handled in CoverageItem by not showing details)
           
-          return items.filter((item: CoverageRequest) => {
-              if (!inSelectedMonth(item)) return false;
-              if (item.status === CoverageStatus.open) return true;
-              if (item.requestingVolunteer.id === user.id && item.status === CoverageStatus.resolved) return true;
-              return false;
-          });
+        const filteredItems: CoverageRequest[] = items.filter((item: CoverageRequest) => {
+          if (!inSelectedMonth(item)) return false;
+          if (item.status === CoverageStatus.open) return true;
+          if (item.requestingVolunteer.id === user.id && item.status === CoverageStatus.resolved) return true;
+          return false;
+        });
+
+        return filteredItems.map((item: CoverageRequest) => ({
+          ...item,
+          details: item.requestingVolunteer.id === user.id ? item.details : '',
+        }));
       }
   }, [selectedDate, items, user]);
 

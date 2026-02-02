@@ -18,7 +18,7 @@ export default function CoveragePage() {
 
   return (
     <WithPermission 
-      permissions={{ permission: { coverage: ["view"] } }} 
+      permissions={{ permission: { coverage: ["view"] } }}
       fallback={
         <div className="flex items-center justify-center h-full">
             <TypographyTitle>Access Denied</TypographyTitle>
@@ -42,15 +42,9 @@ export default function CoveragePage() {
                         </div>
                     </div>
                     
-                    <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center justify-between">
                         {/* Tabs */}
                         <div className="flex items-center border-b w-full">
-                            <button className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground border-b-2 border-transparent hover:border-border transition-colors">
-                                Absence Request
-                            </button>
-                            <button className="px-4 py-2 text-sm font-medium text-primary border-b-2 border-primary transition-colors">
-                                Coverage Request
-                            </button>
                             <div className="flex-1"></div>
                             <div className="pb-2 pr-6">
                                 <Button variant="ghost" size="sm" className="h-8 gap-2 text-muted-foreground hover:text-foreground">

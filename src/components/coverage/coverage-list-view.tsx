@@ -40,11 +40,6 @@ export function CoverageListView(
 ) {
   const { user } = useAuth();
   const { openAsideFor, closeAside } = useCoveragePage();
-  const [selectedIdx, setSelectedIdx] = useState<number | undefined>(undefined);
-
-  useEffect(() => {
-    console.log("index, ", selectedIdx);
-  }, [selectedIdx]);
   
   const items = useMemo(() => {
     if (!user) return [];
@@ -103,13 +98,9 @@ export function CoverageListView(
   if (!user) return null;
 
   const handleItemClick = (item: CoverageRequest) => {
-    const idx = sortedItems.findIndex(i => i.id === item.id);
-    if (idx === -1) return;
-
-    setSelectedIdx(idx);
     openAsideFor(item);
   };
-  
+
   return (
     <div className="w-full px-10">
       <div className="py-4 space-y-4">
@@ -131,9 +122,6 @@ export function CoverageListView(
                 </div>
                 <div className="flex flex-col gap-3 px-5">
                   {group.items.map((item) => {
-                    const idx = filteredItems.findIndex(i => i.id === item.id);
-                    // const isSelected = idx === selectedIdx;
-
                     return (
                       <CoverageItem 
                         key={item.id} 

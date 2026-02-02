@@ -200,6 +200,22 @@ function AsideFieldContent({
   );
 }
 
+function AsideFooter({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      data-slot="aside-footer"
+      className={cn(
+        "sticky bottom-0 flex justify-end gap-2 pt-4 mt-6 bg-background",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 export {
   AsideBody,
   AsideClose,
@@ -214,4 +230,5 @@ export {
   AsideSectionHeader,
   AsideSectionTitle,
   AsideTitle,
+  AsideFooter,
 };

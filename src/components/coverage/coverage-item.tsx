@@ -97,7 +97,7 @@ export function CoverageItem({
   return (
     <div
       className={cn(
-        "relative flex w-full items-start gap-4 rounded-lg bg-card p-4 shadow-xs border transition-all hover:shadow-sm",
+        "relative flex w-full items-start gap-4 rounded-lg bg-card p-4 shadow-xs border transition-all hover:shadow-md cursor-pointer",
       )}
       onClick={() => onSelect?.(item)}
     >

@@ -11,7 +11,7 @@ import { CoverageStatus } from "@/models/api/coverage";
 import { useCoveragePage } from "./coverage-page-context";
 import type { CoverageRequest } from "@/models/coverage";
 import { mockCoverageRequests } from "./mock-data";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 
 type CoverageListViewProps = {
   selectedDate?: Date  // Optional, if passed in, will only show items from the same month
@@ -39,7 +39,12 @@ export function CoverageListView(
   { selectedDate }: CoverageListViewProps
 ) {
   const { user } = useAuth();
-  const { openAsideFor } = useCoveragePage();
+  const { openAsideFor, closeAside } = useCoveragePage();
+  const [selectedIdx, setSelectedIdx] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    console.log("index, ", selectedIdx);
+  }, [selectedIdx]);
   
   const items = useMemo(() => {
     if (!user) return [];
@@ -82,19 +87,34 @@ export function CoverageListView(
       }
   }, [selectedDate, items, user]);
 
-  const dayGroups = useMemo(() => groupByDay(filteredItems), [filteredItems]);
+  const sortedItems = useMemo(() => {
+    return [...filteredItems].sort(
+      (a, b) =>
+        toDate(a.shift.startAt).getTime() -
+        toDate(b.shift.startAt).getTime()
+    );
+  }, [filteredItems]);
+
+  const dayGroups = useMemo(
+    () => groupByDay(sortedItems),
+    [sortedItems]
+  );
 
   if (!user) return null;
 
   const handleItemClick = (item: CoverageRequest) => {
-    openAsideFor(item);
-  }
+    const idx = sortedItems.findIndex(i => i.id === item.id);
+    if (idx === -1) return;
 
+    setSelectedIdx(idx);
+    openAsideFor(item);
+  };
+  
   return (
     <div className="w-full px-10">
       <div className="py-4 space-y-4">
         {filteredItems.length === 0 && (
-             <div className="text-center text-muted-foreground py-10">No coverage requests found.</div>
+          <div className="text-center text-muted-foreground py-10">No coverage requests found.</div>
         )}
         
         {dayGroups.map((group) => {
@@ -110,13 +130,17 @@ export function CoverageListView(
                   </TypographyTitle>
                 </div>
                 <div className="flex flex-col gap-3 px-5">
-                  {group.items.map((item) => (
-                    <CoverageItem 
-                      key={item.id} 
-                      item={item} 
-                      onSelect={handleItemClick}
-                    />
-                  ))}
+                  {group.items.map((item) => {
+                    const idx = filteredItems.findIndex(i => i.id === item.id);
+                    // const isSelected = idx === selectedIdx;
+
+                    return (
+                      <CoverageItem 
+                        key={item.id} 
+                        item={item} 
+                        onSelect={handleItemClick}
+                      />)
+                  })}
                 </div>
               </section>
             );

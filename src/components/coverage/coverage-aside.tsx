@@ -11,14 +11,16 @@ import {
   AsideSection,
   AsideSectionContent,
   AsideTitle,
+  AsideFooter,
 } from "@/components/aside";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCoveragePage } from "./coverage-page-context";
 import { useEffect } from "react";
-import { clientApi } from "@/trpc/client";
 import { Separator } from "@radix-ui/react-separator";
 import type { User } from "@/models/user";
 import type { Volunteer } from "@/models/volunteer";
 import { UserList } from "@/components/users/user-list";
+import { Button } from "@/components/ui/button";
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -133,6 +135,17 @@ export function CoverageAside() {
                 {selectedItem.comments}
               </AsideFieldContent>
             </AsideField>}
+
+            <AsideFooter>
+              <div className="flex-row">
+                <Button variant="ghost">
+                  <ChevronLeft></ChevronLeft>
+                </Button>
+                <Button variant="ghost">
+                  <ChevronRight></ChevronRight>
+                </Button>
+              </div>
+            </AsideFooter>
           </AsideSectionContent>
         </AsideSection>
       </AsideBody>

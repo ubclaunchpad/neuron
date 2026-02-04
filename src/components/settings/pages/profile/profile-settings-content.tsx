@@ -1,5 +1,6 @@
 "use client";
 
+import { Role } from "@/models/interfaces";
 import { WithPermission } from "@/components/utils/with-permission";
 import { useAuth } from "@/providers/client-auth-provider";
 import { clientApi } from "@/trpc/client";
@@ -17,15 +18,17 @@ import { getImageUrlFromKey } from "@/lib/build-image-url";
 
 export function ProfileSettingsContent() {
   const { user } = useAuth();
+
+  const isVolunteer = user?.role == Role.volunteer
   const { data: volunteer } = clientApi.volunteer.byId.useQuery(
     { userId: user!.id },
-    { enabled: !!user }
+    { enabled: !!user && isVolunteer }
   );
 
   const { onSubmit, successMessage, isPending } =
-    useProfileUpsert(user?.id ?? "");
+    useProfileUpsert(user?.id ?? "", isVolunteer);
 
-  if (!user || !volunteer) {
+  if (!user || (isVolunteer && !volunteer)) {
     return (
       <div className="flex justify-center py-10">
         <Spinner />
@@ -33,7 +36,14 @@ export function ProfileSettingsContent() {
     );
   }
 
-  const initial = {
+  const adminInitial = {
+    firstName: user?.name ?? "",
+    lastName: user?.lastName ?? "",
+    email: user?.email ?? "",
+    image: getImageUrlFromKey(user?.image) ?? null,
+  }
+
+  const volunteerInitial = {
     firstName: user?.name ?? "",
     lastName: user?.lastName ?? "",
     email: user?.email ?? "",
@@ -42,8 +52,10 @@ export function ProfileSettingsContent() {
     bio: volunteer?.bio ?? "",
     city: volunteer?.city ?? "",
     province: volunteer?.province ?? "",
-    image: getImageUrlFromKey(volunteer?.image) ?? null,
+    image: getImageUrlFromKey(user?.image) ?? null,
   };
+
+  const initial = isVolunteer ? volunteerInitial : adminInitial;
 
   return (
     <WithPermission permissions={{ permission: { profile: ["update"] } }}>
@@ -64,7 +76,7 @@ export function ProfileSettingsContent() {
             </CardHeader>
 
             <CardContent className="grid gap-4">
-                <ProfileGeneralSection fallbackName={user?.name ?? "U"} />
+                <ProfileGeneralSection fallbackName={user?.name ?? "U"} isVolunteer={isVolunteer} />
 
                 <div className="flex justify-end">
                 <Button type="submit" disabled={isPending}>

@@ -11,7 +11,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-export function ProfileGeneralSection({ fallbackName }: { fallbackName: string }) {
+export function ProfileGeneralSection({ 
+  fallbackName,
+  isVolunteer = false,
+}: { 
+  fallbackName: string,
+  isVolunteer?: boolean,
+}) {
   const {
     form: { register, watch, setValue, formState: { errors } },
   } = useProfileForm();
@@ -43,36 +49,43 @@ export function ProfileGeneralSection({ fallbackName }: { fallbackName: string }
 
       <Field data-invalid={!!errors.email}>
         <FieldLabel>Email</FieldLabel>
-        <Input type="email" {...register("email")} />
+        <Input 
+          type="email" {...register("email")}
+          disabled={!isVolunteer} 
+        />
         <FieldError errors={errors.email} />
       </Field>
 
-      <Field>
-        <FieldLabel>Preferred Name</FieldLabel>
-        <Input {...register("preferredName")} />
-      </Field>
+      {isVolunteer && (
+        <>
+          <Field>
+            <FieldLabel>Preferred Name</FieldLabel>
+            <Input {...register("preferredName")} />
+          </Field>
 
-      <Field>
-        <FieldLabel>Pronouns</FieldLabel>
-        <Input {...register("pronouns")} />
-      </Field>
+          <Field>
+            <FieldLabel>Pronouns</FieldLabel>
+            <Input {...register("pronouns")} />
+          </Field>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field>
-          <FieldLabel>City</FieldLabel>
-          <Input {...register("city")} />
-        </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field>
+              <FieldLabel>City</FieldLabel>
+              <Input {...register("city")} />
+            </Field>
 
-        <Field>
-          <FieldLabel>Province</FieldLabel>
-          <Input {...register("province")} />
-        </Field>
-      </div>
+            <Field>
+              <FieldLabel>Province</FieldLabel>
+              <Input {...register("province")} />
+            </Field>
+          </div>
 
-      <Field>
-        <FieldLabel>Bio</FieldLabel>
-        <Textarea {...register("bio")} />
-      </Field>
+          <Field>
+            <FieldLabel>Bio</FieldLabel>
+            <Textarea {...register("bio")} />
+          </Field>
+        </>
+      )}
     </>
   );
 }

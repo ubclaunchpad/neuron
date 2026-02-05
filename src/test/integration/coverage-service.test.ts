@@ -30,7 +30,15 @@ describe("CoverageService", () => {
   let classId: string;
   const className = "Test Class";
 
-  async function setupCoverageTestData() {
+  beforeEach(() => {
+    scope = createTestScope();
+    scope.mockSession.setAsAdmin();
+    coverageService = scope.resolve<ICoverageService>("coverageService");
+    termService = scope.resolve<ITermService>("termService");
+    classService = scope.resolve<IClassService>("classService");
+  });
+
+  beforeEach(async () => {
     volunteer1Id = randomUUID();
     volunteer2Id = randomUUID();
     volunteer3Id = randomUUID();
@@ -129,14 +137,6 @@ describe("CoverageService", () => {
       .from(shift)
       .where(eq(shift.courseId, classId));
     shiftId = shifts[0]!.id;
-  }
-
-  beforeEach(() => {
-    scope = createTestScope();
-    scope.mockSession.setAsAdmin();
-    coverageService = scope.resolve<ICoverageService>("coverageService");
-    termService = scope.resolve<ITermService>("termService");
-    classService = scope.resolve<IClassService>("classService");
   });
 
   afterEach(async () => {
@@ -160,8 +160,6 @@ describe("CoverageService", () => {
 
   describe("listCoverageRequests", () => {
     it("should return empty list when no coverage requests exist", async () => {
-      await setupCoverageTestData();
-
       const result = await coverageService.listCoverageRequests(
         {},
         volunteer1Id,
@@ -173,8 +171,6 @@ describe("CoverageService", () => {
     });
 
     it("should return coverage requests with embedded shift info", async () => {
-      await setupCoverageTestData();
-
       await coverageService.createCoverageRequest(volunteer1Id, {
         shiftId,
         category: "emergency",
@@ -201,8 +197,6 @@ describe("CoverageService", () => {
     });
 
     it("should include category/details/comments for admin", async () => {
-      await setupCoverageTestData();
-
       await coverageService.createCoverageRequest(volunteer1Id, {
         shiftId,
         category: "health",
@@ -223,8 +217,6 @@ describe("CoverageService", () => {
     });
 
     it("should only show open or own requests for volunteers", async () => {
-      await setupCoverageTestData();
-
       const requestId = await coverageService.createCoverageRequest(
         volunteer1Id,
         {
@@ -272,8 +264,6 @@ describe("CoverageService", () => {
     });
 
     it("should support status filter", async () => {
-      await setupCoverageTestData();
-
       await coverageService.createCoverageRequest(volunteer1Id, {
         shiftId,
         category: "emergency",
@@ -298,8 +288,6 @@ describe("CoverageService", () => {
 
   describe("getCoverageRequestByIds", () => {
     it("should return coverage requests with embedded shift info", async () => {
-      await setupCoverageTestData();
-
       const requestId = await coverageService.createCoverageRequest(
         volunteer1Id,
         {
@@ -325,8 +313,6 @@ describe("CoverageService", () => {
     });
 
     it("should throw when ID not found", async () => {
-      await setupCoverageTestData();
-
       await expect(
         coverageService.getCoverageRequestByIds([randomUUID()]),
       ).rejects.toThrow();
@@ -335,8 +321,6 @@ describe("CoverageService", () => {
 
   describe("createCoverageRequest", () => {
     it("should create a coverage request and return its ID", async () => {
-      await setupCoverageTestData();
-
       const requestId = await coverageService.createCoverageRequest(
         volunteer1Id,
         {
@@ -351,8 +335,6 @@ describe("CoverageService", () => {
     });
 
     it("should reject duplicate active request for same shift", async () => {
-      await setupCoverageTestData();
-
       await coverageService.createCoverageRequest(volunteer1Id, {
         shiftId,
         category: "emergency",
@@ -371,8 +353,6 @@ describe("CoverageService", () => {
 
   describe("cancelCoverageRequest", () => {
     it("should cancel an open request", async () => {
-      await setupCoverageTestData();
-
       const requestId = await coverageService.createCoverageRequest(
         volunteer1Id,
         {
@@ -391,8 +371,6 @@ describe("CoverageService", () => {
     });
 
     it("should reject canceling a non-open request", async () => {
-      await setupCoverageTestData();
-
       const requestId = await coverageService.createCoverageRequest(
         volunteer1Id,
         {
@@ -410,8 +388,6 @@ describe("CoverageService", () => {
     });
 
     it("should reject canceling another volunteer's request", async () => {
-      await setupCoverageTestData();
-
       const requestId = await coverageService.createCoverageRequest(
         volunteer1Id,
         {
@@ -429,8 +405,6 @@ describe("CoverageService", () => {
 
   describe("fulfillCoverageRequest", () => {
     it("should fill an open request", async () => {
-      await setupCoverageTestData();
-
       const requestId = await coverageService.createCoverageRequest(
         volunteer1Id,
         {
@@ -452,8 +426,6 @@ describe("CoverageService", () => {
     });
 
     it("should reject filling a non-open request", async () => {
-      await setupCoverageTestData();
-
       const requestId = await coverageService.createCoverageRequest(
         volunteer1Id,
         {
@@ -471,8 +443,6 @@ describe("CoverageService", () => {
     });
 
     it("should reject filling request for shift volunteer is assigned to", async () => {
-      await setupCoverageTestData();
-
       const requestId = await coverageService.createCoverageRequest(
         volunteer1Id,
         {
@@ -491,8 +461,6 @@ describe("CoverageService", () => {
 
   describe("unassignCoverage", () => {
     it("should unassign a filled request", async () => {
-      await setupCoverageTestData();
-
       const requestId = await coverageService.createCoverageRequest(
         volunteer1Id,
         {
@@ -514,8 +482,6 @@ describe("CoverageService", () => {
     });
 
     it("should reject unassigning by wrong volunteer", async () => {
-      await setupCoverageTestData();
-
       const requestId = await coverageService.createCoverageRequest(
         volunteer1Id,
         {

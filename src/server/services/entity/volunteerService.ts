@@ -1,5 +1,5 @@
 import type { ListRequestWithSearch } from "@/models/api/common";
-import { UpdateVolunteerProfileInput } from "@/models/api/volunteer";
+import type { UpdateVolunteerProfileInput } from "@/models/api/volunteer";
 import type { ListResponse } from "@/models/list-response";
 import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
@@ -175,20 +175,22 @@ export class VolunteerService implements IVolunteerService {
   async updateVolunteerProfile(
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void> {
-    const { volunteerUserId, ...rest } = input;
+    await this.db.transaction(async (tx) => {
+      const { volunteerUserId, ...updatePayload } = input;
 
-    const [updated] = await this.db
-      .update(volunteer)
-      .set(rest)
-      .where(eq(volunteer.userId, volunteerUserId))
-      .returning({ userId: volunteer.userId });
+      const [updatedVolunteer] = await tx
+        .update(volunteer)
+        .set(updatePayload)
+        .where(eq(volunteer.userId, volunteerUserId))
+        .returning({ userId: volunteer.userId });
 
-    if (!updated) {
-      throw new NeuronError(
-        `Could not find Volunteer with id ${volunteerUserId}`,
-        NeuronErrorCodes.NOT_FOUND,
-      );
-    }
+      if (!updatedVolunteer) {
+        throw new NeuronError(
+          `Could not find volunteer with id ${volunteerUserId}`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+    });
   }
 
   async updateVolunteerAvailability(

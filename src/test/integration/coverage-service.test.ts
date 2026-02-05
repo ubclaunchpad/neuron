@@ -24,6 +24,7 @@ describe("CoverageService", () => {
 
   let volunteer1Id: string;
   let volunteer2Id: string;
+  let volunteer3Id: string; // Not assigned to the schedule - can cover shifts
   let instructorId: string;
   let shiftId: string;
   let classId: string;
@@ -32,6 +33,7 @@ describe("CoverageService", () => {
   async function setupCoverageTestData() {
     volunteer1Id = randomUUID();
     volunteer2Id = randomUUID();
+    volunteer3Id = randomUUID();
     instructorId = randomUUID();
 
     await scope.db.insert(user).values([
@@ -58,6 +60,17 @@ describe("CoverageService", () => {
         updatedAt: new Date(),
       },
       {
+        id: volunteer3Id,
+        name: "Vol",
+        lastName: "Three",
+        email: `vol3-${Date.now()}-${randomUUID()}@test.com`,
+        role: "volunteer",
+        status: "active",
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
         id: instructorId,
         name: "Inst",
         lastName: "One",
@@ -69,11 +82,15 @@ describe("CoverageService", () => {
         updatedAt: new Date(),
       },
     ]);
-    createdUserIds.push(volunteer1Id, volunteer2Id, instructorId);
+    createdUserIds.push(volunteer1Id, volunteer2Id, volunteer3Id, instructorId);
 
     await scope.db
       .insert(volunteer)
-      .values([{ userId: volunteer1Id }, { userId: volunteer2Id }]);
+      .values([
+        { userId: volunteer1Id },
+        { userId: volunteer2Id },
+        { userId: volunteer3Id },
+      ]);
 
     const termId = await termService.createTerm({
       name: `Test Term ${randomUUID()}`,
@@ -217,21 +234,29 @@ describe("CoverageService", () => {
         },
       );
 
-      // Volunteer2 sees the open request
+      // Volunteer3 (not assigned to shift) sees the open request
       const result1 = await coverageService.listCoverageRequests(
         {},
-        volunteer2Id,
+        volunteer3Id,
         Role.volunteer,
       );
       expect(result1.data).toHaveLength(1);
 
+      // Volunteer2 (assigned to shift) does NOT see the open request
+      const result1b = await coverageService.listCoverageRequests(
+        {},
+        volunteer2Id,
+        Role.volunteer,
+      );
+      expect(result1b.data).toHaveLength(0);
+
       // Cancel the request
       await coverageService.cancelCoverageRequest(volunteer1Id, requestId);
 
-      // Volunteer2 no longer sees the withdrawn request
+      // Volunteer3 no longer sees the withdrawn request
       const result2 = await coverageService.listCoverageRequests(
         {},
-        volunteer2Id,
+        volunteer3Id,
         Role.volunteer,
       );
       expect(result2.data).toHaveLength(0);
@@ -415,14 +440,15 @@ describe("CoverageService", () => {
         },
       );
 
-      await coverageService.fulfillCoverageRequest(volunteer2Id, requestId);
+      // volunteer3Id is NOT assigned to the shift, so they can cover it
+      await coverageService.fulfillCoverageRequest(volunteer3Id, requestId);
 
       const [request] = await coverageService.getCoverageRequestByIds([
         requestId,
       ]);
       expect(request!.status).toBe("resolved");
       expect(request!.coveringVolunteer).toBeDefined();
-      expect(request!.coveringVolunteer!.id).toBe(volunteer2Id);
+      expect(request!.coveringVolunteer!.id).toBe(volunteer3Id);
     });
 
     it("should reject filling a non-open request", async () => {
@@ -440,8 +466,26 @@ describe("CoverageService", () => {
       await coverageService.cancelCoverageRequest(volunteer1Id, requestId);
 
       await expect(
-        coverageService.fulfillCoverageRequest(volunteer2Id, requestId),
+        coverageService.fulfillCoverageRequest(volunteer3Id, requestId),
       ).rejects.toThrow();
+    });
+
+    it("should reject filling request for shift volunteer is assigned to", async () => {
+      await setupCoverageTestData();
+
+      const requestId = await coverageService.createCoverageRequest(
+        volunteer1Id,
+        {
+          shiftId,
+          category: "emergency",
+          details: "Need coverage",
+        },
+      );
+
+      // volunteer2Id IS assigned to the shift, so they cannot cover it
+      await expect(
+        coverageService.fulfillCoverageRequest(volunteer2Id, requestId),
+      ).rejects.toThrow("Cannot cover a shift you are already assigned to.");
     });
   });
 
@@ -458,8 +502,9 @@ describe("CoverageService", () => {
         },
       );
 
-      await coverageService.fulfillCoverageRequest(volunteer2Id, requestId);
-      await coverageService.unassignCoverage(volunteer2Id, requestId);
+      // volunteer3Id is NOT assigned to the shift, so they can cover it
+      await coverageService.fulfillCoverageRequest(volunteer3Id, requestId);
+      await coverageService.unassignCoverage(volunteer3Id, requestId);
 
       const [request] = await coverageService.getCoverageRequestByIds([
         requestId,
@@ -480,7 +525,8 @@ describe("CoverageService", () => {
         },
       );
 
-      await coverageService.fulfillCoverageRequest(volunteer2Id, requestId);
+      // volunteer3Id is NOT assigned to the shift, so they can cover it
+      await coverageService.fulfillCoverageRequest(volunteer3Id, requestId);
 
       await expect(
         coverageService.unassignCoverage(volunteer1Id, requestId),

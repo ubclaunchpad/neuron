@@ -23,6 +23,7 @@ import {
   shift,
   type CoverageRequestDB,
 } from "@/server/db/schema";
+import { volunteerToSchedule } from "@/server/db/schema/schedule";
 import { instructorUserView } from "@/server/db/schema/user";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
@@ -109,12 +110,32 @@ export class CoverageService implements ICoverageService {
       whereConditions.push(eq(coverageRequest.status, status));
     }
 
-    // Role-based visibility filter (volunteers only see open or their own requests)
+    // Role-based visibility filter for non-admins:
+    // - See open requests EXCEPT for shifts they're already assigned to
+    // - Always see their own requests (as requester or covering volunteer)
     if (!isAdmin) {
       whereConditions.push(
         or(
-          eq(coverageRequest.status, CoverageStatus.open),
+          // Show open requests only if volunteer is NOT already assigned to the shift
+          and(
+            eq(coverageRequest.status, CoverageStatus.open),
+            // Not assigned via schedule
+            sql`NOT EXISTS (
+              SELECT 1 FROM ${volunteerToSchedule}
+              WHERE ${volunteerToSchedule.scheduleId} = ${shift.scheduleId}
+              AND ${volunteerToSchedule.volunteerUserId} = ${viewerUserId}
+            )`,
+            // Not already covering this shift via another resolved coverage request
+            sql`NOT EXISTS (
+              SELECT 1 FROM ${coverageRequest} AS cr2
+              WHERE cr2.shift_id = ${shift.id}
+              AND cr2.covered_by_volunteer_user_id = ${viewerUserId}
+              AND cr2.status = ${CoverageStatus.resolved}
+            )`,
+          ),
+          // Always show their own requests (as requester)
           eq(coverageRequest.requestingVolunteerUserId, viewerUserId),
+          // Always show requests they're covering
           eq(coverageRequest.coveredByVolunteerUserId, viewerUserId),
         )!,
       );
@@ -352,6 +373,7 @@ export class CoverageService implements ICoverageService {
       .select({
         status: coverageRequest.status,
         shiftStartAt: shift.startAt,
+        shiftId: shift.id,
       })
       .from(coverageRequest)
       .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
@@ -374,6 +396,22 @@ export class CoverageService implements ICoverageService {
     if (request.shiftStartAt <= new Date()) {
       throw new NeuronError(
         "Can not fulfill a coverage request for a past shift.",
+        NeuronErrorCodes.BAD_REQUEST,
+      );
+    }
+
+    // Check if volunteer is already assigned to this shift
+    const shiftModel = await this.shiftService.getShiftById(
+      request.shiftId,
+      coveredByVolunteerUserId,
+    );
+    const isAssigned = shiftModel.volunteers.some(
+      (v) => v.id === coveredByVolunteerUserId,
+    );
+
+    if (isAssigned) {
+      throw new NeuronError(
+        "Cannot cover a shift you are already assigned to.",
         NeuronErrorCodes.BAD_REQUEST,
       );
     }

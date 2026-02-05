@@ -111,7 +111,7 @@ export const SettingsDialog = NiceModal.create(() => {
 
           {settingsItems.map((item) => (
             <TabsContent
-              className="px-4 flex flex-col gap-4"
+              className="px-4 flex flex-col gap-4 pb-4"
               key={item.id}
               value={item.id}
             >

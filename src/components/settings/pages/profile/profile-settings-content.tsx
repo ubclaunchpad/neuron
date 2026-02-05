@@ -5,28 +5,33 @@ import { WithPermission } from "@/components/utils/with-permission";
 import { useAuth } from "@/providers/client-auth-provider";
 import { clientApi } from "@/trpc/client";
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/primitives/button";
 import { Spinner } from "@/components/ui/spinner";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2 } from "lucide-react";
+import { useImageUrl } from "@/lib/build-image-url";
 
-import { ProfileFormProvider } from "./profile-form-provider";
-import { ProfileGeneralSection } from "./content/profile-general-section";
-import { useProfileUpsert } from "./hooks/use-profile-upsert";
-import { getImageUrlFromKey } from "@/lib/build-image-url";
+import { GeneralProfileFormProvider } from "./general/general-form-provider";
+import { GeneralProfileSection } from "./general/general-profile-section";
+import { useGeneralProfileSubmit } from "./general/hooks/use-general-profile-submit";
+
+import { VolunteerProfileFormProvider } from "./volunteer/volunteer-form-provider";
+import { VolunteerProfileSection } from "./volunteer/volunteer-profile-section";
+import { useVolunteerProfileSubmit } from "./volunteer/hooks/use-volunteer-profile-submit";
 
 export function ProfileSettingsContent() {
   const { user } = useAuth();
 
-  const isVolunteer = user?.role == Role.volunteer
+  const isVolunteer = user?.role === Role.volunteer;
   const { data: volunteer } = clientApi.volunteer.byId.useQuery(
     { userId: user!.id },
-    { enabled: !!user && isVolunteer }
+    { enabled: !!user && isVolunteer },
   );
 
-  const { onSubmit, successMessage, isPending } =
-    useProfileUpsert(user?.id ?? "", isVolunteer);
+  const imageUrl = useImageUrl(user?.image) ?? null;
+
+  const { onSubmit: onGeneralSubmit, isPending: isGeneralPending } =
+    useGeneralProfileSubmit();
+
+  const { onSubmit: onVolunteerSubmit, isPending: isVolunteerPending } =
+    useVolunteerProfileSubmit(user?.id ?? "");
 
   if (!user || (isVolunteer && !volunteer)) {
     return (
@@ -36,58 +41,43 @@ export function ProfileSettingsContent() {
     );
   }
 
-  const adminInitial = {
-    firstName: user?.name ?? "",
-    lastName: user?.lastName ?? "",
-    email: user?.email ?? "",
-    image: getImageUrlFromKey(user?.image) ?? null,
-  }
+  const generalInitial = {
+    firstName: user.name ?? "",
+    lastName: user.lastName ?? "",
+    email: user.email ?? "",
+    image: imageUrl,
+  };
 
   const volunteerInitial = {
-    firstName: user?.name ?? "",
-    lastName: user?.lastName ?? "",
-    email: user?.email ?? "",
     preferredName: volunteer?.preferredName ?? "",
     pronouns: volunteer?.pronouns ?? "",
     bio: volunteer?.bio ?? "",
     city: volunteer?.city ?? "",
     province: volunteer?.province ?? "",
-    image: getImageUrlFromKey(user?.image) ?? null,
   };
-
-  const initial = isVolunteer ? volunteerInitial : adminInitial;
 
   return (
     <WithPermission permissions={{ permission: { profile: ["update"] } }}>
-      <ProfileFormProvider initial={initial} onSubmit={onSubmit}>
+      <div className="space-y-6">
+        <GeneralProfileFormProvider
+          initial={generalInitial}
+          onSubmit={onGeneralSubmit}
+        >
+          <GeneralProfileSection
+            fallbackName={user.name ?? "U"}
+            isPending={isGeneralPending}
+          />
+        </GeneralProfileFormProvider>
 
-        <div className="space-y-4">
-            {successMessage && (
-                <Alert variant="success" role="status" aria-live="polite">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <AlertTitle>Success</AlertTitle>
-                    <AlertDescription>{successMessage}</AlertDescription>
-                </Alert>
-            )}
-
-            <Card>
-            <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-            </CardHeader>
-
-            <CardContent className="grid gap-4">
-                <ProfileGeneralSection fallbackName={user?.name ?? "U"} isVolunteer={isVolunteer} />
-
-                <div className="flex justify-end">
-                <Button type="submit" disabled={isPending}>
-                    {isPending ? <><Spinner /> Saving...</> : "Save Changes"}
-                </Button>
-                </div>
-            </CardContent>
-            </Card>
-        </div>
-        
-      </ProfileFormProvider>
+        {isVolunteer && (
+          <VolunteerProfileFormProvider
+            initial={volunteerInitial}
+            onSubmit={onVolunteerSubmit}
+          >
+            <VolunteerProfileSection isPending={isVolunteerPending} />
+          </VolunteerProfileFormProvider>
+        )}
+      </div>
     </WithPermission>
   );
 }

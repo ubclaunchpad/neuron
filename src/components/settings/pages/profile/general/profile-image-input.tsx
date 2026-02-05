@@ -94,7 +94,7 @@ export function ProfileImageInput({
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => setValue("image", undefined, { shouldDirty: true })}
+            onClick={() => setValue("image", null, { shouldDirty: true })}
             className="w-full max-w-[140px] text-destructive hover:text-destructive hover:bg-destructive/10"
           >
             <Trash2 className="mr-2 h-4 w-4" />

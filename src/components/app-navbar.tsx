@@ -20,6 +20,7 @@ import {
 import { ActiveContext } from "@/components/utils/active-context";
 import { WithPermission } from "@/components/utils/with-permission";
 import type { Permissions } from "@/lib/auth/extensions/permissions";
+import { useImageUrl } from "@/lib/build-image-url";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/client-auth-provider";
 import ChevronRight from "@public/assets/icons/caret-right.svg";
@@ -75,6 +76,7 @@ export const navbarItems = [
 function ProfileCard() {
   const { user } = useAuth();
   const userFullname = `${user?.name} ${user?.lastName}`;
+  const imageUrl = useImageUrl(user?.image);
 
   return (
     <SettingsDropdown
@@ -95,7 +97,7 @@ function ProfileCard() {
       >
         <Avatar
           className="size-10 shrink-0 group-data-[state=collapsed]:rounded-sm"
-          src={user?.image ?? undefined}
+          src={imageUrl}
           fallbackText={userFullname}
         />
 

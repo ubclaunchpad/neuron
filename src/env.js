@@ -25,7 +25,7 @@ export const env = createEnv({
     MINIO_PORT: port,
     MINIO_REGION: z.string(),
     MINIO_BUCKET: z.string(),
-    MINIO_USE_SSL: z.coerce.boolean(),
+    MINIO_USE_SSL: z.string().transform((val) => val === "true"),
     FILES_BASE_URL: z.url(),
     FILES_BUCKET: z.string(),
   },

@@ -2,7 +2,11 @@ import type { CourseDB, ShiftDB } from "@/server/db/schema";
 import type { AttendanceStatus } from "./interfaces";
 import { type EmbeddedClass } from "./class";
 import { getEmbeddedUser, type User } from "./user";
-import { getEmbeddedVolunteer, type Volunteer } from "./volunteer";
+import {
+  getEmbeddedVolunteer,
+  type EmbeddedVolunteer,
+  type Volunteer,
+} from "./volunteer";
 import {
   CoverageStatus,
   type CoverageStatus as CoverageStatusType,
@@ -291,6 +295,7 @@ export type EmbeddedShift = {
   endAt: Date;
   class: EmbeddedClass;
   instructors: User[];
+  volunteers: EmbeddedVolunteer[];
 };
 
 export function getEmbeddedShift(s: {
@@ -300,6 +305,7 @@ export function getEmbeddedShift(s: {
   endAt: Date;
   class: EmbeddedClass;
   instructors: User[];
+  volunteers: EmbeddedVolunteer[];
 }): EmbeddedShift {
   return {
     id: s.id,
@@ -308,6 +314,7 @@ export function getEmbeddedShift(s: {
     endAt: s.endAt,
     class: s.class,
     instructors: s.instructors,
+    volunteers: s.volunteers,
   };
 }
 

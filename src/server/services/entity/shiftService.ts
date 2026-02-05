@@ -84,6 +84,7 @@ export interface IShiftService {
     prevCursor: string;
   }>;
   getShiftById(shiftId: string, userId: string): Promise<SingleShiftView>;
+  getShiftsByIds(shiftIds: string[]): Promise<Shift[]>;
   createShift(input: CreateShiftInput, tx?: Transaction): Promise<string>;
   deleteShift(input: ShiftIdInput): Promise<void>;
   cancelShift(input: CancelShiftInput): Promise<void>;
@@ -421,7 +422,7 @@ export class ShiftService implements IShiftService {
   }
 
   private async loadShiftModels(
-    whereClauses: (SQL<unknown> | undefined)[],
+    ...whereClauses: (SQL<unknown> | undefined)[]
   ): Promise<Shift[]> {
     const rows: ShiftRow[] = await this.db
       .select({
@@ -448,7 +449,7 @@ export class ShiftService implements IShiftService {
       permission: { shifts: ["override-check-in"] },
     });
 
-    const [shiftModel] = await this.loadShiftModels([eq(shift.id, shiftId)]);
+    const [shiftModel] = await this.loadShiftModels(eq(shift.id, shiftId));
 
     if (!shiftModel) {
       throw new NeuronError(
@@ -563,7 +564,7 @@ export class ShiftService implements IShiftService {
       conditions.push(this.buildInstructorVisibilityCondition(viewer.id));
     }
 
-    const shiftModels = await this.loadShiftModels(conditions);
+    const shiftModels = await this.loadShiftModels(...conditions);
 
     return {
       cursor: normalizedCursor,
@@ -589,7 +590,7 @@ export class ShiftService implements IShiftService {
   ): Promise<SingleShiftView> {
     const viewer = await this.getViewer(userId);
 
-    const shiftModels = await this.loadShiftModels([eq(shift.id, shiftId)]);
+    const shiftModels = await this.loadShiftModels(eq(shift.id, shiftId));
     const shiftModel = shiftModels[0];
 
     if (!shiftModel) {
@@ -608,6 +609,11 @@ export class ShiftService implements IShiftService {
     }
 
     return getSingleShift(shiftModel);
+  }
+
+  async getShiftsByIds(shiftIds: string[]): Promise<Shift[]> {
+    if (shiftIds.length === 0) return [];
+    return this.loadShiftModels(inArray(shift.id, shiftIds));
   }
 
   async createShift(

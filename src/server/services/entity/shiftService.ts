@@ -1,5 +1,5 @@
-import type { Session } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/extensions/permissions";
+import type { ICurrentSessionService } from "@/server/services/currentSessionService";
 import { CoverageStatus } from "@/models/api/coverage";
 import type {
   CancelShiftInput,
@@ -101,21 +101,17 @@ function sortCoverageRequestsByStatus(
 
 export class ShiftService implements IShiftService {
   private readonly db: Drizzle;
-  private readonly session?: Session;
+  private readonly currentSessionService: ICurrentSessionService;
 
-  constructor({ db, session }: { db: Drizzle; session?: Session }) {
+  constructor({
+    db,
+    currentSessionService,
+  }: {
+    db: Drizzle;
+    currentSessionService: ICurrentSessionService;
+  }) {
     this.db = db;
-    this.session = session;
-  }
-
-  private requireSession(): Session {
-    if (!this.session) {
-      throw new NeuronError(
-        "Authentication required",
-        NeuronErrorCodes.UNAUTHORIZED,
-      );
-    }
-    return this.session;
+    this.currentSessionService = currentSessionService;
   }
 
   private async getViewer(
@@ -446,7 +442,7 @@ export class ShiftService implements IShiftService {
     shiftId: string,
     volunteerId: string,
   ): Promise<ShiftAttendanceSummary> {
-    const session = this.requireSession();
+    const session = this.currentSessionService.requireSession();
     const hasOverride = hasPermission({
       user: session.user,
       permission: { shifts: ["override-check-in"] },
@@ -699,7 +695,7 @@ export class ShiftService implements IShiftService {
       .update(shift)
       .set({
         canceled: true,
-        cancelledByUserId: this.session?.user?.id ?? null,
+        cancelledByUserId: this.currentSessionService.getUserId() ?? null,
         canceledAt: new Date(),
         cancelReason,
       })

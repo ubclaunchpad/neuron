@@ -3,9 +3,11 @@ import type { NeuronCradle, NeuronContainer } from "@/server/api/di-container";
 import type { Session } from "@/lib/auth";
 import type { IEmailService } from "@/server/services/emailService";
 import type { IImageService } from "@/server/services/imageService";
+import type { ICurrentSessionService } from "@/server/services/currentSessionService";
 import { getTestDb } from "./test-db";
 import { MockEmailService } from "./mocks/mock-email-service";
 import { MockImageService } from "./mocks/mock-image-service";
+import { MockCurrentSessionService } from "./mocks/mock-current-session-service";
 
 // Services that use real implementations with test DB
 import {
@@ -62,7 +64,10 @@ export function createTestContainer(
     session: asValue(session),
     headers: asValue(headers),
 
-    // Mock external services
+    // Mock services
+    currentSessionService: asClass<ICurrentSessionService>(
+      MockCurrentSessionService,
+    ).singleton(),
     emailService: asClass<IEmailService>(MockEmailService).singleton(),
     imageService: asClass<IImageService>(MockImageService).singleton(),
     // cacheService: asClass(CacheService).scoped(),

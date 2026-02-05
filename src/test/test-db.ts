@@ -17,17 +17,16 @@ let db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
 export function getTestDb() {
   if (!db) {
-    conn = postgres(testDbUrl, { max: 1 });
+    conn = postgres(testDbUrl, {
+      max: 1,
+      onnotice: () => {}, // Suppress NOTICE messages from PostgreSQL
+    });
     db = drizzle(conn, { schema });
   }
   return db;
 }
 
-/**
- * Run migrations on the test database.
- * Should be called once before running tests.
- */
-export async function runMigrations() {
+async function runMigrations() {
   const db = getTestDb();
   await migrate(db, {
     migrationsFolder: MigrationsFolder,
@@ -36,10 +35,6 @@ export async function runMigrations() {
   });
 }
 
-/**
- * Reset the database by dropping and recreating the public schema,
- * then re-running migrations.
- */
 export async function resetDatabase() {
   const db = getTestDb();
 

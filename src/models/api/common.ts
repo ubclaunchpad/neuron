@@ -7,8 +7,7 @@ export const ListRequest = z.object({
   perPage: z.number().int().positive().max(100).default(20),
   cursor: z.number().nullish(),
 });
-export type ListRequest = z.infer<typeof ListRequest>;
-
+export type ListRequest = z.input<typeof ListRequest>;
 
 export const ListRequestWithSearch = ListRequest.extend({
   search: z.string().optional(),

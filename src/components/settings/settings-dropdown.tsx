@@ -10,10 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { authClient } from "@/lib/auth/client";
+import { forceLogout } from "@/lib/auth/logout";
 import { useAuth } from "@/providers/client-auth-provider";
 import NiceModal from "@ebay/nice-modal-react";
-import { useRouter } from "next/navigation";
 import { SettingsDialog } from "./settings-dialog";
 
 export function SettingsDropdown({
@@ -23,8 +22,10 @@ export function SettingsDropdown({
   children: React.ReactNode;
   className?: string;
 }) {
-  const router = useRouter();
   const { user } = useAuth();
+  const handleLogout = async () => {
+    await forceLogout();
+  };
 
   return (
     <>
@@ -51,15 +52,7 @@ export function SettingsDropdown({
                 Report a Bug <i>(Coming soon)</i>
               </span>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() =>
-                authClient.signOut({
-                  fetchOptions: {
-                    onRequest: () => router.push("/auth/login"),
-                  },
-                })
-              }
-            >
+            <DropdownMenuItem onSelect={handleLogout}>
               <LogOut />
               <span>Logout</span>
             </DropdownMenuItem>

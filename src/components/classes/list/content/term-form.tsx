@@ -177,8 +177,8 @@ function TermFormShell({
                           <ButtonGroup className="w-full">
                             <DateRangeInput
                               value={{
-                                from: isoDateToJSDate(value.from),
-                                to: isoDateToJSDate(value.to),
+                                from: isoDateToJSDate(value!.from),
+                                to: isoDateToJSDate(value!.to),
                               }}
                               onChange={(dateRange) =>
                                 onChange({

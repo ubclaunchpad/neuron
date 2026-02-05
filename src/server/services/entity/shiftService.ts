@@ -72,6 +72,24 @@ const coverageStatusPriority = {
   [CoverageStatus.withdrawn]: 2,
 } as const;
 
+export interface IShiftService {
+  checkIn(
+    shiftId: string,
+    volunteerId: string,
+  ): Promise<ShiftAttendanceSummary>;
+  listWindow(input: GetShiftsInput): Promise<{
+    cursor: string;
+    shifts: ListShiftView[];
+    nextCursor: string;
+    prevCursor: string;
+  }>;
+  getShiftById(shiftId: string, userId: string): Promise<SingleShiftView>;
+  createShift(input: CreateShiftInput, tx?: Transaction): Promise<string>;
+  deleteShift(input: ShiftIdInput): Promise<void>;
+  cancelShift(input: CancelShiftInput): Promise<void>;
+  assertValidShift(volunteerId: string, shiftId: string): Promise<void>;
+}
+
 function sortCoverageRequestsByStatus(
   coverages: Shift["coverageRequests"],
 ): Shift["coverageRequests"] {
@@ -81,13 +99,23 @@ function sortCoverageRequestsByStatus(
   );
 }
 
-export class ShiftService {
+export class ShiftService implements IShiftService {
   private readonly db: Drizzle;
-  private readonly session: Session;
+  private readonly session?: Session;
 
-  constructor(db: Drizzle, session: Session) {
+  constructor({ db, session }: { db: Drizzle; session?: Session }) {
     this.db = db;
     this.session = session;
+  }
+
+  private requireSession(): Session {
+    if (!this.session) {
+      throw new NeuronError(
+        "Authentication required",
+        NeuronErrorCodes.UNAUTHORIZED,
+      );
+    }
+    return this.session;
   }
 
   private async getViewer(
@@ -418,8 +446,9 @@ export class ShiftService {
     shiftId: string,
     volunteerId: string,
   ): Promise<ShiftAttendanceSummary> {
+    const session = this.requireSession();
     const hasOverride = hasPermission({
-      user: this.session.user,
+      user: session.user,
       permission: { shifts: ["override-check-in"] },
     });
 

@@ -39,7 +39,7 @@ export function CheckInButton({
   className,
 }: {
   shift: ListShiftWithPersonalStatus;
-  size: ComponentProps<typeof Button>["size"];
+  size?: ComponentProps<typeof Button>["size"];
   className?: string;
 }) {
   const [now, setNow] = useState(() => new Date());

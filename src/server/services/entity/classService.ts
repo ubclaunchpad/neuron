@@ -28,29 +28,55 @@ import {
 } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
-import type { ImageService } from "../imageService";
-import { ShiftService } from "./shiftService";
-import type { TermService } from "./termService";
-import { UserService } from "./userService";
-import { VolunteerService } from "./volunteerService";
+import type { IImageService } from "../imageService";
+import type { IShiftService } from "./shiftService";
+import type { ITermService } from "./termService";
+import type { IUserService } from "./userService";
+import type { IVolunteerService } from "./volunteerService";
 import { tryCatch } from "@/lib/try-catch";
 
-export class ClassService {
-  private readonly db: Drizzle;
-  private readonly userService: UserService;
-  private readonly volunteerService: VolunteerService;
-  private readonly termService: TermService;
-  private readonly shiftService: ShiftService;
-  private readonly imageService: ImageService;
+export interface IClassService {
+  getClassesForRequest(
+    listRequest: ClassRequest,
+  ): Promise<ClassResponse<Class>>;
+  getClasses(ids: string[]): Promise<Class[]>;
+  getClass(id: string): Promise<Class>;
+  createClass(classCreate: CreateClassOutput): Promise<string>;
+  updateClass(classUpdate: UpdateClassOutput): Promise<void>;
+  deleteClass(classId: string): Promise<void>;
+  publishClass(classId: string): Promise<void>;
+  publishAllClasses(): Promise<void>;
+  retrieveFullClasses(input: {
+    where: SQL<unknown>;
+    withTotalCount?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<Class[]>;
+}
 
-  constructor(
-    db: Drizzle,
-    userService: UserService,
-    volunteerService: VolunteerService,
-    termService: TermService,
-    shiftService: ShiftService,
-    imageService: ImageService,
-  ) {
+export class ClassService implements IClassService {
+  private readonly db: Drizzle;
+  private readonly userService: IUserService;
+  private readonly volunteerService: IVolunteerService;
+  private readonly termService: ITermService;
+  private readonly shiftService: IShiftService;
+  private readonly imageService: IImageService;
+
+  constructor({
+    db,
+    userService,
+    volunteerService,
+    termService,
+    shiftService,
+    imageService,
+  }: {
+    db: Drizzle;
+    userService: IUserService;
+    volunteerService: IVolunteerService;
+    termService: ITermService;
+    shiftService: IShiftService;
+    imageService: IImageService;
+  }) {
     this.db = db;
     this.userService = userService;
     this.volunteerService = volunteerService;

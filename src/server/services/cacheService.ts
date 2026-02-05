@@ -4,12 +4,35 @@ import type { CacheClient } from "../db/cache";
 
 type CacheableValue = SuperJSONValue;
 
-export class CacheService {
+export interface ICacheService {
+  set<T extends CacheableValue>(key: string, value: T): Promise<void>;
+  setSingleItemInGroup<T extends CacheableValue>(
+    group: string,
+    key: string,
+    value: T,
+  ): Promise<void>;
+  setMultipleInGroup<T extends CacheableValue>(
+    group: string,
+    keys: string[],
+    values: T[],
+  ): Promise<void>;
+  get<T extends CacheableValue>(key: string): Promise<T | null>;
+  getSingleItemFromGroup<T extends CacheableValue>(
+    group: string,
+    key: string,
+  ): Promise<T | null>;
+  getMultipleFromGroup<T extends CacheableValue>(
+    group: string,
+    keys: string[],
+  ): Promise<Array<T | null>>;
+}
+
+export class CacheService implements ICacheService {
   private readonly cacheClient: CacheClient;
   private singleObjectMemoryCache?: Map<string, string>; // key -> serialized string
   private groupObjectMemoryCache?: Map<string, Map<string, string>>; // group -> (key -> serialized string)
 
-  constructor(cacheClient: CacheClient) {
+  constructor({ cacheClient }: { cacheClient: CacheClient }) {
     this.cacheClient = cacheClient;
   }
 
@@ -103,9 +126,7 @@ export class CacheService {
     this.ensureGroupExistsInMemory(group);
 
     const inMemoryGroup = this.groupObjectMemoryCache?.get(group);
-    const serializedVals = new Array<string | null | undefined>(
-      keys.length,
-    );
+    const serializedVals = new Array<string | null | undefined>(keys.length);
     const missingRedisKeys: string[] = [];
 
     // check per-request cache first
@@ -158,7 +179,7 @@ export class CacheService {
 
   private ensureGroupExistsInMemory(group: string) {
     this.groupObjectMemoryCache ??= new Map();
-    
+
     if (!this.groupObjectMemoryCache.has(group))
       this.groupObjectMemoryCache.set(group, new Map());
   }

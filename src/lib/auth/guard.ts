@@ -35,7 +35,14 @@ async function resolveActiveUserAndPermission(
 // Guards
 export async function getSession(): Promise<Session | null> {
   const h = new Headers(await headers());
-  return auth.api.getSession({ headers: h });
+  try {
+    return await auth.api.getSession({ headers: h });
+  } catch (err) {
+    console.error("[auth] getSession failed", err);
+
+    // fail closed: behave like unauthenticated.
+    return null;
+  }
 }
 
 export async function requireNotAuth(): Promise<void> {

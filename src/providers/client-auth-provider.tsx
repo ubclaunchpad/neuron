@@ -61,7 +61,6 @@ export default function ClientAuthProvider({
     isPending && bootstrapped
       ? stableRef.current
       : (liveSession ?? stableRef.current);
-  const role = session?.user?.role;
 
   // Memoize context value to avoid repaints
   const value = useMemo<AuthContextValue>(

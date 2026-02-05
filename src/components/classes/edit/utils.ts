@@ -1,4 +1,5 @@
-import { getImageUrlFromKey } from "@/lib/build-image-url";
+import { buildImageUrl } from "@/lib/build-image-url";
+import type { PublicConfig } from "@/lib/public-config";
 import type { SingleClass } from "@/models/class";
 import type {
   ScheduleEditSchemaInput,
@@ -6,14 +7,17 @@ import type {
 } from "./schedule-form/schema";
 import type { ClassEditSchemaType } from "./schema";
 
-export function classToFormValues(c?: SingleClass): ClassEditSchemaType {
+export function classToFormValues(
+  c: SingleClass | undefined,
+  config: PublicConfig | null,
+): ClassEditSchemaType {
   return {
     name: c?.name ?? "",
     description: c?.description ?? "",
     meetingURL: c?.meetingURL ?? "",
     category: c?.category ?? "",
     subcategory: c?.subcategory ?? "",
-    image: getImageUrlFromKey(c?.image) ?? null,
+    image: (config ? buildImageUrl(config, c?.image) : undefined) ?? null,
     levelRange: [c?.lowerLevel ?? 1, c?.upperLevel ?? 4],
     schedules:
       c?.schedules.map((s) => ({

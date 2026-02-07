@@ -4,7 +4,7 @@ import type { Term } from "@/models/term";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { ClassFormValues } from "../schema";
-import { useClassImageUpload } from "./use-class-image-upload";
+import { useImageUpload } from "@/hooks/use-image-upload";
 import { useClassMutations } from "./use-class-mutations";
 
 export function useClassUpsert({
@@ -22,7 +22,7 @@ export function useClassUpsert({
   const [isSaveAndPublish, setSaveAndPublish] = useState(false);
 
   const { createClass, updateClass, publishClass } = useClassMutations();
-  const { uploadImage } = useClassImageUpload();
+  const { uploadImage } = useImageUpload();
 
   const submitHandler = async (data: ClassFormValues): Promise<string> => {
     const payload = { ...data };

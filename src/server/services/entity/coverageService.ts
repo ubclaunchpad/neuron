@@ -8,19 +8,25 @@ import {
   getListCoverageRequestBase,
   getListCoverageRequestWithReason,
   type CoverageRequest,
-  type CoverageRequestShiftContext,
   type ListCoverageRequestBase,
   type ListCoverageRequestWithReason,
 } from "@/models/coverage";
 import { Role } from "@/models/interfaces";
+import type { EmbeddedShift } from "@/models/shift";
+import { buildUser } from "@/models/user";
+import { getEmbeddedVolunteer } from "@/models/volunteer";
 import type { ListResponse } from "@/models/list-response";
 import type { Drizzle } from "@/server/db";
 import { course } from "@/server/db/schema/course";
 import {
   coverageRequest,
+  instructorToSchedule,
   shift,
   type CoverageRequestDB,
 } from "@/server/db/schema";
+import { volunteerToSchedule } from "@/server/db/schema/schedule";
+import { instructorUserView } from "@/server/db/schema/user";
+import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import { getPagination } from "@/utils/searchUtils";
@@ -62,11 +68,15 @@ export class CoverageService implements ICoverageService {
   private readonly volunteerService: IVolunteerService;
   private readonly shiftService: IShiftService;
 
-  constructor(
-    db: Drizzle,
-    volunteerService: IVolunteerService,
-    shiftService: IShiftService,
-  ) {
+  constructor({
+    db,
+    volunteerService,
+    shiftService,
+  }: {
+    db: Drizzle;
+    volunteerService: IVolunteerService;
+    shiftService: IShiftService;
+  }) {
     this.db = db;
     this.volunteerService = volunteerService;
     this.shiftService = shiftService;
@@ -80,7 +90,7 @@ export class CoverageService implements ICoverageService {
       .from(coverageRequest)
       .where(eq(coverageRequest.shiftId, shiftId));
 
-    return this.formatCoverageRequests(coverageRequestDBs);
+    return this.loadCoverageRequestModels(coverageRequestDBs);
   }
 
   async listCoverageRequests(
@@ -101,12 +111,32 @@ export class CoverageService implements ICoverageService {
       whereConditions.push(eq(coverageRequest.status, status));
     }
 
-    // Role-based visibility filter (volunteers only see open or their own requests)
+    // Role-based visibility filter for non-admins:
+    // - See open requests EXCEPT for shifts they're already assigned to
+    // - Always see their own requests (as requester or covering volunteer)
     if (!isAdmin) {
       whereConditions.push(
         or(
-          eq(coverageRequest.status, CoverageStatus.open),
+          // Show open requests only if volunteer is NOT already assigned to the shift
+          and(
+            eq(coverageRequest.status, CoverageStatus.open),
+            // Not assigned via schedule
+            sql`NOT EXISTS (
+              SELECT 1 FROM ${volunteerToSchedule}
+              WHERE ${volunteerToSchedule.scheduleId} = ${shift.scheduleId}
+              AND ${volunteerToSchedule.volunteerUserId} = ${viewerUserId}
+            )`,
+            // Not already covering this shift via another resolved coverage request
+            sql`NOT EXISTS (
+              SELECT 1 FROM ${coverageRequest} AS cr2
+              WHERE cr2.shift_id = ${shift.id}
+              AND cr2.covered_by_volunteer_user_id = ${viewerUserId}
+              AND cr2.status = ${CoverageStatus.resolved}
+            )`,
+          ),
+          // Always show their own requests (as requester)
           eq(coverageRequest.requestingVolunteerUserId, viewerUserId),
+          // Always show requests they're covering
           eq(coverageRequest.coveredByVolunteerUserId, viewerUserId),
         )!,
       );
@@ -122,10 +152,17 @@ export class CoverageService implements ICoverageService {
           date: shift.date,
           startAt: shift.startAt,
           endAt: shift.endAt,
+          scheduleId: shift.scheduleId,
         },
         course: {
           id: course.id,
           name: course.name,
+          termId: course.termId,
+          image: course.image,
+          description: course.description,
+          meetingURL: course.meetingURL,
+          category: course.category,
+          subcategory: course.subcategory,
         },
       })
       .from(coverageRequest)
@@ -139,6 +176,40 @@ export class CoverageService implements ICoverageService {
     if (rows.length === 0) {
       return { data: [], total: 0, nextCursor: null };
     }
+
+    // Batch load instructors by schedule
+    const scheduleIds = [...new Set(rows.map((r) => r.shift.scheduleId))];
+    const instructorRecords = await this.db
+      .select({
+        scheduleId: instructorToSchedule.scheduleId,
+        instructor: getViewColumns(instructorUserView),
+      })
+      .from(instructorToSchedule)
+      .innerJoin(
+        instructorUserView,
+        eq(instructorToSchedule.instructorUserId, instructorUserView.id),
+      )
+      .where(inArray(instructorToSchedule.scheduleId, scheduleIds));
+
+    const instructorsBySchedule = new Map<
+      string,
+      ReturnType<typeof buildUser>[]
+    >();
+    for (const record of instructorRecords) {
+      const list = instructorsBySchedule.get(record.scheduleId) ?? [];
+      list.push(buildUser(record.instructor));
+      instructorsBySchedule.set(record.scheduleId, list);
+    }
+
+    // Batch load shifts to get volunteers
+    const shiftIds = [...new Set(rows.map((r) => r.shift.id))];
+    const shiftModels = await this.shiftService.getShiftsByIds(shiftIds);
+    const volunteersByShift = new Map(
+      shiftModels.map((s) => [
+        s.id,
+        s.volunteers.map((v) => getEmbeddedVolunteer(v)),
+      ]),
+    );
 
     // Extract volunteer IDs for batch loading
     const volunteerIds = uniqueDefined(
@@ -169,26 +240,37 @@ export class CoverageService implements ICoverageService {
         ? volunteers.get(row.coverageRequest.coveredByVolunteerUserId)
         : undefined;
 
-      const coverageModel = buildCoverageRequest(
-        row.coverageRequest,
-        requestingVolunteer,
-        coveringVolunteer,
-      );
-
-      const shiftContext: CoverageRequestShiftContext = {
+      const embeddedShift: EmbeddedShift = {
         id: row.shift.id,
         date: row.shift.date,
         startAt: row.shift.startAt,
         endAt: row.shift.endAt,
-        className: row.course.name,
-        classId: row.course.id,
+        class: {
+          id: row.course.id,
+          name: row.course.name,
+          termId: row.course.termId,
+          image: row.course.image,
+          description: row.course.description,
+          meetingURL: row.course.meetingURL,
+          category: row.course.category,
+          subcategory: row.course.subcategory,
+        },
+        instructors: instructorsBySchedule.get(row.shift.scheduleId) ?? [],
+        volunteers: volunteersByShift.get(row.shift.id) ?? [],
       };
+
+      const coverageModel = buildCoverageRequest(
+        row.coverageRequest,
+        embeddedShift,
+        requestingVolunteer,
+        coveringVolunteer,
+      );
 
       // Return admin view with reason fields, or base view for volunteers
       if (isAdmin) {
-        return getListCoverageRequestWithReason(coverageModel, shiftContext);
+        return getListCoverageRequestWithReason(coverageModel);
       }
-      return getListCoverageRequestBase(coverageModel, shiftContext);
+      return getListCoverageRequestBase(coverageModel);
     });
 
     return { data, total, nextCursor };
@@ -211,7 +293,7 @@ export class CoverageService implements ICoverageService {
       );
     }
 
-    return this.formatCoverageRequests(coverageRequestDBs);
+    return this.loadCoverageRequestModels(coverageRequestDBs);
   }
 
   async createCoverageRequest(
@@ -303,6 +385,7 @@ export class CoverageService implements ICoverageService {
       .select({
         status: coverageRequest.status,
         shiftStartAt: shift.startAt,
+        shiftId: shift.id,
       })
       .from(coverageRequest)
       .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
@@ -325,6 +408,22 @@ export class CoverageService implements ICoverageService {
     if (request.shiftStartAt <= new Date()) {
       throw new NeuronError(
         "Can not fulfill a coverage request for a past shift.",
+        NeuronErrorCodes.BAD_REQUEST,
+      );
+    }
+
+    // Check if volunteer is already assigned to this shift
+    const shiftModel = await this.shiftService.getShiftById(
+      request.shiftId,
+      coveredByVolunteerUserId,
+    );
+    const isAssigned = shiftModel.volunteers.some(
+      (v) => v.id === coveredByVolunteerUserId,
+    );
+
+    if (isAssigned) {
+      throw new NeuronError(
+        "Cannot cover a shift you are already assigned to.",
         NeuronErrorCodes.BAD_REQUEST,
       );
     }
@@ -399,10 +498,32 @@ export class CoverageService implements ICoverageService {
     }
   }
 
-  private async formatCoverageRequests(
+  private async loadCoverageRequestModels(
     requestDBs: CoverageRequestDB[],
   ): Promise<CoverageRequest[]> {
-    // Dedupe and get volunteers
+    if (requestDBs.length === 0) return [];
+
+    // Batch load shifts (includes class, instructors, volunteers)
+    const shiftIds = uniqueDefined(requestDBs.map((r) => r.shiftId));
+    const shiftModels = await this.shiftService.getShiftsByIds(shiftIds);
+
+    // Build shift map with embedded shift data
+    const shiftMap = new Map<string, EmbeddedShift>(
+      shiftModels.map((s) => [
+        s.id,
+        {
+          id: s.id,
+          date: s.date,
+          startAt: s.startAt,
+          endAt: s.endAt,
+          class: s.class,
+          instructors: s.instructors,
+          volunteers: s.volunteers.map((v) => getEmbeddedVolunteer(v)),
+        },
+      ]),
+    );
+
+    // Batch load volunteers for coverage requests
     const volunteerIds = uniqueDefined(
       requestDBs
         .flatMap((request) => [
@@ -418,6 +539,7 @@ export class CoverageService implements ICoverageService {
     return requestDBs.map((req) =>
       buildCoverageRequest(
         req,
+        shiftMap.get(req.shiftId)!,
         volunteers.get(req.requestingVolunteerUserId)!,
         req.coveredByVolunteerUserId
           ? volunteers.get(req.coveredByVolunteerUserId)!

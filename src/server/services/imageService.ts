@@ -11,7 +11,7 @@ export interface IImageService {
 
 export class ImageService implements IImageService {
   private readonly minio: Minio.Client;
-  private readonly expiration = 5 * 60; // 5 mins, may be too generous
+  private readonly expiration = 5 * 60; // 5 mins
   private readonly bucket = env.MINIO_BUCKET ?? "neuron";
   private readonly bucketReady: Promise<void>;
 

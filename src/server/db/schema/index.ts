@@ -8,4 +8,3 @@ export * from "./log";
 export * from "./schedule";
 export * from "./shift";
 export * from "./user";
-

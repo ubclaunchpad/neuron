@@ -39,7 +39,7 @@ export interface IUserService {
 export class UserService implements IUserService {
   private readonly db: Drizzle;
 
-  constructor(db: Drizzle) {
+  constructor({ db }: { db: Drizzle }) {
     this.db = db;
   }
 

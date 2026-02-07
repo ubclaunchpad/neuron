@@ -62,14 +62,21 @@ export class ClassService implements IClassService {
   private readonly shiftService: IShiftService;
   private readonly imageService: IImageService;
 
-  constructor(
-    db: Drizzle,
-    userService: IUserService,
-    volunteerService: IVolunteerService,
-    termService: ITermService,
-    shiftService: IShiftService,
-    imageService: IImageService,
-  ) {
+  constructor({
+    db,
+    userService,
+    volunteerService,
+    termService,
+    shiftService,
+    imageService,
+  }: {
+    db: Drizzle;
+    userService: IUserService;
+    volunteerService: IVolunteerService;
+    termService: ITermService;
+    shiftService: IShiftService;
+    imageService: IImageService;
+  }) {
     this.db = db;
     this.userService = userService;
     this.volunteerService = volunteerService;
@@ -297,16 +304,19 @@ export class ClassService implements IClassService {
             .toString();
 
           // store start/end times in UTC
-          await this.shiftService.createShift({
-            scheduleId: schedule.id,
-            date: shiftDate.toString(),
-            startAt,
-            endAt,
-          });
+          await this.shiftService.createShift(
+            {
+              scheduleId: schedule.id,
+              date: shiftDate.toString(),
+              startAt,
+              endAt,
+            },
+            tx,
+          );
         }
 
         // update class to published
-        const row = await this.db
+        const row = await tx
           .update(course)
           .set({ published: true })
           .where(eq(course.id, classId))
@@ -356,7 +366,7 @@ export class ClassService implements IClassService {
     const courseIds = await this.db
       .select({ id: course.id })
       .from(course)
-      .where(sql`published = false`);
+      .where(eq(course.published, false));
 
     if (courseIds.length === 0) return;
 

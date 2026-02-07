@@ -4,6 +4,7 @@ import {
   asClass,
   asValue,
   createContainer,
+  InjectionMode,
   type AwilixContainer,
 } from "awilix";
 import type { Sql } from "postgres";
@@ -30,19 +31,23 @@ import {
   type IVolunteerService,
 } from "../services/entity/volunteerService";
 import { ImageService, type IImageService } from "../services/imageService";
+import {
+  CurrentSessionService,
+  type ICurrentSessionService,
+} from "../services/currentSessionService";
 
 export type NeuronCradle = {
   env: typeof env;
 
-  dbConn: Sql;
   db: Drizzle;
-  cacheClient: CacheClient;
+  // cacheClient: CacheClient;
 
   // current request info
   session?: Session;
   headers: Headers;
 
   // services
+  currentSessionService: ICurrentSessionService;
   imageService: IImageService;
   emailService: IEmailService;
   classService: IClassService;
@@ -58,7 +63,9 @@ export type NeuronContainer = AwilixContainer<NeuronCradle>;
 
 const createRootContainer = (): NeuronContainer => {
   const container = createContainer<NeuronCradle>({
-    injectionMode: "CLASSIC",
+    // PROXY is resilient to build-time minification (CLASSIC breaks when
+    // constructor/function parameter names get mangled).
+    injectionMode: InjectionMode.PROXY,
     strict: true,
   });
 
@@ -67,7 +74,7 @@ const createRootContainer = (): NeuronContainer => {
   });
 
   registerDb(container);
-  registerCacheClient(container);
+  //registerCacheClient(container);
   registerServices(container);
 
   return container;
@@ -75,6 +82,9 @@ const createRootContainer = (): NeuronContainer => {
 
 const registerServices = (container: NeuronContainer) => {
   container.register({
+    currentSessionService: asClass<ICurrentSessionService>(
+      CurrentSessionService,
+    ).scoped(),
     imageService: asClass<IImageService>(ImageService).singleton(),
     emailService: asClass<IEmailService>(EmailService).singleton(),
     classService: asClass<IClassService>(ClassService).scoped(),
@@ -87,5 +97,13 @@ const registerServices = (container: NeuronContainer) => {
   });
 };
 
-export const rootContainer = createRootContainer();
-export const createRequestScope = () => rootContainer.createScope();
+let _rootContainer: NeuronContainer | null = null;
+
+export const getRootContainer = (): NeuronContainer => {
+  if (!_rootContainer) {
+    _rootContainer = createRootContainer();
+  }
+  return _rootContainer;
+};
+
+export const createRequestScope = () => getRootContainer().createScope();

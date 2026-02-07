@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   AsideBody,
@@ -17,8 +17,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCoveragePage } from "./coverage-page-context";
 import { useEffect } from "react";
 import { Separator } from "@radix-ui/react-separator";
-import type { User } from "@/models/user";
-import type { Volunteer } from "@/models/volunteer";
 import { UserList } from "@/components/users/user-list";
 import { Button } from "@/components/ui/button";
 
@@ -44,18 +42,20 @@ export function CoverageAside() {
   if (!selectedItem) return null;
 
   const shiftDate: string = dateFormatter.format(selectedItem.shift.startAt);
-  const shiftStartTime: string = timeFormatter.format(selectedItem.shift.startAt);
+  const shiftStartTime: string = timeFormatter.format(
+    selectedItem.shift.startAt,
+  );
   const shiftEndTime: string = timeFormatter.format(selectedItem.shift.endAt);
 
-  const instructors: User[] = selectedItem.shift.instructors;
-  const requestingVolunteer: Volunteer = selectedItem.requestingVolunteer;
+  const instructors = selectedItem.shift.instructors;
+  const requestingVolunteer = selectedItem.requestingVolunteer;
 
   return (
     <AsideContainer>
       <AsideHeader className="border-0">
         <AsideDescription>{shiftDate}</AsideDescription>
         <AsideDescription>
-          {shiftStartTime + '-' + shiftEndTime}
+          {shiftStartTime + "-" + shiftEndTime}
         </AsideDescription>
         <AsideTitle>{selectedItem.shift.class.name}</AsideTitle>
       </AsideHeader>
@@ -66,7 +66,9 @@ export function CoverageAside() {
         <AsideSection>
           <AsideSectionContent>
             <AsideField inline>
-              <AsideFieldLabel>Instructor{instructors.length === 1 ? "" : "s"}</AsideFieldLabel>
+              <AsideFieldLabel>
+                Instructor{instructors.length === 1 ? "" : "s"}
+              </AsideFieldLabel>
               <AsideFieldContent className="w-auto">
                 <UserList
                   users={instructors.map((instructor) => ({
@@ -102,52 +104,49 @@ export function CoverageAside() {
             <AsideField inline>
               <AsideFieldLabel>Requested by</AsideFieldLabel>
               <AsideFieldContent>
-                <UserList users={[{
-                  id: requestingVolunteer.id,
-                  fullName: `${requestingVolunteer.name} ${requestingVolunteer.lastName}`,
-                  email: requestingVolunteer.email,
-                  image: "image" in requestingVolunteer ? requestingVolunteer.image : null,
-                  subtitle: undefined,
-                }]}
-                emptyLabel="Requesting volunteer not found" />
+                <UserList
+                  users={[
+                    {
+                      id: requestingVolunteer.id,
+                      fullName: `${requestingVolunteer.name} ${requestingVolunteer.lastName}`,
+                      email: requestingVolunteer.email,
+                      image:
+                        "image" in requestingVolunteer
+                          ? requestingVolunteer.image
+                          : null,
+                      subtitle: undefined,
+                    },
+                  ]}
+                  emptyLabel="Requesting volunteer not found"
+                />
               </AsideFieldContent>
             </AsideField>
 
-            <AsideField inline>
-              <AsideFieldLabel>Requested on</AsideFieldLabel>
-              <AsideFieldContent className="w-auto">
-                Date Requested Here
-              </AsideFieldContent>
-            </AsideField>
+            {/* Reason fields only present for admin view (ListCoverageRequestWithReason) */}
+            {"details" in selectedItem && selectedItem.details !== "" && (
+              <AsideField inline>
+                <AsideFieldLabel>Reason for request</AsideFieldLabel>
+                <AsideFieldContent className="w-auto">
+                  {selectedItem.details}
+                </AsideFieldContent>
+              </AsideField>
+            )}
 
-            {/* Volunteers only see reason for their own requests */}
-            {selectedItem.details !== '' && <AsideField inline>
-              <AsideFieldLabel>Reason for request</AsideFieldLabel>
-              <AsideFieldContent className="w-auto">
-                {selectedItem.details}
-              </AsideFieldContent>
-            </AsideField>}
-
-            {/* Volunteers only see reason details for their own requests */}
-            {selectedItem.comments && <AsideField inline>
-              <AsideFieldLabel>Request Details</AsideFieldLabel>
-              <AsideFieldContent className="w-auto">
-                {selectedItem.comments}
-              </AsideFieldContent>
-            </AsideField>}
+            {"comments" in selectedItem && selectedItem.comments && (
+              <AsideField inline>
+                <AsideFieldLabel>Request Details</AsideFieldLabel>
+                <AsideFieldContent className="w-auto">
+                  {selectedItem.comments}
+                </AsideFieldContent>
+              </AsideField>
+            )}
 
             <AsideFooter>
               <div className="flex-row">
-                <Button 
-                  variant="ghost"
-                  onClick={() => goToPrev()}
-                >
+                <Button variant="ghost" onClick={() => goToPrev()}>
                   <ChevronLeft></ChevronLeft>
                 </Button>
-                <Button 
-                  variant="ghost"
-                  onClick={() => goToNext()}
-                >
+                <Button variant="ghost" onClick={() => goToNext()}>
                   <ChevronRight></ChevronRight>
                 </Button>
               </div>

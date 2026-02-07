@@ -1,78 +1,38 @@
 "use client";
 
 import { CoverageListView } from "@/components/coverage/coverage-list-view";
-import { PageLayout, PageLayoutAside, PageLayoutContent, PageLayoutHeader, PageLayoutHeaderContent, PageLayoutHeaderTitle } from "@/components/page-layout";
-import { WithPermission } from "@/components/utils/with-permission";
-import { TypographyTitle } from "@/components/ui/typography";
-import { Button } from "@/components/ui/button";
-import { Bell, ChevronDown } from "lucide-react";
+import {
+  PageLayout,
+  PageLayoutAside,
+  PageLayoutContent,
+  PageLayoutHeader,
+  PageLayoutHeaderContent,
+  PageLayoutHeaderTitle,
+} from "@/components/page-layout";
 import { Suspense } from "react";
 import { CoveragePageProvider } from "@/components/coverage/coverage-page-context";
 import { CoverageAside } from "@/components/coverage/coverage-aside";
-import { MonthInput } from "@/components/ui/date-input.tsx";
-import { useState } from "react";
 
 export default function CoveragePage() {
-  // Changed from month selector, pass in 1st of selected month to children
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-
   return (
-    <WithPermission 
-      permissions={{ permission: { coverage: ["view"] } }}
-      fallback={
-        <div className="flex items-center justify-center h-full">
-            <TypographyTitle>Access Denied</TypographyTitle>
-        </div>
-      }
-    >
-        <PageLayout>
-            <CoveragePageProvider>
-                <PageLayoutAside>
-                    <Suspense fallback={<>Loading coverage...</>}>
-                        <CoverageAside />
-                    </Suspense>
-                </PageLayoutAside>
+    <PageLayout>
+      <CoveragePageProvider>
+        <PageLayoutAside>
+          <Suspense fallback={<>Loading coverage...</>}>
+            <CoverageAside />
+          </Suspense>
+        </PageLayoutAside>
 
-                <PageLayoutHeader hideShadow border="always" className="pb-0 block h-auto">
-                    <div className="flex items-center justify-between py-4 pr-6">
-                        <PageLayoutHeaderContent className="items-center">
-                            <PageLayoutHeaderTitle>Coverage Requests</PageLayoutHeaderTitle>
-                        </PageLayoutHeaderContent>
+        <PageLayoutHeader hideShadow border="always">
+          <PageLayoutHeaderContent>
+            <PageLayoutHeaderTitle>Coverage Requests</PageLayoutHeaderTitle>
+          </PageLayoutHeaderContent>
+        </PageLayoutHeader>
 
-                        <div className="flex items-center gap-4">
-                            {/* Mock Notifications Button */}
-                            <Button variant="outline" size="sm" className="gap-2">
-                                <Bell className="size-4" />
-                                Notifications
-                            </Button>
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                        {/* Tabs */}
-                        <div className="flex items-center border-b w-full">
-                            <div className="flex-1"></div>
-                            <div className="pb-2 pr-6">
-                                <Button variant="ghost" size="sm" className="h-8 gap-2 text-muted-foreground hover:text-foreground">
-                                    Filters
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </PageLayoutHeader>
-
-                <PageLayoutContent className="px-6"> 
-                    <div className="flex items-center gap-2 py-4">
-                        <MonthInput 
-                            onChange={(d?: Date) => setSelectedDate(d)}
-                        ></MonthInput>
-                    </div>
-                    <CoverageListView 
-                        selectedDate={selectedDate}
-                    />
-                </PageLayoutContent>
-            </CoveragePageProvider>
-        </PageLayout>
-    </WithPermission>
+        <PageLayoutContent className="px-6">
+          <CoverageListView />
+        </PageLayoutContent>
+      </CoveragePageProvider>
+    </PageLayout>
   );
 }

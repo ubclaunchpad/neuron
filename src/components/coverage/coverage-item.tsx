@@ -19,8 +19,7 @@ import { createPrng } from "@/utils/prngUtils";
 import { backgroundColors } from "@/components/ui/avatar";
 import { differenceInMinutes, format } from "date-fns";
 import { useMemo, useState } from "react";
-import type { CoverageRequest } from "@/models/coverage";
-import type { Volunteer } from "@/models/volunteer";
+import type { CoverageListItem } from "./coverage-page-context";
 
 function formatDuration(start: Date, end: Date) {
   const minutes = differenceInMinutes(end, start);
@@ -39,12 +38,12 @@ export function CoverageItem({
   item,
   onSelect,
 }: {
-  item: CoverageRequest;
-  onSelect?: (item: CoverageRequest) => void;
+  item: CoverageListItem;
+  onSelect?: (item: CoverageListItem) => void;
 }) {
   const { user } = useAuth();
   const { startAt, endAt } = item.shift;
-  
+
   // Use createPrng properly - it expects a seed string
   const color = useMemo(() => {
     const prng = createPrng(item.shift.class.name);
@@ -60,32 +59,32 @@ export function CoverageItem({
   const handleFill = () => {
     setIsFilling(true);
     setTimeout(() => {
-        setIsFilling(false);
-        alert("Success: Shift covered! (Mock action)");
+      setIsFilling(false);
+      alert("Success: Shift covered! (Mock action)");
     }, 1000);
   };
 
   const handleCancel = () => {
     setIsCancelling(true);
     setTimeout(() => {
-        setIsCancelling(false);
-        alert("Success: Request withdrawn! (Mock action)");
+      setIsCancelling(false);
+      alert("Success: Request withdrawn! (Mock action)");
     }, 1000);
   };
 
   const handleNotify = () => {
     setIsNotifying(true);
     setTimeout(() => {
-        setIsNotifying(false);
-        alert("Success: Instructor notified! (Mock action)");
+      setIsNotifying(false);
+      alert("Success: Instructor notified! (Mock action)");
     }, 1000);
   };
 
   const handleApprove = () => {
     setIsApproving(true);
     setTimeout(() => {
-        setIsApproving(false);
-        alert("Success: Request approved! (Mock action)");
+      setIsApproving(false);
+      alert("Success: Request approved! (Mock action)");
     }, 1000);
   };
 
@@ -101,60 +100,69 @@ export function CoverageItem({
       )}
       onClick={() => onSelect?.(item)}
     >
-        {/* Vertical Color Bar */}
-        <div
-          style={{ backgroundColor: color }}
-          className="absolute left-5 top-5 bottom-5 w-1.5 rounded-full z-10"
-        />
+      {/* Vertical Color Bar */}
+      <div
+        style={{ backgroundColor: color }}
+        className="absolute left-5 top-5 bottom-5 w-1.5 rounded-full z-10"
+      />
 
-        <div 
-            className="grid gap-4 pl-8 items-start w-full"
-            style={{ gridTemplateColumns: "95px 1.4fr 1.6fr 280px" }}
-        >
-            {/* Column 1: Time */}
-            <div className="flex flex-col gap-0.5">
-                <TypographyRegBold className="text-sm font-semibold">
-                    {format(startAt, "hh:mm a")}
-                </TypographyRegBold>
-                <TypographySmall className="text-muted-foreground">
-                    {formatDuration(startAt, endAt)}
-                </TypographySmall>
+      <div
+        className="grid gap-4 pl-8 items-start w-full"
+        style={{ gridTemplateColumns: "95px 1.4fr 1.6fr 280px" }}
+      >
+        {/* Column 1: Time */}
+        <div className="flex flex-col gap-0.5">
+          <TypographyRegBold className="text-sm font-semibold">
+            {format(startAt, "hh:mm a")}
+          </TypographyRegBold>
+          <TypographySmall className="text-muted-foreground">
+            {formatDuration(startAt, endAt)}
+          </TypographySmall>
+        </div>
+
+        {/* Column 2: Class Info & Metadata */}
+        <div className="flex flex-col gap-1.5 overflow-hidden">
+          <div className="font-medium text-base leading-tight truncate">
+            {item.shift.class.name}
+          </div>
+          <div className="text-sm text-muted-foreground truncate">
+            <span className="font-medium text-foreground">Instructor:</span>{" "}
+            {item.shift.instructors.length > 0
+              ? item.shift.instructors
+                  .map((i) => `${i.name} ${i.lastName}`)
+                  .join(", ")
+              : "None assigned"}
+          </div>
+          <div className="text-sm text-muted-foreground truncate">
+            <span className="font-medium text-foreground">Volunteer(s):</span>{" "}
+            {item.shift.volunteers.length > 0
+              ? item.shift.volunteers
+                  .map((v) => `${v.name} ${v.lastName}`)
+                  .join(", ")
+              : "None assigned"}
+          </div>
+        </div>
+
+        {/* Column 3: Request Info */}
+        <div className="flex flex-col gap-1.5 overflow-hidden">
+          <div className="text-sm truncate">
+            <span className="text-muted-foreground">Requested by: </span>
+            <span className="font-bold text-foreground">
+              {item.requestingVolunteer.name}{" "}
+              {item.requestingVolunteer.lastName}
+            </span>
+          </div>
+
+          {/* Reason (Visible to Admin or My Request) */}
+          {(isAdmin || isMyRequest) && "details" in item && (
+            <div className="mt-1 text-xs text-muted-foreground italic truncate">
+              Reason: {item.details}
             </div>
+          )}
+        </div>
 
-            {/* Column 2: Class Info & Metadata */}
-            <div className="flex flex-col gap-1.5 overflow-hidden">
-                <div className="font-medium text-base leading-tight truncate">
-                    {item.shift.class.name}
-                </div>
-                <div className="text-sm text-muted-foreground truncate">
-                    <span className="font-medium text-foreground">Instructor:</span> INSTRUCTOR_FIRST_NAME INSTRUCTOR_LAST_NAME
-                </div>
-                <div className="text-sm text-muted-foreground truncate">
-                    {/* <span className="font-medium text-foreground">Volunteer(s):</span> {item.volunteers.map((v: Volunteer) => `${v.name} ${v.lastName}`).join(", ")} */}
-                    <span className="font-medium text-foreground">Volunteer(s):</span> ALL VOLUNTEERS HERE
-                </div>
-            </div>
-
-             {/* Column 3: Request Info */}
-             <div className="flex flex-col gap-1.5 overflow-hidden">
-                <div className="text-sm truncate">
-                    <span className="text-muted-foreground">Requested by: </span>
-                    <span className="font-bold text-foreground">{item.requestingVolunteer.name} {item.requestingVolunteer.lastName}</span>
-                </div>
-                <div className="text-xs text-muted-foreground truncate">
-                   Requested on: REQUESTED ON
-                </div>
-                
-                 {/* Reason (Visible to Admin or My Request) */}
-                {(isAdmin || isMyRequest) && (
-                   <div className="mt-1 text-xs text-muted-foreground italic truncate">
-                       Reason: {item.details}
-                   </div>
-                )}
-             </div>
-
-             {/* Actions (Far Right) */}
-             {/* <div className="flex flex-col gap-2 items-end w-full">
+        {/* Actions (Far Right) */}
+        {/* <div className="flex flex-col gap-2 items-end w-full">
                  {isOpen && !isMyRequest && !isAdmin && (
                      <Button
                         size="default" // h-10
@@ -185,7 +193,7 @@ export function CoverageItem({
                             pending={isNotifying}
                             onClick={handleNotify}
                             className="gap-2 px-4"
-                         > 
+                         >
                              <Send className="size-4" />
                              Notify Instructor
                          </Button>
@@ -202,14 +210,14 @@ export function CoverageItem({
                          </Button>
                      </div>
                  )}
-                 
+
                  {!isOpen && (
                       <div className="h-10 px-4 flex items-center justify-center rounded-md bg-muted text-muted-foreground text-sm font-medium border border-transparent whitespace-nowrap">
                           {item.status === CoverageStatus.resolved ? "Fulfilled" : "Expired/Withdrawn"}
                       </div>
                  )}
              </div> */}
-        </div>
+      </div>
     </div>
   );
 }

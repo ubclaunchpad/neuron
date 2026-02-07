@@ -1,27 +1,25 @@
 "use client";
 
-import { useAuth } from "@/providers/client-auth-provider";
-import { Role } from "@/models/interfaces";
 import { CoverageItem } from "./coverage-item";
 import { TypographyTitle } from "@/components/ui/typography";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Spinner } from "@/components/ui/spinner";
 import { format, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useMemo, useEffect } from "react";
-import { CoverageStatus } from "@/models/api/coverage";
-import { useCoveragePage } from "./coverage-page-context";
-import type { CoverageRequest } from "@/models/coverage";
-import { mockCoverageRequests } from "./mock-data";
-
-type CoverageListViewProps = {
-  selectedDate?: Date  // Optional, if passed in, will only show items from the same month
-}
+import {
+  useCoveragePage,
+  type CoverageListItem,
+} from "./coverage-page-context";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { clientApi } from "@/trpc/client";
 
 function toDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
 }
 
-function groupByDay(items: CoverageRequest[]) {
-  const groups = new Map<string, { date: Date; items: CoverageRequest[] }>();
+function groupByDay(items: CoverageListItem[]) {
+  const groups = new Map<string, { date: Date; items: CoverageListItem[] }>();
 
   items.forEach((item) => {
     const start = toDate(item.shift.startAt);
@@ -31,112 +29,104 @@ function groupByDay(items: CoverageRequest[]) {
     groups.set(key, group);
   });
 
-  return Array.from(groups.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
+  return Array.from(groups.values()).sort(
+    (a, b) => a.date.getTime() - b.date.getTime(),
+  );
 }
 
-export function CoverageListView(
-  { selectedDate }: CoverageListViewProps
-) {
-  const { user } = useAuth();
+export function CoverageListView() {
   const { openAsideFor, setSortedItems } = useCoveragePage();
-  
-  const items = useMemo(() => {
-    if (!user) return [];
-    return mockCoverageRequests;
-  }, [user]);
 
-  const filteredItems = useMemo(() => {
-      const inSelectedMonth = (item: CoverageRequest) => {
-        if (!selectedDate) return true;
+  const infiniteQuery = clientApi.coverage.list.useInfiniteQuery(
+    {},
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      placeholderData: (prev) => prev,
+      select: (data) => ({
+        ...data,
+        items: data.pages.flatMap((page) => page.data) ?? [],
+      }),
+    },
+  );
 
-        const start = toDate(item.shift.startAt);
-        return (
-          start.getFullYear() === selectedDate.getFullYear() &&
-          start.getMonth() === selectedDate.getMonth()
-        );
-      };
+  const handleScroll = useInfiniteScroll(infiniteQuery);
 
-      if (!user) return [];
-      if (user.role === Role.admin) {
-        console.log("User role is ", user.role);
-        return items.filter(item => inSelectedMonth(item));
-      } else {
-        // Volunteers see for the month:
-        // 1. All shifts up for coverage (status = open)
-        // 2. Their own shifts that were taken (my request AND status = resolved)
-        // "Volunteers do not see why a shift was put up for coverage on the sidebar" (handled in CoverageItem by not showing details)
-          
-        const filteredItems: CoverageRequest[] = items.filter((item: CoverageRequest) => {
-          if (!inSelectedMonth(item)) return false;
-          if (item.status === CoverageStatus.open) return true;
-          if (item.requestingVolunteer.id === user.id && item.status === CoverageStatus.resolved) return true;
-          return false;
-        });
-
-        return filteredItems.map((item: CoverageRequest) => ({
-          ...item,
-          details: item.requestingVolunteer.id === user.id ? item.details : '',
-          comments: item.requestingVolunteer.id == user.id ? item.comments : undefined,
-        }));
-      }
-  }, [selectedDate, items, user]);
+  const items = infiniteQuery.data?.items ?? [];
 
   const sortedItems = useMemo(() => {
-    return [...filteredItems].sort(
+    return [...items].sort(
       (a, b) =>
-        toDate(a.shift.startAt).getTime() -
-        toDate(b.shift.startAt).getTime()
+        toDate(a.shift.startAt).getTime() - toDate(b.shift.startAt).getTime(),
     );
-  }, [filteredItems]);
+  }, [items]);
 
-  const dayGroups = useMemo(
-    () => groupByDay(sortedItems),
-    [sortedItems]
-  );
+  const dayGroups = useMemo(() => groupByDay(sortedItems), [sortedItems]);
 
   useEffect(() => {
     setSortedItems(sortedItems);
   }, [sortedItems, setSortedItems]);
 
-  if (!user) return null;
+  const isLoading = infiniteQuery.isLoading;
+  const isEmpty = !isLoading && items.length === 0;
+  const showNoMoreResults =
+    !isLoading && items.length > 0 && !infiniteQuery.hasNextPage;
 
-  const handleItemClick = (item: CoverageRequest) => {
+  const handleItemClick = (item: CoverageListItem) => {
     openAsideFor(item);
   };
 
   return (
-    <div className="w-full px-10">
-      <div className="py-4 space-y-4">
-        {filteredItems.length === 0 && (
-          <div className="text-center text-muted-foreground py-10">No coverage requests found.</div>
+    <ScrollArea onScroll={handleScroll} className="w-full h-full">
+      <div className="px-10 py-4 space-y-4">
+        {isLoading && (
+          <div className="flex justify-center py-10">
+            <Spinner className="size-6" />
+          </div>
         )}
-        
+
+        {isEmpty && (
+          <div className="text-center text-muted-foreground py-10">
+            No coverage requests found.
+          </div>
+        )}
+
         {dayGroups.map((group) => {
-            const groupIsToday = isToday(group.date);
-            return (
-              <section key={group.date.toISOString()} className="space-y-3">
-                <div className="pt-3 pb-2">
-                  <TypographyTitle
-                    className={cn("text-md", groupIsToday && "text-primary")}
-                  >
-                    {format(group.date, "EEE d")}
-                    {groupIsToday && " | Today"}
-                  </TypographyTitle>
-                </div>
-                <div className="flex flex-col gap-3 px-5">
-                  {group.items.map((item) => {
-                    return (
-                      <CoverageItem 
-                        key={item.id} 
-                        item={item} 
-                        onSelect={handleItemClick}
-                      />)
-                  })}
-                </div>
-              </section>
-            );
-          })}
+          const groupIsToday = isToday(group.date);
+          return (
+            <section key={group.date.toISOString()} className="space-y-3">
+              <div className="pt-3 pb-2">
+                <TypographyTitle
+                  className={cn("text-md", groupIsToday && "text-primary")}
+                >
+                  {format(group.date, "EEE d")}
+                  {groupIsToday && " | Today"}
+                </TypographyTitle>
+              </div>
+              <div className="flex flex-col gap-3 px-5">
+                {group.items.map((item) => (
+                  <CoverageItem
+                    key={item.id}
+                    item={item}
+                    onSelect={handleItemClick}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })}
+
+        {infiniteQuery.isFetchingNextPage && (
+          <div className="flex justify-center py-4">
+            <Spinner className="size-5" />
+          </div>
+        )}
+
+        {showNoMoreResults && (
+          <div className="text-center text-muted-foreground py-4 text-sm">
+            No more results
+          </div>
+        )}
       </div>
-    </div>
+    </ScrollArea>
   );
 }

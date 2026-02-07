@@ -35,7 +35,7 @@ const timeFormatter = new Intl.DateTimeFormat("en-US", {
 });
 
 export function CoverageAside() {
-  const { selectedItem, closeAside } = useCoveragePage();
+  const { selectedItem, closeAside, goToNext, goToPrev } = useCoveragePage();
 
   useEffect(() => {
     if (!selectedItem) closeAside();
@@ -116,7 +116,7 @@ export function CoverageAside() {
             <AsideField inline>
               <AsideFieldLabel>Requested on</AsideFieldLabel>
               <AsideFieldContent className="w-auto">
-                REQUESTED ON HERE
+                Date Requested Here
               </AsideFieldContent>
             </AsideField>
 
@@ -138,10 +138,16 @@ export function CoverageAside() {
 
             <AsideFooter>
               <div className="flex-row">
-                <Button variant="ghost">
+                <Button 
+                  variant="ghost"
+                  onClick={() => goToPrev()}
+                >
                   <ChevronLeft></ChevronLeft>
                 </Button>
-                <Button variant="ghost">
+                <Button 
+                  variant="ghost"
+                  onClick={() => goToNext()}
+                >
                   <ChevronRight></ChevronRight>
                 </Button>
               </div>

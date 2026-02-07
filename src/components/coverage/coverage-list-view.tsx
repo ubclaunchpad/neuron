@@ -6,12 +6,11 @@ import { CoverageItem } from "./coverage-item";
 import { TypographyTitle } from "@/components/ui/typography";
 import { format, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { CoverageStatus } from "@/models/api/coverage";
 import { useCoveragePage } from "./coverage-page-context";
 import type { CoverageRequest } from "@/models/coverage";
 import { mockCoverageRequests } from "./mock-data";
-import { useState, useEffect } from "react";
 
 type CoverageListViewProps = {
   selectedDate?: Date  // Optional, if passed in, will only show items from the same month
@@ -39,7 +38,7 @@ export function CoverageListView(
   { selectedDate }: CoverageListViewProps
 ) {
   const { user } = useAuth();
-  const { openAsideFor, closeAside } = useCoveragePage();
+  const { openAsideFor, setSortedItems } = useCoveragePage();
   
   const items = useMemo(() => {
     if (!user) return [];
@@ -94,6 +93,10 @@ export function CoverageListView(
     () => groupByDay(sortedItems),
     [sortedItems]
   );
+
+  useEffect(() => {
+    setSortedItems(sortedItems);
+  }, [sortedItems, setSortedItems]);
 
   if (!user) return null;
 

@@ -11,8 +11,12 @@ import type { CoverageRequest } from "@/models/coverage";
 
 type CoveragePageContextValue = {
     selectedItem: CoverageRequest | null;
+    sortedItems: CoverageRequest[];
     openAsideFor: (item: CoverageRequest) => void;
     closeAside: () => void;
+    setSortedItems: (items: CoverageRequest[]) => void;
+    goToNext: () => void;
+    goToPrev: () => void;
 };
 
 const CoveragePageContext = createContext<CoveragePageContextValue | null>(
@@ -30,6 +34,7 @@ export function useCoveragePage() {
 export function CoveragePageProvider({ children }: PropsWithChildren) {
     const { setOpen } = usePageAside();
     const [selectedItem, setSelectedItem] = useState<CoverageRequest | null>(null);
+    const [sortedItems, setSortedItems] = useState<CoverageRequest[]>([]);
 
     const openAsideFor = (item: CoverageRequest) => {
         setSelectedItem(item);
@@ -41,8 +46,24 @@ export function CoveragePageProvider({ children }: PropsWithChildren) {
         setOpen(false);
     };
 
+    const goToNext = () => {
+        if (!selectedItem) return;
+        const currentIndex = sortedItems.findIndex(item => item.id === selectedItem.id);
+        if (currentIndex < sortedItems.length - 1) {
+            openAsideFor(sortedItems[currentIndex + 1]!);
+        }
+    };
+
+    const goToPrev = () => {
+        if (!selectedItem) return;
+        const currentIndex = sortedItems.findIndex(item => item.id === selectedItem.id);
+        if (currentIndex > 0) {
+            openAsideFor(sortedItems[currentIndex - 1]!);
+        }
+    };
+
     return (
-        <CoveragePageContext.Provider value={{ selectedItem, openAsideFor, closeAside }}>
+        <CoveragePageContext.Provider value={{ selectedItem, sortedItems, openAsideFor, closeAside, setSortedItems, goToNext, goToPrev }}>
             {children}
         </CoveragePageContext.Provider>
     );

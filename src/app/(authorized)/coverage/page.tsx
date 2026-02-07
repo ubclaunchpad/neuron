@@ -27,6 +27,12 @@ export default function CoveragePage() {
     >
         <PageLayout>
             <CoveragePageProvider>
+                <PageLayoutAside>
+                    <Suspense fallback={<>Loading coverage...</>}>
+                        <CoverageAside />
+                    </Suspense>
+                </PageLayoutAside>
+
                 <PageLayoutHeader hideShadow border="always" className="pb-0 block h-auto">
                     <div className="flex items-center justify-between py-4 pr-6">
                         <PageLayoutHeaderContent className="items-center">
@@ -54,12 +60,6 @@ export default function CoveragePage() {
                         </div>
                     </div>
                 </PageLayoutHeader>
-
-                <PageLayoutAside>
-                    <Suspense fallback={<>Loading coverage...</>}>
-                        <CoverageAside></CoverageAside>
-                    </Suspense>
-                </PageLayoutAside>
 
                 <PageLayoutContent className="px-6"> 
                     <div className="flex items-center gap-2 py-4">

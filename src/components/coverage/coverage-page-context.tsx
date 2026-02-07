@@ -3,6 +3,7 @@
 import { usePageAside } from "@/components/page-layout";
 import {
   createContext,
+  useCallback,
   useContext,
   useState,
   type PropsWithChildren,
@@ -45,35 +46,48 @@ export function CoveragePageProvider({ children }: PropsWithChildren) {
   );
   const [sortedItems, setSortedItems] = useState<CoverageListItem[]>([]);
 
-  const openAsideFor = (item: CoverageListItem) => {
-    setSelectedItem(item);
-    setOpen(true);
-  };
+  const openAsideFor = useCallback(
+    (item: CoverageListItem) => {
+      setSelectedItem(item);
+      setOpen(true);
+    },
+    [setOpen],
+  );
 
-  const closeAside = () => {
+  const closeAside = useCallback(() => {
     setSelectedItem(null);
     setOpen(false);
-  };
+  }, [setOpen]);
 
-  const goToNext = () => {
-    if (!selectedItem) return;
-    const currentIndex = sortedItems.findIndex(
-      (item) => item.id === selectedItem.id,
-    );
-    if (currentIndex < sortedItems.length - 1) {
-      openAsideFor(sortedItems[currentIndex + 1]!);
-    }
-  };
+  const goToNext = useCallback(() => {
+    setSelectedItem((current) => {
+      if (!current) return current;
+      const currentIndex = sortedItems.findIndex(
+        (item) => item.id === current.id,
+      );
+      if (currentIndex < sortedItems.length - 1) {
+        const next = sortedItems[currentIndex + 1]!;
+        setOpen(true);
+        return next;
+      }
+      return current;
+    });
+  }, [sortedItems, setOpen]);
 
-  const goToPrev = () => {
-    if (!selectedItem) return;
-    const currentIndex = sortedItems.findIndex(
-      (item) => item.id === selectedItem.id,
-    );
-    if (currentIndex > 0) {
-      openAsideFor(sortedItems[currentIndex - 1]!);
-    }
-  };
+  const goToPrev = useCallback(() => {
+    setSelectedItem((current) => {
+      if (!current) return current;
+      const currentIndex = sortedItems.findIndex(
+        (item) => item.id === current.id,
+      );
+      if (currentIndex > 0) {
+        const prev = sortedItems[currentIndex - 1]!;
+        setOpen(true);
+        return prev;
+      }
+      return current;
+    });
+  }, [sortedItems, setOpen]);
 
   return (
     <CoveragePageContext.Provider

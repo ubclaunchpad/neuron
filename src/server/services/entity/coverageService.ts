@@ -30,7 +30,7 @@ import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import { getPagination } from "@/utils/searchUtils";
-import { and, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 import type { IVolunteerService } from "./volunteerService";
 import type { IShiftService } from "./shiftService";
 
@@ -100,7 +100,7 @@ export class CoverageService implements ICoverageService {
   ): Promise<
     ListResponse<ListCoverageRequestBase | ListCoverageRequestWithReason>
   > {
-    const { perPage, offset, status } = getPagination(input);
+    const { perPage, offset, status, from, to } = getPagination(input);
     const isAdmin = viewerRole === Role.admin;
 
     // Build WHERE conditions
@@ -109,6 +109,15 @@ export class CoverageService implements ICoverageService {
     // Optional status filter
     if (status) {
       whereConditions.push(eq(coverageRequest.status, status));
+    }
+
+    // Date filter: only show requests for shifts starting on or after `from` (defaults to now)
+    const fromDate = from ?? new Date();
+    whereConditions.push(gte(shift.startAt, fromDate));
+
+    // Optional upper bound date filter
+    if (to) {
+      whereConditions.push(lte(shift.startAt, to));
     }
 
     // Role-based visibility filter for non-admins:
@@ -169,7 +178,7 @@ export class CoverageService implements ICoverageService {
       .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
       .innerJoin(course, eq(shift.courseId, course.id))
       .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-      .orderBy(desc(shift.startAt), desc(coverageRequest.id))
+      .orderBy(shift.startAt, coverageRequest.id)
       .limit(perPage)
       .offset(offset);
 

@@ -9,7 +9,7 @@ import {
 } from "awilix";
 import type { Sql } from "postgres";
 import { registerDb, type Drizzle } from "../db";
-import { registerCacheClient, type CacheClient } from "../db/cache";
+// import { registerCacheClient, type CacheClient } from "../db/cache";
 // import { CacheService, type ICacheService } from "../services/cacheService";
 import { EmailService, type IEmailService } from "../services/emailService";
 import {

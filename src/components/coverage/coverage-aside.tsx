@@ -13,8 +13,14 @@ import {
   AsideTitle,
   AsideFooter,
 } from "@/components/aside";
+import { Badge } from "@/components/ui/badge";
+import { WithPermission } from "@/components/utils/with-permission";
+import { CoverageStatus } from "@/models/api/coverage";
+import { useAuth } from "@/providers/client-auth-provider";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCoveragePage } from "./coverage-page-context";
+import { FillCoverageButton } from "./fill-coverage-button";
+import { WithdrawCoverageButton } from "./withdraw-coverage-button";
 import { useEffect } from "react";
 import { Separator } from "@radix-ui/react-separator";
 import { UserList } from "@/components/users/user-list";
@@ -34,6 +40,7 @@ const timeFormatter = new Intl.DateTimeFormat("en-US", {
 
 export function CoverageAside() {
   const { selectedItem, closeAside, goToNext, goToPrev } = useCoveragePage();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!selectedItem) closeAside();
@@ -139,6 +146,47 @@ export function CoverageAside() {
                   {selectedItem.comments}
                 </AsideFieldContent>
               </AsideField>
+            )}
+
+            {selectedItem.status === CoverageStatus.open && (
+              <div className="flex gap-2">
+                {user?.id !== selectedItem.requestingVolunteer.id && (
+                  <WithPermission
+                    permissions={{ permission: { coverage: ["fill"] } }}
+                  >
+                    <FillCoverageButton
+                      item={selectedItem}
+                      className="w-full"
+                    />
+                  </WithPermission>
+                )}
+
+                {user?.id === selectedItem.requestingVolunteer.id && (
+                  <WithPermission
+                    permissions={{ permission: { coverage: ["request"] } }}
+                  >
+                    <WithdrawCoverageButton
+                      item={selectedItem}
+                      className="w-full"
+                    />
+                  </WithPermission>
+                )}
+              </div>
+            )}
+
+            {selectedItem.status !== CoverageStatus.open && (
+              <Badge
+                variant="colored"
+                color={
+                  selectedItem.status === CoverageStatus.resolved
+                    ? "success"
+                    : "default"
+                }
+              >
+                {selectedItem.status === CoverageStatus.resolved
+                  ? "Fulfilled"
+                  : "Withdrawn"}
+              </Badge>
             )}
 
             <AsideFooter>

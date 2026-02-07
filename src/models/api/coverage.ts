@@ -44,6 +44,8 @@ export const CoverageRequestIdInput = z.object({
 
 export const ListCoverageRequestsInput = ListRequest.extend({
   status: CoverageStatusEnum.optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
 });
 export type ListCoverageRequestsInput = z.input<
   typeof ListCoverageRequestsInput

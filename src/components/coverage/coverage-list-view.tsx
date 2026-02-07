@@ -1,12 +1,12 @@
 "use client";
 
 import { CoverageItem } from "./coverage-item";
+import { ListLoadingState, ListStateWrapper } from "@/components/members/list";
 import { TypographyTitle } from "@/components/ui/typography";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Spinner } from "@/components/ui/spinner";
 import { format, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import {
   useCoveragePage,
   type CoverageListItem,
@@ -42,34 +42,36 @@ export function CoverageListView() {
     {
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
       placeholderData: (prev) => prev,
-      select: (data) => ({
-        ...data,
-        items: data.pages.flatMap((page) => page.data) ?? [],
-      }),
     },
   );
 
   const handleScroll = useInfiniteScroll(infiniteQuery);
 
-  const items = infiniteQuery.data?.items ?? [];
+  const pages = infiniteQuery.data?.pages;
 
   const sortedItems = useMemo(() => {
+    const items = pages?.flatMap((page) => page.data) ?? [];
     return [...items].sort(
       (a, b) =>
         toDate(a.shift.startAt).getTime() - toDate(b.shift.startAt).getTime(),
     );
-  }, [items]);
+  }, [pages]);
 
   const dayGroups = useMemo(() => groupByDay(sortedItems), [sortedItems]);
 
+  const prevItemIds = useRef<string>("");
   useEffect(() => {
-    setSortedItems(sortedItems);
+    const itemIds = sortedItems.map((i) => i.id).join(",");
+    if (itemIds !== prevItemIds.current) {
+      prevItemIds.current = itemIds;
+      setSortedItems(sortedItems);
+    }
   }, [sortedItems, setSortedItems]);
 
   const isLoading = infiniteQuery.isLoading;
-  const isEmpty = !isLoading && items.length === 0;
+  const isEmpty = !isLoading && sortedItems.length === 0;
   const showNoMoreResults =
-    !isLoading && items.length > 0 && !infiniteQuery.hasNextPage;
+    !isLoading && sortedItems.length > 0 && !infiniteQuery.hasNextPage;
 
   const handleItemClick = (item: CoverageListItem) => {
     openAsideFor(item);
@@ -78,16 +80,10 @@ export function CoverageListView() {
   return (
     <ScrollArea onScroll={handleScroll} className="w-full h-full">
       <div className="px-10 py-4 space-y-4">
-        {isLoading && (
-          <div className="flex justify-center py-10">
-            <Spinner className="size-6" />
-          </div>
-        )}
+        {isLoading && <ListLoadingState />}
 
         {isEmpty && (
-          <div className="text-center text-muted-foreground py-10">
-            No coverage requests found.
-          </div>
+          <ListStateWrapper>No coverage requests found.</ListStateWrapper>
         )}
 
         {dayGroups.map((group) => {
@@ -115,16 +111,10 @@ export function CoverageListView() {
           );
         })}
 
-        {infiniteQuery.isFetchingNextPage && (
-          <div className="flex justify-center py-4">
-            <Spinner className="size-5" />
-          </div>
-        )}
+        {infiniteQuery.isFetchingNextPage && <ListLoadingState />}
 
         {showNoMoreResults && (
-          <div className="text-center text-muted-foreground py-4 text-sm">
-            No more results
-          </div>
+          <ListStateWrapper>No more results</ListStateWrapper>
         )}
       </div>
     </ScrollArea>

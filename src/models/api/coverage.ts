@@ -45,6 +45,6 @@ export const CoverageRequestIdInput = z.object({
 export const ListCoverageRequestsInput = ListRequest.extend({
   status: CoverageStatusEnum.optional(),
 });
-export type ListCoverageRequestsInput = z.infer<
+export type ListCoverageRequestsInput = z.input<
   typeof ListCoverageRequestsInput
 >;

@@ -23,7 +23,6 @@ export const env = createEnv({
     MINIO_ROOT_PASSWORD: z.string(),
     MINIO_HOST: z.string(),
     MINIO_PORT: port,
-    MINIO_REGION: z.string(),
     MINIO_BUCKET: z.string(),
     MINIO_USE_SSL: z.string().transform((val) => val === "true"),
     FILES_BASE_URL: z.url(),
@@ -52,7 +51,6 @@ export const env = createEnv({
     MINIO_ROOT_PASSWORD: process.env.MINIO_ROOT_PASSWORD,
     MINIO_HOST: process.env.MINIO_HOST,
     MINIO_PORT: process.env.MINIO_PORT,
-    MINIO_REGION: process.env.MINIO_REGION,
     MINIO_BUCKET: process.env.MINIO_BUCKET,
     MINIO_USE_SSL: process.env.MINIO_USE_SSL,
 

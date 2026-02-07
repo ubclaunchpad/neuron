@@ -13,10 +13,12 @@ export const shiftRouter = createTRPCRouter({
   list: authorizedProcedure({ permission: { shifts: ["view"] } })
     .input(GetShiftsInput)
     .query(({ input, ctx }) => {
+      const currentUser = ctx.currentSessionService.requireUser();
+
       if (
         input.userId &&
         hasPermission({
-          user: ctx.session.user,
+          user: currentUser,
           permission: { shifts: ["view-all"] },
         })
       ) {
@@ -25,7 +27,7 @@ export const shiftRouter = createTRPCRouter({
 
       return ctx.shiftService.listWindow({
         ...input,
-        userId: input.userId ?? ctx.session.user.id,
+        userId: input.userId ?? currentUser.id,
       });
     }),
   checkIn: authorizedProcedure({
@@ -36,7 +38,7 @@ export const shiftRouter = createTRPCRouter({
   })
     .input(CheckInInput)
     .mutation(async ({ input, ctx }) => {
-      const user = ctx.session.user;
+      const user = ctx.currentSessionService.requireUser();
       const hasOverride = hasPermission({
         user,
         permission: { shifts: ["override-check-in"] },
@@ -56,9 +58,10 @@ export const shiftRouter = createTRPCRouter({
     }),
   byId: authorizedProcedure({ permission: { shifts: ["view"] } })
     .input(ShiftIdInput)
-    .query(({ input, ctx }) =>
-      ctx.shiftService.getShiftById(input.shiftId, ctx.session.user.id),
-    ),
+    .query(({ input, ctx }) => {
+      const currentUser = ctx.currentSessionService.requireUser();
+      return ctx.shiftService.getShiftById(input.shiftId, currentUser.id);
+    }),
   cancel: authorizedProcedure({ permission: { shifts: ["cancel"] } })
     .input(CancelShiftInput)
     .mutation(({ input, ctx }) => ctx.shiftService.cancelShift(input)),

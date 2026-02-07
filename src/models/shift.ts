@@ -2,7 +2,11 @@ import type { CourseDB, ShiftDB } from "@/server/db/schema";
 import type { AttendanceStatus } from "./interfaces";
 import { type EmbeddedClass } from "./class";
 import { getEmbeddedUser, type User } from "./user";
-import { getEmbeddedVolunteer, type Volunteer } from "./volunteer";
+import {
+  getEmbeddedVolunteer,
+  type EmbeddedVolunteer,
+  type Volunteer,
+} from "./volunteer";
 import {
   CoverageStatus,
   type CoverageStatus as CoverageStatusType,
@@ -282,6 +286,36 @@ export function getSingleShiftWithRosterContext(s: Shift) {
     })),
     coverageRequests: s.coverageRequests.map(getCoverageSummary),
   } satisfies SingleShiftWithRosterContext;
+}
+
+export type EmbeddedShift = {
+  id: string;
+  date: string;
+  startAt: Date;
+  endAt: Date;
+  class: EmbeddedClass;
+  instructors: User[];
+  volunteers: EmbeddedVolunteer[];
+};
+
+export function getEmbeddedShift(s: {
+  id: string;
+  date: string;
+  startAt: Date;
+  endAt: Date;
+  class: EmbeddedClass;
+  instructors: User[];
+  volunteers: EmbeddedVolunteer[];
+}): EmbeddedShift {
+  return {
+    id: s.id,
+    date: s.date,
+    startAt: s.startAt,
+    endAt: s.endAt,
+    class: s.class,
+    instructors: s.instructors,
+    volunteers: s.volunteers,
+  };
 }
 
 export type ListShift = ReturnType<typeof getListShift>;

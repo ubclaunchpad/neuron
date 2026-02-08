@@ -18,7 +18,10 @@ import { createPrng } from "@/utils/prngUtils";
 import { backgroundColors } from "@/components/ui/avatar";
 import { differenceInMinutes, format } from "date-fns";
 import { useMemo } from "react";
-import type { CoverageListItem } from "./coverage-page-context";
+import {
+  useCoveragePage,
+  type CoverageListItem,
+} from "./coverage-page-context";
 import { FillCoverageButton } from "./fill-coverage-button";
 import { WithdrawCoverageButton } from "./withdraw-coverage-button";
 
@@ -32,22 +35,21 @@ function formatDuration(start: Date, end: Date) {
 }
 
 export function CoverageItem({
-  item,
-  onSelect,
+  coverageRequest,
 }: {
-  item: CoverageListItem;
-  onSelect?: (item: CoverageListItem) => void;
+  coverageRequest: CoverageListItem;
 }) {
   const { user } = useAuth();
-  const { startAt, endAt } = item.shift;
+  const { openAsideFor } = useCoveragePage();
+  const { startAt, endAt } = coverageRequest.shift;
 
   const color = useMemo(() => {
-    const prng = createPrng(item.shift.class.name);
+    const prng = createPrng(coverageRequest.shift.class.name);
     return prng.shuffle(backgroundColors)[0] ?? "#111315";
-  }, [item.shift.class.name]);
+  }, [coverageRequest.shift.class.name]);
 
-  const isMyRequest = user?.id === item.requestingVolunteer.id;
-  const isOpen = item.status === CoverageStatus.open;
+  const isMyRequest = user?.id === coverageRequest.requestingVolunteer.id;
+  const isOpen = coverageRequest.status === CoverageStatus.open;
 
   return (
     <Item
@@ -58,9 +60,9 @@ export function CoverageItem({
       <Button
         data-overlay
         unstyled
-        aria-label={`Open coverage request for ${item.shift.class.name}`}
+        aria-label={`Open coverage request for ${coverageRequest.shift.class.name}`}
         className="absolute inset-0 z-0 cursor-pointer"
-        onClick={() => onSelect?.(item)}
+        onClick={() => openAsideFor(coverageRequest)}
       />
 
       <ItemContent className="flex-row gap-4">
@@ -79,47 +81,47 @@ export function CoverageItem({
             {formatDuration(startAt, endAt)}
           </TypographySmall>
         </ItemContent>
-        <ItemContent className="!flex-1">
-          <ItemTitle className="truncate block w-full max-w-full">
-            {item.shift.class.name}
-          </ItemTitle>
-          <ItemDescription className="text-xs line-clamp-1">
-            Instructor:{" "}
-            {item.shift.instructors.length > 0
-              ? item.shift.instructors
-                  .map((i) => `${i.name} ${i.lastName}`)
-                  .join(", ")
-              : "None assigned"}
-          </ItemDescription>
-          <ItemDescription className="text-xs line-clamp-1">
-            Volunteer(s):{" "}
-            {item.shift.volunteers.length > 0
-              ? item.shift.volunteers
-                  .map((v) => `${v.name} ${v.lastName}`)
-                  .join(", ")
-              : "None assigned"}
-          </ItemDescription>
-        </ItemContent>
-        <ItemContent className="!flex-1">
-          <ItemTitle className="truncate block w-full max-w-full text-sm">
-            Requested by:{" "}
-            <span className="font-bold">
-              {item.requestingVolunteer.name}{" "}
-              {item.requestingVolunteer.lastName}
-            </span>
-          </ItemTitle>
-          {isMyRequest && "details" in item && (
-            <ItemDescription className="text-xs line-clamp-1 italic">
-              Reason: {item.details}
+        <ItemContent className="flex-1! flex-col gap-3 md:flex-col lg:flex-row lg:gap-4">
+          <ItemContent className="flex-1!">
+            <ItemTitle className="truncate text-[1rem] block w-full max-w-full">
+              {coverageRequest.shift.class.name}
+            </ItemTitle>
+            <ItemDescription className="text-xs line-clamp-1">
+              Instructor:{" "}
+              {coverageRequest.shift.instructors.length > 0
+                ? coverageRequest.shift.instructors
+                    .map((i) => `${i.name} ${i.lastName}`)
+                    .join(", ")
+                : "None assigned"}
             </ItemDescription>
-          )}
+            <ItemDescription className="text-xs line-clamp-1">
+              Volunteer(s):{" "}
+              {coverageRequest.shift.volunteers.length > 0
+                ? coverageRequest.shift.volunteers
+                    .map((v) => `${v.name} ${v.lastName}`)
+                    .join(", ")
+                : "None assigned"}
+            </ItemDescription>
+          </ItemContent>
+          <ItemContent className="flex-1!">
+            <ItemTitle className="truncate block w-full max-w-full">
+              Requested by:{" "}
+              <span className="font-bold">
+                {coverageRequest.requestingVolunteer.name}{" "}
+                {coverageRequest.requestingVolunteer.lastName}
+              </span>
+            </ItemTitle>
+            <ItemDescription className="text-xs leading-snug line-clamp-1">
+              Requested on: {format(coverageRequest.requestedAt, "MMM d, yyyy")}
+            </ItemDescription>
+          </ItemContent>
         </ItemContent>
       </ItemContent>
 
       <ItemActions className="ml-auto gap-2 relative z-10">
         {isOpen && !isMyRequest && (
           <WithPermission permissions={{ permission: { coverage: ["fill"] } }}>
-            <FillCoverageButton item={item} />
+            <FillCoverageButton item={coverageRequest} />
           </WithPermission>
         )}
 
@@ -127,7 +129,7 @@ export function CoverageItem({
           <WithPermission
             permissions={{ permission: { coverage: ["request"] } }}
           >
-            <WithdrawCoverageButton item={item} />
+            <WithdrawCoverageButton item={coverageRequest} />
           </WithPermission>
         )}
 
@@ -135,10 +137,12 @@ export function CoverageItem({
           <Badge
             variant="colored"
             color={
-              item.status === CoverageStatus.resolved ? "success" : "default"
+              coverageRequest.status === CoverageStatus.resolved
+                ? "success"
+                : "default"
             }
           >
-            {item.status === CoverageStatus.resolved
+            {coverageRequest.status === CoverageStatus.resolved
               ? "Fulfilled"
               : "Withdrawn"}
           </Badge>

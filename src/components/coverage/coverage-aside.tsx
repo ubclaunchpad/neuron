@@ -22,7 +22,7 @@ import { useCoveragePage } from "./coverage-page-context";
 import { FillCoverageButton } from "./fill-coverage-button";
 import { WithdrawCoverageButton } from "./withdraw-coverage-button";
 import { useEffect } from "react";
-import { Separator } from "@radix-ui/react-separator";
+import { Separator } from "@/components/ui/separator";
 import { UserList } from "@/components/users/user-list";
 import { Button } from "@/components/ui/button";
 
@@ -62,7 +62,7 @@ export function CoverageAside() {
       <AsideHeader className="border-0">
         <AsideDescription>{shiftDate}</AsideDescription>
         <AsideDescription>
-          {shiftStartTime + "-" + shiftEndTime}
+          {shiftStartTime} - {shiftEndTime}
         </AsideDescription>
         <AsideTitle>{selectedItem.shift.class.name}</AsideTitle>
       </AsideHeader>
@@ -88,8 +88,10 @@ export function CoverageAside() {
                 />
               </AsideFieldContent>
             </AsideField>
+          </AsideSectionContent>
 
-            {/* <AsideField inline>
+          {/* <AsideSectionContent>
+            <AsideField inline>
               <AsideFieldLabel>Volunteers</AsideFieldLabel>
               <AsideFieldContent>
                 <UserList
@@ -106,8 +108,10 @@ export function CoverageAside() {
                   emptyLabel="No volunteers assigned"
                 />
               </AsideFieldContent>
-            </AsideField> */}
+            </AsideField>
+          </AsideSectionContent> */}
 
+          <AsideSectionContent>
             <AsideField inline>
               <AsideFieldLabel>Requested by</AsideFieldLabel>
               <AsideFieldContent>
@@ -129,7 +133,6 @@ export function CoverageAside() {
               </AsideFieldContent>
             </AsideField>
 
-            {/* Reason fields only present for admin view (ListCoverageRequestWithReason) */}
             {"details" in selectedItem && selectedItem.details !== "" && (
               <AsideField inline>
                 <AsideFieldLabel>Reason for request</AsideFieldLabel>
@@ -147,17 +150,18 @@ export function CoverageAside() {
                 </AsideFieldContent>
               </AsideField>
             )}
+          </AsideSectionContent>
 
+          <Separator />
+
+          <AsideSectionContent>
             {selectedItem.status === CoverageStatus.open && (
-              <div className="flex gap-2">
+              <>
                 {user?.id !== selectedItem.requestingVolunteer.id && (
                   <WithPermission
                     permissions={{ permission: { coverage: ["fill"] } }}
                   >
-                    <FillCoverageButton
-                      item={selectedItem}
-                      className="w-full"
-                    />
+                    <FillCoverageButton item={selectedItem} />
                   </WithPermission>
                 )}
 
@@ -165,13 +169,10 @@ export function CoverageAside() {
                   <WithPermission
                     permissions={{ permission: { coverage: ["request"] } }}
                   >
-                    <WithdrawCoverageButton
-                      item={selectedItem}
-                      className="w-full"
-                    />
+                    <WithdrawCoverageButton item={selectedItem} />
                   </WithPermission>
                 )}
-              </div>
+              </>
             )}
 
             {selectedItem.status !== CoverageStatus.open && (
@@ -188,18 +189,18 @@ export function CoverageAside() {
                   : "Withdrawn"}
               </Badge>
             )}
-
-            <AsideFooter>
-              <div className="flex-row">
-                <Button variant="ghost" onClick={() => goToPrev()}>
-                  <ChevronLeft></ChevronLeft>
-                </Button>
-                <Button variant="ghost" onClick={() => goToNext()}>
-                  <ChevronRight></ChevronRight>
-                </Button>
-              </div>
-            </AsideFooter>
           </AsideSectionContent>
+
+          <AsideFooter>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => goToPrev()}>
+                <ChevronLeft></ChevronLeft>
+              </Button>
+              <Button variant="ghost" onClick={() => goToNext()}>
+                <ChevronRight></ChevronRight>
+              </Button>
+            </div>
+          </AsideFooter>
         </AsideSection>
       </AsideBody>
     </AsideContainer>

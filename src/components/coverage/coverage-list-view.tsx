@@ -35,7 +35,7 @@ function groupByDay(items: CoverageListItem[]) {
 }
 
 export function CoverageListView() {
-  const { openAsideFor, setSortedItems } = useCoveragePage();
+  const { setSortedItems } = useCoveragePage();
 
   const infiniteQuery = clientApi.coverage.list.useInfiniteQuery(
     {},
@@ -73,10 +73,6 @@ export function CoverageListView() {
   const showNoMoreResults =
     !isLoading && sortedItems.length > 0 && !infiniteQuery.hasNextPage;
 
-  const handleItemClick = (item: CoverageListItem) => {
-    openAsideFor(item);
-  };
-
   return (
     <ScrollArea onScroll={handleScroll} className="w-full h-full">
       <div className="px-10 py-4 space-y-4">
@@ -86,7 +82,12 @@ export function CoverageListView() {
           <ListStateWrapper>No coverage requests found.</ListStateWrapper>
         )}
 
-        {dayGroups.map((group) => {
+        {dayGroups.map((group, index) => {
+          const previousGroup = dayGroups[index - 1];
+          const showMonth =
+            !previousGroup ||
+            previousGroup.date.getMonth() !== group.date.getMonth() ||
+            previousGroup.date.getFullYear() !== group.date.getFullYear();
           const groupIsToday = isToday(group.date);
           return (
             <section key={group.date.toISOString()} className="space-y-3">
@@ -94,17 +95,13 @@ export function CoverageListView() {
                 <TypographyTitle
                   className={cn("text-md", groupIsToday && "text-primary")}
                 >
-                  {format(group.date, "EEE d")}
+                  {format(group.date, showMonth ? "EEE, MMM d" : "EEE d")}
                   {groupIsToday && " | Today"}
                 </TypographyTitle>
               </div>
               <div className="flex flex-col gap-3 px-5">
                 {group.items.map((item) => (
-                  <CoverageItem
-                    key={item.id}
-                    item={item}
-                    onSelect={handleItemClick}
-                  />
+                  <CoverageItem key={item.id} coverageRequest={item} />
                 ))}
               </div>
             </section>

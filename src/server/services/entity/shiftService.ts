@@ -203,6 +203,7 @@ export class ShiftService implements IShiftService {
       .select({
         id: coverageRequest.id,
         shiftId: coverageRequest.shiftId,
+        requestedAt: coverageRequest.requestedAt,
         status: coverageRequest.status,
         category: coverageRequest.category,
         details: coverageRequest.details,
@@ -333,6 +334,7 @@ export class ShiftService implements IShiftService {
       const shiftCoverage = {
         id: record.id,
         shiftId: record.shiftId,
+        requestedAt: record.requestedAt,
         status: record.status,
         category: record.category,
         details: record.details,

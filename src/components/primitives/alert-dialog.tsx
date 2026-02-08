@@ -53,14 +53,14 @@ export function AlertDialog({
             alertCancelContent
           ) : (
             <AlertDialogCancel onClick={onReject}>
-              {alertCancelContent ?? "Continue"}
+              {alertCancelContent ?? "Cancel"}
             </AlertDialogCancel>
           )}
           {alertActionAsOverride ? (
             alertActionContent
           ) : (
             <AlertDialogAction onClick={onAccept}>
-              {alertActionContent ?? "Continue"}
+              {alertActionContent ?? "Accept"}
             </AlertDialogAction>
           )}
         </AlertDialogFooter>

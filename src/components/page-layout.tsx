@@ -156,7 +156,7 @@ function PageLayoutHeader({
       ref={headerRef}
       data-slot="page-header"
       className={cn(
-        "bg-background sticky top-0 z-40 border-b transition-[border-color] shadow-bottom",
+        "bg-background sticky top-0 z-30 border-b transition-[border-color] shadow-bottom",
         (hideShadow || !isPageScrolled) && "shadow-none",
         hideBorder && "border-transparent",
         className,
@@ -329,6 +329,5 @@ export {
   PageLayoutHeader,
   PageLayoutHeaderContent,
   PageLayoutHeaderTitle,
-  usePageLayout as usePageAside
+  usePageLayout as usePageAside,
 };
-

@@ -39,6 +39,7 @@ export type ShiftAttendance = {
 export type ShiftCoverage = {
   id: string;
   shiftId: string;
+  requestedAt: Date;
   status: CoverageStatusType;
   requestingVolunteer: Volunteer;
   coveredByVolunteer?: Volunteer | null;
@@ -78,6 +79,7 @@ export type ShiftAttendanceSummary = {
 
 export type ShiftCoverageSummary = {
   id: string;
+  requestedAt: Date;
   status: CoverageStatusType;
   category?: string;
   requestingVolunteer: ReturnType<typeof getEmbeddedVolunteer>;
@@ -169,6 +171,7 @@ function getAttendanceSummary(
 function getCoverageSummary(coverage: ShiftCoverage): ShiftCoverageSummary {
   return {
     id: coverage.id,
+    requestedAt: coverage.requestedAt,
     status: coverage.status,
     category: coverage.category,
     requestingVolunteer: getEmbeddedVolunteer(coverage.requestingVolunteer),

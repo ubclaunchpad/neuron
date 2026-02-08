@@ -41,62 +41,63 @@ export function useCoveragePage() {
 
 export function CoveragePageProvider({ children }: PropsWithChildren) {
   const { setOpen } = usePageAside();
-  const [selectedItem, setSelectedItem] = useState<CoverageListItem | null>(
-    null,
+  const [selectedCoverageRequest, setSelectedCoverageRequest] =
+    useState<CoverageListItem | null>(null);
+  const [coverageRequests, setCoverageRequests] = useState<CoverageListItem[]>(
+    [],
   );
-  const [sortedItems, setSortedItems] = useState<CoverageListItem[]>([]);
 
   const openAsideFor = useCallback(
     (item: CoverageListItem) => {
-      setSelectedItem(item);
+      setSelectedCoverageRequest(item);
       setOpen(true);
     },
     [setOpen],
   );
 
   const closeAside = useCallback(() => {
-    setSelectedItem(null);
+    setSelectedCoverageRequest(null);
     setOpen(false);
   }, [setOpen]);
 
   const goToNext = useCallback(() => {
-    setSelectedItem((current) => {
+    setSelectedCoverageRequest((current) => {
       if (!current) return current;
-      const currentIndex = sortedItems.findIndex(
+      const currentIndex = coverageRequests.findIndex(
         (item) => item.id === current.id,
       );
-      if (currentIndex < sortedItems.length - 1) {
-        const next = sortedItems[currentIndex + 1]!;
+      if (currentIndex < coverageRequests.length - 1) {
+        const next = coverageRequests[currentIndex + 1]!;
         setOpen(true);
         return next;
       }
       return current;
     });
-  }, [sortedItems, setOpen]);
+  }, [coverageRequests, setOpen]);
 
   const goToPrev = useCallback(() => {
-    setSelectedItem((current) => {
+    setSelectedCoverageRequest((current) => {
       if (!current) return current;
-      const currentIndex = sortedItems.findIndex(
+      const currentIndex = coverageRequests.findIndex(
         (item) => item.id === current.id,
       );
       if (currentIndex > 0) {
-        const prev = sortedItems[currentIndex - 1]!;
+        const prev = coverageRequests[currentIndex - 1]!;
         setOpen(true);
         return prev;
       }
       return current;
     });
-  }, [sortedItems, setOpen]);
+  }, [coverageRequests, setOpen]);
 
   return (
     <CoveragePageContext.Provider
       value={{
-        selectedItem,
-        sortedItems,
+        selectedItem: selectedCoverageRequest,
+        sortedItems: coverageRequests,
         openAsideFor,
         closeAside,
-        setSortedItems,
+        setSortedItems: setCoverageRequests,
         goToNext,
         goToPrev,
       }}

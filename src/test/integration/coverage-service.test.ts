@@ -187,6 +187,7 @@ describe("CoverageService", () => {
       const item = result.data[0]!;
       expect(item.shift).toBeDefined();
       expect(item.shift.id).toBe(shiftId);
+      expect(item.requestedAt).toBeInstanceOf(Date);
       expect(item.shift.date).toBeDefined();
       expect(item.shift.startAt).toBeInstanceOf(Date);
       expect(item.shift.endAt).toBeInstanceOf(Date);
@@ -307,6 +308,7 @@ describe("CoverageService", () => {
       expect(request.shift.class.id).toBe(classId);
       expect(request.shift.class.name).toBe(className);
       expect(request.shift.instructors).toHaveLength(1);
+      expect(request.requestedAt).toBeInstanceOf(Date);
       expect(request.shift.date).toBeDefined();
       expect(request.shift.startAt).toBeInstanceOf(Date);
       expect(request.shift.endAt).toBeInstanceOf(Date);

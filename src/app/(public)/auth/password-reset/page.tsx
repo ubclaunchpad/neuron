@@ -12,11 +12,7 @@ import { authClient } from "@/lib/auth/client";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 
 import { FormInputField } from "@/components/form/FormInput";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -61,8 +57,8 @@ export default function PasswordResetForm() {
     reValidateMode: "onChange",
     defaultValues: {
       password: "",
-      confirmPassword: ""
-    }
+      confirmPassword: "",
+    },
   });
 
   const onSubmit = async (data: PasswordResetSchemaType) => {
@@ -135,7 +131,7 @@ export default function PasswordResetForm() {
         <FormInputField
           control={control}
           type="password"
-          name="password"
+          name="confirmPassword"
           label="Confirm password"
           autoComplete="new-password"
           placeholder="•••••••••••••"

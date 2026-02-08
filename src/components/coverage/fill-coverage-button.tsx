@@ -29,12 +29,7 @@ export function FillCoverageButton({
     <AlertDialog
       alertTitle="Take this shift?"
       alertDescription="You will be assigned to cover this shift. The requesting volunteer will be notified."
-      alertActionAsOverride
-      alertActionContent={
-        <Button size="sm" variant="default" pending={isPending}>
-          Yes, take shift
-        </Button>
-      }
+      alertActionContent="Yes, take shift"
       onAccept={() =>
         fillCoverageRequest({
           coverageRequestId: item.id,

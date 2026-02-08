@@ -24,7 +24,7 @@ export function UserList({
       {users.map((user) => (
         <div key={user.id} className="inline-flex items-start gap-2">
           <Avatar
-            className="rounded-lg self-stretch"
+            className="rounded-lg size-10"
             src={user.image}
             fallbackText={user.fullName}
           />

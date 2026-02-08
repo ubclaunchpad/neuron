@@ -20,20 +20,19 @@ export function SearchInput({
   onQueryChange: (value: string) => void;
 }) {
   const [internalQuery, setInternalQuery] = useState(query);
-  const [debouncedQuery, isDebouncing, setDebouncedInstantly] = useDebouncedValue(internalQuery, 250);
+  const [debouncedQuery, isDebouncing, setDebouncedInstantly] =
+    useDebouncedValue(internalQuery, 250);
 
   // Keep external and external query in sync
   useEffect(() => {
-    if (query != debouncedQuery)
-      onQueryChange(debouncedQuery);
+    if (query != debouncedQuery) onQueryChange(debouncedQuery);
   }, [debouncedQuery]);
   useEffect(() => {
-    if (internalQuery != query)
-      setInternalQuery(query);
+    if (internalQuery != query) setInternalQuery(query);
   }, [query]);
 
   return (
-    <InputGroup className={cn("!ring-0", className)} {...rest}>
+    <InputGroup className={cn("ring-0!", className)} {...rest}>
       <InputGroupAddon align="inline-start">
         {isDebouncing ? (
           <Spinner className="shrink-0 opacity-50" />

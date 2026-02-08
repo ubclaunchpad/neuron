@@ -245,7 +245,7 @@ function PageLayoutContent({
       data-slot="page-main"
       className={cn(
         "h-full min-h-0 overflow-y-auto",
-        "[scrollbar-gutter:stable_both-edges] [-webkit-overflow-scrolling:touch] [overscroll-behavior:contain] [touch-action:pan-y] [scroll-behavior:smooth]",
+        "[scrollbar-gutter:stable_both-edges] [-webkit-overflow-scrolling:touch] overscroll-contain [touch-action:pan-y] scroll-smooth",
         "transition-[padding-right] duration-200",
         className,
       )}

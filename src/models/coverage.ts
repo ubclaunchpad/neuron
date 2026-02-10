@@ -68,7 +68,6 @@ export type EmbeddedCoverageRequest = ReturnType<
   typeof getEmbeddedCoverageRequest
 >;
 
-// Base list item (visible to all users who can see the request)
 export function getListCoverageRequestBase(r: CoverageRequest) {
   return {
     id: r.id,
@@ -82,7 +81,6 @@ export function getListCoverageRequestBase(r: CoverageRequest) {
   } as const;
 }
 
-// Admin list item (includes reason fields: category, details, comments)
 export function getListCoverageRequestWithReason(r: CoverageRequest) {
   return {
     ...getListCoverageRequestBase(r),

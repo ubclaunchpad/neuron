@@ -3,7 +3,7 @@
 import { AlertDialog } from "@/components/primitives/alert-dialog";
 import { Button } from "@/components/primitives/button";
 import { CoverageStatus } from "@/models/api/coverage";
-import type { CoverageListItem } from "./coverage-page-context";
+import type { CoverageListItem } from "@/components/coverage/list/coverage-page-context";
 import { clientApi } from "@/trpc/client";
 import { XIcon } from "lucide-react";
 

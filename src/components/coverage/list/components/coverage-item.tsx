@@ -21,9 +21,9 @@ import { useMemo } from "react";
 import {
   useCoveragePage,
   type CoverageListItem,
-} from "./coverage-page-context";
-import { FillCoverageButton } from "./fill-coverage-button";
-import { WithdrawCoverageButton } from "./withdraw-coverage-button";
+} from "../coverage-page-context";
+import { FillCoverageButton } from "@/components/coverage/primitives/fill-coverage-button";
+import { WithdrawCoverageButton } from "@/components/coverage/primitives/withdraw-coverage-button";
 
 function formatDuration(start: Date, end: Date) {
   const minutes = differenceInMinutes(end, start);

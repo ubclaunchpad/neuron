@@ -1,7 +1,7 @@
 "use client";
 
-import { CoverageListView } from "@/components/coverage/coverage-list-view";
-import { CoverageFilters } from "@/components/coverage/coverage-filters";
+import { CoverageListView } from "@/components/coverage/list/coverage-list-view";
+import { CoverageFilters } from "@/components/coverage/filters/coverage-filters";
 import {
   PageLayout,
   PageLayoutAside,
@@ -11,8 +11,8 @@ import {
   PageLayoutHeaderTitle,
 } from "@/components/page-layout";
 import { Suspense } from "react";
-import { CoveragePageProvider } from "@/components/coverage/coverage-page-context";
-import { CoverageAside } from "@/components/coverage/coverage-aside";
+import { CoveragePageProvider } from "@/components/coverage/list/coverage-page-context";
+import { CoverageAside } from "@/components/coverage/list/coverage-aside";
 
 export default function CoveragePage() {
   return (

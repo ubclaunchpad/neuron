@@ -1,39 +1,18 @@
 "use client";
 
-import { CoverageItem } from "./coverage-item";
+import { CoverageItem } from "./components/coverage-item";
 import { ListLoadingState, ListStateWrapper } from "@/components/members/list";
 import { TypographyTitle } from "@/components/ui/typography";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useMemo, useEffect, useRef } from "react";
-import {
-  useCoveragePage,
-  type CoverageListItem,
-} from "./coverage-page-context";
+import { useCoveragePage } from "./coverage-page-context";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { clientApi } from "@/trpc/client";
-import { buildFilterInput, useCoverageFilterParams } from "./coverage-filters";
-
-function toDate(value: Date | string) {
-  return value instanceof Date ? value : new Date(value);
-}
-
-function groupByDay(items: CoverageListItem[]) {
-  const groups = new Map<string, { date: Date; items: CoverageListItem[] }>();
-
-  items.forEach((item) => {
-    const start = toDate(item.shift.startAt);
-    const key = format(start, "yyyy-MM-dd");
-    const group = groups.get(key) ?? { date: start, items: [] };
-    group.items.push(item);
-    groups.set(key, group);
-  });
-
-  return Array.from(groups.values()).sort(
-    (a, b) => a.date.getTime() - b.date.getTime(),
-  );
-}
+import { buildFilterInput } from "@/components/coverage/filters/utils";
+import { useCoverageFilterParams } from "@/components/coverage/filters/hooks/use-coverage-filter-params";
+import { groupCoverageItemsByDay, sortCoverageItemsByStartAt } from "./utils";
 
 export function CoverageListView() {
   const { setSortedItems } = useCoveragePage();
@@ -54,13 +33,13 @@ export function CoverageListView() {
 
   const sortedItems = useMemo(() => {
     const items = pages?.flatMap((page) => page.data) ?? [];
-    return [...items].sort(
-      (a, b) =>
-        toDate(a.shift.startAt).getTime() - toDate(b.shift.startAt).getTime(),
-    );
+    return sortCoverageItemsByStartAt(items);
   }, [pages]);
 
-  const dayGroups = useMemo(() => groupByDay(sortedItems), [sortedItems]);
+  const dayGroups = useMemo(
+    () => groupCoverageItemsByDay(sortedItems),
+    [sortedItems],
+  );
 
   const prevItemIds = useRef<string>("");
   useEffect(() => {

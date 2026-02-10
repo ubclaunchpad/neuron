@@ -15,12 +15,12 @@ import {
 } from "@/components/aside";
 import { Badge } from "@/components/ui/badge";
 import { WithPermission } from "@/components/utils/with-permission";
-import { CoverageStatus } from "@/models/api/coverage";
+import { CoverageRequestCategory, CoverageStatus } from "@/models/api/coverage";
 import { useAuth } from "@/providers/client-auth-provider";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCoveragePage } from "./coverage-page-context";
-import { FillCoverageButton } from "./fill-coverage-button";
-import { WithdrawCoverageButton } from "./withdraw-coverage-button";
+import { FillCoverageButton } from "@/components/coverage/primitives/fill-coverage-button";
+import { WithdrawCoverageButton } from "@/components/coverage/primitives/withdraw-coverage-button";
 import { useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { UserList } from "@/components/users/user-list";
@@ -53,9 +53,11 @@ export function CoverageAside() {
     selectedItem.shift.startAt,
   );
   const shiftEndTime: string = timeFormatter.format(selectedItem.shift.endAt);
+  const requestedOn: string = dateFormatter.format(selectedItem.requestedAt);
 
   const instructors = selectedItem.shift.instructors;
   const requestingVolunteer = selectedItem.requestingVolunteer;
+  const volunteers = selectedItem.shift.volunteers;
 
   return (
     <AsideContainer>
@@ -90,7 +92,7 @@ export function CoverageAside() {
             </AsideField>
           </AsideSectionContent>
 
-          {/* <AsideSectionContent>
+          <AsideSectionContent>
             <AsideField inline>
               <AsideFieldLabel>Volunteers</AsideFieldLabel>
               <AsideFieldContent>
@@ -100,16 +102,12 @@ export function CoverageAside() {
                     fullName: `${volunteer.name} ${volunteer.lastName}`,
                     email: volunteer.email,
                     image: "image" in volunteer ? volunteer.image : null,
-                    subtitle:
-                      "coveringFor" in volunteer && volunteer.coveringFor
-                        ? `Covering for ${volunteer.coveringFor.name} ${volunteer.coveringFor.lastName}`
-                        : undefined,
                   }))}
                   emptyLabel="No volunteers assigned"
                 />
               </AsideFieldContent>
             </AsideField>
-          </AsideSectionContent> */}
+          </AsideSectionContent>
 
           <AsideSectionContent>
             <AsideField inline>
@@ -125,7 +123,6 @@ export function CoverageAside() {
                         "image" in requestingVolunteer
                           ? requestingVolunteer.image
                           : null,
-                      subtitle: undefined,
                     },
                   ]}
                   emptyLabel="Requesting volunteer not found"
@@ -133,9 +130,23 @@ export function CoverageAside() {
               </AsideFieldContent>
             </AsideField>
 
+            <AsideField inline>
+              <AsideFieldLabel>Requested on</AsideFieldLabel>
+              <AsideFieldContent>{requestedOn}</AsideFieldContent>
+            </AsideField>
+
+            {"category" in selectedItem && (
+              <AsideField inline>
+                <AsideFieldLabel>Reason for Request</AsideFieldLabel>
+                <AsideFieldContent className="w-auto font-semibold">
+                  {CoverageRequestCategory.getName(selectedItem.category)}
+                </AsideFieldContent>
+              </AsideField>
+            )}
+
             {"details" in selectedItem && selectedItem.details !== "" && (
               <AsideField inline>
-                <AsideFieldLabel>Reason for request</AsideFieldLabel>
+                <AsideFieldLabel>Reason Details</AsideFieldLabel>
                 <AsideFieldContent className="w-auto">
                   {selectedItem.details}
                 </AsideFieldContent>
@@ -144,7 +155,7 @@ export function CoverageAside() {
 
             {"comments" in selectedItem && selectedItem.comments && (
               <AsideField inline>
-                <AsideFieldLabel>Request Details</AsideFieldLabel>
+                <AsideFieldLabel>Additional Comments</AsideFieldLabel>
                 <AsideFieldContent className="w-auto">
                   {selectedItem.comments}
                 </AsideFieldContent>

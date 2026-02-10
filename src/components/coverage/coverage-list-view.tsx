@@ -13,6 +13,7 @@ import {
 } from "./coverage-page-context";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { clientApi } from "@/trpc/client";
+import { buildFilterInput, useCoverageFilterParams } from "./coverage-filters";
 
 function toDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
@@ -36,14 +37,16 @@ function groupByDay(items: CoverageListItem[]) {
 
 export function CoverageListView() {
   const { setSortedItems } = useCoveragePage();
-
-  const infiniteQuery = clientApi.coverage.list.useInfiniteQuery(
-    {},
-    {
-      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-      placeholderData: (prev) => prev,
-    },
+  const { tab, filters } = useCoverageFilterParams();
+  const filterInput = useMemo(
+    () => buildFilterInput(tab, filters),
+    [tab, filters],
   );
+
+  const infiniteQuery = clientApi.coverage.list.useInfiniteQuery(filterInput, {
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    placeholderData: (prev) => prev,
+  });
 
   const handleScroll = useInfiniteScroll(infiniteQuery);
 

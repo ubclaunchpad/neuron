@@ -15,6 +15,11 @@ import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 
 export const classRouter = createTRPCRouter({
+  names: authorizedProcedure({ permission: { coverage: ["view"] } }).query(
+    async ({ ctx }) => {
+      return ctx.classService.getClassNames();
+    },
+  ),
   list: authorizedProcedure({ permission: { classes: ["view"] } })
     .input(ClassRequest)
     .query(async ({ input, ctx }): Promise<ClassResponse<ListClass>> => {

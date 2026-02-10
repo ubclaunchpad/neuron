@@ -1,6 +1,7 @@
 "use client";
 
 import { CoverageListView } from "@/components/coverage/coverage-list-view";
+import { CoverageFilters } from "@/components/coverage/coverage-filters";
 import {
   PageLayout,
   PageLayoutAside,
@@ -27,6 +28,7 @@ export default function CoveragePage() {
           <PageLayoutHeaderContent>
             <PageLayoutHeaderTitle>Coverage Requests</PageLayoutHeaderTitle>
           </PageLayoutHeaderContent>
+          <CoverageFilters />
         </PageLayoutHeader>
 
         <PageLayoutContent className="px-6">

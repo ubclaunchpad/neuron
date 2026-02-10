@@ -100,7 +100,8 @@ export class CoverageService implements ICoverageService {
   ): Promise<
     ListResponse<ListCoverageRequestBase | ListCoverageRequestWithReason>
   > {
-    const { perPage, offset, status, from, to } = getPagination(input);
+    const { perPage, offset } = getPagination(input);
+    const { status, from, to, courseIds } = input;
     const isAdmin = viewerRole === Role.admin;
 
     // Build WHERE conditions
@@ -111,13 +112,19 @@ export class CoverageService implements ICoverageService {
       whereConditions.push(eq(coverageRequest.status, status));
     }
 
-    // Date filter: only show requests for shifts starting on or after `from` (defaults to now)
-    const fromDate = from ?? new Date();
-    whereConditions.push(gte(shift.startAt, fromDate));
+    // Optional lower bound date filter (coerced to Date by Zod)
+    if (from) {
+      whereConditions.push(gte(shift.startAt, from as Date));
+    }
 
-    // Optional upper bound date filter
+    // Optional upper bound date filter (coerced to Date by Zod)
     if (to) {
-      whereConditions.push(lte(shift.startAt, to));
+      whereConditions.push(lte(shift.startAt, to as Date));
+    }
+
+    // Optional course filter
+    if (courseIds?.length) {
+      whereConditions.push(inArray(course.id, courseIds));
     }
 
     // Role-based visibility filter for non-admins:

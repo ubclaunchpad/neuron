@@ -209,7 +209,7 @@ export function DateRangePicker({
           id={id}
           disabled={disabled}
           className={cn(
-            "justify-start min-w-0 shrink-1 font-normal",
+            "justify-start min-w-0 shrink font-normal",
             !label && "text-muted-foreground",
             className,
           )}
@@ -248,7 +248,20 @@ export type MonthPickerProps = Omit<
   placeholder?: string;
 };
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 export function MonthPicker({
   defaultValue,
@@ -275,7 +288,9 @@ export function MonthPicker({
 
   const onSelect = (month: number) => {
     const next =
-      selected && selected.getFullYear() === year && selected.getMonth() === month
+      selected &&
+      selected.getFullYear() === year &&
+      selected.getMonth() === month
         ? undefined
         : new Date(year, month, 1);
 
@@ -310,9 +325,7 @@ export function MonthPicker({
           {...buttonProps}
         >
           <CalendarIcon className="size-4" />
-          <span className="text-base truncate">
-            {label ?? placeholder}
-          </span>
+          <span className="text-base truncate">{label ?? placeholder}</span>
         </Button>
       </PopoverTrigger>
 
@@ -350,10 +363,7 @@ export function MonthPicker({
               <Button
                 key={m}
                 variant={isSelected ? "outline" : "ghost"}
-                className={cn(
-                  "h-9",
-                  isSelected && "border-primary",
-                )}
+                className={cn("h-9", isSelected && "border-primary")}
                 onClick={() => onSelect(idx)}
               >
                 {m}
@@ -366,5 +376,8 @@ export function MonthPicker({
   );
 }
 
-
-export { DatePicker as DateInput, DateRangePicker as DateRangeInput, MonthPicker as MonthInput };
+export {
+  DatePicker as DateInput,
+  DateRangePicker as DateRangeInput,
+  MonthPicker as MonthInput,
+};

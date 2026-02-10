@@ -46,6 +46,7 @@ export const ListCoverageRequestsInput = ListRequest.extend({
   status: CoverageStatusEnum.optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
+  courseIds: z.array(z.uuid()).optional(),
 });
 export type ListCoverageRequestsInput = z.input<
   typeof ListCoverageRequestsInput

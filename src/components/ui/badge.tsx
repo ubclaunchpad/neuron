@@ -16,10 +16,12 @@ const badgeVariants = cva(
         outline: "text-foreground",
         notification:
           "border-transparent bg-destructive text-primary-foreground shadow h-5 min-w-5 px-1.5 flex justify-center items-center border-none",
+        filter: "border-transparent rounded font-medium px-1 py-px",
         colored: "border-transparent",
       },
       color: {
         default: "bg-muted text-foreground",
+        emphasis: "bg-emphasis text-emphasis-foreground",
         primary: "bg-primary/10 text-primary",
         success: "bg-emerald-50 text-emerald-700",
         warning: "bg-amber-50 text-amber-800",
@@ -46,7 +48,7 @@ function Badge({ className, variant, color, ...props }: BadgeProps) {
       className={cn(
         badgeVariants({
           variant,
-          color: variant === "colored" ? color : undefined,
+          color,
         }),
         className,
       )}

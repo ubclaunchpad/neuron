@@ -118,7 +118,7 @@ export function CoverageItem({
         </ItemContent>
       </ItemContent>
 
-      <ItemActions className="ml-auto gap-2 relative z-10">
+      <ItemActions className="ml-auto gap-2 relative z-10 min-w-24 justify-end">
         {isOpen && !isMyRequest && (
           <WithPermission permissions={{ permission: { coverage: ["fill"] } }}>
             <FillCoverageButton item={coverageRequest} />

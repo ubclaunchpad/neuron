@@ -1,6 +1,6 @@
-export type CoverageFilterValues = {
-  status?: "open" | "resolved" | "withdrawn";
-  from?: Date;
-  to?: Date;
-  courseIds?: string[];
-};
+import type { ListCoverageRequestsInput } from "@/models/api/coverage";
+
+export type CoverageFilterValues = Omit<
+  ListCoverageRequestsInput,
+  "perPage" | "cursor"
+>;

@@ -31,7 +31,18 @@ import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import { getPagination } from "@/utils/searchUtils";
-import { and, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
+import {
+  asc,
+  desc,
+  and,
+  eq,
+  gte,
+  inArray,
+  lte,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import type { IVolunteerService } from "./volunteerService";
 import type { IShiftService } from "./shiftService";
 
@@ -102,7 +113,7 @@ export class CoverageService implements ICoverageService {
     ListResponse<ListCoverageRequestBase | ListCoverageRequestWithReason>
   > {
     const { perPage, offset } = getPagination(input);
-    const { status, from, to, courseIds } = input;
+    const { status, from, to, courseIds, sortOrder } = input;
     const isAdmin = hasPermission({
       role: viewerRole,
       permission: { shifts: ["view-all"] },
@@ -189,7 +200,10 @@ export class CoverageService implements ICoverageService {
       .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
       .innerJoin(course, eq(shift.courseId, course.id))
       .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-      .orderBy(shift.startAt, coverageRequest.id)
+      .orderBy(
+        sortOrder === "asc" ? asc(shift.startAt) : desc(shift.startAt),
+        desc(coverageRequest.id),
+      )
       .limit(perPage)
       .offset(offset);
 

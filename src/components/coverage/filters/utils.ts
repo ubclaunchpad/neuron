@@ -19,15 +19,19 @@ export function buildFilterInput(
     case "upcoming":
       input.status = "open";
       input.from = new Date();
+      input.sortOrder = "asc";
       break;
     case "resolved":
       input.status = "resolved";
+      input.sortOrder = "desc";
       break;
     case "past":
       input.to = new Date();
+      input.sortOrder = "desc";
       break;
     case "withdrawn":
       input.status = "withdrawn";
+      input.sortOrder = "desc";
       break;
   }
 

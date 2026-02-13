@@ -12,7 +12,7 @@ import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { clientApi } from "@/trpc/client";
 import { buildFilterInput } from "@/components/coverage/filters/utils";
 import { useCoverageFilterParams } from "@/components/coverage/filters/hooks/use-coverage-filter-params";
-import { groupCoverageItemsByDay, sortCoverageItemsByStartAt } from "./utils";
+import { groupCoverageItemsByDay } from "./utils";
 
 export function CoverageListView() {
   const { setSortedItems } = useCoveragePage();
@@ -29,31 +29,26 @@ export function CoverageListView() {
 
   const handleScroll = useInfiniteScroll(infiniteQuery);
 
-  const pages = infiniteQuery.data?.pages;
-
-  const sortedItems = useMemo(() => {
-    const items = pages?.flatMap((page) => page.data) ?? [];
-    return sortCoverageItemsByStartAt(items);
-  }, [pages]);
-
-  const dayGroups = useMemo(
-    () => groupCoverageItemsByDay(sortedItems),
-    [sortedItems],
+  const items = useMemo(
+    () => infiniteQuery.data?.pages.flatMap((page) => page.data) ?? [],
+    [infiniteQuery.data],
   );
+
+  const dayGroups = useMemo(() => groupCoverageItemsByDay(items), [items]);
 
   const prevItemIds = useRef<string>("");
   useEffect(() => {
-    const itemIds = sortedItems.map((i) => i.id).join(",");
+    const itemIds = items.map((i) => i.id).join(",");
     if (itemIds !== prevItemIds.current) {
       prevItemIds.current = itemIds;
-      setSortedItems(sortedItems);
+      setSortedItems(items);
     }
-  }, [sortedItems, setSortedItems]);
+  }, [items, setSortedItems]);
 
   const isLoading = infiniteQuery.isLoading;
-  const isEmpty = !isLoading && sortedItems.length === 0;
+  const isEmpty = !isLoading && items.length === 0;
   const showNoMoreResults =
-    !isLoading && sortedItems.length > 0 && !infiniteQuery.hasNextPage;
+    !isLoading && items.length > 0 && !infiniteQuery.hasNextPage;
 
   return (
     <ScrollArea onScroll={handleScroll} className="w-full h-full">

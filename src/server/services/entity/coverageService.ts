@@ -11,6 +11,7 @@ import {
   type ListCoverageRequestBase,
   type ListCoverageRequestWithReason,
 } from "@/models/coverage";
+import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { Role } from "@/models/interfaces";
 import type { EmbeddedShift } from "@/models/shift";
 import { buildUser } from "@/models/user";
@@ -102,7 +103,10 @@ export class CoverageService implements ICoverageService {
   > {
     const { perPage, offset } = getPagination(input);
     const { status, from, to, courseIds } = input;
-    const isAdmin = viewerRole === Role.admin;
+    const isAdmin = hasPermission({
+      role: viewerRole,
+      permission: { shifts: ["view-all"] },
+    });
 
     // Build WHERE conditions
     const whereConditions: SQL<unknown>[] = [];

@@ -558,12 +558,21 @@ export class ShiftService implements IShiftService {
 
     const viewer = await this.getViewer(userId);
 
-    if (viewer?.role === Role.volunteer) {
-      conditions.push(this.buildVolunteerVisibilityCondition(viewer.id));
-    }
+    if (viewer) {
+      const canViewAll = hasPermission({
+        role: viewer.role,
+        permission: { shifts: ["view-all"] },
+      });
+      const canCheckIn = hasPermission({
+        role: viewer.role,
+        permission: { shifts: ["check-in"] },
+      });
 
-    if (viewer?.role === Role.instructor) {
-      conditions.push(this.buildInstructorVisibilityCondition(viewer.id));
+      if (!canViewAll && canCheckIn) {
+        conditions.push(this.buildVolunteerVisibilityCondition(viewer.id));
+      } else if (!canViewAll && !canCheckIn) {
+        conditions.push(this.buildInstructorVisibilityCondition(viewer.id));
+      }
     }
 
     const shiftModels = await this.loadShiftModels(...conditions);
@@ -571,12 +580,22 @@ export class ShiftService implements IShiftService {
     return {
       cursor: normalizedCursor,
       shifts: shiftModels.map((shiftModel) => {
-        if (viewer?.role === Role.admin) {
-          return getListShiftWithRosterStatus(shiftModel);
-        }
+        if (viewer) {
+          const canViewAll = hasPermission({
+            role: viewer.role,
+            permission: { shifts: ["view-all"] },
+          });
+          const canCheckIn = hasPermission({
+            role: viewer.role,
+            permission: { shifts: ["check-in"] },
+          });
 
-        if (viewer?.role === Role.volunteer) {
-          return getListShiftWithPersonalStatus(shiftModel, viewer.id);
+          if (canViewAll) {
+            return getListShiftWithRosterStatus(shiftModel);
+          }
+          if (canCheckIn) {
+            return getListShiftWithPersonalStatus(shiftModel, viewer.id);
+          }
         }
 
         return getListShift(shiftModel);
@@ -602,12 +621,22 @@ export class ShiftService implements IShiftService {
       );
     }
 
-    if (viewer?.role === Role.admin) {
-      return getSingleShiftWithRosterContext(shiftModel);
-    }
+    if (viewer) {
+      const canViewAll = hasPermission({
+        role: viewer.role,
+        permission: { shifts: ["view-all"] },
+      });
+      const canCheckIn = hasPermission({
+        role: viewer.role,
+        permission: { shifts: ["check-in"] },
+      });
 
-    if (viewer?.role === Role.volunteer) {
-      return getSingleShiftWithPersonalContext(shiftModel, viewer.id);
+      if (canViewAll) {
+        return getSingleShiftWithRosterContext(shiftModel);
+      }
+      if (canCheckIn) {
+        return getSingleShiftWithPersonalContext(shiftModel, viewer.id);
+      }
     }
 
     return getSingleShift(shiftModel);

@@ -135,32 +135,36 @@ export function CoverageAside() {
               <AsideFieldContent>{requestedOn}</AsideFieldContent>
             </AsideField>
 
-            {"category" in selectedItem && (
-              <AsideField inline>
-                <AsideFieldLabel>Reason for Request</AsideFieldLabel>
-                <AsideFieldContent className="w-auto font-semibold">
-                  {CoverageRequestCategory.getName(selectedItem.category)}
-                </AsideFieldContent>
-              </AsideField>
-            )}
+            <WithPermission
+              permissions={{ permission: { shifts: ["view-all"] } }}
+            >
+              {"category" in selectedItem && (
+                <AsideField inline>
+                  <AsideFieldLabel>Reason for Request</AsideFieldLabel>
+                  <AsideFieldContent className="w-auto font-semibold">
+                    {CoverageRequestCategory.getName(selectedItem.category)}
+                  </AsideFieldContent>
+                </AsideField>
+              )}
 
-            {"details" in selectedItem && selectedItem.details !== "" && (
-              <AsideField inline>
-                <AsideFieldLabel>Reason Details</AsideFieldLabel>
-                <AsideFieldContent className="w-auto">
-                  {selectedItem.details}
-                </AsideFieldContent>
-              </AsideField>
-            )}
+              {"details" in selectedItem && selectedItem.details !== "" && (
+                <AsideField inline>
+                  <AsideFieldLabel>Reason Details</AsideFieldLabel>
+                  <AsideFieldContent className="w-auto">
+                    {selectedItem.details}
+                  </AsideFieldContent>
+                </AsideField>
+              )}
 
-            {"comments" in selectedItem && selectedItem.comments && (
-              <AsideField inline>
-                <AsideFieldLabel>Additional Comments</AsideFieldLabel>
-                <AsideFieldContent className="w-auto">
-                  {selectedItem.comments}
-                </AsideFieldContent>
-              </AsideField>
-            )}
+              {"comments" in selectedItem && selectedItem.comments && (
+                <AsideField inline>
+                  <AsideFieldLabel>Additional Comments</AsideFieldLabel>
+                  <AsideFieldContent className="w-auto">
+                    {selectedItem.comments}
+                  </AsideFieldContent>
+                </AsideField>
+              )}
+            </WithPermission>
           </AsideSectionContent>
 
           <Separator />

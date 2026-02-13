@@ -25,7 +25,7 @@ import { useCoverageTab } from "@/components/coverage/filters/hooks/use-coverage
 export function CoverageFilters() {
   const [tab, setTab] = useCoverageTab();
 
-  const { data: availableClasses } = clientApi.class.names.useQuery();
+  const { data: availableClasses } = clientApi.class.forSelect.useQuery();
 
   const classOptions = useMemo(
     () => (availableClasses ?? []).map((c) => ({ label: c.name, value: c.id })),

@@ -36,7 +36,7 @@ import type { IVolunteerService } from "./volunteerService";
 import { tryCatch } from "@/lib/try-catch";
 
 export interface IClassService {
-  getClassNames(): Promise<{ id: string; name: string }[]>;
+  getClassesForSelect(): Promise<{ id: string; name: string }[]>;
   getClassesForRequest(
     listRequest: ClassRequest,
   ): Promise<ClassResponse<Class>>;
@@ -86,7 +86,7 @@ export class ClassService implements IClassService {
     this.imageService = imageService;
   }
 
-  async getClassNames(): Promise<{ id: string; name: string }[]> {
+  async getClassesForSelect(): Promise<{ id: string; name: string }[]> {
     return this.db
       .select({ id: course.id, name: course.name })
       .from(course)

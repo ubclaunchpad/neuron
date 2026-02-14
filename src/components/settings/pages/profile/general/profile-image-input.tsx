@@ -80,7 +80,7 @@ export function ProfileImageInput({
     >
       <div className="flex gap-4 items-start">
         <div className="flex flex-col items-center gap-4">
-          <Avatar className="aspect-square size-[140px] shrink-0 rounded-md pointer-events-none">
+          <Avatar className="aspect-square size-35 shrink-0 rounded-md pointer-events-none">
             <AvatarImage
               src={imageValue ?? undefined}
               className="rounded-md object-cover"
@@ -95,7 +95,7 @@ export function ProfileImageInput({
             size="sm"
             variant="outline"
             onClick={() => setValue("image", null, { shouldDirty: true })}
-            className="w-full max-w-[140px] text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="w-full max-w-35 text-destructive hover:text-destructive hover:bg-destructive/10"
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Clear

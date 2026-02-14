@@ -12,7 +12,7 @@ export function SchedulePageControls({
 }) {
   const { selectedDate, setSelectedDate } = useSchedulePage();
   return (
-    <div className="flex px-9 w-full items-center border-t [&_*]:!rounded-none">
+    <div className="flex px-9 w-full items-center border-t **:rounded-none!">
       {currentView === "week" && <FullCalendarControls />}
       <MonthSelect value={selectedDate} onValueChange={setSelectedDate} />
     </div>

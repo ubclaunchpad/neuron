@@ -81,6 +81,9 @@ export const coverageRequest = pgTable(
     category: coverageCategory("category").notNull(),
     details: text("details").notNull(),
     comments: text("comments"),
+    requestedAt: timestamp("requested_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     status: coverageStatus("status").notNull().default(CoverageStatus.open),
     requestingVolunteerUserId: uuid("requesting_volunteer_user_id")
       .notNull()

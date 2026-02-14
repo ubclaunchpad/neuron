@@ -38,7 +38,7 @@ export function ListBody<TItem>({
 export function ListEmptyState({ query }: { query: string }) {
   return (
     <ListStateWrapper>
-      No results found
+      No results found.
       {query && (
         <>
           {" "}

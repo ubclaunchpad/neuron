@@ -24,7 +24,7 @@ export function ClassCard({
   return (
     <Card
       size="sm"
-      className="max-w-full w-[258px] relative has-[button[data-overlay]:hover]:bg-secondary/90 has-[button[data-overlay]:focus-visible]:ring-2 has-[button[data-overlay]:focus-visible]:ring-ring/50"
+      className="max-w-full w-64.5 relative has-[button[data-overlay]:hover]:bg-secondary/90 has-[button[data-overlay]:focus-visible]:ring-2 has-[button[data-overlay]:focus-visible]:ring-ring/50"
     >
       {/* Button that covers the entire card*/}
       <Button

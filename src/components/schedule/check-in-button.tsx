@@ -72,13 +72,7 @@ export function CheckInButton({
     return longFormat.replace("hours", "h").replace("minutes", "m");
   }, [checkInOpensAt, now]);
 
-  const attendance =
-    shift.attendance &&
-    !Array.isArray(shift.attendance) &&
-    typeof shift.attendance === "object" &&
-    "status" in shift.attendance
-      ? (shift.attendance as ShiftAttendanceSummary)
-      : undefined;
+  const attendance = shift.attendance as ShiftAttendanceSummary | undefined;
 
   const apiUtils = clientApi.useUtils();
   const { mutate: checkIn, isPending } = clientApi.shift.checkIn.useMutation({

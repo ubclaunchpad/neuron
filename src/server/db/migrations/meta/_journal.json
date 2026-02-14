@@ -29,6 +29,13 @@
       "when": 1765066348948,
       "tag": "0003_add_cancelled_by_user_id_to_shifts",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1770513453605,
+      "tag": "0004_add_requested_at_to_coverage_request",
+      "breakpoints": true
     }
   ]
 }

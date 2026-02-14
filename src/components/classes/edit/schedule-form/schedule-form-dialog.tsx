@@ -68,7 +68,7 @@ export const ScheduleFormDialog = NiceModal.create(
           }
         }}
       >
-        <DialogContent className="!max-w-[37.5rem]">
+        <DialogContent className="max-w-150!">
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>
               <DialogTitle>

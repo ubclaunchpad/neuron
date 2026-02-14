@@ -274,7 +274,10 @@ export function AvailabilityInput({
                 {/* time column header (empty, just a spacer) */}
                 <TableHead className="w-14 p-0 border-0" />
                 {DAYS.map((d, i) => (
-                  <TableHead key={i} className="text-accent-foreground text-left">
+                  <TableHead
+                    key={i}
+                    className="text-accent-foreground text-left"
+                  >
                     {d}
                   </TableHead>
                 ))}
@@ -289,13 +292,13 @@ export function AvailabilityInput({
                     // Row cell sizing
                     "[&>td]:h-6 [&>td]:p-0",
                     // Borders: bottom on each cell, light zebra for odd rows, no bottom on last row
-                    "[&>td]:border-b odd:[&>td]:border-b-[var(--border-secondary)] last:[&>td]:border-b-0",
+                    "[&>td]:border-b odd:[&>td]:border-b-(--border-secondary) last:[&>td]:border-b-0",
                     // Vertical separators between day cells (skip time label col and the first day cell)
                     "[&>td:nth-child(n+3)]:border-l [&>td]:border-border [&>td:first-child]:border-0",
                     // Establish base per-cell background CSS var (zebra for even columns)
                     "[--cell-base:hsl(var(--background))]",
                     // Remove hover styles
-                    "hover:!bg-(--cell-base)",
+                    "hover:bg-(--cell-base)!",
                     "[&>td:nth-child(2n)]:[--cell-base:rgba(217,217,217,0.15)]",
                   )}
                 >
@@ -307,12 +310,20 @@ export function AvailabilityInput({
                   {/* Day cells */}
                   {DAYS.map((_, day) => {
                     const isPreviewed = dragging && checkPreviewed(day, time);
-                    const isAvailable = isSlotAvailable(localAvailability, day, time);
+                    const isAvailable = isSlotAvailable(
+                      localAvailability,
+                      day,
+                      time,
+                    );
                     const isPreviewedAvailable = isPreviewed
                       ? !!applyValue
                       : isAvailable;
 
-                    const state: "unavailable" |  "available" | "preview-available" | "preview-unavailable" = isPreviewed
+                    const state:
+                      | "unavailable"
+                      | "available"
+                      | "preview-available"
+                      | "preview-unavailable" = isPreviewed
                       ? isPreviewedAvailable
                         ? "preview-available"
                         : "preview-unavailable"
@@ -326,7 +337,7 @@ export function AvailabilityInput({
                         data-state={state}
                         data-editable={editMode}
                         className={cn(
-                          "transition-colors bg-[var(--cell-bg)]",
+                          "transition-colors bg-(--cell-bg)",
                           "[--cell-bg:var(--cell-base)]",
                           "data-[state=available]:[--cell-bg:var(--color-success)]",
                           "data-[state=preview-available]:[--cell-bg:var(--success-light)]",

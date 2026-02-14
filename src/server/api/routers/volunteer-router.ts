@@ -17,7 +17,7 @@ export const volunteerRouter = createTRPCRouter({
       return volunteers;
     }),
   setClassPreference: authorizedProcedure({
-    permission: { profile: ["update"] },
+    permission: { classes: ["prefer"] },
   })
     .input(
       UserIdInput.extend({
@@ -34,7 +34,7 @@ export const volunteerRouter = createTRPCRouter({
       return { ok: true };
     }),
   getClassPreference: authorizedProcedure({
-    permission: { profile: ["update"] },
+    permission: { classes: ["prefer"] },
   })
     .input(
       UserIdInput.extend({
@@ -47,13 +47,13 @@ export const volunteerRouter = createTRPCRouter({
         input.classId,
       );
     }),
-  byId: authorizedProcedure({ permission: { profile: ["view"] } })
+  byId: authorizedProcedure({ permission: { "volunteer-profile": ["view"] } })
     .input(UserIdInput)
     .query(async ({ input, ctx }) => {
       return await ctx.volunteerService.getVolunteer(input.userId);
     }),
   updateVolunteerProfile: authorizedProcedure({
-    permission: { profile: ["update"] },
+    permission: { "volunteer-profile": ["update"] },
   })
     .input(UpdateVolunteerProfileInput)
     .mutation(async ({ input, ctx }) => {
@@ -61,7 +61,7 @@ export const volunteerRouter = createTRPCRouter({
       return { ok: true };
     }),
   updateVolunteerAvailability: authorizedProcedure({
-    permission: { profile: ["update"] },
+    permission: { "volunteer-profile": ["update"] },
   })
     .input(UpdateVolunteerAvailabilityInput)
     .mutation(async ({ input, ctx }) => {

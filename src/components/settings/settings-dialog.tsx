@@ -56,7 +56,7 @@ export const SettingsDialog = NiceModal.create(() => {
     <Dialog open={modal.visible} onOpenChange={modal.hide}>
       <DialogContent
         hideCloseButton
-        className="sm:max-w-[min(calc(100vw-2rem),_42rem)] md:h-[60vh] h-[85vh] p-0 gap-0 border overflow-hidden"
+        className="sm:max-w-[min(calc(100vw-2rem),42rem)] md:h-[60vh] h-[85vh] p-0 gap-0 border overflow-hidden"
       >
         <Tabs
           defaultValue="profile"
@@ -97,7 +97,7 @@ export const SettingsDialog = NiceModal.create(() => {
               >
                 <TabsTrigger
                   className={cn(
-                    "md:w-full justify-start !ring-0 !shadow-none",
+                    "md:w-full justify-start ring-0! shadow-none!",
                     "text-sidebar-foreground data-[state=active]:bg-sidebar-accent hover:bg-sidebar-accent",
                   )}
                   value={item.id}

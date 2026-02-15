@@ -6,11 +6,13 @@ import {
 } from "@/models/interfaces";
 import { createRequestScope } from "@/server/api/di-container";
 import { db } from "@/server/db";
-import { account, session, verification } from "@/server/db/schema/auth";
+import { account, appInvitation, session, verification } from "@/server/db/schema/auth";
 import { user, volunteer } from "@/server/db/schema/user";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { appInvite } from "@better-auth-extended/app-invite";
+import { eq } from "drizzle-orm";
 
 export const auth = betterAuth({
   user: {
@@ -35,6 +37,7 @@ export const auth = betterAuth({
       session,
       account,
       verification,
+      appInvitation,
     },
   }),
   advanced: {
@@ -85,7 +88,80 @@ export const auth = betterAuth({
       );
     },
   },
-  plugins: [nextCookies()],
+  plugins: [
+    nextCookies(),
+    appInvite({
+      sendInvitationEmail: async (invitation, request) => {
+        if (!invitation.email) {
+          return;
+        }
+
+        const scope = createRequestScope();
+        const { emailService } = scope.cradle;
+        const origin =
+          request ? new URL(request.url).origin : (process.env.BETTER_AUTH_URL ?? "http://localhost:3000");
+        const inviteUrl = new URL(
+          `/auth/signup?invitationId=${invitation.id}`,
+          origin,
+        ).toString();
+
+        await emailService.send(
+          invitation.email,
+          "You've been invited to Neuron",
+          `You were invited by ${invitation.inviter.name} (${invitation.inviter.email}). Complete your sign up here: ${inviteUrl}`,
+        );
+      },
+      canCreateInvitation: (ctx): boolean => {
+        const inviter = ctx.context.session?.user;
+        if (!inviter) {
+          return false;
+        }
+
+        return inviter.role === Role.admin || inviter.role === Role.instructor;
+      },
+      verifyEmailOnAccept: true,
+      schema: {
+        appInvitation: {
+          additionalFields: {
+            role: {
+              type: "string",
+              required: true,
+              input: true,
+            },
+          },
+        },
+        user: {
+          additionalFields: {
+            lastName: {
+              type: "string",
+              required: true,
+              input: true,
+            },
+          },
+        },
+      },
+      hooks: {
+        accept: {
+          after: async (_ctx, data) => {
+            const roleResult = RoleEnum.safeParse(
+              (data.invitation as { role?: unknown }).role,
+            );
+            if (!roleResult.success) {
+              throw new Error("Invitation role is missing or invalid.");
+            }
+
+            await db
+              .update(user)
+              .set({
+                role: roleResult.data,
+                status: UserStatus.active,
+              })
+              .where(eq(user.id, data.user.id));
+          },
+        },
+      },
+    }),
+  ],
 } satisfies BetterAuthOptions);
 
 export type Session = typeof auth.$Infer.Session;

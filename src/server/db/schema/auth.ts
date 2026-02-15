@@ -53,3 +53,28 @@ export const verification = pgTable("verification", {
     index().on(table.identifier),
     uniqueIndex().on(table.identifier, table.value),
 ]);
+
+export const appInvitation = pgTable("appInvitation", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name"),
+    email: text("email"),
+    status: text("status").notNull(),
+    inviterId: uuid("inviter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    domainWhitelist: text("domain_whitelist"),
+    role: text("role").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+    index().on(table.inviterId),
+    index().on(table.email),
+    index().on(table.status),
+]);
+
+export const appInvitationRelations = relations(appInvitation, ({ one }) => ({
+    inviter: one(user, {
+        fields: [appInvitation.inviterId],
+        references: [user.id],
+    }),
+}));

@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -50,11 +50,19 @@ type SignupSchemaType = z.infer<typeof SignupSchema>;
 
 export default function SignupForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [invitationError, setInvitationError] = useState<string | null>(null);
+  const [isLoadingInvitation, setIsLoadingInvitation] = useState(false);
+  const [invitedEmail, setInvitedEmail] = useState<string | null>(null);
+  const [invitedRole, setInvitedRole] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const invitationId = searchParams.get("invitationId");
+  const isInviteFlow = !!invitationId;
 
   const {
     handleSubmit,
     setError,
+    setValue,
     control,
     formState: { errors, isSubmitting },
   } = useForm({
@@ -70,7 +78,108 @@ export default function SignupForm() {
     }
   });
 
+  useEffect(() => {
+    let mounted = true;
+
+    const loadInvitation = async () => {
+      if (!invitationId) {
+        if (!mounted) return;
+        setInvitationError(null);
+        setInvitedEmail(null);
+        setInvitedRole(null);
+        return;
+      }
+
+      setIsLoadingInvitation(true);
+      const { data, error } = await authClient.getAppInvitation({
+        query: { id: invitationId },
+      });
+
+      if (!mounted) return;
+
+      if (error || !data) {
+        setInvitationError(
+          "This invitation is invalid or expired. Please request a new invitation.",
+        );
+        setInvitedEmail(null);
+        setInvitedRole(null);
+        setIsLoadingInvitation(false);
+        return;
+      }
+
+      setInvitationError(null);
+      setInvitedEmail(data.email ?? null);
+
+      const roleFromInvitation =
+        typeof (data as { additionalFields?: { role?: unknown } }).additionalFields
+          ?.role === "string"
+          ? (data as { additionalFields?: { role?: string } }).additionalFields?.role
+          : null;
+      setInvitedRole(roleFromInvitation ?? null);
+
+      if (data.email) {
+        setValue("email", data.email, { shouldValidate: true });
+      }
+
+      setIsLoadingInvitation(false);
+    };
+
+    void loadInvitation();
+
+    return () => {
+      mounted = false;
+    };
+  }, [invitationId, setValue]);
+
+  const inviteRoleLabel = useMemo(() => {
+    if (invitedRole === "admin") return "admin";
+    if (invitedRole === "instructor") return "instructor";
+    return null;
+  }, [invitedRole]);
+
   const onSubmit = async (data: SignupSchemaType) => {
+    if (invitationId) {
+      if (invitationError) {
+        setError("root", {
+          type: "custom",
+          message: invitationError,
+        });
+        return;
+      }
+
+      if (invitedEmail && invitedEmail.toLowerCase() !== data.email.toLowerCase()) {
+        setError("email", {
+          type: "custom",
+          message: "This invitation is for a different email address.",
+        });
+        return;
+      }
+
+      const { error } = await authClient.acceptInvitation({
+        invitationId,
+        name: `${data.firstName} ${data.lastName}`.trim(),
+        email: data.email,
+        password: data.password,
+        additionalFields: {
+          lastName: data.lastName,
+        },
+      });
+
+      if (error) {
+        setError("root", {
+          type: "custom",
+          message: getBetterAuthErrorMessage(error?.code),
+        });
+        return;
+      }
+
+      setSuccessMessage(
+        "Your invitation has been accepted. You can now log in with your new account.",
+      );
+      setTimeout(() => router.replace("/auth/login"), 3000);
+      return;
+    }
+
     const { error } = await authClient.signUp.email({
       name: data.firstName,
       lastName: data.lastName,
@@ -122,6 +231,36 @@ export default function SignupForm() {
         </Alert>
       )}
 
+      {isInviteFlow && isLoadingInvitation && (
+        <Alert role="status" aria-live="polite">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Loading invitation...</AlertTitle>
+          <AlertDescription>
+            Verifying your invitation details.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {isInviteFlow && !isLoadingInvitation && !invitationError && (
+        <Alert role="status" aria-live="polite">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertTitle>Invitation found</AlertTitle>
+          <AlertDescription>
+            {inviteRoleLabel
+              ? `You were invited as an ${inviteRoleLabel}. Complete the form to continue.`
+              : "Complete the form to accept your invitation."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {invitationError && (
+        <Alert variant="destructive" role="alert" aria-live="assertive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Invalid invitation</AlertTitle>
+          <AlertDescription>{invitationError}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="space-y-5">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-3">
           <FormInputField
@@ -147,6 +286,7 @@ export default function SignupForm() {
           name="email"
           placeholder="john.doe@example.com"
           label="Email"
+          readOnly={!!invitedEmail}
           className="gap-1"
         />
 
@@ -173,7 +313,11 @@ export default function SignupForm() {
 
       <div className="space-y-5">
         <Field orientation="horizontal">
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          <Button
+            type="submit"
+            disabled={isSubmitting || isLoadingInvitation || !!invitationError}
+            className="w-full"
+          >
             {isSubmitting ? (
               <>
                 <Spinner /> Creating...

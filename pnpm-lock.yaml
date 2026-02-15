@@ -17,6 +17,9 @@ importers:
 
   .:
     dependencies:
+      '@better-auth-extended/app-invite':
+        specifier: ^0.2.2
+        version: 0.2.2(better-auth@1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.41.0(gel@2.2.0)(kysely@0.28.10)(postgres@3.4.8))(next@16.1.6(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.90.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@4.0.18(@types/node@20.19.30)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.90.0)))
       '@ebay/nice-modal-react':
         specifier: ^1.2.13
         version: 1.2.13(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -835,6 +838,21 @@ packages:
   '@bcoe/v8-coverage@1.0.2':
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
+
+  '@better-auth-extended/app-invite@0.2.2':
+    resolution: {integrity: sha512-6/jYlG1O2koySNo83QYYZPfERARp0qiIoIEsn4SAv1TUnfSQbyX45LmlTeUmH+JQuLxeQ66NisoC5mG0tA/Nog==}
+    peerDependencies:
+      better-auth: ^1.3.34
+
+  '@better-auth-extended/internal-env@0.0.2':
+    resolution: {integrity: sha512-qT9aahyFxHLv4ThKz+g8LEPHYj7yTsITY26TxiezJGMGLavOqIKP22DWFNH0qmK6nFfLDmOn4bJyIqs2yBLMOQ==}
+    peerDependencies:
+      better-auth: ^1.3.34
+
+  '@better-auth-extended/internal-utils@0.0.3':
+    resolution: {integrity: sha512-NA7OkFvSskj4n+tBexIcULC/HnSIvZuc8sI2r2HMLfk9Q5eT81s1oxLXPoxNY9T/8F2pw7qSceHFKBYuxxqYqw==}
+    peerDependencies:
+      better-auth: ^1.3.34
 
   '@better-auth/core@1.4.18':
     resolution: {integrity: sha512-q+awYgC7nkLEBdx2sW0iJjkzgSHlIxGnOpsN1r/O1+a4m7osJNHtfK2mKJSL1I+GfNyIlxJF8WvD/NLuYMpmcg==}
@@ -6490,6 +6508,24 @@ snapshots:
       '@babel/helper-validator-identifier': 7.28.5
 
   '@bcoe/v8-coverage@1.0.2': {}
+
+  '@better-auth-extended/app-invite@0.2.2(better-auth@1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.41.0(gel@2.2.0)(kysely@0.28.10)(postgres@3.4.8))(next@16.1.6(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.90.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@4.0.18(@types/node@20.19.30)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.90.0)))':
+    dependencies:
+      '@better-auth-extended/internal-env': 0.0.2(better-auth@1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.41.0(gel@2.2.0)(kysely@0.28.10)(postgres@3.4.8))(next@16.1.6(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.90.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@4.0.18(@types/node@20.19.30)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.90.0)))
+      '@better-auth-extended/internal-utils': 0.0.3(better-auth@1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.41.0(gel@2.2.0)(kysely@0.28.10)(postgres@3.4.8))(next@16.1.6(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.90.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@4.0.18(@types/node@20.19.30)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.90.0)))
+      better-auth: 1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.41.0(gel@2.2.0)(kysely@0.28.10)(postgres@3.4.8))(next@16.1.6(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.90.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@4.0.18(@types/node@20.19.30)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.90.0))
+      zod: 4.3.6
+
+  '@better-auth-extended/internal-env@0.0.2(better-auth@1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.41.0(gel@2.2.0)(kysely@0.28.10)(postgres@3.4.8))(next@16.1.6(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.90.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@4.0.18(@types/node@20.19.30)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.90.0)))':
+    dependencies:
+      '@better-auth/utils': 0.3.0
+      better-auth: 1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.41.0(gel@2.2.0)(kysely@0.28.10)(postgres@3.4.8))(next@16.1.6(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.90.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@4.0.18(@types/node@20.19.30)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.90.0))
+
+  '@better-auth-extended/internal-utils@0.0.3(better-auth@1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.41.0(gel@2.2.0)(kysely@0.28.10)(postgres@3.4.8))(next@16.1.6(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.90.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@4.0.18(@types/node@20.19.30)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.90.0)))':
+    dependencies:
+      '@better-auth-extended/internal-env': 0.0.2(better-auth@1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.41.0(gel@2.2.0)(kysely@0.28.10)(postgres@3.4.8))(next@16.1.6(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.90.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@4.0.18(@types/node@20.19.30)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.90.0)))
+      '@better-auth/utils': 0.3.0
+      better-auth: 1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.41.0(gel@2.2.0)(kysely@0.28.10)(postgres@3.4.8))(next@16.1.6(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(sass@1.90.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vitest@4.0.18(@types/node@20.19.30)(jiti@2.6.1)(lightningcss@1.30.2)(sass@1.90.0))
 
   '@better-auth/core@1.4.18(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.3.6))(jose@6.1.3)(kysely@0.28.10)(nanostores@1.1.0)':
     dependencies:

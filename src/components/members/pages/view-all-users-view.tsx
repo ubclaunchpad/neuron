@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useImageUrl } from "@/lib/build-image-url";
+import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { Role, UserStatus } from "@/models/interfaces";
 import type { ListUser, User } from "@/models/user";
 import { useAuth } from "@/providers/client-auth-provider";
@@ -19,6 +20,7 @@ import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@public/assets/icons/add.svg";
 import { Ban, MoreHorizontalIcon, Power } from "lucide-react";
 import { CreateUserDialog } from "../create-user-dialog";
+import { InviteUserDialog } from "../invite-user-dialog";
 import { ListItem } from "../list";
 import { StatusBadge } from "../status-badge";
 import { UserProfileDialog } from "../user-profile-dialog";
@@ -30,6 +32,12 @@ import {
 } from "./users-view-shell";
 
 export function ViewUsersView({ className }: { className?: string }) {
+  const { user } = useAuth();
+  const canInviteUsers = hasPermission({
+    user,
+    permission: { users: ["invite"] },
+  });
+
   return (
     <UsersViewShell
       className={className}
@@ -38,10 +46,18 @@ export function ViewUsersView({ className }: { className?: string }) {
       <ShellHeader>
         <ShellSearchInput />
 
-        <Button onClick={() => NiceModal.show(CreateUserDialog)}>
-          <AddIcon />
-          <span>Add User</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          {canInviteUsers && (
+            <Button variant="outline" onClick={() => NiceModal.show(InviteUserDialog)}>
+              <AddIcon />
+              <span>Invite User</span>
+            </Button>
+          )}
+          <Button onClick={() => NiceModal.show(CreateUserDialog)}>
+            <AddIcon />
+            <span>Add User</span>
+          </Button>
+        </div>
       </ShellHeader>
 
       <UsersList>

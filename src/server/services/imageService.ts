@@ -29,6 +29,8 @@ export class ImageService implements IImageService {
     const port = env.MINIO_PORT ?? 9000;
     const useSSL = env.MINIO_USE_SSL ?? true;
 
+    console.log(host, port, useSSL, typeof useSSL);
+
     this.minio = new Minio.Client({
       endPoint: host,
       port,
@@ -56,6 +58,7 @@ export class ImageService implements IImageService {
       throw new NeuronError(
         "Storage bucket not available",
         NeuronErrorCodes.INTERNAL_SERVER_ERROR,
+        error,
       );
     }
   }

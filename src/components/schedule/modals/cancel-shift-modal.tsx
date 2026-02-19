@@ -3,6 +3,7 @@
 import { Button } from "@/components/primitives/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -69,9 +70,11 @@ function CancelShiftForm({
       </FieldGroup>
 
       <DialogFooter>
-        <Button size="sm" variant="outline" disabled={isSubmitting}>
-          Close
-        </Button>
+        <DialogClose asChild>
+          <Button size="sm" variant="outline" disabled={isSubmitting}>
+            Close
+          </Button>
+        </DialogClose>
         <Button
           type="submit"
           size="sm"

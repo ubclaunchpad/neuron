@@ -156,7 +156,7 @@ function PageLayoutHeader({
       ref={headerRef}
       data-slot="page-header"
       className={cn(
-        "bg-background sticky top-0 z-40 border-b transition-[border-color] shadow-bottom",
+        "bg-background sticky top-0 z-30 border-b transition-[border-color] shadow-bottom",
         (hideShadow || !isPageScrolled) && "shadow-none",
         hideBorder && "border-transparent",
         className,
@@ -245,7 +245,7 @@ function PageLayoutContent({
       data-slot="page-main"
       className={cn(
         "h-full min-h-0 overflow-y-auto",
-        "[scrollbar-gutter:stable_both-edges] [-webkit-overflow-scrolling:touch] [overscroll-behavior:contain] [touch-action:pan-y] [scroll-behavior:smooth]",
+        "[scrollbar-gutter:stable_both-edges] [-webkit-overflow-scrolling:touch] overscroll-contain [touch-action:pan-y] scroll-smooth",
         "transition-[padding-right] duration-200",
         className,
       )}
@@ -329,6 +329,5 @@ export {
   PageLayoutHeader,
   PageLayoutHeaderContent,
   PageLayoutHeaderTitle,
-  usePageLayout as usePageAside
+  usePageLayout as usePageAside,
 };
-

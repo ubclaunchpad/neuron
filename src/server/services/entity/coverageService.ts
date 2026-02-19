@@ -11,6 +11,7 @@ import {
   type ListCoverageRequestBase,
   type ListCoverageRequestWithReason,
 } from "@/models/coverage";
+import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { Role } from "@/models/interfaces";
 import type { EmbeddedShift } from "@/models/shift";
 import { buildUser } from "@/models/user";
@@ -30,7 +31,18 @@ import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import { getPagination } from "@/utils/searchUtils";
-import { and, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
+import {
+  asc,
+  desc,
+  and,
+  eq,
+  gte,
+  inArray,
+  lte,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import type { IVolunteerService } from "./volunteerService";
 import type { IShiftService } from "./shiftService";
 
@@ -100,8 +112,12 @@ export class CoverageService implements ICoverageService {
   ): Promise<
     ListResponse<ListCoverageRequestBase | ListCoverageRequestWithReason>
   > {
-    const { perPage, offset, status } = getPagination(input);
-    const isAdmin = viewerRole === Role.admin;
+    const { perPage, offset } = getPagination(input);
+    const { status, from, to, courseIds, sortOrder } = input;
+    const isAdmin = hasPermission({
+      role: viewerRole,
+      permission: { shifts: ["view-all"] },
+    });
 
     // Build WHERE conditions
     const whereConditions: SQL<unknown>[] = [];
@@ -109,6 +125,21 @@ export class CoverageService implements ICoverageService {
     // Optional status filter
     if (status) {
       whereConditions.push(eq(coverageRequest.status, status));
+    }
+
+    // Optional lower bound date filter (coerced to Date by Zod)
+    if (from) {
+      whereConditions.push(gte(shift.startAt, from as Date));
+    }
+
+    // Optional upper bound date filter (coerced to Date by Zod)
+    if (to) {
+      whereConditions.push(lte(shift.startAt, to as Date));
+    }
+
+    // Optional course filter
+    if (courseIds?.length) {
+      whereConditions.push(inArray(course.id, courseIds));
     }
 
     // Role-based visibility filter for non-admins:
@@ -169,7 +200,10 @@ export class CoverageService implements ICoverageService {
       .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
       .innerJoin(course, eq(shift.courseId, course.id))
       .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-      .orderBy(desc(shift.startAt), desc(coverageRequest.id))
+      .orderBy(
+        sortOrder === "asc" ? asc(shift.startAt) : desc(shift.startAt),
+        desc(coverageRequest.id),
+      )
       .limit(perPage)
       .offset(offset);
 

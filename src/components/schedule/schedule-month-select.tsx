@@ -54,7 +54,7 @@ export function MonthSelect({
     >
       <SelectTrigger
         className={cn(
-          "w-[180px] rounded-b-none border-none shadow-none !ring-0 outline-0",
+          "w-45 rounded-b-none border-none shadow-none ring-0! outline-0",
           "enabled:hover:bg-accent enabled:hover:text-accent-foreground cursor-pointer",
         )}
       >

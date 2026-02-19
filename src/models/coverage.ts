@@ -6,6 +6,7 @@ import { getEmbeddedVolunteer, type Volunteer } from "./volunteer";
 export type CoverageRequest = {
   id: string;
   shift: EmbeddedShift;
+  requestedAt: Date;
   status: CoverageStatus;
   category: CoverageRequestCategory;
   details: string;
@@ -23,6 +24,7 @@ export function buildCoverageRequest(
   return {
     id: coverageDB.id,
     shift,
+    requestedAt: coverageDB.requestedAt,
     status: coverageDB.status,
     category: coverageDB.category,
     details: coverageDB.details,
@@ -36,6 +38,7 @@ export function getSingleCoverageRequest(r: CoverageRequest) {
   return {
     id: r.id,
     shift: r.shift,
+    requestedAt: r.requestedAt,
     status: r.status,
     category: r.category,
     details: r.details,
@@ -51,6 +54,7 @@ export function getEmbeddedCoverageRequest(r: CoverageRequest) {
   return {
     id: r.id,
     shift: r.shift,
+    requestedAt: r.requestedAt,
     status: r.status,
     requestingVolunteer: getEmbeddedVolunteer(r.requestingVolunteer),
     coveringVolunteer: r.coveringVolunteer
@@ -64,11 +68,11 @@ export type EmbeddedCoverageRequest = ReturnType<
   typeof getEmbeddedCoverageRequest
 >;
 
-// Base list item (visible to all users who can see the request)
 export function getListCoverageRequestBase(r: CoverageRequest) {
   return {
     id: r.id,
     shift: r.shift,
+    requestedAt: r.requestedAt,
     status: r.status,
     requestingVolunteer: getEmbeddedVolunteer(r.requestingVolunteer),
     coveringVolunteer: r.coveringVolunteer
@@ -77,7 +81,6 @@ export function getListCoverageRequestBase(r: CoverageRequest) {
   } as const;
 }
 
-// Admin list item (includes reason fields: category, details, comments)
 export function getListCoverageRequestWithReason(r: CoverageRequest) {
   return {
     ...getListCoverageRequestBase(r),

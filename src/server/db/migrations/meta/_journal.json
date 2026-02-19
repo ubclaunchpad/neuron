@@ -33,8 +33,15 @@
     {
       "idx": 4,
       "version": "7",
+      "when": 1770513453605,
+      "tag": "0004_add_requested_at_to_coverage_request",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
       "when": 1770955605557,
-      "tag": "0004_lowly_the_watchers",
+      "tag": "0005_add_app_invitation_table",
       "breakpoints": true
     }
   ]

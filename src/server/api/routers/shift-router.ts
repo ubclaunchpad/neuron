@@ -17,7 +17,7 @@ export const shiftRouter = createTRPCRouter({
 
       if (
         input.userId &&
-        hasPermission({
+        !hasPermission({
           user: currentUser,
           permission: { shifts: ["view-all"] },
         })

@@ -26,7 +26,7 @@ export function DayViewHeader() {
             variant="ghost"
             onClick={() => queueMicrotask(() => calendarApi.gotoDate(curDate))}
             className={cn(
-              "flex-1 block transition-none !h-[unset] rounded-none !p-2 !pt-3 text-center border-border",
+              "flex-1 block transition-none h-[unset]! rounded-none p-2! pt-3! text-center border-border",
               isToday && "border-b-2 border-primary",
             )}
           >

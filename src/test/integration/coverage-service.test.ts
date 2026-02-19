@@ -187,6 +187,7 @@ describe("CoverageService", () => {
       const item = result.data[0]!;
       expect(item.shift).toBeDefined();
       expect(item.shift.id).toBe(shiftId);
+      expect(item.requestedAt).toBeInstanceOf(Date);
       expect(item.shift.date).toBeDefined();
       expect(item.shift.startAt).toBeInstanceOf(Date);
       expect(item.shift.endAt).toBeInstanceOf(Date);
@@ -284,6 +285,91 @@ describe("CoverageService", () => {
       );
       expect(withdrawnResult.data).toHaveLength(0);
     });
+
+    describe("sortOrder", () => {
+      let shiftIds: string[];
+
+      beforeEach(async () => {
+        // Create a class with 3 shifts on different dates
+        const multiShiftClassId = await classService.createClass({
+          termId: createdTermIds[0]!,
+          name: "Sort Test Class",
+          lowerLevel: 1,
+          upperLevel: 2,
+          category: "literacy",
+          schedules: [
+            {
+              localStartTime: Temporal.PlainTime.from("10:00:00"),
+              localEndTime: Temporal.PlainTime.from("11:00:00"),
+              volunteerUserIds: [volunteer1Id, volunteer2Id],
+              preferredVolunteerCount: 2,
+              instructorUserIds: [instructorId],
+              rule: {
+                type: "single",
+                extraDates: ["2026-07-01", "2026-07-15", "2026-08-01"],
+              },
+            },
+          ],
+        });
+        createdClassIds.push(multiShiftClassId);
+
+        await classService.publishClass(multiShiftClassId);
+
+        const shifts = await scope.db
+          .select()
+          .from(shift)
+          .where(eq(shift.courseId, multiShiftClassId));
+
+        // Sort by startAt ascending so shiftIds[0] is earliest, [2] is latest
+        shifts.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+        shiftIds = shifts.map((s) => s.id);
+
+        // Create coverage requests on each shift
+        for (const id of shiftIds) {
+          await coverageService.createCoverageRequest(volunteer1Id, {
+            shiftId: id,
+            category: "emergency",
+            details: "Need coverage",
+          });
+        }
+      });
+
+      it("should return results in ascending order when sortOrder is asc", async () => {
+        const result = await coverageService.listCoverageRequests(
+          { sortOrder: "asc" },
+          volunteer1Id,
+          Role.admin,
+        );
+
+        const resultShiftIds = result.data.map((item) => item.shift.id);
+        expect(resultShiftIds).toEqual(shiftIds);
+      });
+
+      it("should return results in descending order when sortOrder is desc", async () => {
+        const result = await coverageService.listCoverageRequests(
+          { sortOrder: "desc" },
+          volunteer1Id,
+          Role.admin,
+        );
+
+        const resultShiftIds = result.data.map((item) => item.shift.id);
+        expect(resultShiftIds).toEqual([...shiftIds].reverse());
+      });
+
+      it("should default to descending order when sortOrder is not specified", async () => {
+        const result = await coverageService.listCoverageRequests(
+          {},
+          volunteer1Id,
+          Role.admin,
+        );
+
+        const multiShiftResults = result.data.filter((item) =>
+          shiftIds.includes(item.shift.id),
+        );
+        const resultShiftIds = multiShiftResults.map((item) => item.shift.id);
+        expect(resultShiftIds).toEqual([...shiftIds].reverse());
+      });
+    });
   });
 
   describe("getCoverageRequestByIds", () => {
@@ -307,6 +393,7 @@ describe("CoverageService", () => {
       expect(request.shift.class.id).toBe(classId);
       expect(request.shift.class.name).toBe(className);
       expect(request.shift.instructors).toHaveLength(1);
+      expect(request.requestedAt).toBeInstanceOf(Date);
       expect(request.shift.date).toBeDefined();
       expect(request.shift.startAt).toBeInstanceOf(Date);
       expect(request.shift.endAt).toBeInstanceOf(Date);

@@ -1,7 +1,7 @@
 "use client";
 
-import { Role } from "@/models/interfaces";
 import { WithPermission } from "@/components/utils/with-permission";
+import { usePermission } from "@/hooks/use-permission";
 import { useAuth } from "@/providers/client-auth-provider";
 import { clientApi } from "@/trpc/client";
 
@@ -19,10 +19,12 @@ import { useVolunteerProfileSubmit } from "./volunteer/hooks/use-volunteer-profi
 export function ProfileSettingsContent() {
   const { user } = useAuth();
 
-  const isVolunteer = user?.role === Role.volunteer;
+  const hasVolunteerProfile = usePermission({
+    permission: { "volunteer-profile": ["view"] },
+  });
   const { data: volunteer } = clientApi.volunteer.byId.useQuery(
     { userId: user!.id },
-    { enabled: !!user && isVolunteer },
+    { enabled: !!user && hasVolunteerProfile },
   );
 
   const imageUrl = useImageUrl(user?.image) ?? null;
@@ -33,7 +35,7 @@ export function ProfileSettingsContent() {
   const { onSubmit: onVolunteerSubmit, isPending: isVolunteerPending } =
     useVolunteerProfileSubmit(user?.id ?? "");
 
-  if (!user || (isVolunteer && !volunteer)) {
+  if (!user || (hasVolunteerProfile && !volunteer)) {
     return (
       <div className="flex justify-center py-10">
         <Spinner />
@@ -69,7 +71,7 @@ export function ProfileSettingsContent() {
           />
         </GeneralProfileFormProvider>
 
-        {isVolunteer && (
+        {hasVolunteerProfile && (
           <VolunteerProfileFormProvider
             initial={volunteerInitial}
             onSubmit={onVolunteerSubmit}

@@ -26,10 +26,11 @@ export class ImageService implements IImageService {
     }
 
     const host = env.MINIO_HOST ?? "localhost";
-    const port = env.MINIO_PORT ?? 9000;
+    const port = env.MINIO_PORT;
     const useSSL = env.MINIO_USE_SSL ?? true;
 
     console.log(host, port, useSSL, typeof useSSL);
+    console.log(accessKey, secretKey);
 
     this.minio = new Minio.Client({
       endPoint: host,

@@ -29,6 +29,7 @@
     "test:db:push": "dotenv -e .env.test -- drizzle-kit push"
   },
   "dependencies": {
+    "@better-auth-extended/app-invite": "^0.2.2",
     "@ebay/nice-modal-react": "^1.2.13",
     "@fullcalendar/core": "^6.1.20",
     "@fullcalendar/daygrid": "^6.1.20",

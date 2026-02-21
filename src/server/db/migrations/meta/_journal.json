@@ -36,6 +36,13 @@
       "when": 1770513453605,
       "tag": "0004_add_requested_at_to_coverage_request",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1771699215279,
+      "tag": "0005_expand_availability_bitstring",
+      "breakpoints": true
     }
   ]
 }

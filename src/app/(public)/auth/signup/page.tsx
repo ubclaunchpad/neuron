@@ -1,21 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-  Field
-} from "@/components/ui/field";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/primitives/button";
+import { Field } from "@/components/ui/field";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 import { FormInputField } from "@/components/form/FormInput";
@@ -50,21 +45,39 @@ type SignupSchemaType = z.infer<typeof SignupSchema>;
 
 export default function SignupForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [invitationError, setInvitationError] = useState<string | null>(null);
-  const [isLoadingInvitation, setIsLoadingInvitation] = useState(false);
-  const [invitedEmail, setInvitedEmail] = useState<string | null>(null);
-  const [invitedRole, setInvitedRole] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const invitationId = searchParams.get("invitationId");
   const isInviteFlow = !!invitationId;
 
   const {
+    data: invitation,
+    isPending: isLoadingInvitation,
+    isError: isFailedToLoadInvite,
+  } = useQuery({
+    queryKey: ["app-invitation", invitationId],
+    queryFn: async () => {
+      const { data, error } = await authClient.getAppInvitation({
+        query: { id: invitationId! },
+      });
+      if (error || !data) {
+        throw new Error(
+          "This invitation is invalid or expired. Please request a new invitation.",
+        );
+      }
+      return data;
+    },
+    enabled: isInviteFlow,
+    retry: false,
+    meta: { suppressToast: true },
+  });
+
+  const {
     handleSubmit,
     setError,
     setValue,
     control,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(SignupSchema),
     mode: "onSubmit",
@@ -74,130 +87,99 @@ export default function SignupForm() {
       lastName: "",
       email: "",
       password: "",
-      confirmPassword: ""
-    }
+      confirmPassword: "",
+    },
   });
 
   useEffect(() => {
-    let mounted = true;
+    if (invitation?.email) {
+      setValue("email", invitation.email, { shouldValidate: true });
+    }
+  }, [invitation, setValue]);
 
-    const loadInvitation = async () => {
-      if (!invitationId) {
-        if (!mounted) return;
-        setInvitationError(null);
-        setInvitedEmail(null);
-        setInvitedRole(null);
-        return;
-      }
+  const { mutateAsync: acceptInviteMutation, isPending: isAcceptingInvite } =
+    useMutation({
+      mutationFn: async (payload: {
+        invitationId: string;
+        name: string;
+        password: string;
+        lastName: string;
+      }) => {
+        const { error } = await authClient.acceptInvitation({
+          invitationId: payload.invitationId,
+          name: payload.name,
+          password: payload.password,
+          additionalFields: {
+            lastName: payload.lastName,
+          },
+        });
 
-      setIsLoadingInvitation(true);
-      const { data, error } = await authClient.getAppInvitation({
-        query: { id: invitationId },
-      });
-
-      if (!mounted) return;
-
-      if (error || !data) {
-        setInvitationError(
-          "This invitation is invalid or expired. Please request a new invitation.",
+        if (error) {
+          throw new Error(getBetterAuthErrorMessage(error?.code));
+        }
+      },
+      onSuccess: () => {
+        setSuccessMessage(
+          "Your invitation has been accepted. You can now log in with your new account.",
         );
-        setInvitedEmail(null);
-        setInvitedRole(null);
-        setIsLoadingInvitation(false);
-        return;
-      }
-
-      setInvitationError(null);
-      setInvitedEmail(data.email ?? null);
-
-      const roleFromInvitation =
-        typeof (data as { additionalFields?: { role?: unknown } }).additionalFields
-          ?.role === "string"
-          ? (data as { additionalFields?: { role?: string } }).additionalFields?.role
-          : null;
-      setInvitedRole(roleFromInvitation ?? null);
-
-      if (data.email) {
-        setValue("email", data.email, { shouldValidate: true });
-      }
-
-      setIsLoadingInvitation(false);
-    };
-
-    void loadInvitation();
-
-    return () => {
-      mounted = false;
-    };
-  }, [invitationId, setValue]);
-
-  const inviteRoleLabel = useMemo(() => {
-    if (invitedRole === "admin") return "admin";
-    if (invitedRole === "instructor") return "instructor";
-    return null;
-  }, [invitedRole]);
-
-  const onSubmit = async (data: SignupSchemaType) => {
-    if (invitationId) {
-      if (invitationError) {
+      },
+      onError: (error) => {
         setError("root", {
           type: "custom",
-          message: invitationError,
+          message: error.message,
         });
-        return;
-      }
+      },
+    });
 
-      if (invitedEmail && invitedEmail.toLowerCase() !== data.email.toLowerCase()) {
-        setError("email", {
-          type: "custom",
-          message: "This invitation is for a different email address.",
-        });
-        return;
-      }
-
-      const { error } = await authClient.acceptInvitation({
-        invitationId,
-        name: `${data.firstName} ${data.lastName}`.trim(),
-        email: data.email,
-        password: data.password,
-        additionalFields: {
-          lastName: data.lastName,
-        },
+  const { mutateAsync: signUpMutation, isPending: isSigningUp } = useMutation({
+    mutationFn: async (payload: {
+      name: string;
+      lastName: string;
+      email: string;
+      password: string;
+    }) => {
+      const { error } = await authClient.signUp.email({
+        name: payload.name,
+        lastName: payload.lastName,
+        email: payload.email,
+        password: payload.password,
       });
 
       if (error) {
-        setError("root", {
-          type: "custom",
-          message: getBetterAuthErrorMessage(error?.code),
-        });
-        return;
+        throw new Error(getBetterAuthErrorMessage(error?.code));
       }
-
+    },
+    onSuccess: () => {
       setSuccessMessage(
-        "Your invitation has been accepted. You can now log in with your new account.",
+        "Your account has been successfully created! Please check your email to verify your account.",
       );
-      setTimeout(() => router.replace("/auth/login"), 3000);
-      return;
-    }
-
-    const { error } = await authClient.signUp.email({
-      name: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      password: data.password,
-    });
-
-    if (error) {
+    },
+    onError: (error) => {
       setError("root", {
         type: "custom",
-        message: getBetterAuthErrorMessage(error?.code),
+        message: error.message,
       });
-      return;
-    }
+    },
+  });
 
-    setSuccessMessage(
-      "Your account has been successfully created! Please check your email to verify your account.",
-    );
+  const isCreatingAccount = isAcceptingInvite || isSigningUp;
+
+  const onSubmit = async (data: SignupSchemaType) => {
+    if (isInviteFlow) {
+      await acceptInviteMutation({
+        invitationId,
+        name: data.firstName,
+        lastName: data.lastName,
+        password: data.password,
+      });
+    } else {
+      await signUpMutation({
+        name: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+      });
+    }
 
     // Redirect to login page after 5 seconds on success
     setTimeout(() => router.replace("/auth/login"), 5000);
@@ -217,7 +199,7 @@ export default function SignupForm() {
       {errors.root?.message && (
         <Alert variant="destructive" role="alert" aria-live="assertive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Couldn’t create account</AlertTitle>
+          <AlertTitle>Couldn't create account</AlertTitle>
           <AlertDescription>{errors.root.message}</AlertDescription>
         </Alert>
       )}
@@ -231,9 +213,9 @@ export default function SignupForm() {
         </Alert>
       )}
 
-      {isInviteFlow && isLoadingInvitation && (
+      {isLoadingInvitation && (
         <Alert role="status" aria-live="polite">
-          <AlertCircle className="h-4 w-4" />
+          <Spinner />
           <AlertTitle>Loading invitation...</AlertTitle>
           <AlertDescription>
             Verifying your invitation details.
@@ -241,23 +223,13 @@ export default function SignupForm() {
         </Alert>
       )}
 
-      {isInviteFlow && !isLoadingInvitation && !invitationError && (
+      {isInviteFlow && !!invitation && (
         <Alert role="status" aria-live="polite">
-          <CheckCircle2 className="h-4 w-4" />
+          <CheckCircle2 />
           <AlertTitle>Invitation found</AlertTitle>
           <AlertDescription>
-            {inviteRoleLabel
-              ? `You were invited as an ${inviteRoleLabel}. Complete the form to continue.`
-              : "Complete the form to accept your invitation."}
+            Complete the form to accept your invitation.
           </AlertDescription>
-        </Alert>
-      )}
-
-      {invitationError && (
-        <Alert variant="destructive" role="alert" aria-live="assertive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Invalid invitation</AlertTitle>
-          <AlertDescription>{invitationError}</AlertDescription>
         </Alert>
       )}
 
@@ -286,7 +258,7 @@ export default function SignupForm() {
           name="email"
           placeholder="john.doe@example.com"
           label="Email"
-          readOnly={!!invitedEmail}
+          readOnly={isInviteFlow}
           className="gap-1"
         />
 
@@ -315,16 +287,13 @@ export default function SignupForm() {
         <Field orientation="horizontal">
           <Button
             type="submit"
-            disabled={isSubmitting || isLoadingInvitation || !!invitationError}
+            pending={isCreatingAccount}
+            disabled={
+              isInviteFlow && (isLoadingInvitation || isFailedToLoadInvite)
+            }
             className="w-full"
           >
-            {isSubmitting ? (
-              <>
-                <Spinner /> Creating...
-              </>
-            ) : (
-              "Create an Account"
-            )}
+            {isInviteFlow ? "Accept Invitation" : "Create an Account"}
           </Button>
         </Field>
 

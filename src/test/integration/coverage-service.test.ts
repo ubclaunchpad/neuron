@@ -586,4 +586,59 @@ describe("CoverageService", () => {
       ).rejects.toThrow();
     });
   });
+
+  describe("term published visibility", () => {
+    it("admin should see coverage requests in unpublished terms", async () => {
+      // The term created in beforeEach is unpublished by default
+      await coverageService.createCoverageRequest(volunteer1Id, {
+        shiftId,
+        category: "emergency",
+        details: "Need coverage",
+      });
+
+      const result = await coverageService.listCoverageRequests(
+        {},
+        "admin-1",
+        Role.admin,
+      );
+      expect(result.data.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("volunteer should not see coverage requests in unpublished terms", async () => {
+      await coverageService.createCoverageRequest(volunteer1Id, {
+        shiftId,
+        category: "emergency",
+        details: "Need coverage",
+      });
+
+      const result = await coverageService.listCoverageRequests(
+        {},
+        volunteer1Id,
+        Role.volunteer,
+      );
+      expect(result.data).toHaveLength(0);
+    });
+
+    it("volunteer should see coverage requests in published terms", async () => {
+      // Publish the term that was created in beforeEach
+      const terms = await termService.getAllTerms();
+      const testTerm = terms.find((t) => createdTermIds.includes(t.id));
+      if (testTerm) {
+        await termService.publishTerm(testTerm.id);
+      }
+
+      await coverageService.createCoverageRequest(volunteer1Id, {
+        shiftId,
+        category: "emergency",
+        details: "Need coverage",
+      });
+
+      const result = await coverageService.listCoverageRequests(
+        {},
+        volunteer1Id,
+        Role.volunteer,
+      );
+      expect(result.data.length).toBeGreaterThanOrEqual(1);
+    });
+  });
 });

@@ -4,13 +4,13 @@ import {
   type Holiday,
   type UpdatedHoliday,
 } from "@/models/api/term";
+import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { buildTerm, type Term } from "@/models/term";
 import { type Drizzle, type Transaction } from "@/server/db";
 import { blackout, term } from "@/server/db/schema/course";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { and, desc, eq, gte, inArray, lte } from "drizzle-orm";
-// import { P } from "node_modules/better-auth/dist/shared/better-auth.jwa4Tx7v";
-// import { text } from "stream/consumers";
+import type { ICurrentSessionService } from "@/server/services/currentSessionService";
+import { and, desc, eq, gte, inArray, lte, type SQL } from "drizzle-orm";
 
 export interface ITermService {
   getCurrentTerm(nowDate?: string): Promise<Term | undefined>;
@@ -20,21 +20,51 @@ export interface ITermService {
   createTerm(input: CreateTermInput): Promise<string>;
   updateTerm(input: UpdateTermInput): Promise<string>;
   deleteTerm(id: string): Promise<void>;
+  publishTerm(id: string): Promise<void>;
+  unpublishTerm(id: string): Promise<void>;
 }
 
 export class TermService implements ITermService {
   private readonly db: Drizzle;
+  private readonly currentSessionService: ICurrentSessionService;
 
-  constructor({ db }: { db: Drizzle }) {
+  constructor({
+    db,
+    currentSessionService,
+  }: {
+    db: Drizzle;
+    currentSessionService: ICurrentSessionService;
+  }) {
     this.db = db;
+    this.currentSessionService = currentSessionService;
+  }
+
+  private canSeeUnpublished(): boolean {
+    const user = this.currentSessionService.getUser();
+    if (!user) return false;
+    return hasPermission({
+      user,
+      permission: { terms: ["view-unpublished"] },
+    });
+  }
+
+  private publishedFilter(): SQL<unknown> | undefined {
+    if (this.canSeeUnpublished()) return undefined;
+    return eq(term.published, true);
   }
 
   async getCurrentTerm(
     nowDate: string = new Date().toISOString(),
   ): Promise<Term | undefined> {
+    const publishedCondition = this.publishedFilter();
+
     // Active term if one contains today
     const active = await this.db.query.term.findFirst({
-      where: and(lte(term.startDate, nowDate), gte(term.endDate, nowDate)),
+      where: and(
+        lte(term.startDate, nowDate),
+        gte(term.endDate, nowDate),
+        publishedCondition,
+      ),
       with: { blackouts: true },
       orderBy: [desc(term.startDate)],
     });
@@ -42,12 +72,13 @@ export class TermService implements ITermService {
 
     // Most recent past term
     const past = await this.db.query.term.findFirst({
-      where: lte(term.endDate, nowDate),
+      where: and(lte(term.endDate, nowDate), publishedCondition),
       orderBy: [desc(term.endDate)],
     });
     if (past) return buildTerm(past);
 
     const future = await this.db.query.term.findFirst({
+      where: publishedCondition,
       with: { blackouts: true },
       orderBy: [term.startDate],
     });
@@ -57,14 +88,18 @@ export class TermService implements ITermService {
   }
 
   async getAllTerms(): Promise<Term[]> {
-    const term = await this.db.query.term.findMany({
+    const terms = await this.db.query.term.findMany({
+      where: this.publishedFilter(),
       with: { blackouts: true },
     });
-    return term.map((d) => buildTerm(d));
+    return terms.map((d) => buildTerm(d));
   }
 
   async getTerms(ids: string[]): Promise<Term[]> {
-    const data = await this.db.select().from(term).where(inArray(term.id, ids));
+    const data = await this.db
+      .select()
+      .from(term)
+      .where(and(inArray(term.id, ids), this.publishedFilter()));
 
     if (data.length !== ids.length) {
       const firstMissing = ids.find((id) => !data.some((d) => d.id === id));
@@ -79,13 +114,13 @@ export class TermService implements ITermService {
 
   async getTerm(id: string): Promise<Term> {
     const termData = await this.db.query.term.findFirst({
-      where: eq(term.id, id),
+      where: and(eq(term.id, id), this.publishedFilter()),
       with: { blackouts: true },
     });
 
     if (!termData)
       throw new NeuronError(
-        "Could not find Term with id ${id}",
+        `Could not find Term with id ${id}`,
         NeuronErrorCodes.NOT_FOUND,
       );
 
@@ -157,6 +192,34 @@ export class TermService implements ITermService {
 
       return id;
     });
+  }
+
+  async publishTerm(id: string): Promise<void> {
+    const updated = await this.db
+      .update(term)
+      .set({ published: true })
+      .where(eq(term.id, id))
+      .returning({ id: term.id });
+
+    if (updated.length === 0)
+      throw new NeuronError(
+        `Could not find Term with id ${id}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+  }
+
+  async unpublishTerm(id: string): Promise<void> {
+    const updated = await this.db
+      .update(term)
+      .set({ published: false })
+      .where(eq(term.id, id))
+      .returning({ id: term.id });
+
+    if (updated.length === 0)
+      throw new NeuronError(
+        `Could not find Term with id ${id}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
   }
 
   async deleteTerm(id: string): Promise<void> {

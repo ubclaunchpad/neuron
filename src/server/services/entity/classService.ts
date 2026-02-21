@@ -3,6 +3,7 @@ import { and, eq, inArray, sql, SQL } from "drizzle-orm";
 import { RRuleTemporal } from "rrule-temporal";
 
 import { NEURON_TIMEZONE } from "@/lib/constants";
+import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { Role } from "@/models/interfaces";
 import type {
   ClassRequest,
@@ -21,6 +22,7 @@ import type { Term } from "@/models/term";
 import { type Drizzle, type Transaction } from "@/server/db";
 import {
   course,
+  term,
   instructorToSchedule,
   schedule,
   user,
@@ -28,6 +30,7 @@ import {
 } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
+import type { ICurrentSessionService } from "@/server/services/currentSessionService";
 import type { IImageService } from "../imageService";
 import type { IShiftService } from "./shiftService";
 import type { ITermService } from "./termService";
@@ -57,6 +60,7 @@ export interface IClassService {
 
 export class ClassService implements IClassService {
   private readonly db: Drizzle;
+  private readonly currentSessionService: ICurrentSessionService;
   private readonly userService: IUserService;
   private readonly volunteerService: IVolunteerService;
   private readonly termService: ITermService;
@@ -65,6 +69,7 @@ export class ClassService implements IClassService {
 
   constructor({
     db,
+    currentSessionService,
     userService,
     volunteerService,
     termService,
@@ -72,6 +77,7 @@ export class ClassService implements IClassService {
     imageService,
   }: {
     db: Drizzle;
+    currentSessionService: ICurrentSessionService;
     userService: IUserService;
     volunteerService: IVolunteerService;
     termService: ITermService;
@@ -79,6 +85,7 @@ export class ClassService implements IClassService {
     imageService: IImageService;
   }) {
     this.db = db;
+    this.currentSessionService = currentSessionService;
     this.userService = userService;
     this.volunteerService = volunteerService;
     this.termService = termService;
@@ -86,11 +93,28 @@ export class ClassService implements IClassService {
     this.imageService = imageService;
   }
 
+  private canSeeUnpublishedTerms(): boolean {
+    const user = this.currentSessionService.getUser();
+    if (!user) return false;
+    return hasPermission({
+      user,
+      permission: { terms: ["view-unpublished"] },
+    });
+  }
+
   async getClassesForSelect(): Promise<{ id: string; name: string }[]> {
-    return this.db
+    const query = this.db
       .select({ id: course.id, name: course.name })
-      .from(course)
-      .orderBy(course.name);
+      .from(course);
+
+    if (!this.canSeeUnpublishedTerms()) {
+      return query
+        .innerJoin(term, eq(course.termId, term.id))
+        .where(eq(term.published, true))
+        .orderBy(course.name);
+    }
+
+    return query.orderBy(course.name);
   }
 
   async getClassesForRequest(
@@ -126,8 +150,15 @@ export class ClassService implements IClassService {
   }
 
   async getClasses(ids: string[]): Promise<Class[]> {
+    const whereConditions: SQL<unknown>[] = [inArray(course.id, ids)];
+    if (!this.canSeeUnpublishedTerms()) {
+      whereConditions.push(
+        sql`${course.termId} IN (SELECT ${term.id} FROM ${term} WHERE ${term.published} = true)`,
+      );
+    }
+
     const classes = await this.retrieveFullClasses({
-      where: inArray(course.id, ids),
+      where: and(...whereConditions)!,
     });
 
     if (classes.length !== ids.length) {
@@ -142,8 +173,15 @@ export class ClassService implements IClassService {
   }
 
   async getClass(id: string): Promise<Class> {
+    const whereConditions: SQL<unknown>[] = [eq(course.id, id)];
+    if (!this.canSeeUnpublishedTerms()) {
+      whereConditions.push(
+        sql`${course.termId} IN (SELECT ${term.id} FROM ${term} WHERE ${term.published} = true)`,
+      );
+    }
+
     const classes = await this.retrieveFullClasses({
-      where: eq(course.id, id),
+      where: and(...whereConditions)!,
     });
 
     if (classes.length !== 1) {

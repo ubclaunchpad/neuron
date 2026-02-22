@@ -13,6 +13,25 @@ import { clientApi } from "@/trpc/client";
 import { buildFilterInput } from "@/components/coverage/filters/utils";
 import { useCoverageFilterParams } from "@/components/coverage/filters/hooks/use-coverage-filter-params";
 import { groupCoverageItemsByDay } from "./utils";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const skeletonDayGroup = (numItems: number) => {
+  const items = Array.from({ length: numItems }, (_, i) => (
+    <Skeleton key={i} className="w-full h-22" />
+  ));
+
+  return (
+    <section className="space-y-3">
+      <div className="pt-3 pb-2">
+        <Skeleton className="h-6 w-31" />
+      </div>
+      <div className="flex flex-col gap-3 px-5">
+        {items}
+      </div>
+    </section>
+  );
+};
+
 
 export function CoverageListView() {
   const { setSortedItems } = useCoveragePage();
@@ -53,7 +72,14 @@ export function CoverageListView() {
   return (
     <ScrollArea onScroll={handleScroll} className="w-full h-full">
       <div className="px-10 py-4 space-y-4">
-        {isLoading && <ListLoadingState />}
+        
+      {isLoading && (
+        <>
+          {skeletonDayGroup(1)}
+          {skeletonDayGroup(2)}
+          {skeletonDayGroup(3)}
+        </>
+      )}
 
         {isEmpty && (
           <ListStateWrapper>No coverage requests found.</ListStateWrapper>

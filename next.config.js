@@ -7,6 +7,9 @@ import "./src/env.js";
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   output: "standalone",
+  outputFileTracingIncludes: {
+    "/server.js": ["./src/server/db/migrations/**"],
+  },
 
   webpack(config, { isServer, dev }) {
     const fileLoaderRule = config.module.rules.find((rule) =>

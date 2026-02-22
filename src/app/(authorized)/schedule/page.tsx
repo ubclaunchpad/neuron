@@ -18,6 +18,7 @@ import { SchedulePageProvider } from "../../../components/schedule/schedule-page
 import { ShiftDetailsAside } from "../../../components/schedule/shift-details-aside";
 import { ScheduleCalendarView } from "./schedule-calendar-view";
 import { ScheduleListView } from "./schedule-list-view";
+import { skeletonAside } from "@/components/ui/skeleton";
 
 export type ScheduleView = "list" | "week";
 
@@ -57,7 +58,7 @@ export default function SchedulePage() {
           </PageLayoutHeader>
 
           <PageLayoutAside>
-            <Suspense fallback={<>Loading shift...</>}>
+            <Suspense fallback={skeletonAside()}>
               <ShiftDetailsAside />
             </Suspense>
           </PageLayoutAside>

@@ -29,6 +29,8 @@ import {
   usePageAside,
 } from "@/components/page-layout";
 import { ClassList } from "./content/class-list";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@radix-ui/react-separator";
 
 export type ClassesPageContextValue = {
   selectedTermId: string | null;
@@ -50,6 +52,30 @@ export function useClassesPage() {
     throw new Error("useClassesPage must be used within the ClassesPage");
   return ctx;
 }
+
+const classListSkeleton = () => {
+  const SkeletonGroup = () => (
+    <>
+      <Skeleton className="w-40 h-7 pt-4 pb-2" />
+      <div className="flex flex-col px-5 mb-4">
+        <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(180px,258px))] justify-stretch">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="w-64 h-85" />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <>
+      <Skeleton className="w-full h-10 mb-6" />
+      {[1, 2].map((i) => (
+        <SkeletonGroup key={i} />
+      ))}
+    </>
+  );
+};
 
 export function ClassListView() {
   const { setOpen } = usePageAside();
@@ -184,7 +210,7 @@ export function ClassListView() {
         <div className="flex flex-col gap-6 p-9">
           <Loader
             isLoading={isLoadingContent}
-            fallback={<div>Loading classes...</div>}
+            fallback={classListSkeleton()}
           >
             {!classListData?.classes?.length ? (
               <ClassesEmptyView />

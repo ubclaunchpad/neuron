@@ -18,6 +18,7 @@ import {
   ListStateWrapper,
 } from "../list";
 import { SearchInput } from "../search-input";
+import { skeletonList } from "@/components/ui/skeleton";
 
 type UsersViewShellContextValue = {
   query: string;
@@ -173,7 +174,12 @@ export function UsersList({
       <div className="pb-10">
         {!isReloading && <ListBody items={users} children={children} />}
 
-        {isLoading && <ListLoadingState />}
+        {/* {isLoading && <ListLoadingState />} */}
+        {isLoading && skeletonList({
+          numItems: 9,
+          containerClassName: "flex flex-col gap-3",
+          itemClassName: "h-19 w-full",
+        })}
 
         {showNoMoreResults && (
           <ListStateWrapper className="text-muted-foreground">

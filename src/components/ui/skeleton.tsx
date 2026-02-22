@@ -12,6 +12,24 @@ function Skeleton({
   )
 }
 
+function skeletonList({
+  numItems,
+  containerClassName,
+  itemClassName,
+}: {
+  numItems: number;
+  containerClassName: string;
+  itemClassName: string;
+}) {
+  return (
+    <div className={containerClassName}>
+      {Array.from({ length: numItems }, (_, itemIndex) => (
+        <Skeleton key={itemIndex} className={itemClassName} />
+      ))}
+    </div>
+  );
+}
+
 function skeletonListGroup({
   numGroups = 3,
   containerClassName,
@@ -31,18 +49,17 @@ function skeletonListGroup({
     <>
       {Array.from({ length: numGroups }, (_, groupIndex) => {
         const numItems = groupIndex + 1;
-        const items = Array.from({ length: numItems }, (_, itemIndex) => (
-          <Skeleton key={itemIndex} className={itemClassName} />
-        ));
 
         return (
           <section key={groupIndex} className={containerClassName}>
             <div className={titleContainerClassName}>
               <Skeleton className={titleClassName} />
             </div>
-            <div className={itemContainerClassName}>
-              {items}
-            </div>
+            {skeletonList({
+              numItems,
+              containerClassName: itemContainerClassName,
+              itemClassName,
+            })}
           </section>
         );
       })}
@@ -51,4 +68,4 @@ function skeletonListGroup({
 }
 
 
-export { Skeleton, skeletonListGroup }
+export { Skeleton, skeletonList, skeletonListGroup }

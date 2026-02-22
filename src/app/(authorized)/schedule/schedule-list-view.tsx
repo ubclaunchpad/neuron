@@ -16,6 +16,7 @@ import {
 } from "date-fns";
 import { useMemo } from "react";
 import { useSchedulePage } from "../../../components/schedule/schedule-page-context";
+import { skeletonListGroup } from "@/components/ui/skeleton";
 
 type StatusFilter = "all" | "mine" | "requested" | "needs";
 
@@ -72,7 +73,18 @@ export function ScheduleListView({ className }: { className?: string }) {
     <div className="w-full px-10">
       <div className={cn("mx-auto max-w-3xl py-4", className)}>
         <div className="space-y-4 pb-18">
-          {query.isLoading && <ListLoadingState />}
+
+          {query.isLoading && (
+            <>
+              {skeletonListGroup({
+                containerClassName: "space-y-3",
+                titleContainerClassName: "pt-3 pb-2",
+                titleClassName: "h-6 w-31",
+                itemContainerClassName: "flex flex-col gap-3 px-5",
+                itemClassName: "w-182 h-16",
+              })}
+            </>
+          )}
 
           {!query.isLoading && dayGroups.length === 0 && (
             <ListStateWrapper>No shifts found.</ListStateWrapper>

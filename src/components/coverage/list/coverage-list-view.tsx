@@ -13,25 +13,7 @@ import { clientApi } from "@/trpc/client";
 import { buildFilterInput } from "@/components/coverage/filters/utils";
 import { useCoverageFilterParams } from "@/components/coverage/filters/hooks/use-coverage-filter-params";
 import { groupCoverageItemsByDay } from "./utils";
-import { Skeleton } from "@/components/ui/skeleton";
-
-const skeletonDayGroup = (numItems: number) => {
-  const items = Array.from({ length: numItems }, (_, i) => (
-    <Skeleton key={i} className="w-full h-22" />
-  ));
-
-  return (
-    <section className="space-y-3">
-      <div className="pt-3 pb-2">
-        <Skeleton className="h-6 w-31" />
-      </div>
-      <div className="flex flex-col gap-3 px-5">
-        {items}
-      </div>
-    </section>
-  );
-};
-
+import { skeletonListGroup } from "@/components/ui/skeleton";
 
 export function CoverageListView() {
   const { setSortedItems } = useCoveragePage();
@@ -75,9 +57,13 @@ export function CoverageListView() {
         
       {isLoading && (
         <>
-          {skeletonDayGroup(1)}
-          {skeletonDayGroup(2)}
-          {skeletonDayGroup(3)}
+          {skeletonListGroup({
+            containerClassName: "space-y-3",
+            titleContainerClassName: "pt-3 pb-2",
+            titleClassName: "h-6 w-31",
+            itemContainerClassName: "flex flex-col gap-3 px-5",
+            itemClassName: "w-full h-22",
+          })}
         </>
       )}
 

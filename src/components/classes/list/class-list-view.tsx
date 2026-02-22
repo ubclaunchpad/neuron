@@ -29,8 +29,7 @@ import {
   usePageAside,
 } from "@/components/page-layout";
 import { ClassList } from "./content/class-list";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@radix-ui/react-separator";
+import { Skeleton, userListSkeleton } from "@/components/ui/skeleton";
 
 export type ClassesPageContextValue = {
   selectedTermId: string | null;
@@ -76,6 +75,50 @@ const classListSkeleton = () => {
     </>
   );
 };
+
+const classDetailsAsideSkeleton = () => {
+  return (
+    <>
+      <div className="pt-17 pb-5 pl-5 pr-9">
+        {/* Title, subtitle */}
+        <div className="pb-5">
+          <Skeleton className="w-2/5 h-8 mb-2" />
+          <Skeleton className="w-3/5 h-6 mb-2" />
+        </div>
+
+        {/* Description */}
+        <div className="pt-4">
+          <Skeleton className="w-1/4 h-6 mb-2" />
+          <div className="pt-4">
+            <Skeleton className="w-full h-5 mb-2" />
+            <Skeleton className="w-full h-5 mb-2" />
+            <Skeleton className="w-full h-5 mb-2" />
+            <Skeleton className="w-3/4 h-5 mb-2" />
+          </div>
+        </div>
+
+        {/* Schedule group */}
+        <div className="pt-10">
+          <Skeleton className="w-3/5 h-8 mb-2" />
+          <div className="grid grid-cols-2 gap-4">
+            <Skeleton className="w-1/2 h-5 mb-2" />
+            <Skeleton className="w-3/4 h-5 mb-2" />
+
+            <div></div>
+            {userListSkeleton({ count: 3 })}
+          </div>
+        </div>
+
+        {/* Button group */}
+        <div className="flex gap-2 pt-10">
+          <Skeleton className="w-24 h-10" />
+          <Skeleton className="w-24 h-10" />
+          <Skeleton className="w-24 h-10" />
+        </div>
+      </div>
+    </>
+  );
+}
 
 export function ClassListView() {
   const { setOpen } = usePageAside();
@@ -201,7 +244,7 @@ export function ClassListView() {
       </PageLayoutHeader>
 
       <PageLayoutAside>
-        <Suspense fallback={<div>Loading class...</div>}>
+        <Suspense fallback={classDetailsAsideSkeleton()}>
           <ClassDetailsAside />
         </Suspense>
       </PageLayoutAside>

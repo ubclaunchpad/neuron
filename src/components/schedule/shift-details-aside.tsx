@@ -53,7 +53,7 @@ export function ShiftDetailsAside() {
   }, [selectedShiftId, closeAside]);
 
   if (isLoadingShift || !shift) {
-    return;
+    return <></>;
   }
 
   const startAt =

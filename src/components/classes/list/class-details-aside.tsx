@@ -75,7 +75,7 @@ export function ClassDetailsAside() {
   }, [classData?.schedules]);
 
   if (isLoadingClassData || !classData) {
-    return <>Loading class...</>;
+    return <></>;
   }
 
   return (

@@ -351,7 +351,7 @@ function FilterBarTrigger({ className }: { className?: string }) {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[180px] p-1"
+        className="w-45 p-1"
         align="start"
         onCloseAutoFocus={(event) => event.preventDefault()}
       >
@@ -513,7 +513,7 @@ function FilterBarMultiSelect({
             <ChevronDown className="opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[220px] p-0" align="start">
+        <PopoverContent className="w-55 p-0" align="start">
           <Command shouldFilter={false}>
             {searchable && (
               <CommandInput
@@ -695,7 +695,7 @@ function FilterBarAdd({ className }: { className?: string }) {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[180px] p-1"
+        className="w-45 p-1"
         align="start"
         onCloseAutoFocus={(event) => event.preventDefault()}
       >

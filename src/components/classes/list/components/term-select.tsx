@@ -50,7 +50,7 @@ export function TermSelect({
         onValueChange={setSelectedTermId}
         disabled={isDisabled}
       >
-        <SelectTrigger className={"min-w-[180px] w-auto"}>
+        <SelectTrigger className={"min-w-45 w-auto"}>
           <SelectValue placeholder="Select term" />
         </SelectTrigger>
         <SelectContent>

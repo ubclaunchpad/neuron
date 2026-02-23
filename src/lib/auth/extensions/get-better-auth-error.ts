@@ -76,6 +76,24 @@ const errorMessages: ErrorMessages = {
   VALIDATION_ERROR:
     "There was a validation error. Please check your input and try again.",
   MISSING_FIELD: "A required field is missing. Please fill in all fields.",
+  APP_INVITATION_NOT_FOUND:
+    "This invitation is invalid or expired. Please request a new invitation.",
+  USER_WAS_ALREADY_INVITED_TO_THIS_APPLICATION:
+    "This email already has an active invitation.",
+  USER_IS_ALREADY_A_MEMBER_OF_THIS_APPLICATION:
+    "This user is already a member of the application.",
+  YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_APPLICATION:
+    "You are not allowed to invite users.",
+  INVITER_IS_NO_LONGER_A_MEMBER_OF_THIS_APPLICATION:
+    "The inviter is no longer active. Please request a new invitation.",
+  YOU_ARE_NOT_ALLOWED_TO_CANCEL_THIS_APP_INVITATION:
+    "You are not allowed to cancel this invitation.",
+  THIS_APP_INVITATION_CANT_BE_REJECTED:
+    "This invitation can no longer be rejected.",
+  EMAIL_DOMAIN_IS_NOT_IN_WHITELIST:
+    "This email domain is not allowed for this invitation.",
+  ADMIN_PLUGIN_IS_NOT_SET_UP:
+    "Invitation permissions are not configured correctly. Please contact support.",
 };
 
 export function getBetterAuthErrorMessage(code: ErrorCode | undefined): string {

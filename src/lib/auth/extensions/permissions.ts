@@ -17,7 +17,7 @@ const accessControl = createAccessControl({
   coverage: ["view", "request", "fill"],
   profile: ["view", "update"],
   "volunteer-profile": ["view", "update"],
-  users: ["view", "create", "update", "activate", "deactivate"],
+  users: ["view", "create", "update", "activate", "deactivate", "invite"],
   logs: ["view"],
 } as const);
 
@@ -26,7 +26,7 @@ const admin = accessControl.newRole({
   terms: ["view", "create", "delete"],
   shifts: ["view", "view-all", "cancel", "override-check-in"],
   coverage: ["view"],
-  users: ["view", "create", "update", "activate", "deactivate"],
+  users: ["view", "create", "update", "activate", "deactivate", "invite"],
   logs: ["view"],
   profile: ["view", "update"],
 });

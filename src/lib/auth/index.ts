@@ -6,11 +6,17 @@ import {
 } from "@/models/interfaces";
 import { createRequestScope } from "@/server/api/di-container";
 import { db } from "@/server/db";
-import { account, session, verification } from "@/server/db/schema/auth";
+import {
+  account,
+  appInvitation,
+  session,
+  verification,
+} from "@/server/db/schema/auth";
 import { user, volunteer } from "@/server/db/schema/user";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { appInvitePlugin } from "@/lib/auth/extensions/app-invite/server-plugin";
 
 export const auth = betterAuth({
   user: {
@@ -35,6 +41,7 @@ export const auth = betterAuth({
       session,
       account,
       verification,
+      appInvitation,
     },
   }),
   advanced: {
@@ -85,7 +92,7 @@ export const auth = betterAuth({
       );
     },
   },
-  plugins: [nextCookies()],
+  plugins: [nextCookies(), appInvitePlugin],
 } satisfies BetterAuthOptions);
 
 export type Session = typeof auth.$Infer.Session;

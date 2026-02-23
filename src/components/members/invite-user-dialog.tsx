@@ -14,45 +14,58 @@ import {
 } from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
 import { SelectItem } from "@/components/ui/select";
-import { CreateUserInput } from "@/models/api/user";
+import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
+import { authClient } from "@/lib/auth/client";
 import { Role, RoleEnum } from "@/models/interfaces";
-import { clientApi } from "@/trpc/client";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
-type CreateUserSchemaType = z.infer<typeof CreateUserInput>;
+const InviteUserSchema = z.object({
+  email: z.email("Please enter a valid email address."),
+  role: z.enum([Role.admin, Role.instructor]),
+});
 
-export const CreateUserDialog = NiceModal.create(() => {
+type InviteUserSchemaType = z.infer<typeof InviteUserSchema>;
+
+export const InviteUserDialog = NiceModal.create(() => {
   const modal = useModal();
-  const apiUtils = clientApi.useUtils();
-
   const form = useForm({
-    resolver: zodResolver(CreateUserInput),
+    resolver: zodResolver(InviteUserSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
     defaultValues: {
-      role: "" as Role,
-      name: "",
-      lastName: "",
       email: "",
+      role: "" as Exclude<Role, "volunteer">,
     },
   });
 
-  const { mutate: createUserMutation, isPending: isCreating } =
-    clientApi.user.create.useMutation({
-      onSuccess: async () => {
-        await apiUtils.user.list.invalidate();
-        toast.success("User created successfully");
+  const { mutateAsync: inviteUserMutation, isPending: isInvitingUser } =
+    useMutation({
+      mutationFn: async (data: InviteUserSchemaType) => {
+        const { error } = await authClient.inviteUser({
+          type: "personal",
+          email: data.email,
+          additionalFields: {
+            role: data.role,
+          },
+        });
+
+        if (error) {
+          throw new Error(getBetterAuthErrorMessage(error.code));
+        }
+      },
+      onSuccess: (_, data) => {
+        toast.success(`Invitation sent to ${data.email}`);
         modal.hide();
-        form.reset();
       },
     });
 
-  const onSubmit = (data: CreateUserSchemaType) => {
-    createUserMutation(data);
+  const onSubmit = async (data: InviteUserSchemaType) => {
+    await inviteUserMutation(data);
   };
 
   return (
@@ -62,8 +75,10 @@ export const CreateUserDialog = NiceModal.create(() => {
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Account</DialogTitle>
-          <DialogDescription>Create a new user account.</DialogDescription>
+          <DialogTitle>Invite User</DialogTitle>
+          <DialogDescription>
+            Send an invitation email to an admin or instructor.
+          </DialogDescription>
         </DialogHeader>
 
         <form
@@ -87,23 +102,6 @@ export const CreateUserDialog = NiceModal.create(() => {
                 ))}
             </FormSelectField>
 
-            <FieldGroup className="sm:flex-row">
-              <FormInputField
-                control={form.control}
-                name="name"
-                label="First Name"
-                placeholder="Jane"
-                required
-              />
-              <FormInputField
-                control={form.control}
-                name="lastName"
-                label="Last Name"
-                placeholder="Doe"
-                required
-              />
-            </FieldGroup>
-
             <FormInputField
               control={form.control}
               name="email"
@@ -112,16 +110,20 @@ export const CreateUserDialog = NiceModal.create(() => {
               type="email"
               required
             />
+
+            <p className="text-sm text-muted-foreground text-center">
+              The user will receive an email to create their account.
+            </p>
           </FieldGroup>
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline" size="sm" disabled={isCreating}>
+              <Button variant="outline" size="sm" disabled={isInvitingUser}>
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" size="sm" pending={isCreating}>
-              Create User
+            <Button type="submit" size="sm" pending={isInvitingUser}>
+              <span>Send Invite</span>
             </Button>
           </DialogFooter>
         </form>

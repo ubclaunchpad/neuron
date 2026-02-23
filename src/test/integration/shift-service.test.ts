@@ -135,7 +135,7 @@ describe("ShiftService", () => {
         publishTerm: false,
       });
 
-      const result = await shiftService.getShiftById(shiftId, "admin-1");
+      const result = await shiftService.getShiftById(shiftId, volunteerId);
       expect(result.id).toBe(shiftId);
     });
 

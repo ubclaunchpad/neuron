@@ -1,5 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { and, eq, inArray, sql, SQL } from "drizzle-orm";
+import { and, eq, inArray, SQL } from "drizzle-orm";
 import { RRuleTemporal } from "rrule-temporal";
 
 import { NEURON_TIMEZONE } from "@/lib/constants";
@@ -93,25 +93,21 @@ export class ClassService implements IClassService {
     this.imageService = imageService;
   }
 
-  private canSeeUnpublishedTerms(): boolean {
-    const user = this.currentSessionService.getUser();
-    if (!user) return false;
-    return hasPermission({
-      user,
-      permission: { terms: ["view-unpublished"] },
-    });
-  }
-
   async getClassesForSelect(): Promise<{ id: string; name: string }[]> {
-    const query = this.db
+    let query = this.db
       .select({ id: course.id, name: course.name })
-      .from(course);
+      .from(course)
+      .$dynamic();
 
-    if (!this.canSeeUnpublishedTerms()) {
-      return query
+    if (
+      !hasPermission({
+        user: this.currentSessionService.getUser(),
+        permission: { terms: ["view-unpublished"] },
+      })
+    ) {
+      query = query
         .innerJoin(term, eq(course.termId, term.id))
-        .where(eq(term.published, true))
-        .orderBy(course.name);
+        .where(eq(term.published, true));
     }
 
     return query.orderBy(course.name);
@@ -150,15 +146,8 @@ export class ClassService implements IClassService {
   }
 
   async getClasses(ids: string[]): Promise<Class[]> {
-    const whereConditions: SQL<unknown>[] = [inArray(course.id, ids)];
-    if (!this.canSeeUnpublishedTerms()) {
-      whereConditions.push(
-        sql`${course.termId} IN (SELECT ${term.id} FROM ${term} WHERE ${term.published} = true)`,
-      );
-    }
-
     const classes = await this.retrieveFullClasses({
-      where: and(...whereConditions)!,
+      where: inArray(course.id, ids),
     });
 
     if (classes.length !== ids.length) {
@@ -173,15 +162,8 @@ export class ClassService implements IClassService {
   }
 
   async getClass(id: string): Promise<Class> {
-    const whereConditions: SQL<unknown>[] = [eq(course.id, id)];
-    if (!this.canSeeUnpublishedTerms()) {
-      whereConditions.push(
-        sql`${course.termId} IN (SELECT ${term.id} FROM ${term} WHERE ${term.published} = true)`,
-      );
-    }
-
     const classes = await this.retrieveFullClasses({
-      where: and(...whereConditions)!,
+      where: eq(course.id, id),
     });
 
     if (classes.length !== 1) {
@@ -429,8 +411,39 @@ export class ClassService implements IClassService {
     limit?: number;
     offset?: number;
   }): Promise<Class[]> {
+    // Pre-filter course IDs using the standard query builder so that
+    // joins (e.g. on term.published) resolve correctly. Drizzle's
+    // relational findMany aliases tables, which breaks raw column refs.
+    let idsQuery = this.db
+      .select({ id: course.id })
+      .from(course)
+      .where(where)
+      .$dynamic();
+
+    if (
+      !hasPermission({
+        user: this.currentSessionService.getUser(),
+        permission: { terms: ["view-unpublished"] },
+      })
+    ) {
+      idsQuery = idsQuery
+        .innerJoin(term, eq(course.termId, term.id))
+        .where(and(where, eq(term.published, true)));
+    }
+
+    if (limit !== undefined) {
+      idsQuery = idsQuery.limit(limit);
+    }
+
+    if (offset !== undefined) {
+      idsQuery = idsQuery.offset(offset);
+    }
+
+    const matchedIds = await idsQuery.then((q) => q.map((r) => r.id));
+    if (matchedIds.length === 0) return [];
+
     const courses = await this.db.query.course.findMany({
-      where,
+      where: inArray(course.id, matchedIds),
       with: {
         schedules: {
           with: {
@@ -439,8 +452,6 @@ export class ClassService implements IClassService {
           },
         },
       },
-      limit,
-      offset,
     });
 
     // Get instructors and volunteers for schedules

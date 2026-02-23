@@ -108,6 +108,8 @@ describe("CoverageService", () => {
     });
     createdTermIds.push(termId);
 
+    await termService.publishTerm(termId);
+
     classId = await classService.createClass({
       termId,
       name: className,
@@ -589,7 +591,9 @@ describe("CoverageService", () => {
 
   describe("term published visibility", () => {
     it("admin should see coverage requests in unpublished terms", async () => {
-      // The term created in beforeEach is unpublished by default
+      // Unpublish the term that was published in beforeEach
+      await termService.unpublishTerm(createdTermIds[0]!);
+
       await coverageService.createCoverageRequest(volunteer1Id, {
         shiftId,
         category: "emergency",
@@ -605,6 +609,9 @@ describe("CoverageService", () => {
     });
 
     it("volunteer should not see coverage requests in unpublished terms", async () => {
+      // Unpublish the term that was published in beforeEach
+      await termService.unpublishTerm(createdTermIds[0]!);
+
       await coverageService.createCoverageRequest(volunteer1Id, {
         shiftId,
         category: "emergency",
@@ -620,13 +627,6 @@ describe("CoverageService", () => {
     });
 
     it("volunteer should see coverage requests in published terms", async () => {
-      // Publish the term that was created in beforeEach
-      const terms = await termService.getAllTerms();
-      const testTerm = terms.find((t) => createdTermIds.includes(t.id));
-      if (testTerm) {
-        await termService.publishTerm(testTerm.id);
-      }
-
       await coverageService.createCoverageRequest(volunteer1Id, {
         shiftId,
         category: "emergency",

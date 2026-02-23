@@ -36,6 +36,7 @@ import AddIcon from "@public/assets/icons/add.svg";
 import { XIcon } from "lucide-react";
 import { Controller, useForm, type FieldErrors } from "react-hook-form";
 import z from "zod";
+import { TermFormSkeleton } from "@/components/classes/list/content/term-form-skeleton";
 
 const TermHolidaySchema = z
   .object({
@@ -333,7 +334,7 @@ export const TermForm = NiceModal.create(
           </DialogHeader>
 
           {editing && (isLoadingTerm || !termData) ? (
-            <Spinner />
+            <TermFormSkeleton />
           ) : (
             <TermFormShell
               key={editing ? editingId : "create"}

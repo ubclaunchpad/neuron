@@ -48,7 +48,10 @@ export function ViewUsersView({ className }: { className?: string }) {
 
         <div className="flex items-center gap-2">
           {canInviteUsers && (
-            <Button variant="outline" onClick={() => NiceModal.show(InviteUserDialog)}>
+            <Button
+              variant="outline"
+              onClick={() => NiceModal.show(InviteUserDialog)}
+            >
               <AddIcon />
               <span>Invite User</span>
             </Button>

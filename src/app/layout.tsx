@@ -9,14 +9,14 @@ import { AuthProvider } from "@/providers/auth-provider";
 import { TRPCReactProvider } from "@/trpc/client";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-export const fontBody = Roboto({
+const fontBody = Roboto({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
   variable: "--font-roboto",
   display: "swap",
 });
 
-export const fontDisplay = Montserrat({
+const fontDisplay = Montserrat({
   subsets: ["latin"],
   weight: ["400", "600", "700"],
   variable: "--font-montserrat",

@@ -2,7 +2,7 @@
 
 import { FormInputField } from "@/components/form/FormInput";
 import { FormSelectField } from "@/components/form/FormSelect";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/primitives/button";
 import {
   Dialog,
   DialogClose,
@@ -14,12 +14,12 @@ import {
 } from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
 import { SelectItem } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 import { authClient } from "@/lib/auth/client";
-import { Role } from "@/models/interfaces";
+import { Role, RoleEnum } from "@/models/interfaces";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
@@ -31,42 +31,43 @@ const InviteUserSchema = z.object({
 
 type InviteUserSchemaType = z.infer<typeof InviteUserSchema>;
 
-const defaultValues: InviteUserSchemaType = {
-  email: "",
-  role: Role.instructor,
-};
-
 export const InviteUserDialog = NiceModal.create(() => {
   const modal = useModal();
-  const form = useForm<InviteUserSchemaType>({
+  const form = useForm({
     resolver: zodResolver(InviteUserSchema),
-    defaultValues,
     mode: "onSubmit",
     reValidateMode: "onChange",
+    defaultValues: {
+      email: "",
+      role: "" as Exclude<Role, "volunteer">,
+    },
   });
 
-  const onSubmit = async (data: InviteUserSchemaType) => {
-    const { error } = await authClient.inviteUser({
-      type: "personal",
-      email: data.email,
-      additionalFields: {
-        role: data.role,
+  const { mutateAsync: inviteUserMutation, isPending: isInvitingUser } =
+    useMutation({
+      mutationFn: async (data: InviteUserSchemaType) => {
+        console.log(data);
+        const { error } = await authClient.inviteUser({
+          type: "personal",
+          email: data.email,
+          additionalFields: {
+            role: data.role,
+          },
+        });
+
+        if (error) {
+          throw new Error(getBetterAuthErrorMessage(error.code));
+        }
+      },
+      onSuccess: (_, data) => {
+        toast.success(`Invitation sent to ${data.email}`);
+        modal.hide();
       },
     });
 
-    if (error) {
-      form.setError("root", {
-        type: "custom",
-        message: getBetterAuthErrorMessage(error.code),
-      });
-      return;
-    }
-
-    toast.success(`Invitation sent to ${data.email}`);
-    modal.hide();
+  const onSubmit = async (data: InviteUserSchemaType) => {
+    await inviteUserMutation(data);
   };
-
-  const isSubmitting = form.formState.isSubmitting;
 
   return (
     <Dialog
@@ -86,6 +87,22 @@ export const InviteUserDialog = NiceModal.create(() => {
           onSubmit={form.handleSubmit(onSubmit)}
         >
           <FieldGroup>
+            <FormSelectField
+              control={form.control}
+              name="role"
+              label="Role"
+              placeholder="Select role"
+              required
+            >
+              {RoleEnum.options
+                .filter((r) => r !== Role.volunteer)
+                .map((roleValue) => (
+                  <SelectItem key={roleValue} value={roleValue}>
+                    {Role.getName(roleValue)}
+                  </SelectItem>
+                ))}
+            </FormSelectField>
+
             <FormInputField
               control={form.control}
               name="email"
@@ -95,34 +112,18 @@ export const InviteUserDialog = NiceModal.create(() => {
               required
             />
 
-            <FormSelectField
-              control={form.control}
-              name="role"
-              label="Role"
-              placeholder="Select role"
-              required
-            >
-              <SelectItem value={Role.admin}>{Role.getName(Role.admin)}</SelectItem>
-              <SelectItem value={Role.instructor}>
-                {Role.getName(Role.instructor)}
-              </SelectItem>
-            </FormSelectField>
-
-            {form.formState.errors.root?.message && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.root.message}
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground text-center">
+              The user will receive an email to create their account.
+            </p>
           </FieldGroup>
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline" size="sm" disabled={isSubmitting}>
+              <Button variant="outline" size="sm" disabled={isInvitingUser}>
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" size="sm" disabled={isSubmitting}>
-              {isSubmitting && <Spinner />}
+            <Button type="submit" size="sm" pending={isInvitingUser}>
               <span>Send Invite</span>
             </Button>
           </DialogFooter>

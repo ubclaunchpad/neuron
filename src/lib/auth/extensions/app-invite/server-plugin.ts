@@ -1,37 +1,15 @@
+import "server-only";
+
 import { Role, RoleEnum, UserStatus } from "@/models/interfaces";
 import { createRequestScope } from "@/server/api/di-container";
 import { db } from "@/server/db";
 import { user, volunteer } from "@/server/db/schema/user";
-import {
-  appInvite,
-  type AppInviteOptions,
-} from "@better-auth-extended/app-invite";
+import { appInvite } from "@better-auth-extended/app-invite";
 import { env } from "@/env";
 import { eq } from "drizzle-orm";
 import { hasPermission } from "@/lib/auth/extensions/permissions";
-import { appInviteClient } from "@better-auth-extended/app-invite/client";
-import type { User } from "..";
-
-const schema = {
-  appInvitation: {
-    additionalFields: {
-      role: {
-        type: RoleEnum.options,
-        input: false,
-        required: true,
-      },
-    },
-  },
-  user: {
-    additionalFields: {
-      lastName: {
-        type: "string",
-        required: true,
-        input: true,
-      },
-    },
-  },
-} satisfies AppInviteOptions["schema"];
+import { appInviteSchema } from "./shared";
+import type { User } from "../..";
 
 export const appInvitePlugin = appInvite({
   sendInvitationEmail: async (invitation, request) => {
@@ -66,7 +44,7 @@ export const appInvitePlugin = appInvite({
     });
   },
   verifyEmailOnAccept: true,
-  schema,
+  schema: appInviteSchema,
   hooks: {
     accept: {
       after: async (_, data) => {
@@ -90,10 +68,6 @@ export const appInvitePlugin = appInvite({
       },
     },
   },
-});
-
-export const appInviteClientPlugin = appInviteClient({
-  schema,
 });
 
 type AppInvitation = typeof appInvitePlugin.$Infer.AppInvitation;

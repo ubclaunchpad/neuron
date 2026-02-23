@@ -16,7 +16,7 @@ import { user, volunteer } from "@/server/db/schema/user";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { appInvitePlugin } from "@/lib/auth/extensions/app-invite";
+import { appInvitePlugin } from "@/lib/auth/extensions/app-invite/server-plugin";
 
 export const auth = betterAuth({
   user: {

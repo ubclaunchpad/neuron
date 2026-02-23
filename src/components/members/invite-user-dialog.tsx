@@ -46,7 +46,6 @@ export const InviteUserDialog = NiceModal.create(() => {
   const { mutateAsync: inviteUserMutation, isPending: isInvitingUser } =
     useMutation({
       mutationFn: async (data: InviteUserSchemaType) => {
-        console.log(data);
         const { error } = await authClient.inviteUser({
           type: "personal",
           email: data.email,

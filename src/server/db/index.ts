@@ -52,7 +52,12 @@ async function runMigrations() {
   }
 }
 
-const migrationPromise = globalForDb.migrationPromise ?? runMigrations();
+// Skip migrations during `next build` — no DB is available at build time.
+// NEXT_PHASE is set to "phase-production-build" by Next.js during the build step.
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+
+const migrationPromise =
+  isBuildPhase ? Promise.resolve() : (globalForDb.migrationPromise ?? runMigrations());
 if (env.NODE_ENV !== "production") globalForDb.migrationPromise = migrationPromise;
 await migrationPromise;
 

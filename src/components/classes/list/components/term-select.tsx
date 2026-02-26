@@ -15,7 +15,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import NiceModal from "@ebay/nice-modal-react";
-import { ChevronDown, Edit, Plus } from "lucide-react";
+import { Check, ChevronDown, Edit, Plus } from "lucide-react";
 import { useClassesPage } from "../class-list-view";
 
 export function TermSelect({
@@ -44,10 +44,9 @@ export function TermSelect({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild disabled={isDisabled}>
         <Button
           variant="outline"
-          disabled={isDisabled}
           endIcon=<ChevronDown />
           className={cn(
             "min-w-45 max-w-80 shrink justify-between gap-2",
@@ -63,16 +62,21 @@ export function TermSelect({
         {terms.map((t) => {
           const isSelected = t.id === selectedTermId;
           return (
-            <div key={t.id} className="flex gap-1 items-center-safe">
+            <div key={t.id} className="flex gap-0.5 items-center-safe">
               <DropdownMenuItem
-                className="min-w-0 flex-1 pr-1"
+                className="min-w-0 flex-1 py-1"
                 onSelect={() => setSelectedTermId(t.id)}
               >
-                <span className="truncate">{t.name}</span>
+                <span className="truncate flex-1">{t.name}</span>
+                {isSelected && (
+                  <WithPermission
+                    permissions={{ permission: { terms: ["create"] } }}
+                    fallback={<Check />}
+                  >
+                    <span className="size-2.5 rounded-full bg-primary shrink-0" />
+                  </WithPermission>
+                )}
               </DropdownMenuItem>
-              {isSelected && (
-                <span className="size-2.5 rounded-full bg-primary shrink-0" />
-              )}
               <WithPermission
                 permissions={{ permission: { terms: ["create"] } }}
               >

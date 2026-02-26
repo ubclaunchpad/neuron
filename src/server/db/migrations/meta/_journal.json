@@ -43,6 +43,13 @@
       "when": 1770955605557,
       "tag": "0005_add_app_invitation_table",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771826510420,
+      "tag": "0006_add_published_to_terms",
+      "breakpoints": true
     }
   ]
 }

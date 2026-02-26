@@ -21,8 +21,8 @@ export function useGeneralProfileSubmit() {
         const parts = data.image.split("/");
         imageKey = parts[parts.length - 1] ?? data.image;
       }
-      // If data.image is null/undefined, imageKey stays null (clear image)
 
+      // If data.image is null/undefined, imageKey stays null (clear image)
       const { error } = await authClient.updateUser({
         name: data.firstName,
         lastName: data.lastName,

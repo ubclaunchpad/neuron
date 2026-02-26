@@ -3,21 +3,19 @@
 import { WithPermission } from "@/components/utils/with-permission";
 import { clientApi } from "@/trpc/client";
 
-import { TermForm } from "@/components/classes/list/content/term-form";
-import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
+import { TermFormDialog } from "@/components/classes/list/content/term-form/term-form-dialog";
+import { Button } from "@/components/primitives/button";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import NiceModal from "@ebay/nice-modal-react";
-import { Edit, Plus } from "lucide-react";
+import { Check, ChevronDown, Edit, Plus } from "lucide-react";
 import { useClassesPage } from "../class-list-view";
 
 export function TermSelect({
@@ -42,52 +40,79 @@ export function TermSelect({
   }
 
   const isDisabled = disableIfSingle && terms.length <= 1;
+  const selectedTerm = terms.find((t) => t.id === selectedTermId);
 
   return (
-    <ButtonGroup className={className}>
-      <Select
-        value={selectedTermId ?? undefined}
-        onValueChange={setSelectedTermId}
-        disabled={isDisabled}
-      >
-        <SelectTrigger className={"min-w-45 w-auto"}>
-          <SelectValue placeholder="Select term" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {terms.map((t) => (
-              <SelectItem key={t.id} value={t.id}>
-                {t.name}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-
-      <WithPermission permissions={{ permission: { terms: ["create"] } }}>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild disabled={isDisabled}>
         <Button
-          onClick={() =>
-            NiceModal.show(TermForm, {
-              editingId: selectedTermId,
-              onCreated: setSelectedTermId,
-            })
-          }
           variant="outline"
+          endIcon=<ChevronDown />
+          className={cn(
+            "min-w-45 max-w-80 shrink justify-between gap-2",
+            className,
+          )}
         >
-          <Edit />
+          <span className="truncate">
+            {selectedTerm?.name ?? "Select term"}
+          </span>
         </Button>
-        <Button
-          onClick={() =>
-            NiceModal.show(TermForm, {
-              editingId: null,
-              onCreated: setSelectedTermId,
-            })
-          }
-          variant="outline"
-        >
-          <Plus />
-        </Button>
-      </WithPermission>
-    </ButtonGroup>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80">
+        {terms.map((t) => {
+          const isSelected = t.id === selectedTermId;
+          return (
+            <div key={t.id} className="flex gap-0.5 items-center-safe">
+              <DropdownMenuItem
+                className="min-w-0 flex-1 py-1"
+                onSelect={() => setSelectedTermId(t.id)}
+              >
+                <span className="truncate flex-1">{t.name}</span>
+                {isSelected && (
+                  <WithPermission
+                    permissions={{ permission: { terms: ["create"] } }}
+                    fallback={<Check />}
+                  >
+                    <span className="size-2.5 rounded-full bg-primary shrink-0" />
+                  </WithPermission>
+                )}
+              </DropdownMenuItem>
+              <WithPermission
+                permissions={{ permission: { terms: ["create"] } }}
+              >
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="shrink-0"
+                  startIcon={<Edit />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    NiceModal.show(TermFormDialog, {
+                      editingId: t.id,
+                      onCreated: setSelectedTermId,
+                    });
+                  }}
+                ></Button>
+              </WithPermission>
+            </div>
+          );
+        })}
+        <WithPermission permissions={{ permission: { terms: ["create"] } }}>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() =>
+              NiceModal.show(TermFormDialog, {
+                editingId: null,
+                onCreated: setSelectedTermId,
+              })
+            }
+          >
+            <Plus />
+            <span>New Term</span>
+          </DropdownMenuItem>
+        </WithPermission>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

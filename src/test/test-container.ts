@@ -77,7 +77,7 @@ export function createTestContainer(
     shiftService: asClass<IShiftService>(ShiftService).scoped(),
     userService: asClass<IUserService>(UserService).singleton(),
     volunteerService: asClass<IVolunteerService>(VolunteerService).singleton(),
-    termService: asClass<ITermService>(TermService).singleton(),
+    termService: asClass<ITermService>(TermService).scoped(),
     coverageService: asClass<ICoverageService>(CoverageService).scoped(),
   });
 

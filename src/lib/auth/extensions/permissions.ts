@@ -12,7 +12,7 @@ import {
  */
 const accessControl = createAccessControl({
   classes: ["view", "create", "update", "delete", "prefer"],
-  terms: ["view", "create", "delete"],
+  terms: ["view", "create", "delete", "publish", "view-unpublished"],
   shifts: ["view", "view-all", "cancel", "check-in", "override-check-in"],
   coverage: ["view", "request", "fill"],
   profile: ["view", "update"],
@@ -23,7 +23,7 @@ const accessControl = createAccessControl({
 
 const admin = accessControl.newRole({
   classes: ["view", "create", "update", "delete"],
-  terms: ["view", "create", "delete"],
+  terms: ["view", "create", "delete", "publish", "view-unpublished"],
   shifts: ["view", "view-all", "cancel", "override-check-in"],
   coverage: ["view"],
   users: ["view", "create", "update", "activate", "deactivate", "invite"],

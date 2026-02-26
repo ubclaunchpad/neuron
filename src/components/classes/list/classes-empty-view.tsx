@@ -12,7 +12,7 @@ import {
   EmptyTitle,
 } from "../../ui/empty";
 import { useClassesPage } from "./class-list-view";
-import { TermForm } from "./content/term-form";
+import { TermFormDialog } from "./content/term-form/term-form-dialog";
 import { usePermission } from "@/hooks/use-permission";
 
 export function ClassesEmptyView() {
@@ -53,7 +53,7 @@ export function ClassesEmptyView() {
         ) : (
           <Button
             onClick={() =>
-              NiceModal.show(TermForm, {
+              NiceModal.show(TermFormDialog, {
                 editingId: null,
                 onCreated: setSelectedTermId,
               })

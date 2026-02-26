@@ -9,7 +9,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
-import React from "react";
+import React, { type ComponentProps } from "react";
 
 type AlertDialogComponentProps = Omit<
   React.ComponentProps<typeof UIAlertDialog>,
@@ -18,8 +18,10 @@ type AlertDialogComponentProps = Omit<
   alertTitle?: React.ReactNode;
   alertDescription: React.ReactNode;
   alertActionContent?: React.ReactNode;
+  alertActionProps?: ComponentProps<typeof AlertDialogAction>;
   alertActionAsOverride?: boolean;
   alertCancelContent?: React.ReactNode;
+  alertCancelProps?: ComponentProps<typeof AlertDialogCancel>;
   alertCancelOverride?: boolean;
   children?: React.ReactNode;
   onAccept?: () => void;
@@ -30,8 +32,10 @@ export function AlertDialog({
   alertTitle,
   alertDescription,
   alertActionContent,
+  alertActionProps,
   alertActionAsOverride,
   alertCancelContent,
+  alertCancelProps,
   alertCancelOverride,
   onAccept,
   onReject,
@@ -52,14 +56,14 @@ export function AlertDialog({
           {alertCancelOverride ? (
             alertCancelContent
           ) : (
-            <AlertDialogCancel onClick={onReject}>
+            <AlertDialogCancel onClick={onReject} {...alertCancelProps}>
               {alertCancelContent ?? "Cancel"}
             </AlertDialogCancel>
           )}
           {alertActionAsOverride ? (
             alertActionContent
           ) : (
-            <AlertDialogAction onClick={onAccept}>
+            <AlertDialogAction onClick={onAccept} {...alertActionProps}>
               {alertActionContent ?? "Accept"}
             </AlertDialogAction>
           )}

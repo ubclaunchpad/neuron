@@ -70,7 +70,7 @@ function DialogContent({
       >
         <Wrapper
           className={cn(
-            "relative grid gap-4 rounded-xl p-4 max-h-[calc(100vh-2rem)] overflow-y-auto hide-scrollbar",
+            "relative grid gap-4 rounded-xl p-4 max-h-[calc(100dvh-2rem)] overflow-y-auto hide-scrollbar",
             className,
           )}
         >

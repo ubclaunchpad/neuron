@@ -50,6 +50,13 @@
       "when": 1771826510420,
       "tag": "0006_add_published_to_terms",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1772219284463,
+      "tag": "0007_expand_availability_bitstring",
+      "breakpoints": true
     }
   ]
 }

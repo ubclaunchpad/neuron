@@ -1,3 +1,4 @@
+import "server-only";
 import { asFunction } from "awilix";
 import path from "node:path";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";

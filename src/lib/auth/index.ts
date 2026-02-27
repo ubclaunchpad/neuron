@@ -13,6 +13,8 @@ import {
   verification,
 } from "@/server/db/schema/auth";
 import { user, volunteer } from "@/server/db/schema/user";
+import { renderForgotPassword } from "@/server/emails/templates/forgot-password";
+import { renderVerifyEmail } from "@/server/emails/templates/verify-email";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -73,11 +75,11 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }) => {
       const scope = createRequestScope();
       const { emailService } = scope.cradle;
-      await emailService.send(
-        user.email,
-        "Reset your password",
-        `Click the link to reset your password: ${url}`,
-      );
+      const { html, text } = await renderForgotPassword({
+        url,
+        userName: user.name,
+      });
+      await emailService.send(user.email, "Reset your password", text, html);
     },
   },
   emailVerification: {
@@ -85,10 +87,15 @@ export const auth = betterAuth({
     sendVerificationEmail: async ({ user, url }) => {
       const scope = createRequestScope();
       const { emailService } = scope.cradle;
+      const { html, text } = await renderVerifyEmail({
+        url,
+        userName: user.name,
+      });
       await emailService.send(
         user.email,
         "Verify your email address",
-        `Click the link to verify your email: ${url}`,
+        text,
+        html,
       );
     },
   },

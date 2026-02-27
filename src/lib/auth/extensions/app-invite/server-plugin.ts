@@ -21,7 +21,7 @@ export const appInvitePlugin = appInvite({
     const scope = createRequestScope();
     const { emailService } = scope.cradle;
 
-    const origin = request ? new URL(request.url).origin : env.BETTER_AUTH_URL;
+    const origin = request ? new URL(request.url).origin : env.BASE_URL;
     const inviteUrl = new URL(
       `/auth/signup?invitationId=${invitation.id}`,
       origin,

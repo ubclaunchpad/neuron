@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createContext, useContext } from "react";
+import { createContext, useContext, type ComponentProps } from "react";
 import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import {
   TermEditSchema,
@@ -28,6 +28,7 @@ export function TermFormProvider({
   editing,
   termId,
   children,
+  ...props
 }: {
   initial: TermEditSchemaInput;
   onSubmit: (data: TermEditSchemaOutput) => void;
@@ -35,7 +36,7 @@ export function TermFormProvider({
   editing: boolean;
   termId?: string;
   children: React.ReactNode;
-}) {
+} & Omit<ComponentProps<"form">, "onSubmit">) {
   const form = useForm({
     resolver: zodResolver(TermEditSchema),
     values: initial,
@@ -52,7 +53,9 @@ export function TermFormProvider({
     <TermFormContext.Provider
       value={{ form, fullErrors, submitting, isDirty, editing, termId }}
     >
-      <form onSubmit={form.handleSubmit(onSubmit)}>{children}</form>
+      <form {...props} onSubmit={form.handleSubmit(onSubmit)}>
+        {children}
+      </form>
     </TermFormContext.Provider>
   );
 }

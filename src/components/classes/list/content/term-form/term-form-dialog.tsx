@@ -29,7 +29,7 @@ export const TermFormDialog = NiceModal.create(
     const apiUtils = clientApi.useUtils();
     const editing = !!editingId;
 
-    const { data: termData, isLoading: isLoadingTerm } =
+    const { data: termData, isPending: isLoadingTerm } =
       clientApi.term.byId.useQuery(
         { termId: editingId ?? "" },
         { enabled: !!editing },
@@ -37,21 +37,21 @@ export const TermFormDialog = NiceModal.create(
 
     const { mutate: createTermMutation, isPending: isCreatingTerm } =
       clientApi.term.create.useMutation({
-        onSuccess: async (createdTermId, { name }) => {
+        onSuccess: async (createdTermId) => {
           onCreated?.(createdTermId);
           await apiUtils.term.all.invalidate();
-          toast.success(`"${name}" created successfully`);
-          await modal.hide();
+          toast.success("Term created");
+          modal.remove();
         },
       });
 
     const { mutate: updateTermMutation, isPending: isUpdatingTerm } =
       clientApi.term.update.useMutation({
-        onSuccess: async (_, { id, name }) => {
+        onSuccess: async (_, { id }) => {
           await apiUtils.term.byId.invalidate({ termId: id });
           await apiUtils.term.all.invalidate();
-          toast.success(`"${name}" updated successfully`);
-          await modal.hide();
+          toast.success("Term saved");
+          modal.remove();
         },
       });
 
@@ -97,15 +97,15 @@ export const TermFormDialog = NiceModal.create(
         open={modal.visible}
         onOpenChange={(open) => (open ? modal.show() : modal.hide())}
       >
-        <TermFormProvider
-          key={editing ? editingId : "create"}
-          initial={initial}
-          onSubmit={onSubmit}
-          submitting={submitting}
-          editing={editing}
-          termId={editingId ?? undefined}
-        >
-          <DialogContent>
+        <DialogContent asChild>
+          <TermFormProvider
+            key={editing ? editingId : "create"}
+            initial={initial}
+            onSubmit={onSubmit}
+            submitting={submitting}
+            editing={editing}
+            termId={editingId ?? undefined}
+          >
             <DialogHeader>
               <DialogTitle>
                 {editing ? `Edit term` : "Add a new term"}
@@ -124,8 +124,8 @@ export const TermFormDialog = NiceModal.create(
             )}
 
             <TermFormFooter />
-          </DialogContent>
-        </TermFormProvider>
+          </TermFormProvider>
+        </DialogContent>
       </Dialog>
     );
   },

@@ -6,7 +6,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { XIcon } from "lucide-react";
-import { Slottable } from "@radix-ui/react-slot";
+import { Slot, Slottable } from "@radix-ui/react-slot";
 import { TypographyTitle } from "./typography";
 
 function Dialog({
@@ -53,10 +53,13 @@ function DialogContent({
   className,
   children,
   hideCloseButton = false,
+  asChild = false,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   hideCloseButton?: boolean;
+  asChild?: boolean;
 }) {
+  const Wrapper = asChild ? Slot : "div";
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
@@ -65,7 +68,7 @@ function DialogContent({
         className="data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 duration-100 fixed top-1/2 left-1/2 z-50 w-full max-w-[calc(100%-2rem)] sm:max-w-lg -translate-x-1/2 -translate-y-1/2 outline-none ring-foreground/10 ring-1 overflow-hidden bg-background rounded-xl"
         {...props}
       >
-        <div
+        <Wrapper
           className={cn(
             "relative grid gap-4 rounded-xl p-4 max-h-[calc(100vh-2rem)] overflow-y-auto hide-scrollbar",
             className,
@@ -84,7 +87,7 @@ function DialogContent({
               </Button>
             </DialogPrimitive.Close>
           )}
-        </div>
+        </Wrapper>
       </DialogPrimitive.Content>
     </DialogPortal>
   );

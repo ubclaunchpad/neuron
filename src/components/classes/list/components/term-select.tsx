@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import NiceModal from "@ebay/nice-modal-react";
 import { Check, ChevronDown, Edit, Plus } from "lucide-react";
 import { useClassesPage } from "../class-list-view";
+import { useEffect } from "react";
 
 export function TermSelect({
   disableIfSingle,
@@ -26,8 +27,18 @@ export function TermSelect({
   className?: string;
 }) {
   const { selectedTermId, setSelectedTermId } = useClassesPage();
-  const { data: terms, isPending: isLoadingTerms } =
-    clientApi.term.all.useQuery();
+  const {
+    data: terms,
+    isPending: isLoadingTerms,
+    isRefetching,
+  } = clientApi.term.all.useQuery();
+
+  // If the current term is not in the list, select the first term
+  useEffect(() => {
+    const selectedTerm = terms?.find((t) => t.id === selectedTermId);
+    if (!selectedTerm && terms?.[0] && !isRefetching)
+      setSelectedTermId(terms[0].id);
+  }, [terms, selectedTermId, setSelectedTermId]);
 
   // Show loading skeleton while terms are loading
   if (isLoadingTerms || !selectedTermId) {
@@ -42,6 +53,11 @@ export function TermSelect({
   const isDisabled = disableIfSingle && terms.length <= 1;
   const selectedTerm = terms.find((t) => t.id === selectedTermId);
 
+  console.log(
+    selectedTerm,
+    selectedTermId,
+    selectedTerm?.id === selectedTermId,
+  );
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={isDisabled}>
@@ -86,8 +102,7 @@ export function TermSelect({
                   size="icon-sm"
                   className="shrink-0"
                   startIcon={<Edit />}
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => {
                     NiceModal.show(TermFormDialog, {
                       editingId: t.id,
                       onCreated: setSelectedTermId,

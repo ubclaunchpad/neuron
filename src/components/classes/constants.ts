@@ -5,6 +5,7 @@ export const CLASS_CATEGORIES = [
     "Food & Nutrition",
     "In-Person Exercise",
     "One-on-One Exercise",
+    "IMPACT 360",
     "Other Opportunities",
 ] as const;
 

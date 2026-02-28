@@ -11,13 +11,10 @@ import React, {
   useState,
   type JSX,
 } from "react";
-import {
-  ListBody,
-  ListEmptyState,
-  ListLoadingState,
-  ListStateWrapper,
-} from "../list";
+import { ListBody, ListEmptyState, ListStateWrapper } from "../list";
 import { SearchInput } from "../search-input";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { UserCardSkeleton } from "../list-skeleton";
 
 type UsersViewShellContextValue = {
   query: string;
@@ -173,7 +170,13 @@ export function UsersList({
       <div className="pb-10">
         {!isReloading && <ListBody items={users} children={children} />}
 
-        {isLoading && <ListLoadingState />}
+        {isLoading && (
+          <SkeletonList
+            numItems={3}
+            containerClassName="space-y-2"
+            itemRenderer={() => <UserCardSkeleton />}
+          />
+        )}
 
         {showNoMoreResults && (
           <ListStateWrapper className="text-muted-foreground">

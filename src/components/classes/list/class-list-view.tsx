@@ -29,6 +29,12 @@ import {
   usePageAside,
 } from "@/components/page-layout";
 import { ClassList } from "./content/class-list";
+import { ClassListSkeleton } from "./class-list-skeleton";
+import AddIcon from "@public/assets/icons/add.svg";
+import Link from "next/link";
+import { WithPermission } from "@/components/utils/with-permission";
+import { Button } from "@/components/primitives/button";
+import { SkeletonAside } from "@/components/ui/skeleton";
 
 export type ClassesPageContextValue = {
   selectedTermId: string | null;
@@ -175,17 +181,32 @@ export function ClassListView() {
       </PageLayoutHeader>
 
       <PageLayoutAside>
-        <Suspense fallback={<div>Loading class...</div>}>
+        <Suspense fallback={<SkeletonAside />}>
           <ClassDetailsAside />
         </Suspense>
       </PageLayoutAside>
 
       <PageLayoutContent ref={contentScrollRef}>
         <div className="flex flex-col gap-6 p-9">
-          <Loader
-            isLoading={isLoadingContent}
-            fallback={<div>Loading classes...</div>}
-          >
+          {(isLoadingContent || !!classListData?.classes?.length) && (
+            <WithPermission
+              permissions={{ permission: { classes: ["create"] } }}
+            >
+              <Button asChild>
+                <Link
+                  href={{
+                    pathname: "classes/edit",
+                    query: { termId: selectedTermId },
+                  }}
+                >
+                  <AddIcon />
+                  Create Class
+                </Link>
+              </Button>
+            </WithPermission>
+          )}
+
+          <Loader isLoading={isLoadingContent} fallback={<ClassListSkeleton />}>
             {!classListData?.classes?.length ? (
               <ClassesEmptyView />
             ) : (

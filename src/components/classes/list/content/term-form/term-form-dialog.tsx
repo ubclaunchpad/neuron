@@ -16,6 +16,7 @@ import { TermForm } from "./content/term-form";
 import { TermFormFooter } from "./content/term-form-footer";
 import { TermFormProvider } from "./term-form-provider";
 import { toFormValues, type TermEditSchemaOutput } from "./schema";
+import { TermFormSkeleton } from "@/components/classes/list/content/term-form-skeleton";
 
 export const TermFormDialog = NiceModal.create(
   ({
@@ -118,7 +119,7 @@ export const TermFormDialog = NiceModal.create(
             </DialogHeader>
 
             {editing && (isLoadingTerm || !termData) ? (
-              <Spinner />
+              <TermFormSkeleton />
             ) : (
               <TermForm termData={termData} />
             )}

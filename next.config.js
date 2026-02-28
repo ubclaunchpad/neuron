@@ -8,7 +8,7 @@ import "./src/env.js";
 const nextConfig = {
   output: "standalone",
   outputFileTracingIncludes: {
-    "/server.js": ["./src/server/db/migrations/**"],
+    "/*": ["src/server/db/migrations/**/*", "drizzle.config.*"],
   },
 
   webpack(config, { isServer, dev }) {

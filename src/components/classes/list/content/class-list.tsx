@@ -90,7 +90,7 @@ export function ClassList({ classes }: { classes: ListClass[] }) {
               title={category}
             >
               {classesWithoutSubCategory.length > 0 && (
-                <div className="grid gap-6 px-5 [grid-template-columns:repeat(auto-fit,minmax(180px,258px))] justify-stretch">
+                <div className="grid gap-6 px-5 grid-cols-[repeat(auto-fit,minmax(180px,258px))] justify-stretch">
                   {classesWithoutSubCategory.map((c) => (
                     <ClassCard
                       key={c.id}
@@ -107,7 +107,7 @@ export function ClassList({ classes }: { classes: ListClass[] }) {
                     className="flex flex-col gap-3 scroll-mt-9 items-stretch px-5"
                   >
                     <TypographyTitle>{subcategory}</TypographyTitle>
-                    <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(180px,258px))] justify-stretch">
+                    <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(180px,258px)) justify-stretch">
                       {classesForSubcategory.map((c) => (
                         <ClassCard
                           key={c.id}

@@ -12,21 +12,21 @@ import {
  */
 const accessControl = createAccessControl({
   classes: ["view", "create", "update", "delete", "prefer"],
-  terms: ["view", "create", "delete"],
+  terms: ["view", "create", "delete", "publish", "view-unpublished"],
   shifts: ["view", "view-all", "cancel", "check-in", "override-check-in"],
   coverage: ["view", "request", "fill"],
   profile: ["view", "update"],
   "volunteer-profile": ["view", "update"],
-  users: ["view", "create", "update", "activate", "deactivate"],
+  users: ["view", "create", "update", "activate", "deactivate", "invite"],
   logs: ["view"],
 } as const);
 
 const admin = accessControl.newRole({
   classes: ["view", "create", "update", "delete"],
-  terms: ["view", "create", "delete"],
+  terms: ["view", "create", "delete", "publish", "view-unpublished"],
   shifts: ["view", "view-all", "cancel", "override-check-in"],
   coverage: ["view"],
-  users: ["view", "create", "update", "activate", "deactivate"],
+  users: ["view", "create", "update", "activate", "deactivate", "invite"],
   logs: ["view"],
   profile: ["view", "update"],
 });

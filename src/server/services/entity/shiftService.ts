@@ -48,6 +48,7 @@ import {
   volunteerUserView,
 } from "@/server/db/schema/user";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import { term } from "@/server/db/schema/course";
 import { and, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 
 type ShiftRow = {
@@ -423,9 +424,22 @@ export class ShiftService implements IShiftService {
     });
   }
 
+  private canSeeUnpublishedTerms(): boolean {
+    const user = this.currentSessionService.getUser();
+    if (!user) return false;
+    return hasPermission({
+      user,
+      permission: { terms: ["view-unpublished"] },
+    });
+  }
+
   private async loadShiftModels(
     ...whereClauses: (SQL<unknown> | undefined)[]
   ): Promise<Shift[]> {
+    if (!this.canSeeUnpublishedTerms()) {
+      whereClauses.push(eq(term.published, true));
+    }
+
     const rows: ShiftRow[] = await this.db
       .select({
         shift: shift,
@@ -435,6 +449,7 @@ export class ShiftService implements IShiftService {
       .from(shift)
       .innerJoin(course, eq(shift.courseId, course.id))
       .innerJoin(schedule, eq(shift.scheduleId, schedule.id))
+      .innerJoin(term, eq(course.termId, term.id))
       .where(and(...whereClauses))
       .orderBy(shift.startAt);
 

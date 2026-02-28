@@ -108,6 +108,8 @@ describe("CoverageService", () => {
     });
     createdTermIds.push(termId);
 
+    await termService.publishTerm(termId);
+
     classId = await classService.createClass({
       termId,
       name: className,
@@ -584,6 +586,59 @@ describe("CoverageService", () => {
       await expect(
         coverageService.unassignCoverage(volunteer1Id, requestId),
       ).rejects.toThrow();
+    });
+  });
+
+  describe("term published visibility", () => {
+    it("admin should see coverage requests in unpublished terms", async () => {
+      // Unpublish the term that was published in beforeEach
+      await termService.unpublishTerm(createdTermIds[0]!);
+
+      await coverageService.createCoverageRequest(volunteer1Id, {
+        shiftId,
+        category: "emergency",
+        details: "Need coverage",
+      });
+
+      const result = await coverageService.listCoverageRequests(
+        {},
+        "admin-1",
+        Role.admin,
+      );
+      expect(result.data.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("volunteer should not see coverage requests in unpublished terms", async () => {
+      // Unpublish the term that was published in beforeEach
+      await termService.unpublishTerm(createdTermIds[0]!);
+
+      await coverageService.createCoverageRequest(volunteer1Id, {
+        shiftId,
+        category: "emergency",
+        details: "Need coverage",
+      });
+
+      const result = await coverageService.listCoverageRequests(
+        {},
+        volunteer1Id,
+        Role.volunteer,
+      );
+      expect(result.data).toHaveLength(0);
+    });
+
+    it("volunteer should see coverage requests in published terms", async () => {
+      await coverageService.createCoverageRequest(volunteer1Id, {
+        shiftId,
+        category: "emergency",
+        details: "Need coverage",
+      });
+
+      const result = await coverageService.listCoverageRequests(
+        {},
+        volunteer1Id,
+        Role.volunteer,
+      );
+      expect(result.data.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

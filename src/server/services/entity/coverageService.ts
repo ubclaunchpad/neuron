@@ -18,7 +18,7 @@ import { buildUser } from "@/models/user";
 import { getEmbeddedVolunteer } from "@/models/volunteer";
 import type { ListResponse } from "@/models/list-response";
 import type { Drizzle } from "@/server/db";
-import { course } from "@/server/db/schema/course";
+import { course, term } from "@/server/db/schema/course";
 import {
   coverageRequest,
   instructorToSchedule,
@@ -114,10 +114,6 @@ export class CoverageService implements ICoverageService {
   > {
     const { perPage, offset } = getPagination(input);
     const { status, from, to, courseIds, sortOrder } = input;
-    const isAdmin = hasPermission({
-      role: viewerRole,
-      permission: { shifts: ["view-all"] },
-    });
 
     // Build WHERE conditions
     const whereConditions: SQL<unknown>[] = [];
@@ -142,10 +138,25 @@ export class CoverageService implements ICoverageService {
       whereConditions.push(inArray(course.id, courseIds));
     }
 
-    // Role-based visibility filter for non-admins:
+    // only show coverage for published terms
+    if (
+      !hasPermission({
+        role: viewerRole,
+        permission: { terms: ["view-unpublished"] },
+      })
+    ) {
+      whereConditions.push(eq(term.published, true));
+    }
+
+    // Role-based visibility filter for those who can't view all:
     // - See open requests EXCEPT for shifts they're already assigned to
     // - Always see their own requests (as requester or covering volunteer)
-    if (!isAdmin) {
+    if (
+      !hasPermission({
+        role: viewerRole,
+        permission: { shifts: ["view-all"] },
+      })
+    ) {
       whereConditions.push(
         or(
           // Show open requests only if volunteer is NOT already assigned to the shift
@@ -199,6 +210,7 @@ export class CoverageService implements ICoverageService {
       .from(coverageRequest)
       .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
       .innerJoin(course, eq(shift.courseId, course.id))
+      .innerJoin(term, eq(course.termId, term.id))
       .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
       .orderBy(
         sortOrder === "asc" ? asc(shift.startAt) : desc(shift.startAt),
@@ -301,7 +313,12 @@ export class CoverageService implements ICoverageService {
       );
 
       // Return admin view with reason fields, or base view for volunteers
-      if (isAdmin) {
+      if (
+        hasPermission({
+          role: viewerRole,
+          permission: { shifts: ["view-all"] },
+        })
+      ) {
         return getListCoverageRequestWithReason(coverageModel);
       }
       return getListCoverageRequestBase(coverageModel);

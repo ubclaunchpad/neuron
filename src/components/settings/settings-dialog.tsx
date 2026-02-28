@@ -56,7 +56,7 @@ export const SettingsDialog = NiceModal.create(() => {
     <Dialog open={modal.visible} onOpenChange={modal.hide}>
       <DialogContent
         hideCloseButton
-        className="sm:max-w-[min(calc(100vw-2rem),42rem)] md:h-[60vh] h-[85vh] p-0 gap-0 border overflow-hidden"
+        className="sm:max-w-[min(calc(100vw-2rem),42rem)] md:h-[60vh] h-[85vh] p-0 gap-0 border overflow-y-auto"
       >
         <Tabs
           defaultValue="profile"

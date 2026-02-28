@@ -2,7 +2,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function TermFormSkeleton() {
   return (
-    <form className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
+      {/* Published/Unpublished Toggle */}
+      <div>
+        <Skeleton className="w-full h-17 mb-4" />
+      </div>
+
       {/* Term Name */}
       <div>
         <Skeleton className="w-1/8 h-4 mb-2" />
@@ -48,6 +53,6 @@ export function TermFormSkeleton() {
         <Skeleton className="w-1/6 h-9" />
         <Skeleton className="w-1/6 h-9" />
       </div>
-    </form>
+    </div>
   );
 }

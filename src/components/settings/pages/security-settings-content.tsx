@@ -1,70 +1,97 @@
-import React, { useState } from 'react';
-import { createAuthClient } from 'better-auth/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { AlertCircle, LogOut, Shield, Lock } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { forceLogout } from "@/lib/auth/logout";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
+import { authClient } from "@/lib/auth/client";
+import { forceLogout } from "@/lib/auth/logout";
+import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
+
+import { FormInputField } from "@/components/form/FormInput";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2, LogOut, Shield, Lock } from "lucide-react";
+
+const ChangePasswordSchema = z
+  .object({
+    currentPassword: z.string().nonempty("Please fill out this field."),
+    newPassword: z
+      .string()
+      .nonempty("Please fill out this field.")
+      .min(8, "Password must be at least 8 characters long."),
+    confirmPassword: z.string().nonempty("Please fill out this field."),
+  })
+  .superRefine((val, ctx) => {
+    if (val.newPassword !== val.confirmPassword) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["confirmPassword"],
+        message: "Passwords don't match.",
+      });
+    }
+  });
+
+type ChangePasswordSchemaType = z.infer<typeof ChangePasswordSchema>;
 
 export function SecuritySettingsContent() {
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
-  const authClient = createAuthClient()
+  const [sessionMessage, setSessionMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(false);
 
-  const handleLogout = async () => {
-      await forceLogout();
-    };
+  const {
+    handleSubmit,
+    setError,
+    control,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ChangePasswordSchemaType>({
+    resolver: zodResolver(ChangePasswordSchema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const onSubmit = async (data: ChangePasswordSchemaType) => {
+    const { error } = await authClient.changePassword({
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
+      revokeOtherSessions: false,
+    });
+
+    if (error) {
+      setError("root", {
+        type: "custom",
+        message: getBetterAuthErrorMessage(error?.code),
+      });
+      return;
+    }
+
+    reset();
+    setError("root", { type: "success" } as any);
+  };
 
   const handleRevokeAllSessions = async () => {
     try {
-      setLoading(true);
+      setSessionLoading(true);
       await authClient.revokeOtherSessions();
-      setMessage({ type: 'success', text: 'All other sessions have been revoked' });
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to revoke sessions. Please try again.' });
+      setSessionMessage({ type: "success", text: "All other sessions have been revoked." });
+    } catch {
+      setSessionMessage({ type: "error", text: "Failed to revoke sessions. Please try again." });
     } finally {
-      setLoading(false);
+      setSessionLoading(false);
     }
   };
 
-  const handleChangePassword = async () => {
-    setMessage(null);
-
-    if (newPassword !== confirmPassword) {
-      setMessage({ type: 'error', text: 'New passwords do not match' });
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      setMessage({ type: 'error', text: 'Password must be at least 8 characters long' });
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await authClient.changePassword({
-        currentPassword,
-        newPassword,
-        revokeOtherSessions: false,
-      });
-      setMessage({ type: 'success', text: 'Password changed successfully' });
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to change password. Please check your current password.' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isPasswordSuccess = (errors.root as any)?.type === "success";
 
   return (
     <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto px-1">
@@ -75,13 +102,6 @@ export function SecuritySettingsContent() {
         </p>
       </div>
       <Separator />
-
-      {message && (
-        <Alert variant={message.type === 'error' ? 'destructive' : 'default'}>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{message.text}</AlertDescription>
-        </Alert>
-      )}
 
       <Card>
         <CardHeader>
@@ -94,41 +114,64 @@ export function SecuritySettingsContent() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="current-password">Current Password</Label>
-              <Input
-                id="current-password"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
-              <Input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm New Password</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <Button onClick={handleChangePassword} disabled={loading}>
-              {loading ? 'Updating...' : 'Update Password'}
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="space-y-4"
+          >
+            {errors.root?.message && !isPasswordSuccess && (
+              <Alert variant="destructive" role="alert" aria-live="assertive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Couldn't update password</AlertTitle>
+                <AlertDescription>{errors.root.message}</AlertDescription>
+              </Alert>
+            )}
+
+            {isPasswordSuccess && (
+              <Alert variant="success" role="status" aria-live="polite">
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertTitle>Success</AlertTitle>
+                <AlertDescription>Password changed successfully.</AlertDescription>
+              </Alert>
+            )}
+
+            <FormInputField
+              control={control}
+              type="password"
+              name="currentPassword"
+              placeholder="•••••••••••••"
+              label="Current Password"
+              className="gap-1"
+            />
+            <FormInputField
+              control={control}
+              type="password"
+              name="newPassword"
+              autoComplete="new-password"
+              placeholder="•••••••••••••"
+              label="New Password (at least 8 characters)"
+              className="gap-1"
+            />
+            <FormInputField
+              control={control}
+              type="password"
+              name="confirmPassword"
+              autoComplete="new-password"
+              placeholder="•••••••••••••"
+              label="Confirm New Password"
+              className="gap-1"
+            />
+
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Spinner /> Updating...
+                </>
+              ) : (
+                "Update Password"
+              )}
             </Button>
-          </div>
+          </form>
         </CardContent>
       </Card>
 
@@ -143,6 +186,21 @@ export function SecuritySettingsContent() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {sessionMessage && (
+            <Alert
+              variant={sessionMessage.type === "error" ? "destructive" : "default"}
+              role={sessionMessage.type === "error" ? "alert" : "status"}
+              aria-live={sessionMessage.type === "error" ? "assertive" : "polite"}
+            >
+              {sessionMessage.type === "error" ? (
+                <AlertCircle className="h-4 w-4" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
+              <AlertDescription>{sessionMessage.text}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <p className="text-sm font-medium">Logout from all devices</p>
@@ -153,29 +211,27 @@ export function SecuritySettingsContent() {
             <Button
               variant="outline"
               onClick={handleRevokeAllSessions}
-              disabled={loading}
+              disabled={sessionLoading}
             >
-              Revoke All Sessions
+              {sessionLoading ? <Spinner /> : "Revoke All Sessions"}
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Logout */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <LogOut className="h-5 w-5" />
             Logout
           </CardTitle>
-          <CardDescription>
-            Sign out of your account on this device
-          </CardDescription>
+          <CardDescription>Sign out of your account on this device</CardDescription>
         </CardHeader>
         <CardContent>
           <Button
             variant="destructive"
-            onClick={handleLogout}
-            disabled={loading}
+            onClick={forceLogout}
             className="w-full sm:w-auto"
           >
             <LogOut className="mr-2 h-4 w-4" />

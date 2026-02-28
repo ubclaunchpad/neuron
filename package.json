@@ -103,7 +103,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.4",
     "@hookform/devtools": "^4.4.0",
-    "@react-email/preview-server": "5.2.8",
+    "@react-email/preview-server": "5.2.9",
     "@svgr/webpack": "^8.1.0",
     "@types/node": "^20.19.35",
     "@types/nodemailer": "^7.0.11",

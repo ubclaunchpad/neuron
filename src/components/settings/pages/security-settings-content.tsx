@@ -37,6 +37,7 @@ const ChangePasswordSchema = z
 type ChangePasswordSchemaType = z.infer<typeof ChangePasswordSchema>;
 
 export function SecuritySettingsContent() {
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
   const [sessionMessage, setSessionMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -48,7 +49,7 @@ export function SecuritySettingsContent() {
     setError,
     control,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<ChangePasswordSchemaType>({
     resolver: zodResolver(ChangePasswordSchema),
     mode: "onSubmit",
@@ -76,7 +77,7 @@ export function SecuritySettingsContent() {
     }
 
     reset();
-    setError("root", { type: "success" } as any);
+    setPasswordSuccess(true);
   };
 
   const handleRevokeAllSessions = async () => {
@@ -94,9 +95,8 @@ export function SecuritySettingsContent() {
   const isPasswordSuccess = (errors.root as any)?.type === "success";
 
   return (
-    <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto px-1">
+    <div className="space-y-6 px-1">
       <div>
-        <h3 className="text-lg font-medium">Security</h3>
         <p className="text-sm text-muted-foreground">
           Manage your account security and sessions
         </p>
@@ -119,7 +119,7 @@ export function SecuritySettingsContent() {
             noValidate
             className="space-y-4"
           >
-            {errors.root?.message && !isPasswordSuccess && (
+            {errors.root?.message && (
               <Alert variant="destructive" role="alert" aria-live="assertive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Couldn't update password</AlertTitle>
@@ -127,7 +127,7 @@ export function SecuritySettingsContent() {
               </Alert>
             )}
 
-            {isPasswordSuccess && (
+            {passwordSuccess && !isDirty  && (
               <Alert variant="success" role="status" aria-live="polite">
                 <CheckCircle2 className="h-4 w-4" />
                 <AlertTitle>Success</AlertTitle>

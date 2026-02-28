@@ -77,7 +77,7 @@ export function ProfileImageInput({
       onError={(errors) => toast.error(errors[0])}
     >
       <div className="flex gap-4 items-start">
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-4 h-full justify-around">
           <Avatar className="aspect-square size-35 shrink-0 rounded-md pointer-events-none">
             <AvatarImage
               src={imageValue ?? undefined}
@@ -100,7 +100,7 @@ export function ProfileImageInput({
           </Button>
         </div>
 
-        <DropzoneArea>
+        <DropzoneArea className="h-full">
           <DropzoneHeader>
             <DropzoneMedia variant="icon">
               <Upload />

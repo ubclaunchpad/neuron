@@ -31,6 +31,9 @@ export function VerifyEmail({ url, userName }: VerifyEmailProps) {
           Verify Email Address
         </Button>
       </Section>
+      <Text className="break-all text-sm leading-relaxed text-muted-foreground">
+        Or copy and paste this link: {url}
+      </Text>
       <Text className="text-sm leading-relaxed text-muted-foreground">
         If you did not create an account, you can safely ignore this email.
       </Text>

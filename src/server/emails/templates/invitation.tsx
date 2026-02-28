@@ -34,6 +34,9 @@ export function InvitationEmail({
           Accept Invitation
         </Button>
       </Section>
+      <Text className="break-all text-sm leading-relaxed text-muted-foreground">
+        Or copy and paste this link: {inviteUrl}
+      </Text>
     </EmailLayout>
   );
 }

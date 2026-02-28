@@ -1,5 +1,5 @@
-import type { Session } from "@/lib/auth";
 import { hasPermission } from "@/lib/auth/extensions/permissions";
+import type { ICurrentSessionService } from "@/server/services/currentSessionService";
 import { CoverageStatus } from "@/models/api/coverage";
 import type {
   CancelShiftInput,
@@ -48,6 +48,7 @@ import {
   volunteerUserView,
 } from "@/server/db/schema/user";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import { term } from "@/server/db/schema/course";
 import { and, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 
 type ShiftRow = {
@@ -84,6 +85,7 @@ export interface IShiftService {
     prevCursor: string;
   }>;
   getShiftById(shiftId: string, userId: string): Promise<SingleShiftView>;
+  getShiftsByIds(shiftIds: string[]): Promise<Shift[]>;
   createShift(input: CreateShiftInput, tx?: Transaction): Promise<string>;
   deleteShift(input: ShiftIdInput): Promise<void>;
   cancelShift(input: CancelShiftInput): Promise<void>;
@@ -101,11 +103,17 @@ function sortCoverageRequestsByStatus(
 
 export class ShiftService implements IShiftService {
   private readonly db: Drizzle;
-  private readonly session: Session;
+  private readonly currentSessionService: ICurrentSessionService;
 
-  constructor(db: Drizzle, session: Session) {
+  constructor({
+    db,
+    currentSessionService,
+  }: {
+    db: Drizzle;
+    currentSessionService: ICurrentSessionService;
+  }) {
     this.db = db;
-    this.session = session;
+    this.currentSessionService = currentSessionService;
   }
 
   private async getViewer(
@@ -196,6 +204,7 @@ export class ShiftService implements IShiftService {
       .select({
         id: coverageRequest.id,
         shiftId: coverageRequest.shiftId,
+        requestedAt: coverageRequest.requestedAt,
         status: coverageRequest.status,
         category: coverageRequest.category,
         details: coverageRequest.details,
@@ -326,6 +335,7 @@ export class ShiftService implements IShiftService {
       const shiftCoverage = {
         id: record.id,
         shiftId: record.shiftId,
+        requestedAt: record.requestedAt,
         status: record.status,
         category: record.category,
         details: record.details,
@@ -414,9 +424,22 @@ export class ShiftService implements IShiftService {
     });
   }
 
+  private canSeeUnpublishedTerms(): boolean {
+    const user = this.currentSessionService.getUser();
+    if (!user) return false;
+    return hasPermission({
+      user,
+      permission: { terms: ["view-unpublished"] },
+    });
+  }
+
   private async loadShiftModels(
-    whereClauses: (SQL<unknown> | undefined)[],
+    ...whereClauses: (SQL<unknown> | undefined)[]
   ): Promise<Shift[]> {
+    if (!this.canSeeUnpublishedTerms()) {
+      whereClauses.push(eq(term.published, true));
+    }
+
     const rows: ShiftRow[] = await this.db
       .select({
         shift: shift,
@@ -426,6 +449,7 @@ export class ShiftService implements IShiftService {
       .from(shift)
       .innerJoin(course, eq(shift.courseId, course.id))
       .innerJoin(schedule, eq(shift.scheduleId, schedule.id))
+      .innerJoin(term, eq(course.termId, term.id))
       .where(and(...whereClauses))
       .orderBy(shift.startAt);
 
@@ -436,12 +460,13 @@ export class ShiftService implements IShiftService {
     shiftId: string,
     volunteerId: string,
   ): Promise<ShiftAttendanceSummary> {
+    const session = this.currentSessionService.requireSession();
     const hasOverride = hasPermission({
-      user: this.session.user,
+      user: session.user,
       permission: { shifts: ["override-check-in"] },
     });
 
-    const [shiftModel] = await this.loadShiftModels([eq(shift.id, shiftId)]);
+    const [shiftModel] = await this.loadShiftModels(eq(shift.id, shiftId));
 
     if (!shiftModel) {
       throw new NeuronError(
@@ -548,25 +573,44 @@ export class ShiftService implements IShiftService {
 
     const viewer = await this.getViewer(userId);
 
-    if (viewer?.role === Role.volunteer) {
-      conditions.push(this.buildVolunteerVisibilityCondition(viewer.id));
+    if (viewer) {
+      const canViewAll = hasPermission({
+        role: viewer.role,
+        permission: { shifts: ["view-all"] },
+      });
+      const canCheckIn = hasPermission({
+        role: viewer.role,
+        permission: { shifts: ["check-in"] },
+      });
+
+      if (!canViewAll && canCheckIn) {
+        conditions.push(this.buildVolunteerVisibilityCondition(viewer.id));
+      } else if (!canViewAll && !canCheckIn) {
+        conditions.push(this.buildInstructorVisibilityCondition(viewer.id));
+      }
     }
 
-    if (viewer?.role === Role.instructor) {
-      conditions.push(this.buildInstructorVisibilityCondition(viewer.id));
-    }
-
-    const shiftModels = await this.loadShiftModels(conditions);
+    const shiftModels = await this.loadShiftModels(...conditions);
 
     return {
       cursor: normalizedCursor,
       shifts: shiftModels.map((shiftModel) => {
-        if (viewer?.role === Role.admin) {
-          return getListShiftWithRosterStatus(shiftModel);
-        }
+        if (viewer) {
+          const canViewAll = hasPermission({
+            role: viewer.role,
+            permission: { shifts: ["view-all"] },
+          });
+          const canCheckIn = hasPermission({
+            role: viewer.role,
+            permission: { shifts: ["check-in"] },
+          });
 
-        if (viewer?.role === Role.volunteer) {
-          return getListShiftWithPersonalStatus(shiftModel, viewer.id);
+          if (canViewAll) {
+            return getListShiftWithRosterStatus(shiftModel);
+          }
+          if (canCheckIn) {
+            return getListShiftWithPersonalStatus(shiftModel, viewer.id);
+          }
         }
 
         return getListShift(shiftModel);
@@ -582,7 +626,7 @@ export class ShiftService implements IShiftService {
   ): Promise<SingleShiftView> {
     const viewer = await this.getViewer(userId);
 
-    const shiftModels = await this.loadShiftModels([eq(shift.id, shiftId)]);
+    const shiftModels = await this.loadShiftModels(eq(shift.id, shiftId));
     const shiftModel = shiftModels[0];
 
     if (!shiftModel) {
@@ -592,15 +636,30 @@ export class ShiftService implements IShiftService {
       );
     }
 
-    if (viewer?.role === Role.admin) {
-      return getSingleShiftWithRosterContext(shiftModel);
-    }
+    if (viewer) {
+      const canViewAll = hasPermission({
+        role: viewer.role,
+        permission: { shifts: ["view-all"] },
+      });
+      const canCheckIn = hasPermission({
+        role: viewer.role,
+        permission: { shifts: ["check-in"] },
+      });
 
-    if (viewer?.role === Role.volunteer) {
-      return getSingleShiftWithPersonalContext(shiftModel, viewer.id);
+      if (canViewAll) {
+        return getSingleShiftWithRosterContext(shiftModel);
+      }
+      if (canCheckIn) {
+        return getSingleShiftWithPersonalContext(shiftModel, viewer.id);
+      }
     }
 
     return getSingleShift(shiftModel);
+  }
+
+  async getShiftsByIds(shiftIds: string[]): Promise<Shift[]> {
+    if (shiftIds.length === 0) return [];
+    return this.loadShiftModels(inArray(shift.id, shiftIds));
   }
 
   async createShift(
@@ -688,7 +747,7 @@ export class ShiftService implements IShiftService {
       .update(shift)
       .set({
         canceled: true,
-        cancelledByUserId: this.session?.user?.id ?? null,
+        cancelledByUserId: this.currentSessionService.getUserId() ?? null,
         canceledAt: new Date(),
         cancelReason,
       })

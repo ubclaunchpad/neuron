@@ -1,10 +1,12 @@
 import type { CoverageRequestDB } from "@/server/db/schema";
 import type { CoverageRequestCategory, CoverageStatus } from "./api/coverage";
+import type { EmbeddedShift } from "./shift";
 import { getEmbeddedVolunteer, type Volunteer } from "./volunteer";
 
 export type CoverageRequest = {
   id: string;
-  shiftId: string;
+  shift: EmbeddedShift;
+  requestedAt: Date;
   status: CoverageStatus;
   category: CoverageRequestCategory;
   details: string;
@@ -15,12 +17,14 @@ export type CoverageRequest = {
 
 export function buildCoverageRequest(
   coverageDB: CoverageRequestDB,
+  shift: EmbeddedShift,
   requestingVolunteer: Volunteer,
   coveringVolunteer?: Volunteer,
 ): CoverageRequest {
   return {
     id: coverageDB.id,
-    shiftId: coverageDB.shiftId,
+    shift,
+    requestedAt: coverageDB.requestedAt,
     status: coverageDB.status,
     category: coverageDB.category,
     details: coverageDB.details,
@@ -33,7 +37,8 @@ export function buildCoverageRequest(
 export function getSingleCoverageRequest(r: CoverageRequest) {
   return {
     id: r.id,
-    shiftId: r.shiftId,
+    shift: r.shift,
+    requestedAt: r.requestedAt,
     status: r.status,
     category: r.category,
     details: r.details,
@@ -48,7 +53,8 @@ export function getSingleCoverageRequest(r: CoverageRequest) {
 export function getEmbeddedCoverageRequest(r: CoverageRequest) {
   return {
     id: r.id,
-    shiftId: r.shiftId,
+    shift: r.shift,
+    requestedAt: r.requestedAt,
     status: r.status,
     requestingVolunteer: getEmbeddedVolunteer(r.requestingVolunteer),
     coveringVolunteer: r.coveringVolunteer
@@ -62,26 +68,12 @@ export type EmbeddedCoverageRequest = ReturnType<
   typeof getEmbeddedCoverageRequest
 >;
 
-// Shift context for coverage list display
-export type CoverageRequestShiftContext = {
-  id: string;
-  date: string;
-  startAt: Date;
-  endAt: Date;
-  className: string;
-  classId: string;
-};
-
-// Base list item (visible to all users who can see the request)
-export function getListCoverageRequestBase(
-  r: CoverageRequest,
-  shiftContext: CoverageRequestShiftContext,
-) {
+export function getListCoverageRequestBase(r: CoverageRequest) {
   return {
     id: r.id,
-    shiftId: r.shiftId,
+    shift: r.shift,
+    requestedAt: r.requestedAt,
     status: r.status,
-    shift: shiftContext,
     requestingVolunteer: getEmbeddedVolunteer(r.requestingVolunteer),
     coveringVolunteer: r.coveringVolunteer
       ? getEmbeddedVolunteer(r.coveringVolunteer)
@@ -89,13 +81,9 @@ export function getListCoverageRequestBase(
   } as const;
 }
 
-// Admin list item (includes reason fields: category, details, comments)
-export function getListCoverageRequestWithReason(
-  r: CoverageRequest,
-  shiftContext: CoverageRequestShiftContext,
-) {
+export function getListCoverageRequestWithReason(r: CoverageRequest) {
   return {
-    ...getListCoverageRequestBase(r, shiftContext),
+    ...getListCoverageRequestBase(r),
     category: r.category,
     details: r.details,
     comments: r.comments,

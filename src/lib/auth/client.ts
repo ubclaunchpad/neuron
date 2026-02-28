@@ -1,8 +1,9 @@
 import type { auth } from "@/lib/auth";
+
 import { inferAdditionalFields } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { appInviteClientPlugin } from "./extensions/app-invite/client-plugin";
 
 export const authClient = createAuthClient({
-  baseURL: "http://localhost:3000",
-  plugins: [inferAdditionalFields<typeof auth>()],
+  plugins: [inferAdditionalFields<typeof auth>(), appInviteClientPlugin],
 });

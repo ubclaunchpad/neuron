@@ -2,10 +2,58 @@
 
 import * as React from "react";
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
-import { type VariantProps } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 import { toggleVariants } from "@/components/ui/toggle";
+
+const toggleGroupVariants = cva(
+  "group/toggle-group flex w-fit items-center rounded-md",
+  {
+    variants: {
+      variant: {
+        default: "",
+        outline: "",
+        tab: "rounded-lg bg-muted text-muted-foreground gap-1",
+      },
+      size: {
+        default: "",
+        sm: "",
+        lg: "",
+      },
+    },
+    compoundVariants: [
+      { variant: "tab", size: "default", className: "p-1" },
+      { variant: "tab", size: "sm", className: "p-0.5" },
+    ],
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+const toggleGroupItemVariants = cva(
+  "w-auto min-w-0 shrink-0 focus:z-10 focus-visible:z-10",
+  {
+    variants: {
+      variant: {
+        default: "",
+        outline: "",
+        tab: "",
+      },
+      size: {
+        default: "px-3",
+        sm: "h-7 px-2.5",
+        lg: "px-3",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
 
 const ToggleGroupContext = React.createContext<
   VariantProps<typeof toggleVariants> & {
@@ -36,7 +84,8 @@ function ToggleGroup({
       data-spacing={spacing}
       style={{ "--gap": spacing } as React.CSSProperties}
       className={cn(
-        "group/toggle-group flex w-fit items-center gap-[--spacing(var(--gap))] rounded-md data-[spacing=default]:data-[variant=outline]:shadow-xs",
+        toggleGroupVariants({ variant, size }),
+        "gap-[--spacing(var(--gap))] data-[spacing=default]:data-[variant=outline]:shadow-xs",
         className,
       )}
       {...props}
@@ -69,8 +118,11 @@ function ToggleGroupItem({
           variant: context.variant || variant,
           size: context.size || size,
         }),
-        "w-auto min-w-0 shrink-0 px-3 focus:z-10 focus-visible:z-10",
-        "data-[spacing=0]:rounded-none data-[spacing=0]:shadow-none data-[spacing=0]:first:rounded-l-md data-[spacing=0]:last:rounded-r-md data-[spacing=0]:data-[variant=outline]:border-l-0 data-[spacing=0]:data-[variant=outline]:first:border-l",
+        toggleGroupItemVariants({
+          variant: context.variant || variant,
+          size: context.size || size,
+        }),
+        "data-[spacing=0]:not-data-[variant=tab]:rounded-none data-[spacing=0]:not-data-[variant=tab]:shadow-none data-[spacing=0]:not-data-[variant=tab]:first:rounded-l-md data-[spacing=0]:not-data-[variant=tab]:last:rounded-r-md data-[spacing=0]:data-[variant=outline]:border-l-0 data-[spacing=0]:data-[variant=outline]:first:border-l",
         className,
       )}
       {...props}
@@ -80,4 +132,4 @@ function ToggleGroupItem({
   );
 }
 
-export { ToggleGroup, ToggleGroupItem };
+export { ToggleGroup, ToggleGroupItem, toggleGroupVariants };

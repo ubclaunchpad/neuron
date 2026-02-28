@@ -5,9 +5,6 @@
 /.pnp
 .pnp.js
 
-# testing
-/coverage
-
 # database
 /prisma/db.sqlite
 /prisma/db.sqlite-journal
@@ -50,9 +47,6 @@ yarn-error.log*
 **/.pnp
 **.pnp.js
 
-# testing
-**/coverage
-
 # production
 **/build
 **/dist
@@ -67,3 +61,8 @@ yarn-error.log*
 **/.prettierignore
 **/repomix-output.txt
 src/test.ts
+
+# any dotdirs i.e. .vscode, .next, etc
+.*/
+# dotdir allow list
+!.github/

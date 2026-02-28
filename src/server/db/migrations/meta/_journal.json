@@ -29,6 +29,34 @@
       "when": 1765066348948,
       "tag": "0003_add_cancelled_by_user_id_to_shifts",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1770513453605,
+      "tag": "0004_add_requested_at_to_coverage_request",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1770955605557,
+      "tag": "0005_add_app_invitation_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771826510420,
+      "tag": "0006_add_published_to_terms",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1772219284463,
+      "tag": "0007_expand_availability_bitstring",
+      "breakpoints": true
     }
   ]
 }

@@ -1,8 +1,9 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { and, eq, inArray, sql, SQL } from "drizzle-orm";
+import { and, eq, inArray, SQL } from "drizzle-orm";
 import { RRuleTemporal } from "rrule-temporal";
 
 import { NEURON_TIMEZONE } from "@/lib/constants";
+import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { Role } from "@/models/interfaces";
 import type {
   ClassRequest,
@@ -21,6 +22,7 @@ import type { Term } from "@/models/term";
 import { type Drizzle, type Transaction } from "@/server/db";
 import {
   course,
+  term,
   instructorToSchedule,
   schedule,
   user,
@@ -28,6 +30,7 @@ import {
 } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
+import type { ICurrentSessionService } from "@/server/services/currentSessionService";
 import type { IImageService } from "../imageService";
 import type { IShiftService } from "./shiftService";
 import type { ITermService } from "./termService";
@@ -36,6 +39,7 @@ import type { IVolunteerService } from "./volunteerService";
 import { tryCatch } from "@/lib/try-catch";
 
 export interface IClassService {
+  getClassesForSelect(): Promise<{ id: string; name: string }[]>;
   getClassesForRequest(
     listRequest: ClassRequest,
   ): Promise<ClassResponse<Class>>;
@@ -56,26 +60,57 @@ export interface IClassService {
 
 export class ClassService implements IClassService {
   private readonly db: Drizzle;
+  private readonly currentSessionService: ICurrentSessionService;
   private readonly userService: IUserService;
   private readonly volunteerService: IVolunteerService;
   private readonly termService: ITermService;
   private readonly shiftService: IShiftService;
   private readonly imageService: IImageService;
 
-  constructor(
-    db: Drizzle,
-    userService: IUserService,
-    volunteerService: IVolunteerService,
-    termService: ITermService,
-    shiftService: IShiftService,
-    imageService: IImageService,
-  ) {
+  constructor({
+    db,
+    currentSessionService,
+    userService,
+    volunteerService,
+    termService,
+    shiftService,
+    imageService,
+  }: {
+    db: Drizzle;
+    currentSessionService: ICurrentSessionService;
+    userService: IUserService;
+    volunteerService: IVolunteerService;
+    termService: ITermService;
+    shiftService: IShiftService;
+    imageService: IImageService;
+  }) {
     this.db = db;
+    this.currentSessionService = currentSessionService;
     this.userService = userService;
     this.volunteerService = volunteerService;
     this.termService = termService;
     this.shiftService = shiftService;
     this.imageService = imageService;
+  }
+
+  async getClassesForSelect(): Promise<{ id: string; name: string }[]> {
+    let query = this.db
+      .select({ id: course.id, name: course.name })
+      .from(course)
+      .$dynamic();
+
+    if (
+      !hasPermission({
+        user: this.currentSessionService.getUser(),
+        permission: { terms: ["view-unpublished"] },
+      })
+    ) {
+      query = query
+        .innerJoin(term, eq(course.termId, term.id))
+        .where(eq(term.published, true));
+    }
+
+    return query.orderBy(course.name);
   }
 
   async getClassesForRequest(
@@ -297,16 +332,19 @@ export class ClassService implements IClassService {
             .toString();
 
           // store start/end times in UTC
-          await this.shiftService.createShift({
-            scheduleId: schedule.id,
-            date: shiftDate.toString(),
-            startAt,
-            endAt,
-          });
+          await this.shiftService.createShift(
+            {
+              scheduleId: schedule.id,
+              date: shiftDate.toString(),
+              startAt,
+              endAt,
+            },
+            tx,
+          );
         }
 
         // update class to published
-        const row = await this.db
+        const row = await tx
           .update(course)
           .set({ published: true })
           .where(eq(course.id, classId))
@@ -356,7 +394,7 @@ export class ClassService implements IClassService {
     const courseIds = await this.db
       .select({ id: course.id })
       .from(course)
-      .where(sql`published = false`);
+      .where(eq(course.published, false));
 
     if (courseIds.length === 0) return;
 
@@ -373,8 +411,39 @@ export class ClassService implements IClassService {
     limit?: number;
     offset?: number;
   }): Promise<Class[]> {
+    // Pre-filter course IDs using the standard query builder so that
+    // joins (e.g. on term.published) resolve correctly. Drizzle's
+    // relational findMany aliases tables, which breaks raw column refs.
+    let idsQuery = this.db
+      .select({ id: course.id })
+      .from(course)
+      .where(where)
+      .$dynamic();
+
+    if (
+      !hasPermission({
+        user: this.currentSessionService.getUser(),
+        permission: { terms: ["view-unpublished"] },
+      })
+    ) {
+      idsQuery = idsQuery
+        .innerJoin(term, eq(course.termId, term.id))
+        .where(and(where, eq(term.published, true)));
+    }
+
+    if (limit !== undefined) {
+      idsQuery = idsQuery.limit(limit);
+    }
+
+    if (offset !== undefined) {
+      idsQuery = idsQuery.offset(offset);
+    }
+
+    const matchedIds = await idsQuery.then((q) => q.map((r) => r.id));
+    if (matchedIds.length === 0) return [];
+
     const courses = await this.db.query.course.findMany({
-      where,
+      where: inArray(course.id, matchedIds),
       with: {
         schedules: {
           with: {
@@ -383,8 +452,6 @@ export class ClassService implements IClassService {
           },
         },
       },
-      limit,
-      offset,
     });
 
     // Get instructors and volunteers for schedules

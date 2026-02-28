@@ -82,7 +82,7 @@ export function ShiftItem({
             {formatDuration(startAt, endAt)}
           </TypographySmall>
         </ItemContent>
-        <ItemContent className="!flex-1">
+        <ItemContent className="flex-1!">
           <ItemTitle className="truncate block w-full max-w-full">
             {shift.className}
           </ItemTitle>

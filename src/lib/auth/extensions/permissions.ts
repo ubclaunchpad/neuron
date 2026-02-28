@@ -12,41 +12,21 @@ import {
  */
 const accessControl = createAccessControl({
   classes: ["view", "create", "update", "delete", "prefer"],
-  terms: ["view", "create", "delete"],
-  shifts: [
-    "view",
-    "view-all",
-    "view-coverage",
-    "cancel",
-    "check-in",
-    "override-check-in",
-  ],
-  coverage: ["view", "request", "fill", "notify"],
+  terms: ["view", "create", "delete", "publish", "view-unpublished"],
+  shifts: ["view", "view-all", "cancel", "check-in", "override-check-in"],
+  coverage: ["view", "request", "fill"],
   profile: ["view", "update"],
-  users: [
-    "view",
-    "create",
-    "update",
-    "invite",
-    "activate",
-    "deactivate",
-  ],
+  "volunteer-profile": ["view", "update"],
+  users: ["view", "create", "update", "activate", "deactivate", "invite"],
   logs: ["view"],
 } as const);
 
 const admin = accessControl.newRole({
   classes: ["view", "create", "update", "delete"],
-  terms: ["view", "create", "delete"],
+  terms: ["view", "create", "delete", "publish", "view-unpublished"],
   shifts: ["view", "view-all", "cancel", "override-check-in"],
-  coverage: ["view", "notify"],
-  users: [
-    "view",
-    "create",
-    "update",
-    "invite",
-    "activate",
-    "deactivate",
-  ],
+  coverage: ["view"],
+  users: ["view", "create", "update", "activate", "deactivate", "invite"],
   logs: ["view"],
   profile: ["view", "update"],
 });
@@ -54,8 +34,9 @@ const admin = accessControl.newRole({
 const volunteer = accessControl.newRole({
   classes: ["view", "prefer"],
   terms: ["view"],
-  shifts: ["view", "view-coverage", "check-in"],
+  shifts: ["view", "check-in"],
   profile: ["view", "update"],
+  "volunteer-profile": ["view", "update"],
   coverage: ["view", "request", "fill"],
 });
 

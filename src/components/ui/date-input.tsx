@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import * as React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import type { DateRange } from "react-day-picker";
 import { Button } from "./button";
@@ -208,7 +209,7 @@ export function DateRangePicker({
           id={id}
           disabled={disabled}
           className={cn(
-            "justify-start min-w-0 shrink-1 font-normal",
+            "justify-start min-w-0 shrink font-normal",
             !label && "text-muted-foreground",
             className,
           )}
@@ -236,4 +237,147 @@ export function DateRangePicker({
   );
 }
 
-export { DatePicker as DateInput, DateRangePicker as DateRangeInput };
+export type MonthPickerProps = Omit<
+  React.ComponentProps<typeof Button>,
+  "children" | "id" | "value" | "defaultValue" | "onChange" | "onBlur"
+> & {
+  defaultValue?: Date;
+  onChange?: (date: Date | undefined) => void;
+  onBlur?: () => void;
+  id?: string;
+  placeholder?: string;
+};
+
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+export function MonthPicker({
+  defaultValue,
+  onChange,
+  onBlur,
+  id,
+  placeholder = "Pick a month",
+  disabled,
+  className,
+  ...buttonProps
+}: MonthPickerProps) {
+  const [open, setOpen] = React.useState(false);
+  const [selected, setSelected] = React.useState(defaultValue);
+
+  const [year, setYear] = React.useState(new Date().getFullYear());
+  const wasOpen = React.useRef(false);
+
+  React.useEffect(() => {
+    if (open && !wasOpen.current && selected) {
+      setYear(selected.getFullYear());
+    }
+    wasOpen.current = open;
+  }, [open, selected]);
+
+  const onSelect = (month: number) => {
+    const next =
+      selected &&
+      selected.getFullYear() === year &&
+      selected.getMonth() === month
+        ? undefined
+        : new Date(year, month, 1);
+
+    setSelected(next);
+    onChange?.(next);
+    // setOpen(false);
+  };
+
+  const label = selected
+    ? selected.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    : undefined;
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) onBlur?.();
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          id={id}
+          disabled={disabled}
+          className={cn(
+            "justify-start min-w-0 shrink-1 font-normal",
+            !label && "text-muted-foreground",
+            className,
+          )}
+          {...buttonProps}
+        >
+          <CalendarIcon className="size-4" />
+          <span className="text-base truncate">{label ?? placeholder}</span>
+        </Button>
+      </PopoverTrigger>
+
+      <PopoverContent className="w-64 p-3" align="start">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setYear((year) => year - 1)}
+          >
+            <ChevronLeft></ChevronLeft>
+          </Button>
+
+          <span className="font-medium">{year}</span>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setYear((year) => year + 1)}
+          >
+            <ChevronRight></ChevronRight>
+          </Button>
+        </div>
+
+        {/* Month grid */}
+        <div className="grid grid-cols-3 gap-2">
+          {MONTHS.map((m, idx) => {
+            const isSelected =
+              selected &&
+              selected.getFullYear() === year &&
+              selected.getMonth() === idx;
+
+            return (
+              <Button
+                key={m}
+                variant={isSelected ? "outline" : "ghost"}
+                className={cn("h-9", isSelected && "border-primary")}
+                onClick={() => onSelect(idx)}
+              >
+                {m}
+              </Button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export {
+  DatePicker as DateInput,
+  DateRangePicker as DateRangeInput,
+  MonthPicker as MonthInput,
+};

@@ -11,7 +11,7 @@ export interface IImageService {
 
 export class ImageService implements IImageService {
   private readonly minio: Minio.Client;
-  private readonly expiration = 5 * 60; // 5 mins, may be too generous
+  private readonly expiration = 5 * 60; // 5 mins
   private readonly bucket = env.MINIO_BUCKET ?? "neuron";
   private readonly bucketReady: Promise<void>;
 
@@ -26,7 +26,7 @@ export class ImageService implements IImageService {
     }
 
     const host = env.MINIO_HOST ?? "localhost";
-    const port = env.MINIO_PORT ?? 9000;
+    const port = env.MINIO_PORT;
     const useSSL = env.MINIO_USE_SSL ?? true;
 
     this.minio = new Minio.Client({
@@ -56,6 +56,7 @@ export class ImageService implements IImageService {
       throw new NeuronError(
         "Storage bucket not available",
         NeuronErrorCodes.INTERNAL_SERVER_ERROR,
+        error,
       );
     }
   }

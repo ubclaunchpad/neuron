@@ -1,3 +1,5 @@
+import "server-only";
+
 import {
   Role,
   RoleEnum,
@@ -6,11 +8,19 @@ import {
 } from "@/models/interfaces";
 import { createRequestScope } from "@/server/api/di-container";
 import { db } from "@/server/db";
-import { account, session, verification } from "@/server/db/schema/auth";
+import {
+  account,
+  appInvitation,
+  session,
+  verification,
+} from "@/server/db/schema/auth";
 import { user, volunteer } from "@/server/db/schema/user";
+import { renderForgotPassword } from "@/server/emails/templates/forgot-password";
+import { renderVerifyEmail } from "@/server/emails/templates/verify-email";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { appInvitePlugin } from "@/lib/auth/extensions/app-invite/server-plugin";
 
 export const auth = betterAuth({
   user: {
@@ -35,6 +45,7 @@ export const auth = betterAuth({
       session,
       account,
       verification,
+      appInvitation,
     },
   }),
   advanced: {
@@ -66,11 +77,11 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }) => {
       const scope = createRequestScope();
       const { emailService } = scope.cradle;
-      await emailService.send(
-        user.email,
-        "Reset your password",
-        `Click the link to reset your password: ${url}`,
-      );
+      const { html, text } = await renderForgotPassword({
+        url,
+        userName: user.name,
+      });
+      await emailService.send(user.email, "Reset your password", text, html);
     },
   },
   emailVerification: {
@@ -78,14 +89,19 @@ export const auth = betterAuth({
     sendVerificationEmail: async ({ user, url }) => {
       const scope = createRequestScope();
       const { emailService } = scope.cradle;
+      const { html, text } = await renderVerifyEmail({
+        url,
+        userName: user.name,
+      });
       await emailService.send(
         user.email,
         "Verify your email address",
-        `Click the link to verify your email: ${url}`,
+        text,
+        html,
       );
     },
   },
-  plugins: [nextCookies()],
+  plugins: [nextCookies(), appInvitePlugin],
 } satisfies BetterAuthOptions);
 
 export type Session = typeof auth.$Infer.Session;

@@ -1,3 +1,4 @@
+import { usePublicConfig } from "@/lib/public-config";
 import type { SingleClass } from "@/models/class";
 import type { Term } from "@/models/term";
 import { useEffect } from "react";
@@ -27,7 +28,8 @@ export function ClassEditShell({
   isLoading: boolean;
 }) {
   const isEditing = !!editingClass;
-  const initial = classToFormValues(editingClass);
+  const publicConfig = usePublicConfig();
+  const initial = classToFormValues(editingClass, publicConfig);
 
   const { onSubmit, isPending, handleSaveAndPublish } = useClassUpsert({
     isEditing,

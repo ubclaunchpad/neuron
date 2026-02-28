@@ -11,12 +11,7 @@ import {
   PageLayoutHeaderTitle,
 } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { clientApi } from "@/trpc/client";
 import { parseAsStringEnum, useQueryState } from "nuqs";
@@ -58,7 +53,9 @@ export default function MembersPage() {
             )}
           >
             <TabsList className="grid grid-cols-3 sm: w-[50%] mb-7 min-w-fit">
-            <TabsTrigger value={MembersTabs.volunteers}>Volunteers</TabsTrigger>
+              <TabsTrigger value={MembersTabs.volunteers}>
+                Volunteers
+              </TabsTrigger>
               <TabsTrigger value={MembersTabs.users}>All Users</TabsTrigger>
               <TabsTrigger value={MembersTabs.verification} className="gap-1.5">
                 <span className="not-sm:hidden">Pending Verification</span>

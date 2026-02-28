@@ -1,3 +1,4 @@
+import "server-only";
 import { asFunction } from "awilix";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -13,10 +14,16 @@ export type Transaction = Parameters<TxCallback>[0];
 
 /**
  * Cache the database connection in development.
- * This avoids creating a new connection on every HMR * update.
+ * This avoids creating a new connection on every HMR update.
  */
-const globalForDb = globalThis as unknown as { conn: postgres.Sql | undefined };
-const conn = globalForDb.conn ?? postgres(env.DATABASE_URL);
+const globalForDb = globalThis as unknown as {
+  conn: postgres.Sql | undefined;
+};
+const conn =
+  globalForDb.conn ??
+  postgres(env.DATABASE_URL, {
+    onnotice: () => {}, // Silence postgres NOTICE spam (existing schema/table)
+  });
 
 if (env.NODE_ENV !== "production") globalForDb.conn = conn;
 

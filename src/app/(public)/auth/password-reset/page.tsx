@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, CheckCircle2, ChevronLeft } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useQueryState, parseAsString } from "nuqs";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -12,11 +13,7 @@ import { authClient } from "@/lib/auth/client";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 
 import { FormInputField } from "@/components/form/FormInput";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -42,9 +39,9 @@ type PasswordResetSchemaType = z.infer<typeof PasswordResetSchema>;
 
 export default function PasswordResetForm() {
   const router = useRouter();
-  const params = useSearchParams();
-  const token = params.get("token") ?? undefined;
-  const tokenError = params.get("error")
+  const [token] = useQueryState("token", parseAsString);
+  const [errorParam] = useQueryState("error", parseAsString);
+  const tokenError = errorParam
     ? "Invalid or expired token. Please try resetting your password again."
     : null;
 
@@ -61,13 +58,13 @@ export default function PasswordResetForm() {
     reValidateMode: "onChange",
     defaultValues: {
       password: "",
-      confirmPassword: ""
-    }
+      confirmPassword: "",
+    },
   });
 
   const onSubmit = async (data: PasswordResetSchemaType) => {
     const { error } = await authClient.resetPassword({
-      token,
+      token: token ?? undefined,
       newPassword: data.password,
     });
 
@@ -135,7 +132,7 @@ export default function PasswordResetForm() {
         <FormInputField
           control={control}
           type="password"
-          name="password"
+          name="confirmPassword"
           label="Confirm password"
           autoComplete="new-password"
           placeholder="•••••••••••••"

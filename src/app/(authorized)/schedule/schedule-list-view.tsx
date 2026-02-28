@@ -7,12 +7,12 @@ import { TypographyTitle } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 import type { ListShift } from "@/models/shift";
 import {
-    compareAsc,
-    endOfMonth,
-    format,
-    isSameMonth,
-    isToday,
-    startOfMonth,
+  compareAsc,
+  endOfMonth,
+  format,
+  isSameMonth,
+  isToday,
+  startOfMonth,
 } from "date-fns";
 import { useMemo } from "react";
 import { useSchedulePage } from "../../../components/schedule/schedule-page-context";
@@ -75,7 +75,7 @@ export function ScheduleListView({ className }: { className?: string }) {
           {query.isLoading && <ListLoadingState />}
 
           {!query.isLoading && dayGroups.length === 0 && (
-            <ListStateWrapper>No shifts found</ListStateWrapper>
+            <ListStateWrapper>No shifts found.</ListStateWrapper>
           )}
 
           {dayGroups.map((group) => {

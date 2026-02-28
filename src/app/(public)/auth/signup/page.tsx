@@ -1,21 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useQueryState, parseAsString } from "nuqs";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-  Field
-} from "@/components/ui/field";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/primitives/button";
+import { Field } from "@/components/ui/field";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 import { FormInputField } from "@/components/form/FormInput";
@@ -51,12 +47,38 @@ type SignupSchemaType = z.infer<typeof SignupSchema>;
 export default function SignupForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const router = useRouter();
+  const [invitationId] = useQueryState("invitationId", parseAsString);
+  const isInviteFlow =
+    !!invitationId && z.string().uuid().safeParse(invitationId).success;
+
+  const {
+    data: invitation,
+    isLoading: isLoadingInvitation,
+    isError: isFailedToLoadInvite,
+  } = useQuery({
+    queryKey: ["app-invitation", invitationId],
+    queryFn: async () => {
+      const { data, error } = await authClient.getAppInvitation({
+        query: { id: invitationId! },
+      });
+      if (error || !data) {
+        throw new Error(
+          "This invitation is invalid or expired. Please request a new invitation.",
+        );
+      }
+      return data;
+    },
+    enabled: isInviteFlow,
+    retry: false,
+    meta: { suppressToast: true },
+  });
 
   const {
     handleSubmit,
     setError,
+    setValue,
     control,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(SignupSchema),
     mode: "onSubmit",
@@ -66,29 +88,99 @@ export default function SignupForm() {
       lastName: "",
       email: "",
       password: "",
-      confirmPassword: ""
-    }
+      confirmPassword: "",
+    },
   });
 
-  const onSubmit = async (data: SignupSchemaType) => {
-    const { error } = await authClient.signUp.email({
-      name: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      password: data.password,
+  useEffect(() => {
+    if (invitation?.email) {
+      setValue("email", invitation.email, { shouldValidate: true });
+    }
+  }, [invitation, setValue]);
+
+  const { mutateAsync: acceptInviteMutation, isPending: isAcceptingInvite } =
+    useMutation({
+      mutationFn: async (payload: {
+        invitationId: string;
+        name: string;
+        password: string;
+        lastName: string;
+      }) => {
+        const { error } = await authClient.acceptInvitation({
+          invitationId: payload.invitationId,
+          name: payload.name,
+          password: payload.password,
+          additionalFields: {
+            lastName: payload.lastName,
+          },
+        });
+
+        if (error) {
+          throw new Error(getBetterAuthErrorMessage(error?.code));
+        }
+      },
+      onSuccess: () => {
+        setSuccessMessage(
+          "Your invitation has been accepted. You can now log in with your new account.",
+        );
+      },
+      onError: (error) => {
+        setError("root", {
+          type: "custom",
+          message: error.message,
+        });
+      },
     });
 
-    if (error) {
+  const { mutateAsync: signUpMutation, isPending: isSigningUp } = useMutation({
+    mutationFn: async (payload: {
+      name: string;
+      lastName: string;
+      email: string;
+      password: string;
+    }) => {
+      const { error } = await authClient.signUp.email({
+        name: payload.name,
+        lastName: payload.lastName,
+        email: payload.email,
+        password: payload.password,
+      });
+
+      if (error) {
+        throw new Error(getBetterAuthErrorMessage(error?.code));
+      }
+    },
+    onSuccess: () => {
+      setSuccessMessage(
+        "Your account has been successfully created! Please check your email to verify your account.",
+      );
+    },
+    onError: (error) => {
       setError("root", {
         type: "custom",
-        message: getBetterAuthErrorMessage(error?.code),
+        message: error.message,
       });
-      return;
-    }
+    },
+  });
 
-    setSuccessMessage(
-      "Your account has been successfully created! Please check your email to verify your account.",
-    );
+  const isCreatingAccount = isAcceptingInvite || isSigningUp;
+
+  const onSubmit = async (data: SignupSchemaType) => {
+    if (isInviteFlow) {
+      await acceptInviteMutation({
+        invitationId: invitationId!,
+        name: data.firstName,
+        lastName: data.lastName,
+        password: data.password,
+      });
+    } else {
+      await signUpMutation({
+        name: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+      });
+    }
 
     // Redirect to login page after 5 seconds on success
     setTimeout(() => router.replace("/auth/login"), 5000);
@@ -108,7 +200,7 @@ export default function SignupForm() {
       {errors.root?.message && (
         <Alert variant="destructive" role="alert" aria-live="assertive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Couldn’t create account</AlertTitle>
+          <AlertTitle>Couldn't create account</AlertTitle>
           <AlertDescription>{errors.root.message}</AlertDescription>
         </Alert>
       )}
@@ -119,6 +211,34 @@ export default function SignupForm() {
           <CheckCircle2 className="h-4 w-4" />
           <AlertTitle>Success</AlertTitle>
           <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
+      )}
+
+      {isLoadingInvitation && (
+        <Alert role="status" aria-live="polite">
+          <Spinner />
+          <AlertTitle>Loading invitation...</AlertTitle>
+          <AlertDescription>
+            Verifying your invitation details.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!!invitationId && !isInviteFlow && (
+        <Alert variant="destructive" role="alert" aria-live="assertive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Invalid invitation</AlertTitle>
+          <AlertDescription>The invitation link is invalid.</AlertDescription>
+        </Alert>
+      )}
+
+      {isInviteFlow && !!invitation && (
+        <Alert role="status" aria-live="polite">
+          <CheckCircle2 />
+          <AlertTitle>Invitation found</AlertTitle>
+          <AlertDescription>
+            Complete the form to accept your invitation.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -147,6 +267,7 @@ export default function SignupForm() {
           name="email"
           placeholder="john.doe@example.com"
           label="Email"
+          readOnly={isInviteFlow}
           className="gap-1"
         />
 
@@ -173,14 +294,15 @@ export default function SignupForm() {
 
       <div className="space-y-5">
         <Field orientation="horizontal">
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? (
-              <>
-                <Spinner /> Creating...
-              </>
-            ) : (
-              "Create an Account"
-            )}
+          <Button
+            type="submit"
+            pending={isCreatingAccount}
+            disabled={
+              isInviteFlow && (isLoadingInvitation || isFailedToLoadInvite)
+            }
+            className="w-full"
+          >
+            {isInviteFlow ? "Accept Invitation" : "Create an Account"}
           </Button>
         </Field>
 

@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getImageUrlFromKey } from "@/lib/build-image-url";
+import { useImageUrl } from "@/lib/build-image-url";
 import { Role, UserStatus } from "@/models/interfaces";
 import type { ListUser, User } from "@/models/user";
 import { useAuth } from "@/providers/client-auth-provider";
@@ -60,6 +60,8 @@ export function ViewVolunteerListItem({
     },
   );
 
+  const avatarSrc = useImageUrl(user.image);
+
   const { mutate: activateMutation } = clientApi.user.activate.useMutation({
     onSuccess: async ({ userId }) => {
       await apiUtils.user.byId.invalidate({ userId });
@@ -75,7 +77,7 @@ export function ViewVolunteerListItem({
     <ListItem
       leadingContent={
         <Avatar
-          src={getImageUrlFromKey(user.image)}
+          src={avatarSrc}
           fallbackText={user.name}
           className="size-10.5"
         />

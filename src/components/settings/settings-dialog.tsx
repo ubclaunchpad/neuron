@@ -16,7 +16,7 @@ import { Bell, Clock, LockKeyhole, User, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList } from "../ui/tabs";
 import { AvailabilitySettingsContent } from "./pages/availability-settings-content";
 import { NotificationsSettingsContent } from "./pages/notifications-settings-content";
-import { ProfileSettingsContent } from "./pages/profile-settings-content";
+import { ProfileSettingsContent } from "./pages/profile/profile-settings-content";
 import { SecuritySettingsContent } from "./pages/security-settings-content";
 
 const settingsItems = [
@@ -60,7 +60,7 @@ export const SettingsDialog = NiceModal.create(() => {
       >
         <Tabs
           defaultValue="profile"
-          className="md:grid md:grid-cols-[180px_1fr]"
+          className="md:grid md:grid-cols-[180px_1fr] overflow-auto"
         >
           <header className="md:hidden flex items-center justify-between h-13 px-3">
             <DialogTitle>Settings</DialogTitle>
@@ -97,7 +97,7 @@ export const SettingsDialog = NiceModal.create(() => {
               >
                 <TabsTrigger
                   className={cn(
-                    "md:w-full justify-start !ring-0 !shadow-none",
+                    "md:w-full justify-start ring-0! shadow-none!",
                     "text-sidebar-foreground data-[state=active]:bg-sidebar-accent hover:bg-sidebar-accent",
                   )}
                   value={item.id}
@@ -111,7 +111,7 @@ export const SettingsDialog = NiceModal.create(() => {
 
           {settingsItems.map((item) => (
             <TabsContent
-              className="px-4 flex flex-col gap-6"
+              className="px-4 flex flex-col gap-4 pb-4"
               key={item.id}
               value={item.id}
             >
@@ -121,7 +121,7 @@ export const SettingsDialog = NiceModal.create(() => {
                   <DialogDescription>{item.description}</DialogDescription>
                 )}
               </DialogHeader>
-              <item.content/>
+              <item.content />
             </TabsContent>
           ))}
         </Tabs>

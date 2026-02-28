@@ -156,7 +156,9 @@ export function ClassDetailsAside() {
         <Separator />
 
         <div className="flex gap-2">
-          <StarClassButton classId={classData.id} />
+          <WithPermission permissions={{ permission: { classes: ["prefer"] } }}>
+            <StarClassButton classId={classData.id} />
+          </WithPermission>
           <WithPermission permissions={{ permission: { classes: ["create"] } }}>
             <Button variant="outline" asChild>
               <Link

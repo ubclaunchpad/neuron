@@ -25,7 +25,11 @@ import { CancelShiftButton } from "./cancel-shift-button";
 import { useSchedulePage } from "./schedule-page-context";
 import { WithPermission } from "../utils/with-permission";
 import { CheckInButton } from "./check-in-button";
-import { ShiftStatus } from "@/models/shift";
+import {
+  ShiftStatus,
+  type ListShiftWithPersonalStatus,
+  type SingleShiftWithPersonalContext,
+} from "@/models/shift";
 import { RequestCoverageButton } from "./request-coverage-button";
 import { ShiftStatusBadge } from "./shift-status-badge";
 
@@ -174,8 +178,10 @@ export function ShiftDetailsAside() {
           <WithPermission
             permissions={{ permission: { shifts: ["check-in"] } }}
           >
-            <CheckInButton shift={shift} />
-            <RequestCoverageButton shift={shift} />
+            <CheckInButton shift={shift as ListShiftWithPersonalStatus} />
+            <RequestCoverageButton
+              shift={shift as SingleShiftWithPersonalContext}
+            />
           </WithPermission>
         </div>
       </AsideBody>

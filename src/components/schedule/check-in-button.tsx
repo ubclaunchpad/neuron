@@ -39,7 +39,7 @@ export function CheckInButton({
   className,
 }: {
   shift: ListShiftWithPersonalStatus;
-  size: ComponentProps<typeof Button>["size"];
+  size?: ComponentProps<typeof Button>["size"];
   className?: string;
 }) {
   const [now, setNow] = useState(() => new Date());
@@ -72,13 +72,7 @@ export function CheckInButton({
     return longFormat.replace("hours", "h").replace("minutes", "m");
   }, [checkInOpensAt, now]);
 
-  const attendance =
-    shift.attendance &&
-    !Array.isArray(shift.attendance) &&
-    typeof shift.attendance === "object" &&
-    "status" in shift.attendance
-      ? (shift.attendance as ShiftAttendanceSummary)
-      : undefined;
+  const attendance = shift.attendance as ShiftAttendanceSummary | undefined;
 
   const apiUtils = clientApi.useUtils();
   const { mutate: checkIn, isPending } = clientApi.shift.checkIn.useMutation({

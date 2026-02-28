@@ -20,6 +20,7 @@ import {
 import { ActiveContext } from "@/components/utils/active-context";
 import { WithPermission } from "@/components/utils/with-permission";
 import type { Permissions } from "@/lib/auth/extensions/permissions";
+import { useImageUrl } from "@/lib/build-image-url";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/client-auth-provider";
 import ChevronRight from "@public/assets/icons/caret-right.svg";
@@ -75,6 +76,7 @@ export const navbarItems = [
 function ProfileCard() {
   const { user } = useAuth();
   const userFullname = `${user?.name} ${user?.lastName}`;
+  const imageUrl = useImageUrl(user?.image);
 
   return (
     <SettingsDropdown
@@ -83,7 +85,7 @@ function ProfileCard() {
         "bg-card shadow rounded-lg",
         "p-3 transition-[padding,margin]",
         "focus-visible:ring-2 focus-visible:ring-ring/50",
-        "group-data-[state=collapsed]:!p-0.5 group-data-[state=collapsed]:my-2.5 group-data-[state=collapsed]:rounded-lg",
+        "group-data-[state=collapsed]:p-0.5! group-data-[state=collapsed]:my-2.5 group-data-[state=collapsed]:rounded-lg",
         "group-data-[state=collapsed]:shrink-0 group-data-[state=collapsed]:gap-0 group-data-[state=collapsed]:min-w-max",
       )}
     >
@@ -95,7 +97,7 @@ function ProfileCard() {
       >
         <Avatar
           className="size-10 shrink-0 group-data-[state=collapsed]:rounded-sm"
-          src={user?.image ?? undefined}
+          src={imageUrl}
           fallbackText={userFullname}
         />
 
@@ -203,7 +205,7 @@ export function AppNavbar() {
                           className={cn(
                             "relative gap-3.5 h-11.4 group-data-[state=collapsed]:h-10 my-1.5 group-data-[state=collapsed]:my-[0.425rem]",
                             "overflow-visible transition-all",
-                            "before:absolute before:left-[calc(-5px-1.25rem)] before:top-0 before:bottom-0  before:w-[5px] before:rounded-r-md before:bg-primary-muted before:transition-[left] data-[active=true]:before:left-[-1.25rem]",
+                            "before:absolute before:-left-6.25 before:top-0 before:bottom-0  `before:w-1.25 before:rounded-r-md before:bg-primary-muted before:transition-[left] data-[active=true]:before:-left-5",
                           )}
                         >
                           <Link href={item.href as Route}>

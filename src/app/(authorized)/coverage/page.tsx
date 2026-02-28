@@ -13,14 +13,14 @@ import {
 import { Suspense } from "react";
 import { CoveragePageProvider } from "@/components/coverage/list/coverage-page-context";
 import { CoverageAside } from "@/components/coverage/list/coverage-aside";
-import { skeletonAside } from "@/components/ui/skeleton";
+import { SkeletonAside } from "@/components/ui/skeleton";
 
 export default function CoveragePage() {
   return (
     <PageLayout>
       <CoveragePageProvider>
         <PageLayoutAside>
-          <Suspense fallback={skeletonAside()}>
+          <Suspense fallback={<SkeletonAside />}>
             <CoverageAside />
           </Suspense>
         </PageLayoutAside>

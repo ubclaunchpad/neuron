@@ -1,57 +1,32 @@
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+
+function FormFieldRow({ labelWidth = "w-20" }: { labelWidth?: string }) {
+  return (
+    <div>
+      <Skeleton className={`${labelWidth} h-4 mb-2`} />
+      <Skeleton className="w-full h-10" />
+    </div>
+  );
+}
 
 export function TermFormSkeleton() {
   return (
-    <div className="flex flex-col gap-4">
-      {/* Published/Unpublished Toggle */}
-      <div>
-        <Skeleton className="w-full h-17 mb-4" />
-      </div>
+    <div className="flex flex-col gap-5">
+      <FormFieldRow labelWidth="w-16" />
 
-      {/* Term Name */}
-      <div>
-        <Skeleton className="w-1/8 h-4 mb-2" />
-        <Skeleton className="w-full h-10" />
-      </div>
-
-      {/* Start Date and End Date */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-3">
-        <div>
-          <Skeleton className="w-1/4 h-4 mb-2" />
-          <Skeleton className="w-full h-10" />
-        </div>
-        <div>
-          <Skeleton className="w-1/4 h-4 mb-2" />
-          <Skeleton className="w-full h-10" />
-        </div>
+        <FormFieldRow labelWidth="w-20" />
+        <FormFieldRow labelWidth="w-24" />
       </div>
 
-      {/* Separator */}
-      <Skeleton className="w-full h-px" />
+      <Separator />
 
-      {/* Holidays Section */}
+      <FormFieldRow labelWidth="w-14" />
+
       <div>
-        <Skeleton className="w-1/6 h-5 mb-2" />
-        <div className="mb-4 space-y-1">
-          <Skeleton className="w-full h-4" />
-          <Skeleton className="w-1/4 h-4" />
-        </div>
-
-        {/* Holiday Items */}
-        <div>
-          <Skeleton className="w-full h-10 mb-2" />
-        </div>
-
-        {/* Add Holiday Button */}
-        <div className="mt-4">
-          <Skeleton className="w-1/4 h-9" />
-        </div>
-      </div>
-
-      {/* Dialog Footer */}
-      <div className="flex justify-end gap-2 pt-4">
-        <Skeleton className="w-1/6 h-9" />
-        <Skeleton className="w-1/6 h-9" />
+        <Skeleton className="w-24 h-4 mb-2" />
+        <Skeleton className="w-full h-24" />
       </div>
     </div>
   );

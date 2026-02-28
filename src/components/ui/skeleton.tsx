@@ -1,4 +1,16 @@
-import { cn } from "@/lib/utils"
+import {
+  AsideBody,
+  AsideContainer,
+  AsideField,
+  AsideFieldContent,
+  AsideFieldLabel,
+  AsideHeader,
+  AsideSection,
+  AsideSectionContent,
+} from "@/components/aside";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import React from "react";
 
 function Skeleton({
   className,
@@ -9,41 +21,51 @@ function Skeleton({
       className={cn("animate-pulse rounded-md bg-accent", className)}
       {...props}
     />
-  )
+  );
 }
 
-function skeletonList({
+function SkeletonList({
   numItems,
   containerClassName,
   itemClassName,
+  itemRenderer,
 }: {
   numItems: number;
   containerClassName: string;
-  itemClassName: string;
+  itemClassName?: string;
+  itemRenderer?: (index: number) => React.ReactNode;
 }) {
   return (
     <div className={containerClassName}>
-      {Array.from({ length: numItems }, (_, itemIndex) => (
-        <Skeleton key={itemIndex} className={itemClassName} />
-      ))}
+      {Array.from({ length: numItems }, (_, itemIndex) =>
+        itemRenderer ? (
+          <React.Fragment key={itemIndex}>
+            {itemRenderer(itemIndex)}
+          </React.Fragment>
+        ) : (
+          <Skeleton key={itemIndex} className={itemClassName} />
+        ),
+      )}
     </div>
   );
 }
 
-function skeletonListGroup({
+function SkeletonListGroup({
   numGroups = 3,
   containerClassName,
   titleContainerClassName,
   titleClassName,
   itemContainerClassName,
   itemClassName,
+  itemRenderer,
 }: {
   numGroups?: number;
   containerClassName: string;
   titleContainerClassName: string;
   titleClassName: string;
   itemContainerClassName: string;
-  itemClassName: string;
+  itemClassName?: string;
+  itemRenderer?: (index: number) => React.ReactNode;
 }) {
   return (
     <>
@@ -55,11 +77,12 @@ function skeletonListGroup({
             <div className={titleContainerClassName}>
               <Skeleton className={titleClassName} />
             </div>
-            {skeletonList({
-              numItems,
-              containerClassName: itemContainerClassName,
-              itemClassName,
-            })}
+            <SkeletonList
+              numItems={numItems}
+              containerClassName={itemContainerClassName}
+              itemClassName={itemClassName}
+              itemRenderer={itemRenderer}
+            />
           </section>
         );
       })}
@@ -67,7 +90,7 @@ function skeletonListGroup({
   );
 }
 
-function userListSkeleton({ count = 3 }: { count?: number } = {}) {
+function UserListSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="flex flex-col gap-3">
       {Array.from({ length: count }, (_, i) => (
@@ -84,46 +107,85 @@ function userListSkeleton({ count = 3 }: { count?: number } = {}) {
   );
 }
 
-
-function skeletonAside() {
-  const dataRow = <Skeleton className="w-3/4 h-5 mb-2" />;
-
-  const rows = [
-    { left: dataRow, right: dataRow },
-    { left: dataRow, right: dataRow },
-    { left: null, right: userListSkeleton({ count: 4 }) },
-    { left: dataRow, right: dataRow },
-  ];
-
+function SkeletonAside() {
   return (
-    <>
-      <div className="pt-17 pb-5 pl-5 pr-9">
-        {/* Date, time, title */}
-        <div className="pb-5">
-          <Skeleton className="w-2/5 h-6 mb-2" />
-          <Skeleton className="w-2/5 h-6 mb-2" />
-          <Skeleton className="w-1/3 h-8 mb-2" />
-        </div>
+    <AsideContainer>
+      <AsideHeader>
+        <Skeleton className="h-5 w-2/5" />
+        <Skeleton className="h-5 w-1/3" />
+        <Skeleton className="h-7 w-3/5" />
+      </AsideHeader>
 
-        {/* Shift information */}
-        <div className="space-y-3 pt-5">
-          {rows.map((row, i) => (
-            <div key={i} className="grid grid-cols-2 gap-4">
-              <div>{row.left}</div>
-              <div>{row.right}</div>
-            </div>
-          ))}
-        </div>
+      <Separator />
 
-        {/* Details */}
-        <div className="pt-4">
-          <Skeleton className="w-full h-5 mb-2" />
-          <Skeleton className="w-full h-5 mb-2" />
-          <Skeleton className="w-3/4 h-5 mb-2" />
+      <AsideBody>
+        <AsideSection>
+          <AsideSectionContent>
+            <AsideField>
+              <AsideFieldLabel>
+                <Skeleton className="h-4 w-3/4" />
+              </AsideFieldLabel>
+              <AsideFieldContent>
+                <Skeleton className="h-4 w-full" />
+              </AsideFieldContent>
+            </AsideField>
+            <AsideField>
+              <AsideFieldLabel>
+                <Skeleton className="h-4 w-3/4" />
+              </AsideFieldLabel>
+              <AsideFieldContent>
+                <Skeleton className="h-4 w-full" />
+              </AsideFieldContent>
+            </AsideField>
+            <AsideField>
+              <AsideFieldLabel>
+                <Skeleton className="h-4 w-3/4" />
+              </AsideFieldLabel>
+              <AsideFieldContent>
+                <Skeleton className="h-4 w-full" />
+              </AsideFieldContent>
+            </AsideField>
+          </AsideSectionContent>
+        </AsideSection>
+
+        <AsideSection>
+          <AsideSectionContent>
+            <AsideField>
+              <AsideFieldLabel>
+                <Skeleton className="h-4 w-3/4" />
+              </AsideFieldLabel>
+              <AsideFieldContent>
+                <Skeleton className="h-4 w-full" />
+              </AsideFieldContent>
+            </AsideField>
+            <AsideField inline={false}>
+              <AsideFieldLabel>
+                <Skeleton className="h-4 w-1/3" />
+              </AsideFieldLabel>
+              <AsideFieldContent>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </AsideFieldContent>
+            </AsideField>
+          </AsideSectionContent>
+        </AsideSection>
+
+        <Separator />
+
+        <div className="flex gap-2">
+          <Skeleton className="w-24 h-9" />
+          <Skeleton className="w-24 h-9" />
         </div>
-      </div>
-    </>
+      </AsideBody>
+    </AsideContainer>
   );
 }
 
-export { Skeleton, skeletonList, skeletonListGroup, skeletonAside, userListSkeleton }
+export {
+  Skeleton,
+  SkeletonList,
+  SkeletonListGroup,
+  SkeletonAside,
+  UserListSkeleton,
+};

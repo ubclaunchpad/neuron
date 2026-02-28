@@ -29,7 +29,12 @@ import {
   usePageAside,
 } from "@/components/page-layout";
 import { ClassList } from "./content/class-list";
-import { Skeleton, userListSkeleton } from "@/components/ui/skeleton";
+import { ClassListSkeleton } from "./class-list-skeleton";
+import AddIcon from "@public/assets/icons/add.svg";
+import Link from "next/link";
+import { WithPermission } from "@/components/utils/with-permission";
+import { Button } from "@/components/primitives/button";
+import { SkeletonAside } from "@/components/ui/skeleton";
 
 export type ClassesPageContextValue = {
   selectedTermId: string | null;
@@ -50,74 +55,6 @@ export function useClassesPage() {
   if (!ctx)
     throw new Error("useClassesPage must be used within the ClassesPage");
   return ctx;
-}
-
-const classListSkeleton = () => {
-  const SkeletonGroup = () => (
-    <>
-      <Skeleton className="w-40 h-7 pt-4 pb-2" />
-      <div className="flex flex-col px-5 mb-4">
-        <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(180px,258px))] justify-stretch">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="w-64 h-85" />
-          ))}
-        </div>
-      </div>
-    </>
-  );
-
-  return (
-    <>
-      <Skeleton className="w-full h-10 mb-6" />
-      {[1, 2].map((i) => (
-        <SkeletonGroup key={i} />
-      ))}
-    </>
-  );
-};
-
-const classDetailsAsideSkeleton = () => {
-  return (
-    <>
-      <div className="pt-17 pb-5 pl-5 pr-9">
-        {/* Title, subtitle */}
-        <div className="pb-5">
-          <Skeleton className="w-2/5 h-8 mb-2" />
-          <Skeleton className="w-3/5 h-6 mb-2" />
-        </div>
-
-        {/* Description */}
-        <div className="pt-4">
-          <Skeleton className="w-1/4 h-6 mb-2" />
-          <div className="pt-4">
-            <Skeleton className="w-full h-5 mb-2" />
-            <Skeleton className="w-full h-5 mb-2" />
-            <Skeleton className="w-full h-5 mb-2" />
-            <Skeleton className="w-3/4 h-5 mb-2" />
-          </div>
-        </div>
-
-        {/* Schedule group */}
-        <div className="pt-10">
-          <Skeleton className="w-3/5 h-8 mb-2" />
-          <div className="grid grid-cols-2 gap-4">
-            <Skeleton className="w-1/2 h-5 mb-2" />
-            <Skeleton className="w-3/4 h-5 mb-2" />
-
-            <div></div>
-            {userListSkeleton({ count: 3 })}
-          </div>
-        </div>
-
-        {/* Button group */}
-        <div className="flex gap-2 pt-10">
-          <Skeleton className="w-24 h-10" />
-          <Skeleton className="w-24 h-10" />
-          <Skeleton className="w-24 h-10" />
-        </div>
-      </div>
-    </>
-  );
 }
 
 export function ClassListView() {
@@ -244,17 +181,32 @@ export function ClassListView() {
       </PageLayoutHeader>
 
       <PageLayoutAside>
-        <Suspense fallback={classDetailsAsideSkeleton()}>
+        <Suspense fallback={<SkeletonAside />}>
           <ClassDetailsAside />
         </Suspense>
       </PageLayoutAside>
 
       <PageLayoutContent ref={contentScrollRef}>
         <div className="flex flex-col gap-6 p-9">
-          <Loader
-            isLoading={isLoadingContent}
-            fallback={classListSkeleton()}
-          >
+          {(isLoadingContent || !!classListData?.classes?.length) && (
+            <WithPermission
+              permissions={{ permission: { classes: ["create"] } }}
+            >
+              <Button asChild>
+                <Link
+                  href={{
+                    pathname: "classes/edit",
+                    query: { termId: selectedTermId },
+                  }}
+                >
+                  <AddIcon />
+                  Create Class
+                </Link>
+              </Button>
+            </WithPermission>
+          )}
+
+          <Loader isLoading={isLoadingContent} fallback={<ClassListSkeleton />}>
             {!classListData?.classes?.length ? (
               <ClassesEmptyView />
             ) : (

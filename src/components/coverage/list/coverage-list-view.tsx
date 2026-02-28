@@ -13,7 +13,8 @@ import { clientApi } from "@/trpc/client";
 import { buildFilterInput } from "@/components/coverage/filters/utils";
 import { useCoverageFilterParams } from "@/components/coverage/filters/hooks/use-coverage-filter-params";
 import { groupCoverageItemsByDay } from "./utils";
-import { skeletonListGroup } from "@/components/ui/skeleton";
+import { SkeletonListGroup } from "@/components/ui/skeleton";
+import { CoverageItemSkeleton } from "./components/coverage-item-skeleton";
 
 export function CoverageListView() {
   const { setSortedItems } = useCoveragePage();
@@ -56,15 +57,13 @@ export function CoverageListView() {
       <div className="px-10 py-4 space-y-4">
         
       {isLoading && (
-        <>
-          {skeletonListGroup({
-            containerClassName: "space-y-3",
-            titleContainerClassName: "pt-3 pb-2",
-            titleClassName: "h-6 w-31",
-            itemContainerClassName: "flex flex-col gap-3 px-5",
-            itemClassName: "w-full h-22",
-          })}
-        </>
+        <SkeletonListGroup
+          containerClassName="space-y-3"
+          titleContainerClassName="pt-3 pb-2"
+          titleClassName="h-6 w-31"
+          itemContainerClassName="flex flex-col gap-3 px-5"
+          itemRenderer={() => <CoverageItemSkeleton />}
+        />
       )}
 
         {isEmpty && (

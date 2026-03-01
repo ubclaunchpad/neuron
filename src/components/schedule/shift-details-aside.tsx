@@ -13,7 +13,6 @@ import {
   AsideTitle,
 } from "@/components/aside";
 import { Button } from "@/components/primitives/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { UserList } from "@/components/users/user-list";
 import { clientApi } from "@/trpc/client";

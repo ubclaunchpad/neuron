@@ -39,7 +39,7 @@ const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
 function generateTimeLabels(): string[] {
   const labels: string[] = [];
   for (let hour = 0; hour <= 23; hour++) {
-    const time12 = hour == 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const time12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
     const period = hour >= 12 ? "PM" : "AM";
     labels.push(`${time12} ${period}`);
     labels.push(""); // half-hour spacer

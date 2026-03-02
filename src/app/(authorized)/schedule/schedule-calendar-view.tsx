@@ -35,6 +35,7 @@ export function ScheduleCalendarView() {
 
   return (
     <FullCalendar
+      initialDate={selectedDate}
       eventClick={handleEventClick}
       events={scheduleShifts.map((shift) => ({
         id: shift.id,

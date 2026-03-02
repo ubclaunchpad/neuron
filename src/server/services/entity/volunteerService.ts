@@ -1,5 +1,5 @@
 import type { ListRequestWithSearch } from "@/models/api/common";
-import type { UpdateVolunteerProfileInput } from "@/models/api/volunteer";
+import type { UpdateVolunteerAvailabilityInput, UpdateVolunteerProfileInput } from "@/models/api/volunteer";
 import type { ListResponse } from "@/models/list-response";
 import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
@@ -37,8 +37,7 @@ export interface IVolunteerService {
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void>;
   updateVolunteerAvailability(
-    volunteerUserId: string,
-    availability: string,
+    input: z.infer<typeof UpdateVolunteerAvailabilityInput>,
   ): Promise<void>;
 }
 
@@ -194,12 +193,13 @@ export class VolunteerService implements IVolunteerService {
   }
 
   async updateVolunteerAvailability(
-    volunteerUserId: string,
-    availability: string,
+    input: z.infer<typeof UpdateVolunteerAvailabilityInput>,
   ): Promise<void> {
+    const { volunteerUserId, ...updatePayload } = input;
+
     const [updated] = await this.db
       .update(volunteer)
-      .set({ availability })
+      .set(updatePayload)
       .where(eq(volunteer.userId, volunteerUserId))
       .returning({ userId: volunteer.userId });
 

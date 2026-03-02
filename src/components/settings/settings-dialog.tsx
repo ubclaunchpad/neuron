@@ -14,7 +14,7 @@ import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { TabsTrigger } from "@radix-ui/react-tabs";
 import { Bell, Clock, LockKeyhole, User, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList } from "../ui/tabs";
-import { AvailabilitySettingsContent } from "./pages/availability-settings-content";
+import { AvailabilitySettingsContent } from "./pages/availability/availability-settings-content";
 import { NotificationsSettingsContent } from "./pages/notifications-settings-content";
 import { ProfileSettingsContent } from "./pages/profile/profile-settings-content";
 import { SecuritySettingsContent } from "./pages/security-settings-content";
@@ -56,7 +56,7 @@ export const SettingsDialog = NiceModal.create(() => {
     <Dialog open={modal.visible} onOpenChange={modal.hide}>
       <DialogContent
         hideCloseButton
-        className="sm:max-w-[min(calc(100vw-2rem),42rem)] md:h-[60vh] h-[85vh] p-0 gap-0 border overflow-hidden"
+        className="sm:max-w-[min(calc(100vw-2rem),64rem)] md:h-[60vh] h-[85vh] p-0 gap-0 border overflow-hidden"
       >
         <Tabs
           defaultValue="profile"

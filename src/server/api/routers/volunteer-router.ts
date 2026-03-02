@@ -65,10 +65,7 @@ export const volunteerRouter = createTRPCRouter({
   })
     .input(UpdateVolunteerAvailabilityInput)
     .mutation(async ({ input, ctx }) => {
-      await ctx.volunteerService.updateVolunteerAvailability(
-        input.volunteerUserId,
-        input.availability,
-      );
+      await ctx.volunteerService.updateVolunteerAvailability(input);
       return { ok: true };
     }),
 });

@@ -4,8 +4,9 @@ import { cn } from "@/lib/utils";
 import React, { useEffect, useRef, useState } from "react";
 import { mergeProps, useMove } from "react-aria";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -21,7 +22,6 @@ import {
   isValidAvailabilityBitstring,
 } from "@/utils/availabilityUtils";
 import EditIcon from "@public/assets/icons/edit.svg";
-import { TypographyTitle } from "../ui/typography";
 
 export type AvailabilityGridProps = {
   availability: string;
@@ -30,6 +30,7 @@ export type AvailabilityGridProps = {
   onCancel?: () => void;
   isEditing?: boolean;
   title?: string;
+  hasUnsavedChanges?: boolean;
   className?: string;
 };
 
@@ -37,8 +38,8 @@ const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
 function generateTimeLabels(): string[] {
   const labels: string[] = [];
-  for (let hour = 9; hour <= 18; hour++) {
-    const time12 = hour > 12 ? hour - 12 : hour;
+  for (let hour = 0; hour <= 23; hour++) {
+    const time12 = hour == 0 ? 12 : hour > 12 ? hour - 12 : hour;
     const period = hour >= 12 ? "PM" : "AM";
     labels.push(`${time12} ${period}`);
     labels.push(""); // half-hour spacer
@@ -55,6 +56,7 @@ export function AvailabilityInput({
   onSave,
   onCancel,
   title = "My Availability",
+  hasUnsavedChanges = false,
   className,
 }: AvailabilityGridProps) {
   if (!isValidAvailabilityBitstring(availability)) {
@@ -218,7 +220,14 @@ export function AvailabilityInput({
     >
       <CardHeader>
         <div className="flex items-center justify-between">
-          <TypographyTitle>{title}</TypographyTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>{title}</CardTitle>
+            {hasUnsavedChanges && (
+              <Badge variant="outline" className="text-muted-foreground">
+                Unsaved
+              </Badge>
+            )}
+          </div>
 
           {editable && (
             <div className="flex items-center gap-2">
@@ -237,7 +246,7 @@ export function AvailabilityInput({
                     Cancel
                   </Button>
                   <Button size="sm" onClick={handleSave}>
-                    Save
+                    Done
                   </Button>
                 </>
               )}

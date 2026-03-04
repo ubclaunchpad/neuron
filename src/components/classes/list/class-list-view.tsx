@@ -88,11 +88,14 @@ export function ClassListView({ classId, setClassId }: ClassListViewProps) {
   );
 
   useEffect(() => {
-    if (linkedClass?.termId && linkedClass.termId !== selectedTermId) {
-      setSelectedTermId(linkedClass.termId);
-      setQueryTerm(linkedClass.termId);
+    if (linkedClass?.termId) {
+      setSelectedTermId((prev) => {
+        if (prev === linkedClass.termId) return prev;
+        setQueryTerm(linkedClass.termId);
+        return linkedClass.termId;
+      });
     }
-  }, [linkedClass?.termId]);
+  }, [linkedClass?.termId, setQueryTerm]);
 
   const canCreateTerm = usePermission({ permission: { terms: ["create"] } });
 

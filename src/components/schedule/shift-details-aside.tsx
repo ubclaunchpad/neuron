@@ -39,7 +39,7 @@ export function ShiftDetailsAside() {
       { shiftId: selectedShiftId ?? "" },
       {
         enabled: !!selectedShiftId,
-        suspense: !!selectedShiftId,
+        suspense: true,
         meta: { suppressToast: true },
       },
     );

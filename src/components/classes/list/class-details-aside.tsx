@@ -42,7 +42,7 @@ export function ClassDetailsAside() {
       { classId: selectedClassId ?? "" },
       {
         enabled: !!selectedClassId,
-        suspense: !!selectedClassId,
+        suspense: true,
         meta: { suppressToast: true },
       },
     );

@@ -56,9 +56,11 @@ export function SchedulePageProvider({
         shiftData.startAt instanceof Date
           ? shiftData.startAt
           : new Date(shiftData.startAt);
-      setSelectedDate(shiftDate);
+      setSelectedDate((prev) =>
+        prev.toISOString() === shiftDate.toISOString() ? prev : shiftDate,
+      );
     }
-  }, [shiftData]);
+  }, [shiftData?.startAt]);
 
   const openAsideFor = useCallback(
     (id: string) => {

@@ -42,7 +42,7 @@ const timeFormatter = new Intl.DateTimeFormat("en-US", {
 });
 
 export function CoverageAside() {
-  const { selectedCoverageId, goToNext, goToPrev } =
+  const { selectedCoverageId, goToNext, goToPrev, hasNext, hasPrev } =
     useCoveragePage();
   const { user } = useAuth();
 
@@ -50,7 +50,7 @@ export function CoverageAside() {
     { coverageRequestId: selectedCoverageId ?? "" },
     {
       enabled: !!selectedCoverageId,
-      suspense: !!selectedCoverageId,
+      suspense: true,
       meta: { suppressToast: true },
     },
   );
@@ -218,10 +218,10 @@ export function CoverageAside() {
 
           <AsideFooter>
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => goToPrev()}>
+              <Button variant="ghost" disabled={!hasPrev} onClick={() => goToPrev()}>
                 <ChevronLeft></ChevronLeft>
               </Button>
-              <Button variant="ghost" onClick={() => goToNext()}>
+              <Button variant="ghost" disabled={!hasNext} onClick={() => goToNext()}>
                 <ChevronRight></ChevronRight>
               </Button>
             </div>

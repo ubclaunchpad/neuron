@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useMemo,
   useState,
   type PropsWithChildren,
 } from "react";
@@ -24,6 +25,8 @@ type CoveragePageContextValue = {
   setSortedItems: (items: CoverageListItem[]) => void;
   goToNext: () => void;
   goToPrev: () => void;
+  hasNext: boolean;
+  hasPrev: boolean;
 };
 
 const CoveragePageContext = createContext<CoveragePageContextValue | null>(
@@ -83,6 +86,14 @@ export function CoveragePageProvider({
     }
   }, [coverageRequests, coverageId, setCoverageId]);
 
+  const currentIndex = useMemo(() => {
+    if (!coverageId) return -1;
+    return coverageRequests.findIndex((item) => item.id === coverageId);
+  }, [coverageRequests, coverageId]);
+
+  const hasNext = currentIndex >= 0 && currentIndex < coverageRequests.length - 1;
+  const hasPrev = currentIndex > 0;
+
   return (
     <CoveragePageContext.Provider
       value={{
@@ -93,6 +104,8 @@ export function CoveragePageProvider({
         setSortedItems: setCoverageRequests,
         goToNext,
         goToPrev,
+        hasNext,
+        hasPrev,
       }}
     >
       {children}

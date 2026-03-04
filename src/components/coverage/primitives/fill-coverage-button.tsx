@@ -17,7 +17,7 @@ export function FillCoverageButton({
   const { mutate: fillCoverageRequest, isPending } =
     clientApi.coverage.fillCoverageRequest.useMutation({
       onSuccess: () => {
-        void apiUtils.coverage.list.invalidate();
+        void apiUtils.coverage.invalidate();
       },
     });
 

@@ -14,11 +14,25 @@ import { Suspense } from "react";
 import { CoveragePageProvider } from "@/components/coverage/list/coverage-page-context";
 import { CoverageAside } from "@/components/coverage/list/coverage-aside";
 import { SkeletonAside } from "@/components/ui/skeleton";
+import { parseAsString, useQueryState } from "nuqs";
 
 export default function CoveragePage() {
+  const [coverageId, setCoverageId] = useQueryState(
+    "coverageId",
+    parseAsString,
+  );
+
   return (
-    <PageLayout>
-      <CoveragePageProvider>
+    <PageLayout
+      open={!!coverageId}
+      onOpenChange={(open) => {
+        if (!open) setCoverageId(null);
+      }}
+    >
+      <CoveragePageProvider
+        coverageId={coverageId}
+        setCoverageId={setCoverageId}
+      >
         <PageLayoutAside>
           <Suspense fallback={<SkeletonAside />}>
             <CoverageAside />

@@ -12,7 +12,7 @@ import {
 import { SchedulePageControls } from "@/components/schedule/schedule-page-controls";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
-import { parseAsStringEnum, useQueryState } from "nuqs";
+import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 import { Activity, Suspense } from "react";
 import { SchedulePageProvider } from "../../../components/schedule/schedule-page-context";
 import { ShiftDetailsAside } from "../../../components/schedule/shift-details-aside";
@@ -29,11 +29,17 @@ export default function SchedulePage() {
       .withDefault("list")
       .withOptions({ clearOnDefault: false }),
   );
+  const [shiftId, setShiftId] = useQueryState("shiftId", parseAsString);
 
   return (
-    <PageLayout>
+    <PageLayout
+      open={!!shiftId}
+      onOpenChange={(open) => {
+        if (!open) setShiftId(null);
+      }}
+    >
       <FullCalendarProvider>
-        <SchedulePageProvider>
+        <SchedulePageProvider shiftId={shiftId} setShiftId={setShiftId}>
           <PageLayoutHeader hideShadow border="always">
             <PageLayoutHeaderContent className="items-center">
               <PageLayoutHeaderTitle>Schedule</PageLayoutHeaderTitle>

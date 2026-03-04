@@ -18,13 +18,16 @@ import { WithPermission } from "@/components/utils/with-permission";
 import { CoverageRequestCategory, CoverageStatus } from "@/models/api/coverage";
 import { useAuth } from "@/providers/client-auth-provider";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCoveragePage } from "./coverage-page-context";
+import {
+  useCoveragePage,
+  type CoverageListItem,
+} from "./coverage-page-context";
 import { FillCoverageButton } from "@/components/coverage/primitives/fill-coverage-button";
 import { WithdrawCoverageButton } from "@/components/coverage/primitives/withdraw-coverage-button";
-import { useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { UserList } from "@/components/users/user-list";
 import { Button } from "@/components/ui/button";
+import { clientApi } from "@/trpc/client";
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -39,12 +42,19 @@ const timeFormatter = new Intl.DateTimeFormat("en-US", {
 });
 
 export function CoverageAside() {
-  const { selectedItem, closeAside, goToNext, goToPrev } = useCoveragePage();
+  const { selectedCoverageId, goToNext, goToPrev } =
+    useCoveragePage();
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!selectedItem) closeAside();
-  }, [selectedItem, closeAside]);
+  const { data } = clientApi.coverage.byId.useQuery(
+    { coverageRequestId: selectedCoverageId ?? "" },
+    {
+      enabled: !!selectedCoverageId,
+      suspense: !!selectedCoverageId,
+      meta: { suppressToast: true },
+    },
+  );
+  const selectedItem = data as CoverageListItem | undefined;
 
   if (!selectedItem) return null;
 

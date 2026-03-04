@@ -91,11 +91,11 @@ export function useClassFormSubmit({
 
       if (
         !isEditing ||
-        initial.levelRange[0] !== levelRange[0] ||
-        initial.levelRange[1] !== levelRange[1]
+        initial.levelRange?.[0] !== levelRange?.[0] ||
+        initial.levelRange?.[1] !== levelRange?.[1]
       ) {
-        updatedValues.lowerLevel = levelRange[0]!;
-        updatedValues.upperLevel = levelRange[1]!;
+        updatedValues.lowerLevel = levelRange?.[0] ?? null;
+        updatedValues.upperLevel = levelRange?.[1] ?? null;
       }
 
       return updatedValues;

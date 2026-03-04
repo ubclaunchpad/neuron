@@ -18,7 +18,7 @@ export function classToFormValues(
     category: c?.category ?? "",
     subcategory: c?.subcategory ?? "",
     image: (config ? buildImageUrl(config, c?.image) : undefined) ?? null,
-    levelRange: [c?.lowerLevel ?? 1, c?.upperLevel ?? 4],
+    levelRange: c?.lowerLevel && c?.upperLevel ? [c.lowerLevel, c.upperLevel] : null,
     schedules:
       c?.schedules.map((s) => ({
         id: s.id,

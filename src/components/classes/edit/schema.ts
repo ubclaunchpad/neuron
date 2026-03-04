@@ -12,14 +12,32 @@ export const ClassEditSchema = z
     meetingURL: asNullishField(z.url("Please enter a valid meeting url.")),
     category: z.string().nonempty("Please fill out this field."),
     subcategory: asNullishField(z.string()),
-    levelRange: z.array(z.int().min(1).max(4)).length(2),
+    levelRange: z.array(z.int().min(1).max(4)).length(2).nullish(),
     schedules: z.array(ScheduleEditSchema),
     image: z.string().nullable(),
   })
-  .refine((val) => val.levelRange[0]! <= val.levelRange[1]!, {
-    error: "The upper level must be greater than the lower level",
-    path: ["levelRange"],
-  });
+  .refine(
+    (val) => {
+      if (!val.levelRange) return true;
+      return val.levelRange[0]! <= val.levelRange[1]!;
+    },
+    {
+      error: "The upper level must be greater than the lower level",
+      path: ["levelRange"],
+    },
+  )
+  .refine(
+    (val) => {
+      if (val.category.includes("Exercise")) {
+        return !!val.levelRange;
+      }
+      return true;
+    },
+    {
+      error: "Levels are required for exercise classes",
+      path: ["levelRange"],
+    },
+  );
 export type ClassEditSchemaType = z.infer<typeof ClassEditSchema>;
 export type ClassEditSchemaInput = z.input<typeof ClassEditSchema>;
 export type ClassEditSchemaOutput = z.output<typeof ClassEditSchema>;

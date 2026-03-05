@@ -22,12 +22,12 @@ export const UpdateVolunteerProfileInput = z.object({
   phoneNumber: z.string().optional(),
   city: z.string().optional(),
   province: z.string().optional(),
-  preferredTimeCommitmentHours: z.number().int().min(0).optional(),
 });
 
 export const UpdateVolunteerAvailabilityInput = z.object({
   volunteerUserId: z.uuid(),
   availability: BitString(AVAILABILITY_SLOTS),
+  preferredTimeCommitmentHours: z.number().int().min(0).optional(),
 });
 
 export const AdminSignoffInput = z.object({

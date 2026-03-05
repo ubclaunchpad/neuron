@@ -34,9 +34,7 @@ export default function CoveragePage() {
         setCoverageId={setCoverageId}
       >
         <PageLayoutAside>
-          <Suspense fallback={<SkeletonAside />}>
-            <CoverageAside />
-          </Suspense>
+          <CoverageAside />
         </PageLayoutAside>
 
         <PageLayoutHeader hideShadow border="always">

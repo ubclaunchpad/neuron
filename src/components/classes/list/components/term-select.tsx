@@ -53,11 +53,6 @@ export function TermSelect({
   const isDisabled = disableIfSingle && terms.length <= 1;
   const selectedTerm = terms.find((t) => t.id === selectedTermId);
 
-  console.log(
-    selectedTerm,
-    selectedTermId,
-    selectedTerm?.id === selectedTermId,
-  );
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={isDisabled}>

@@ -64,9 +64,7 @@ export default function SchedulePage() {
           </PageLayoutHeader>
 
           <PageLayoutAside>
-            <Suspense fallback={<SkeletonAside />}>
-              <ShiftDetailsAside />
-            </Suspense>
+            <ShiftDetailsAside />
           </PageLayoutAside>
 
           <PageLayoutContent className="flex-1">

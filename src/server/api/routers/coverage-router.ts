@@ -3,12 +3,6 @@ import {
   CreateCoverageRequest,
   ListCoverageRequestsInput,
 } from "@/models/api/coverage";
-import {
-  getListCoverageRequestBase,
-  getListCoverageRequestWithReason,
-} from "@/models/coverage";
-import { Role } from "@/models/interfaces";
-import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 
@@ -18,33 +12,16 @@ export const coverageRouter = createTRPCRouter({
   })
     .input(CoverageRequestIdInput)
     .query(async ({ input, ctx }) => {
-      const currentUser = ctx.currentSessionService.requireUser();
-      const request = await ctx.coverageService.getCoverageRequestById(
+      return await ctx.coverageService.getCoverageRequestById(
         input.coverageRequestId,
       );
-
-      if (
-        hasPermission({
-          role: currentUser.role as Role,
-          permission: { shifts: ["view-all"] },
-        })
-      ) {
-        return getListCoverageRequestWithReason(request);
-      }
-      return getListCoverageRequestBase(request);
     }),
   list: authorizedProcedure({
     permission: { coverage: ["view"] },
   })
     .input(ListCoverageRequestsInput)
     .query(async ({ input, ctx }) => {
-      const currentUser = ctx.currentSessionService.requireUser();
-
-      return await ctx.coverageService.listCoverageRequests(
-        input,
-        currentUser.id,
-        currentUser.role as Role,
-      );
+      return await ctx.coverageService.listCoverageRequests(input);
     }),
   requestCoverage: authorizedProcedure({
     permission: { coverage: ["request"] },

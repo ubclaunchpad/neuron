@@ -4,6 +4,7 @@ import { Role, RoleEnum, UserStatus } from "@/models/interfaces";
 import { createRequestScope } from "@/server/api/di-container";
 import { db } from "@/server/db";
 import { user, volunteer } from "@/server/db/schema/user";
+import { renderInvitation } from "@/server/emails/templates/invitation";
 import { appInvite } from "@better-auth-extended/app-invite";
 import { env } from "@/env";
 import { eq } from "drizzle-orm";
@@ -20,16 +21,22 @@ export const appInvitePlugin = appInvite({
     const scope = createRequestScope();
     const { emailService } = scope.cradle;
 
-    const origin = request ? new URL(request.url).origin : env.BETTER_AUTH_URL;
+    const origin = request ? new URL(request.url).origin : env.BASE_URL;
     const inviteUrl = new URL(
       `/auth/signup?invitationId=${invitation.id}`,
       origin,
     ).toString();
 
+    const { html, text } = await renderInvitation({
+      inviteUrl,
+      inviterName: invitation.inviter.name,
+      inviterEmail: invitation.inviter.email,
+    });
     await emailService.send(
       invitation.email,
       "You've been invited to Neuron",
-      `You were invited by ${invitation.inviter.name} (${invitation.inviter.email}). Complete your sign up here: ${inviteUrl}`,
+      text,
+      html,
     );
   },
   canCreateInvitation: (ctx): boolean => {

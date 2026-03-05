@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useQueryState, parseAsString } from "nuqs";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -46,13 +47,13 @@ type SignupSchemaType = z.infer<typeof SignupSchema>;
 export default function SignupForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const invitationId = searchParams.get("invitationId");
-  const isInviteFlow = !!invitationId;
+  const [invitationId] = useQueryState("invitationId", parseAsString);
+  const isInviteFlow =
+    !!invitationId && z.string().uuid().safeParse(invitationId).success;
 
   const {
     data: invitation,
-    isPending: isLoadingInvitation,
+    isLoading: isLoadingInvitation,
     isError: isFailedToLoadInvite,
   } = useQuery({
     queryKey: ["app-invitation", invitationId],
@@ -167,7 +168,7 @@ export default function SignupForm() {
   const onSubmit = async (data: SignupSchemaType) => {
     if (isInviteFlow) {
       await acceptInviteMutation({
-        invitationId,
+        invitationId: invitationId!,
         name: data.firstName,
         lastName: data.lastName,
         password: data.password,
@@ -220,6 +221,14 @@ export default function SignupForm() {
           <AlertDescription>
             Verifying your invitation details.
           </AlertDescription>
+        </Alert>
+      )}
+
+      {!!invitationId && !isInviteFlow && (
+        <Alert variant="destructive" role="alert" aria-live="assertive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Invalid invitation</AlertTitle>
+          <AlertDescription>The invitation link is invalid.</AlertDescription>
         </Alert>
       )}
 

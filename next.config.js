@@ -7,8 +7,16 @@ import "./src/env.js";
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   output: "standalone",
+  serverExternalPackages: [
+    "postgres",
+    "drizzle-orm",
+    "nodemailer",
+    "minio",
+    "redis",
+    "awilix",
+  ],
   outputFileTracingIncludes: {
-    "/server.js": ["./src/server/db/migrations/**"],
+    "/*": ["src/server/db/migrations/**/*", "drizzle.config.*"],
   },
 
   webpack(config, { isServer, dev }) {

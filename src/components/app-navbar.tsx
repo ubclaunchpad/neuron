@@ -96,7 +96,7 @@ function ProfileCard() {
         )}
       >
         <Avatar
-          className="size-10 shrink-0 group-data-[state=collapsed]:rounded-sm"
+          className="size-10 shrink-0 group-data-[state=collapsed]:rounded-md"
           src={imageUrl}
           fallbackText={userFullname}
         />

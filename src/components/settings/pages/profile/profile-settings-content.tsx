@@ -5,9 +5,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { useAuth } from "@/providers/client-auth-provider";
 import { clientApi } from "@/trpc/client";
 
-import { Spinner } from "@/components/ui/spinner";
 import { useImageUrl } from "@/lib/build-image-url";
-
 import { GeneralProfileFormProvider } from "./general/general-form-provider";
 import { GeneralProfileSection } from "./general/general-profile-section";
 import { useGeneralProfileSubmit } from "./general/hooks/use-general-profile-submit";
@@ -15,6 +13,34 @@ import { useGeneralProfileSubmit } from "./general/hooks/use-general-profile-sub
 import { VolunteerProfileFormProvider } from "./volunteer/volunteer-form-provider";
 import { VolunteerProfileSection } from "./volunteer/volunteer-profile-section";
 import { useVolunteerProfileSubmit } from "./volunteer/hooks/use-volunteer-profile-submit";
+import type { Volunteer } from "@/models/volunteer";
+import type { VolunteerProfileSchemaType } from "./volunteer/schema";
+import type { User } from "@/lib/auth";
+import type { GeneralProfileSchemaType } from "./general/schema";
+
+function volunteerProfileToFormValues(
+  volunteer: Volunteer,
+): VolunteerProfileSchemaType {
+  return {
+    preferredName: volunteer?.preferredName ?? "",
+    pronouns: volunteer?.pronouns ?? "",
+    bio: volunteer?.bio ?? "",
+    city: volunteer?.city ?? "",
+    province: volunteer?.province ?? "",
+  };
+}
+
+function generalProfileToFormValues(
+  user: User,
+  imageUrl?: string,
+): GeneralProfileSchemaType {
+  return {
+    firstName: user.name ?? "",
+    lastName: user.lastName ?? "",
+    email: user.email ?? "",
+    image: imageUrl ?? null,
+  };
+}
 
 export function ProfileSettingsContent() {
   const { user } = useAuth();
@@ -27,7 +53,7 @@ export function ProfileSettingsContent() {
     { enabled: !!user && hasVolunteerProfile },
   );
 
-  const imageUrl = useImageUrl(user?.image) ?? null;
+  const imageUrl = useImageUrl(user?.image);
 
   const { onSubmit: onGeneralSubmit, isPending: isGeneralPending } =
     useGeneralProfileSubmit();
@@ -35,45 +61,24 @@ export function ProfileSettingsContent() {
   const { onSubmit: onVolunteerSubmit, isPending: isVolunteerPending } =
     useVolunteerProfileSubmit(user?.id ?? "");
 
-  if (!user || (hasVolunteerProfile && !volunteer)) {
-    return (
-      <div className="flex justify-center py-10">
-        <Spinner />
-      </div>
-    );
-  }
-
-  const generalInitial = {
-    firstName: user.name ?? "",
-    lastName: user.lastName ?? "",
-    email: user.email ?? "",
-    image: imageUrl,
-  };
-
-  const volunteerInitial = {
-    preferredName: volunteer?.preferredName ?? "",
-    pronouns: volunteer?.pronouns ?? "",
-    bio: volunteer?.bio ?? "",
-    city: volunteer?.city ?? "",
-    province: volunteer?.province ?? "",
-  };
+  if (!user) return null;
 
   return (
     <WithPermission permissions={{ permission: { profile: ["update"] } }}>
       <div className="space-y-6">
         <GeneralProfileFormProvider
-          initial={generalInitial}
+          initial={generalProfileToFormValues(user, imageUrl)}
           onSubmit={onGeneralSubmit}
         >
           <GeneralProfileSection
-            fallbackName={user.name ?? "U"}
+            fallbackName={user.name}
             isPending={isGeneralPending}
           />
         </GeneralProfileFormProvider>
 
-        {hasVolunteerProfile && (
+        {hasVolunteerProfile && volunteer && (
           <VolunteerProfileFormProvider
-            initial={volunteerInitial}
+            initial={volunteerProfileToFormValues(volunteer)}
             onSubmit={onVolunteerSubmit}
           >
             <VolunteerProfileSection isPending={isVolunteerPending} />

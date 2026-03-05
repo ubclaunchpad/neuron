@@ -15,6 +15,7 @@ import { ClassGeneralSection } from "./content/class-general-section";
 import { ClassSchedulesSection } from "./content/class-schedules-sections";
 import { useClassUpsert } from "./hooks/use-class-upsert";
 import { classToFormValues } from "./utils";
+import { ClassFormShellSkeleton } from "./class-form-shell-skeleton";
 
 export function ClassEditShell({
   editingClass,
@@ -76,7 +77,7 @@ export function ClassEditShell({
         <PageLayoutContent>
           <div className="flex flex-col gap-8 p-9 pt-4">
             {isLoading ? (
-              <div>Loading Class Data...</div>
+              <ClassFormShellSkeleton />
             ) : (
               <>
                 <ClassGeneralSection />

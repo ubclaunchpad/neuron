@@ -24,7 +24,6 @@ export function AvailabilitySection({
 
   return (
     <div className="space-y-4">
-
       <Controller
         name="availability"
         control={control}
@@ -47,7 +46,7 @@ export function AvailabilitySection({
         )}
       />
 
-      <Card>
+      <Card size="sm">
         <CardHeader>
           <CardTitle>Preferred Time Commitment</CardTitle>
         </CardHeader>

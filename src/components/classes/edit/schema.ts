@@ -7,8 +7,7 @@ export const LOCATION_TYPE = {
   MEETING_LINK: "meeting_link",
   IN_PERSON: "in_person",
 } as const;
-export type LocationType =
-  (typeof LOCATION_TYPE)[keyof typeof LOCATION_TYPE];
+export type LocationType = (typeof LOCATION_TYPE)[keyof typeof LOCATION_TYPE];
 
 export type ClassFormValues = Omit<UpdateClassInput, "id">;
 
@@ -32,7 +31,9 @@ export const ClassEditSchema = z
   .refine(
     (val) => {
       if (val.locationType === LOCATION_TYPE.MEETING_LINK) {
-        return val.meetingURL && z.string().url().safeParse(val.meetingURL).success;
+        return (
+          val.meetingURL && z.string().url().safeParse(val.meetingURL).success
+        );
       }
       return true;
     },
@@ -41,7 +42,9 @@ export const ClassEditSchema = z
   .refine(
     (val) => {
       if (val.locationType === LOCATION_TYPE.IN_PERSON) {
-        return typeof val.location === "string" && val.location.trim().length > 0;
+        return (
+          typeof val.location === "string" && val.location.trim().length > 0
+        );
       }
       return true;
     },

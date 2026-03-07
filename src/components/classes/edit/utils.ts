@@ -14,12 +14,11 @@ export function classToFormValues(
 ): ClassEditSchemaType {
   const hasMeetingUrl = Boolean(c?.meetingURL?.trim());
   const hasLocation = Boolean(c?.location?.trim());
-  const locationType =
-    hasMeetingUrl
-      ? LOCATION_TYPE.MEETING_LINK
-      : hasLocation
-        ? LOCATION_TYPE.IN_PERSON
-        : LOCATION_TYPE.MEETING_LINK;
+  const locationType = hasMeetingUrl
+    ? LOCATION_TYPE.MEETING_LINK
+    : hasLocation
+      ? LOCATION_TYPE.IN_PERSON
+      : LOCATION_TYPE.MEETING_LINK;
 
   return {
     name: c?.name ?? "",

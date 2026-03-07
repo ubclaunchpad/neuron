@@ -61,7 +61,12 @@ export function useClassFormSubmit({
 
   const getUpdatedFormValues = useCallback(
     (values: ClassEditSchemaOutput): ClassFormValues => {
-      const { schedules, levelRange, locationType: _locationType, ...rest } = values;
+      const {
+        schedules,
+        levelRange,
+        locationType: _locationType,
+        ...rest
+      } = values;
 
       const originalSchedules = initial?.schedules ?? [];
       const { added, edited, deletedIds } = diffEntityArray(

@@ -33,9 +33,10 @@ export function ClassGeneralSection() {
 
   useEffect(() => {
     if (isExercise && !getValues("levelRange")) {
-      setValue("levelRange", [1, 4], { shouldValidate: true, shouldDirty: true });
-    } else if (!isExercise && getValues("levelRange")) {
-      setValue("levelRange", null, { shouldValidate: true, shouldDirty: true });
+      setValue("levelRange", [1, 4], {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
     }
   }, [isExercise, setValue, getValues]);
 

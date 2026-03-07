@@ -26,18 +26,7 @@ export const ClassEditSchema = z
       path: ["levelRange"],
     },
   )
-  .refine(
-    (val) => {
-      if (val.category.includes("Exercise")) {
-        return !!val.levelRange;
-      }
-      return true;
-    },
-    {
-      error: "Levels are required for exercise classes",
-      path: ["levelRange"],
-    },
-  );
+;
 export type ClassEditSchemaType = z.infer<typeof ClassEditSchema>;
 export type ClassEditSchemaInput = z.input<typeof ClassEditSchema>;
 export type ClassEditSchemaOutput = z.output<typeof ClassEditSchema>;

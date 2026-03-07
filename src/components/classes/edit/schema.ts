@@ -3,13 +3,21 @@ import type { UpdateClassInput } from "@/models/api/class";
 import z from "zod";
 import { ScheduleEditSchema } from "./schedule-form/schema";
 
+export const LOCATION_TYPE = {
+  MEETING_LINK: "meeting_link",
+  IN_PERSON: "in_person",
+} as const;
+export type LocationType =
+  (typeof LOCATION_TYPE)[keyof typeof LOCATION_TYPE];
+
 export type ClassFormValues = Omit<UpdateClassInput, "id">;
 
 export const ClassEditSchema = z
   .object({
     name: z.string().nonempty("Please fill out this field."),
     description: asNullishField(z.string()),
-    meetingURL: asNullishField(z.url("Please enter a valid meeting url.")),
+    locationType: z.enum([LOCATION_TYPE.MEETING_LINK, LOCATION_TYPE.IN_PERSON]),
+    meetingURL: asNullishField(z.string()),
     location: asNullishField(z.string()),
     category: z.string().nonempty("Please fill out this field."),
     subcategory: asNullishField(z.string()),
@@ -20,7 +28,25 @@ export const ClassEditSchema = z
   .refine((val) => val.levelRange[0]! <= val.levelRange[1]!, {
     error: "The upper level must be greater than the lower level",
     path: ["levelRange"],
-  });
+  })
+  .refine(
+    (val) => {
+      if (val.locationType === LOCATION_TYPE.MEETING_LINK) {
+        return val.meetingURL && z.string().url().safeParse(val.meetingURL).success;
+      }
+      return true;
+    },
+    { message: "Please enter a valid meeting URL.", path: ["meetingURL"] },
+  )
+  .refine(
+    (val) => {
+      if (val.locationType === LOCATION_TYPE.IN_PERSON) {
+        return typeof val.location === "string" && val.location.trim().length > 0;
+      }
+      return true;
+    },
+    { message: "Please enter the in-person location.", path: ["location"] },
+  );
 export type ClassEditSchemaType = z.infer<typeof ClassEditSchema>;
 export type ClassEditSchemaInput = z.input<typeof ClassEditSchema>;
 export type ClassEditSchemaOutput = z.output<typeof ClassEditSchema>;

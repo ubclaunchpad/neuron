@@ -6,14 +6,25 @@ import type {
   ScheduleRuleEditSchemaType,
 } from "./schedule-form/schema";
 import type { ClassEditSchemaType } from "./schema";
+import { LOCATION_TYPE } from "./schema";
 
 export function classToFormValues(
   c: SingleClass | undefined,
   config: PublicConfig | null,
 ): ClassEditSchemaType {
+  const hasMeetingUrl = Boolean(c?.meetingURL?.trim());
+  const hasLocation = Boolean(c?.location?.trim());
+  const locationType =
+    hasMeetingUrl
+      ? LOCATION_TYPE.MEETING_LINK
+      : hasLocation
+        ? LOCATION_TYPE.IN_PERSON
+        : LOCATION_TYPE.MEETING_LINK;
+
   return {
     name: c?.name ?? "",
     description: c?.description ?? "",
+    locationType,
     meetingURL: c?.meetingURL ?? "",
     location: c?.location ?? "",
     category: c?.category ?? "",

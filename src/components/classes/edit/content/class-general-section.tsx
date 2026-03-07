@@ -19,11 +19,22 @@ import { useClassForm } from "../class-form-provider";
 import { ClassImageInput } from "./class-image-input";
 import { FormFieldController } from "@/components/form/FormField";
 import { FormError } from "@/components/form/FormLayout";
+import { FormFieldLayout } from "@/components/form/FormLayout";
+import { LOCATION_TYPE } from "../schema";
+import { useWatch } from "react-hook-form";
+import {
+  Select,
+  SelectContent,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function ClassGeneralSection() {
   const {
-    form: { control },
+    form: { control, setValue },
   } = useClassForm();
+
+  const locationType = useWatch({ control, name: "locationType" });
 
   return (
     <Card className="w-full">
@@ -110,21 +121,70 @@ export function ClassGeneralSection() {
             description="Provide a brief overview for users"
           />
 
-          <FormInputField
-            control={control}
-            name="meetingURL"
-            label="Meeting Link"
-            placeholder="https://zoom.us/j/..."
-            description="Video conferencing link for online classes"
-          />
+          <FieldGroup>
+            <FormFieldController control={control} name="locationType">
+              {({ value, onChange, ...field }) => (
+                <FormFieldLayout
+                  label="Location type"
+                  description="How the class is held"
+                  required
+                >
+                  <Select
+                    value={value}
+                    onValueChange={(newValue) => {
+                      onChange(newValue);
+                      if (newValue === LOCATION_TYPE.MEETING_LINK) {
+                        setValue("location", "");
+                      } else {
+                        setValue("meetingURL", "");
+                      }
+                    }}
+                    {...field}
+                  >
+                    <SelectTrigger
+                      aria-invalid={field["aria-invalid"]}
+                      id={field.id}
+                      onBlur={field.onBlur}
+                      className="shadow-xs"
+                    >
+                      <SelectValue placeholder="Select how the class is held" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={LOCATION_TYPE.MEETING_LINK}>
+                        Meeting link
+                      </SelectItem>
+                      <SelectItem value={LOCATION_TYPE.IN_PERSON}>
+                        In-person location
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormError />
+                </FormFieldLayout>
+              )}
+            </FormFieldController>
 
-          <FormInputField
-            control={control}
-            name="location"
-            label="In-person location"
-            placeholder="e.g. Building 1, Room 101"
-            description="Location for in-person classes"
-          />
+            {locationType === LOCATION_TYPE.MEETING_LINK && (
+              <FormInputField
+                control={control}
+                name="meetingURL"
+                label="Meeting Link"
+                placeholder="https://zoom.us/j/..."
+                description="Video conferencing link for online classes"
+                required
+              />
+            )}
+
+            {locationType === LOCATION_TYPE.IN_PERSON && (
+              <FormInputField
+                control={control}
+                name="location"
+                label="In-person location"
+                placeholder="e.g. Building 1, Room 101"
+                description="Location for in-person classes"
+                required
+              />
+            )}
+          </FieldGroup>
 
           <ClassImageInput />
         </FieldGroup>

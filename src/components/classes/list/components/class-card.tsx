@@ -62,15 +62,17 @@ export function ClassCard({
         />
 
         <div className="flex flex-col items-start">
-          <TypographySmall className="text-primary-muted mb-1">
-            {classData.lowerLevel === classData.upperLevel ? (
-              <>Level {classData.lowerLevel}</>
-            ) : (
-              <>
-                Level {classData.lowerLevel}-{classData.upperLevel}
-              </>
-            )}
-          </TypographySmall>
+          {classData.lowerLevel && classData.upperLevel ? (
+            <TypographySmall className="text-primary-muted mb-1">
+              {classData.lowerLevel === classData.upperLevel ? (
+                <>Level {classData.lowerLevel}</>
+              ) : (
+                <>
+                  Level {classData.lowerLevel}-{classData.upperLevel}
+                </>
+              )}
+            </TypographySmall>
+          ) : null}
 
           <TypographyRegBold className="mb-0.5">
             {classData.name}

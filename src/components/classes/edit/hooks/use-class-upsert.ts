@@ -46,8 +46,8 @@ export function useClassUpsert({
     const createdId = await createClass({
       termId,
       name: payload.name!,
-      lowerLevel: payload.lowerLevel!,
-      upperLevel: payload.upperLevel!,
+      lowerLevel: payload.lowerLevel ?? null,
+      upperLevel: payload.upperLevel ?? null,
       category: payload.category!,
       subcategory: payload.subcategory ?? undefined,
       image: payload.image ?? undefined,

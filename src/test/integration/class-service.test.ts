@@ -116,6 +116,33 @@ describe("ClassService", () => {
     return { termId, classId };
   }
 
+  describe("class creation", () => {
+    it("should allow creating a non-exercise class without levels", async () => {
+      const termId = await termService.createTerm({
+        name: `Test Term ${randomUUID()}`,
+        startDate: "2026-06-01",
+        endDate: "2026-08-31",
+        holidays: [],
+      });
+      createdTermIds.push(termId);
+
+      const classId = await classService.createClass({
+        termId,
+        name: `Non-Exercise Class ${randomUUID()}`,
+        lowerLevel: null,
+        upperLevel: null,
+        category: "Literacy",
+        schedules: [],
+      });
+      createdClassIds.push(classId);
+
+      const result = await classService.getClass(classId);
+      expect(result.id).toBe(classId);
+      expect(result.lowerLevel).toBeNull();
+      expect(result.upperLevel).toBeNull();
+    });
+  });
+
   describe("term published visibility", () => {
     it("admin should see classes in unpublished terms via getClass", async () => {
       const { classId } = await createTermAndClass({ publishTerm: false });

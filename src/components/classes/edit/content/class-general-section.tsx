@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import { useWatch } from "react-hook-form";
+
 import { CLASS_CATEGORIES } from "@/components/classes/constants";
 import { FormInputField } from "@/components/form/FormInput";
 import { FormSelectField } from "@/components/form/FormSelect";
@@ -22,8 +25,20 @@ import { FormError } from "@/components/form/FormLayout";
 
 export function ClassGeneralSection() {
   const {
-    form: { control },
+    form: { control, setValue, getValues },
   } = useClassForm();
+
+  const category = useWatch({ control, name: "category" });
+  const isExercise = category?.includes("Exercise") ?? false;
+
+  useEffect(() => {
+    if (isExercise && !getValues("levelRange")) {
+      setValue("levelRange", [1, 4], {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [isExercise, setValue, getValues]);
 
   return (
     <Card className="w-full">
@@ -65,42 +80,45 @@ export function ClassGeneralSection() {
             />
           </FieldGroup>
 
-          <FormFieldController control={control} name="levelRange">
-            {({ onChange, value, ...field }) => (
-              <>
-                <FieldLabel className="w-full flex justify-between items-end">
-                  <span>
-                    Levels <LabelRequiredMarker />
-                  </span>
-                  <span className="text-sm">
-                    Level {value[0]} {value[0] !== value[1] && `- ${value[1]}`}
-                  </span>
-                </FieldLabel>
+          {isExercise && (
+            <FormFieldController control={control} name="levelRange">
+              {({ onChange, value, ...field }) => (
+                <>
+                  <FieldLabel className="w-full flex justify-between items-end">
+                    <span>
+                      Levels <LabelRequiredMarker />
+                    </span>
+                    <span className="text-sm">
+                      Level {value?.[0] ?? 1}{" "}
+                      {value?.[0] !== value?.[1] && `- ${value?.[1] ?? 4}`}
+                    </span>
+                  </FieldLabel>
 
-                <div>
-                  <Slider
-                    min={1}
-                    max={4}
-                    step={1}
-                    value={value}
-                    onValueChange={onChange}
-                    className="my-2"
-                    {...field}
-                  />
+                  <div>
+                    <Slider
+                      min={1}
+                      max={4}
+                      step={1}
+                      value={value ?? [1, 4]}
+                      onValueChange={onChange}
+                      className="my-2"
+                      {...field}
+                    />
 
-                  {/* Labels for each level */}
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Level 1</span>
-                    <span>Level 2</span>
-                    <span>Level 3</span>
-                    <span>Level 4</span>
+                    {/* Labels for each level */}
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Level 1</span>
+                      <span>Level 2</span>
+                      <span>Level 3</span>
+                      <span>Level 4</span>
+                    </div>
                   </div>
-                </div>
 
-                <FormError />
-              </>
-            )}
-          </FormFieldController>
+                  <FormError />
+                </>
+              )}
+            </FormFieldController>
+          )}
 
           <FormTextareaField
             control={control}

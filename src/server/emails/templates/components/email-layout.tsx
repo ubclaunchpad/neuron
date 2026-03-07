@@ -67,9 +67,14 @@ const tailwindConfig = {
   },
 } satisfies TailwindConfig;
 
-const baseUrl = process.env.BASE_URL
-  ? `https://${process.env.BASE_URL}`
-  : "http://localhost:3000";
+const baseUrl =
+  process.env.BASE_URL &&
+  (process.env.BASE_URL.startsWith("http://") ||
+    process.env.BASE_URL.startsWith("https://"))
+    ? process.env.BASE_URL
+    : process.env.BASE_URL
+      ? `https://${process.env.BASE_URL}`
+      : "http://localhost:3000";
 
 export function EmailLayout({ preview, children }: EmailLayoutProps) {
   return (

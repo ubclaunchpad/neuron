@@ -153,6 +153,8 @@ export function ShiftDetailsAside() {
                       <Video /> Join Class
                     </Link>
                   </Button>
+                ) : shift.class.location ? (
+                  <span className="text-sm">{shift.class.location}</span>
                 ) : (
                   <span>No meeting link</span>
                 )}

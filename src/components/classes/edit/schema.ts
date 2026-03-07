@@ -10,6 +10,7 @@ export const ClassEditSchema = z
     name: z.string().nonempty("Please fill out this field."),
     description: asNullishField(z.string()),
     meetingURL: asNullishField(z.url("Please enter a valid meeting url.")),
+    location: asNullishField(z.string()),
     category: z.string().nonempty("Please fill out this field."),
     subcategory: asNullishField(z.string()),
     levelRange: z.array(z.int().min(1).max(4)).length(2),

@@ -53,6 +53,8 @@ export function useClassUpsert({
       image: payload.image ?? undefined,
       meetingURL: payload.meetingURL ?? undefined,
       description: payload.description ?? undefined,
+      meetingURL: payload.meetingURL ?? undefined,
+      location: payload.location ?? undefined,
       schedules: payload.addedSchedules,
     } satisfies CreateClassInput);
 

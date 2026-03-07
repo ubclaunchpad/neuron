@@ -1,5 +1,9 @@
 import type { CourseDB } from "@/server/db/schema";
-import { getEmbeddedSchedule, getSingleSchedule, type Schedule } from "./schedule";
+import {
+  getEmbeddedSchedule,
+  getSingleSchedule,
+  type Schedule,
+} from "./schedule";
 import type { Term } from "./term";
 
 export type Class = {
@@ -10,6 +14,7 @@ export type Class = {
   image?: string;
   published: boolean;
   meetingURL?: string;
+  location?: string;
   category: string;
   subcategory?: string;
   lowerLevel: number;
@@ -31,6 +36,7 @@ export function buildClass(
     image: classDB.image ?? undefined,
     published: classDB.published,
     meetingURL: classDB.meetingURL ?? undefined,
+    location: classDB.location ?? undefined,
     category: classDB.category,
     subcategory: classDB.subcategory ?? undefined,
     lowerLevel: classDB.lowerLevel,
@@ -49,6 +55,7 @@ export function getSingleClass(c: Class) {
     image: c.image,
     published: c.published,
     meetingURL: c.meetingURL,
+    location: c.location,
     category: c.category,
     subcategory: c.subcategory,
     lowerLevel: c.lowerLevel,
@@ -67,6 +74,7 @@ export function getEmbeddedClass(c: Class | CourseDB) {
     image: c.image,
     description: c.description,
     meetingURL: c.meetingURL,
+    location: c.location,
     category: c.category,
     subcategory: c.subcategory,
   } as const;
@@ -87,7 +95,7 @@ export function getListClass(c: Class) {
 
 export type ClassResponse<C> = {
   classes: C[];
-  term: Term
+  term: Term;
 };
 
 export type SingleClass = ReturnType<typeof getSingleClass>;

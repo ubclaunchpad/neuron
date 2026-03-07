@@ -15,6 +15,7 @@ export function classToFormValues(
     name: c?.name ?? "",
     description: c?.description ?? "",
     meetingURL: c?.meetingURL ?? "",
+    location: c?.location ?? "",
     category: c?.category ?? "",
     subcategory: c?.subcategory ?? "",
     image: (config ? buildImageUrl(config, c?.image) : undefined) ?? null,

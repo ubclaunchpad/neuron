@@ -1,4 +1,9 @@
-import { useEffect, useRef, type DependencyList, type EffectCallback } from "react";
+import {
+  useEffect,
+  useRef,
+  type DependencyList,
+  type EffectCallback,
+} from "react";
 
 /**
  * Runs an effect only when the dependencies update, but not on the initial render.
@@ -19,17 +24,17 @@ import { useEffect, useRef, type DependencyList, type EffectCallback } from "rea
  * @param inputs Dependency list like in useEffect
  */
 export function useDidUpdateEffect(fn: EffectCallback, inputs: DependencyList) {
-    const isMountingRef = useRef(false);
-  
-    useEffect(() => {
-        isMountingRef.current = true;
-    }, []);
-  
-    useEffect(() => {
-        if (!isMountingRef.current) {
-            return fn();
-        } else {
-            isMountingRef.current = false;
-        }
-    }, inputs);
+  const isMountingRef = useRef(false);
+
+  useEffect(() => {
+    isMountingRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!isMountingRef.current) {
+      return fn();
+    } else {
+      isMountingRef.current = false;
+    }
+  }, inputs);
 }

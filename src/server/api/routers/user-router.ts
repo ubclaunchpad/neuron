@@ -4,7 +4,11 @@ import {
   InstructorIdInput,
   UpdateInstructorInput,
 } from "@/models/api/instructor";
-import { CreateUserInput, ListUsersInput, UserIdInput } from "@/models/api/user";
+import {
+  CreateUserInput,
+  ListUsersInput,
+  UserIdInput,
+} from "@/models/api/user";
 import type { ListResponse } from "@/models/list-response";
 import { getListUser, type ListUser } from "@/models/user";
 import { authorizedProcedure } from "@/server/api/procedures";
@@ -61,11 +65,12 @@ export const userRouter = createTRPCRouter({
       const id = await ctx.userService.rejectVolunteer(input.userId);
       return { userId: id };
     }),
-  verificationCount: authorizedProcedure({ permission: { users: ["view"] } })
-    .query(async ({ input, ctx }) => {
-      const count = await ctx.userService.getVerificationRequestCount();
-      return count;
-    }),
+  verificationCount: authorizedProcedure({
+    permission: { users: ["view"] },
+  }).query(async ({ input, ctx }) => {
+    const count = await ctx.userService.getVerificationRequestCount();
+    return count;
+  }),
   create: authorizedProcedure({ permission: { users: ["create"] } })
     .input(CreateUserInput)
     .mutation(async ({ input, ctx }) => {

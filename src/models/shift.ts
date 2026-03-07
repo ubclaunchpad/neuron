@@ -135,6 +135,7 @@ export function buildShift(
       image: classDB.image ?? null,
       description: classDB.description ?? null,
       meetingURL: classDB.meetingURL ?? null,
+      location: classDB.location ?? null,
       category: classDB.category,
       subcategory: classDB.subcategory ?? null,
     },

@@ -82,6 +82,7 @@ export const course = pgTable(
     published: boolean("published").notNull().default(false),
     description: text("description"),
     meetingURL: text("meeting_url"),
+    location: text("location"),
     category: text("category").notNull(),
     subcategory: text("subcategory"),
     lowerLevel: integer("lower_level").notNull(),

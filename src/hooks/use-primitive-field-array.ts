@@ -167,8 +167,8 @@ export type PrimitiveFieldArrayPathByValue<
 /** Element type for a primitive array at a given primitive-array path */
 export type PrimitiveFieldArray<
   TFieldValues extends FieldValues = FieldValues,
-  TPrimitiveFieldArrayName extends
-    PrimitiveFieldArrayPath<TFieldValues> = PrimitiveFieldArrayPath<TFieldValues>,
+  TPrimitiveFieldArrayName extends PrimitiveFieldArrayPath<TFieldValues> =
+    PrimitiveFieldArrayPath<TFieldValues>,
 > =
   PrimitiveFieldArrayPathValue<TFieldValues, TPrimitiveFieldArrayName> extends
     | ReadonlyArray<infer U>

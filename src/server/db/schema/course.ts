@@ -104,6 +104,14 @@ export const course = pgTable(
       "chk_upper_level_bounds",
       sql`${table.upperLevel} IS NULL OR (${table.upperLevel} >= 1 AND ${table.upperLevel} <= 4)`,
     ),
+    check(
+      "chk_levels_both_or_neither",
+      sql`(${table.lowerLevel} IS NULL) = (${table.upperLevel} IS NULL)`,
+    ),
+    check(
+      "chk_lower_lte_upper",
+      sql`${table.lowerLevel} IS NULL OR ${table.lowerLevel} <= ${table.upperLevel}`,
+    ),
   ],
 );
 export type CourseDB = typeof course.$inferSelect;

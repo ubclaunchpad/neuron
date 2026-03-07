@@ -17,7 +17,10 @@ export const CreateClass = z.object({
   category: z.string(),
   subcategory: z.string().optional(),
   schedules: z.array(CreateSchedule).default([]),
-});
+}).refine(
+  (val) => (val.lowerLevel == null) === (val.upperLevel == null),
+  { message: "Both levels must be provided or both must be empty", path: ["lowerLevel"] },
+);
 export type CreateClassInput = z.input<typeof CreateClass>;
 export type CreateClassOutput= z.output<typeof CreateClass>;
 
@@ -34,7 +37,10 @@ export const UpdateClass = z.object({
   addedSchedules: z.array(CreateSchedule).default([]),
   updatedSchedules: z.array(UpdateSchedule).default([]),
   deletedSchedules: z.array(z.uuid()).default([]),
-});
+}).refine(
+  (val) => (val.lowerLevel == null) === (val.upperLevel == null),
+  { message: "Both levels must be provided or both must be empty", path: ["lowerLevel"] },
+);
 export type UpdateClassInput = z.input<typeof UpdateClass>;
 export type UpdateClassOutput = z.output<typeof UpdateClass>;
 

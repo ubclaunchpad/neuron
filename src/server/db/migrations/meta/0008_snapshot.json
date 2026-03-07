@@ -1,5 +1,5 @@
 {
-  "id": "a53aabbe-42ae-457e-bf90-a03842f5926e",
+  "id": "49a0501a-1f4d-4d24-b01d-bb9559cfa58b",
   "prevId": "20873cbb-8f15-4573-9c32-696350ae2634",
   "version": "7",
   "dialect": "postgresql",
@@ -764,6 +764,14 @@
         "chk_upper_level_bounds": {
           "name": "chk_upper_level_bounds",
           "value": "\"course\".\"upper_level\" IS NULL OR (\"course\".\"upper_level\" >= 1 AND \"course\".\"upper_level\" <= 4)"
+        },
+        "chk_levels_both_or_neither": {
+          "name": "chk_levels_both_or_neither",
+          "value": "(\"course\".\"lower_level\" IS NULL) = (\"course\".\"upper_level\" IS NULL)"
+        },
+        "chk_lower_lte_upper": {
+          "name": "chk_lower_lte_upper",
+          "value": "\"course\".\"lower_level\" IS NULL OR \"course\".\"lower_level\" <= \"course\".\"upper_level\""
         }
       },
       "isRLSEnabled": false

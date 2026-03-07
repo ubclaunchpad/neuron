@@ -115,15 +115,15 @@ export function ClassGeneralSection() {
             name="meetingURL"
             label="Meeting Link"
             placeholder="https://zoom.us/j/..."
-            description="Video conferencing link for online classes (optional if in-person location is provided)"
+            description="Video conferencing link for online classes"
           />
 
           <FormInputField
             control={control}
             name="location"
             label="In-person location"
-            placeholder="e.g. Community Center, 123 Main St"
-            description="Address or place for in-person classes (optional if meeting link is provided)"
+            placeholder="e.g. Building 1, Room 101"
+            description="Location for in-person classes"
           />
 
           <ClassImageInput />

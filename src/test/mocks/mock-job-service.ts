@@ -16,6 +16,7 @@ export class MockJobService implements IJobService {
     _data?: JobPayload<TJobName>,
     _options?: RunJobOptions,
   ): Promise<string | null> {
+    if (_options?.cron) return null;
     return "mock-job-id";
   }
 

@@ -207,9 +207,10 @@ export class JobService implements IJobService {
             runAt,
             ...rest
           } = mergedOptions;
+          const startAfter = runAt ?? rest.startAfter;
           return {
             ...rest,
-            startAfter: runAt ?? rest.startAfter,
+            ...(startAfter !== undefined ? { startAfter } : {}),
           };
         })()
       : undefined;
@@ -224,13 +225,30 @@ export class JobService implements IJobService {
     await this.boss.start();
     sharedBossState.isStarted = true;
 
-    if (!sharedBossState.isWorkersRegistered) {
-      await this.registerWorkers();
-      await this.registerWorkersForPersistedCorrelationSchedules();
-      sharedBossState.isWorkersRegistered = true;
-    }
+    try {
+      if (!sharedBossState.isWorkersRegistered) {
+        await this.registerWorkers();
+        await this.registerWorkersForPersistedCorrelationSchedules();
+        sharedBossState.isWorkersRegistered = true;
+      }
 
-    await this.registerStartupSchedules();
+      await this.registerStartupSchedules();
+    } catch (error) {
+      sharedBossState.isStarted = false;
+      sharedBossState.isWorkersRegistered = false;
+      sharedBossState.registeredWorkerQueues.clear();
+      sharedBossState.pendingWorkerRegistrations.clear();
+      sharedBossState.recurringQueuesByJob.clear();
+      sharedBossState.boss = undefined;
+
+      try {
+        await this.boss.stop();
+      } catch {
+        // Ignore shutdown failures while handling bootstrap failures.
+      }
+
+      throw error;
+    }
   }
 
   private async registerWorkers(): Promise<void> {

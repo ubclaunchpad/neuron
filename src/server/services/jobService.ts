@@ -76,6 +76,7 @@ export class JobService implements IJobService {
 
   async start(): Promise<void> {
     if (this.env.NODE_ENV === "test") return;
+    if (sharedBossState.isStarted) return;
 
     sharedBossState.startPromise ??= this.bootstrap();
     return sharedBossState.startPromise;
@@ -132,11 +133,15 @@ export class JobService implements IJobService {
     const results = await Promise.allSettled(
       [...queueNames].map(async (queueName) => this.boss.unschedule(queueName)),
     );
+    const errors = results
+      .filter((result): result is PromiseRejectedResult => result.status === "rejected")
+      .map((result) => result.reason);
 
-    for (const result of results) {
-      if (result.status === "rejected") {
-        throw result.reason;
-      }
+    if (errors.length === 1) {
+      throw errors[0];
+    }
+    if (errors.length > 1) {
+      throw new AggregateError(errors, `${errors.length} unschedule calls failed`);
     }
 
     sharedBossState.recurringQueuesByJob.delete(jobName);
@@ -150,10 +155,11 @@ export class JobService implements IJobService {
     const definition = this.getJobDefinition(jobName);
     const mergedOptions = mergeRetryOptions(definition.retries, options);
     const cron = mergedOptions?.cron;
-    const correlationId = mergedOptions?.correlationId;
-    const queueName = this.getQueueName(jobName, correlationId);
 
     if (cron) {
+      const correlationId = mergedOptions?.correlationId;
+      const queueName = this.getQueueName(jobName, correlationId);
+
       if (mergedOptions?.runAt || mergedOptions?.startAfter) {
         throw new Error("Recurring runs cannot include runAt/startAfter.");
       }
@@ -174,6 +180,10 @@ export class JobService implements IJobService {
       );
       this.trackRecurringQueue(jobName, queueName);
       return null;
+    }
+
+    if (mergedOptions?.correlationId) {
+      throw new Error("correlationId is only supported for recurring (cron) runs.");
     }
 
     if (mergedOptions?.startAt || mergedOptions?.endAt) {
@@ -209,6 +219,7 @@ export class JobService implements IJobService {
 
     if (!sharedBossState.isWorkersRegistered) {
       await this.registerWorkers();
+      await this.registerWorkersForPersistedCorrelationSchedules();
       sharedBossState.isWorkersRegistered = true;
     }
 
@@ -229,6 +240,25 @@ export class JobService implements IJobService {
         ...(startup.options ?? {}),
         cron: startup.cron,
       });
+    }
+  }
+
+  private async registerWorkersForPersistedCorrelationSchedules(): Promise<void> {
+    const schedules = (await this.boss.getSchedules()) as Array<{ name: string }>;
+
+    for (const definition of registeredJobs) {
+      const correlatedQueueNames = schedules
+        .map((schedule) => schedule.name)
+        .filter(
+          (queueName) =>
+            queueName !== definition.name &&
+            queueName.startsWith(`${definition.name}:`),
+        );
+
+      for (const queueName of correlatedQueueNames) {
+        await this.ensureWorkerRegistered(queueName, definition);
+        this.trackRecurringQueue(definition.name, queueName);
+      }
     }
   }
 

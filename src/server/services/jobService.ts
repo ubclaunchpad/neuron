@@ -81,7 +81,10 @@ export class JobService implements IJobService {
     if (this.env.NODE_ENV === "test") return;
     if (sharedBossState.isStarted) return;
 
-    sharedBossState.startPromise ??= this.bootstrap();
+    sharedBossState.startPromise ??= this.bootstrap().catch((error) => {
+      sharedBossState.startPromise = undefined;
+      throw error;
+    });
     return sharedBossState.startPromise;
   }
 
@@ -296,26 +299,29 @@ export class JobService implements IJobService {
 
     const registrationPromise = (async () => {
       const worker = async (job: any) => {
-        const jobItem = Array.isArray(job) ? job[0] : job;
-        const scope = this.container.createScope();
-        scope.register({
-          headers: asValue(new Headers()),
-          session: asValue(undefined),
-        });
+        const jobItems = Array.isArray(job) ? job : [job];
 
-        try {
-          await definition.handler(definitionPayload(definition, jobItem?.data), {
-            container: scope,
-            cradle: scope.cradle,
+        for (const jobItem of jobItems) {
+          const scope = this.container.createScope();
+          scope.register({
+            headers: asValue(new Headers()),
+            session: asValue(undefined),
           });
-        } catch (error) {
-          console.error(
-            `[pg-boss] job ${queueName} failed (id=${jobItem?.id ?? "unknown"})`,
-            error,
-          );
-          throw error;
-        } finally {
-          await scope.dispose();
+
+          try {
+            await definition.handler(definitionPayload(definition, jobItem?.data), {
+              container: scope,
+              cradle: scope.cradle,
+            });
+          } catch (error) {
+            console.error(
+              `[pg-boss] job ${queueName} failed (id=${jobItem?.id ?? "unknown"})`,
+              error,
+            );
+            throw error;
+          } finally {
+            await scope.dispose();
+          }
         }
       };
 

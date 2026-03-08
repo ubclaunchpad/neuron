@@ -35,6 +35,7 @@ type SharedBossState = {
   isStarted: boolean;
   isWorkersRegistered: boolean;
   registeredWorkerQueues: Set<string>;
+  recurringQueuesByJob: Map<KnownJobName, Set<string>>;
   startPromise?: Promise<void>;
 };
 
@@ -48,14 +49,17 @@ const sharedBossState: SharedBossState =
     isStarted: false,
     isWorkersRegistered: false,
     registeredWorkerQueues: new Set<string>(),
+    recurringQueuesByJob: new Map<KnownJobName, Set<string>>(),
   };
 
 globalWithBoss.__neuronPgBossState = sharedBossState;
+sharedBossState.registeredWorkerQueues ??= new Set<string>();
+sharedBossState.recurringQueuesByJob ??= new Map<KnownJobName, Set<string>>();
 
 export class JobService implements IJobService {
   private readonly container: NeuronContainer;
   private readonly env: typeof environment;
-  private readonly boss: PgBoss;
+  private boss: PgBoss;
 
   constructor({
     container,
@@ -67,11 +71,7 @@ export class JobService implements IJobService {
     this.container = container;
     this.env = env;
 
-    sharedBossState.boss ??= new PgBoss({
-      connectionString: env.DATABASE_URL,
-    });
-
-    this.boss = sharedBossState.boss;
+    this.boss = this.getOrCreateBoss();
   }
 
   async start(): Promise<void> {
@@ -82,12 +82,15 @@ export class JobService implements IJobService {
   }
 
   async stop(): Promise<void> {
-    if (!sharedBossState.isStarted) return;
+    if (sharedBossState.boss && sharedBossState.isStarted) {
+      await this.boss.stop();
+    }
 
-    await this.boss.stop();
+    sharedBossState.boss = undefined;
     sharedBossState.isStarted = false;
     sharedBossState.isWorkersRegistered = false;
     sharedBossState.registeredWorkerQueues.clear();
+    sharedBossState.recurringQueuesByJob.clear();
     sharedBossState.startPromise = undefined;
   }
 
@@ -97,9 +100,55 @@ export class JobService implements IJobService {
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
   ): Promise<string | null> {
+    await this.start();
+    return this.runWithStartedBoss(jobName, data, options);
+  }
+
+  async unschedule(
+    jobName: KnownJobName,
+    options?: { correlationId?: string },
+  ): Promise<void> {
+    this.getJobDefinition(jobName);
+    await this.start();
+
+    const correlationId = options?.correlationId;
+    if (correlationId) {
+      const queueName = this.getQueueName(jobName, correlationId);
+      await this.boss.unschedule(queueName);
+      this.removeRecurringQueue(jobName, queueName);
+      return;
+    }
+
+    const trackedQueues = sharedBossState.recurringQueuesByJob.get(jobName);
+    const schedules = (await this.boss.getSchedules()) as Array<{ name: string }>;
+    const discoveredQueueNames = schedules
+      .map((schedule) => schedule.name)
+      .filter((name) => name === jobName || name.startsWith(`${jobName}:`));
+    const queueNames = new Set<string>([
+      jobName,
+      ...(trackedQueues ?? []),
+      ...discoveredQueueNames,
+    ]);
+    const results = await Promise.allSettled(
+      [...queueNames].map(async (queueName) => this.boss.unschedule(queueName)),
+    );
+
+    for (const result of results) {
+      if (result.status === "rejected") {
+        throw result.reason;
+      }
+    }
+
+    sharedBossState.recurringQueuesByJob.delete(jobName);
+  }
+
+  private async runWithStartedBoss<TJobName extends KnownJobName>(
+    jobName: TJobName,
+    data?: JobPayload<TJobName>,
+    options?: RunJobOptions,
+  ): Promise<string | null> {
     const definition = this.getJobDefinition(jobName);
     const mergedOptions = mergeRetryOptions(definition.retries, options);
-    await this.start();
     const cron = mergedOptions?.cron;
     const correlationId = mergedOptions?.correlationId;
     const queueName = this.getQueueName(jobName, correlationId);
@@ -123,6 +172,7 @@ export class JobService implements IJobService {
         (data ?? null) as object | null,
         scheduleOptions as any,
       );
+      this.trackRecurringQueue(jobName, queueName);
       return null;
     }
 
@@ -150,19 +200,10 @@ export class JobService implements IJobService {
     return this.boss.send(jobName, (data ?? null) as object | null, sendOptions);
   }
 
-  async unschedule(
-    jobName: KnownJobName,
-    options?: { correlationId?: string },
-  ): Promise<void> {
-    this.getJobDefinition(jobName);
-    await this.start();
-    const queueName = this.getQueueName(jobName, options?.correlationId);
-    await this.boss.unschedule(queueName);
-  }
-
   private async bootstrap(): Promise<void> {
     if (sharedBossState.isStarted) return;
 
+    this.boss = this.getOrCreateBoss();
     await this.boss.start();
     sharedBossState.isStarted = true;
 
@@ -184,7 +225,7 @@ export class JobService implements IJobService {
     for (const definition of registeredJobs) {
       const startup = definition.startup;
       if (!startup) continue;
-      await this.run(definition.name, startup.data, {
+      await this.runWithStartedBoss(definition.name, startup.data, {
         ...(startup.options ?? {}),
         cron: startup.cron,
       });
@@ -244,6 +285,28 @@ export class JobService implements IJobService {
     }
 
     sharedBossState.registeredWorkerQueues.add(queueName);
+  }
+
+  private getOrCreateBoss(): PgBoss {
+    sharedBossState.boss ??= new PgBoss({
+      connectionString: this.env.DATABASE_URL,
+    });
+    return sharedBossState.boss;
+  }
+
+  private trackRecurringQueue(jobName: KnownJobName, queueName: string): void {
+    const queues = sharedBossState.recurringQueuesByJob.get(jobName) ?? new Set();
+    queues.add(queueName);
+    sharedBossState.recurringQueuesByJob.set(jobName, queues);
+  }
+
+  private removeRecurringQueue(jobName: KnownJobName, queueName: string): void {
+    const queues = sharedBossState.recurringQueuesByJob.get(jobName);
+    if (!queues) return;
+    queues.delete(queueName);
+    if (queues.size === 0) {
+      sharedBossState.recurringQueuesByJob.delete(jobName);
+    }
   }
 }
 

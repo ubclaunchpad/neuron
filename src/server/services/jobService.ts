@@ -35,6 +35,7 @@ type SharedBossState = {
   isStarted: boolean;
   isWorkersRegistered: boolean;
   registeredWorkerQueues: Set<string>;
+  pendingWorkerRegistrations: Map<string, Promise<void>>;
   recurringQueuesByJob: Map<KnownJobName, Set<string>>;
   startPromise?: Promise<void>;
 };
@@ -49,11 +50,13 @@ const sharedBossState: SharedBossState =
     isStarted: false,
     isWorkersRegistered: false,
     registeredWorkerQueues: new Set<string>(),
+    pendingWorkerRegistrations: new Map<string, Promise<void>>(),
     recurringQueuesByJob: new Map<KnownJobName, Set<string>>(),
   };
 
 globalWithBoss.__neuronPgBossState = sharedBossState;
 sharedBossState.registeredWorkerQueues ??= new Set<string>();
+sharedBossState.pendingWorkerRegistrations ??= new Map<string, Promise<void>>();
 sharedBossState.recurringQueuesByJob ??= new Map<KnownJobName, Set<string>>();
 
 export class JobService implements IJobService {
@@ -91,6 +94,7 @@ export class JobService implements IJobService {
     sharedBossState.isStarted = false;
     sharedBossState.isWorkersRegistered = false;
     sharedBossState.registeredWorkerQueues.clear();
+    sharedBossState.pendingWorkerRegistrations.clear();
     sharedBossState.recurringQueuesByJob.clear();
     sharedBossState.startPromise = undefined;
   }
@@ -283,38 +287,53 @@ export class JobService implements IJobService {
     definition: RegisteredJob<any>,
   ): Promise<void> {
     if (sharedBossState.registeredWorkerQueues.has(queueName)) return;
-
-    const worker = async (job: any) => {
-      const jobItem = Array.isArray(job) ? job[0] : job;
-      const scope = this.container.createScope();
-      scope.register({
-        headers: asValue(new Headers()),
-        session: asValue(undefined),
-      });
-
-      try {
-        await definition.handler(definitionPayload(definition, jobItem?.data), {
-          container: scope,
-          cradle: scope.cradle,
-        });
-      } catch (error) {
-        console.error(
-          `[pg-boss] job ${queueName} failed (id=${jobItem?.id ?? "unknown"})`,
-          error,
-        );
-        throw error;
-      } finally {
-        await scope.dispose();
-      }
-    };
-
-    if (definition.workOptions) {
-      await this.boss.work(queueName, definition.workOptions as any, worker);
-    } else {
-      await this.boss.work(queueName, worker);
+    const existingRegistration =
+      sharedBossState.pendingWorkerRegistrations.get(queueName);
+    if (existingRegistration) {
+      await existingRegistration;
+      return;
     }
 
-    sharedBossState.registeredWorkerQueues.add(queueName);
+    const registrationPromise = (async () => {
+      const worker = async (job: any) => {
+        const jobItem = Array.isArray(job) ? job[0] : job;
+        const scope = this.container.createScope();
+        scope.register({
+          headers: asValue(new Headers()),
+          session: asValue(undefined),
+        });
+
+        try {
+          await definition.handler(definitionPayload(definition, jobItem?.data), {
+            container: scope,
+            cradle: scope.cradle,
+          });
+        } catch (error) {
+          console.error(
+            `[pg-boss] job ${queueName} failed (id=${jobItem?.id ?? "unknown"})`,
+            error,
+          );
+          throw error;
+        } finally {
+          await scope.dispose();
+        }
+      };
+
+      if (definition.workOptions) {
+        await this.boss.work(queueName, definition.workOptions as any, worker);
+      } else {
+        await this.boss.work(queueName, worker);
+      }
+
+      sharedBossState.registeredWorkerQueues.add(queueName);
+    })();
+
+    sharedBossState.pendingWorkerRegistrations.set(queueName, registrationPromise);
+    try {
+      await registrationPromise;
+    } finally {
+      sharedBossState.pendingWorkerRegistrations.delete(queueName);
+    }
   }
 
   private getOrCreateBoss(): PgBoss {

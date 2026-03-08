@@ -21,7 +21,7 @@ export const scheduledTestJob: RegisteredJob<ScheduledTestPayload> = {
       // Prevent duplicate startup test jobs from being enqueued repeatedly.
       singletonKey: "scheduled-startup-test",
       singletonHours: 1,
-      startAfter: "90 seconds",
+      startAfter: 90,
     },
   },
   handler: async (payload) => {

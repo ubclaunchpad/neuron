@@ -7,16 +7,23 @@ import type {
 } from "@/server/jobs/types";
 
 export class MockJobService implements IJobService {
+  readonly calls: {
+    jobName: KnownJobName;
+    data?: unknown;
+    options?: RunJobOptions;
+  }[] = [];
+
   async start(): Promise<void> {}
 
   async stop(): Promise<void> {}
 
   async run<TJobName extends KnownJobName>(
-    _jobName: TJobName,
-    _data?: JobPayload<TJobName>,
-    _options?: RunJobOptions,
+    jobName: TJobName,
+    data?: JobPayload<TJobName>,
+    options?: RunJobOptions,
   ): Promise<string | null> {
-    if (_options?.cron) return null;
+    this.calls.push({ jobName, data, options });
+    if (options?.cron) return null;
     return "mock-job-id";
   }
 

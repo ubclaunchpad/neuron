@@ -1,11 +1,10 @@
-import { env } from "@/env";
 import { cleanupOrphanedImagesJob } from "./definitions/cleanup-orphaned-images.job";
 import { scheduledTestJob } from "./definitions/scheduled-test.job";
 import type { RegisteredJob } from "./types";
 
 export const registeredJobs = [
   cleanupOrphanedImagesJob,
-  ...(env.NODE_ENV === "production" ? [] : [scheduledTestJob]),
+  scheduledTestJob,
 ] as const satisfies readonly RegisteredJob<any>[];
 
 type RegisteredJobs = typeof registeredJobs;

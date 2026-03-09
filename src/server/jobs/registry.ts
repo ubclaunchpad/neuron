@@ -1,19 +1,19 @@
+import { env } from "@/env";
 import { cleanupOrphanedImagesJob } from "./definitions/cleanup-orphaned-images.job";
 import { scheduledTestJob } from "./definitions/scheduled-test.job";
 import type { RegisteredJob } from "./types";
 
-export const registeredJobs = [
+const allJobs = [
   cleanupOrphanedImagesJob,
   scheduledTestJob,
 ] as const satisfies readonly RegisteredJob<any>[];
 
-type RegisteredJobs = typeof registeredJobs;
-type AnyRegisteredJob = RegisteredJobs[number];
+type AnyKnownJob = (typeof allJobs)[number];
 
-export type KnownJobName = AnyRegisteredJob["name"];
+export type KnownJobName = AnyKnownJob["name"];
 
 type JobPayloadMap = {
-  [TJob in AnyRegisteredJob as TJob["name"]]: TJob extends RegisteredJob<
+  [TJob in AnyKnownJob as TJob["name"]]: TJob extends RegisteredJob<
     infer TPayload
   >
     ? TPayload
@@ -32,13 +32,23 @@ const assertUniqueJobNames = (jobs: readonly RegisteredJob<any>[]) => {
   }
 };
 
-assertUniqueJobNames(registeredJobs);
+assertUniqueJobNames(allJobs);
 
-export const jobsByName = new Map<KnownJobName, AnyRegisteredJob>(
-  registeredJobs.map((job) => [job.name, job] as const),
+export const jobsByName = new Map<KnownJobName, AnyKnownJob>(
+  allJobs.map((job) => [job.name, job] as const),
 );
 
-const knownJobNames = new Set<string>(registeredJobs.map((job) => job.name));
+const knownJobNames = new Set<string>(allJobs.map((job) => job.name));
 
 export const isKnownJobName = (jobName: string): jobName is KnownJobName =>
   knownJobNames.has(jobName);
+
+export const registeredJobs: readonly RegisteredJob<any>[] =
+  env.NODE_ENV === "production"
+    ? [cleanupOrphanedImagesJob]
+    : [cleanupOrphanedImagesJob, scheduledTestJob];
+
+const registeredJobNames = new Set<string>(registeredJobs.map((job) => job.name));
+
+export const isRegisteredJobName = (jobName: string): jobName is KnownJobName =>
+  registeredJobNames.has(jobName);

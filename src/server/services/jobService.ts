@@ -5,6 +5,7 @@ import type { env as environment } from "@/env";
 import type { NeuronContainer } from "@/server/api/di-container";
 import {
   isKnownJobName,
+  isRegisteredJobName,
   jobsByName,
   registeredJobs,
   type JobPayload,
@@ -286,6 +287,11 @@ export class JobService implements IJobService {
   private getJobDefinition(jobName: string) {
     if (!isKnownJobName(jobName)) {
       throw new Error(`Unknown job name: ${jobName}`);
+    }
+    if (!isRegisteredJobName(jobName)) {
+      throw new Error(
+        `Job is not registered in ${this.env.NODE_ENV}: ${jobName}`,
+      );
     }
     return jobsByName.get(jobName)!;
   }

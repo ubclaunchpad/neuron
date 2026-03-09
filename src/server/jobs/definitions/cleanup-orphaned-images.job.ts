@@ -15,7 +15,7 @@ export const cleanupOrphanedImagesJob: RegisteredJob<CleanupOrphanedImagesPayloa
       retryBackoff: true,
     },
     startup:
-      env.NODE_ENV === "production"
+      env.NODE_ENV !== "production"
         ? undefined
         : {
             cron: "0 3 * * *",

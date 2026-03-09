@@ -74,7 +74,7 @@ export function createTestContainer(
     currentSessionService: asClass<ICurrentSessionService>(
       MockCurrentSessionService,
     ).singleton(),
-    jobService: asClass<IJobService>(MockJobService).singleton(),
+    jobService: asClass<IJobService>(MockJobService).transient(),
     emailService: asClass<IEmailService>(MockEmailService).singleton(),
     imageService: asClass<IImageService>(MockImageService).singleton(),
     // cacheService: asClass(CacheService).scoped(),

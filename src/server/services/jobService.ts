@@ -1,5 +1,5 @@
 import { asValue } from "awilix";
-import { PgBoss } from "pg-boss";
+import { PgBoss, type Schedule } from "pg-boss";
 
 import type { env as environment } from "@/env";
 import type { NeuronContainer } from "@/server/api/di-container";
@@ -122,7 +122,7 @@ export class JobService implements IJobService {
     }
 
     const trackedQueues = sharedBossState.recurringQueuesByJob.get(jobName);
-    const schedules = (await this.boss.getSchedules()) as Array<{ name: string }>;
+    const schedules = await this.getSchedules();
     const discoveredQueueNames = schedules
       .map((schedule) => schedule.name)
       .filter((name) => name === jobName || name.startsWith(`${jobName}:`));
@@ -265,7 +265,7 @@ export class JobService implements IJobService {
   }
 
   private async registerWorkersForPersistedCorrelationSchedules(): Promise<void> {
-    const schedules = (await this.boss.getSchedules()) as Array<{ name: string }>;
+    const schedules = await this.getSchedules();
 
     for (const definition of registeredJobs) {
       const correlatedQueueNames = schedules
@@ -335,7 +335,12 @@ export class JobService implements IJobService {
             );
             throw error;
           } finally {
-            await scope.dispose();
+            await scope.dispose().catch((disposeError) => {
+              console.error(
+                `[pg-boss] scope disposal failed for job ${queueName}`,
+                disposeError,
+              );
+            });
           }
         }
       };
@@ -362,6 +367,10 @@ export class JobService implements IJobService {
       connectionString: this.env.DATABASE_URL,
     });
     return sharedBossState.boss;
+  }
+
+  private async getSchedules(): Promise<Schedule[]> {
+    return this.boss.getSchedules();
   }
 
   private trackRecurringQueue(jobName: KnownJobName, queueName: string): void {

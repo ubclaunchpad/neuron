@@ -1,6 +1,6 @@
 {
-  "id": "7d8c92e7-182d-4c1a-bb26-80f6ad8f6110",
-  "prevId": "560d1ea8-b5c4-46f1-bd6f-d8ebe2848dc2",
+  "id": "5de7367c-71f7-4d40-9ee8-87a526c11ab9",
+  "prevId": "49a0501a-1f4d-4d24-b01d-bb9559cfa58b",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -133,8 +133,12 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -258,8 +262,12 @@
           "name": "appInvitation_inviter_id_user_id_fk",
           "tableFrom": "appInvitation",
           "tableTo": "user",
-          "columnsFrom": ["inviter_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "inviter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -363,8 +371,12 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -374,7 +386,9 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": ["token"]
+          "columns": [
+            "token"
+          ]
         }
       },
       "policies": {},
@@ -567,8 +581,12 @@
           "name": "blackout_term_id_term_id_fk",
           "tableFrom": "blackout",
           "tableTo": "term",
-          "columnsFrom": ["term_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "term_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -576,8 +594,12 @@
           "name": "blackout_schedule_id_schedule_id_fk",
           "tableFrom": "blackout",
           "tableTo": "schedule",
-          "columnsFrom": ["schedule_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -639,9 +661,16 @@
           "primaryKey": false,
           "notNull": false
         },
-        "meeting_url": {
-          "name": "meeting_url",
+        "location": {
+          "name": "location",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "location_type": {
+          "name": "location_type",
+          "type": "location_type",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
         },
@@ -661,13 +690,13 @@
           "name": "lower_level",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "upper_level": {
           "name": "upper_level",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -721,8 +750,12 @@
           "name": "course_term_id_term_id_fk",
           "tableFrom": "course",
           "tableTo": "term",
-          "columnsFrom": ["term_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "term_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -733,11 +766,19 @@
       "checkConstraints": {
         "chk_lower_level_bounds": {
           "name": "chk_lower_level_bounds",
-          "value": "\"course\".\"lower_level\" >= 1 AND \"course\".\"lower_level\" <= 4"
+          "value": "\"course\".\"lower_level\" IS NULL OR (\"course\".\"lower_level\" >= 1 AND \"course\".\"lower_level\" <= 4)"
         },
         "chk_upper_level_bounds": {
           "name": "chk_upper_level_bounds",
-          "value": "\"course\".\"upper_level\" >= 1 AND \"course\".\"upper_level\" <= 4"
+          "value": "\"course\".\"upper_level\" IS NULL OR (\"course\".\"upper_level\" >= 1 AND \"course\".\"upper_level\" <= 4)"
+        },
+        "chk_levels_both_or_neither": {
+          "name": "chk_levels_both_or_neither",
+          "value": "(\"course\".\"lower_level\" IS NULL) = (\"course\".\"upper_level\" IS NULL)"
+        },
+        "chk_lower_lte_upper": {
+          "name": "chk_lower_lte_upper",
+          "value": "\"course\".\"lower_level\" IS NULL OR \"course\".\"lower_level\" <= \"course\".\"upper_level\""
         }
       },
       "isRLSEnabled": false
@@ -923,8 +964,12 @@
           "name": "log_volunteer_user_id_volunteer_user_id_fk",
           "tableFrom": "log",
           "tableTo": "volunteer",
-          "columnsFrom": ["volunteer_user_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "volunteer_user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -932,8 +977,12 @@
           "name": "log_course_id_course_id_fk",
           "tableFrom": "log",
           "tableTo": "course",
-          "columnsFrom": ["course_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "course_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -998,8 +1047,12 @@
           "name": "instructor_to_schedule_instructor_user_id_user_id_fk",
           "tableFrom": "instructor_to_schedule",
           "tableTo": "user",
-          "columnsFrom": ["instructor_user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "instructor_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1007,8 +1060,12 @@
           "name": "instructor_to_schedule_schedule_id_schedule_id_fk",
           "tableFrom": "instructor_to_schedule",
           "tableTo": "schedule",
-          "columnsFrom": ["schedule_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1016,7 +1073,10 @@
       "compositePrimaryKeys": {
         "pk_instructor_schedule": {
           "name": "pk_instructor_schedule",
-          "columns": ["instructor_user_id", "schedule_id"]
+          "columns": [
+            "instructor_user_id",
+            "schedule_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1094,8 +1154,12 @@
           "name": "schedule_course_id_course_id_fk",
           "tableFrom": "schedule",
           "tableTo": "course",
-          "columnsFrom": ["course_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "course_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1169,8 +1233,12 @@
           "name": "volunteer_to_schedule_volunteer_user_id_volunteer_user_id_fk",
           "tableFrom": "volunteer_to_schedule",
           "tableTo": "volunteer",
-          "columnsFrom": ["volunteer_user_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "volunteer_user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1178,8 +1246,12 @@
           "name": "volunteer_to_schedule_schedule_id_schedule_id_fk",
           "tableFrom": "volunteer_to_schedule",
           "tableTo": "schedule",
-          "columnsFrom": ["schedule_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1187,7 +1259,10 @@
       "compositePrimaryKeys": {
         "pk_volunteer_schedule": {
           "name": "pk_volunteer_schedule",
-          "columns": ["volunteer_user_id", "schedule_id"]
+          "columns": [
+            "volunteer_user_id",
+            "schedule_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1339,8 +1414,12 @@
           "name": "coverage_request_shift_id_shift_id_fk",
           "tableFrom": "coverage_request",
           "tableTo": "shift",
-          "columnsFrom": ["shift_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "shift_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1348,8 +1427,12 @@
           "name": "coverage_request_requesting_volunteer_user_id_volunteer_user_id_fk",
           "tableFrom": "coverage_request",
           "tableTo": "volunteer",
-          "columnsFrom": ["requesting_volunteer_user_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "requesting_volunteer_user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1357,8 +1440,12 @@
           "name": "coverage_request_covered_by_volunteer_user_id_volunteer_user_id_fk",
           "tableFrom": "coverage_request",
           "tableTo": "volunteer",
-          "columnsFrom": ["covered_by_volunteer_user_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "covered_by_volunteer_user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1526,8 +1613,12 @@
           "name": "shift_class_id_course_id_fk",
           "tableFrom": "shift",
           "tableTo": "course",
-          "columnsFrom": ["class_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "class_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1535,8 +1626,12 @@
           "name": "shift_schedule_id_schedule_id_fk",
           "tableFrom": "shift",
           "tableTo": "schedule",
-          "columnsFrom": ["schedule_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "schedule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1544,8 +1639,12 @@
           "name": "shift_cancelled_by_user_id_user_id_fk",
           "tableFrom": "shift",
           "tableTo": "user",
-          "columnsFrom": ["cancelled_by_user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "cancelled_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1619,8 +1718,12 @@
           "name": "shift_attendance_shift_id_shift_id_fk",
           "tableFrom": "shift_attendance",
           "tableTo": "shift",
-          "columnsFrom": ["shift_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "shift_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1628,8 +1731,12 @@
           "name": "shift_attendance_user_id_volunteer_user_id_fk",
           "tableFrom": "shift_attendance",
           "tableTo": "volunteer",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1637,7 +1744,10 @@
       "compositePrimaryKeys": {
         "pk_shift_attendance": {
           "name": "pk_shift_attendance",
-          "columns": ["shift_id", "user_id"]
+          "columns": [
+            "shift_id",
+            "user_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1675,8 +1785,12 @@
           "name": "course_preference_volunteer_user_id_volunteer_user_id_fk",
           "tableFrom": "course_preference",
           "tableTo": "volunteer",
-          "columnsFrom": ["volunteer_user_id"],
-          "columnsTo": ["user_id"],
+          "columnsFrom": [
+            "volunteer_user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1684,8 +1798,12 @@
           "name": "course_preference_course_id_course_id_fk",
           "tableFrom": "course_preference",
           "tableTo": "course",
-          "columnsFrom": ["course_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "course_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1693,7 +1811,10 @@
       "compositePrimaryKeys": {
         "pk_course_preferences": {
           "name": "pk_course_preferences",
-          "columns": ["volunteer_user_id", "course_id"]
+          "columns": [
+            "volunteer_user_id",
+            "course_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -1841,7 +1962,9 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
@@ -1896,10 +2019,10 @@
         },
         "availability": {
           "name": "availability",
-          "type": "bit(140)",
+          "type": "bit(336)",
           "primaryKey": false,
           "notNull": true,
-          "default": "'00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'"
+          "default": "'000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'"
         },
         "preferred_time_commitment_hours": {
           "name": "preferred_time_commitment_hours",
@@ -1945,8 +2068,12 @@
           "name": "volunteer_user_id_user_id_fk",
           "tableFrom": "volunteer",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1959,30 +2086,62 @@
     }
   },
   "enums": {
+    "public.location_type": {
+      "name": "location_type",
+      "schema": "public",
+      "values": [
+        "InPerson",
+        "MeetingLink"
+      ]
+    },
     "public.attendance_status": {
       "name": "attendance_status",
       "schema": "public",
-      "values": ["present", "absent", "excused", "late"]
+      "values": [
+        "present",
+        "absent",
+        "excused",
+        "late"
+      ]
     },
     "public.coverage_category": {
       "name": "coverage_category",
       "schema": "public",
-      "values": ["emergency", "health", "conflict", "transportation", "other"]
+      "values": [
+        "emergency",
+        "health",
+        "conflict",
+        "transportation",
+        "other"
+      ]
     },
     "public.coverage_status": {
       "name": "coverage_status",
       "schema": "public",
-      "values": ["open", "withdrawn", "resolved"]
+      "values": [
+        "open",
+        "withdrawn",
+        "resolved"
+      ]
     },
     "public.role": {
       "name": "role",
       "schema": "public",
-      "values": ["admin", "instructor", "volunteer"]
+      "values": [
+        "admin",
+        "instructor",
+        "volunteer"
+      ]
     },
     "public.status": {
       "name": "status",
       "schema": "public",
-      "values": ["unverified", "rejected", "active", "inactive"]
+      "values": [
+        "unverified",
+        "rejected",
+        "active",
+        "inactive"
+      ]
     }
   },
   "schemas": {},
@@ -2173,10 +2332,10 @@
         },
         "availability": {
           "name": "availability",
-          "type": "bit(140)",
+          "type": "bit(336)",
           "primaryKey": false,
           "notNull": true,
-          "default": "'00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'"
+          "default": "'000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'"
         },
         "preferred_time_commitment_hours": {
           "name": "preferred_time_commitment_hours",

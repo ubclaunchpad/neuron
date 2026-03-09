@@ -13,11 +13,7 @@ import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth
 import { FormFieldController } from "@/components/form/FormField";
 import { FormInput, FormInputField } from "@/components/form/FormInput";
 import { FormError, FormField, FormLabel } from "@/components/form/FormLayout";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -43,7 +39,7 @@ export default function LoginForm() {
     defaultValues: {
       email: "",
       password: "",
-    }
+    },
   });
 
   const onSubmit = async (data: LoginSchemaType) => {
@@ -66,7 +62,7 @@ export default function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      noValidate 
+      noValidate
       className="w-full max-w-3xl space-y-8 p-8"
     >
       <h1 className="text-2xl font-display font-medium leading-none text-primary">
@@ -114,25 +110,25 @@ export default function LoginForm() {
         </FormFieldController>
       </div>
 
-        <div className="space-y-5">
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? (
-              <>
-                <Spinner /> Signing in...
-              </>
-            ) : (
-              "Log In"
-            )}
+      <div className="space-y-5">
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? (
+            <>
+              <Spinner /> Signing in...
+            </>
+          ) : (
+            "Log In"
+          )}
+        </Button>
+        <p className="text-center text-foreground">
+          Don&apos;t have an account?{" "}
+          <Button asChild variant="link" className="p-0">
+            <Link href="/auth/signup">
+              <strong>Sign Up</strong>
+            </Link>
           </Button>
-          <p className="text-center text-foreground">
-            Don&apos;t have an account?{" "}
-            <Button asChild variant="link" className="p-0">
-              <Link href="/auth/signup">
-                <strong>Sign Up</strong>
-              </Link>
-            </Button>
-          </p>
-        </div>
+        </p>
+      </div>
     </form>
   );
 }

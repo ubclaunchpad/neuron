@@ -145,14 +145,22 @@ export function ShiftDetailsAside() {
 
           <AsideSectionContent>
             <AsideField inline>
-              <AsideFieldLabel>Meeting</AsideFieldLabel>
+              <AsideFieldLabel>Location</AsideFieldLabel>
               <AsideFieldContent>
-                {shift.class.meetingURL ? (
-                  <Button asChild className="cursor-pointer" variant="outline">
-                    <Link href={shift.class.meetingURL as Route}>
+                {shift.class.location ? (
+                  shift.class.locationType === "MeetingLink" ? (
+                    <Button
+                      asChild
+                      className="cursor-pointer"
+                      variant="outline"
+                      href={shift.class.location as Route}
+                      target="_blank"
+                    >
                       <Video /> Join Class
-                    </Link>
-                  </Button>
+                    </Button>
+                  ) : (
+                    <span>{shift.class.location}</span>
+                  )
                 ) : (
                   <span>No meeting link</span>
                 )}

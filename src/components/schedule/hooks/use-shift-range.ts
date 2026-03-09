@@ -87,9 +87,12 @@ export function useShiftRange({
     queryFn: async () => {
       const pages = await Promise.all(
         requiredMonths.map((cursor) =>
-          utils.shift.list.fetch({ cursor, userId, courseId, scheduleId }, {
-            staleTime: 5 * 60 * 1000, // 5 min, these change not very often
-          }),
+          utils.shift.list.fetch(
+            { cursor, userId, courseId, scheduleId },
+            {
+              staleTime: 5 * 60 * 1000, // 5 min, these change not very often
+            },
+          ),
         ),
       );
       return pages;

@@ -14,9 +14,16 @@ export default async function ClassesTemplate({
   const queryClassId = searchParams?.class;
 
   // Check if the user has the update or create permission
-  const updatePermission = await checkPermissions({ permission: { classes: ["update"] } });
-  const createPermission = await checkPermissions({ permission: { classes: ["create"] } });
-  if ((!updatePermission && queryClassId) || (!createPermission && !queryClassId)) {
+  const updatePermission = await checkPermissions({
+    permission: { classes: ["update"] },
+  });
+  const createPermission = await checkPermissions({
+    permission: { classes: ["create"] },
+  });
+  if (
+    (!updatePermission && queryClassId) ||
+    (!createPermission && !queryClassId)
+  ) {
     redirect("/classes");
   }
 

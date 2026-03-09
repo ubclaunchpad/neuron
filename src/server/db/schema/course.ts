@@ -1,3 +1,4 @@
+import { LocationType } from "@/models/api/class";
 import { relations, sql } from "drizzle-orm";
 import {
   boolean,
@@ -5,12 +6,15 @@ import {
   date,
   index,
   integer,
+  pgEnum,
   pgTable,
   text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
 import { schedule } from "./schedule";
+
+export const locationType = pgEnum("location_type", LocationType.values);
 
 export const term = pgTable(
   "term",
@@ -81,7 +85,8 @@ export const course = pgTable(
     name: text("name").notNull(),
     published: boolean("published").notNull().default(false),
     description: text("description"),
-    meetingURL: text("meeting_url"),
+    location: text("location"),
+    locationType: locationType("location_type"),
     category: text("category").notNull(),
     subcategory: text("subcategory"),
     lowerLevel: integer("lower_level"),

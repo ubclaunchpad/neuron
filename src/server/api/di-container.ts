@@ -99,7 +99,16 @@ const registerServices = (container: NeuronContainer) => {
     volunteerService: asClass<IVolunteerService>(VolunteerService).singleton(),
     termService: asClass<ITermService>(TermService).scoped(),
     coverageService: asClass<ICoverageService>(CoverageService).scoped(),
-    jobService: asClass<IJobService>(JobService).singleton(),
+const createRootContainer = (): NeuronContainer => {
+  const container = createContainer<NeuronCradle>({
+    injectionMode: InjectionMode.PROXY,
+    strict: true,
+  });
+
+  container.register({
+    env: asValue(env),
+    container: asValue(container),
+  });
     // cacheService: asClass<ICacheService>(CacheService).scoped(),
   });
 };

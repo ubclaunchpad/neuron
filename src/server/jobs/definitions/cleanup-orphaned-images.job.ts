@@ -25,9 +25,7 @@ export const cleanupOrphanedImagesJob: RegisteredJob<CleanupOrphanedImagesPayloa
         "[pg-boss] cleanup-orphaned-images job executed",
         payload ?? {},
       );
-      // Placeholder implementation for now.
-      // Later, this can compare DB references against object storage keys
-      // and remove unreferenced files safely.
+      throw new Error("cleanup-orphaned-images handler is not yet implemented.");
     },
   };
 

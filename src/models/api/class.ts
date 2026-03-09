@@ -13,12 +13,15 @@ export const CreateClass = z.object({
   description: z.string().optional(),
   meetingURL: z.url().optional(),
   location: z.string().optional(),
-  lowerLevel: z.int().min(1).max(4),
-  upperLevel: z.int().min(1).max(4),
+  lowerLevel: z.int().min(1).max(4).nullish(),
+  upperLevel: z.int().min(1).max(4).nullish(),
   category: z.string(),
   subcategory: z.string().optional(),
   schedules: z.array(CreateSchedule).default([]),
-});
+}).refine(
+  (val) => (val.lowerLevel == null) === (val.upperLevel == null),
+  { message: "Both levels must be provided or both must be empty", path: ["lowerLevel"] },
+);
 export type CreateClassInput = z.input<typeof CreateClass>;
 export type CreateClassOutput = z.output<typeof CreateClass>;
 
@@ -31,12 +34,15 @@ export const UpdateClass = z.object({
   location: z.string().nullish(),
   category: z.string().optional(),
   subcategory: z.string().nullish(),
-  lowerLevel: z.int().optional(),
-  upperLevel: z.int().optional(),
+  lowerLevel: z.int().nullish(),
+  upperLevel: z.int().nullish(),
   addedSchedules: z.array(CreateSchedule).default([]),
   updatedSchedules: z.array(UpdateSchedule).default([]),
   deletedSchedules: z.array(z.uuid()).default([]),
-});
+}).refine(
+  (val) => (val.lowerLevel == null) === (val.upperLevel == null),
+  { message: "Both levels must be provided or both must be empty", path: ["lowerLevel"] },
+);
 export type UpdateClassInput = z.input<typeof UpdateClass>;
 export type UpdateClassOutput = z.output<typeof UpdateClass>;
 

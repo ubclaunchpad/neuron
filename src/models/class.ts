@@ -17,8 +17,8 @@ export type Class = {
   location?: string;
   category: string;
   subcategory?: string;
-  lowerLevel: number;
-  upperLevel: number;
+  lowerLevel: number | null;
+  upperLevel: number | null;
   schedules: Schedule[];
   createdAt: Date;
   updatedAt: Date;

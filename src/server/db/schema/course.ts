@@ -85,8 +85,8 @@ export const course = pgTable(
     location: text("location"),
     category: text("category").notNull(),
     subcategory: text("subcategory"),
-    lowerLevel: integer("lower_level").notNull(),
-    upperLevel: integer("upper_level").notNull(),
+    lowerLevel: integer("lower_level"),
+    upperLevel: integer("upper_level"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -99,11 +99,19 @@ export const course = pgTable(
     index().on(table.name),
     check(
       "chk_lower_level_bounds",
-      sql`${table.lowerLevel} >= 1 AND ${table.lowerLevel} <= 4`,
+      sql`${table.lowerLevel} IS NULL OR (${table.lowerLevel} >= 1 AND ${table.lowerLevel} <= 4)`,
     ),
     check(
       "chk_upper_level_bounds",
-      sql`${table.upperLevel} >= 1 AND ${table.upperLevel} <= 4`,
+      sql`${table.upperLevel} IS NULL OR (${table.upperLevel} >= 1 AND ${table.upperLevel} <= 4)`,
+    ),
+    check(
+      "chk_levels_both_or_neither",
+      sql`(${table.lowerLevel} IS NULL) = (${table.upperLevel} IS NULL)`,
+    ),
+    check(
+      "chk_lower_lte_upper",
+      sql`${table.lowerLevel} IS NULL OR ${table.lowerLevel} <= ${table.upperLevel}`,
     ),
   ],
 );

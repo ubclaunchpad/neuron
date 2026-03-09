@@ -53,13 +53,12 @@ export type NeuronCradle = {
   imageService: IImageService;
   emailService: IEmailService;
   classService: IClassService;
-  // cacheService: ICacheService;
-  userService: IUserService;
-  volunteerService: IVolunteerService;
-  termService: ITermService;
-  shiftService: IShiftService;
-  coverageService: ICoverageService;
-  jobService: IJobService;
+export type NeuronCradle = {
+  env: typeof env;
+  container: NeuronContainer;
+
+  db: Drizzle;
+  // ... rest of cradle
 };
 
 export type NeuronContainer = AwilixContainer<NeuronCradle>;

@@ -20,13 +20,12 @@ export const cleanupOrphanedImagesJob: RegisteredJob<CleanupOrphanedImagesPayloa
         dryRun: false,
       },
     },
-    handler: async (payload) => {
-      console.info(
-        "[pg-boss] cleanup-orphaned-images job executed",
-        payload ?? {},
-      );
-      throw new Error("cleanup-orphaned-images handler is not yet implemented.");
-    },
+  handler: async (payload) => {
+    console.info(
+      "[pg-boss] cleanup-orphaned-images job executed (not yet implemented)",
+      payload ?? {},
+    );
+  },
   };
 
 

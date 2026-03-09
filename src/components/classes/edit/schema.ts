@@ -45,7 +45,7 @@ export const ClassEditSchema = z
       return true;
     },
     { message: "Please enter the in-person location.", path: ["location"] },
-  );
+  )
   .refine(
     (val) => {
       if (!val.levelRange) return true;
@@ -55,8 +55,7 @@ export const ClassEditSchema = z
       error: "The upper level must be greater than the lower level",
       path: ["levelRange"],
     },
-  )
-;
+  );
 export type ClassEditSchemaType = z.infer<typeof ClassEditSchema>;
 export type ClassEditSchemaInput = z.input<typeof ClassEditSchema>;
 export type ClassEditSchemaOutput = z.output<typeof ClassEditSchema>;

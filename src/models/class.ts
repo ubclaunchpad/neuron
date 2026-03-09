@@ -1,3 +1,4 @@
+import type { LocationType } from "@/models/api/class";
 import type { CourseDB } from "@/server/db/schema";
 import {
   getEmbeddedSchedule,
@@ -13,8 +14,8 @@ export type Class = {
   description?: string;
   image?: string;
   published: boolean;
-  meetingURL?: string;
   location?: string;
+  locationType?: LocationType;
   category: string;
   subcategory?: string;
   lowerLevel: number | null;
@@ -35,8 +36,8 @@ export function buildClass(
     description: classDB.description ?? undefined,
     image: classDB.image ?? undefined,
     published: classDB.published,
-    meetingURL: classDB.meetingURL ?? undefined,
     location: classDB.location ?? undefined,
+    locationType: classDB.locationType ?? undefined,
     category: classDB.category,
     subcategory: classDB.subcategory ?? undefined,
     lowerLevel: classDB.lowerLevel,
@@ -54,8 +55,8 @@ export function getSingleClass(c: Class) {
     description: c.description,
     image: c.image,
     published: c.published,
-    meetingURL: c.meetingURL,
     location: c.location,
+    locationType: c.locationType,
     category: c.category,
     subcategory: c.subcategory,
     lowerLevel: c.lowerLevel,
@@ -73,8 +74,8 @@ export function getEmbeddedClass(c: Class | CourseDB) {
     termId: c.termId,
     image: c.image,
     description: c.description,
-    meetingURL: c.meetingURL,
     location: c.location,
+    locationType: c.locationType,
     category: c.category,
     subcategory: c.subcategory,
   } as const;

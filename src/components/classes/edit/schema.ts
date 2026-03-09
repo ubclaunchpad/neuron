@@ -1,13 +1,11 @@
 import { asNullishField } from "@/components/form/utils/zod-form-utils";
-import type { UpdateClassInput } from "@/models/api/class";
+import {
+  LocationType,
+  LocationTypeEnum,
+  type UpdateClassInput,
+} from "@/models/api/class";
 import z from "zod";
 import { ScheduleEditSchema } from "./schedule-form/schema";
-
-export const LOCATION_TYPE = {
-  MEETING_LINK: "meeting_link",
-  IN_PERSON: "in_person",
-} as const;
-export type LocationType = (typeof LOCATION_TYPE)[keyof typeof LOCATION_TYPE];
 
 export type ClassFormValues = Omit<UpdateClassInput, "id">;
 
@@ -15,8 +13,7 @@ export const ClassEditSchema = z
   .object({
     name: z.string().nonempty("Please fill out this field."),
     description: asNullishField(z.string()),
-    locationType: z.enum([LOCATION_TYPE.MEETING_LINK, LOCATION_TYPE.IN_PERSON]),
-    meetingURL: asNullishField(z.string()),
+    locationType: LocationTypeEnum,
     location: asNullishField(z.string()),
     category: z.string().nonempty("Please fill out this field."),
     subcategory: asNullishField(z.string()),
@@ -26,25 +23,15 @@ export const ClassEditSchema = z
   })
   .refine(
     (val) => {
-      if (val.locationType === LOCATION_TYPE.MEETING_LINK) {
-        return (
-          val.meetingURL && z.string().url().safeParse(val.meetingURL).success
-        );
+      if (
+        val.locationType === LocationType.MeetingLink &&
+        !!val.location?.trim()
+      ) {
+        return z.url().safeParse(val.location).success;
       }
       return true;
     },
-    { message: "Please enter a valid meeting URL.", path: ["meetingURL"] },
-  )
-  .refine(
-    (val) => {
-      if (val.locationType === LOCATION_TYPE.IN_PERSON) {
-        return (
-          typeof val.location === "string" && val.location.trim().length > 0
-        );
-      }
-      return true;
-    },
-    { message: "Please enter the in-person location.", path: ["location"] },
+    { message: "Please enter a valid meeting URL.", path: ["location"] },
   )
   .refine(
     (val) => {

@@ -68,8 +68,8 @@
     {
       "idx": 9,
       "version": "7",
-      "when": 1773015867449,
-      "tag": "0009_add_location_to_class",
+      "when": 1773033743776,
+      "tag": "0009_add_location_type",
       "breakpoints": true
     }
   ]

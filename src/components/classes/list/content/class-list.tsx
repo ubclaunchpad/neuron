@@ -15,7 +15,7 @@ const CATEGORY_ORDER: Map<ClassCategory, number> = new Map(
 );
 
 export function ClassList({ classes }: { classes: ListClass[] }) {
-  const { openAsideFor: openSidebarFor, selectedTermId } = useClassesPage();
+  const { openAsideFor } = useClassesPage();
 
   // Group classes by category and sort groups by the configured category order
   const classesByCategory = useMemo(() => {
@@ -70,7 +70,7 @@ export function ClassList({ classes }: { classes: ListClass[] }) {
                   <ClassCard
                     key={c.id}
                     classData={c}
-                    onClickAction={() => openSidebarFor(c.id)}
+                    onClickAction={() => openAsideFor(c.id)}
                   />
                 ))}
               </div>
@@ -87,7 +87,7 @@ export function ClassList({ classes }: { classes: ListClass[] }) {
                       <ClassCard
                         key={c.id}
                         classData={c}
-                        onClickAction={() => openSidebarFor(c.id)}
+                        onClickAction={() => openAsideFor(c.id)}
                       />
                     ))}
                   </div>

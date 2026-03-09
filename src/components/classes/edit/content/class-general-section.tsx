@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown, MapPin, Video } from "lucide-react";
 import { useEffect } from "react";
 import { useWatch } from "react-hook-form";
 
@@ -17,20 +18,29 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FieldGroup, FieldLabel } from "@/components/ui/field";
-import { LabelRequiredMarker } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent, SelectItem, SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { LabelRequiredMarker } from "@/components/ui/label";
+import { SelectItem } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "../../../ui/dropdown-menu";
+import { InputGroupButton } from "../../../ui/input-group";
 import { useClassForm } from "../class-form-provider";
-import { LOCATION_TYPE } from "../schema";
+import { LocationType } from "@/models/api/class";
 import { ClassImageInput } from "./class-image-input";
 
 export function ClassGeneralSection() {
   const {
-    form: { control, setValue, getValues },
+    form: { control, setValue, getValues, trigger, formState },
   } = useClassForm();
 
   const category = useWatch({ control, name: "category" });
@@ -135,70 +145,79 @@ export function ClassGeneralSection() {
             description="Provide a brief overview for users"
           />
 
-          <FieldGroup>
-            <FormFieldController control={control} name="locationType">
-              {({ value, onChange, ...field }) => (
-                <FormFieldLayout
-                  label="Location type"
-                  description="How the class is held"
-                  required
-                >
-                  <Select
-                    value={value}
-                    onValueChange={(newValue) => {
-                      onChange(newValue);
-                      if (newValue === LOCATION_TYPE.MEETING_LINK) {
-                        setValue("location", "");
-                      } else {
-                        setValue("meetingURL", "");
-                      }
-                    }}
-                    {...field}
+          <FormFieldController control={control} name="location">
+            {({ value, onChange, ...field }) => (
+              <FormFieldLayout
+                label="Location"
+                description="Add a video conferencing link or a physical location"
+                required
+              >
+                <InputGroup>
+                  <InputGroupAddon
+                    align="inline-start"
+                    className="pl-[0.65rem]!"
                   >
-                    <SelectTrigger
-                      aria-invalid={field["aria-invalid"]}
-                      id={field.id}
-                      onBlur={field.onBlur}
-                      className="shadow-xs"
-                    >
-                      <SelectValue placeholder="Select how the class is held" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={LOCATION_TYPE.MEETING_LINK}>
-                        Meeting link
-                      </SelectItem>
-                      <SelectItem value={LOCATION_TYPE.IN_PERSON}>
-                        In-person location
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormError />
-                </FormFieldLayout>
-              )}
-            </FormFieldController>
-
-            {locationType === LOCATION_TYPE.MEETING_LINK && (
-              <FormInputField
-                control={control}
-                name="meetingURL"
-                label="Meeting Link"
-                placeholder="https://zoom.us/j/..."
-                description="Video conferencing link for online classes"
-                required
-              />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <InputGroupButton
+                          variant="ghost"
+                          size="sm"
+                          className="rounded ring-0!"
+                        >
+                          {locationType === LocationType.InPerson ? (
+                            <>
+                              <MapPin />
+                              In-person
+                            </>
+                          ) : (
+                            <>
+                              <Video />
+                              Online
+                            </>
+                          )}
+                          <ChevronDown className="size-3" />
+                        </InputGroupButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-auto">
+                        <DropdownMenuRadioGroup
+                          value={locationType}
+                          onValueChange={(value) => {
+                            setValue("locationType", value as LocationType, {
+                              shouldDirty: true,
+                            });
+                            if (formState.isSubmitted) {
+                              trigger("location");
+                            }
+                          }}
+                        >
+                          <DropdownMenuRadioItem value={LocationType.InPerson}>
+                            <MapPin />
+                            In-person
+                          </DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem
+                            value={LocationType.MeetingLink}
+                          >
+                            <Video />
+                            Online
+                          </DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    {...field}
+                    value={value ?? ""}
+                    onChange={onChange}
+                    placeholder={
+                      locationType === LocationType.MeetingLink
+                        ? "https://zoom.us/j/..."
+                        : "e.g. Building 1, Room 101"
+                    }
+                  />
+                </InputGroup>
+              </FormFieldLayout>
             )}
-
-            {locationType === LOCATION_TYPE.IN_PERSON && (
-              <FormInputField
-                control={control}
-                name="location"
-                label="In-person location"
-                placeholder="e.g. Building 1, Room 101"
-                description="Location for in-person classes"
-                required
-              />
-            )}
-          </FieldGroup>
+          </FormFieldController>
 
           <ClassImageInput />
         </FieldGroup>

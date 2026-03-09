@@ -5,31 +5,23 @@ import type {
   ScheduleEditSchemaInput,
   ScheduleRuleEditSchemaType,
 } from "./schedule-form/schema";
+import { LocationType } from "@/models/api/class";
 import type { ClassEditSchemaType } from "./schema";
-import { LOCATION_TYPE } from "./schema";
 
 export function classToFormValues(
   c: SingleClass | undefined,
   config: PublicConfig | null,
 ): ClassEditSchemaType {
-  const hasMeetingUrl = Boolean(c?.meetingURL?.trim());
-  const hasLocation = Boolean(c?.location?.trim());
-  const locationType = hasMeetingUrl
-    ? LOCATION_TYPE.MEETING_LINK
-    : hasLocation
-      ? LOCATION_TYPE.IN_PERSON
-      : LOCATION_TYPE.MEETING_LINK;
-
   return {
     name: c?.name ?? "",
     description: c?.description ?? "",
-    locationType,
-    meetingURL: c?.meetingURL ?? "",
+    locationType: c?.locationType ?? LocationType.MeetingLink,
     location: c?.location ?? "",
     category: c?.category ?? "",
     subcategory: c?.subcategory ?? "",
     image: (config ? buildImageUrl(config, c?.image) : undefined) ?? null,
-    levelRange: c?.lowerLevel && c?.upperLevel ? [c.lowerLevel, c.upperLevel] : null,
+    levelRange:
+      c?.lowerLevel && c?.upperLevel ? [c.lowerLevel, c.upperLevel] : null,
     schedules:
       c?.schedules.map((s) => ({
         id: s.id,

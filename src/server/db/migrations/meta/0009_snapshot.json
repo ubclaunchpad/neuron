@@ -1,5 +1,5 @@
 {
-  "id": "4829dc2c-be47-462a-a23b-cd66e47460bf",
+  "id": "5de7367c-71f7-4d40-9ee8-87a526c11ab9",
   "prevId": "49a0501a-1f4d-4d24-b01d-bb9559cfa58b",
   "version": "7",
   "dialect": "postgresql",
@@ -661,15 +661,16 @@
           "primaryKey": false,
           "notNull": false
         },
-        "meeting_url": {
-          "name": "meeting_url",
+        "location": {
+          "name": "location",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "location": {
-          "name": "location",
-          "type": "text",
+        "location_type": {
+          "name": "location_type",
+          "type": "location_type",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
         },
@@ -2085,6 +2086,14 @@
     }
   },
   "enums": {
+    "public.location_type": {
+      "name": "location_type",
+      "schema": "public",
+      "values": [
+        "InPerson",
+        "MeetingLink"
+      ]
+    },
     "public.attendance_status": {
       "name": "attendance_status",
       "schema": "public",

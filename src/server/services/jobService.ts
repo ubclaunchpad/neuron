@@ -288,7 +288,7 @@ export class JobService implements IJobService {
 
       for (const queueName of correlatedQueueNames) {
         await this.ensureWorkerRegistered(queueName, definition);
-        this.trackRecurringQueue(definition.name, queueName);
+        this.trackRecurringQueue(definition.name as KnownJobName, queueName);
       }
     }
   }

@@ -310,17 +310,41 @@ return this.boss.send(
     return `${jobName}:${normalized}`;
   }
 
-  private async ensureWorkerRegistered(
-    queueName: string,
-    definition: RegisteredJob<any>,
-  ): Promise<void> {
-    if (sharedBossState.registeredWorkerQueues.has(queueName)) return;
-    const existingRegistration =
-      sharedBossState.pendingWorkerRegistrations.get(queueName);
-    if (existingRegistration) {
-      await existingRegistration;
-      return;
+if (sharedBossState.registeredWorkerQueues.has(queueName)) return;
+const existingRegistration =
+  sharedBossState.pendingWorkerRegistrations.get(queueName);
+if (existingRegistration) {
+  await existingRegistration;
+  return;
+}
+
+// Claim the slot before calling boss.work()
+sharedBossState.registeredWorkerQueues.add(queueName);
+
+const registrationPromise = (async () => {
+  try {
+    const worker = async (job: any) => {
+      // ... worker implementation ...
+    };
+
+    if (definition.workOptions) {
+      await this.boss.work(queueName, definition.workOptions as any, worker);
+    } else {
+      await this.boss.work(queueName, worker);
     }
+  } catch (error) {
+    // Remove from set on failure so it can be retried
+    sharedBossState.registeredWorkerQueues.delete(queueName);
+    throw error;
+  }
+})();
+
+sharedBossState.pendingWorkerRegistrations.set(queueName, registrationPromise);
+try {
+  await registrationPromise;
+} finally {
+  sharedBossState.pendingWorkerRegistrations.delete(queueName);
+}
 
     const registrationPromise = (async () => {
       const worker = async (job: any) => {

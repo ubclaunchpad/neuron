@@ -221,8 +221,10 @@ export class JobService implements IJobService {
   private async bootstrap(): Promise<void> {
     if (sharedBossState.isStarted) return;
 
-    this.boss = this.getOrCreateBoss();
-    await this.boss.start();
+    // Capture the boss instance locally so that error recovery uses the same
+    // reference even if sharedBossState.boss is cleared between lines.
+    const boss = this.getOrCreateBoss();
+    await boss.start();
     sharedBossState.isStarted = true;
 
     try {
@@ -231,7 +233,6 @@ export class JobService implements IJobService {
         await this.registerWorkersForPersistedCorrelationSchedules();
         sharedBossState.isWorkersRegistered = true;
       }
-
       await this.registerStartupSchedules();
     } catch (error) {
       sharedBossState.isStarted = false;
@@ -242,7 +243,9 @@ export class JobService implements IJobService {
       sharedBossState.boss = undefined;
 
       try {
-        await this.boss.stop();
+        // Use the locally captured reference — sharedBossState.boss is already
+        // cleared above and this.boss may have been reassigned.
+        await boss.stop();
       } catch {
         // Ignore shutdown failures while handling bootstrap failures.
       }

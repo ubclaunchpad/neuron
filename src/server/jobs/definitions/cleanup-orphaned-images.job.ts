@@ -15,13 +15,14 @@ export const cleanupOrphanedImagesJob: RegisteredJob<CleanupOrphanedImagesPayloa
     },
     // Keep startup scheduling disabled until cleanup logic is implemented.
     startup: undefined,
-  handler: async (payload) => {
-    void payload;
-    throw new Error("cleanup-orphaned-images handler is not implemented yet.");
-  },
+
+    handler: async (_payload) => {
+      // TODO: implement orphaned image cleanup logic.
+      // This intentionally throws so that any manual invocation fails loudly
+      // rather than silently retrying 3 times before landing in dead-letter.
+      throw new Error(
+        "cleanup-orphaned-images handler is not implemented yet. " +
+          "Do not enqueue this job until the handler is complete.",
+      );
+    },
   };
-
-
-
-
-

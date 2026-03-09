@@ -43,13 +43,18 @@ export interface TestContainerOptions {
   headers?: Headers;
 }
 
+export interface TestContainerResult {
+  container: NeuronContainer;
+  mockJobService: MockJobService;
+}
+
 /**
  * Creates a test DI container with mocked external services.
  * Uses real implementations for domain services with the test database.
  */
 export function createTestContainer(
   options: TestContainerOptions = {},
-): NeuronContainer {
+): TestContainerResult {
   const { session, headers = new Headers() } = options;
 
   const container = createContainer<NeuronCradle>({
@@ -58,6 +63,11 @@ export function createTestContainer(
   });
 
   const db = getTestDb();
+
+  // Instantiate up front so the same instance is shared across all resolutions.
+  // asClass(.transient()) would return a new instance on every cradle access,
+  // making calls inspection impossible from tests.
+  const mockJobService = new MockJobService();
 
   container.register({
     env: asValue(env),
@@ -74,7 +84,7 @@ export function createTestContainer(
     currentSessionService: asClass<ICurrentSessionService>(
       MockCurrentSessionService,
     ).singleton(),
-    jobService: asClass<IJobService>(MockJobService).transient(),
+    jobService: asValue<IJobService>(mockJobService),
     emailService: asClass<IEmailService>(MockEmailService).singleton(),
     imageService: asClass<IImageService>(MockImageService).singleton(),
     // cacheService: asClass(CacheService).scoped(),
@@ -88,5 +98,5 @@ export function createTestContainer(
     coverageService: asClass<ICoverageService>(CoverageService).scoped(),
   });
 
-  return container;
+  return { container, mockJobService };
 }

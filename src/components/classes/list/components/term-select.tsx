@@ -75,7 +75,7 @@ export function TermSelect({
           return (
             <div key={t.id} className="flex gap-0.5 items-center-safe">
               <DropdownMenuItem
-                className="min-w-0 flex-1 py-1"
+                className="min-w-0 flex-1"
                 onSelect={() => setSelectedTermId(t.id)}
               >
                 <span className="truncate flex-1">{t.name}</span>

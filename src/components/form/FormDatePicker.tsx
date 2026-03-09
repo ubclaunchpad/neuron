@@ -14,8 +14,10 @@ import { FormFieldController } from "./FormField";
 import { FormFieldLayout } from "./FormLayout";
 import { cn } from "@/lib/utils";
 
-export interface FormDateInputProps
-  extends Omit<React.ComponentProps<typeof DateInput>, "value" | "onChange"> {
+export interface FormDateInputProps extends Omit<
+  React.ComponentProps<typeof DateInput>,
+  "value" | "onChange"
+> {
   value: string | null | undefined;
   onChange: (value: string | null) => void;
   clearable?: boolean;

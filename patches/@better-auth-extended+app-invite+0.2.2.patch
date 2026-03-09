@@ -1,0 +1,13 @@
+diff --git a/node_modules/@better-auth-extended/app-invite/dist/index.js b/node_modules/@better-auth-extended/app-invite/dist/index.js
+index 0000000..1111111 100644
+--- a/node_modules/@better-auth-extended/app-invite/dist/index.js
++++ b/node_modules/@better-auth-extended/app-invite/dist/index.js
+@@ -1,7 +1,7 @@
+ import { n as inferAppInviteAdditionalFields, t as appInviteClient } from "./client-D5zGHduA.js";
+ import { generateId, logger } from "better-auth";
+ import { APIError, createAuthEndpoint, createEmailVerificationToken, originCheck, sessionMiddleware } from "better-auth/api";
+-import { createAuthEndpoint as createAuthEndpoint$1 } from "better-auth/plugins";
++import { createAuthEndpoint as createAuthEndpoint$1 } from "better-auth/api";
+ import { getAdditionalPluginFields, getDate, getPlugin, matchWildcard, tryCatch } from "@better-auth-extended/internal-utils";
+ import { z } from "zod";
+ import { parseUserInput, toZodSchema } from "better-auth/db";

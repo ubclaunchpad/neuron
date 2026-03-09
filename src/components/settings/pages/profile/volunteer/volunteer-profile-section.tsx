@@ -13,7 +13,7 @@ export function VolunteerProfileSection({ isPending }: { isPending: boolean }) {
   } = useVolunteerProfileForm();
 
   return (
-    <Card>
+    <Card size="sm">
       <CardHeader>
         <CardTitle>Volunteer Information</CardTitle>
       </CardHeader>

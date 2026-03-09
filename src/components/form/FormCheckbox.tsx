@@ -1,18 +1,13 @@
 import type { ComponentProps } from "react";
-import type {
-  Control,
-  FieldPath,
-  FieldValues
-} from "react-hook-form";
+import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { Checkbox } from "../ui/checkbox";
 import { FormFieldController } from "./FormField";
 import { FormFieldLayout } from "./FormLayout";
 
-export interface FormCheckboxProps
-  extends Omit<
-    React.ComponentProps<typeof Checkbox>,
-    "checked" | "onCheckedChange" | "value" | "onChange"
-  > {
+export interface FormCheckboxProps extends Omit<
+  React.ComponentProps<typeof Checkbox>,
+  "checked" | "onCheckedChange" | "value" | "onChange"
+> {
   value: boolean;
   onChange: (value: boolean) => void;
 }

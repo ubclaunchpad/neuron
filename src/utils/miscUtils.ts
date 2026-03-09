@@ -9,7 +9,7 @@ function semesterForMonth(month: number): string {
 
 export function getUpcomingSemester(
   monthsAhead = 2,
-  timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone
+  timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone,
 ): string {
   const now = Temporal.Now.zonedDateTimeISO(timeZone);
   const future = now.add({ months: monthsAhead });
@@ -17,7 +17,7 @@ export function getUpcomingSemester(
 }
 
 export function getCurrentSemester(
-  timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone
+  timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone,
 ): string {
   const now = Temporal.Now.zonedDateTimeISO(timeZone);
   return semesterForMonth(now.month);

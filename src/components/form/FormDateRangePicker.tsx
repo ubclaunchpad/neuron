@@ -10,11 +10,10 @@ import { DateRangeInput } from "../ui/date-input";
 import { FormFieldController } from "./FormField";
 import { FormFieldLayout } from "./FormLayout";
 
-export interface FormDateRangeInputProps
-  extends Omit<
-    React.ComponentProps<typeof DateRangeInput>,
-    "value" | "onChange"
-  > {
+export interface FormDateRangeInputProps extends Omit<
+  React.ComponentProps<typeof DateRangeInput>,
+  "value" | "onChange"
+> {
   value: { from: string | null | undefined; to: string | null | undefined };
   onChange: (value: { from: string | null; to: string | null }) => void;
 }

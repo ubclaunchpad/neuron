@@ -9,7 +9,7 @@ import {
   useState,
   type Dispatch,
   type RefObject,
-  type SetStateAction
+  type SetStateAction,
 } from "react";
 import { CalendarView } from "../../app/(authorized)/schedule/dateUtils";
 

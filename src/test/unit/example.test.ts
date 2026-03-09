@@ -7,7 +7,12 @@ describe("MockEmailService", () => {
     const emailService = new MockEmailService();
 
     await emailService.send("test@example.com", "Hello", "World");
-    await emailService.send("other@example.com", "Subject", "Body", "<p>Body</p>");
+    await emailService.send(
+      "other@example.com",
+      "Subject",
+      "Body",
+      "<p>Body</p>",
+    );
 
     expect(emailService.getAllEmails()).toHaveLength(2);
     expect(emailService.getLastEmail()?.to).toBe("other@example.com");

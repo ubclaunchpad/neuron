@@ -1,5 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { and, eq, inArray, SQL } from "drizzle-orm";
+import { and, asc, eq, inArray, SQL } from "drizzle-orm";
 import { RRuleTemporal } from "rrule-temporal";
 
 import { NEURON_TIMEZONE } from "@/lib/constants";
@@ -444,6 +444,7 @@ export class ClassService implements IClassService {
 
     const courses = await this.db.query.course.findMany({
       where: inArray(course.id, matchedIds),
+      orderBy: [asc(course.id)],
       with: {
         schedules: {
           with: {

@@ -19,40 +19,31 @@ import { clientApi } from "@/trpc/client";
 import { Video } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-import { useEffect } from "react";
 import { CancelShiftButton } from "./cancel-shift-button";
 import { useSchedulePage } from "./schedule-page-context";
 import { WithPermission } from "../utils/with-permission";
 import { CheckInButton } from "./check-in-button";
 import {
-  ShiftStatus,
   type ListShiftWithPersonalStatus,
   type SingleShiftWithPersonalContext,
 } from "@/models/shift";
 import { RequestCoverageButton } from "./request-coverage-button";
 import { ShiftStatusBadge } from "./shift-status-badge";
+import { SkeletonAside } from "../ui/skeleton";
 
 export function ShiftDetailsAside() {
-  const { selectedShiftId, closeAside } = useSchedulePage();
+  const { selectedShiftId } = useSchedulePage();
   const { data: shift, isPending: isLoadingShift } =
     clientApi.shift.byId.useQuery(
       { shiftId: selectedShiftId ?? "" },
       {
         enabled: !!selectedShiftId,
-        suspense: !!selectedShiftId,
         meta: { suppressToast: true },
       },
     );
 
-  // Close aside if no shiftId is selected
-  useEffect(() => {
-    if (!selectedShiftId) {
-      closeAside();
-    }
-  }, [selectedShiftId, closeAside]);
-
   if (isLoadingShift || !shift) {
-    return <></>;
+    return <SkeletonAside />;
   }
 
   const startAt =

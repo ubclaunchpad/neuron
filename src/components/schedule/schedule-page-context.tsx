@@ -1,10 +1,11 @@
 "use client";
 
-import { usePageAside } from "@/components/page-layout";
+import { clientApi } from "@/trpc/client";
 import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type PropsWithChildren,
@@ -30,33 +31,57 @@ export function useSchedulePage() {
   return ctx;
 }
 
-export function SchedulePageProvider({ children }: PropsWithChildren) {
-  const { setOpen } = usePageAside();
-  const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
+type SchedulePageProviderProps = PropsWithChildren<{
+  shiftId: string | null;
+  setShiftId: (id: string | null) => Promise<URLSearchParams>;
+}>;
+
+export function SchedulePageProvider({
+  shiftId,
+  setShiftId,
+  children,
+}: SchedulePageProviderProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
+  // When a shiftId is present (e.g. from URL), fetch the shift and navigate
+  // to its date so the list/calendar shows the correct month.
+  const { data: shiftData } = clientApi.shift.byId.useQuery(
+    { shiftId: shiftId ?? "" },
+    { enabled: !!shiftId },
+  );
+
+  useEffect(() => {
+    if (shiftData?.startAt) {
+      const shiftDate =
+        shiftData.startAt instanceof Date
+          ? shiftData.startAt
+          : new Date(shiftData.startAt);
+      setSelectedDate((prev) =>
+        prev.toISOString() === shiftDate.toISOString() ? prev : shiftDate,
+      );
+    }
+  }, [shiftData?.startAt]);
+
   const openAsideFor = useCallback(
-    (shiftId: string) => {
-      setSelectedShiftId(shiftId);
-      setOpen(true);
+    (id: string) => {
+      setShiftId(id);
     },
-    [setOpen],
+    [setShiftId],
   );
 
   const closeAside = useCallback(() => {
-    setSelectedShiftId(null);
-    setOpen(false);
-  }, [setOpen]);
+    setShiftId(null);
+  }, [setShiftId]);
 
   const value = useMemo(
     () => ({
-      selectedShiftId,
+      selectedShiftId: shiftId,
       selectedDate,
       setSelectedDate,
       openAsideFor,
       closeAside,
     }),
-    [selectedShiftId, selectedDate, setSelectedDate, openAsideFor, closeAside],
+    [shiftId, selectedDate, setSelectedDate, openAsideFor, closeAside],
   );
 
   return (

@@ -1,10 +1,10 @@
 "use client";
 
-import { usePageAside } from "@/components/page-layout";
 import {
   createContext,
   useCallback,
   useContext,
+  useMemo,
   useState,
   type PropsWithChildren,
 } from "react";
@@ -18,13 +18,15 @@ export type CoverageListItem =
   | ListCoverageRequestWithReason;
 
 type CoveragePageContextValue = {
-  selectedItem: CoverageListItem | null;
+  selectedCoverageId: string | null;
   sortedItems: CoverageListItem[];
   openAsideFor: (item: CoverageListItem) => void;
   closeAside: () => void;
   setSortedItems: (items: CoverageListItem[]) => void;
   goToNext: () => void;
   goToPrev: () => void;
+  hasNext: boolean;
+  hasPrev: boolean;
 };
 
 const CoveragePageContext = createContext<CoveragePageContextValue | null>(
@@ -39,67 +41,71 @@ export function useCoveragePage() {
   return ctx;
 }
 
-export function CoveragePageProvider({ children }: PropsWithChildren) {
-  const { setOpen } = usePageAside();
-  const [selectedCoverageRequest, setSelectedCoverageRequest] =
-    useState<CoverageListItem | null>(null);
+type CoveragePageProviderProps = PropsWithChildren<{
+  coverageId: string | null;
+  setCoverageId: (id: string | null) => Promise<URLSearchParams>;
+}>;
+
+export function CoveragePageProvider({
+  coverageId,
+  setCoverageId,
+  children,
+}: CoveragePageProviderProps) {
   const [coverageRequests, setCoverageRequests] = useState<CoverageListItem[]>(
     [],
   );
 
   const openAsideFor = useCallback(
     (item: CoverageListItem) => {
-      setSelectedCoverageRequest(item);
-      setOpen(true);
+      setCoverageId(item.id);
     },
-    [setOpen],
+    [setCoverageId],
   );
 
   const closeAside = useCallback(() => {
-    setSelectedCoverageRequest(null);
-    setOpen(false);
-  }, [setOpen]);
+    setCoverageId(null);
+  }, [setCoverageId]);
 
   const goToNext = useCallback(() => {
-    setSelectedCoverageRequest((current) => {
-      if (!current) return current;
-      const currentIndex = coverageRequests.findIndex(
-        (item) => item.id === current.id,
-      );
-      if (currentIndex < coverageRequests.length - 1) {
-        const next = coverageRequests[currentIndex + 1]!;
-        setOpen(true);
-        return next;
-      }
-      return current;
-    });
-  }, [coverageRequests, setOpen]);
+    if (!coverageId) return;
+    const currentIndex = coverageRequests.findIndex(
+      (item) => item.id === coverageId,
+    );
+    if (currentIndex >= 0 && currentIndex < coverageRequests.length - 1) {
+      setCoverageId(coverageRequests[currentIndex + 1]!.id);
+    }
+  }, [coverageRequests, coverageId, setCoverageId]);
 
   const goToPrev = useCallback(() => {
-    setSelectedCoverageRequest((current) => {
-      if (!current) return current;
-      const currentIndex = coverageRequests.findIndex(
-        (item) => item.id === current.id,
-      );
-      if (currentIndex > 0) {
-        const prev = coverageRequests[currentIndex - 1]!;
-        setOpen(true);
-        return prev;
-      }
-      return current;
-    });
-  }, [coverageRequests, setOpen]);
+    if (!coverageId) return;
+    const currentIndex = coverageRequests.findIndex(
+      (item) => item.id === coverageId,
+    );
+    if (currentIndex > 0) {
+      setCoverageId(coverageRequests[currentIndex - 1]!.id);
+    }
+  }, [coverageRequests, coverageId, setCoverageId]);
+
+  const currentIndex = useMemo(() => {
+    if (!coverageId) return -1;
+    return coverageRequests.findIndex((item) => item.id === coverageId);
+  }, [coverageRequests, coverageId]);
+
+  const hasNext = currentIndex >= 0 && currentIndex < coverageRequests.length - 1;
+  const hasPrev = currentIndex > 0;
 
   return (
     <CoveragePageContext.Provider
       value={{
-        selectedItem: selectedCoverageRequest,
+        selectedCoverageId: coverageId,
         sortedItems: coverageRequests,
         openAsideFor,
         closeAside,
         setSortedItems: setCoverageRequests,
         goToNext,
         goToPrev,
+        hasNext,
+        hasPrev,
       }}
     >
       {children}

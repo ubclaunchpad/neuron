@@ -51,6 +51,7 @@ export function buildClass(
 export function getSingleClass(c: Class) {
   return {
     id: c.id,
+    termId: c.termId,
     name: c.name,
     description: c.description,
     image: c.image,

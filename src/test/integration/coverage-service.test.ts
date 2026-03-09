@@ -3,7 +3,6 @@ import { randomUUID } from "crypto";
 import { Temporal } from "@js-temporal/polyfill";
 import { shift, user, volunteer, term, course } from "@/server/db/schema";
 import { eq, inArray } from "drizzle-orm";
-import { Role } from "@/models/interfaces";
 import type { ICoverageService } from "@/server/services/entity/coverageService";
 import type { ITermService } from "@/server/services/entity/termService";
 import type { IClassService } from "@/server/services/entity/classService";
@@ -162,11 +161,7 @@ describe("CoverageService", () => {
 
   describe("listCoverageRequests", () => {
     it("should return empty list when no coverage requests exist", async () => {
-      const result = await coverageService.listCoverageRequests(
-        {},
-        volunteer1Id,
-        Role.admin,
-      );
+      const result = await coverageService.listCoverageRequests({});
 
       expect(result.data).toEqual([]);
       expect(result.total).toBe(0);
@@ -179,11 +174,7 @@ describe("CoverageService", () => {
         details: "Need coverage",
       });
 
-      const result = await coverageService.listCoverageRequests(
-        {},
-        volunteer1Id,
-        Role.admin,
-      );
+      const result = await coverageService.listCoverageRequests({});
 
       expect(result.data).toHaveLength(1);
       const item = result.data[0]!;
@@ -207,11 +198,7 @@ describe("CoverageService", () => {
         comments: "Will be back next week",
       });
 
-      const result = await coverageService.listCoverageRequests(
-        {},
-        volunteer1Id,
-        Role.admin,
-      );
+      const result = await coverageService.listCoverageRequests({});
 
       const item = result.data[0]! as Record<string, unknown>;
       expect(item.category).toBe("health");
@@ -230,38 +217,28 @@ describe("CoverageService", () => {
       );
 
       // Volunteer3 (not assigned to shift) sees the open request
-      const result1 = await coverageService.listCoverageRequests(
-        {},
-        volunteer3Id,
-        Role.volunteer,
-      );
+      scope.mockSession.setAsVolunteer({ id: volunteer3Id });
+      const result1 = await coverageService.listCoverageRequests({});
       expect(result1.data).toHaveLength(1);
 
       // Volunteer2 (assigned to shift) does NOT see the open request
-      const result1b = await coverageService.listCoverageRequests(
-        {},
-        volunteer2Id,
-        Role.volunteer,
-      );
+      scope.mockSession.setAsVolunteer({ id: volunteer2Id });
+      const result1b = await coverageService.listCoverageRequests({});
       expect(result1b.data).toHaveLength(0);
 
-      // Cancel the request
+      // Cancel the request (need admin session for this since cancelCoverageRequest
+      // doesn't use session, but restore admin after for consistency)
+      scope.mockSession.setAsAdmin();
       await coverageService.cancelCoverageRequest(volunteer1Id, requestId);
 
       // Volunteer3 no longer sees the withdrawn request
-      const result2 = await coverageService.listCoverageRequests(
-        {},
-        volunteer3Id,
-        Role.volunteer,
-      );
+      scope.mockSession.setAsVolunteer({ id: volunteer3Id });
+      const result2 = await coverageService.listCoverageRequests({});
       expect(result2.data).toHaveLength(0);
 
       // Volunteer1 still sees their own withdrawn request
-      const result3 = await coverageService.listCoverageRequests(
-        {},
-        volunteer1Id,
-        Role.volunteer,
-      );
+      scope.mockSession.setAsVolunteer({ id: volunteer1Id });
+      const result3 = await coverageService.listCoverageRequests({});
       expect(result3.data).toHaveLength(1);
       expect(result3.data[0]!.status).toBe("withdrawn");
     });
@@ -275,15 +252,11 @@ describe("CoverageService", () => {
 
       const openResult = await coverageService.listCoverageRequests(
         { status: "open" },
-        volunteer1Id,
-        Role.admin,
       );
       expect(openResult.data).toHaveLength(1);
 
       const withdrawnResult = await coverageService.listCoverageRequests(
         { status: "withdrawn" },
-        volunteer1Id,
-        Role.admin,
       );
       expect(withdrawnResult.data).toHaveLength(0);
     });
@@ -339,8 +312,6 @@ describe("CoverageService", () => {
       it("should return results in ascending order when sortOrder is asc", async () => {
         const result = await coverageService.listCoverageRequests(
           { sortOrder: "asc" },
-          volunteer1Id,
-          Role.admin,
         );
 
         const resultShiftIds = result.data.map((item) => item.shift.id);
@@ -350,8 +321,6 @@ describe("CoverageService", () => {
       it("should return results in descending order when sortOrder is desc", async () => {
         const result = await coverageService.listCoverageRequests(
           { sortOrder: "desc" },
-          volunteer1Id,
-          Role.admin,
         );
 
         const resultShiftIds = result.data.map((item) => item.shift.id);
@@ -359,11 +328,7 @@ describe("CoverageService", () => {
       });
 
       it("should default to descending order when sortOrder is not specified", async () => {
-        const result = await coverageService.listCoverageRequests(
-          {},
-          volunteer1Id,
-          Role.admin,
-        );
+        const result = await coverageService.listCoverageRequests({});
 
         const multiShiftResults = result.data.filter((item) =>
           shiftIds.includes(item.shift.id),
@@ -600,11 +565,7 @@ describe("CoverageService", () => {
         details: "Need coverage",
       });
 
-      const result = await coverageService.listCoverageRequests(
-        {},
-        "admin-1",
-        Role.admin,
-      );
+      const result = await coverageService.listCoverageRequests({});
       expect(result.data.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -618,11 +579,8 @@ describe("CoverageService", () => {
         details: "Need coverage",
       });
 
-      const result = await coverageService.listCoverageRequests(
-        {},
-        volunteer1Id,
-        Role.volunteer,
-      );
+      scope.mockSession.setAsVolunteer({ id: volunteer1Id });
+      const result = await coverageService.listCoverageRequests({});
       expect(result.data).toHaveLength(0);
     });
 
@@ -633,11 +591,8 @@ describe("CoverageService", () => {
         details: "Need coverage",
       });
 
-      const result = await coverageService.listCoverageRequests(
-        {},
-        volunteer1Id,
-        Role.volunteer,
-      );
+      scope.mockSession.setAsVolunteer({ id: volunteer1Id });
+      const result = await coverageService.listCoverageRequests({});
       expect(result.data.length).toBeGreaterThanOrEqual(1);
     });
   });

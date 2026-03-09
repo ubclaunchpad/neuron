@@ -18,7 +18,7 @@ export function WithdrawCoverageButton({
   const { mutate: cancelCoverageRequest, isPending } =
     clientApi.coverage.cancelCoverageRequest.useMutation({
       onSuccess: () => {
-        void apiUtils.coverage.list.invalidate();
+        void apiUtils.coverage.invalidate();
       },
     });
 

@@ -264,7 +264,7 @@ export class JobService implements IJobService {
     for (const definition of registeredJobs) {
       const startup = definition.startup;
       if (!startup) continue;
-      await this.runWithStartedBoss(definition.name, startup.data, {
+      await this.runWithStartedBoss(definition.name as KnownJobName, startup.data, {
         ...(startup.options ?? {}),
         cron: startup.cron,
       });

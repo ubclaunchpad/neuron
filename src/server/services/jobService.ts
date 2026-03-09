@@ -224,6 +224,7 @@ return this.boss.send(
   (data ?? null) as object | null,
   sendOptions as any,
 );
+}
 
   private async bootstrap(): Promise<void> {
     if (sharedBossState.isStarted) return;

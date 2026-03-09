@@ -8,7 +8,6 @@ import {
   InjectionMode,
   type AwilixContainer,
 } from "awilix";
-import type { Sql } from "postgres";
 import { registerDb, type Drizzle } from "../db";
 // import { registerCacheClient, type CacheClient } from "../db/cache";
 // import { CacheService, type ICacheService } from "../services/cacheService";
@@ -40,6 +39,7 @@ import { JobService, type IJobService } from "../services/jobService";
 
 export type NeuronCradle = {
   env: typeof env;
+  container: NeuronContainer;
 
   db: Drizzle;
   // cacheClient: CacheClient;
@@ -53,12 +53,13 @@ export type NeuronCradle = {
   imageService: IImageService;
   emailService: IEmailService;
   classService: IClassService;
-export type NeuronCradle = {
-  env: typeof env;
-  container: NeuronContainer;
-
-  db: Drizzle;
-  // ... rest of cradle
+  // cacheService: ICacheService;
+  userService: IUserService;
+  volunteerService: IVolunteerService;
+  termService: ITermService;
+  shiftService: IShiftService;
+  coverageService: ICoverageService;
+  jobService: IJobService;
 };
 
 export type NeuronContainer = AwilixContainer<NeuronCradle>;
@@ -73,6 +74,7 @@ const createRootContainer = (): NeuronContainer => {
 
   container.register({
     env: asValue(env),
+    container: asValue(container),
   });
 
   registerDb(container);
@@ -98,16 +100,7 @@ const registerServices = (container: NeuronContainer) => {
     volunteerService: asClass<IVolunteerService>(VolunteerService).singleton(),
     termService: asClass<ITermService>(TermService).scoped(),
     coverageService: asClass<ICoverageService>(CoverageService).scoped(),
-const createRootContainer = (): NeuronContainer => {
-  const container = createContainer<NeuronCradle>({
-    injectionMode: InjectionMode.PROXY,
-    strict: true,
-  });
-
-  container.register({
-    env: asValue(env),
-    container: asValue(container),
-  });
+    jobService: asClass<IJobService>(JobService).singleton(),
     // cacheService: asClass<ICacheService>(CacheService).scoped(),
   });
 };

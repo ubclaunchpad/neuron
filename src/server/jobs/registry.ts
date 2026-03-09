@@ -2,12 +2,10 @@ import { cleanupOrphanedImagesJob } from "./definitions/cleanup-orphaned-images.
 import { scheduledTestJob } from "./definitions/scheduled-test.job";
 import type { RegisteredJob } from "./types";
 
-const allJobs = [
+export const registeredJobs = [
   cleanupOrphanedImagesJob,
-import { env } from "@/env";
+  scheduledTestJob,
 ] as const satisfies readonly RegisteredJob<any>[];
-
-export const registeredJobs = allJobs;
 
 type RegisteredJobs = typeof registeredJobs;
 type AnyRegisteredJob = RegisteredJobs[number];

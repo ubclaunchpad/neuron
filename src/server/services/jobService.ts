@@ -10,11 +10,7 @@ import {
   type JobPayload,
   type KnownJobName,
 } from "../jobs/registry";
-import type {
-  JobRetryOptions,
-  RegisteredJob,
-  RunJobOptions,
-} from "../jobs/types";
+import type { JobRetryOptions, RegisteredJob, RunJobOptions } from "../jobs/types";
 
 export interface IJobService {
   start(): Promise<void>;
@@ -73,7 +69,6 @@ export class JobService implements IJobService {
   }) {
     this.container = container;
     this.env = env;
-
     this.boss = this.getOrCreateBoss();
   }
 
@@ -102,7 +97,6 @@ export class JobService implements IJobService {
     sharedBossState.startPromise = undefined;
   }
 
-  // One-off job execution
   async run<TJobName extends KnownJobName>(
     jobName: TJobName,
     data?: JobPayload<TJobName>,
@@ -137,6 +131,7 @@ export class JobService implements IJobService {
       ...(trackedQueues ?? []),
       ...discoveredQueueNames,
     ]);
+
     const results = await Promise.allSettled(
       [...queueNames].map(async (queueName) => this.boss.unschedule(queueName)),
     );
@@ -144,9 +139,7 @@ export class JobService implements IJobService {
       .filter((result): result is PromiseRejectedResult => result.status === "rejected")
       .map((result) => result.reason);
 
-    if (errors.length === 1) {
-      throw errors[0];
-    }
+    if (errors.length === 1) throw errors[0];
     if (errors.length > 1) {
       throw new AggregateError(errors, `${errors.length} unschedule calls failed`);
     }
@@ -192,39 +185,34 @@ export class JobService implements IJobService {
     if (mergedOptions?.correlationId) {
       throw new Error("correlationId is only supported for recurring (cron) runs.");
     }
-
     if (mergedOptions?.startAt || mergedOptions?.endAt) {
       throw new Error("startAt/endAt require cron for recurring runs.");
     }
 
-const sendOptions = mergedOptions
-  ? (() => {
-      const {
-        cron: _cron,
-        startAt: _startAt,
-        endAt: _endAt,
-        correlationId: _correlationId,
-        runAt,
-        startAfter: rawStartAfter,
-        ...rest
-      } = mergedOptions;
-      if (runAt !== undefined && rawStartAfter !== undefined) {
-        throw new Error("Provide either runAt or startAfter, not both.");
-      }
-      const startAfter = runAt ?? rawStartAfter;
-      return {
-        ...rest,
-        ...(startAfter !== undefined ? { startAfter } : {}),
-      };
-    })()
-  : undefined;
+    const sendOptions = mergedOptions
+      ? (() => {
+          const {
+            cron: _cron,
+            startAt: _startAt,
+            endAt: _endAt,
+            correlationId: _correlationId,
+            runAt,
+            startAfter: rawStartAfter,
+            ...rest
+          } = mergedOptions;
+          if (runAt !== undefined && rawStartAfter !== undefined) {
+            throw new Error("Provide either runAt or startAfter, not both.");
+          }
+          const startAfter = runAt ?? rawStartAfter;
+          return {
+            ...rest,
+            ...(startAfter !== undefined ? { startAfter } : {}),
+          };
+        })()
+      : undefined;
 
-return this.boss.send(
-  jobName,
-  (data ?? null) as object | null,
-  sendOptions as any,
-);
-}
+    return this.boss.send(jobName, (data ?? null) as object | null, sendOptions as any);
+  }
 
   private async bootstrap(): Promise<void> {
     if (sharedBossState.isStarted) return;
@@ -311,41 +299,18 @@ return this.boss.send(
     return `${jobName}:${normalized}`;
   }
 
-if (sharedBossState.registeredWorkerQueues.has(queueName)) return;
-const existingRegistration =
-  sharedBossState.pendingWorkerRegistrations.get(queueName);
-if (existingRegistration) {
-  await existingRegistration;
-  return;
-}
+  private async ensureWorkerRegistered(
+    queueName: string,
+    definition: RegisteredJob<any>,
+  ): Promise<void> {
+    if (sharedBossState.registeredWorkerQueues.has(queueName)) return;
 
-// Claim the slot before calling boss.work()
-sharedBossState.registeredWorkerQueues.add(queueName);
-
-const registrationPromise = (async () => {
-  try {
-    const worker = async (job: any) => {
-      // ... worker implementation ...
-    };
-
-    if (definition.workOptions) {
-      await this.boss.work(queueName, definition.workOptions as any, worker);
-    } else {
-      await this.boss.work(queueName, worker);
+    const existingRegistration =
+      sharedBossState.pendingWorkerRegistrations.get(queueName);
+    if (existingRegistration) {
+      await existingRegistration;
+      return;
     }
-  } catch (error) {
-    // Remove from set on failure so it can be retried
-    sharedBossState.registeredWorkerQueues.delete(queueName);
-    throw error;
-  }
-})();
-
-sharedBossState.pendingWorkerRegistrations.set(queueName, registrationPromise);
-try {
-  await registrationPromise;
-} finally {
-  sharedBossState.pendingWorkerRegistrations.delete(queueName);
-}
 
     const registrationPromise = (async () => {
       const worker = async (job: any) => {

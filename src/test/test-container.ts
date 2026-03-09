@@ -61,6 +61,7 @@ export function createTestContainer(
 
   container.register({
     env: asValue(env),
+    container: asValue(container),
 
     // Database - real test database
     db: asValue(db),

@@ -85,17 +85,19 @@ export class JobService implements IJobService {
   }
 
   async stop(): Promise<void> {
-    if (sharedBossState.boss && sharedBossState.isStarted) {
-      await this.boss.stop();
+    try {
+      if (sharedBossState.boss && sharedBossState.isStarted) {
+        await this.boss.stop();
+      }
+    } finally {
+      sharedBossState.boss = undefined;
+      sharedBossState.isStarted = false;
+      sharedBossState.isWorkersRegistered = false;
+      sharedBossState.registeredWorkerQueues.clear();
+      sharedBossState.pendingWorkerRegistrations.clear();
+      sharedBossState.recurringQueuesByJob.clear();
+      sharedBossState.startPromise = undefined;
     }
-
-    sharedBossState.boss = undefined;
-    sharedBossState.isStarted = false;
-    sharedBossState.isWorkersRegistered = false;
-    sharedBossState.registeredWorkerQueues.clear();
-    sharedBossState.pendingWorkerRegistrations.clear();
-    sharedBossState.recurringQueuesByJob.clear();
-    sharedBossState.startPromise = undefined;
   }
 
   async run<TJobName extends KnownJobName>(

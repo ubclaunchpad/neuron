@@ -10,19 +10,20 @@ import {
   registeredJobs,
   type JobPayload,
   type KnownJobName,
+  type RunnableJobName,
 } from "../jobs/registry";
 import type { JobRetryOptions, RegisteredJob, RunJobOptions } from "../jobs/types";
 
 export interface IJobService {
   start(): Promise<void>;
   stop(): Promise<void>;
-  run<TJobName extends KnownJobName>(
+  run<TJobName extends RunnableJobName>(
     jobName: TJobName,
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
   ): Promise<string | null>;
   unschedule(
-    jobName: KnownJobName,
+    jobName: RunnableJobName,
     options?: { correlationId?: string },
   ): Promise<void>;
 }
@@ -100,7 +101,7 @@ export class JobService implements IJobService {
     }
   }
 
-  async run<TJobName extends KnownJobName>(
+  async run<TJobName extends RunnableJobName>(
     jobName: TJobName,
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
@@ -110,7 +111,7 @@ export class JobService implements IJobService {
   }
 
   async unschedule(
-    jobName: KnownJobName,
+    jobName: RunnableJobName,
     options?: { correlationId?: string },
   ): Promise<void> {
     this.getJobDefinition(jobName);

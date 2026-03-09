@@ -1,14 +1,14 @@
 import type {
   IJobService,
 } from "@/server/services/jobService";
-import type { JobPayload, KnownJobName } from "@/server/jobs/registry";
+import type { JobPayload, RunnableJobName } from "@/server/jobs/registry";
 import type {
   RunJobOptions,
 } from "@/server/jobs/types";
 
 export class MockJobService implements IJobService {
   readonly calls: {
-    jobName: KnownJobName;
+    jobName: RunnableJobName;
     data?: unknown;
     options?: RunJobOptions;
   }[] = [];
@@ -17,7 +17,7 @@ export class MockJobService implements IJobService {
 
   async stop(): Promise<void> {}
 
-  async run<TJobName extends KnownJobName>(
+  async run<TJobName extends RunnableJobName>(
     jobName: TJobName,
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
@@ -28,7 +28,7 @@ export class MockJobService implements IJobService {
   }
 
   async unschedule(
-    _jobName: KnownJobName,
+    _jobName: RunnableJobName,
     _options?: { correlationId?: string },
   ): Promise<void> {}
 }

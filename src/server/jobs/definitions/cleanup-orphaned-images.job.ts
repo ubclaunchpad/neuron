@@ -1,4 +1,3 @@
-import { env } from "@/env";
 import type { RegisteredJob } from "../types";
 
 type CleanupOrphanedImagesPayload = {
@@ -14,21 +13,11 @@ export const cleanupOrphanedImagesJob: RegisteredJob<CleanupOrphanedImagesPayloa
       retryDelay: 30,
       retryBackoff: true,
     },
-    startup:
-      env.NODE_ENV !== "production"
-        ? undefined
-        : {
-            cron: "0 3 * * *",
-            data: {
-              initiatedBy: "scheduler",
-              dryRun: false,
-            },
-          },
+    // Keep startup scheduling disabled until cleanup logic is implemented.
+    startup: undefined,
   handler: async (payload) => {
-    console.info(
-      "[pg-boss] cleanup-orphaned-images job executed (not yet implemented)",
-      payload ?? {},
-    );
+    void payload;
+    throw new Error("cleanup-orphaned-images handler is not implemented yet.");
   },
   };
 

@@ -11,6 +11,7 @@ const allJobs = [
 type AnyKnownJob = (typeof allJobs)[number];
 
 export type KnownJobName = AnyKnownJob["name"];
+export type RunnableJobName = Exclude<KnownJobName, "jobs.scheduled-test">;
 
 type JobPayloadMap = {
   [TJob in AnyKnownJob as TJob["name"]]: TJob extends RegisteredJob<

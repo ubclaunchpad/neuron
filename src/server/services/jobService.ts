@@ -197,28 +197,33 @@ export class JobService implements IJobService {
       throw new Error("startAt/endAt require cron for recurring runs.");
     }
 
-    const sendOptions = mergedOptions
-      ? (() => {
-          const {
-            cron: _cron,
-            startAt: _startAt,
-            endAt: _endAt,
-            correlationId: _correlationId,
-            runAt,
-            startAfter: rawStartAfter,
-            ...rest
-          } = mergedOptions;
-          if (runAt !== undefined && rawStartAfter !== undefined) {
-            throw new Error("Provide either runAt or startAfter, not both.");
-          }
-          const startAfter = runAt ?? rawStartAfter;
-          return {
-            ...rest,
-            ...(startAfter !== undefined ? { startAfter } : {}),
-          };
-        })()
-      : undefined;
-  }
+const sendOptions = mergedOptions
+  ? (() => {
+      const {
+        cron: _cron,
+        startAt: _startAt,
+        endAt: _endAt,
+        correlationId: _correlationId,
+        runAt,
+        startAfter: rawStartAfter,
+        ...rest
+      } = mergedOptions;
+      if (runAt !== undefined && rawStartAfter !== undefined) {
+        throw new Error("Provide either runAt or startAfter, not both.");
+      }
+      const startAfter = runAt ?? rawStartAfter;
+      return {
+        ...rest,
+        ...(startAfter !== undefined ? { startAfter } : {}),
+      };
+    })()
+  : undefined;
+
+return this.boss.send(
+  jobName,
+  (data ?? null) as object | null,
+  sendOptions as any,
+);
 
   private async bootstrap(): Promise<void> {
     if (sharedBossState.isStarted) return;

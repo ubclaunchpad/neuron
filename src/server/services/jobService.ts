@@ -205,17 +205,19 @@ export class JobService implements IJobService {
             endAt: _endAt,
             correlationId: _correlationId,
             runAt,
+            startAfter: rawStartAfter,
             ...rest
           } = mergedOptions;
-          const startAfter = runAt ?? rest.startAfter;
+          if (runAt !== undefined && rawStartAfter !== undefined) {
+            throw new Error("Provide either runAt or startAfter, not both.");
+          }
+          const startAfter = runAt ?? rawStartAfter;
           return {
             ...rest,
             ...(startAfter !== undefined ? { startAfter } : {}),
           };
         })()
       : undefined;
-
-    return this.boss.send(jobName, (data ?? null) as object | null, sendOptions);
   }
 
   private async bootstrap(): Promise<void> {

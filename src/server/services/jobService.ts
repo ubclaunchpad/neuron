@@ -221,9 +221,12 @@ export class JobService implements IJobService {
   private async bootstrap(): Promise<void> {
     if (sharedBossState.isStarted) return;
 
-    // Capture the boss instance locally so that error recovery uses the same
-    // reference even if sharedBossState.boss is cleared between lines.
+    // Capture the boss instance locally and sync this.boss so that all
+    // instance methods (work, send, getSchedules, etc.) use the new instance
+    // after a stop() → start() cycle. Without this, this.boss still refers
+    // to the stopped instance created in the constructor.
     const boss = this.getOrCreateBoss();
+    this.boss = boss;
     await boss.start();
     sharedBossState.isStarted = true;
 

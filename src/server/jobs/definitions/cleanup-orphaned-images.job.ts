@@ -9,9 +9,9 @@ export const cleanupOrphanedImagesJob: RegisteredJob<CleanupOrphanedImagesPayloa
   {
     name: "jobs.cleanup-orphaned-images",
     retries: {
-      retryLimit: 3,
-      retryDelay: 30,
-      retryBackoff: true,
+      // Handler is not yet implemented — fail immediately on any invocation
+      // rather than retrying. Replace with real retry config when implemented.
+      retryLimit: 0,
     },
     // Keep startup scheduling disabled until cleanup logic is implemented.
     startup: undefined,
@@ -19,7 +19,7 @@ export const cleanupOrphanedImagesJob: RegisteredJob<CleanupOrphanedImagesPayloa
     handler: async (_payload) => {
       // TODO: implement orphaned image cleanup logic.
       // This intentionally throws so that any manual invocation fails loudly
-      // rather than silently retrying 3 times before landing in dead-letter.
+      // rather than silently retrying before landing in dead-letter.
       throw new Error(
         "cleanup-orphaned-images handler is not implemented yet. " +
           "Do not enqueue this job until the handler is complete.",

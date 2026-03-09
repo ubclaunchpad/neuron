@@ -4,7 +4,7 @@ import type { RegisteredJob } from "./types";
 
 const allJobs = [
   cleanupOrphanedImagesJob,
-  ...(env.NODE_ENV === "test" ? [scheduledTestJob] : []),
+import { env } from "@/env";
 ] as const satisfies readonly RegisteredJob<any>[];
 
 export const registeredJobs = allJobs;

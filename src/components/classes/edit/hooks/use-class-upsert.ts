@@ -51,8 +51,9 @@ export function useClassUpsert({
       category: payload.category!,
       subcategory: payload.subcategory ?? undefined,
       image: payload.image ?? undefined,
-      meetingURL: payload.meetingURL ?? undefined,
       description: payload.description ?? undefined,
+      location: payload.location ?? undefined,
+      locationType: payload.locationType ?? undefined,
       schedules: payload.addedSchedules,
     } satisfies CreateClassInput);
 

@@ -1,4 +1,3 @@
-import "server-only";
 import { env } from "@/env";
 import type { Session } from "@/lib/auth";
 import {

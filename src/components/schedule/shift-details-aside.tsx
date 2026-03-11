@@ -19,40 +19,31 @@ import { clientApi } from "@/trpc/client";
 import { Video } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-import { useEffect } from "react";
 import { CancelShiftButton } from "./cancel-shift-button";
 import { useSchedulePage } from "./schedule-page-context";
 import { WithPermission } from "../utils/with-permission";
 import { CheckInButton } from "./check-in-button";
 import {
-  ShiftStatus,
   type ListShiftWithPersonalStatus,
   type SingleShiftWithPersonalContext,
 } from "@/models/shift";
 import { RequestCoverageButton } from "./request-coverage-button";
 import { ShiftStatusBadge } from "./shift-status-badge";
+import { SkeletonAside } from "../ui/skeleton";
 
 export function ShiftDetailsAside() {
-  const { selectedShiftId, closeAside } = useSchedulePage();
+  const { selectedShiftId } = useSchedulePage();
   const { data: shift, isPending: isLoadingShift } =
     clientApi.shift.byId.useQuery(
       { shiftId: selectedShiftId ?? "" },
       {
         enabled: !!selectedShiftId,
-        suspense: !!selectedShiftId,
         meta: { suppressToast: true },
       },
     );
 
-  // Close aside if no shiftId is selected
-  useEffect(() => {
-    if (!selectedShiftId) {
-      closeAside();
-    }
-  }, [selectedShiftId, closeAside]);
-
   if (isLoadingShift || !shift) {
-    return <></>;
+    return <SkeletonAside />;
   }
 
   const startAt =
@@ -145,14 +136,22 @@ export function ShiftDetailsAside() {
 
           <AsideSectionContent>
             <AsideField inline>
-              <AsideFieldLabel>Meeting</AsideFieldLabel>
+              <AsideFieldLabel>Location</AsideFieldLabel>
               <AsideFieldContent>
-                {shift.class.meetingURL ? (
-                  <Button asChild className="cursor-pointer" variant="outline">
-                    <Link href={shift.class.meetingURL as Route}>
+                {shift.class.location ? (
+                  shift.class.locationType === "MeetingLink" ? (
+                    <Button
+                      asChild
+                      className="cursor-pointer"
+                      variant="outline"
+                      href={shift.class.location as Route}
+                      target="_blank"
+                    >
                       <Video /> Join Class
-                    </Link>
-                  </Button>
+                    </Button>
+                  ) : (
+                    <span>{shift.class.location}</span>
+                  )
                 ) : (
                   <span>No meeting link</span>
                 )}

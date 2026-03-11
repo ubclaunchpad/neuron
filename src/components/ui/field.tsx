@@ -270,6 +270,5 @@ export {
   FieldSeparator,
   FieldSet,
   FieldTitle,
-  ReadonlyField
+  ReadonlyField,
 };
-

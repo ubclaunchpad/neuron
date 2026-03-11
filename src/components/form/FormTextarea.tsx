@@ -9,8 +9,10 @@ import { Textarea } from "../ui/textarea";
 import { FormFieldController } from "./FormField";
 import { FormFieldLayout } from "./FormLayout";
 
-export interface FormTextareaProps
-  extends Omit<React.ComponentProps<typeof Textarea>, "value" | "onChange"> {
+export interface FormTextareaProps extends Omit<
+  React.ComponentProps<typeof Textarea>,
+  "value" | "onChange"
+> {
   value: string;
   onChange: (value: string) => void;
 }

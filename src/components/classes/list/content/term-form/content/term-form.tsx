@@ -17,7 +17,11 @@ export function TermForm({ termData }: { termData?: Term }) {
   return (
     <>
       {editing && termId !== undefined && termData?.published !== undefined && (
-        <TermPublishToggle termId={termId} termName={termData.name} published={termData.published} />
+        <TermPublishToggle
+          termId={termId}
+          termName={termData.name}
+          published={termData.published}
+        />
       )}
 
       <FieldGroup>

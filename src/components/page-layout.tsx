@@ -40,13 +40,20 @@ function PageLayout({
   asideWidth = "448px",
   mainMinWidth = "412px",
   defaultOpen = false,
+  open: controlledOpen,
+  onOpenChange,
   ...props
 }: React.ComponentProps<"div"> & {
   asideWidth?: string;
   mainMinWidth?: string;
   defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [isOpen, setIsOpen] = React.useState(defaultOpen);
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen);
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : uncontrolledOpen;
+
   const [isPageScrolled, setIsPageScrolled] = React.useState(false);
   const [asideCount, setAsideCount] = React.useState(0);
   const [headerHeight, setHeaderHeight] = React.useState(0);
@@ -57,14 +64,23 @@ function PageLayout({
   }, []);
 
   const hasAside = asideCount > 0;
-  const toggle = React.useCallback(() => setIsOpen((v) => !v), []);
+
+  const setOpen = React.useCallback(
+    (value: boolean) => {
+      if (!isControlled) setUncontrolledOpen(value);
+      onOpenChange?.(value);
+    },
+    [isControlled, onOpenChange],
+  );
+
+  const toggle = React.useCallback(() => setOpen(!isOpen), [setOpen, isOpen]);
 
   const state = isOpen && hasAside ? "open" : "closed";
 
   const ctx = React.useMemo<PageLayoutContextValue>(
     () => ({
       isOpen,
-      setOpen: setIsOpen,
+      setOpen,
       toggle,
       registerAside,
       hasAside,
@@ -77,7 +93,7 @@ function PageLayout({
     }),
     [
       isOpen,
-      setIsOpen,
+      setOpen,
       toggle,
       registerAside,
       hasAside,

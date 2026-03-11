@@ -45,17 +45,18 @@ import {
 } from "drizzle-orm";
 import type { IVolunteerService } from "./volunteerService";
 import type { IShiftService } from "./shiftService";
+import type { ICurrentSessionService } from "../currentSessionService";
 
 export interface ICoverageService {
   getCoverageRequestsForShift(shiftId: string): Promise<CoverageRequest[]>;
   listCoverageRequests(
     input: ListCoverageRequestsInput,
-    viewerUserId: string,
-    viewerRole: Role,
   ): Promise<
     ListResponse<ListCoverageRequestBase | ListCoverageRequestWithReason>
   >;
-  getCoverageRequestById(id: string): Promise<CoverageRequest>;
+  getCoverageRequestById(
+    id: string,
+  ): Promise<ListCoverageRequestBase | ListCoverageRequestWithReason>;
   getCoverageRequestByIds(ids: string[]): Promise<CoverageRequest[]>;
   createCoverageRequest(
     requestingVolunteerUserId: string,
@@ -77,19 +78,23 @@ export interface ICoverageService {
 
 export class CoverageService implements ICoverageService {
   private readonly db: Drizzle;
+  private readonly currentSessionService: ICurrentSessionService;
   private readonly volunteerService: IVolunteerService;
   private readonly shiftService: IShiftService;
 
   constructor({
     db,
+    currentSessionService,
     volunteerService,
     shiftService,
   }: {
     db: Drizzle;
+    currentSessionService: ICurrentSessionService;
     volunteerService: IVolunteerService;
     shiftService: IShiftService;
   }) {
     this.db = db;
+    this.currentSessionService = currentSessionService;
     this.volunteerService = volunteerService;
     this.shiftService = shiftService;
   }
@@ -107,11 +112,12 @@ export class CoverageService implements ICoverageService {
 
   async listCoverageRequests(
     input: ListCoverageRequestsInput,
-    viewerUserId: string,
-    viewerRole: Role,
   ): Promise<
     ListResponse<ListCoverageRequestBase | ListCoverageRequestWithReason>
   > {
+    const currentUser = this.currentSessionService.requireUser();
+    const viewerUserId = currentUser.id;
+    const viewerRole = currentUser.role as Role;
     const { perPage, offset } = getPagination(input);
     const { status, from, to, courseIds, sortOrder } = input;
 
@@ -202,7 +208,8 @@ export class CoverageService implements ICoverageService {
           termId: course.termId,
           image: course.image,
           description: course.description,
-          meetingURL: course.meetingURL,
+          locationType: course.locationType,
+          location: course.location,
           category: course.category,
           subcategory: course.subcategory,
         },
@@ -297,7 +304,8 @@ export class CoverageService implements ICoverageService {
           termId: row.course.termId,
           image: row.course.image,
           description: row.course.description,
-          meetingURL: row.course.meetingURL,
+          locationType: row.course.locationType,
+          location: row.course.location,
           category: row.course.category,
           subcategory: row.course.subcategory,
         },
@@ -327,8 +335,38 @@ export class CoverageService implements ICoverageService {
     return { data, total, nextCursor };
   }
 
-  async getCoverageRequestById(id: string): Promise<CoverageRequest> {
-    return this.getCoverageRequestByIds([id]).then((req) => req[0]!);
+  async getCoverageRequestById(
+    id: string,
+  ): Promise<ListCoverageRequestBase | ListCoverageRequestWithReason> {
+    const currentUser = this.currentSessionService.requireUser();
+    const viewerRole = currentUser.role as Role;
+
+    const request = await this.getCoverageRequestByIds([id]).then(
+      (req) => req[0]!,
+    );
+
+    const canViewAll = hasPermission({
+      role: viewerRole,
+      permission: { shifts: ["view-all"] },
+    });
+
+    if (!canViewAll) {
+      const isRequester = request.requestingVolunteer.id === currentUser.id;
+      const isCovering = request.coveringVolunteer?.id === currentUser.id;
+      const isOpen = request.status === CoverageStatus.open;
+
+      if (!isRequester && !isCovering && !isOpen) {
+        throw new NeuronError(
+          "Unable to find coverage request",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+    }
+
+    if (canViewAll) {
+      return getListCoverageRequestWithReason(request);
+    }
+    return getListCoverageRequestBase(request);
   }
 
   async getCoverageRequestByIds(ids: string[]): Promise<CoverageRequest[]> {

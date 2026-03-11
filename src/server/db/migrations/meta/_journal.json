@@ -64,6 +64,13 @@
       "when": 1772908609720,
       "tag": "0008_uneven_eddie_brock",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1773033743776,
+      "tag": "0009_add_location_type",
+      "breakpoints": true
     }
   ]
 }

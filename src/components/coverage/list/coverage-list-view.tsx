@@ -55,16 +55,15 @@ export function CoverageListView() {
   return (
     <ScrollArea onScroll={handleScroll} className="w-full h-full">
       <div className="px-10 py-4 space-y-4">
-        
-      {isLoading && (
-        <SkeletonListGroup
-          containerClassName="space-y-3"
-          titleContainerClassName="pt-3 pb-2"
-          titleClassName="h-6 w-31"
-          itemContainerClassName="flex flex-col gap-3 px-5"
-          itemRenderer={() => <CoverageItemSkeleton />}
-        />
-      )}
+        {isLoading && (
+          <SkeletonListGroup
+            containerClassName="space-y-3"
+            titleContainerClassName="pt-3 pb-2"
+            titleClassName="h-6 w-31"
+            itemContainerClassName="flex flex-col gap-3 px-5"
+            itemRenderer={() => <CoverageItemSkeleton />}
+          />
+        )}
 
         {isEmpty && (
           <ListStateWrapper>No coverage requests found.</ListStateWrapper>

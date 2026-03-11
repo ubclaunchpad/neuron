@@ -35,7 +35,7 @@ export default function InactivePage() {
         </div>
 
         <Button onClick={() => authClient.signOut()}>
-          <LogOutIcon className="h-4 w-4"/>
+          <LogOutIcon className="h-4 w-4" />
           <span>Log Out</span>
         </Button>
       </div>

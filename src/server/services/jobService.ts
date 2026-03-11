@@ -12,7 +12,11 @@ import {
   type KnownJobName,
   type RunnableJobName,
 } from "../jobs/registry";
-import type { JobRetryOptions, RegisteredJob, RunJobOptions } from "../jobs/types";
+import type {
+  JobRetryOptions,
+  RegisteredJob,
+  RunJobOptions,
+} from "../jobs/types";
 
 export interface IJobService {
   start(): Promise<void>;
@@ -43,14 +47,13 @@ type GlobalWithBoss = typeof globalThis & {
 };
 
 const globalWithBoss = globalThis as GlobalWithBoss;
-const sharedBossState: SharedBossState =
-  globalWithBoss.__neuronPgBossState ?? {
-    isStarted: false,
-    isWorkersRegistered: false,
-    registeredWorkerQueues: new Set<string>(),
-    pendingWorkerRegistrations: new Map<string, Promise<void>>(),
-    recurringQueuesByJob: new Map<KnownJobName, Set<string>>(),
-  };
+const sharedBossState: SharedBossState = globalWithBoss.__neuronPgBossState ?? {
+  isStarted: false,
+  isWorkersRegistered: false,
+  registeredWorkerQueues: new Set<string>(),
+  pendingWorkerRegistrations: new Map<string, Promise<void>>(),
+  recurringQueuesByJob: new Map<KnownJobName, Set<string>>(),
+};
 
 globalWithBoss.__neuronPgBossState = sharedBossState;
 sharedBossState.registeredWorkerQueues ??= new Set<string>();
@@ -140,12 +143,18 @@ export class JobService implements IJobService {
       [...queueNames].map(async (queueName) => this.boss.unschedule(queueName)),
     );
     const errors = results
-      .filter((result): result is PromiseRejectedResult => result.status === "rejected")
+      .filter(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      )
       .map((result) => result.reason);
 
     if (errors.length === 1) throw errors[0];
     if (errors.length > 1) {
-      throw new AggregateError(errors, `${errors.length} unschedule calls failed`);
+      throw new AggregateError(
+        errors,
+        `${errors.length} unschedule calls failed`,
+      );
     }
 
     sharedBossState.recurringQueuesByJob.delete(jobName);
@@ -173,6 +182,7 @@ export class JobService implements IJobService {
       const {
         cron: _cron,
         runAt: _runAt,
+        startAfter: _startAfter,
         correlationId: _correlationId,
         ...scheduleOptions
       } = mergedOptions;
@@ -187,7 +197,9 @@ export class JobService implements IJobService {
     }
 
     if (mergedOptions?.correlationId) {
-      throw new Error("correlationId is only supported for recurring (cron) runs.");
+      throw new Error(
+        "correlationId is only supported for recurring (cron) runs.",
+      );
     }
     if (mergedOptions?.startAt || mergedOptions?.endAt) {
       throw new Error("startAt/endAt require cron for recurring runs.");
@@ -215,7 +227,11 @@ export class JobService implements IJobService {
         })()
       : undefined;
 
-    return this.boss.send(jobName, (data ?? null) as object | null, sendOptions as any);
+    return this.boss.send(
+      jobName,
+      (data ?? null) as object | null,
+      sendOptions as any,
+    );
   }
 
   private async bootstrap(): Promise<void> {
@@ -223,7 +239,7 @@ export class JobService implements IJobService {
 
     // Capture the boss instance locally and sync this.boss so that all
     // instance methods (work, send, getSchedules, etc.) use the new instance
-    // after a stop() → start() cycle. Without this, this.boss still refers
+    // after a stop() -> start() cycle. Without this, this.boss still refers
     // to the stopped instance created in the constructor.
     const boss = this.getOrCreateBoss();
     this.boss = boss;
@@ -267,10 +283,14 @@ export class JobService implements IJobService {
     for (const definition of registeredJobs) {
       const startup = definition.startup;
       if (!startup) continue;
-      await this.runWithStartedBoss(definition.name as KnownJobName, startup.data, {
-        ...(startup.options ?? {}),
-        cron: startup.cron,
-      });
+      await this.runWithStartedBoss(
+        definition.name as KnownJobName,
+        startup.data,
+        {
+          ...(startup.options ?? {}),
+          cron: startup.cron,
+        },
+      );
     }
   }
 
@@ -339,10 +359,13 @@ export class JobService implements IJobService {
           });
 
           try {
-            await definition.handler(definitionPayload(definition, jobItem?.data), {
-              container: scope,
-              cradle: scope.cradle,
-            });
+            await definition.handler(
+              definitionPayload(definition, jobItem?.data),
+              {
+                container: scope,
+                cradle: scope.cradle,
+              },
+            );
           } catch (error) {
             console.error(
               `[pg-boss] job ${queueName} failed (id=${jobItem?.id ?? "unknown"})`,
@@ -369,7 +392,10 @@ export class JobService implements IJobService {
       sharedBossState.registeredWorkerQueues.add(queueName);
     })();
 
-    sharedBossState.pendingWorkerRegistrations.set(queueName, registrationPromise);
+    sharedBossState.pendingWorkerRegistrations.set(
+      queueName,
+      registrationPromise,
+    );
     try {
       await registrationPromise;
     } finally {
@@ -378,8 +404,12 @@ export class JobService implements IJobService {
   }
 
   private getOrCreateBoss(): PgBoss {
+    // pg-boss automatically creates and migrates its own `pgboss` schema on start().
+    // This is separate from Drizzle-managed migrations in `public`.
+    // The DB user must have CREATE SCHEMA privileges on first run.
     sharedBossState.boss ??= new PgBoss({
       connectionString: this.env.DATABASE_URL,
+      schema: "pgboss",
     });
     return sharedBossState.boss;
   }
@@ -389,7 +419,8 @@ export class JobService implements IJobService {
   }
 
   private trackRecurringQueue(jobName: KnownJobName, queueName: string): void {
-    const queues = sharedBossState.recurringQueuesByJob.get(jobName) ?? new Set();
+    const queues =
+      sharedBossState.recurringQueuesByJob.get(jobName) ?? new Set();
     queues.add(queueName);
     sharedBossState.recurringQueuesByJob.set(jobName, queues);
   }

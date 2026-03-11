@@ -49,7 +49,9 @@ export const registeredJobs: readonly RegisteredJob<any>[] =
     ? [cleanupOrphanedImagesJob]
     : [cleanupOrphanedImagesJob, scheduledTestJob];
 
-const registeredJobNames = new Set<string>(registeredJobs.map((job) => job.name));
+const registeredJobNames = new Set<string>(
+  registeredJobs.map((job) => job.name),
+);
 
 export const isRegisteredJobName = (jobName: string): jobName is KnownJobName =>
   registeredJobNames.has(jobName);

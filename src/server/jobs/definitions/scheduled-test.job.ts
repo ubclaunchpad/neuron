@@ -32,8 +32,3 @@ export const scheduledTestJob: RegisteredJob<ScheduledTestPayload> = {
     console.info("[pg-boss] scheduled-test job executed", payload);
   },
 };
-
-
-
-
-

@@ -1,4 +1,3 @@
-import { env } from "@/env";
 import { cleanupOrphanedImagesJob } from "./definitions/cleanup-orphaned-images.job";
 import type { RegisteredJob } from "./types";
 
@@ -9,7 +8,7 @@ const allJobs = [
 type AnyKnownJob = (typeof allJobs)[number];
 
 export type KnownJobName = AnyKnownJob["name"];
-export type RunnableJobName = Exclude<KnownJobName, "jobs.scheduled-test">;
+export type RunnableJobName = KnownJobName;
 
 type JobPayloadMap = {
   [TJob in AnyKnownJob as TJob["name"]]: TJob extends RegisteredJob<
@@ -42,10 +41,7 @@ const knownJobNames = new Set<string>(allJobs.map((job) => job.name));
 export const isKnownJobName = (jobName: string): jobName is KnownJobName =>
   knownJobNames.has(jobName);
 
-export const registeredJobs: readonly RegisteredJob<any>[] =
-  env.NODE_ENV === "production"
-    ? [cleanupOrphanedImagesJob]
-    : [cleanupOrphanedImagesJob, scheduledTestJob];
+export const registeredJobs: readonly RegisteredJob<any>[] = allJobs;
 
 const registeredJobNames = new Set<string>(
   registeredJobs.map((job) => job.name),

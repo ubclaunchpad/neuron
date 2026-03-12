@@ -8,7 +8,7 @@ type CleanupOrphanedImagesPayload = {
 export const cleanupOrphanedImagesJob: RegisteredJob<CleanupOrphanedImagesPayload> =
   {
     name: "jobs.cleanup-orphaned-images",
-    retries: {
+    retryOpts: {
       // Handler is not yet implemented — fail immediately on any invocation
       // rather than retrying. Replace with real retry config when implemented.
       retryLimit: 0,

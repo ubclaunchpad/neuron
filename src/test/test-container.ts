@@ -1,4 +1,10 @@
-import { createContainer, asValue, asClass, InjectionMode } from "awilix";
+import {
+  createContainer,
+  asValue,
+  asClass,
+  InjectionMode,
+  type AwilixContainer,
+} from "awilix";
 import { env } from "@/env";
 import type { NeuronCradle, NeuronContainer } from "@/server/api/di-container";
 import type { Session } from "@/lib/auth";
@@ -43,18 +49,13 @@ export interface TestContainerOptions {
   headers?: Headers;
 }
 
-export interface TestContainerResult {
-  container: NeuronContainer;
-  mockJobService: MockJobService;
-}
-
 /**
  * Creates a test DI container with mocked external services.
  * Uses real implementations for domain services with the test database.
  */
 export function createTestContainer(
   options: TestContainerOptions = {},
-): TestContainerResult {
+): AwilixContainer<NeuronCradle> {
   const { session, headers = new Headers() } = options;
 
   const container = createContainer<NeuronCradle>({
@@ -73,7 +74,7 @@ export function createTestContainer(
     env: asValue(env),
     container: asValue(container),
 
-    // Database - real test database
+    // Database
     db: asValue(db),
 
     // Request context
@@ -98,5 +99,5 @@ export function createTestContainer(
     coverageService: asClass<ICoverageService>(CoverageService).scoped(),
   });
 
-  return { container, mockJobService };
+  return container;
 }

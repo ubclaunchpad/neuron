@@ -166,7 +166,7 @@ export class JobService implements IJobService {
     options?: RunJobOptions,
   ): Promise<string | null> {
     const definition = this.getJobDefinition(jobName);
-    const mergedOptions = mergeRetryOptions(definition.retries, options);
+    const mergedOptions = mergeRetryOptions(definition.retryOpts, options);
     const cron = mergedOptions?.cron;
 
     if (cron) {
@@ -348,6 +348,16 @@ export class JobService implements IJobService {
     }
 
     const registrationPromise = (async () => {
+      if (await this.boss.getQueue(queueName)) {
+        await this.boss.updateQueue(queueName, {
+          ...definition.retryOpts,
+        });
+      } else {
+        await this.boss.createQueue(queueName, {
+          ...definition.retryOpts,
+        });
+      }
+
       const worker = async (job: any) => {
         const jobItems = Array.isArray(job) ? job : [job];
 
@@ -404,12 +414,10 @@ export class JobService implements IJobService {
   }
 
   private getOrCreateBoss(): PgBoss {
-    // pg-boss automatically creates and migrates its own `pgboss` schema on start().
-    // This is separate from Drizzle-managed migrations in `public`.
-    // The DB user must have CREATE SCHEMA privileges on first run.
     sharedBossState.boss ??= new PgBoss({
       connectionString: this.env.DATABASE_URL,
       schema: "pgboss",
+      migrate: true,
     });
     return sharedBossState.boss;
   }

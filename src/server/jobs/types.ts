@@ -43,7 +43,10 @@ export interface JobRuntimeContext {
   cradle: NeuronCradle;
 }
 
-type StartupRecurringOptions = Omit<RunJobOptions, "cron" | "runAt" | "startAfter">;
+type StartupRecurringOptions = Omit<
+  RunJobOptions,
+  "cron" | "runAt" | "startAfter"
+>;
 type StartupOneOffOptions = Omit<
   RunJobOptions,
   "cron" | "runAt" | "correlationId" | "startAt" | "endAt" | "tz"
@@ -61,9 +64,11 @@ export type StartupSchedule<TPayload extends object> =
       options?: StartupOneOffOptions;
     };
 
-export interface RegisteredJob<TPayload extends object = Record<string, unknown>> {
+export interface RegisteredJob<
+  TPayload extends object = Record<string, unknown>,
+> {
   name: JobName;
-  retries?: JobRetryOptions;
+  retryOpts?: JobRetryOptions;
   workOptions?: WorkRegistrationOptions;
   startup?: StartupSchedule<TPayload>;
   handler: (payload: TPayload, context: JobRuntimeContext) => Promise<void>;

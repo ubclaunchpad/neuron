@@ -7,6 +7,7 @@ import {
   InjectionMode,
   type AwilixContainer,
 } from "awilix";
+import type { Sql } from "postgres";
 import { registerDb, type Drizzle } from "../db";
 // import { registerCacheClient, type CacheClient } from "../db/cache";
 // import { CacheService, type ICacheService } from "../services/cacheService";
@@ -34,11 +35,9 @@ import {
   CurrentSessionService,
   type ICurrentSessionService,
 } from "../services/currentSessionService";
-import { JobService, type IJobService } from "../services/jobService";
 
 export type NeuronCradle = {
   env: typeof env;
-  container: NeuronContainer;
 
   db: Drizzle;
   // cacheClient: CacheClient;
@@ -58,7 +57,6 @@ export type NeuronCradle = {
   termService: ITermService;
   shiftService: IShiftService;
   coverageService: ICoverageService;
-  jobService: IJobService;
 };
 
 export type NeuronContainer = AwilixContainer<NeuronCradle>;
@@ -73,15 +71,11 @@ const createRootContainer = (): NeuronContainer => {
 
   container.register({
     env: asValue(env),
-    container: asValue(container),
   });
 
   registerDb(container);
   //registerCacheClient(container);
   registerServices(container);
-  void container.cradle.jobService.start().catch((error) => {
-    console.error("[pg-boss] failed to start job service", error);
-  });
 
   return container;
 };
@@ -99,7 +93,6 @@ const registerServices = (container: NeuronContainer) => {
     volunteerService: asClass<IVolunteerService>(VolunteerService).singleton(),
     termService: asClass<ITermService>(TermService).scoped(),
     coverageService: asClass<ICoverageService>(CoverageService).scoped(),
-    jobService: asClass<IJobService>(JobService).singleton(),
     // cacheService: asClass<ICacheService>(CacheService).scoped(),
   });
 };

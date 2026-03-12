@@ -78,7 +78,6 @@ export class JobService implements IJobService {
   }
 
   async start(): Promise<void> {
-    if (this.env.NODE_ENV === "test") return;
     if (sharedBossState.isStarted) return;
 
     sharedBossState.startPromise ??= this.bootstrap().catch((error) => {
@@ -190,7 +189,7 @@ export class JobService implements IJobService {
         queueName,
         cron,
         (data ?? null) as object | null,
-        scheduleOptions as any,
+        scheduleOptions,
       );
       this.trackRecurringQueue(jobName, queueName);
       return null;
@@ -331,7 +330,7 @@ export class JobService implements IJobService {
     if (!normalized) {
       throw new Error("correlationId must be a non-empty string.");
     }
-    return `${jobName}:${normalized}`;
+    return `${jobName}/${normalized}`;
   }
 
   private async ensureWorkerRegistered(

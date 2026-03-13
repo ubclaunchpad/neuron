@@ -33,7 +33,10 @@ export const env = createEnv({
     MINIO_HOST: z.string(),
     MINIO_PORT: port,
     MINIO_BUCKET: z.string(),
-    MINIO_USE_SSL: z.enum(["true", "false"]).transform((val) => val === "true")
+    MINIO_USE_SSL: z.enum(["true", "false"]).transform((val) => val === "true"),
+
+    // Sentry / Bugsink
+    SENTRY_DSN: z.string().url(),
   },
 
   /**
@@ -68,6 +71,8 @@ export const env = createEnv({
     MINIO_PORT: process.env.MINIO_PORT,
     MINIO_BUCKET: process.env.MINIO_BUCKET,
     MINIO_USE_SSL: process.env.MINIO_USE_SSL,
+
+    SENTRY_DSN: process.env.SENTRY_DSN,
 
     NEXT_PUBLIC_FILES_BASE_URL: process.env.NEXT_PUBLIC_FILES_BASE_URL,
     NEXT_PUBLIC_FILES_BUCKET: process.env.NEXT_PUBLIC_FILES_BUCKET,

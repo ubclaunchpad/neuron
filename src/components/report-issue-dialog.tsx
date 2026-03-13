@@ -13,9 +13,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
+import { clientApi } from "@/trpc/client";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import z from "zod";
 
 const ReportIssueSchema = z.object({
@@ -42,10 +44,19 @@ export const ReportIssueDialog = NiceModal.create(() => {
     reValidateMode: "onChange",
   });
 
+  const submitBugReport = clientApi.bugReport.submit.useMutation({
+    onSuccess: () => {
+      toast.success("Issue reported successfully. Thank you!");
+      modal.hide();
+      form.reset();
+    },
+    onError: (error) => {
+      toast.error(`Failed to report issue: ${error.message}`);
+    },
+  });
+
   const onSubmit = (data: ReportIssueSchemaType) => {
-    // No functionality - just for UI display
-    console.log("Report Issue (No Functionality):", data);
-    modal.hide();
+    submitBugReport.mutate(data);
   };
 
   return (
@@ -94,12 +105,20 @@ export const ReportIssueDialog = NiceModal.create(() => {
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={submitBugReport.isPending}
+              >
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" size="sm">
-              Submit
+            <Button
+              type="submit"
+              size="sm"
+              disabled={submitBugReport.isPending}
+            >
+              {submitBugReport.isPending ? "Submitting..." : "Submit"}
             </Button>
           </DialogFooter>
         </form>

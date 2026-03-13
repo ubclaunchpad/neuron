@@ -55,8 +55,11 @@ export function ProfileSettingsContent() {
 
   const imageUrl = useImageUrl(user?.image);
 
-  const { onSubmit: onGeneralSubmit, isPending: isGeneralPending } =
-    useGeneralProfileSubmit();
+  const {
+    onSubmit: onGeneralSubmit,
+    isPending: isGeneralPending,
+    pendingEmailChange,
+  } = useGeneralProfileSubmit();
 
   const { onSubmit: onVolunteerSubmit, isPending: isVolunteerPending } =
     useVolunteerProfileSubmit(user?.id ?? "");
@@ -73,6 +76,7 @@ export function ProfileSettingsContent() {
           <GeneralProfileSection
             fallbackName={user.name}
             isPending={isGeneralPending}
+            pendingEmailChange={pendingEmailChange}
           />
         </GeneralProfileFormProvider>
 

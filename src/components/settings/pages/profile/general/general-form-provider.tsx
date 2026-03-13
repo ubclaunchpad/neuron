@@ -14,7 +14,10 @@ export function GeneralProfileFormProvider({
   children,
 }: {
   initial: GeneralProfileSchemaType;
-  onSubmit: (data: GeneralProfileSchemaType) => void;
+  onSubmit: (
+    data: GeneralProfileSchemaType,
+    form: UseFormReturn<GeneralProfileSchemaType>,
+  ) => void | Promise<void>;
   children: React.ReactNode;
 }) {
   const form = useForm<GeneralProfileSchemaType>({
@@ -26,7 +29,9 @@ export function GeneralProfileFormProvider({
 
   return (
     <GeneralProfileFormContext.Provider value={{ form }}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>{children}</form>
+      <form onSubmit={form.handleSubmit((data) => onSubmit(data, form))}>
+        {children}
+      </form>
     </GeneralProfileFormContext.Provider>
   );
 }

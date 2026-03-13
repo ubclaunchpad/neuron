@@ -16,6 +16,7 @@ import {
 } from "@/server/db/schema/auth";
 import { user, volunteer } from "@/server/db/schema/user";
 import { renderForgotPassword } from "@/server/emails/templates/forgot-password";
+import { renderRequestChangeEmail } from "@/server/emails/templates/request-change-email";
 import { renderVerifyEmail } from "@/server/emails/templates/verify-email";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -37,6 +38,32 @@ export const auth = betterAuth({
       },
       lastName: { type: "string" },
     },
+    changeEmail: {
+      enabled: true,
+      sendChangeEmailConfirmation: async ({
+        user,
+        newEmail,
+        url,
+      }: {
+        user: { name: string; email: string };
+        newEmail: string;
+        url: string;
+      }) => {
+        const scope = createRequestScope();
+        const { emailService } = scope.cradle;
+        const { html, text } = await renderRequestChangeEmail({
+          url,
+          userName: user.name,
+          newEmail: newEmail,
+        });
+        await emailService.send(
+          user.email,
+          `Confirm your email address change to ${newEmail}`,
+          text,
+          html,
+        );
+      },
+    },
   },
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -56,7 +83,7 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        after: async (user) => {
+        after: async (user: { role: Role; id: string }) => {
           switch (user.role) {
             case Role.volunteer:
               await db.insert(volunteer).values({ userId: user.id });
@@ -74,7 +101,13 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendResetPassword: async ({ user, url }) => {
+    sendResetPassword: async ({
+      user,
+      url,
+    }: {
+      user: { name: string; email: string };
+      url: string;
+    }) => {
       const scope = createRequestScope();
       const { emailService } = scope.cradle;
       const { html, text } = await renderForgotPassword({
@@ -86,7 +119,13 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendOnSignUp: true,
-    sendVerificationEmail: async ({ user, url }) => {
+    sendVerificationEmail: async ({
+      user,
+      url,
+    }: {
+      user: { name: string; email: string };
+      url: string;
+    }) => {
       const scope = createRequestScope();
       const { emailService } = scope.cradle;
       const { html, text } = await renderVerifyEmail({

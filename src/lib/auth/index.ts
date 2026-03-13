@@ -40,7 +40,13 @@ export const auth = betterAuth({
     },
     changeEmail: {
       enabled: true,
-      sendChangeEmailConfirmation: async ({ user, url }) => {
+      sendChangeEmailConfirmation: async ({
+        user,
+        url,
+      }: {
+        user: { name: string; email: string };
+        url: string;
+      }) => {
         const scope = createRequestScope();
         const { emailService } = scope.cradle;
         const { html, text } = await renderRequestChangeEmail({
@@ -74,7 +80,7 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        after: async (user) => {
+        after: async (user: { role: Role; id: string }) => {
           switch (user.role) {
             case Role.volunteer:
               await db.insert(volunteer).values({ userId: user.id });
@@ -92,7 +98,13 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendResetPassword: async ({ user, url }) => {
+    sendResetPassword: async ({
+      user,
+      url,
+    }: {
+      user: { name: string; email: string };
+      url: string;
+    }) => {
       const scope = createRequestScope();
       const { emailService } = scope.cradle;
       const { html, text } = await renderForgotPassword({
@@ -104,7 +116,13 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendOnSignUp: true,
-    sendVerificationEmail: async ({ user, url }) => {
+    sendVerificationEmail: async ({
+      user,
+      url,
+    }: {
+      user: { name: string; email: string };
+      url: string;
+    }) => {
       const scope = createRequestScope();
       const { emailService } = scope.cradle;
       const { html, text } = await renderVerifyEmail({

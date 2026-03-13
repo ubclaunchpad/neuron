@@ -6,7 +6,10 @@ import { useImageUpload } from "@/hooks/use-image-upload";
 import type { GeneralProfileSchemaType } from "../schema";
 import type { Session } from "@/lib/auth";
 
-async function emailSubmit(data: GeneralProfileSchemaType, session: Session) {
+async function emailSubmit(
+  data: GeneralProfileSchemaType,
+  session: Session | null,
+) {
   const nextEmail = data.email.trim();
   const currentEmail = session?.user?.email?.trim();
   if (nextEmail && currentEmail && nextEmail !== currentEmail) {
@@ -62,13 +65,11 @@ export function useGeneralProfileSubmit() {
       if (updateResult.error) {
         throw new Error(getBetterAuthErrorMessage(updateResult.error.code));
       }
+      toast.success("Your profile has been successfully updated!");
 
       await emailSubmit(data, session);
 
       await refetchSession();
-    },
-    onSuccess: () => {
-      toast.success("Your profile has been successfully updated!");
     },
     onError: (error: Error) => {
       toast.error(error.message);

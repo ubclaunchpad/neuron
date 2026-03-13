@@ -40,9 +40,7 @@ export const auth = betterAuth({
     },
     changeEmail: {
       enabled: true,
-    },
-    emailVerification: {
-      sendVerificationEmail: async ({ user, url, token }) => {
+      sendChangeEmailConfirmation: async ({ user, url }) => {
         const scope = createRequestScope();
         const { emailService } = scope.cradle;
         const { html, text } = await renderRequestChangeEmail({
@@ -55,8 +53,8 @@ export const auth = betterAuth({
           text,
           html,
         );
-      }
-    }
+      },
+    },
   },
   database: drizzleAdapter(db, {
     provider: "pg",

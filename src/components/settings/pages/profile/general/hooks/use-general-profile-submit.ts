@@ -19,35 +19,56 @@ type GeneralProfileFormApi = {
   ) => void;
 };
 
-async function emailSubmit(
-  data: GeneralProfileSchemaType,
-  session: Session | null,
-): Promise<boolean> {
-  const nextEmail = data.email.trim();
-  const currentEmail = session?.user?.email?.trim();
-  if (nextEmail && currentEmail && nextEmail !== currentEmail) {
-    const changeEmailResult = await authClient.changeEmail({
-      newEmail: nextEmail,
-      callbackURL: window.location.origin,
-    });
+type SubmitResult = {
+  didRequestEmailChange: boolean;
+  currentSessionEmail?: string;
+  requestedEmail?: string;
+};
 
-    if (!changeEmailResult) {
-      throw new Error(
-        "Profile updated, but email change could not be started. Please try again.",
-      );
-    }
+function getRequestedEmail(data: GeneralProfileSchemaType): string {
+  return data.email.trim();
+}
 
-    if (changeEmailResult.error) {
-      throw new Error(getBetterAuthErrorMessage(changeEmailResult.error.code));
-    }
+function getCurrentSessionEmail(session: Session | null): string {
+  return session?.user?.email?.trim() ?? "";
+}
 
-    toast.success(
-      `Profile updated. A confirmation link was sent to your current email. After you click it, we will send another verification email to ${nextEmail}.`,
-    );
-    return true;
+function getImageKeyFromValue(image: string | null | undefined): string | null {
+  if (!image) return null;
+  const parts = image.split("/");
+  return parts[parts.length - 1] ?? image;
+}
+
+function buildProfileUpdateSuccessMessage(requestedEmail?: string): string {
+  if (!requestedEmail) {
+    return "Your profile has been successfully updated!";
   }
 
-  return false;
+  return `Your profile has been successfully updated! A confirmation link was sent to your current email. After you click it, we will send a verification email to ${requestedEmail}.`;
+}
+
+async function requestEmailChangeIfNeeded({
+  requestedEmail,
+  currentSessionEmail,
+}: {
+  requestedEmail: string;
+  currentSessionEmail: string;
+}): Promise<boolean> {
+  if (!requestedEmail || !currentSessionEmail) return false;
+  if (requestedEmail === currentSessionEmail) return false;
+
+  const changeEmailResult = await authClient.changeEmail({
+    newEmail: requestedEmail,
+    callbackURL: window.location.origin,
+  });
+
+  if (!changeEmailResult) {
+    throw new Error("Profile updated, but email change could not be started. Please try again.");
+  }
+  if (changeEmailResult.error) {
+    throw new Error(getBetterAuthErrorMessage(changeEmailResult.error.code));
+  }
+  return true;
 }
 
 export function useGeneralProfileSubmit() {
@@ -56,18 +77,15 @@ export function useGeneralProfileSubmit() {
 
   const mutation = useMutation({
     mutationFn: async (data: GeneralProfileSchemaType) => {
-      let imageKey: string | null = null;
+      const requestedEmail = getRequestedEmail(data);
+      const currentSessionEmail = getCurrentSessionEmail(session);
+      let imageKey = getImageKeyFromValue(data.image);
 
       if (data.image?.startsWith("blob:")) {
         // New image selected - upload it
         imageKey = await uploadImage(data.image);
-      } else if (data.image) {
-        // Existing image URL - extract key from URL or use as-is
-        const parts = data.image.split("/");
-        imageKey = parts[parts.length - 1] ?? data.image;
       }
 
-      // If data.image is null/undefined, imageKey stays null (clear image)
       const updateResult = await authClient.updateUser({
         name: data.firstName,
         lastName: data.lastName,
@@ -85,7 +103,10 @@ export function useGeneralProfileSubmit() {
       let emailChangeErrorMessage: string | null = null;
       let didRequestEmailChange = false;
       try {
-        didRequestEmailChange = await emailSubmit(data, session);
+        didRequestEmailChange = await requestEmailChangeIfNeeded({
+          requestedEmail,
+          currentSessionEmail,
+        });
       } catch (error) {
         emailChangeErrorMessage =
           error instanceof Error
@@ -99,11 +120,18 @@ export function useGeneralProfileSubmit() {
         );
         return { didRequestEmailChange: false };
       }
+
+      toast.success(
+        buildProfileUpdateSuccessMessage(
+          didRequestEmailChange ? requestedEmail : undefined,
+        ),
+      );
+
       return {
         didRequestEmailChange,
-        currentSessionEmail: session?.user?.email?.trim(),
-        requestedEmail: data.email.trim(),
-      };
+        currentSessionEmail,
+        requestedEmail,
+      } satisfies SubmitResult;
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -132,7 +160,7 @@ export function useGeneralProfileSubmit() {
     ) => {
       const result = await mutation.mutateAsync(data);
       if (!result?.didRequestEmailChange) return;
-      setPendingEmailChange(result.requestedEmail ?? data.email.trim());
+      setPendingEmailChange(result.requestedEmail ?? getRequestedEmail(data));
 
       const currentSessionEmail = result.currentSessionEmail;
       if (!currentSessionEmail) return;

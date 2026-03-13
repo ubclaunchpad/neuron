@@ -29,7 +29,7 @@ async function emailSubmit(
     }
 
     toast.success(
-      `A request to change your email address has been sent to the ${nextEmail}. Please check your inbox to confirm the change.`,
+      `A request to change your email address has been sent to ${nextEmail}. Please check your inbox to confirm the change.`,
     );
   }
 }
@@ -65,11 +65,24 @@ export function useGeneralProfileSubmit() {
       if (updateResult.error) {
         throw new Error(getBetterAuthErrorMessage(updateResult.error.code));
       }
-      toast.success("Your profile has been successfully updated!");
-
-      await emailSubmit(data, session);
-
+      
+      let emailChangeErrorMessage: string | null = null;
+      try {
+        await emailSubmit(data, session);
+      } catch (error) {
+        emailChangeErrorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to start email change request.";
+      }
       await refetchSession();
+      if (emailChangeErrorMessage) {
+        toast.warning(
+          `Everything except your email was updated. ${emailChangeErrorMessage}`,
+        );
+        return;
+      }
+      toast.success("Your profile has been successfully updated!");
     },
     onError: (error: Error) => {
       toast.error(error.message);

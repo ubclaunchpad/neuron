@@ -4,9 +4,35 @@ import { authClient } from "@/lib/auth/client";
 import { getBetterAuthErrorMessage } from "@/lib/auth/extensions/get-better-auth-error";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import type { GeneralProfileSchemaType } from "../schema";
+import type { Session } from "@/lib/auth";
+
+async function emailSubmit(data: GeneralProfileSchemaType, session: Session) {
+  const nextEmail = data.email.trim();
+  const currentEmail = session?.user?.email?.trim();
+  if (nextEmail && currentEmail && nextEmail !== currentEmail) {
+    const changeEmailResult = await authClient.changeEmail({
+      newEmail: nextEmail,
+      callbackURL: window.location.origin,
+    });
+
+    if (!changeEmailResult) {
+      throw new Error(
+        "Profile updated, but email change could not be started. Please try again.",
+      );
+    }
+
+    if (changeEmailResult.error) {
+      throw new Error(getBetterAuthErrorMessage(changeEmailResult.error.code));
+    }
+
+    toast.success(
+      `A request to change your email address has been sent to the ${nextEmail}. Please check your inbox to confirm the change.`,
+    );
+  }
+}
 
 export function useGeneralProfileSubmit() {
-  const { refetch: refetchSession } = authClient.useSession();
+  const { data: session, refetch: refetchSession } = authClient.useSession();
   const { uploadImage } = useImageUpload();
 
   const mutation = useMutation({
@@ -23,15 +49,21 @@ export function useGeneralProfileSubmit() {
       }
 
       // If data.image is null/undefined, imageKey stays null (clear image)
-      const { error } = await authClient.updateUser({
+      const updateResult = await authClient.updateUser({
         name: data.firstName,
         lastName: data.lastName,
         image: imageKey,
       });
 
-      if (error) {
-        throw new Error(getBetterAuthErrorMessage(error.code));
+      if (!updateResult) {
+        throw new Error("Failed to update profile. Please try again.");
       }
+
+      if (updateResult.error) {
+        throw new Error(getBetterAuthErrorMessage(updateResult.error.code));
+      }
+
+      await emailSubmit(data, session);
 
       await refetchSession();
     },

@@ -16,6 +16,7 @@ import {
 } from "@/server/db/schema/auth";
 import { user, volunteer } from "@/server/db/schema/user";
 import { renderForgotPassword } from "@/server/emails/templates/forgot-password";
+import { renderRequestChangeEmail } from "@/server/emails/templates/request-change-email";
 import { renderVerifyEmail } from "@/server/emails/templates/verify-email";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -37,6 +38,25 @@ export const auth = betterAuth({
       },
       lastName: { type: "string" },
     },
+    changeEmail: {
+      enabled: true,
+    },
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url, token }) => {
+        const scope = createRequestScope();
+        const { emailService } = scope.cradle;
+        const { html, text } = await renderRequestChangeEmail({
+          url,
+          userName: user.name,
+        });
+        await emailService.send(
+          user.email,
+          "Confirm your email address change",
+          text,
+          html,
+        );
+      }
+    }
   },
   database: drizzleAdapter(db, {
     provider: "pg",

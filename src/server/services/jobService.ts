@@ -357,7 +357,7 @@ export class JobService implements IJobService {
           ...definition.retryOpts,
         });
       }
-
+      
       const worker = async (job: any) => {
         const jobItems = Array.isArray(job) ? job : [job];
 

@@ -42,9 +42,11 @@ export const auth = betterAuth({
       enabled: true,
       sendChangeEmailConfirmation: async ({
         user,
+        newEmail,
         url,
       }: {
         user: { name: string; email: string };
+        newEmail: string;
         url: string;
       }) => {
         const scope = createRequestScope();
@@ -52,10 +54,11 @@ export const auth = betterAuth({
         const { html, text } = await renderRequestChangeEmail({
           url,
           userName: user.name,
+          newEmail: newEmail,
         });
         await emailService.send(
           user.email,
-          "Confirm your email address change",
+          `Confirm your email address change to ${newEmail}`,
           text,
           html,
         );

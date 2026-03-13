@@ -5,11 +5,13 @@ import { renderEmail } from "../render";
 interface RequestChangeEmailProps {
   url: string;
   userName?: string;
+  newEmail: string;
 }
 
 export function RequestChangeEmail({
   url,
   userName,
+  newEmail,
 }: RequestChangeEmailProps) {
   return (
     <EmailLayout preview="Update your email address">
@@ -23,9 +25,9 @@ export function RequestChangeEmail({
         Hi{userName ? ` ${userName}` : ""},
       </Text>
       <Text className="text-base leading-relaxed text-muted-foreground">
-        We received a request to change the email address for your account to this inbox. Use the
+        We received a request to update the email address for your account to {newEmail}. Use the
         button below to confirm the change. This link is only valid for a
-        limited time.
+        limited time. A new email address will be sent to {newEmail} to verify that email address.
       </Text>
       <Section className="my-6 text-center">
         <Button

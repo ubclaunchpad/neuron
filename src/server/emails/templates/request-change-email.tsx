@@ -25,9 +25,14 @@ export function RequestChangeEmail({
         Hi{userName ? ` ${userName}` : ""},
       </Text>
       <Text className="text-base leading-relaxed text-muted-foreground">
-        We received a request to update the email address for your account to {newEmail}. Use the
-        button below to confirm the change. This link is only valid for a
-        limited time. A new email address will be sent to {newEmail} to verify that email address.
+        We received a request to update the email address for your account to{" "}
+        {newEmail}. Use the button below to confirm the change. This link is
+        only valid for a limited time.
+      </Text>
+      <Text className="text-base leading-relaxed text-muted-foreground">
+        After you click this confirmation link, we will send a verification
+        email to {newEmail}. You must verify that inbox before the change is
+        completed.
       </Text>
       <Section className="my-6 text-center">
         <Button

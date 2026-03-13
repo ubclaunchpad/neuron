@@ -11,9 +11,11 @@ import { Button } from "@/components/primitives/button";
 export function GeneralProfileSection({
   fallbackName,
   isPending,
+  pendingEmailChange,
 }: {
   fallbackName: string;
   isPending: boolean;
+  pendingEmailChange?: string | null;
 }) {
   const {
     form: { control, watch, setValue },
@@ -55,6 +57,11 @@ export function GeneralProfileSection({
           control={control}
           label="Email"
           type="email"
+          description={
+            pendingEmailChange
+              ? `Pending change requested to ${pendingEmailChange}`
+              : undefined
+          }
         />
 
         <div className="flex justify-end">

@@ -55,7 +55,6 @@ export function GeneralProfileSection({
           control={control}
           label="Email"
           type="email"
-          disabled
         />
 
         <div className="flex justify-end">

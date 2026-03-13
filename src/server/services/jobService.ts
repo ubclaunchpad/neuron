@@ -36,6 +36,7 @@ type SharedBossState = {
   boss?: PgBoss;
   isStarted: boolean;
   isWorkersRegistered: boolean;
+  isErrorListenerAttached: boolean;
   registeredWorkerQueues: Set<string>;
   pendingWorkerRegistrations: Map<string, Promise<void>>;
   recurringQueuesByJob: Map<KnownJobName, Set<string>>;
@@ -50,6 +51,7 @@ const globalWithBoss = globalThis as GlobalWithBoss;
 const sharedBossState: SharedBossState = globalWithBoss.__neuronPgBossState ?? {
   isStarted: false,
   isWorkersRegistered: false,
+  isErrorListenerAttached: false,
   registeredWorkerQueues: new Set<string>(),
   pendingWorkerRegistrations: new Map<string, Promise<void>>(),
   recurringQueuesByJob: new Map<KnownJobName, Set<string>>(),
@@ -59,6 +61,7 @@ globalWithBoss.__neuronPgBossState = sharedBossState;
 sharedBossState.registeredWorkerQueues ??= new Set<string>();
 sharedBossState.pendingWorkerRegistrations ??= new Map<string, Promise<void>>();
 sharedBossState.recurringQueuesByJob ??= new Map<KnownJobName, Set<string>>();
+sharedBossState.isErrorListenerAttached ??= false;
 
 export class JobService implements IJobService {
   private readonly container: NeuronContainer;
@@ -97,6 +100,7 @@ export class JobService implements IJobService {
       sharedBossState.boss = undefined;
       sharedBossState.isStarted = false;
       sharedBossState.isWorkersRegistered = false;
+      sharedBossState.isErrorListenerAttached = false;
       sharedBossState.registeredWorkerQueues.clear();
       sharedBossState.pendingWorkerRegistrations.clear();
       sharedBossState.recurringQueuesByJob.clear();
@@ -243,6 +247,7 @@ export class JobService implements IJobService {
     // to the stopped instance created in the constructor.
     const boss = this.getOrCreateBoss();
     this.boss = boss;
+    this.attachBossErrorListener();
     await boss.start();
     sharedBossState.isStarted = true;
 
@@ -256,6 +261,7 @@ export class JobService implements IJobService {
     } catch (error) {
       sharedBossState.isStarted = false;
       sharedBossState.isWorkersRegistered = false;
+      sharedBossState.isErrorListenerAttached = false;
       sharedBossState.registeredWorkerQueues.clear();
       sharedBossState.pendingWorkerRegistrations.clear();
       sharedBossState.recurringQueuesByJob.clear();
@@ -348,6 +354,8 @@ export class JobService implements IJobService {
     }
 
     const registrationPromise = (async () => {
+      await this.ensureQueueExists(queueName);
+
       const worker = async (job: any) => {
         const jobItems = Array.isArray(job) ? job : [job];
 
@@ -401,6 +409,24 @@ export class JobService implements IJobService {
     } finally {
       sharedBossState.pendingWorkerRegistrations.delete(queueName);
     }
+  }
+
+  private async ensureQueueExists(queueName: string): Promise<void> {
+    try {
+      await this.boss.createQueue(queueName);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.toLowerCase().includes("already exists")) return;
+      throw error;
+    }
+  }
+
+  private attachBossErrorListener(): void {
+    if (sharedBossState.isErrorListenerAttached) return;
+    this.boss.on("error", (error) => {
+      console.error("[pg-boss] worker error", error);
+    });
+    sharedBossState.isErrorListenerAttached = true;
   }
 
   private getOrCreateBoss(): PgBoss {

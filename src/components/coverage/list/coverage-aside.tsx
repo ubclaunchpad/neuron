@@ -21,10 +21,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCoveragePage } from "./coverage-page-context";
 import { FillCoverageButton } from "@/components/coverage/primitives/fill-coverage-button";
 import { WithdrawCoverageButton } from "@/components/coverage/primitives/withdraw-coverage-button";
-import { useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { UserList } from "@/components/users/user-list";
 import { Button } from "@/components/ui/button";
+import { clientApi } from "@/trpc/client";
+import { SkeletonAside } from "@/components/ui/skeleton";
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -39,25 +40,39 @@ const timeFormatter = new Intl.DateTimeFormat("en-US", {
 });
 
 export function CoverageAside() {
-  const { selectedItem, closeAside, goToNext, goToPrev } = useCoveragePage();
+  const { selectedCoverageId, goToNext, goToPrev, hasNext, hasPrev } =
+    useCoveragePage();
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!selectedItem) closeAside();
-  }, [selectedItem, closeAside]);
+  const { data: coverateRequestData, isLoading: isLoadingCoverageRequstData } =
+    clientApi.coverage.byId.useQuery(
+      { coverageRequestId: selectedCoverageId ?? "" },
+      {
+        enabled: !!selectedCoverageId,
+        meta: { suppressToast: true },
+      },
+    );
 
-  if (!selectedItem) return null;
+  if (isLoadingCoverageRequstData || !coverateRequestData) {
+    return <SkeletonAside />;
+  }
 
-  const shiftDate: string = dateFormatter.format(selectedItem.shift.startAt);
-  const shiftStartTime: string = timeFormatter.format(
-    selectedItem.shift.startAt,
+  const shiftDate: string = dateFormatter.format(
+    coverateRequestData.shift.startAt,
   );
-  const shiftEndTime: string = timeFormatter.format(selectedItem.shift.endAt);
-  const requestedOn: string = dateFormatter.format(selectedItem.requestedAt);
+  const shiftStartTime: string = timeFormatter.format(
+    coverateRequestData.shift.startAt,
+  );
+  const shiftEndTime: string = timeFormatter.format(
+    coverateRequestData.shift.endAt,
+  );
+  const requestedOn: string = dateFormatter.format(
+    coverateRequestData.requestedAt,
+  );
 
-  const instructors = selectedItem.shift.instructors;
-  const requestingVolunteer = selectedItem.requestingVolunteer;
-  const volunteers = selectedItem.shift.volunteers;
+  const instructors = coverateRequestData.shift.instructors;
+  const requestingVolunteer = coverateRequestData.requestingVolunteer;
+  const volunteers = coverateRequestData.shift.volunteers;
 
   return (
     <AsideContainer>
@@ -66,7 +81,7 @@ export function CoverageAside() {
         <AsideDescription>
           {shiftStartTime} - {shiftEndTime}
         </AsideDescription>
-        <AsideTitle>{selectedItem.shift.class.name}</AsideTitle>
+        <AsideTitle>{coverateRequestData.shift.class.name}</AsideTitle>
       </AsideHeader>
 
       <Separator />
@@ -138,68 +153,72 @@ export function CoverageAside() {
             <WithPermission
               permissions={{ permission: { shifts: ["view-all"] } }}
             >
-              {"category" in selectedItem && (
+              {"category" in coverateRequestData && (
                 <AsideField inline>
                   <AsideFieldLabel>Reason for Request</AsideFieldLabel>
                   <AsideFieldContent className="w-auto font-semibold">
-                    {CoverageRequestCategory.getName(selectedItem.category)}
+                    {CoverageRequestCategory.getName(
+                      coverateRequestData.category,
+                    )}
                   </AsideFieldContent>
                 </AsideField>
               )}
 
-              {"details" in selectedItem && selectedItem.details !== "" && (
-                <AsideField inline>
-                  <AsideFieldLabel>Reason Details</AsideFieldLabel>
-                  <AsideFieldContent className="w-auto">
-                    {selectedItem.details}
-                  </AsideFieldContent>
-                </AsideField>
-              )}
+              {"details" in coverateRequestData &&
+                coverateRequestData.details !== "" && (
+                  <AsideField inline>
+                    <AsideFieldLabel>Reason Details</AsideFieldLabel>
+                    <AsideFieldContent className="w-auto">
+                      {coverateRequestData.details}
+                    </AsideFieldContent>
+                  </AsideField>
+                )}
 
-              {"comments" in selectedItem && selectedItem.comments && (
-                <AsideField inline>
-                  <AsideFieldLabel>Additional Comments</AsideFieldLabel>
-                  <AsideFieldContent className="w-auto">
-                    {selectedItem.comments}
-                  </AsideFieldContent>
-                </AsideField>
-              )}
+              {"comments" in coverateRequestData &&
+                coverateRequestData.comments && (
+                  <AsideField inline>
+                    <AsideFieldLabel>Additional Comments</AsideFieldLabel>
+                    <AsideFieldContent className="w-auto">
+                      {coverateRequestData.comments}
+                    </AsideFieldContent>
+                  </AsideField>
+                )}
             </WithPermission>
           </AsideSectionContent>
 
           <Separator />
 
           <AsideSectionContent>
-            {selectedItem.status === CoverageStatus.open && (
+            {coverateRequestData.status === CoverageStatus.open && (
               <>
-                {user?.id !== selectedItem.requestingVolunteer.id && (
+                {user?.id !== coverateRequestData.requestingVolunteer.id && (
                   <WithPermission
                     permissions={{ permission: { coverage: ["fill"] } }}
                   >
-                    <FillCoverageButton item={selectedItem} />
+                    <FillCoverageButton item={coverateRequestData} />
                   </WithPermission>
                 )}
 
-                {user?.id === selectedItem.requestingVolunteer.id && (
+                {user?.id === coverateRequestData.requestingVolunteer.id && (
                   <WithPermission
                     permissions={{ permission: { coverage: ["request"] } }}
                   >
-                    <WithdrawCoverageButton item={selectedItem} />
+                    <WithdrawCoverageButton item={coverateRequestData} />
                   </WithPermission>
                 )}
               </>
             )}
 
-            {selectedItem.status !== CoverageStatus.open && (
+            {coverateRequestData.status !== CoverageStatus.open && (
               <Badge
                 variant="colored"
                 color={
-                  selectedItem.status === CoverageStatus.resolved
+                  coverateRequestData.status === CoverageStatus.resolved
                     ? "success"
                     : "default"
                 }
               >
-                {selectedItem.status === CoverageStatus.resolved
+                {coverateRequestData.status === CoverageStatus.resolved
                   ? "Fulfilled"
                   : "Withdrawn"}
               </Badge>
@@ -208,10 +227,18 @@ export function CoverageAside() {
 
           <AsideFooter>
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => goToPrev()}>
+              <Button
+                variant="ghost"
+                disabled={!hasPrev}
+                onClick={() => goToPrev()}
+              >
                 <ChevronLeft></ChevronLeft>
               </Button>
-              <Button variant="ghost" onClick={() => goToNext()}>
+              <Button
+                variant="ghost"
+                disabled={!hasNext}
+                onClick={() => goToNext()}
+              >
                 <ChevronRight></ChevronRight>
               </Button>
             </div>

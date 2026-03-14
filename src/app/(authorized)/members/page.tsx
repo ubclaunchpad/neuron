@@ -73,26 +73,26 @@ export default function MembersPage() {
                 </Badge>
               </TabsTrigger>
             </TabsList>
-            <TabsContent 
-              forceMount 
-              asChild 
-              value={MembersTabs.volunteers} 
+            <TabsContent
+              forceMount
+              asChild
+              value={MembersTabs.volunteers}
               className={cn(activeTab !== MembersTabs.volunteers && "hidden")}
             >
               <ViewVolunteersView />
             </TabsContent>
-            <TabsContent 
-              forceMount 
-              asChild 
-              value={MembersTabs.users} 
+            <TabsContent
+              forceMount
+              asChild
+              value={MembersTabs.users}
               className={cn(activeTab !== MembersTabs.users && "hidden")}
             >
               <ViewUsersView />
             </TabsContent>
-            <TabsContent 
-              forceMount 
-              asChild 
-              value={MembersTabs.verification} 
+            <TabsContent
+              forceMount
+              asChild
+              value={MembersTabs.verification}
               className={cn(activeTab !== MembersTabs.verification && "hidden")}
             >
               <VerifyUsersView />

@@ -13,7 +13,7 @@ export type Holiday = z.infer<typeof Holiday>;
 const UpdatedHoliday = z.object({
   id: z.uuid(),
   startsOn: z.iso.date().optional(),
-  endsOn: z.iso.date().optional()
+  endsOn: z.iso.date().optional(),
 });
 export type UpdatedHoliday = z.infer<typeof UpdatedHoliday>;
 

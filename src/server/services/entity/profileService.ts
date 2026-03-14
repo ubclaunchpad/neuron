@@ -4,8 +4,6 @@
 // import { eq } from "drizzle-orm";
 // import * as Minio from "minio";
 
-
-
 // export class ProfileService {
 //   private readonly db: Drizzle;
 //   private readonly minio: Minio.Client;
@@ -14,10 +12,9 @@
 //   private readonly endpoint: string = process.env.MINIO_ENDPOINT ?? "http://localhost:9000";
 //   private readonly bucket: string = process.env.MINIO_BUCKET ?? "neuron";
 
-
 //   constructor(db: Drizzle) {
 //     this.db = db;
-//     this.minio = new Minio.Client({ 
+//     this.minio = new Minio.Client({
 //       // TODO: CHANGE on deploy
 //       endPoint: "localhost",
 //       port: 9000,
@@ -46,6 +43,5 @@
 //     const accessUrl = `${this.endpoint}/${this.bucket}/${imageUrl}`;
 //     await this.db.update(user).set({ image: accessUrl }).where(eq(user.id, userId));
 //   }
-
 
 // }

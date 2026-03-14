@@ -11,8 +11,10 @@ import { FormFieldLayout } from "./FormLayout";
 import type { VariantProps } from "class-variance-authority";
 import type { fieldVariants } from "../ui/field";
 
-export interface FormInputProps
-  extends Omit<React.ComponentProps<typeof Input>, "value" | "onChange"> {
+export interface FormInputProps extends Omit<
+  React.ComponentProps<typeof Input>,
+  "value" | "onChange"
+> {
   value: string;
   onChange: (value: string) => void;
 }

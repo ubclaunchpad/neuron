@@ -17,30 +17,35 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { NotificationsSettingsContent } from "./pages/notifications-settings-content";
 import { ProfileSettingsContent } from "./pages/profile/profile-settings-content";
 import { SecuritySettingsContent } from "./pages/security-settings-content";
+import type { Permissions } from "@/lib/auth/extensions/permissions";
+import { WithPermission } from "../utils/with-permission";
 
 const settingsItems = [
   {
-    id: "profile" as const,
+    id: "profile",
     label: "Profile",
     description: "Edit how your profile appears across Neuron",
     icon: User,
     content: ProfileSettingsContent,
   },
   {
-    id: "availability" as const,
+    id: "availability",
     label: "Availability",
     description: "Configure times when you are available for class placement",
     icon: Clock,
+    permissions: {
+      permission: { "volunteer-profile": ["update", "view"] },
+    } satisfies Permissions,
     content: AvailabilitySettingsContent,
   },
   {
-    id: "notifications" as const,
+    id: "notifications",
     label: "Notifications",
     icon: Bell,
     content: NotificationsSettingsContent,
   },
   {
-    id: "security" as const,
+    id: "security",
     label: "Security",
     icon: LockKeyhole,
     content: SecuritySettingsContent,
@@ -90,41 +95,43 @@ export const SettingsDialog = NiceModal.create(() => {
                 </Button>
               </div>
               {settingsItems.map((item) => (
-                <Button
-                  key={item.id}
-                  asChild
-                  variant="ghost"
-                  size={isMobile ? "sm" : "default"}
-                >
-                  <TabsTrigger
-                    className={cn(
-                      "md:w-full justify-start ring-0! shadow-none!",
-                      "text-sidebar-foreground data-[state=active]:bg-sidebar-accent hover:bg-sidebar-accent!",
-                    )}
-                    value={item.id}
+                <WithPermission key={item.id} permissions={item.permissions}>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size={isMobile ? "sm" : "default"}
                   >
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </TabsTrigger>
-                </Button>
+                    <TabsTrigger
+                      className={cn(
+                        "md:w-full justify-start ring-0! shadow-none!",
+                        "text-sidebar-foreground data-[state=active]:bg-sidebar-accent hover:bg-sidebar-accent!",
+                      )}
+                      value={item.id}
+                    >
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </TabsTrigger>
+                  </Button>
+                </WithPermission>
               ))}
             </TabsList>
           </div>
 
           {settingsItems.map((item) => (
-            <TabsContent
-              className="m-0 p-4 pt-2 flex flex-col gap-4 overflow-auto hide-scrollbar"
-              key={item.id}
-              value={item.id}
-            >
-              <DialogHeader className="text-left">
-                <DialogTitle>{item.label}</DialogTitle>
-                {item.description && (
-                  <DialogDescription>{item.description}</DialogDescription>
-                )}
-              </DialogHeader>
-              <item.content />
-            </TabsContent>
+            <WithPermission key={item.id} permissions={item.permissions}>
+              <TabsContent
+                className="m-0 p-4 pt-2 flex flex-col gap-4 overflow-auto hide-scrollbar"
+                value={item.id}
+              >
+                <DialogHeader className="text-left">
+                  <DialogTitle>{item.label}</DialogTitle>
+                  {item.description && (
+                    <DialogDescription>{item.description}</DialogDescription>
+                  )}
+                </DialogHeader>
+                <item.content />
+              </TabsContent>
+            </WithPermission>
           ))}
         </Tabs>
       </DialogContent>

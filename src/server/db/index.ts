@@ -1,4 +1,3 @@
-import "server-only";
 import { asFunction } from "awilix";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { drizzle } from "drizzle-orm/postgres-js";

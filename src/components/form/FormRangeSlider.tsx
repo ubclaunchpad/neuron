@@ -9,11 +9,10 @@ import type {
 import { FormFieldController } from "./FormField";
 import { FormFieldLayout } from "./FormLayout";
 
-export interface FormRangeSliderProps
-  extends Omit<
-    React.ComponentProps<typeof Slider>,
-    "value" | "onValueChange" | "onChange"
-  > {
+export interface FormRangeSliderProps extends Omit<
+  React.ComponentProps<typeof Slider>,
+  "value" | "onValueChange" | "onChange"
+> {
   value: [number, number];
   onChange: (value: [number, number]) => void;
 }

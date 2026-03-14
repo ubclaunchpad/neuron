@@ -5,6 +5,7 @@ import type {
   ScheduleEditSchemaInput,
   ScheduleRuleEditSchemaType,
 } from "./schedule-form/schema";
+import { LocationType } from "@/models/api/class";
 import type { ClassEditSchemaType } from "./schema";
 
 export function classToFormValues(
@@ -14,11 +15,13 @@ export function classToFormValues(
   return {
     name: c?.name ?? "",
     description: c?.description ?? "",
-    meetingURL: c?.meetingURL ?? "",
+    locationType: c?.locationType ?? LocationType.MeetingLink,
+    location: c?.location ?? "",
     category: c?.category ?? "",
     subcategory: c?.subcategory ?? "",
     image: (config ? buildImageUrl(config, c?.image) : undefined) ?? null,
-    levelRange: [c?.lowerLevel ?? 1, c?.upperLevel ?? 4],
+    levelRange:
+      c?.lowerLevel && c?.upperLevel ? [c.lowerLevel, c.upperLevel] : null,
     schedules:
       c?.schedules.map((s) => ({
         id: s.id,

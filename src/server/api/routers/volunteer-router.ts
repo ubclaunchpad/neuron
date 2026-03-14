@@ -3,6 +3,7 @@ import { UserIdInput } from "@/models/api/user";
 import {
   UpdateVolunteerAvailabilityInput,
   UpdateVolunteerProfileInput,
+  VolunteerExportInput,
 } from "@/models/api/volunteer";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
@@ -67,5 +68,12 @@ export const volunteerRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       await ctx.volunteerService.updateVolunteerAvailability(input);
       return { ok: true };
+    }),
+  exportAvailability: authorizedProcedure({ permission: { users: ["view"] } })
+    .input(VolunteerExportInput.optional())
+    .query(async ({ input, ctx }) => {
+      return await ctx.volunteerService.getVolunteersForExport(
+        input?.search,
+      );
     }),
 });

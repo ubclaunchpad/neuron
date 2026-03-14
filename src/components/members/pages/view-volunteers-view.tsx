@@ -13,9 +13,10 @@ import { useImageUrl } from "@/lib/build-image-url";
 import { Role, UserStatus } from "@/models/interfaces";
 import type { ListUser, User } from "@/models/user";
 import { useAuth } from "@/providers/client-auth-provider";
-import { clientApi } from "@/trpc/client";
 import NiceModal from "@ebay/nice-modal-react";
 import { Ban, MoreHorizontalIcon, Power } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { ListItem } from "../list";
 import { StatusBadge } from "../status-badge";
 import { UserProfileDialog } from "../user-profile-dialog";
@@ -25,8 +26,43 @@ import {
   UsersList,
   UsersViewShell,
 } from "./users-view-shell";
+import { formatAvailabilityByDay } from "@/utils/availabilityUtils";
+import { clientApi, type RouterOutputs } from "@/trpc/client";
 
 export function ViewVolunteersView({ className }: { className?: string }) {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportQuery = clientApi.volunteer.exportAvailability.useQuery(
+    { search: undefined },
+    {
+      enabled: false,
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const result = await exportQuery.refetch();
+      const volunteers = result.data ?? [];
+
+      if (volunteers.length === 0) {
+        toast.info("No volunteer data to export.");
+        return;
+      }
+
+      const csv = buildVolunteerAvailabilityCsv(volunteers);
+      const date = new Date().toISOString().split("T")[0];
+      triggerCsvDownload(csv, `volunteers-availability-${date}.csv`);
+      toast.success("Volunteer availability exported to CSV.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to export CSV.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <UsersViewShell
       className={className}
@@ -35,6 +71,9 @@ export function ViewVolunteersView({ className }: { className?: string }) {
     >
       <ShellHeader>
         <ShellSearchInput />
+        <Button onClick={() => void handleExport()} disabled={isExporting}>
+          {isExporting ? "Exporting..." : "Export CSV"}
+        </Button>
       </ShellHeader>
 
       <UsersList>
@@ -42,6 +81,67 @@ export function ViewVolunteersView({ className }: { className?: string }) {
       </UsersList>
     </UsersViewShell>
   );
+}
+
+type ExportVolunteer = RouterOutputs["volunteer"]["exportAvailability"][number];
+
+const CSV_HEADERS = [
+  "First Name",
+  "Last Name",
+  "Preferred Name",
+  "Email",
+  "Phone",
+  "City",
+  "Province",
+  "Status",
+  "Preferred Time Commitment (hrs)",
+  "Availability",
+] as const;
+
+function buildVolunteerAvailabilityCsv(volunteers: ExportVolunteer[]): string {
+  const rows = volunteers.map((volunteer) => [
+    volunteer.name ?? "",
+    volunteer.lastName ?? "",
+    volunteer.preferredName ?? "",
+    volunteer.email ?? "",
+    volunteer.phoneNumber ?? "",
+    volunteer.city ?? "",
+    volunteer.province ?? "",
+    volunteer.status ?? "",
+    volunteer.preferredTimeCommitmentHours ?? "",
+    formatAvailabilityByDay(volunteer.availability),
+  ]);
+
+  return [CSV_HEADERS, ...rows]
+    .map((row) => row.map(escapeCsv).join(","))
+    .join("\n");
+}
+
+function escapeCsv(value: string | number | boolean): string;
+function escapeCsv(
+  value: string | number | boolean | null | undefined,
+): string;
+function escapeCsv(
+  value: string | number | boolean | null | undefined,
+): string {
+  if (value === null || value === undefined) return "";
+  const str = String(value);
+  if (/[",\n]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+function triggerCsvDownload(csv: string, filename: string) {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 export function ViewVolunteerListItem({

@@ -97,3 +97,67 @@ export function toggleSlotAvailability(
     !currentlyAvailable,
   );
 }
+
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+
+function formatTime(slotIndex: number): string {
+  const minutes = slotIndex * 30;
+  const hours = Math.floor(minutes / 60)
+    .toString()
+    .padStart(2, "0");
+  const mins = (minutes % 60).toString().padStart(2, "0");
+  return `${hours}:${mins}`;
+}
+
+/**
+ * Format a bitstring into human-friendly daily ranges.
+ * Example: "Mon 09:00-12:00; 14:00-16:30 | Tue None | Wed 18:00-20:00"
+ */
+export function formatAvailabilityByDay(
+  bitstring: string | undefined,
+  dayLabels: readonly string[] = DAY_LABELS,
+): string {
+  if (!bitstring || !isValidAvailabilityBitstring(bitstring)) {
+    return "Unavailable";
+  }
+
+  const dayStrings: string[] = [];
+  let hasAnyAvailability = false;
+
+  for (let day = 0; day < DAYS_PER_WEEK; day++) {
+    const start = day * SLOTS_PER_DAY;
+    const end = start + SLOTS_PER_DAY;
+    const dayBits = bitstring.slice(start, end);
+
+    const ranges: string[] = [];
+    let rangeStart: number | null = null;
+
+    for (let i = 0; i <= SLOTS_PER_DAY; i++) {
+      const bit = dayBits[i] ?? "0";
+      const isAvailable = bit === "1";
+
+      if (isAvailable && rangeStart === null) {
+        rangeStart = i;
+      }
+
+      const isEndOfRange = (!isAvailable || i === SLOTS_PER_DAY) && rangeStart !== null;
+      if (isEndOfRange) {
+        ranges.push(`${formatTime(rangeStart)}-${formatTime(i)}`);
+        rangeStart = null;
+      }
+    }
+
+    if (ranges.length > 0) {
+      hasAnyAvailability = true;
+      dayStrings.push(`${dayLabels[day] ?? `Day ${day + 1}` } ${ranges.join("; ")}`);
+    } else {
+      dayStrings.push(`${dayLabels[day] ?? `Day ${day + 1}` } None`);
+    }
+  }
+
+  if (!hasAnyAvailability) {
+    return "Unavailable";
+  }
+
+  return dayStrings.join(" | ");
+}

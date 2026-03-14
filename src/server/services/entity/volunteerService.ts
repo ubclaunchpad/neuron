@@ -39,6 +39,7 @@ export interface IVolunteerService {
   updateVolunteerAvailability(
     input: z.infer<typeof UpdateVolunteerAvailabilityInput>,
   ): Promise<void>;
+  getVolunteersForExport(search?: string): Promise<Volunteer[]>;
 }
 
 export class VolunteerService implements IVolunteerService {
@@ -209,5 +210,49 @@ export class VolunteerService implements IVolunteerService {
         NeuronErrorCodes.NOT_FOUND,
       );
     }
+  }
+
+  async getVolunteersForExport(search?: string): Promise<Volunteer[]> {
+    const queryInput = search?.trim();
+    const hasQuery = !!queryInput;
+
+    const similarity = hasQuery
+      ? buildSimilarityExpression(
+          [
+            volunteerUserView.name,
+            volunteerUserView.lastName,
+            volunteerUserView.email,
+          ],
+          queryInput,
+        )
+      : undefined;
+
+    let builder = this.db
+      .select(getViewColumns(volunteerUserView))
+      .from(volunteerUserView)
+      .$dynamic();
+
+    if (hasQuery) {
+      builder = builder
+        .where(
+          buildSearchCondition(
+            [
+              volunteerUserView.name,
+              volunteerUserView.lastName,
+              volunteerUserView.email,
+            ],
+            queryInput,
+          ),
+        )
+        .orderBy(desc(similarity!));
+    } else {
+      builder = builder.orderBy(
+        volunteerUserView.lastName,
+        volunteerUserView.name,
+      );
+    }
+
+    const rows = await builder.execute();
+    return rows.map((d) => buildVolunteer(d));
   }
 }

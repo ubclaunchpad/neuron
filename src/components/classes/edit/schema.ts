@@ -13,7 +13,7 @@ export const ClassEditSchema = z
   .object({
     name: z.string().nonempty("Please fill out this field."),
     description: asNullishField(z.string()),
-    locationType: LocationTypeEnum,
+    locationType: LocationTypeEnum.nullish(),
     location: asNullishField(z.string()),
     category: z.string().nonempty("Please fill out this field."),
     subcategory: asNullishField(z.string()),

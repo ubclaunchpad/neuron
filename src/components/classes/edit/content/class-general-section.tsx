@@ -149,8 +149,7 @@ export function ClassGeneralSection() {
             {({ value, onChange, ...field }) => (
               <FormFieldLayout
                 label="Location"
-                description="Add a video conferencing link or a physical location"
-                required
+                description="Add a Zoom link (Online) or an address (In-person)"
               >
                 <InputGroup>
                   <InputGroupAddon
@@ -211,7 +210,7 @@ export function ClassGeneralSection() {
                     placeholder={
                       locationType === LocationType.MeetingLink
                         ? "https://zoom.us/j/..."
-                        : "e.g. Building 1, Room 101"
+                        : "e.g. 123 Main St, Room 101"
                     }
                   />
                 </InputGroup>

@@ -17,6 +17,14 @@ import { MockEmailService } from "./mocks/mock-email-service";
 import { MockImageService } from "./mocks/mock-image-service";
 import { MockCurrentSessionService } from "./mocks/mock-current-session-service";
 import { MockJobService } from "./mocks/mock-job-service";
+import {
+  MockNotificationService,
+  MockPreferenceService,
+  MockNotificationEventService,
+} from "./mocks/mock-notification-services";
+import type { INotificationService } from "@/server/services/notificationService";
+import type { IPreferenceService } from "@/server/services/preferenceService";
+import type { INotificationEventService } from "@/server/services/notificationEventService";
 
 // Services that use real implementations with test DB
 import {
@@ -97,6 +105,14 @@ export function createTestContainer(
     volunteerService: asClass<IVolunteerService>(VolunteerService).singleton(),
     termService: asClass<ITermService>(TermService).scoped(),
     coverageService: asClass<ICoverageService>(CoverageService).scoped(),
+
+    // Notification services (mocked)
+    notificationService:
+      asClass<INotificationService>(MockNotificationService).singleton(),
+    preferenceService:
+      asClass<IPreferenceService>(MockPreferenceService).singleton(),
+    notificationEventService:
+      asClass<INotificationEventService>(MockNotificationEventService).singleton(),
   });
 
   return container;

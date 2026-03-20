@@ -48,6 +48,7 @@ import {
   volunteerUserView,
 } from "@/server/db/schema/user";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import type { INotificationEventService } from "@/server/services/notificationEventService";
 import { term } from "@/server/db/schema/course";
 import { and, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 
@@ -104,16 +105,20 @@ function sortCoverageRequestsByStatus(
 export class ShiftService implements IShiftService {
   private readonly db: Drizzle;
   private readonly currentSessionService: ICurrentSessionService;
+  private readonly notificationEventService: INotificationEventService;
 
   constructor({
     db,
     currentSessionService,
+    notificationEventService,
   }: {
     db: Drizzle;
     currentSessionService: ICurrentSessionService;
+    notificationEventService: INotificationEventService;
   }) {
     this.db = db;
     this.currentSessionService = currentSessionService;
+    this.notificationEventService = notificationEventService;
   }
 
   private async getViewer(
@@ -720,8 +725,10 @@ export class ShiftService implements IShiftService {
         id: shift.id,
         startAt: shift.startAt,
         canceled: shift.canceled,
+        courseName: course.name,
       })
       .from(shift)
+      .innerJoin(course, eq(course.id, shift.courseId))
       .where(eq(shift.id, shiftId))
       .limit(1);
 
@@ -743,11 +750,13 @@ export class ShiftService implements IShiftService {
       return;
     }
 
+    const currentUserId = this.currentSessionService.getUserId();
+
     const [updated] = await this.db
       .update(shift)
       .set({
         canceled: true,
-        cancelledByUserId: this.currentSessionService.getUserId() ?? null,
+        cancelledByUserId: currentUserId ?? null,
         canceledAt: new Date(),
         cancelReason,
       })
@@ -760,6 +769,16 @@ export class ShiftService implements IShiftService {
         NeuronErrorCodes.BAD_REQUEST,
       );
     }
+
+    const currentUser = this.currentSessionService.getUser();
+    void this.notificationEventService.notifyShiftCancelled({
+      shiftId,
+      className: shiftRow.courseName,
+      shiftDate: shiftRow.startAt.toLocaleDateString(),
+      cancelReason,
+      cancelledByUserId: currentUserId ?? "system",
+      cancelledByName: currentUser?.name ?? "System",
+    });
   }
 
   async assertValidShift(volunteerId: string, shiftId: string): Promise<void> {

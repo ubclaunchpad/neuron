@@ -46,6 +46,7 @@ import {
 import type { IVolunteerService } from "./volunteerService";
 import type { IShiftService } from "./shiftService";
 import type { ICurrentSessionService } from "../currentSessionService";
+import type { INotificationEventService } from "../notificationEventService";
 
 export interface ICoverageService {
   getCoverageRequestsForShift(shiftId: string): Promise<CoverageRequest[]>;
@@ -81,22 +82,26 @@ export class CoverageService implements ICoverageService {
   private readonly currentSessionService: ICurrentSessionService;
   private readonly volunteerService: IVolunteerService;
   private readonly shiftService: IShiftService;
+  private readonly notificationEventService: INotificationEventService;
 
   constructor({
     db,
     currentSessionService,
     volunteerService,
     shiftService,
+    notificationEventService,
   }: {
     db: Drizzle;
     currentSessionService: ICurrentSessionService;
     volunteerService: IVolunteerService;
     shiftService: IShiftService;
+    notificationEventService: INotificationEventService;
   }) {
     this.db = db;
     this.currentSessionService = currentSessionService;
     this.volunteerService = volunteerService;
     this.shiftService = shiftService;
+    this.notificationEventService = notificationEventService;
   }
 
   async getCoverageRequestsForShift(
@@ -405,7 +410,38 @@ export class CoverageService implements ICoverageService {
       })
       .returning({ id: coverageRequest.id });
 
-    return created!.id;
+    const coverageRequestId = created!.id;
+
+    // Fetch shift + course info for notification
+    const [shiftInfo] = await this.db
+      .select({
+        courseId: shift.courseId,
+        startAt: shift.startAt,
+        endAt: shift.endAt,
+        courseName: course.name,
+      })
+      .from(shift)
+      .innerJoin(course, eq(course.id, shift.courseId))
+      .where(eq(shift.id, requestData.shiftId))
+      .limit(1);
+
+    if (shiftInfo) {
+      const currentUser = this.currentSessionService.getUser();
+      void this.notificationEventService.notifyCoverageRequested({
+        coverageRequestId,
+        shiftId: requestData.shiftId,
+        classId: shiftInfo.courseId,
+        className: shiftInfo.courseName,
+        shiftDate: shiftInfo.startAt.toLocaleDateString(),
+        shiftStartAt: shiftInfo.startAt,
+        shiftEndAt: shiftInfo.endAt,
+        requestingVolunteerUserId,
+        requestingVolunteerName: currentUser?.name ?? "A volunteer",
+        reason: requestData.details,
+      });
+    }
+
+    return coverageRequestId;
   }
 
   async cancelCoverageRequest(

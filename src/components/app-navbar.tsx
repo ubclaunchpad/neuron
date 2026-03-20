@@ -33,6 +33,7 @@ import LogIcon from "@public/assets/icons/nav/log.svg";
 import MemberIcon from "@public/assets/icons/nav/member.svg";
 import ScheduleIcon from "@public/assets/icons/nav/schedule.svg";
 import Logo from "@public/assets/logo.svg";
+import { NotificationInbox } from "./notifications/notification-inbox";
 import { SettingsDropdown } from "./settings/settings-dropdown";
 
 export const navbarItems = [
@@ -151,7 +152,8 @@ export function AppNavbar() {
                 </span>
               </div>
 
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-1">
+                <NotificationInbox />
                 <SidebarMenuButton
                   onClick={toggleSidebar}
                   aria-label="Toggle sidebar"
@@ -168,13 +170,14 @@ export function AppNavbar() {
 
             <div
               className={cn(
-                "absolute inset-0 flex items-center justify-end w-full overflow-hidden",
+                "absolute inset-0 flex items-center justify-end gap-1 w-full overflow-hidden",
                 "transition-opacity duration-200 ease-in-out motion-safe",
                 "opacity-0 group-data-[state=collapsed]:opacity-100",
                 "group-data-[state=collapsed]:pointer-events-auto pointer-events-none",
               )}
               aria-hidden={false}
             >
+              <NotificationInbox />
               <SidebarMenuButton
                 onClick={toggleSidebar}
                 aria-label="Toggle sidebar"

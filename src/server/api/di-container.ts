@@ -35,6 +35,18 @@ import {
   type ICurrentSessionService,
 } from "../services/currentSessionService";
 import { JobService, type IJobService } from "../services/jobService";
+import {
+  PreferenceService,
+  type IPreferenceService,
+} from "../services/preferenceService";
+import {
+  NotificationService,
+  type INotificationService,
+} from "../services/notificationService";
+import {
+  NotificationEventService,
+  type INotificationEventService,
+} from "../services/notificationEventService";
 
 export type NeuronCradle = {
   env: typeof env;
@@ -59,6 +71,9 @@ export type NeuronCradle = {
   shiftService: IShiftService;
   coverageService: ICoverageService;
   jobService: IJobService;
+  preferenceService: IPreferenceService;
+  notificationService: INotificationService;
+  notificationEventService: INotificationEventService;
 };
 
 export type NeuronContainer = AwilixContainer<NeuronCradle>;
@@ -100,6 +115,11 @@ const registerServices = (container: NeuronContainer) => {
     termService: asClass<ITermService>(TermService).scoped(),
     coverageService: asClass<ICoverageService>(CoverageService).scoped(),
     jobService: asClass<IJobService>(JobService).singleton(),
+    preferenceService: asClass<IPreferenceService>(PreferenceService).scoped(),
+    notificationService:
+      asClass<INotificationService>(NotificationService).scoped(),
+    notificationEventService:
+      asClass<INotificationEventService>(NotificationEventService).scoped(),
     // cacheService: asClass<ICacheService>(CacheService).scoped(),
   });
 };

@@ -33,7 +33,6 @@ import LogIcon from "@public/assets/icons/nav/log.svg";
 import MemberIcon from "@public/assets/icons/nav/member.svg";
 import ScheduleIcon from "@public/assets/icons/nav/schedule.svg";
 import Logo from "@public/assets/logo.svg";
-import { NotificationInbox } from "./notifications/notification-inbox";
 import { SettingsDropdown } from "./settings/settings-dropdown";
 
 export const navbarItems = [
@@ -153,7 +152,6 @@ export function AppNavbar() {
               </div>
 
               <div className="ml-auto flex items-center gap-1">
-                <NotificationInbox />
                 <SidebarMenuButton
                   onClick={toggleSidebar}
                   aria-label="Toggle sidebar"
@@ -177,7 +175,6 @@ export function AppNavbar() {
               )}
               aria-hidden={false}
             >
-              <NotificationInbox />
               <SidebarMenuButton
                 onClick={toggleSidebar}
                 aria-label="Toggle sidebar"
@@ -205,6 +202,7 @@ export function AppNavbar() {
                         <SidebarMenuButton
                           asChild
                           isActive={isActive}
+                          tooltip={item.label}
                           className={cn(
                             "relative gap-3.5 h-11.4 group-data-[state=collapsed]:h-10 my-1.5 group-data-[state=collapsed]:my-[0.425rem]",
                             "overflow-visible transition-all",

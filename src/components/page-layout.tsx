@@ -7,6 +7,7 @@ import { TypographyPageTitle } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 import CaretLeftIcon from "@public/assets/icons/caret-left.svg";
 import { useRouter } from "next/navigation";
+import { NotificationInbox } from "./notifications/notification-inbox";
 import { SidebarTrigger } from "./ui/sidebar";
 
 type PageLayoutContextValue = {
@@ -217,6 +218,10 @@ function PageLayoutHeaderContent({
       )}
 
       {children}
+
+      <div className="self-justify-end">
+        <NotificationInbox />
+      </div>
     </div>
   );
 }

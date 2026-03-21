@@ -9,7 +9,6 @@ import {
   ListFilter,
   MoreHorizontal,
 } from "lucide-react";
-import { Button as UIButton } from "@/components/ui/button";
 import { Button } from "@/components/primitives/button";
 import {
   Popover,
@@ -180,17 +179,21 @@ export function NotificationInbox() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <UIButton variant="ghost" size="icon" className="relative h-10 w-10">
-          <Inbox className="size-5 text-muted-foreground" />
+        <Button
+          variant="outline"
+          size="icon"
+          className="relative"
+          startIcon={<Inbox className="size-5" />}
+        >
           {unreadCount > 0 && (
             <span className="absolute top-2 right-2 size-2 rounded-full bg-red-500" />
           )}
-          <span className="sr-only">Notifications</span>
-        </UIButton>
+          Notifications
+        </Button>
       </PopoverTrigger>
       <PopoverContent
-        align="start"
-        side="right"
+        align="end"
+        side="bottom"
         className="w-96 p-0 overflow-hidden rounded-lg"
         sideOffset={8}
         onOpenAutoFocus={(e) => e.preventDefault()}

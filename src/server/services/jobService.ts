@@ -30,6 +30,7 @@ export interface IJobService {
     jobName: RunnableJobName,
     options?: { correlationId?: string },
   ): Promise<void>;
+  cancelJob(jobName: RunnableJobName, jobId: string): Promise<void>;
 }
 
 type SharedBossState = {
@@ -157,6 +158,12 @@ export class JobService implements IJobService {
     }
 
     sharedBossState.recurringQueuesByJob.delete(jobName);
+  }
+
+  async cancelJob(jobName: RunnableJobName, jobId: string): Promise<void> {
+    this.getJobDefinition(jobName);
+    await this.start();
+    await this.boss.cancel(jobName, jobId);
   }
 
   private async runWithStartedBoss<TJobName extends KnownJobName>(

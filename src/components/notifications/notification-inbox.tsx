@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import {
   Archive,
   Check,
@@ -119,7 +120,7 @@ export function NotificationInbox() {
   ) => {
     markAsRead.mutate({ notificationId });
     if (linkUrl) {
-      router.push(linkUrl);
+      router.push(linkUrl as Route);
     }
     setOpen(false);
   };

@@ -3,7 +3,7 @@ import type { RegisteredJob } from "../types";
 
 export type ProcessNotificationPayload = {
   type: string;
-  audience: Audience;
+  audience: Audience | Audience[];
   context: Record<string, unknown>;
   actorId?: string;
   idempotencyKey?: string;

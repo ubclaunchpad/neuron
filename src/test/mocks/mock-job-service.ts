@@ -31,4 +31,9 @@ export class MockJobService implements IJobService {
     _jobName: RunnableJobName,
     _options?: { correlationId?: string },
   ): Promise<void> {}
+
+  async cancelJob(
+    _jobName: RunnableJobName,
+    _jobId: string,
+  ): Promise<void> {}
 }

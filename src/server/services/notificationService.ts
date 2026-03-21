@@ -29,7 +29,7 @@ interface ResolvedRecipient {
 
 export interface INotificationService {
   notify(params: NotifyParams): Promise<string | null>;
-  cancel(idempotencyKey: string): Promise<void>;
+  cancel(jobId: string): Promise<void>;
 
   getNotifications(params: {
     userId: string;
@@ -107,10 +107,10 @@ export class NotificationService implements INotificationService {
     );
   }
 
-  async cancel(idempotencyKey: string): Promise<void> {
-    await this.jobService.unschedule(
+  async cancel(jobId: string): Promise<void> {
+    await this.jobService.cancelJob(
       "jobs.process-notification" as RunnableJobName,
-      { correlationId: idempotencyKey },
+      jobId,
     );
   }
 

@@ -119,7 +119,7 @@ export function NotificationInbox() {
   ) => {
     markAsRead.mutate({ notificationId });
     if (linkUrl) {
-      router.push(linkUrl as any);
+      router.push(linkUrl);
     }
     setOpen(false);
   };

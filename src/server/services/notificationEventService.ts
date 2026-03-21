@@ -13,7 +13,7 @@ interface ShiftCancelledParams {
   className: string;
   shiftDate: string;
   cancelReason: string;
-  cancelledByUserId: string;
+  cancelledByUserId?: string;
   cancelledByName: string;
 }
 

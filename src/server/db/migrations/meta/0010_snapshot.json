@@ -1,5 +1,5 @@
 {
-  "id": "97fec7ce-4c2d-46f2-9bd1-76ff70f62293",
+  "id": "912223b0-c5dd-4889-9f94-bf066af68068",
   "prevId": "5de7367c-71f7-4d40-9ee8-87a526c11ab9",
   "version": "7",
   "dialect": "postgresql",
@@ -2168,13 +2168,6 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
-        },
-        "email_sent": {
-          "name": "email_sent",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "created_at": {
           "name": "created_at",

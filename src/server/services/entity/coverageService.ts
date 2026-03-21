@@ -437,7 +437,9 @@ export class CoverageService implements ICoverageService {
         shiftStartAt: shiftInfo.startAt,
         shiftEndAt: shiftInfo.endAt,
         requestingVolunteerUserId,
-        requestingVolunteerName: currentUser?.name ?? "A volunteer",
+        requestingVolunteerName: currentUser
+          ? `${currentUser.name} ${currentUser.lastName}`
+          : "A volunteer",
         reason: requestData.details,
       });
     }
@@ -576,7 +578,7 @@ export class CoverageService implements ICoverageService {
 
     // Notify admins, instructors, and requesting volunteer
     const [requestingUser] = await this.db
-      .select({ name: user.name })
+      .select({ name: user.name, lastName: user.lastName })
       .from(user)
       .where(eq(user.id, request.requestingVolunteerUserId))
       .limit(1);
@@ -590,9 +592,13 @@ export class CoverageService implements ICoverageService {
       className: request.courseName,
       shiftDate: formatDate(request.shiftStartAt),
       coveredByVolunteerUserId,
-      coveredByVolunteerName: currentUser?.name ?? "A volunteer",
+      coveredByVolunteerName: currentUser
+        ? `${currentUser.name} ${currentUser.lastName}`
+        : "A volunteer",
       requestingVolunteerUserId: request.requestingVolunteerUserId,
-      requestingVolunteerName: requestingUser?.name ?? "A volunteer",
+      requestingVolunteerName: requestingUser
+        ? `${requestingUser.name} ${requestingUser.lastName}`
+        : "A volunteer",
     });
   }
 

@@ -37,7 +37,6 @@ export const notification = pgTable(
     readAt: timestamp("read_at", { withTimezone: true }),
     archived: boolean("archived").notNull().default(false),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
-    emailSent: boolean("email_sent").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

@@ -13,7 +13,6 @@ CREATE TABLE "notification" (
 	"read_at" timestamp with time zone,
 	"archived" boolean DEFAULT false NOT NULL,
 	"archived_at" timestamp with time zone,
-	"email_sent" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"idempotency_key" text,
 	CONSTRAINT "notification_idempotency_key_unique" UNIQUE("idempotency_key")

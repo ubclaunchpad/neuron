@@ -806,8 +806,10 @@ export class ShiftService implements IShiftService {
       className: shiftRow.courseName,
       shiftDate: formatDate(shiftRow.startAt),
       cancelReason,
-      cancelledByUserId: currentUserId ?? "system",
-      cancelledByName: currentUser?.name ?? "System",
+      cancelledByUserId: currentUserId,
+      cancelledByName: currentUser
+        ? `${currentUser.name} ${currentUser.lastName}`
+        : "System",
     });
   }
 

@@ -71,6 +71,18 @@ export class MockNotificationEventService
     this.calls.push({ method: "notifyCoverageRequested", params });
   }
 
+  async notifyShiftReminder(params: unknown): Promise<void> {
+    this.calls.push({ method: "notifyShiftReminder", params });
+  }
+
+  async notifyShiftNoCheckin(params: unknown): Promise<void> {
+    this.calls.push({ method: "notifyShiftNoCheckin", params });
+  }
+
+  async notifyCoverageFilled(params: unknown): Promise<void> {
+    this.calls.push({ method: "notifyCoverageFilled", params });
+  }
+
   clear() {
     this.calls = [];
   }

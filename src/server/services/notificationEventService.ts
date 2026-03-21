@@ -30,9 +30,40 @@ interface CoverageRequestedParams {
   reason: string;
 }
 
+interface ShiftReminderParams {
+  shiftId: string;
+  className: string;
+  shiftDate: string;
+  shiftTime: string;
+  volunteerUserIds: string[];
+}
+
+interface ShiftNoCheckinParams {
+  shiftId: string;
+  className: string;
+  shiftDate: string;
+  volunteerNames: string;
+  volunteerCount: number;
+}
+
+interface CoverageFilledParams {
+  coverageRequestId: string;
+  shiftId: string;
+  classId: string;
+  className: string;
+  shiftDate: string;
+  coveredByVolunteerUserId: string;
+  coveredByVolunteerName: string;
+  requestingVolunteerUserId: string;
+  requestingVolunteerName: string;
+}
+
 export interface INotificationEventService {
   notifyShiftCancelled(params: ShiftCancelledParams): Promise<void>;
   notifyCoverageRequested(params: CoverageRequestedParams): Promise<void>;
+  notifyShiftReminder(params: ShiftReminderParams): Promise<void>;
+  notifyShiftNoCheckin(params: ShiftNoCheckinParams): Promise<void>;
+  notifyCoverageFilled(params: CoverageFilledParams): Promise<void>;
 }
 
 export class NotificationEventService implements INotificationEventService {
@@ -118,6 +149,83 @@ export class NotificationEventService implements INotificationEventService {
         idempotencyKey: `coverage-available-${params.coverageRequestId}`,
       });
     }
+  }
+
+  async notifyShiftReminder(params: ShiftReminderParams): Promise<void> {
+    if (params.volunteerUserIds.length === 0) return;
+
+    await this.notificationService.notify({
+      type: "shift.reminder",
+      audience: { kind: "users", userIds: params.volunteerUserIds },
+      context: {
+        shiftId: params.shiftId,
+        className: params.className,
+        shiftDate: params.shiftDate,
+        shiftTime: params.shiftTime,
+      },
+      idempotencyKey: `shift-reminder-${params.shiftId}`,
+    });
+  }
+
+  async notifyShiftNoCheckin(params: ShiftNoCheckinParams): Promise<void> {
+    if (params.volunteerCount === 0) return;
+
+    await this.notificationService.notify({
+      type: "shift.no-checkin",
+      audience: { kind: "role", role: "admin" },
+      context: {
+        shiftId: params.shiftId,
+        className: params.className,
+        shiftDate: params.shiftDate,
+        volunteerNames: params.volunteerNames,
+        volunteerCount: params.volunteerCount,
+      },
+      idempotencyKey: `shift-no-checkin-${params.shiftId}`,
+    });
+  }
+
+  async notifyCoverageFilled(params: CoverageFilledParams): Promise<void> {
+    // 1. Notify admins + class instructors
+    const instructorIds = await this.getClassInstructorUserIds(params.classId);
+
+    await this.notificationService.notify({
+      type: "coverage.filled",
+      audience: [
+        { kind: "role", role: "admin" },
+        ...(instructorIds.length > 0
+          ? [{ kind: "users" as const, userIds: instructorIds }]
+          : []),
+      ],
+      context: {
+        coverageRequestId: params.coverageRequestId,
+        shiftId: params.shiftId,
+        className: params.className,
+        shiftDate: params.shiftDate,
+        coveredByVolunteerName: params.coveredByVolunteerName,
+        requestingVolunteerName: params.requestingVolunteerName,
+      },
+      actorId: params.coveredByVolunteerUserId,
+      excludeUserIds: [
+        params.coveredByVolunteerUserId,
+        params.requestingVolunteerUserId,
+      ],
+      idempotencyKey: `coverage-filled-${params.coverageRequestId}`,
+    });
+
+    // 2. Notify requesting volunteer with personal message
+    await this.notificationService.notify({
+      type: "coverage.filled-personal",
+      audience: { kind: "user", userId: params.requestingVolunteerUserId },
+      context: {
+        coverageRequestId: params.coverageRequestId,
+        shiftId: params.shiftId,
+        className: params.className,
+        shiftDate: params.shiftDate,
+        coveredByVolunteerName: params.coveredByVolunteerName,
+      },
+      actorId: params.coveredByVolunteerUserId,
+      idempotencyKey: `coverage-filled-personal-${params.coverageRequestId}`,
+    });
   }
 
   /**

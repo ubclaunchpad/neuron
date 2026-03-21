@@ -26,7 +26,7 @@ import {
   type CoverageRequestDB,
 } from "@/server/db/schema";
 import { volunteerToSchedule } from "@/server/db/schema/schedule";
-import { instructorUserView } from "@/server/db/schema/user";
+import { instructorUserView, user } from "@/server/db/schema/user";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
@@ -511,9 +511,13 @@ export class CoverageService implements ICoverageService {
         status: coverageRequest.status,
         shiftStartAt: shift.startAt,
         shiftId: shift.id,
+        courseId: shift.courseId,
+        courseName: course.name,
+        requestingVolunteerUserId: coverageRequest.requestingVolunteerUserId,
       })
       .from(coverageRequest)
       .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
+      .innerJoin(course, eq(course.id, shift.courseId))
       .where(eq(coverageRequest.id, coverageRequestId));
 
     if (!request) {
@@ -568,6 +572,27 @@ export class CoverageService implements ICoverageService {
         NeuronErrorCodes.BAD_REQUEST,
       );
     }
+
+    // Notify admins, instructors, and requesting volunteer
+    const [requestingUser] = await this.db
+      .select({ name: user.name })
+      .from(user)
+      .where(eq(user.id, request.requestingVolunteerUserId))
+      .limit(1);
+
+    const currentUser = this.currentSessionService.getUser();
+
+    void this.notificationEventService.notifyCoverageFilled({
+      coverageRequestId,
+      shiftId: request.shiftId,
+      classId: request.courseId,
+      className: request.courseName,
+      shiftDate: request.shiftStartAt.toLocaleDateString(),
+      coveredByVolunteerUserId,
+      coveredByVolunteerName: currentUser?.name ?? "A volunteer",
+      requestingVolunteerUserId: request.requestingVolunteerUserId,
+      requestingVolunteerName: requestingUser?.name ?? "A volunteer",
+    });
   }
 
   async unassignCoverage(

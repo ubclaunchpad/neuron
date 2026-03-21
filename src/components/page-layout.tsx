@@ -188,10 +188,12 @@ function PageLayoutHeader({
 function PageLayoutHeaderContent({
   className,
   showBackButton,
+  hideInbox,
   children,
   ...props
 }: React.ComponentProps<"div"> & {
   showBackButton?: boolean;
+  hideInbox?: boolean;
 }) {
   const router = useRouter();
   return (
@@ -219,9 +221,11 @@ function PageLayoutHeaderContent({
 
       {children}
 
-      <div className="self-justify-end">
-        <NotificationInbox />
-      </div>
+      {!hideInbox && (
+        <div className="self-justify-end">
+          <NotificationInbox />
+        </div>
+      )}
     </div>
   );
 }

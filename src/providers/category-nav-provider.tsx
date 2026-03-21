@@ -11,7 +11,8 @@ const CategoryNavContext = React.createContext<CategoryNavContext | null>(null);
 
 export function useCategoryNav() {
   const ctx = React.useContext(CategoryNavContext);
-  if (!ctx) throw new Error("useCategoryNav must be used inside CategoryNavProvider");
+  if (!ctx)
+    throw new Error("useCategoryNav must be used inside CategoryNavProvider");
   return ctx;
 }
 
@@ -24,18 +25,27 @@ export function CategoryNavProvider({
   scrollRef: React.RefObject<HTMLElement>;
   children: React.ReactNode;
 }) {
-  const [active, setActive] = React.useState<string | null>(categories[0] ?? null);
+  const [active, setActive] = React.useState<string | null>(
+    categories[0] ?? null,
+  );
   const registry = React.useRef(new Map<string, HTMLElement>());
 
-  const registerSection = React.useCallback((id: string, el: HTMLElement | null) => {
-    if (el) registry.current.set(id, el);
-    else registry.current.delete(id);
-  }, []);
+  const registerSection = React.useCallback(
+    (id: string, el: HTMLElement | null) => {
+      if (el) registry.current.set(id, el);
+      else registry.current.delete(id);
+    },
+    [],
+  );
 
   const scrollToCategory = React.useCallback((id: string) => {
     const el = registry.current.get(id);
     if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+    el.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+      inline: "nearest",
+    });
   }, []);
 
   // scroll handler: choose the section whose top is closest to container top
@@ -73,9 +83,10 @@ export function CategoryNavProvider({
   }, [scrollRef, active]);
 
   return (
-    <CategoryNavContext.Provider 
+    <CategoryNavContext.Provider
       value={{ activeCategory: active, scrollToCategory, registerSection }}
-    >{children}</CategoryNavContext.Provider>
+    >
+      {children}
+    </CategoryNavContext.Provider>
   );
 }
-

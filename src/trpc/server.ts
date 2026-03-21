@@ -1,4 +1,4 @@
-import "server-only";
+"server-only";
 
 import { createHydrationHelpers } from "@trpc/react-query/rsc";
 import { headers } from "next/headers";
@@ -24,7 +24,5 @@ const createContext = cache(async () => {
 const getQueryClient = cache(createQueryClient);
 const caller = createCaller(createContext);
 
-export const { trpc: ssrApi, HydrateClient } = createHydrationHelpers<AppRouter>(
-  caller,
-  getQueryClient,
-);
+export const { trpc: ssrApi, HydrateClient } =
+  createHydrationHelpers<AppRouter>(caller, getQueryClient);

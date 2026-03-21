@@ -1,7 +1,11 @@
 "use client";
 
 import React from "react";
-import { TooltipContent, TooltipTrigger, Tooltip as UITooltip } from "../ui/tooltip";
+import {
+  TooltipContent,
+  TooltipTrigger,
+  Tooltip as UITooltip,
+} from "../ui/tooltip";
 
 export function Tooltip({
   children,
@@ -27,13 +31,10 @@ export function Tooltip({
       delayDuration={delayDuration || 50}
       open={open}
       defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}>
+      onOpenChange={onOpenChange}
+    >
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent
-        {...props}
-        side={side}
-        align="center"
-      >
+      <TooltipContent {...props} side={side} align="center">
         {content}
       </TooltipContent>
     </UITooltip>

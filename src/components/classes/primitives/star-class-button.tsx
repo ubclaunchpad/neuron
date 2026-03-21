@@ -55,34 +55,32 @@ export function StarClassButton({
     });
 
   return (
-    <WithPermission permissions={{ permission: { classes: ["prefer"] } }}>
-      <Button
-        variant="outline"
-        className={cn(
-          "data-[toggle-state=on]:*:[svg]:fill-primary data-[toggle-state=on]:*:[svg]:stroke-primary",
-          className,
-        )}
-        startIcon={<Star />}
-        loading={preferenceLoading || !preferenceData || !currentUser}
-        tooltip="Mark this class as preferred"
-        asChild
-        {...props}
+    <Button
+      variant="outline"
+      className={cn(
+        "data-[toggle-state=on]:*:[svg]:fill-primary data-[toggle-state=on]:*:[svg]:stroke-primary",
+        className,
+      )}
+      startIcon={<Star />}
+      loading={preferenceLoading || !preferenceData || !currentUser}
+      tooltip="Mark this class as preferred"
+      asChild
+      {...props}
+    >
+      <Toggle
+        unstyled
+        data-toggle-state={preferenceData?.preferred ? "on" : "off"}
+        pressed={preferenceData?.preferred}
+        onPressedChange={(next) =>
+          setPreference({
+            userId: currentUser!.id,
+            classId,
+            preferred: next,
+          })
+        }
       >
-        <Toggle
-          unstyled
-          data-toggle-state={preferenceData?.preferred ? "on" : "off"}
-          pressed={preferenceData?.preferred}
-          onPressedChange={(next) =>
-            setPreference({
-              userId: currentUser!.id,
-              classId,
-              preferred: next,
-            })
-          }
-        >
-          Star
-        </Toggle>
-      </Button>
-    </WithPermission>
+        Star
+      </Toggle>
+    </Button>
   );
 }

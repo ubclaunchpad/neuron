@@ -37,10 +37,7 @@ export interface DropzoneProps extends FileDropzoneOptions {
   children: React.ReactNode;
 }
 
-const Dropzone = ({ 
-  children,
-  ...options 
-}: DropzoneProps) => {
+const Dropzone = ({ children, ...options }: DropzoneProps) => {
   const [state, actions] = useFileDropzone(options);
   const inputId = React.useId();
 
@@ -222,8 +219,7 @@ const dropzoneMediaVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "bg-transparent",
+        default: "bg-transparent",
         icon:
           "flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground " +
           "[&_svg:not([class*='size-'])]:size-5 " +
@@ -309,6 +305,13 @@ DropzoneContent.displayName = "DropzoneContent";
 
 export {
   Dropzone,
-  DropzoneArea, DropzoneContent, DropzoneDescription, DropzoneHeader, DropzoneHint, DropzoneLabel, DropzoneMedia, DropzoneOpenButton, DropzoneTitle
+  DropzoneArea,
+  DropzoneContent,
+  DropzoneDescription,
+  DropzoneHeader,
+  DropzoneHint,
+  DropzoneLabel,
+  DropzoneMedia,
+  DropzoneOpenButton,
+  DropzoneTitle,
 };
-

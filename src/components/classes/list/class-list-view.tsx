@@ -26,9 +26,14 @@ import {
   PageLayoutHeader,
   PageLayoutHeaderContent,
   PageLayoutHeaderTitle,
-  usePageAside,
 } from "@/components/page-layout";
 import { ClassList } from "./content/class-list";
+import { ClassListSkeleton } from "./class-list-skeleton";
+import AddIcon from "@public/assets/icons/add.svg";
+import Link from "next/link";
+import { WithPermission } from "@/components/utils/with-permission";
+import { Button } from "@/components/primitives/button";
+import { SkeletonAside } from "@/components/ui/skeleton";
 
 export type ClassesPageContextValue = {
   selectedTermId: string | null;
@@ -51,10 +56,13 @@ export function useClassesPage() {
   return ctx;
 }
 
-export function ClassListView() {
-  const { setOpen } = usePageAside();
+type ClassListViewProps = {
+  classId: string | null;
+  setClassId: (id: string | null) => Promise<URLSearchParams>;
+};
+
+export function ClassListView({ classId, setClassId }: ClassListViewProps) {
   const contentScrollRef = useRef<HTMLDivElement>(null);
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [selectedTermId, setSelectedTermId] = useState<string | null>(null);
   const [queryTerm, setQueryTerm] = useQueryState(
     "term",
@@ -63,16 +71,28 @@ export function ClassListView() {
 
   const openAsideFor = useCallback(
     (id: string) => {
-      setSelectedClassId(id);
-      setOpen(true);
+      setClassId(id);
     },
-    [setOpen, setSelectedClassId],
+    [setClassId],
   );
 
   const closeAside = useCallback(() => {
-    setSelectedClassId(null);
-    setOpen(false);
-  }, [setOpen, setSelectedClassId]);
+    setClassId(null);
+  }, [setClassId]);
+
+  // When a classId is present (e.g. from URL), fetch the class and navigate
+  // to its term so the list shows the correct term's classes.
+  const { data: linkedClass } = clientApi.class.byId.useQuery(
+    { classId: classId ?? "" },
+    { enabled: !!classId },
+  );
+
+  useEffect(() => {
+    if (linkedClass?.termId && linkedClass.termId !== selectedTermId) {
+      setSelectedTermId(linkedClass.termId);
+      void setQueryTerm(linkedClass.termId);
+    }
+  }, [linkedClass?.termId, selectedTermId, setQueryTerm]);
 
   const canCreateTerm = usePermission({ permission: { terms: ["create"] } });
 
@@ -133,22 +153,22 @@ export function ClassListView() {
 
   const contextValue = useMemo(
     () => ({
-      selectedClassId,
+      selectedClassId: classId,
       selectedTermId,
       queryTerm,
       hasTerms,
-      setSelectedClassId,
+      setSelectedClassId: setClassId,
       setSelectedTermId: handleSelectTerm,
       openAsideFor,
       closeAside,
       contentScrollRef,
     }),
     [
-      selectedClassId,
+      classId,
       selectedTermId,
       queryTerm,
       hasTerms,
-      setSelectedClassId,
+      setClassId,
       handleSelectTerm,
       openAsideFor,
       closeAside,
@@ -175,17 +195,32 @@ export function ClassListView() {
       </PageLayoutHeader>
 
       <PageLayoutAside>
-        <Suspense fallback={<div>Loading class...</div>}>
+        <Suspense fallback={<SkeletonAside />}>
           <ClassDetailsAside />
         </Suspense>
       </PageLayoutAside>
 
       <PageLayoutContent ref={contentScrollRef}>
         <div className="flex flex-col gap-6 p-9">
-          <Loader
-            isLoading={isLoadingContent}
-            fallback={<div>Loading classes...</div>}
-          >
+          {(isLoadingContent || !!classListData?.classes?.length) && (
+            <WithPermission
+              permissions={{ permission: { classes: ["create"] } }}
+            >
+              <Button asChild>
+                <Link
+                  href={{
+                    pathname: "classes/edit",
+                    query: { termId: selectedTermId },
+                  }}
+                >
+                  <AddIcon />
+                  Create Class
+                </Link>
+              </Button>
+            </WithPermission>
+          )}
+
+          <Loader isLoading={isLoadingContent} fallback={<ClassListSkeleton />}>
             {!classListData?.classes?.length ? (
               <ClassesEmptyView />
             ) : (

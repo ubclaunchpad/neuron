@@ -1,8 +1,8 @@
 import { TRPCError } from "@trpc/server";
 
 export class NeuronError extends TRPCError {
-  constructor(message: string, code: TRPCError["code"]) {
-    super({ message, code });
+  constructor(message: string, code: TRPCError["code"], cause?: unknown) {
+    super({ message, code, cause });
   }
 }
 

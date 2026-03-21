@@ -22,6 +22,7 @@ import {
 } from "../ui/input-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import type { UseInfiniteQueryResult } from "@tanstack/react-query";
+import type { InfiniteQueryLike } from "../ui/searchable-select";
 
 export type SelectEntity = {
   id: string;
@@ -112,7 +113,7 @@ function InfiniteMultiSelect<
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-[200px] justify-between !text-muted-foreground"
+            className="w-50 justify-between text-muted-foreground!"
           >
             {placeholder}
             <Plus className="opacity-50" />
@@ -125,7 +126,9 @@ function InfiniteMultiSelect<
               onValueChange={setQuery}
               placeholder={`Search ${entityName}...`}
             />
-            <InfiniteCommandList query={infiniteQuery}>
+            <InfiniteCommandList
+              query={infiniteQuery as InfiniteQueryLike<TEntity>}
+            >
               <CommandEmpty>
                 {emptyText ?? `No ${entityName} found.`}
               </CommandEmpty>

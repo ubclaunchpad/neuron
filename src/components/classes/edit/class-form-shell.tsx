@@ -1,3 +1,4 @@
+import { usePublicConfig } from "@/lib/public-config";
 import type { SingleClass } from "@/models/class";
 import type { Term } from "@/models/term";
 import { useEffect } from "react";
@@ -14,6 +15,7 @@ import { ClassGeneralSection } from "./content/class-general-section";
 import { ClassSchedulesSection } from "./content/class-schedules-sections";
 import { useClassUpsert } from "./hooks/use-class-upsert";
 import { classToFormValues } from "./utils";
+import { ClassFormShellSkeleton } from "./class-form-shell-skeleton";
 
 export function ClassEditShell({
   editingClass,
@@ -27,7 +29,8 @@ export function ClassEditShell({
   isLoading: boolean;
 }) {
   const isEditing = !!editingClass;
-  const initial = classToFormValues(editingClass);
+  const publicConfig = usePublicConfig();
+  const initial = classToFormValues(editingClass, publicConfig);
 
   const { onSubmit, isPending, handleSaveAndPublish } = useClassUpsert({
     isEditing,
@@ -74,7 +77,7 @@ export function ClassEditShell({
         <PageLayoutContent>
           <div className="flex flex-col gap-8 p-9 pt-4">
             {isLoading ? (
-              <div>Loading Class Data...</div>
+              <ClassFormShellSkeleton />
             ) : (
               <>
                 <ClassGeneralSection />

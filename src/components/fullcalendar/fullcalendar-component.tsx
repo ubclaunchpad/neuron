@@ -159,10 +159,10 @@ export function FullCalendar({
         )}
         dayHeaderClassNames={(ctx) =>
           cn(
-            "overflow-hidden [&>*_>*]:!p-0 [&>*_>*]:!block [&>*_>*]:!max-w-full",
+            "overflow-hidden [&>*_>*]:p-0! [&>*_>*]:block! [&>*_>*]:max-w-full!",
             ctx.view.type !== CalendarView.Day &&
               cn(
-                "[&:nth-child(2)]:!border-l-0",
+                "[&:nth-child(2)]:border-l-0!",
                 isSameDay(ctx.date, new Date()) &&
                   "overflow-visible relative after:content-[''] after:absolute after:left-[-1px] after:right-[-1px] after:bottom-[-1px] after:h-[2px] after:bg-primary after:pointer-events-none",
                 isOddDay(ctx.date.getDay(), FIRST_DAY_OF_WEEK) && "bg-muted",
@@ -172,19 +172,19 @@ export function FullCalendar({
         dayCellClassNames={(ctx) =>
           cn(
             ctx.view.type !== CalendarView.Day &&
-              "[&:nth-child(2)]:!border-l-0",
+              "[&:nth-child(2)]:border-l-0!",
             ctx.view.type !== CalendarView.Day &&
               isOddDay(ctx.date.getDay(), FIRST_DAY_OF_WEEK) &&
               "bg-muted",
           )
         }
-        eventClassNames={"!shadow !border mr-[2px] my-[1px] !rounded-sm"}
+        eventClassNames={"shadow! border! mr-[2px] my-[1px] rounded-sm!"}
         eventContent={(ctx) => <CalendarEventContent ctx={ctx} />}
         nowIndicator
         nowIndicatorClassNames={(ctx) =>
           cn(
             ctx.isAxis &&
-              "!m-0 !border-none -translate-y-[calc(50%-1px)] bg-(--fc-now-indicator-color) px-1.5 text-sm text-primary-foreground rounded-full right-1 !left-[unset]",
+              "m-0! border-none! -translate-y-[calc(50%-1px)] bg-(--fc-now-indicator-color) px-1.5 text-sm text-primary-foreground rounded-full right-1 left-[unset]!",
           )
         }
         nowIndicatorContent={(ctx) => ctx.isAxis && format(ctx.date, "h:mm")}
@@ -278,7 +278,7 @@ function CalendarEventContent({ ctx: { event } }: { ctx: EventContentArg }) {
           style={{ "--line-clamp": mostTitleLines } as React.CSSProperties}
           lang="en"
           className={cn(
-            "shrink-0 text-sm break-words hyphens-auto",
+            "shrink-0 text-sm wrap-break-word hyphens-auto",
             mostTitleLines === 1 && "leading-[0.85]",
             // This is the equivalent of line-clamp-[--line-clamp]
             // however, this is not legal in tailwind so we have to do this workaround

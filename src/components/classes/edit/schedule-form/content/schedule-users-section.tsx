@@ -108,9 +108,9 @@ export function ScheduleUsersSection({
 
                     <Field
                       orientation="horizontal"
-                      className="w-fit !items-center gap-3"
+                      className="w-fit items-center! gap-3"
                     >
-                      <FieldContent className="w-fit !items-center">
+                      <FieldContent className="w-fit items-center!">
                         <FormLabel className="text-muted-foreground" required>
                           Preferred:
                         </FormLabel>

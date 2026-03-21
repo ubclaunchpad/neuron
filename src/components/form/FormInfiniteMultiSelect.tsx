@@ -19,9 +19,9 @@ export interface FormInfiniteMultiSelectProps<
   TEntity extends SelectEntity,
   TQueryData extends { entities: TEntity[] },
 > extends Omit<
-    React.ComponentProps<typeof InfiniteMultiSelect<TEntity, TQueryData>>,
-    "values" | "onAppend" | "onRemove"
-  > {}
+  React.ComponentProps<typeof InfiniteMultiSelect<TEntity, TQueryData>>,
+  "values" | "onAppend" | "onRemove"
+> {}
 
 function FormInfiniteMultiSelect<
   TEntity extends SelectEntity,
@@ -51,9 +51,9 @@ export interface FormInfiniteMultiSelectFieldProps<
   TQueryData extends { entities: TEntity[] } = { entities: TEntity[] },
   TTransformedValues = TFieldValues,
 > extends Omit<
-    ComponentProps<typeof InfiniteMultiSelect<TEntity, TQueryData>>,
-    "values" | "onAppend" | "onRemove"
-  > {
+  ComponentProps<typeof InfiniteMultiSelect<TEntity, TQueryData>>,
+  "values" | "onAppend" | "onRemove"
+> {
   name: TName;
   control: Control<TFieldValues, any, TTransformedValues>;
   label?: React.ReactNode;

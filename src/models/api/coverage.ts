@@ -1,7 +1,7 @@
 import { StringEnum } from "@/lib/base-enum";
 import { createStringEnum } from "@/utils/typeUtils";
 import { z } from "zod";
-import { ListRequest } from "./common";
+import { ListRequest, SortOrder } from "./common";
 
 export const CoverageStatusEnum = z.enum([
   "open",
@@ -44,7 +44,11 @@ export const CoverageRequestIdInput = z.object({
 
 export const ListCoverageRequestsInput = ListRequest.extend({
   status: CoverageStatusEnum.optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+  courseIds: z.array(z.uuid()).optional(),
+  sortOrder: SortOrder.default("desc"),
 });
-export type ListCoverageRequestsInput = z.infer<
+export type ListCoverageRequestsInput = z.input<
   typeof ListCoverageRequestsInput
 >;

@@ -8,32 +8,26 @@ export const env = createEnv({
    * Server-side env vars
    */
   server: {
+    DATABASE_URL: z.url(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-
-    // Database
-    DATABASE_URL: z.url(),
-    DATABASE_PASSWORD: z.string(),
-
-    // Redis
-    REDIS_URL: z.url(),
-    REDIS_PASSWORD: z.string(),
-
-    // Email
+    BETTER_AUTH_SECRET: z.string().min(32),
+    NEURON_BASE_URL: z.url(),
     SMTP_HOST: z.string(),
     SMTP_PORT: port,
     SMTP_USER: z.string(),
     SMTP_PASS: z.string(),
     MAIL_FROM: z.string(),
-
-    // MinIO
+    REDIS_URL: z.url(),
     MINIO_ROOT_USER: z.string(),
     MINIO_ROOT_PASSWORD: z.string(),
     MINIO_HOST: z.string(),
-    MINIO_PORT: port,
+    MINIO_PORT: port.optional(),
     MINIO_BUCKET: z.string(),
-    MINIO_USE_SSL: z.enum(["true", "false"]).transform((val) => val === "true"),
+    MINIO_USE_SSL: z.string().transform((val) => val === "true"),
+    FILES_BASE_URL: z.url(),
+    FILES_BUCKET: z.string(),
 
     // Sentry / Bugsink
     SENTRY_DSN: z.string().url(),
@@ -42,29 +36,22 @@ export const env = createEnv({
   /**
    * Client-side env vars (must start with NEXT_PUBLIC_)
    */
-  client: {
-    NEXT_PUBLIC_FILES_BASE_URL: z.string(),
-    NEXT_PUBLIC_FILES_BUCKET: z.string(),
-  },
+  client: {},
 
   /**
    * Raw runtime env mapping
    */
   runtimeEnv: {
-    NODE_ENV: process.env.NODE_ENV,
-
     DATABASE_URL: process.env.DATABASE_URL,
-    DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,
-
-    REDIS_URL: process.env.REDIS_URL,
-    REDIS_PASSWORD: process.env.REDIS_PASSWORD,
-
+    NODE_ENV: process.env.NODE_ENV,
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    NEURON_BASE_URL: process.env.NEURON_BASE_URL,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_PORT: process.env.SMTP_PORT,
     SMTP_USER: process.env.SMTP_USER,
     SMTP_PASS: process.env.SMTP_PASS,
     MAIL_FROM: process.env.MAIL_FROM,
-
+    REDIS_URL: process.env.REDIS_URL,
     MINIO_ROOT_USER: process.env.MINIO_ROOT_USER,
     MINIO_ROOT_PASSWORD: process.env.MINIO_ROOT_PASSWORD,
     MINIO_HOST: process.env.MINIO_HOST,
@@ -72,10 +59,10 @@ export const env = createEnv({
     MINIO_BUCKET: process.env.MINIO_BUCKET,
     MINIO_USE_SSL: process.env.MINIO_USE_SSL,
 
-    SENTRY_DSN: process.env.SENTRY_DSN,
+    FILES_BASE_URL: process.env.FILES_BASE_URL,
+    FILES_BUCKET: process.env.FILES_BUCKET,
 
-    NEXT_PUBLIC_FILES_BASE_URL: process.env.NEXT_PUBLIC_FILES_BASE_URL,
-    NEXT_PUBLIC_FILES_BUCKET: process.env.NEXT_PUBLIC_FILES_BUCKET,
+    SENTRY_DSN: process.env.SENTRY_DSN,
   },
 
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

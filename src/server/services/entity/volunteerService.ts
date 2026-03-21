@@ -1,5 +1,5 @@
 import type { ListRequestWithSearch } from "@/models/api/common";
-import { UpdateVolunteerProfileInput } from "@/models/api/volunteer";
+import type { UpdateVolunteerAvailabilityInput, UpdateVolunteerProfileInput } from "@/models/api/volunteer";
 import type { ListResponse } from "@/models/list-response";
 import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
@@ -37,14 +37,14 @@ export interface IVolunteerService {
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void>;
   updateVolunteerAvailability(
-    volunteerUserId: string,
-    availability: string,
+    input: z.infer<typeof UpdateVolunteerAvailabilityInput>,
   ): Promise<void>;
 }
 
 export class VolunteerService implements IVolunteerService {
   private readonly db: Drizzle;
-  constructor(db: Drizzle) {
+
+  constructor({ db }: { db: Drizzle }) {
     this.db = db;
   }
 
@@ -174,29 +174,32 @@ export class VolunteerService implements IVolunteerService {
   async updateVolunteerProfile(
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void> {
-    const { volunteerUserId, ...rest } = input;
+    await this.db.transaction(async (tx) => {
+      const { volunteerUserId, ...updatePayload } = input;
 
-    const [updated] = await this.db
-      .update(volunteer)
-      .set(rest)
-      .where(eq(volunteer.userId, volunteerUserId))
-      .returning({ userId: volunteer.userId });
+      const [updatedVolunteer] = await tx
+        .update(volunteer)
+        .set(updatePayload)
+        .where(eq(volunteer.userId, volunteerUserId))
+        .returning({ userId: volunteer.userId });
 
-    if (!updated) {
-      throw new NeuronError(
-        `Could not find Volunteer with id ${volunteerUserId}`,
-        NeuronErrorCodes.NOT_FOUND,
-      );
-    }
+      if (!updatedVolunteer) {
+        throw new NeuronError(
+          `Could not find volunteer with id ${volunteerUserId}`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+    });
   }
 
   async updateVolunteerAvailability(
-    volunteerUserId: string,
-    availability: string,
+    input: z.infer<typeof UpdateVolunteerAvailabilityInput>,
   ): Promise<void> {
+    const { volunteerUserId, ...updatePayload } = input;
+
     const [updated] = await this.db
       .update(volunteer)
-      .set({ availability })
+      .set(updatePayload)
       .where(eq(volunteer.userId, volunteerUserId))
       .returning({ userId: volunteer.userId });
 

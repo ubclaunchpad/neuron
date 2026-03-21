@@ -9,7 +9,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    setupFiles: ["./src/test/setup.ts"],
+    globalSetup: ["./src/test/global-setup.ts"],
     include: ["src/test/**/*.test.ts"],
     exclude: ["node_modules", ".next"],
     coverage: {

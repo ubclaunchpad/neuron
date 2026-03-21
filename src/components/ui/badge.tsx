@@ -8,19 +8,21 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
+        default: "border-transparent bg-primary text-primary-foreground shadow",
         secondary:
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
           "border-transparent bg-destructive text-primary-foreground shadow hover:bg-destructive/80",
         outline: "text-foreground",
         notification:
-          "border-transparent bg-destructive text-primary-foreground shadow h-5 min-w-5 px-1.5 flex justify-center items-center border-none",
+          "border-transparent bg-destructive/80 text-primary-foreground shadow h-5 min-w-5 px-1.5 flex justify-center items-center border-none",
+        filter: "border-transparent rounded font-medium px-1 py-px",
         colored: "border-transparent",
       },
       color: {
-        default: "bg-muted text-foreground",
+        default: "",
+        muted: "bg-muted text-foreground",
+        emphasis: "bg-emphasis text-emphasis-foreground",
         primary: "bg-primary/10 text-primary",
         success: "bg-emerald-50 text-emerald-700",
         warning: "bg-amber-50 text-amber-800",
@@ -31,22 +33,23 @@ const badgeVariants = cva(
     compoundVariants: [],
     defaultVariants: {
       variant: "default",
-      size: "default",
+      color: "default",
     },
   },
 );
 
 export interface BadgeProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "color">,
+  extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, "color">,
     VariantProps<typeof badgeVariants> {}
 
-function Badge({ className, variant, size, color, ...props }: BadgeProps) {
+function Badge({ className, variant, color, ...props }: BadgeProps) {
   return (
     <div
       className={cn(
         badgeVariants({
           variant,
-          color: variant === "colored" ? color : undefined,
+          color,
         }),
         className,
       )}

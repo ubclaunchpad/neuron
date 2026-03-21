@@ -1,3 +1,7 @@
+import type {
+  CreateInstructorInput,
+  UpdateInstructorInput,
+} from "@/models/api/instructor";
 import type { ListUsersInput } from "@/models/api/user";
 import { UserStatus } from "@/models/interfaces";
 import type { ListResponse } from "@/models/list-response";
@@ -10,7 +14,11 @@ import { user } from "../../db/schema/user";
 
 export interface IUserService {
   getUsersForRequest(listRequest: ListUsersInput): Promise<ListResponse<User>>;
+  getInstructorsForRequest(
+    listRequest: ListUsersInput,
+  ): Promise<ListResponse<User>>;
   getUsers(ids: string[]): Promise<User[]>;
+  getInstructor(id: string): Promise<User>;
   getUser(id: string): Promise<User>;
   verifyVolunteer(id: string): Promise<string>;
   rejectVolunteer(id: string): Promise<string>;
@@ -22,13 +30,16 @@ export interface IUserService {
     email: string;
     role: string;
   }): Promise<User>;
+  createInstructor(input: CreateInstructorInput): Promise<User>;
+  updateInstructor(input: UpdateInstructorInput): Promise<User>;
+  deleteInstructor(id: string): Promise<string>;
   inviteUser(): Promise<void>;
 }
 
 export class UserService implements IUserService {
   private readonly db: Drizzle;
 
-  constructor(db: Drizzle) {
+  constructor({ db }: { db: Drizzle }) {
     this.db = db;
   }
 
@@ -93,6 +104,15 @@ export class UserService implements IUserService {
     };
   }
 
+  async getInstructorsForRequest(
+    listRequest: ListUsersInput,
+  ): Promise<ListResponse<User>> {
+    return this.getUsersForRequest({
+      ...listRequest,
+      rolesToInclude: ["instructor"] as Array<"instructor">,
+    });
+  }
+
   async getUsers(ids: string[]): Promise<User[]> {
     const data = await this.db.select().from(user).where(inArray(user.id, ids));
 
@@ -109,6 +129,19 @@ export class UserService implements IUserService {
 
   async getUser(id: string): Promise<User> {
     return await this.getUsers([id]).then(([user]) => user!);
+  }
+
+  async getInstructor(id: string): Promise<User> {
+    const instructor = await this.getUser(id);
+
+    if (instructor.role !== "instructor") {
+      throw new NeuronError(
+        `User with id ${id} is not an instructor`,
+        NeuronErrorCodes.BAD_REQUEST,
+      );
+    }
+
+    return instructor;
   }
 
   // any -> active
@@ -213,6 +246,130 @@ export class UserService implements IUserService {
       }
       throw error;
     }
+  }
+
+  async createInstructor(input: CreateInstructorInput): Promise<User> {
+    try {
+      const [createdUser] = await this.db
+        .insert(user)
+        .values({
+          name: input.firstName,
+          lastName: input.lastName,
+          email: input.email,
+          role: "instructor" as any,
+          status: UserStatus.active,
+          emailVerified: false,
+        })
+        .returning();
+
+      if (!createdUser) {
+        throw new NeuronError(
+          "Failed to create instructor",
+          NeuronErrorCodes.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      return buildUser(createdUser);
+    } catch (error: any) {
+      if (error?.code === "23505" || error?.message?.includes("unique")) {
+        throw new NeuronError(
+          "An instructor with this email already exists",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+      throw error;
+    }
+  }
+
+  async updateInstructor(input: UpdateInstructorInput): Promise<User> {
+    const existing = await this.db
+      .select()
+      .from(user)
+      .where(eq(user.id, input.instructorId))
+      .then(([u]) => u);
+
+    if (!existing) {
+      throw new NeuronError(
+        `Could not find instructor with id ${input.instructorId}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+
+    if (existing.role !== "instructor") {
+      throw new NeuronError(
+        `User with id ${input.instructorId} is not an instructor`,
+        NeuronErrorCodes.BAD_REQUEST,
+      );
+    }
+
+    const updatePayload: Partial<typeof user.$inferInsert> = {};
+
+    if (input.firstName !== undefined) {
+      updatePayload.name = input.firstName;
+    }
+    if (input.lastName !== undefined) {
+      updatePayload.lastName = input.lastName;
+    }
+    if (input.email !== undefined) {
+      updatePayload.email = input.email;
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      throw new NeuronError(
+        "At least one field must be provided to update an instructor",
+        NeuronErrorCodes.BAD_REQUEST,
+      );
+    }
+
+    try {
+      const [updatedUser] = await this.db
+        .update(user)
+        .set(updatePayload)
+        .where(eq(user.id, input.instructorId))
+        .returning();
+
+      if (!updatedUser) {
+        throw new NeuronError(
+          "Failed to update instructor",
+          NeuronErrorCodes.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      return buildUser(updatedUser);
+    } catch (error: any) {
+      if (error?.code === "23505" || error?.message?.includes("unique")) {
+        throw new NeuronError(
+          "An instructor with this email already exists",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+      throw error;
+    }
+  }
+
+  async deleteInstructor(id: string): Promise<string> {
+    const existing = await this.db
+      .select()
+      .from(user)
+      .where(eq(user.id, id))
+      .then(([u]) => u);
+
+    if (!existing) {
+      throw new NeuronError(
+        `Could not find instructor with id ${id}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+
+    if (existing.role !== "instructor") {
+      throw new NeuronError(
+        `User with id ${id} is not an instructor`,
+        NeuronErrorCodes.BAD_REQUEST,
+      );
+    }
+
+    await this.db.delete(user).where(eq(user.id, id));
+    return id;
   }
 
   async inviteUser(): Promise<void> {}

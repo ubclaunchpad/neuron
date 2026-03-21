@@ -4,8 +4,9 @@ import { cn } from "@/lib/utils";
 import React, { useEffect, useRef, useState } from "react";
 import { mergeProps, useMove } from "react-aria";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -21,7 +22,6 @@ import {
   isValidAvailabilityBitstring,
 } from "@/utils/availabilityUtils";
 import EditIcon from "@public/assets/icons/edit.svg";
-import { TypographyTitle } from "../ui/typography";
 
 export type AvailabilityGridProps = {
   availability: string;
@@ -30,6 +30,7 @@ export type AvailabilityGridProps = {
   onCancel?: () => void;
   isEditing?: boolean;
   title?: string;
+  hasUnsavedChanges?: boolean;
   className?: string;
 };
 
@@ -37,8 +38,8 @@ const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
 function generateTimeLabels(): string[] {
   const labels: string[] = [];
-  for (let hour = 9; hour <= 18; hour++) {
-    const time12 = hour > 12 ? hour - 12 : hour;
+  for (let hour = 0; hour <= 23; hour++) {
+    const time12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
     const period = hour >= 12 ? "PM" : "AM";
     labels.push(`${time12} ${period}`);
     labels.push(""); // half-hour spacer
@@ -55,6 +56,7 @@ export function AvailabilityInput({
   onSave,
   onCancel,
   title = "My Availability",
+  hasUnsavedChanges = false,
   className,
 }: AvailabilityGridProps) {
   if (!isValidAvailabilityBitstring(availability)) {
@@ -218,7 +220,14 @@ export function AvailabilityInput({
     >
       <CardHeader>
         <div className="flex items-center justify-between">
-          <TypographyTitle>{title}</TypographyTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>{title}</CardTitle>
+            {hasUnsavedChanges && (
+              <Badge variant="outline" className="text-muted-foreground">
+                Unsaved
+              </Badge>
+            )}
+          </div>
 
           {editable && (
             <div className="flex items-center gap-2">
@@ -237,7 +246,7 @@ export function AvailabilityInput({
                     Cancel
                   </Button>
                   <Button size="sm" onClick={handleSave}>
-                    Save
+                    Done
                   </Button>
                 </>
               )}
@@ -274,7 +283,10 @@ export function AvailabilityInput({
                 {/* time column header (empty, just a spacer) */}
                 <TableHead className="w-14 p-0 border-0" />
                 {DAYS.map((d, i) => (
-                  <TableHead key={i} className="text-accent-foreground text-left">
+                  <TableHead
+                    key={i}
+                    className="text-accent-foreground text-left"
+                  >
                     {d}
                   </TableHead>
                 ))}
@@ -289,13 +301,13 @@ export function AvailabilityInput({
                     // Row cell sizing
                     "[&>td]:h-6 [&>td]:p-0",
                     // Borders: bottom on each cell, light zebra for odd rows, no bottom on last row
-                    "[&>td]:border-b odd:[&>td]:border-b-[var(--border-secondary)] last:[&>td]:border-b-0",
+                    "[&>td]:border-b odd:[&>td]:border-b-(--border-secondary) last:[&>td]:border-b-0",
                     // Vertical separators between day cells (skip time label col and the first day cell)
                     "[&>td:nth-child(n+3)]:border-l [&>td]:border-border [&>td:first-child]:border-0",
                     // Establish base per-cell background CSS var (zebra for even columns)
                     "[--cell-base:hsl(var(--background))]",
                     // Remove hover styles
-                    "hover:!bg-(--cell-base)",
+                    "hover:bg-(--cell-base)!",
                     "[&>td:nth-child(2n)]:[--cell-base:rgba(217,217,217,0.15)]",
                   )}
                 >
@@ -307,12 +319,20 @@ export function AvailabilityInput({
                   {/* Day cells */}
                   {DAYS.map((_, day) => {
                     const isPreviewed = dragging && checkPreviewed(day, time);
-                    const isAvailable = isSlotAvailable(localAvailability, day, time);
+                    const isAvailable = isSlotAvailable(
+                      localAvailability,
+                      day,
+                      time,
+                    );
                     const isPreviewedAvailable = isPreviewed
                       ? !!applyValue
                       : isAvailable;
 
-                    const state: "unavailable" |  "available" | "preview-available" | "preview-unavailable" = isPreviewed
+                    const state:
+                      | "unavailable"
+                      | "available"
+                      | "preview-available"
+                      | "preview-unavailable" = isPreviewed
                       ? isPreviewedAvailable
                         ? "preview-available"
                         : "preview-unavailable"
@@ -326,7 +346,7 @@ export function AvailabilityInput({
                         data-state={state}
                         data-editable={editMode}
                         className={cn(
-                          "transition-colors bg-[var(--cell-bg)]",
+                          "transition-colors bg-(--cell-bg)",
                           "[--cell-bg:var(--cell-base)]",
                           "data-[state=available]:[--cell-bg:var(--color-success)]",
                           "data-[state=preview-available]:[--cell-bg:var(--success-light)]",

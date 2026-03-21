@@ -1,20 +1,27 @@
-import { getImageUrlFromKey } from "@/lib/build-image-url";
+import { buildImageUrl } from "@/lib/build-image-url";
+import type { PublicConfig } from "@/lib/public-config";
 import type { SingleClass } from "@/models/class";
 import type {
   ScheduleEditSchemaInput,
   ScheduleRuleEditSchemaType,
 } from "./schedule-form/schema";
+import { LocationType } from "@/models/api/class";
 import type { ClassEditSchemaType } from "./schema";
 
-export function classToFormValues(c?: SingleClass): ClassEditSchemaType {
+export function classToFormValues(
+  c: SingleClass | undefined,
+  config: PublicConfig | null,
+): ClassEditSchemaType {
   return {
     name: c?.name ?? "",
     description: c?.description ?? "",
-    meetingURL: c?.meetingURL ?? "",
+    locationType: c?.locationType ?? LocationType.MeetingLink,
+    location: c?.location ?? "",
     category: c?.category ?? "",
     subcategory: c?.subcategory ?? "",
-    image: getImageUrlFromKey(c?.image) ?? null,
-    levelRange: [c?.lowerLevel ?? 1, c?.upperLevel ?? 4],
+    image: (config ? buildImageUrl(config, c?.image) : undefined) ?? null,
+    levelRange:
+      c?.lowerLevel && c?.upperLevel ? [c.lowerLevel, c.upperLevel] : null,
     schedules:
       c?.schedules.map((s) => ({
         id: s.id,

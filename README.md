@@ -1,17 +1,21 @@
 # Neuron
+
 A volunteer management system for BC Brain Wellness Program.
 
 <!-- GETTING STARTED -->
+
 ## Getting Started
 
 To get a local copy up and running follow these simple steps.
 
 ## Prerequisites
+
 - [**Node.js**](https://nodejs.org/en/download) and a [pnpm](https://pnpm.io/installation)
 - [**Docker**](https://docs.docker.com/desktop/) for local Postgres + Redis (install Docker Desktop locally)
 - A local `.env` with required variables (see **Environment**)
 
 This project uses:
+
 - **Postgres** (via Drizzle ORM with `postgres-js`)
 - **Redis** for caching
 - Strict typed env validation (fails fast if required keys are missing)
@@ -68,17 +72,6 @@ pnpm dev:redis:clear
 
 ---
 
-## Install & Run
-
-```bash
-pnpm install
-pnpm dev
-```
-
-This launches the Next.js app (frontend + tRPC backend) in development mode
-
----
-
 ## Database Migrations
 
 This repo uses [**Drizzle**](https://orm.drizzle.team/). After Postgres is up, run migrations:
@@ -91,6 +84,17 @@ pnpx drizzle-kit migrate
 ```
 
 Migrations target Postgres and align with the schema under the `src/server/db/schema` module.
+
+---
+
+## Install & Run
+
+```bash
+pnpm install
+pnpm dev
+```
+
+This launches the Next.js app (frontend + tRPC backend) in development mode
 
 ---
 

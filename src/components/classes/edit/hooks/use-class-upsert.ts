@@ -4,7 +4,7 @@ import type { Term } from "@/models/term";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { ClassFormValues } from "../schema";
-import { useClassImageUpload } from "./use-class-image-upload";
+import { useImageUpload } from "@/hooks/use-image-upload";
 import { useClassMutations } from "./use-class-mutations";
 
 export function useClassUpsert({
@@ -22,7 +22,7 @@ export function useClassUpsert({
   const [isSaveAndPublish, setSaveAndPublish] = useState(false);
 
   const { createClass, updateClass, publishClass } = useClassMutations();
-  const { uploadImage } = useClassImageUpload();
+  const { uploadImage } = useImageUpload();
 
   const submitHandler = async (data: ClassFormValues): Promise<string> => {
     const payload = { ...data };
@@ -46,13 +46,14 @@ export function useClassUpsert({
     const createdId = await createClass({
       termId,
       name: payload.name!,
-      lowerLevel: payload.lowerLevel!,
-      upperLevel: payload.upperLevel!,
+      lowerLevel: payload.lowerLevel ?? null,
+      upperLevel: payload.upperLevel ?? null,
       category: payload.category!,
       subcategory: payload.subcategory ?? undefined,
       image: payload.image ?? undefined,
-      meetingURL: payload.meetingURL ?? undefined,
       description: payload.description ?? undefined,
+      location: payload.location ?? undefined,
+      locationType: payload.locationType ?? undefined,
       schedules: payload.addedSchedules,
     } satisfies CreateClassInput);
 

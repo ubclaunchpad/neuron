@@ -33,6 +33,7 @@ import { DeleteClassButton } from "../primitives/delete-class-button";
 import { PublishClassButton } from "../primitives/publish-class-button";
 import { StarClassButton } from "../primitives/star-class-button";
 import { UserList } from "@/components/users/user-list";
+import { SkeletonAside } from "@/components/ui/skeleton";
 
 export function ClassDetailsAside() {
   const { selectedClassId, closeAside } = useClassesPage();
@@ -42,17 +43,9 @@ export function ClassDetailsAside() {
       { classId: selectedClassId ?? "" },
       {
         enabled: !!selectedClassId,
-        suspense: !!selectedClassId,
         meta: { suppressToast: true },
       },
     );
-
-  // Close aside if no shiftId is selected
-  useEffect(() => {
-    if (!selectedClassId) {
-      closeAside();
-    }
-  }, [selectedClassId, closeAside]);
 
   const scheduleViews = useMemo(() => {
     return (classData?.schedules ?? []).map((s) => ({
@@ -75,7 +68,7 @@ export function ClassDetailsAside() {
   }, [classData?.schedules]);
 
   if (isLoadingClassData || !classData) {
-    return <>Loading class...</>;
+    return <SkeletonAside />;
   }
 
   return (
@@ -156,7 +149,9 @@ export function ClassDetailsAside() {
         <Separator />
 
         <div className="flex gap-2">
-          <StarClassButton classId={classData.id} />
+          <WithPermission permissions={{ permission: { classes: ["prefer"] } }}>
+            <StarClassButton classId={classData.id} />
+          </WithPermission>
           <WithPermission permissions={{ permission: { classes: ["create"] } }}>
             <Button variant="outline" asChild>
               <Link

@@ -3,30 +3,32 @@ import {
   CreateCoverageRequest,
   ListCoverageRequestsInput,
 } from "@/models/api/coverage";
-import { Role } from "@/models/interfaces";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 
 export const coverageRouter = createTRPCRouter({
+  byId: authorizedProcedure({
+    permission: { coverage: ["view"] },
+  })
+    .input(CoverageRequestIdInput)
+    .query(async ({ input, ctx }) => {
+      return await ctx.coverageService.getCoverageRequestById(
+        input.coverageRequestId,
+      );
+    }),
   list: authorizedProcedure({
     permission: { coverage: ["view"] },
   })
     .input(ListCoverageRequestsInput)
     .query(async ({ input, ctx }) => {
-      const currentUser = ctx.session.user;
-
-      return await ctx.coverageService.listCoverageRequests(
-        input,
-        currentUser.id,
-        currentUser.role as Role,
-      );
+      return await ctx.coverageService.listCoverageRequests(input);
     }),
   requestCoverage: authorizedProcedure({
     permission: { coverage: ["request"] },
   })
     .input(CreateCoverageRequest)
     .mutation(async ({ input, ctx }) => {
-      const currentUser = ctx.session.user;
+      const currentUser = ctx.currentSessionService.requireUser();
 
       return await ctx.coverageService.createCoverageRequest(
         currentUser.id,
@@ -38,7 +40,7 @@ export const coverageRouter = createTRPCRouter({
   })
     .input(CoverageRequestIdInput)
     .mutation(async ({ input, ctx }) => {
-      const currentUser = ctx.session.user;
+      const currentUser = ctx.currentSessionService.requireUser();
 
       await ctx.coverageService.cancelCoverageRequest(
         currentUser.id,
@@ -50,7 +52,7 @@ export const coverageRouter = createTRPCRouter({
   })
     .input(CoverageRequestIdInput)
     .mutation(async ({ input, ctx }) => {
-      const currentUser = ctx.session.user;
+      const currentUser = ctx.currentSessionService.requireUser();
 
       await ctx.coverageService.fulfillCoverageRequest(
         currentUser.id,
@@ -62,7 +64,7 @@ export const coverageRouter = createTRPCRouter({
   })
     .input(CoverageRequestIdInput)
     .mutation(async ({ input, ctx }) => {
-      const currentUser = ctx.session.user;
+      const currentUser = ctx.currentSessionService.requireUser();
 
       await ctx.coverageService.unassignCoverage(
         currentUser.id,

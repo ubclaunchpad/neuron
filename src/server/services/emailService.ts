@@ -20,7 +20,7 @@ export class EmailService implements IEmailService {
   private readonly transporter: Transporter;
   private readonly env: typeof environment;
 
-  constructor(env: typeof environment) {
+  constructor({ env }: { env: typeof environment }) {
     this.env = env;
     this.transporter = nodemailer.createTransport({
       host: env.SMTP_HOST,

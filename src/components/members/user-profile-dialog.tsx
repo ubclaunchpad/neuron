@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { getImageUrlFromKey } from "@/lib/build-image-url";
+import { useImageUrl } from "@/lib/build-image-url";
 import { Role } from "@/models/interfaces";
 import type { ListUser, User } from "@/models/user";
 import { clientApi } from "@/trpc/client";
@@ -36,6 +36,8 @@ export const UserProfileDialog = NiceModal.create(
       },
     );
 
+    const avatarSrc = useImageUrl(user?.image);
+
     if (!user) return null;
 
     const joinedDate =
@@ -58,7 +60,7 @@ export const UserProfileDialog = NiceModal.create(
 
           <div className="flex flex-col items-center gap-3">
             <Avatar
-              src={getImageUrlFromKey(user.image)}
+              src={avatarSrc}
               fallbackText={`${user.name} ${user.lastName}`}
               className="size-22"
             />

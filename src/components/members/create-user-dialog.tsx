@@ -2,7 +2,7 @@
 
 import { FormInputField } from "@/components/form/FormInput";
 import { FormSelectField } from "@/components/form/FormSelect";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/primitives/button";
 import {
   Dialog,
   DialogClose,
@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
 import { SelectItem } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import { CreateUserInput } from "@/models/api/user";
 import { Role, RoleEnum } from "@/models/interfaces";
 import { clientApi } from "@/trpc/client";
@@ -24,25 +23,22 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 
-const CreateUserSchema = CreateUserInput;
-type CreateUserSchemaType = z.infer<typeof CreateUserSchema>;
-
-const defaultValues: CreateUserSchemaType = {
-  role: Role.instructor,
-  name: "",
-  lastName: "",
-  email: "",
-};
+type CreateUserSchemaType = z.infer<typeof CreateUserInput>;
 
 export const CreateUserDialog = NiceModal.create(() => {
   const modal = useModal();
   const apiUtils = clientApi.useUtils();
 
-  const form = useForm<CreateUserSchemaType>({
-    resolver: zodResolver(CreateUserSchema),
-    defaultValues,
+  const form = useForm({
+    resolver: zodResolver(CreateUserInput),
     mode: "onSubmit",
     reValidateMode: "onChange",
+    defaultValues: {
+      role: "" as Role,
+      name: "",
+      lastName: "",
+      email: "",
+    },
   });
 
   const { mutate: createUserMutation, isPending: isCreating } =
@@ -51,6 +47,7 @@ export const CreateUserDialog = NiceModal.create(() => {
         await apiUtils.user.list.invalidate();
         toast.success("User created successfully");
         modal.hide();
+        form.reset();
       },
     });
 
@@ -66,9 +63,7 @@ export const CreateUserDialog = NiceModal.create(() => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Account</DialogTitle>
-          <DialogDescription>
-            Create a new user account.
-          </DialogDescription>
+          <DialogDescription>Create a new user account.</DialogDescription>
         </DialogHeader>
 
         <form
@@ -83,11 +78,13 @@ export const CreateUserDialog = NiceModal.create(() => {
               placeholder="Select role"
               required
             >
-              {RoleEnum.options.filter(r => r !== Role.volunteer).map((roleValue) => (
-                <SelectItem key={roleValue} value={roleValue}>
-                  {Role.getName(roleValue)}
-                </SelectItem>
-              ))}
+              {RoleEnum.options
+                .filter((r) => r !== Role.volunteer)
+                .map((roleValue) => (
+                  <SelectItem key={roleValue} value={roleValue}>
+                    {Role.getName(roleValue)}
+                  </SelectItem>
+                ))}
             </FormSelectField>
 
             <FieldGroup className="sm:flex-row">
@@ -115,10 +112,6 @@ export const CreateUserDialog = NiceModal.create(() => {
               type="email"
               required
             />
-
-          <p className="text-sm text-muted-foreground text-center">
-            The user will receive an email to set their password.
-          </p>
           </FieldGroup>
 
           <DialogFooter>
@@ -127,9 +120,8 @@ export const CreateUserDialog = NiceModal.create(() => {
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" size="sm" disabled={isCreating}>
-              {isCreating && <Spinner />}
-              <span>Create User</span>
+            <Button type="submit" size="sm" pending={isCreating}>
+              Create User
             </Button>
           </DialogFooter>
         </form>
@@ -137,4 +129,3 @@ export const CreateUserDialog = NiceModal.create(() => {
     </Dialog>
   );
 });
-

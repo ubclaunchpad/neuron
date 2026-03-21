@@ -10,17 +10,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary border-primary text-primary-foreground enabled:hover:bg-primary/90",
+          "bg-primary border-primary text-primary-foreground not-disabled:hover:bg-primary/90",
         destructive:
-          "bg-destructive text-white enabled:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-destructive text-white not-disabled:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         "destructive-outline":
-          "text-destructive border-destructive enabled:hover:text-destructive enabled:hover:bg-destructive/10 border bg-background shadow-xs dark:bg-input/30 dark:border-input dark:enabled:hover:bg-input/50",
+          "text-destructive border-destructive not-disabled:hover:text-destructive not-disabled:hover:bg-destructive/10 border bg-background shadow-xs dark:bg-input/30 dark:border-input dark:not-disabled:hover:bg-input/50",
         outline:
-          "border bg-background shadow-xs enabled:hover:bg-accent enabled:hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:enabled:hover:bg-input/50",
+          "border bg-background shadow-xs not-disabled:hover:bg-accent not-disabled:hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:not-disabled:hover:bg-input/50",
         secondary:
-          "bg-secondary text-secondary-foreground enabled:hover:bg-secondary/80",
+          "bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary/80",
         ghost:
-          "enabled:hover:bg-accent enabled:hover:text-accent-foreground dark:enabled:hover:bg-accent/50",
+          "not-disabled:hover:bg-accent not-di:hover:text-accent-foreground dark:not-disabled:hover:bg-accent/50",
         link: "text-secondary-foreground underline-offset-4 hover:underline",
       },
       size: {
@@ -61,10 +61,10 @@ function Button({
 
   // If disabled, prevent going through onclick
   props.onClick = props.disabled
-  ? (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
-      e.preventDefault();
-    }
-  : props.onClick;
+    ? (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+        e.preventDefault();
+      }
+    : props.onClick;
 
   return (
     <Comp
@@ -80,4 +80,3 @@ function Button({
 }
 
 export { Button, buttonVariants };
-

@@ -9,6 +9,8 @@ export async function AuthProvider({
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
   return (
-    <ClientAuthProvider initialSession={session ?? undefined}>{children}</ClientAuthProvider>
+    <ClientAuthProvider initialSession={session ?? undefined}>
+      {children}
+    </ClientAuthProvider>
   );
 }

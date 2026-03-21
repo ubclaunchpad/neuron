@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { WithPermission } from "@/components/utils/with-permission";
-import { getImageUrlFromKey } from "@/lib/build-image-url";
+import { useImageUrl } from "@/lib/build-image-url";
 import { formatScheduleRecurrence, formatTimeRange } from "@/lib/schedule-fmt";
 import type { ListClass } from "@/models/class";
 import EditIcon from "@public/assets/icons/edit.svg";
@@ -19,10 +19,12 @@ export function ClassCard({
   classData: ListClass;
   onClickAction?: MouseEventHandler<HTMLButtonElement>;
 }) {
+  const imageSrc = useImageUrl(classData.image);
+
   return (
     <Card
       size="sm"
-      className="max-w-full w-[258px] relative has-[button[data-overlay]:hover]:bg-secondary/90 has-[button[data-overlay]:focus-visible]:ring-2 has-[button[data-overlay]:focus-visible]:ring-ring/50"
+      className="max-w-full w-64.5 relative has-[button[data-overlay]:hover]:bg-secondary/90 has-[button[data-overlay]:focus-visible]:ring-2 has-[button[data-overlay]:focus-visible]:ring-ring/50"
     >
       {/* Button that covers the entire card*/}
       <Button
@@ -55,20 +57,22 @@ export function ClassCard({
       <CardContent className="flex flex-col gap-2">
         <Avatar
           className="w-full"
-          src={getImageUrlFromKey(classData.image)}
+          src={imageSrc}
           fallbackText={classData.name}
         />
 
         <div className="flex flex-col items-start">
-          <TypographySmall className="text-primary-muted mb-1">
-            {classData.lowerLevel === classData.upperLevel ? (
-              <>Level {classData.lowerLevel}</>
-            ) : (
-              <>
-                Level {classData.lowerLevel}-{classData.upperLevel}
-              </>
-            )}
-          </TypographySmall>
+          {classData.lowerLevel && classData.upperLevel ? (
+            <TypographySmall className="text-primary-muted mb-1">
+              {classData.lowerLevel === classData.upperLevel ? (
+                <>Level {classData.lowerLevel}</>
+              ) : (
+                <>
+                  Level {classData.lowerLevel}-{classData.upperLevel}
+                </>
+              )}
+            </TypographySmall>
+          ) : null}
 
           <TypographyRegBold className="mb-0.5">
             {classData.name}

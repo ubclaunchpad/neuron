@@ -551,6 +551,7 @@ function SidebarMenuButton({
       <TooltipContent
         side="right"
         align="center"
+        hideArrow
         hidden={state !== "collapsed" || isMobile}
         {...tooltip}
       />

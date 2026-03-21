@@ -60,7 +60,7 @@ export function TermSelect({
           variant="outline"
           endIcon=<ChevronDown />
           className={cn(
-            "min-w-45 max-w-80 shrink justify-between gap-2",
+            "min-w-45 max-w-80 h-9 shrink justify-between gap-2",
             className,
           )}
         >

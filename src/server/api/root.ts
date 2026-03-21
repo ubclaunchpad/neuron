@@ -9,6 +9,7 @@ import { termRouter } from "@/server/api/routers/term-router";
 import { userRouter } from "@/server/api/routers/user-router";
 import { volunteerRouter } from "@/server/api/routers/volunteer-router";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { notificationRouter } from "./routers/notification-router";
 import { storageRouter } from "./routers/storage-router";
 
 /**
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
   user: userRouter,
   term: termRouter,
   profile: profileRouter,
+  notification: notificationRouter,
   storage: storageRouter,
   bugReport: bugReportRouter,
 });

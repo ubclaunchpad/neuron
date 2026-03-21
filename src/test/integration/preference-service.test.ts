@@ -59,7 +59,7 @@ describe("PreferenceService", () => {
 
   describe("getEffectivePreferences", () => {
     it("should return registry defaults when no overrides exist", async () => {
-      const prefs = await preferenceService.getEffectivePreferences(userId);
+      const prefs = await preferenceService.getEffectivePreferences(userId, "volunteer");
 
       expect(prefs.length).toBeGreaterThan(0);
 
@@ -87,7 +87,7 @@ describe("PreferenceService", () => {
         enabled: false,
       });
 
-      const prefs = await preferenceService.getEffectivePreferences(userId);
+      const prefs = await preferenceService.getEffectivePreferences(userId, "volunteer");
 
       const shiftEmail = prefs.find(
         (p) => p.type === "shift.cancelled" && p.channel === "email",
@@ -104,11 +104,13 @@ describe("PreferenceService", () => {
     });
 
     it("should include preferences for all registered notification types", async () => {
-      const prefs = await preferenceService.getEffectivePreferences(userId);
+      const prefs = await preferenceService.getEffectivePreferences(userId, "volunteer");
 
       const types = new Set(prefs.map((p) => p.type));
       expect(types.has("shift.cancelled")).toBe(true);
-      expect(types.has("coverage.requested")).toBe(true);
+      expect(types.has("coverage.available")).toBe(true);
+      // coverage.requested is admin/instructor only, not shown for volunteers
+      expect(types.has("coverage.requested")).toBe(false);
     });
   });
 
@@ -121,7 +123,7 @@ describe("PreferenceService", () => {
         enabled: false,
       });
 
-      const prefs = await preferenceService.getEffectivePreferences(userId);
+      const prefs = await preferenceService.getEffectivePreferences(userId, "volunteer");
       const pref = prefs.find(
         (p) => p.type === "shift.cancelled" && p.channel === "email",
       );
@@ -144,7 +146,7 @@ describe("PreferenceService", () => {
         enabled: true,
       });
 
-      const prefs = await preferenceService.getEffectivePreferences(userId);
+      const prefs = await preferenceService.getEffectivePreferences(userId, "volunteer");
       const pref = prefs.find(
         (p) => p.type === "shift.cancelled" && p.channel === "email",
       );
@@ -166,7 +168,7 @@ describe("PreferenceService", () => {
         enabled: false,
       });
 
-      const prefs = await preferenceService.getEffectivePreferences(userId);
+      const prefs = await preferenceService.getEffectivePreferences(userId, "volunteer");
       const emailPref = prefs.find(
         (p) => p.type === "shift.cancelled" && p.channel === "email",
       );
@@ -190,7 +192,7 @@ describe("PreferenceService", () => {
       });
 
       // Verify it's overridden
-      let prefs = await preferenceService.getEffectivePreferences(userId);
+      let prefs = await preferenceService.getEffectivePreferences(userId, "volunteer");
       let pref = prefs.find(
         (p) => p.type === "shift.cancelled" && p.channel === "email",
       );
@@ -205,7 +207,7 @@ describe("PreferenceService", () => {
       });
 
       // Should revert to registry default (true)
-      prefs = await preferenceService.getEffectivePreferences(userId);
+      prefs = await preferenceService.getEffectivePreferences(userId, "volunteer");
       pref = prefs.find(
         (p) => p.type === "shift.cancelled" && p.channel === "email",
       );
@@ -221,7 +223,7 @@ describe("PreferenceService", () => {
         channel: "email",
       });
 
-      const prefs = await preferenceService.getEffectivePreferences(userId);
+      const prefs = await preferenceService.getEffectivePreferences(userId, "volunteer");
       const pref = prefs.find(
         (p) => p.type === "shift.cancelled" && p.channel === "email",
       );

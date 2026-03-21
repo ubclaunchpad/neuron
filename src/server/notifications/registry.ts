@@ -66,6 +66,15 @@ export interface CoverageFilledPersonalContext {
 export const notificationTypes = {
   "shift.cancelled": {
     key: "shift.cancelled",
+    label: "Shift cancellations",
+    description: {
+      admin: "Get notified when any shift is cancelled across the program",
+      instructor:
+        "Get notified when a shift you're instructing is cancelled",
+      volunteer:
+        "Get notified when a shift you're assigned to is cancelled",
+    },
+    applicableRoles: ["admin", "volunteer", "instructor"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Shift Cancelled: ${ctx.className}`,
     body: (ctx) =>
@@ -84,6 +93,14 @@ export const notificationTypes = {
 
   "coverage.requested": {
     key: "coverage.requested",
+    label: "Coverage requests",
+    description: {
+      admin:
+        "Get notified when any volunteer requests coverage for a shift",
+      instructor:
+        "Get notified when a volunteer requests coverage for one of your classes",
+    },
+    applicableRoles: ["admin", "instructor"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Coverage Needed: ${ctx.className}`,
     body: (ctx) =>
@@ -102,6 +119,10 @@ export const notificationTypes = {
 
   "coverage.available": {
     key: "coverage.available",
+    label: "Coverage opportunities",
+    description:
+      "Get notified when a shift you're eligible for needs coverage",
+    applicableRoles: ["volunteer"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Coverage Opportunity: ${ctx.className}`,
     body: (ctx) =>
@@ -119,6 +140,10 @@ export const notificationTypes = {
 
   "shift.reminder": {
     key: "shift.reminder",
+    label: "Shift reminders",
+    description:
+      "Get a reminder 1 hour before your upcoming shifts",
+    applicableRoles: ["volunteer"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Shift Reminder: ${ctx.className}`,
     body: (ctx) =>
@@ -137,6 +162,10 @@ export const notificationTypes = {
 
   "shift.no-checkin": {
     key: "shift.no-checkin",
+    label: "Missed check-ins",
+    description:
+      "Get notified when volunteers don't check in for their scheduled shift",
+    applicableRoles: ["admin"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Missed Check-in: ${ctx.className}`,
     body: (ctx) =>
@@ -155,6 +184,14 @@ export const notificationTypes = {
 
   "coverage.filled": {
     key: "coverage.filled",
+    label: "Coverage updates",
+    description: {
+      admin:
+        "Get notified when a volunteer picks up an open coverage request",
+      instructor:
+        "Get notified when coverage is filled for one of your classes",
+    },
+    applicableRoles: ["admin", "instructor"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Coverage Filled: ${ctx.className}`,
     body: (ctx) =>
@@ -173,6 +210,10 @@ export const notificationTypes = {
 
   "coverage.filled-personal": {
     key: "coverage.filled-personal",
+    label: "Your coverage requests",
+    description:
+      "Get notified when another volunteer picks up a shift you requested coverage for",
+    applicableRoles: ["volunteer"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Your Coverage Request Was Filled: ${ctx.className}`,
     body: (ctx) =>

@@ -1,12 +1,14 @@
 import { cleanupOrphanedImagesJob } from "./definitions/cleanup-orphaned-images.job";
 import { processNotificationJob } from "./definitions/process-notification.job";
 import { checkShiftNotificationsJob } from "./definitions/check-shift-notifications.job";
+import { sendEmailJob } from "./definitions/send-email.job";
 import type { RegisteredJob } from "./types";
 
 const allJobs = [
   cleanupOrphanedImagesJob,
   processNotificationJob,
   checkShiftNotificationsJob,
+  sendEmailJob,
 ] as const satisfies readonly RegisteredJob<any>[];
 
 type AnyKnownJob = (typeof allJobs)[number];

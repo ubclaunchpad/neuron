@@ -16,6 +16,9 @@ export interface NotificationTypeDefinition<
   TContext extends {} = Record<string, unknown>,
 > {
   key: string;
+  label: string;
+  description: string | Partial<Record<Role, string>>;
+  applicableRoles: Role[];
   channelDefaults: ChannelDefaults;
   title: (ctx: TContext) => string;
   body: (ctx: TContext) => string;
@@ -37,6 +40,8 @@ export interface NotifyParams {
 
 export interface EffectivePreference {
   type: string;
+  label: string;
+  description: string;
   channel: NotificationChannel;
   enabled: boolean;
   isOverride: boolean;

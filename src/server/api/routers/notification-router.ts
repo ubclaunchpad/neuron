@@ -5,6 +5,7 @@ import {
   MarkAsReadInput,
   SetNotificationPreferenceInput,
 } from "@/models/api/notification";
+import type { Role } from "@/models/interfaces";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 
@@ -67,8 +68,11 @@ export const notificationRouter = createTRPCRouter({
   }),
 
   preferences: authorizedProcedure().query(async ({ ctx }) => {
-    const userId = ctx.currentSessionService.requireUser().id;
-    return ctx.preferenceService.getEffectivePreferences(userId);
+    const user = ctx.currentSessionService.requireUser();
+    return ctx.preferenceService.getEffectivePreferences(
+      user.id,
+      user.role as Role,
+    );
   }),
 
   setPreference: authorizedProcedure()

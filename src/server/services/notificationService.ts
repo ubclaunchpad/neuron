@@ -17,7 +17,6 @@ import type {
   NotifyParams,
 } from "@/server/notifications/types";
 import type { IJobService } from "@/server/services/jobService";
-import type { IEmailService } from "@/server/services/emailService";
 import type { IPreferenceService } from "@/server/services/preferenceService";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
@@ -62,23 +61,19 @@ export interface INotificationService {
 export class NotificationService implements INotificationService {
   private readonly db: Drizzle;
   private readonly jobService: IJobService;
-  private readonly emailService: IEmailService;
   private readonly preferenceService: IPreferenceService;
 
   constructor({
     db,
     jobService,
-    emailService,
     preferenceService,
   }: {
     db: Drizzle;
     jobService: IJobService;
-    emailService: IEmailService;
     preferenceService: IPreferenceService;
   }) {
     this.db = db;
     this.jobService = jobService;
-    this.emailService = emailService;
     this.preferenceService = preferenceService;
   }
 
@@ -388,23 +383,12 @@ export class NotificationService implements INotificationService {
       }
 
       for (const recipient of emailRecipients) {
-        try {
-          if (html) {
-            await this.emailService.send(
-              recipient.email,
-              title,
-              emailText ?? body,
-              html,
-            );
-          } else {
-            await this.emailService.send(recipient.email, title, body);
-          }
-        } catch (error) {
-          console.error(
-            `[notification] Failed to send email to ${recipient.email} for ${type}:`,
-            error,
-          );
-        }
+        void this.jobService.run("jobs.send-email", {
+          to: recipient.email,
+          subject: title,
+          text: emailText ?? body,
+          ...(html ? { html } : {}),
+        });
       }
     }
   }

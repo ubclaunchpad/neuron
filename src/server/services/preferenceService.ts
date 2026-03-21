@@ -8,6 +8,7 @@ import {
   notificationTypes,
   type NotificationType,
 } from "@/server/notifications/registry";
+import type { Role } from "@/models/interfaces";
 import type {
   EffectivePreference,
   NotificationChannel,
@@ -15,7 +16,10 @@ import type {
 import { and, eq, inArray } from "drizzle-orm";
 
 export interface IPreferenceService {
-  getEffectivePreferences(userId: string): Promise<EffectivePreference[]>;
+  getEffectivePreferences(
+    userId: string,
+    role: Role,
+  ): Promise<EffectivePreference[]>;
 
   setPreference(params: {
     userId: string;
@@ -45,6 +49,7 @@ export class PreferenceService implements IPreferenceService {
 
   async getEffectivePreferences(
     userId: string,
+    role: Role,
   ): Promise<EffectivePreference[]> {
     const overrides = await this.db
       .select()
@@ -60,15 +65,29 @@ export class PreferenceService implements IPreferenceService {
 
     for (const typeKey of allNotificationTypes) {
       const typeDef = notificationTypes[typeKey];
+
+      // Only include notification types applicable to this role
+      if (!(typeDef.applicableRoles as readonly string[]).includes(role))
+        continue;
+
       const channels = Object.entries(typeDef.channelDefaults) as [
         NotificationChannel,
         boolean,
       ][];
 
+      const description =
+        typeof typeDef.description === "string"
+          ? typeDef.description
+          : ((typeDef.description as Record<string, string>)[role] ??
+              Object.values(typeDef.description)[0] ??
+              "");
+
       for (const [channel, defaultEnabled] of channels) {
         const override = overrideMap.get(`${typeKey}:${channel}`);
         result.push({
           type: typeKey,
+          label: typeDef.label,
+          description,
           channel,
           enabled: override ? override.enabled : defaultEnabled,
           isOverride: !!override,

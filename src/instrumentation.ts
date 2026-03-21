@@ -1,12 +1,14 @@
+import { env } from "@/env";
 import { migrate } from "@/server/db/migrate";
+import * as Sentry from "@sentry/nextjs";
 
-/**
- * Next.js instrumentation hook. Called exactly once when the server process
- * starts (both in development and production). This is the right place to run
- * one-time startup work like database migrations.
- *
- * @see https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
- */
 export async function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    Sentry.init({
+      dsn: env.SENTRY_DSN,
+      tracesSampleRate: 1.0,
+      environment: env.NODE_ENV,
+    });
+  }
   await migrate();
 }

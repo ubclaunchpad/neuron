@@ -13,6 +13,7 @@ import {
 import { forceLogout } from "@/lib/auth/logout";
 import { useAuth } from "@/providers/client-auth-provider";
 import NiceModal from "@ebay/nice-modal-react";
+import { ReportIssueDialog } from "../report-issue-dialog";
 import { SettingsDialog } from "./settings-dialog";
 
 export function SettingsDropdown({
@@ -46,11 +47,9 @@ export function SettingsDropdown({
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem disabled>
+            <DropdownMenuItem onSelect={() => NiceModal.show(ReportIssueDialog)}>
               <Flag />
-              <span>
-                Report a Bug <i>(Coming soon)</i>
-              </span>
+              <span>Report Issue</span>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={handleLogout}>
               <LogOut />

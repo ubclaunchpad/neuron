@@ -1,4 +1,5 @@
 import "server-only";
+import { bugReportRouter } from "@/server/api/routers/bug-report-router";
 import { classRouter } from "@/server/api/routers/class-router";
 import { coverageRouter } from "@/server/api/routers/coverage-router";
 import { logRouter } from "@/server/api/routers/log-router";
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
   term: termRouter,
   profile: profileRouter,
   storage: storageRouter,
+  bugReport: bugReportRouter,
 });
 
 // export type definition of API

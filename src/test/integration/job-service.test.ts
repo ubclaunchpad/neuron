@@ -273,17 +273,13 @@ describe("JobService", () => {
       expect(result).toBeNull();
     });
 
-    it("rejects correlationId due to colon separator in queue name (known bug)", async () => {
-      // getQueueName() produces "jobs.integration-test:tenant-1" but pg-boss
-      // only allows alphanumeric, underscores, hyphens, periods, and slashes.
-      // The ":" separator is invalid. This test documents the current behavior.
-      await expect(
-        jobService.run(
-          "jobs.integration-test",
-          { message: "cron-corr" },
-          { cron: "0 * * * *", correlationId: "tenant-1" },
-        ),
-      ).rejects.toThrow(/Name can only contain/);
+    it("schedules cron job with correlationId", async () => {
+      const result = await jobService.run(
+        "jobs.integration-test",
+        { message: "cron-corr" },
+        { cron: "0 * * * *", correlationId: "tenant-1" },
+      );
+      expect(result).toBeNull();
     });
 
     it("rejects cron with runAt", async () => {
@@ -320,10 +316,13 @@ describe("JobService", () => {
       ).resolves.toBeUndefined();
     });
 
-    it("unschedules by correlationId (no-ops when schedule does not exist)", async () => {
-      // unschedule with correlationId resolves even if the schedule was never
-      // created — pg-boss.unschedule does not validate queue name format the
-      // same way as getQueue/createQueue.
+    it("unschedules by correlationId", async () => {
+      await jobService.run(
+        "jobs.integration-test",
+        { message: "corr-unsched" },
+        { cron: "0 * * * *", correlationId: "tenant-2" },
+      );
+
       await expect(
         jobService.unschedule("jobs.integration-test", {
           correlationId: "tenant-2",
@@ -332,9 +331,9 @@ describe("JobService", () => {
     });
 
     it("throws for unknown job name", async () => {
-      await expect(
-        jobService.unschedule("jobs.nonexistent"),
-      ).rejects.toThrow("Unknown job name");
+      await expect(jobService.unschedule("jobs.nonexistent")).rejects.toThrow(
+        "Unknown job name",
+      );
     });
   });
 
@@ -366,9 +365,9 @@ describe("JobService", () => {
 
   describe("error handling", () => {
     it("throws for unknown job name on run()", async () => {
-      await expect(
-        jobService.run("jobs.does-not-exist"),
-      ).rejects.toThrow("Unknown job name");
+      await expect(jobService.run("jobs.does-not-exist")).rejects.toThrow(
+        "Unknown job name",
+      );
     });
 
     it("throws for unknown job name on unschedule()", async () => {

@@ -7,6 +7,7 @@ export type ProcessNotificationPayload = {
   context: Record<string, unknown>;
   actorId?: string;
   idempotencyKey?: string;
+  excludeUserIds?: string[];
 };
 
 export const processNotificationJob: RegisteredJob<ProcessNotificationPayload> =
@@ -24,6 +25,7 @@ export const processNotificationJob: RegisteredJob<ProcessNotificationPayload> =
         context: payload.context,
         actorId: payload.actorId,
         idempotencyKey: payload.idempotencyKey,
+        excludeUserIds: payload.excludeUserIds,
       });
     },
   };

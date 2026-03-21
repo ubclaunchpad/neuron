@@ -12,6 +12,7 @@ import {
   type ListCoverageRequestWithReason,
 } from "@/models/coverage";
 import { hasPermission } from "@/lib/auth/extensions/permissions";
+import { formatDate } from "@/lib/constants";
 import { Role } from "@/models/interfaces";
 import type { EmbeddedShift } from "@/models/shift";
 import { buildUser } from "@/models/user";
@@ -432,7 +433,7 @@ export class CoverageService implements ICoverageService {
         shiftId: requestData.shiftId,
         classId: shiftInfo.courseId,
         className: shiftInfo.courseName,
-        shiftDate: shiftInfo.startAt.toLocaleDateString(),
+        shiftDate: formatDate(shiftInfo.startAt),
         shiftStartAt: shiftInfo.startAt,
         shiftEndAt: shiftInfo.endAt,
         requestingVolunteerUserId,
@@ -587,7 +588,7 @@ export class CoverageService implements ICoverageService {
       shiftId: request.shiftId,
       classId: request.courseId,
       className: request.courseName,
-      shiftDate: request.shiftStartAt.toLocaleDateString(),
+      shiftDate: formatDate(request.shiftStartAt),
       coveredByVolunteerUserId,
       coveredByVolunteerName: currentUser?.name ?? "A volunteer",
       requestingVolunteerUserId: request.requestingVolunteerUserId,

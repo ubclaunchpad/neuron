@@ -189,7 +189,10 @@ export class NotificationService implements INotificationService {
       )
       .returning({ id: notification.id });
     if (rows.length === 0) {
-      throw new NeuronError("Notification not found", NeuronErrorCodes.NOT_FOUND);
+      throw new NeuronError(
+        "Notification not found",
+        NeuronErrorCodes.NOT_FOUND,
+      );
     }
   }
 
@@ -205,7 +208,10 @@ export class NotificationService implements INotificationService {
       )
       .returning({ id: notification.id });
     if (rows.length === 0) {
-      throw new NeuronError("Notification not found", NeuronErrorCodes.NOT_FOUND);
+      throw new NeuronError(
+        "Notification not found",
+        NeuronErrorCodes.NOT_FOUND,
+      );
     }
   }
 
@@ -225,7 +231,12 @@ export class NotificationService implements INotificationService {
   async archive(notificationId: string, userId: string): Promise<void> {
     const rows = await this.db
       .update(notification)
-      .set({ archived: true, archivedAt: new Date(), read: true, readAt: new Date() })
+      .set({
+        archived: true,
+        archivedAt: new Date(),
+        read: true,
+        readAt: new Date(),
+      })
       .where(
         and(
           eq(notification.id, notificationId),
@@ -234,7 +245,10 @@ export class NotificationService implements INotificationService {
       )
       .returning({ id: notification.id });
     if (rows.length === 0) {
-      throw new NeuronError("Notification not found", NeuronErrorCodes.NOT_FOUND);
+      throw new NeuronError(
+        "Notification not found",
+        NeuronErrorCodes.NOT_FOUND,
+      );
     }
   }
 
@@ -250,7 +264,10 @@ export class NotificationService implements INotificationService {
       )
       .returning({ id: notification.id });
     if (rows.length === 0) {
-      throw new NeuronError("Notification not found", NeuronErrorCodes.NOT_FOUND);
+      throw new NeuronError(
+        "Notification not found",
+        NeuronErrorCodes.NOT_FOUND,
+      );
     }
   }
 
@@ -259,10 +276,7 @@ export class NotificationService implements INotificationService {
       .update(notification)
       .set({ archived: true, archivedAt: new Date() })
       .where(
-        and(
-          eq(notification.userId, userId),
-          eq(notification.archived, false),
-        ),
+        and(eq(notification.userId, userId), eq(notification.archived, false)),
       );
   }
 
@@ -281,12 +295,15 @@ export class NotificationService implements INotificationService {
     idempotencyKey?: string;
     excludeUserIds?: string[];
   }): Promise<void> {
-    // Check idempotency
+    // Check idempotency — per-user keys are stored as `${baseKey}:${userId}`,
+    // so we check for any row whose key starts with the base key.
     if (idempotencyKey) {
       const [existing] = await this.db
         .select({ id: notification.id })
         .from(notification)
-        .where(eq(notification.idempotencyKey, idempotencyKey))
+        .where(
+          sql`${notification.idempotencyKey} like ${idempotencyKey + ":%"}`,
+        )
         .limit(1);
 
       if (existing) return;
@@ -396,7 +413,6 @@ export class NotificationService implements INotificationService {
   private async resolveAudience(
     audience: Audience,
   ): Promise<ResolvedRecipient[]> {
-    console.log("processing notif");
     switch (audience.kind) {
       case "user": {
         const [result] = await this.db

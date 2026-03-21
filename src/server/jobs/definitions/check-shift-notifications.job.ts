@@ -5,6 +5,7 @@ import { course } from "@/server/db/schema/course";
 import { volunteerToSchedule } from "@/server/db/schema/schedule";
 import { user } from "@/server/db/schema/user";
 import { CoverageStatus } from "@/models/api/coverage";
+import { formatDate, formatTime } from "@/lib/constants";
 import type { RegisteredJob } from "../types";
 
 export type CheckShiftNotificationsPayload = {
@@ -54,11 +55,8 @@ export const checkShiftNotificationsJob: RegisteredJob<CheckShiftNotificationsPa
         await notificationEventService.notifyShiftReminder({
           shiftId,
           className: shiftRow.className,
-          shiftDate: shiftRow.startAt.toLocaleDateString(),
-          shiftTime: shiftRow.startAt.toLocaleTimeString([], {
-            hour: "numeric",
-            minute: "2-digit",
-          }),
+          shiftDate: formatDate(shiftRow.startAt),
+          shiftTime: formatTime(shiftRow.startAt),
           volunteerUserIds: effectiveVolunteers.map((v) => v.userId),
         });
       } else {
@@ -80,7 +78,7 @@ export const checkShiftNotificationsJob: RegisteredJob<CheckShiftNotificationsPa
         await notificationEventService.notifyShiftNoCheckin({
           shiftId,
           className: shiftRow.className,
-          shiftDate: shiftRow.startAt.toLocaleDateString(),
+          shiftDate: formatDate(shiftRow.startAt),
           volunteerNames: missingVolunteers.map((v) => v.name).join(", "),
           volunteerCount: missingVolunteers.length,
         });

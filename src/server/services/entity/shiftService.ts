@@ -1,4 +1,5 @@
 import { hasPermission } from "@/lib/auth/extensions/permissions";
+import { formatDate } from "@/lib/constants";
 import type { ICurrentSessionService } from "@/server/services/currentSessionService";
 import { CoverageStatus } from "@/models/api/coverage";
 import type {
@@ -803,7 +804,7 @@ export class ShiftService implements IShiftService {
     void this.notificationEventService.notifyShiftCancelled({
       shiftId,
       className: shiftRow.courseName,
-      shiftDate: shiftRow.startAt.toLocaleDateString(),
+      shiftDate: formatDate(shiftRow.startAt),
       cancelReason,
       cancelledByUserId: currentUserId ?? "system",
       cancelledByName: currentUser?.name ?? "System",

@@ -6,6 +6,7 @@ import {
   SetNotificationPreferenceInput,
 } from "@/models/api/notification";
 import type { Role } from "@/models/interfaces";
+import { getListNotification } from "@/models/notification";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 
@@ -14,7 +15,7 @@ export const notificationRouter = createTRPCRouter({
     .input(ListNotificationsInput)
     .query(async ({ input, ctx }) => {
       const userId = ctx.currentSessionService.requireUser().id;
-      return ctx.notificationService.getNotifications({
+      const result = await ctx.notificationService.getNotifications({
         userId,
         type: input.type,
         read: input.read,
@@ -22,6 +23,10 @@ export const notificationRouter = createTRPCRouter({
         limit: input.limit,
         cursor: input.cursor,
       });
+      return {
+        items: result.items.map(getListNotification),
+        nextCursor: result.nextCursor,
+      };
     }),
 
   unreadCount: authorizedProcedure().query(async ({ ctx }) => {

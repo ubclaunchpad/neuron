@@ -1,41 +1,65 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import { Archive, ArchiveRestore, MailOpen, Mail } from "lucide-react";
-import type { NotificationDB } from "@/server/db/schema/notification";
+import type { ListNotification } from "@/models/notification";
 import { Button as UIButton } from "@/components/ui/button";
 import { Button } from "@/components/primitives/button";
-
-export function timeAgo(date: Date): string {
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return date.toLocaleDateString();
-}
+import { clientApi } from "@/trpc/client";
+import { timeAgo } from "./utils";
 
 interface NotificationItemProps {
-  notification: NotificationDB;
-  onClick: () => void;
-  onArchive: (notificationId: string) => void;
-  onUnarchive: (notificationId: string) => void;
-  onToggleRead: (notificationId: string) => void;
+  notification: ListNotification;
   isArchivedView?: boolean;
+  onClose: () => void;
 }
 
 export function NotificationItem({
   notification,
-  onClick,
-  onArchive,
-  onUnarchive,
-  onToggleRead,
   isArchivedView = false,
+  onClose,
 }: NotificationItemProps) {
+  const router = useRouter();
+  const utils = clientApi.useUtils();
+
+  const invalidate = () => {
+    void utils.notification.unreadCount.invalidate();
+    void utils.notification.list.invalidate();
+  };
+
+  const markAsRead = clientApi.notification.markAsRead.useMutation({
+    onSuccess: invalidate,
+  });
+
+  const markAsUnread = clientApi.notification.markAsUnread.useMutation({
+    onSuccess: invalidate,
+  });
+
+  const archive = clientApi.notification.archive.useMutation({
+    onSuccess: invalidate,
+  });
+
+  const unarchive = clientApi.notification.unarchive.useMutation({
+    onSuccess: invalidate,
+  });
+
+  const handleClick = () => {
+    markAsRead.mutate({ notificationId: notification.id });
+    if (notification.linkUrl) {
+      router.push(notification.linkUrl as Route);
+    }
+    onClose();
+  };
+
+  const handleToggleRead = () => {
+    if (notification.read) {
+      markAsUnread.mutate({ notificationId: notification.id });
+    } else {
+      markAsRead.mutate({ notificationId: notification.id });
+    }
+  };
+
   const isUnread = !notification.read;
 
   return (
@@ -50,7 +74,7 @@ export function NotificationItem({
         unstyled
         aria-label={notification.title}
         className="absolute z-10 inset-0 cursor-pointer"
-        onClick={onClick}
+        onClick={handleClick}
       />
 
       {/* Content */}
@@ -86,7 +110,7 @@ export function NotificationItem({
             variant="ghost"
             size="icon-sm"
             tooltip="Unarchive"
-            onClick={() => onUnarchive(notification.id)}
+            onClick={() => unarchive.mutate({ notificationId: notification.id })}
             startIcon={<ArchiveRestore />}
           ></Button>
         ) : (
@@ -95,14 +119,14 @@ export function NotificationItem({
               variant="ghost"
               size="icon-sm"
               tooltip={isUnread ? "Mark as read" : "Mark as unread"}
-              onClick={() => onToggleRead(notification.id)}
+              onClick={handleToggleRead}
               startIcon={isUnread ? <MailOpen /> : <Mail />}
             ></Button>
             <Button
               variant="ghost"
               size="icon-sm"
               tooltip="Archive"
-              onClick={() => onArchive(notification.id)}
+              onClick={() => archive.mutate({ notificationId: notification.id })}
               startIcon={<Archive />}
             ></Button>
           </>

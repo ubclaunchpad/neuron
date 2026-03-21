@@ -6,6 +6,7 @@ import {
   instructorToSchedule,
 } from "@/server/db/schema/schedule";
 import { shift } from "@/server/db/schema/shift";
+import { user } from "@/server/db/schema/user";
 import { and, eq, inArray, lt, gt, notInArray } from "drizzle-orm";
 
 interface ShiftCancelledParams {
@@ -243,7 +244,13 @@ export class NotificationEventService implements INotificationEventService {
     const instructors = await this.db
       .select({ userId: instructorToSchedule.instructorUserId })
       .from(instructorToSchedule)
-      .where(inArray(instructorToSchedule.scheduleId, scheduleIds));
+      .innerJoin(user, eq(user.id, instructorToSchedule.instructorUserId))
+      .where(
+        and(
+          inArray(instructorToSchedule.scheduleId, scheduleIds),
+          eq(user.status, "active"),
+        ),
+      );
 
     return [...new Set(instructors.map((i) => i.userId))];
   }

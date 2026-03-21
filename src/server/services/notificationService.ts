@@ -19,7 +19,7 @@ import type {
 import type { IJobService } from "@/server/services/jobService";
 import type { IPreferenceService } from "@/server/services/preferenceService";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 import type { RunnableJobName } from "@/server/jobs/registry";
 
 interface ResolvedRecipient {
@@ -142,23 +142,34 @@ export class NotificationService implements INotificationService {
       eq(notification.archived, archived !== undefined ? archived : false),
     );
     if (cursor) {
-      conditions.push(lt(notification.createdAt, new Date(cursor)));
+      const [cursorTs, cursorId] = cursor.split("|");
+      if (cursorTs && cursorId) {
+        conditions.push(
+          or(
+            lt(notification.createdAt, new Date(cursorTs)),
+            and(
+              eq(notification.createdAt, new Date(cursorTs)),
+              lt(notification.id, cursorId),
+            ),
+          )!,
+        );
+      }
     }
 
     const items = await this.db
       .select()
       .from(notification)
       .where(and(...conditions))
-      .orderBy(desc(notification.createdAt))
+      .orderBy(desc(notification.createdAt), desc(notification.id))
       .limit(limit + 1);
 
     const hasMore = items.length > limit;
     if (hasMore) items.pop();
 
-    const nextCursor =
-      hasMore && items.length > 0
-        ? items[items.length - 1]!.createdAt.toISOString()
-        : null;
+    const lastItem = hasMore && items.length > 0 ? items[items.length - 1]! : null;
+    const nextCursor = lastItem
+      ? `${lastItem.createdAt.toISOString()}|${lastItem.id}`
+      : null;
 
     return { items, nextCursor };
   }
@@ -274,7 +285,12 @@ export class NotificationService implements INotificationService {
   async archiveAll(userId: string): Promise<void> {
     await this.db
       .update(notification)
-      .set({ archived: true, archivedAt: new Date() })
+      .set({
+        archived: true,
+        archivedAt: new Date(),
+        read: true,
+        readAt: new Date(),
+      })
       .where(
         and(eq(notification.userId, userId), eq(notification.archived, false)),
       );
@@ -427,7 +443,9 @@ export class NotificationService implements INotificationService {
         return this.db
           .select({ userId: user.id, email: user.email })
           .from(user)
-          .where(inArray(user.id, audience.userIds));
+          .where(
+            and(inArray(user.id, audience.userIds), eq(user.status, "active")),
+          );
       }
 
       case "role": {
@@ -451,13 +469,23 @@ export class NotificationService implements INotificationService {
           .select({ userId: user.id, email: user.email })
           .from(volunteerToSchedule)
           .innerJoin(user, eq(user.id, volunteerToSchedule.volunteerUserId))
-          .where(eq(volunteerToSchedule.scheduleId, shiftRow.scheduleId));
+          .where(
+            and(
+              eq(volunteerToSchedule.scheduleId, shiftRow.scheduleId),
+              eq(user.status, "active"),
+            ),
+          );
 
         const instructors = await this.db
           .select({ userId: user.id, email: user.email })
           .from(instructorToSchedule)
           .innerJoin(user, eq(user.id, instructorToSchedule.instructorUserId))
-          .where(eq(instructorToSchedule.scheduleId, shiftRow.scheduleId));
+          .where(
+            and(
+              eq(instructorToSchedule.scheduleId, shiftRow.scheduleId),
+              eq(user.status, "active"),
+            ),
+          );
 
         return deduplicateRecipients([...volunteers, ...instructors]);
       }
@@ -476,13 +504,23 @@ export class NotificationService implements INotificationService {
           .select({ userId: user.id, email: user.email })
           .from(volunteerToSchedule)
           .innerJoin(user, eq(user.id, volunteerToSchedule.volunteerUserId))
-          .where(inArray(volunteerToSchedule.scheduleId, scheduleIds));
+          .where(
+            and(
+              inArray(volunteerToSchedule.scheduleId, scheduleIds),
+              eq(user.status, "active"),
+            ),
+          );
 
         const instructors = await this.db
           .select({ userId: user.id, email: user.email })
           .from(instructorToSchedule)
           .innerJoin(user, eq(user.id, instructorToSchedule.instructorUserId))
-          .where(inArray(instructorToSchedule.scheduleId, scheduleIds));
+          .where(
+            and(
+              inArray(instructorToSchedule.scheduleId, scheduleIds),
+              eq(user.status, "active"),
+            ),
+          );
 
         return deduplicateRecipients([...volunteers, ...instructors]);
       }

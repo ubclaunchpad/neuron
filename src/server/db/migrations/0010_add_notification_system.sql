@@ -11,6 +11,8 @@ CREATE TABLE "notification" (
 	"actor_id" uuid,
 	"read" boolean DEFAULT false NOT NULL,
 	"read_at" timestamp with time zone,
+	"archived" boolean DEFAULT false NOT NULL,
+	"archived_at" timestamp with time zone,
 	"email_sent" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"idempotency_key" text,
@@ -33,5 +35,6 @@ CREATE INDEX "idx_notification_user_created" ON "notification" USING btree ("use
 CREATE INDEX "idx_notification_user_read" ON "notification" USING btree ("user_id","read");--> statement-breakpoint
 CREATE INDEX "idx_notification_type" ON "notification" USING btree ("type");--> statement-breakpoint
 CREATE INDEX "idx_notification_source" ON "notification" USING btree ("source_type","source_id");--> statement-breakpoint
+CREATE INDEX "idx_notification_user_archived" ON "notification" USING btree ("user_id","archived");--> statement-breakpoint
 CREATE UNIQUE INDEX "uq_notification_pref_user_type_channel" ON "notification_preference" USING btree ("user_id","type","channel");--> statement-breakpoint
 CREATE INDEX "idx_notification_pref_user" ON "notification_preference" USING btree ("user_id");

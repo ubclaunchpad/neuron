@@ -1,5 +1,5 @@
 {
-  "id": "f790cb06-6dfc-4305-b743-957276334967",
+  "id": "97fec7ce-4c2d-46f2-9bd1-76ff70f62293",
   "prevId": "5de7367c-71f7-4d40-9ee8-87a526c11ab9",
   "version": "7",
   "dialect": "postgresql",
@@ -2156,6 +2156,19 @@
           "primaryKey": false,
           "notNull": false
         },
+        "archived": {
+          "name": "archived",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "email_sent": {
           "name": "email_sent",
           "type": "boolean",
@@ -2246,6 +2259,27 @@
             },
             {
               "expression": "source_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_notification_user_archived": {
+          "name": "idx_notification_user_archived",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "archived",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

@@ -1,19 +1,12 @@
 import * as Sentry from "@sentry/nextjs";
-import { publicProcedure } from "@/server/api/procedures";
+import { SubmitBugReportInput } from "@/models/api/bug-report";
+import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
-import { z } from "zod";
-
-const SubmitBugReportInput = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
-});
 
 export const bugReportRouter = createTRPCRouter({
-  submit: publicProcedure
+  submit: authorizedProcedure()
     .input(SubmitBugReportInput)
     .mutation(async ({ input }) => {
-      // Send to Bugsink via Sentry SDK
       Sentry.captureMessage(input.title, {
         level: "info",
         tags: {
@@ -25,6 +18,9 @@ export const bugReportRouter = createTRPCRouter({
         },
       });
 
-      return { success: true };
+      const ok = await Sentry.flush(5000); // wait up to 5s
+      if (!ok) {
+        console.warn("Sentry flush timed out");
+      }
     }),
 });

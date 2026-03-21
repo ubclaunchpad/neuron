@@ -6,9 +6,6 @@ import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {
-  experimental: {
-    instrumentationHook: true,
-  },
   output: "standalone",
   serverExternalPackages: [
     "postgres",

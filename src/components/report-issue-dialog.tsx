@@ -13,33 +13,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FieldGroup } from "@/components/ui/field";
+import { SubmitBugReportInput } from "@/models/api/bug-report";
 import { clientApi } from "@/trpc/client";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import z from "zod";
+import type { z } from "zod";
 
-const ReportIssueSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
-});
-
-type ReportIssueSchemaType = z.infer<typeof ReportIssueSchema>;
-
-const defaultValues: ReportIssueSchemaType = {
-  title: "",
-  description: "",
-  email: "",
-};
+type ReportIssueSchemaType = z.infer<typeof SubmitBugReportInput>;
 
 export const ReportIssueDialog = NiceModal.create(() => {
   const modal = useModal();
 
   const form = useForm<ReportIssueSchemaType>({
-    resolver: zodResolver(ReportIssueSchema),
-    defaultValues,
+    resolver: zodResolver(SubmitBugReportInput),
+    defaultValues: {
+      title: "",
+      description: "",
+      email: "",
+    },
     mode: "onSubmit",
     reValidateMode: "onChange",
   });
@@ -82,6 +75,7 @@ export const ReportIssueDialog = NiceModal.create(() => {
               name="title"
               label="Title"
               placeholder="Brief description of the issue"
+              maxLength={200}
               required
             />
 

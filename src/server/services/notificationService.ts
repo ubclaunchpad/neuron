@@ -19,6 +19,7 @@ import type {
 import type { IJobService } from "@/server/services/jobService";
 import type { IEmailService } from "@/server/services/emailService";
 import type { IPreferenceService } from "@/server/services/preferenceService";
+import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import type { RunnableJobName } from "@/server/jobs/registry";
 
@@ -35,13 +36,18 @@ export interface INotificationService {
     userId: string;
     type?: string;
     read?: boolean;
+    archived?: boolean;
     limit?: number;
     cursor?: string;
   }): Promise<{ items: NotificationDB[]; nextCursor: string | null }>;
 
   getUnreadCount(userId: string): Promise<number>;
   markAsRead(notificationId: string, userId: string): Promise<void>;
+  markAsUnread(notificationId: string, userId: string): Promise<void>;
   markAllAsRead(userId: string): Promise<void>;
+  archive(notificationId: string, userId: string): Promise<void>;
+  unarchive(notificationId: string, userId: string): Promise<void>;
+  archiveAll(userId: string): Promise<void>;
 
   processNotification(params: {
     type: string;
@@ -117,12 +123,14 @@ export class NotificationService implements INotificationService {
     userId,
     type,
     read,
+    archived,
     limit = 20,
     cursor,
   }: {
     userId: string;
     type?: string;
     read?: boolean;
+    archived?: boolean;
     limit?: number;
     cursor?: string;
   }): Promise<{ items: NotificationDB[]; nextCursor: string | null }> {
@@ -134,6 +142,10 @@ export class NotificationService implements INotificationService {
     if (read !== undefined) {
       conditions.push(eq(notification.read, read));
     }
+    // Default to non-archived when not explicitly filtering
+    conditions.push(
+      eq(notification.archived, archived !== undefined ? archived : false),
+    );
     if (cursor) {
       conditions.push(lt(notification.createdAt, new Date(cursor)));
     }
@@ -161,13 +173,17 @@ export class NotificationService implements INotificationService {
       .select({ count: count() })
       .from(notification)
       .where(
-        and(eq(notification.userId, userId), eq(notification.read, false)),
+        and(
+          eq(notification.userId, userId),
+          eq(notification.read, false),
+          eq(notification.archived, false),
+        ),
       );
     return result?.count ?? 0;
   }
 
   async markAsRead(notificationId: string, userId: string): Promise<void> {
-    await this.db
+    const rows = await this.db
       .update(notification)
       .set({ read: true, readAt: new Date() })
       .where(
@@ -175,7 +191,27 @@ export class NotificationService implements INotificationService {
           eq(notification.id, notificationId),
           eq(notification.userId, userId),
         ),
-      );
+      )
+      .returning({ id: notification.id });
+    if (rows.length === 0) {
+      throw new NeuronError("Notification not found", NeuronErrorCodes.NOT_FOUND);
+    }
+  }
+
+  async markAsUnread(notificationId: string, userId: string): Promise<void> {
+    const rows = await this.db
+      .update(notification)
+      .set({ read: false, readAt: null })
+      .where(
+        and(
+          eq(notification.id, notificationId),
+          eq(notification.userId, userId),
+        ),
+      )
+      .returning({ id: notification.id });
+    if (rows.length === 0) {
+      throw new NeuronError("Notification not found", NeuronErrorCodes.NOT_FOUND);
+    }
   }
 
   async markAllAsRead(userId: string): Promise<void> {
@@ -183,7 +219,55 @@ export class NotificationService implements INotificationService {
       .update(notification)
       .set({ read: true, readAt: new Date() })
       .where(
-        and(eq(notification.userId, userId), eq(notification.read, false)),
+        and(
+          eq(notification.userId, userId),
+          eq(notification.read, false),
+          eq(notification.archived, false),
+        ),
+      );
+  }
+
+  async archive(notificationId: string, userId: string): Promise<void> {
+    const rows = await this.db
+      .update(notification)
+      .set({ archived: true, archivedAt: new Date(), read: true, readAt: new Date() })
+      .where(
+        and(
+          eq(notification.id, notificationId),
+          eq(notification.userId, userId),
+        ),
+      )
+      .returning({ id: notification.id });
+    if (rows.length === 0) {
+      throw new NeuronError("Notification not found", NeuronErrorCodes.NOT_FOUND);
+    }
+  }
+
+  async unarchive(notificationId: string, userId: string): Promise<void> {
+    const rows = await this.db
+      .update(notification)
+      .set({ archived: false, archivedAt: null })
+      .where(
+        and(
+          eq(notification.id, notificationId),
+          eq(notification.userId, userId),
+        ),
+      )
+      .returning({ id: notification.id });
+    if (rows.length === 0) {
+      throw new NeuronError("Notification not found", NeuronErrorCodes.NOT_FOUND);
+    }
+  }
+
+  async archiveAll(userId: string): Promise<void> {
+    await this.db
+      .update(notification)
+      .set({ archived: true, archivedAt: new Date() })
+      .where(
+        and(
+          eq(notification.userId, userId),
+          eq(notification.archived, false),
+        ),
       );
   }
 

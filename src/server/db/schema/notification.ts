@@ -35,6 +35,8 @@ export const notification = pgTable(
     }),
     read: boolean("read").notNull().default(false),
     readAt: timestamp("read_at", { withTimezone: true }),
+    archived: boolean("archived").notNull().default(false),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     emailSent: boolean("email_sent").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -46,6 +48,7 @@ export const notification = pgTable(
     index("idx_notification_user_read").on(table.userId, table.read),
     index("idx_notification_type").on(table.type),
     index("idx_notification_source").on(table.sourceType, table.sourceId),
+    index("idx_notification_user_archived").on(table.userId, table.archived),
   ],
 );
 export type NotificationDB = typeof notification.$inferSelect;

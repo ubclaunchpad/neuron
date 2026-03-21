@@ -30,7 +30,11 @@ export class MockNotificationService implements INotificationService {
   }
 
   async markAsRead(): Promise<void> {}
+  async markAsUnread(): Promise<void> {}
   async markAllAsRead(): Promise<void> {}
+  async archive(): Promise<void> {}
+  async unarchive(): Promise<void> {}
+  async archiveAll(): Promise<void> {}
 
   async processNotification(): Promise<void> {}
 

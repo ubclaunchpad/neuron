@@ -1,8 +1,11 @@
 "use client";
 
+import { Archive, ArchiveRestore, MailOpen, Mail } from "lucide-react";
 import type { NotificationDB } from "@/server/db/schema/notification";
+import { Button as UIButton } from "@/components/ui/button";
+import { Button } from "@/components/primitives/button";
 
-function timeAgo(date: Date): string {
+export function timeAgo(date: Date): string {
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
@@ -19,42 +22,92 @@ function timeAgo(date: Date): string {
 interface NotificationItemProps {
   notification: NotificationDB;
   onClick: () => void;
+  onArchive: (notificationId: string) => void;
+  onUnarchive: (notificationId: string) => void;
+  onToggleRead: (notificationId: string) => void;
+  isArchivedView?: boolean;
 }
 
 export function NotificationItem({
   notification,
   onClick,
+  onArchive,
+  onUnarchive,
+  onToggleRead,
+  isArchivedView = false,
 }: NotificationItemProps) {
+  const isUnread = !notification.read;
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-accent ${
-        !notification.read ? "bg-accent/40" : ""
+    <div
+      className={`group/item relative flex w-full gap-3 px-4 py-3 text-left has-[button[data-overlay]:hover]:bg-accent ${
+        !isArchivedView && isUnread ? "bg-accent/40" : ""
       }`}
     >
-      <div className="flex-1 min-w-0">
+      {/* Overlay button for the entire item click area */}
+      <UIButton
+        data-overlay
+        unstyled
+        aria-label={notification.title}
+        className="absolute z-10 inset-0 cursor-pointer"
+        onClick={onClick}
+      />
+
+      {/* Content */}
+      <div className="relative flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <p
             className={`text-sm truncate ${
-              !notification.read
+              !isArchivedView && isUnread
                 ? "font-semibold text-foreground"
                 : "text-foreground"
             }`}
           >
             {notification.title}
           </p>
-          {!notification.read && (
-            <span className="mt-1.5 size-2 shrink-0 rounded-full bg-blue-500" />
-          )}
+          <div className="flex shrink-0 items-center gap-1">
+            <span className="text-xs text-muted-foreground">
+              {timeAgo(new Date(notification.createdAt))}
+            </span>
+            {!isArchivedView && isUnread && (
+              <span className="size-2 rounded-full bg-blue-500" />
+            )}
+          </div>
         </div>
-        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
+        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-3">
           {notification.body}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground/70">
-          {timeAgo(new Date(notification.createdAt))}
-        </p>
       </div>
-    </button>
+
+      {/* Hover actions — sit above the overlay */}
+      <div className="relative z-10 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/item:opacity-100">
+        {isArchivedView ? (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            tooltip="Unarchive"
+            onClick={() => onUnarchive(notification.id)}
+            startIcon={<ArchiveRestore />}
+          ></Button>
+        ) : (
+          <>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              tooltip={isUnread ? "Mark as read" : "Mark as unread"}
+              onClick={() => onToggleRead(notification.id)}
+              startIcon={isUnread ? <MailOpen /> : <Mail />}
+            ></Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              tooltip="Archive"
+              onClick={() => onArchive(notification.id)}
+              startIcon={<Archive />}
+            ></Button>
+          </>
+        )}
+      </div>
+    </div>
   );
 }

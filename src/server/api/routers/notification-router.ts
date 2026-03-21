@@ -1,4 +1,5 @@
 import {
+  ArchiveNotificationInput,
   ClearNotificationPreferenceInput,
   ListNotificationsInput,
   MarkAsReadInput,
@@ -16,6 +17,7 @@ export const notificationRouter = createTRPCRouter({
         userId,
         type: input.type,
         read: input.read,
+        archived: input.archived,
         limit: input.limit,
         cursor: input.cursor,
       });
@@ -33,9 +35,35 @@ export const notificationRouter = createTRPCRouter({
       await ctx.notificationService.markAsRead(input.notificationId, userId);
     }),
 
+  markAsUnread: authorizedProcedure()
+    .input(MarkAsReadInput)
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.currentSessionService.requireUser().id;
+      await ctx.notificationService.markAsUnread(input.notificationId, userId);
+    }),
+
   markAllAsRead: authorizedProcedure().mutation(async ({ ctx }) => {
     const userId = ctx.currentSessionService.requireUser().id;
     await ctx.notificationService.markAllAsRead(userId);
+  }),
+
+  archive: authorizedProcedure()
+    .input(ArchiveNotificationInput)
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.currentSessionService.requireUser().id;
+      await ctx.notificationService.archive(input.notificationId, userId);
+    }),
+
+  unarchive: authorizedProcedure()
+    .input(ArchiveNotificationInput)
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.currentSessionService.requireUser().id;
+      await ctx.notificationService.unarchive(input.notificationId, userId);
+    }),
+
+  archiveAll: authorizedProcedure().mutation(async ({ ctx }) => {
+    const userId = ctx.currentSessionService.requireUser().id;
+    await ctx.notificationService.archiveAll(userId);
   }),
 
   preferences: authorizedProcedure().query(async ({ ctx }) => {

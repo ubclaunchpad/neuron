@@ -15,24 +15,8 @@ export function CancelShiftButton({
   shift: SingleShift;
   className?: string;
 }) {
-  if (
-    shift.status === ShiftStatus.inprogress ||
-    shift.status === ShiftStatus.finished
-  ) {
+  if (shift.status !== ShiftStatus.scheduled) {
     return null;
-  }
-
-  if (shift.status === ShiftStatus.cancelled) {
-    return (
-      <Badge
-        className={cn(
-          "z-10 border-destructive/40 bg-destructive/10 text-destructive",
-          className,
-        )}
-      >
-        {ShiftStatus.getName(shift.status)}
-      </Badge>
-    );
   }
 
   return (

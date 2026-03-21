@@ -78,6 +78,13 @@
       "when": 1773985794131,
       "tag": "0010_lethal_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1773992441500,
+      "tag": "0011_curly_psynapse",
+      "breakpoints": true
     }
   ]
 }

@@ -17,10 +17,5 @@ export const bugReportRouter = createTRPCRouter({
           email: input.email || "not provided",
         },
       });
-
-      const ok = await Sentry.flush(5000); // wait up to 5s
-      if (!ok) {
-        console.warn("Sentry flush timed out");
-      }
     }),
 });

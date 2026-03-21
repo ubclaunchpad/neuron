@@ -24,10 +24,12 @@ export function NotificationInbox() {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
 
-  const { data: unreadCount = 0 } =
-    clientApi.notification.unreadCount.useQuery(undefined, {
+  const { data: unreadCount = 0 } = clientApi.notification.unreadCount.useQuery(
+    undefined,
+    {
       refetchInterval: 30_000,
-    });
+    },
+  );
 
   const { data, isLoading } = clientApi.notification.list.useQuery(
     { limit: 20, ...getQueryParams(filter) },
@@ -63,8 +65,8 @@ export function NotificationInbox() {
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b p-1">
-          <h3 className="pl-3 text-sm font-semibold">Notifications</h3>
+        <div className="flex items-center justify-between px-1 pt-1">
+          <h3 className="pl-2 text-sm font-semibold">Notifications</h3>
           <div className="flex items-center gap-0.5">
             <NotificationFilterMenu
               filter={filter}
@@ -94,7 +96,7 @@ export function NotificationInbox() {
             <div>
               {groups.map((group) => (
                 <div key={group.label}>
-                  <p className="px-4 py-1.5 text-xs font-medium text-muted-foreground">
+                  <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
                     {group.label}
                   </p>
                   <div className="divide-y">

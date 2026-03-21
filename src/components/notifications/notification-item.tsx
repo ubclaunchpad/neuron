@@ -1,13 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
-import { Archive, ArchiveRestore, MailOpen, Mail } from "lucide-react";
+import { Archive, ArchiveRestore, Expand, MailOpen, Mail } from "lucide-react";
 import type { ListNotification } from "@/models/notification";
 import { Button as UIButton } from "@/components/ui/button";
 import { Button } from "@/components/primitives/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { clientApi } from "@/trpc/client";
+import { NotificationDetailDialog } from "./notification-detail-dialog";
 import { timeAgo } from "./utils";
+import { cn } from "@/lib/utils";
 
 interface NotificationItemProps {
   notification: ListNotification;
@@ -20,6 +24,7 @@ export function NotificationItem({
   isArchivedView = false,
   onClose,
 }: NotificationItemProps) {
+  const [detailOpen, setDetailOpen] = useState(false);
   const router = useRouter();
   const utils = clientApi.useUtils();
 
@@ -52,6 +57,19 @@ export function NotificationItem({
     onClose();
   };
 
+  const handleView = () => {
+    if (!notification.read) {
+      markAsRead.mutate({ notificationId: notification.id });
+    }
+    setDetailOpen(true);
+  };
+
+  const handleDialogNavigate = (url: string) => {
+    setDetailOpen(false);
+    router.push(url as Route);
+    onClose();
+  };
+
   const handleToggleRead = () => {
     if (notification.read) {
       markAsUnread.mutate({ notificationId: notification.id });
@@ -64,7 +82,7 @@ export function NotificationItem({
 
   return (
     <div
-      className={`group/item relative flex w-full gap-3 px-4 py-3 text-left has-[button[data-overlay]:hover]:bg-accent ${
+      className={`group/item relative flex w-full gap-10 pr-4 pl-3 py-2 text-left has-[button[data-overlay]:hover]:bg-accent ${
         !isArchivedView && isUnread ? "bg-accent/40" : ""
       }`}
     >
@@ -79,59 +97,83 @@ export function NotificationItem({
 
       {/* Content */}
       <div className="relative flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <p
-            className={`text-sm truncate ${
-              !isArchivedView && isUnread
-                ? "font-semibold text-foreground"
-                : "text-foreground"
-            }`}
-          >
-            {notification.title}
-          </p>
-          <div className="flex shrink-0 items-center gap-1">
-            <span className="text-xs text-muted-foreground">
-              {timeAgo(new Date(notification.createdAt))}
-            </span>
-            {!isArchivedView && isUnread && (
-              <span className="size-2 rounded-full bg-blue-500" />
-            )}
-          </div>
-        </div>
+        <p
+          className={`text-sm truncate ${
+            !isArchivedView && isUnread
+              ? "font-semibold text-foreground"
+              : "text-foreground"
+          }`}
+        >
+          {notification.title}
+        </p>
         <p className="mt-0.5 text-xs text-muted-foreground line-clamp-3">
           {notification.body}
         </p>
       </div>
 
-      {/* Hover actions — sit above the overlay */}
-      <div className="relative z-10 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/item:opacity-100">
-        {isArchivedView ? (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            tooltip="Unarchive"
-            onClick={() => unarchive.mutate({ notificationId: notification.id })}
-            startIcon={<ArchiveRestore />}
-          ></Button>
-        ) : (
-          <>
+      {/* Date / actions — swap on hover */}
+      <div className="relative z-10 shrink-0 flex items-start">
+        {/* Date — hidden on hover */}
+        <span className="flex items-center gap-1 text-xs text-muted-foreground group-hover/item:invisible">
+          {timeAgo(new Date(notification.createdAt))}
+          <span
+            className={cn(
+              "size-2 rounded-full bg-blue-500",
+              (isArchivedView || !isUnread) && "invisible",
+            )}
+          />
+        </span>
+
+        {/* Actions — shown on hover, positioned over the date */}
+        <div className="absolute -right-1 invisible group-hover/item:visible">
+          <ButtonGroup>
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon-sm"
-              tooltip={isUnread ? "Mark as read" : "Mark as unread"}
-              onClick={handleToggleRead}
-              startIcon={isUnread ? <MailOpen /> : <Mail />}
+              tooltip="View"
+              onClick={handleView}
+              startIcon={<Expand />}
             ></Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              tooltip="Archive"
-              onClick={() => archive.mutate({ notificationId: notification.id })}
-              startIcon={<Archive />}
-            ></Button>
-          </>
-        )}
+            {isArchivedView ? (
+              <Button
+                variant="outline"
+                size="icon-sm"
+                tooltip="Unarchive"
+                onClick={() =>
+                  unarchive.mutate({ notificationId: notification.id })
+                }
+                startIcon={<ArchiveRestore />}
+              ></Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  tooltip={isUnread ? "Mark as read" : "Mark as unread"}
+                  onClick={handleToggleRead}
+                  startIcon={isUnread ? <MailOpen /> : <Mail />}
+                ></Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  tooltip="Archive"
+                  onClick={() =>
+                    archive.mutate({ notificationId: notification.id })
+                  }
+                  startIcon={<Archive />}
+                ></Button>
+              </>
+            )}
+          </ButtonGroup>
+        </div>
       </div>
+
+      <NotificationDetailDialog
+        notification={notification}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onNavigate={handleDialogNavigate}
+      />
     </div>
   );
 }

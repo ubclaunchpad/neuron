@@ -80,7 +80,7 @@ export function FormFieldController<
         return (
           <FormFieldContext.Provider
             value={{
-              control,
+              control: control as Control<any, any, any>,
               name,
               field: fieldWithMeta,
               fieldState,

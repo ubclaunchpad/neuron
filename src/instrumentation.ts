@@ -1,5 +1,4 @@
 import { env } from "@/env";
-import { migrate } from "@/server/db/migrate";
 import * as Sentry from "@sentry/nextjs";
 
 export async function register() {
@@ -9,6 +8,8 @@ export async function register() {
       tracesSampleRate: 1.0,
       environment: env.NODE_ENV,
     });
+
+    const { migrate } = await import("@/server/db/migrate");
+    await migrate();
   }
-  await migrate();
 }

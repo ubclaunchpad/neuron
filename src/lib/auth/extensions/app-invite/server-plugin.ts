@@ -1,5 +1,3 @@
-import "server-only";
-
 import { Role, RoleEnum, UserStatus } from "@/models/interfaces";
 import { createRequestScope } from "@/server/api/di-container";
 import { db } from "@/server/db";

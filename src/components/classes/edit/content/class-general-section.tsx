@@ -149,7 +149,7 @@ export function ClassGeneralSection() {
             {({ value, onChange, ...field }) => (
               <FormFieldLayout
                 label="Location"
-                description="Add a Zoom link (Online) or an address (In-person)"
+                description="Add a meeting link (Online) or an address (In-person)"
               >
                 <InputGroup>
                   <InputGroupAddon
@@ -179,7 +179,7 @@ export function ClassGeneralSection() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-auto">
                         <DropdownMenuRadioGroup
-                          value={locationType}
+                          value={locationType ?? undefined}
                           onValueChange={(value) => {
                             setValue("locationType", value as LocationType, {
                               shouldDirty: true,

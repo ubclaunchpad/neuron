@@ -70,10 +70,10 @@ export const volunteerRouter = createTRPCRouter({
       return { ok: true };
     }),
   exportAvailability: authorizedProcedure({ permission: { users: ["view"] } })
-    .input(VolunteerExportInput.optional())
+    .input(VolunteerExportInput)
     .query(async ({ input, ctx }) => {
       return await ctx.volunteerService.getVolunteersForExport(
-        input?.search,
+        input.search,
       );
     }),
 });

@@ -140,8 +140,7 @@ export function formatAvailabilityByDay(
         rangeStart = i;
       }
 
-      const isEndOfRange = (!isAvailable || i === SLOTS_PER_DAY) && rangeStart !== null;
-      if (isEndOfRange) {
+      if (rangeStart !== null && (!isAvailable || i === SLOTS_PER_DAY)) {
         ranges.push(`${formatTime(rangeStart)}-${formatTime(i)}`);
         rangeStart = null;
       }

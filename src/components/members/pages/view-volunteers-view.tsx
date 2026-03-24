@@ -1,4 +1,5 @@
 import { Avatar } from "@/components/primitives/avatar";
+import { Button as PrimitivesButton } from "@/components/primitives/button";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,7 +15,7 @@ import { Role, UserStatus } from "@/models/interfaces";
 import type { ListUser, User } from "@/models/user";
 import { useAuth } from "@/providers/client-auth-provider";
 import NiceModal from "@ebay/nice-modal-react";
-import { Ban, MoreHorizontalIcon, Power } from "lucide-react";
+import { Ban, DownloadIcon, MoreHorizontalIcon, Power } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ListItem } from "../list";
@@ -23,6 +24,7 @@ import { UserProfileDialog } from "../user-profile-dialog";
 import {
   ShellHeader,
   ShellSearchInput,
+  useUsersViewShellContext,
   UsersList,
   UsersViewShell,
 } from "./users-view-shell";
@@ -30,10 +32,30 @@ import { formatAvailabilityByDay } from "@/utils/availabilityUtils";
 import { clientApi, type RouterOutputs } from "@/trpc/client";
 
 export function ViewVolunteersView({ className }: { className?: string }) {
+  return (
+    <UsersViewShell
+      className={className}
+      rolesToInclude={[Role.volunteer]}
+      statusesToInclude={[UserStatus.active, UserStatus.inactive]}
+    >
+      <ShellHeader>
+        <ShellSearchInput />
+        <ExportAvailabilityButton />
+      </ShellHeader>
+
+      <UsersList>
+        {(user) => <ViewVolunteerListItem key={user.id} user={user} />}
+      </UsersList>
+    </UsersViewShell>
+  );
+}
+
+function ExportAvailabilityButton() {
+  const { query } = useUsersViewShellContext();
   const [isExporting, setIsExporting] = useState(false);
 
   const exportQuery = clientApi.volunteer.exportAvailability.useQuery(
-    { search: undefined },
+    { search: query },
     {
       enabled: false,
       refetchOnWindowFocus: false,
@@ -64,22 +86,14 @@ export function ViewVolunteersView({ className }: { className?: string }) {
   };
 
   return (
-    <UsersViewShell
-      className={className}
-      rolesToInclude={[Role.volunteer]}
-      statusesToInclude={[UserStatus.active, UserStatus.inactive]}
+    <PrimitivesButton
+      variant="outline"
+      onClick={() => void handleExport()}
+      pending={isExporting}
+      startIcon={<DownloadIcon />}
     >
-      <ShellHeader>
-        <ShellSearchInput />
-        <Button onClick={() => void handleExport()} disabled={isExporting}>
-          {isExporting ? "Exporting..." : "Export CSV"}
-        </Button>
-      </ShellHeader>
-
-      <UsersList>
-        {(user) => <ViewVolunteerListItem key={user.id} user={user} />}
-      </UsersList>
-    </UsersViewShell>
+      Export as CSV
+    </PrimitivesButton>
   );
 }
 
@@ -117,16 +131,16 @@ function buildVolunteerAvailabilityCsv(volunteers: ExportVolunteer[]): string {
     .join("\n");
 }
 
-function escapeCsv(value: string | number | boolean): string;
-function escapeCsv(
-  value: string | number | boolean | null | undefined,
-): string;
 function escapeCsv(
   value: string | number | boolean | null | undefined,
 ): string {
   if (value === null || value === undefined) return "";
-  const str = String(value);
-  if (/[",\n]/.test(str)) {
+  let str = String(value);
+  // Prevent CSV formula injection in spreadsheet applications
+  if (/^[=+\-@]/.test(str)) {
+    str = `\t${str}`;
+  }
+  if (/[",\n\t]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;

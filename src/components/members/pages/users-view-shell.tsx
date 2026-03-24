@@ -32,7 +32,7 @@ const UsersViewShellContext = createContext<UsersViewShellContextValue | null>(
   null,
 );
 
-function useUsersViewShellContext() {
+export function useUsersViewShellContext() {
   const ctx = useContext(UsersViewShellContext);
   if (!ctx) {
     throw new Error(

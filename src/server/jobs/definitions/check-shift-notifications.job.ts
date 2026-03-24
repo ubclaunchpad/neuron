@@ -6,6 +6,7 @@ import { volunteerToSchedule } from "@/server/db/schema/schedule";
 import { user } from "@/server/db/schema/user";
 import { CoverageStatus } from "@/models/api/coverage";
 import { formatDate, formatTime } from "@/lib/constants";
+import { UserStatus } from "@/models/interfaces";
 import type { RegisteredJob } from "../types";
 
 export type CheckShiftNotificationsPayload = {
@@ -104,7 +105,12 @@ async function getEffectiveVolunteers(
     })
     .from(volunteerToSchedule)
     .innerJoin(user, eq(user.id, volunteerToSchedule.volunteerUserId))
-    .where(eq(volunteerToSchedule.scheduleId, scheduleId));
+    .where(
+      and(
+        eq(volunteerToSchedule.scheduleId, scheduleId),
+        eq(user.status, UserStatus.active),
+      ),
+    );
 
   // Get resolved coverage requests for this shift
   const resolvedCoverage = await db
@@ -142,7 +148,7 @@ async function getEffectiveVolunteers(
         lastName: user.lastName,
       })
       .from(user)
-      .where(inArray(user.id, coveringUserIds));
+      .where(and(inArray(user.id, coveringUserIds), eq(user.status, UserStatus.active)));
 
     for (const u of coveringUsers) {
       effectiveVolunteers.push({

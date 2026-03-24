@@ -18,6 +18,7 @@ import type {
 } from "@/server/notifications/types";
 import type { IJobService } from "@/server/services/jobService";
 import type { IPreferenceService } from "@/server/services/preferenceService";
+import { UserStatus } from "@/models/interfaces";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, count, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 import type { RunnableJobName } from "@/server/jobs/registry";
@@ -444,7 +445,7 @@ export class NotificationService implements INotificationService {
           .select({ userId: user.id, email: user.email })
           .from(user)
           .where(
-            and(inArray(user.id, audience.userIds), eq(user.status, "active")),
+            and(inArray(user.id, audience.userIds), eq(user.status, UserStatus.active)),
           );
       }
 
@@ -452,7 +453,7 @@ export class NotificationService implements INotificationService {
         return this.db
           .select({ userId: user.id, email: user.email })
           .from(user)
-          .where(and(eq(user.role, audience.role), eq(user.status, "active")));
+          .where(and(eq(user.role, audience.role), eq(user.status, UserStatus.active)));
       }
 
       case "shift": {
@@ -472,7 +473,7 @@ export class NotificationService implements INotificationService {
           .where(
             and(
               eq(volunteerToSchedule.scheduleId, shiftRow.scheduleId),
-              eq(user.status, "active"),
+              eq(user.status, UserStatus.active),
             ),
           );
 
@@ -483,7 +484,7 @@ export class NotificationService implements INotificationService {
           .where(
             and(
               eq(instructorToSchedule.scheduleId, shiftRow.scheduleId),
-              eq(user.status, "active"),
+              eq(user.status, UserStatus.active),
             ),
           );
 
@@ -507,7 +508,7 @@ export class NotificationService implements INotificationService {
           .where(
             and(
               inArray(volunteerToSchedule.scheduleId, scheduleIds),
-              eq(user.status, "active"),
+              eq(user.status, UserStatus.active),
             ),
           );
 
@@ -518,7 +519,7 @@ export class NotificationService implements INotificationService {
           .where(
             and(
               inArray(instructorToSchedule.scheduleId, scheduleIds),
-              eq(user.status, "active"),
+              eq(user.status, UserStatus.active),
             ),
           );
 

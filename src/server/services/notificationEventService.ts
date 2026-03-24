@@ -7,6 +7,7 @@ import {
 } from "@/server/db/schema/schedule";
 import { shift } from "@/server/db/schema/shift";
 import { user } from "@/server/db/schema/user";
+import { UserStatus } from "@/models/interfaces";
 import { and, eq, inArray, lt, gt, notInArray } from "drizzle-orm";
 
 interface ShiftCancelledParams {
@@ -248,7 +249,7 @@ export class NotificationEventService implements INotificationEventService {
       .where(
         and(
           inArray(instructorToSchedule.scheduleId, scheduleIds),
-          eq(user.status, "active"),
+          eq(user.status, UserStatus.active),
         ),
       );
 

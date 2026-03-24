@@ -39,32 +39,45 @@ export interface IVolunteerService {
   updateVolunteerAvailability(
     input: z.infer<typeof UpdateVolunteerAvailabilityInput>,
   ): Promise<void>;
+  getVolunteersForExport(search?: string): Promise<Volunteer[]>;
 }
 
 export class VolunteerService implements IVolunteerService {
   private readonly db: Drizzle;
 
+  private static readonly SEARCH_FIELDS = [
+    volunteerUserView.name,
+    volunteerUserView.lastName,
+    volunteerUserView.email,
+  ];
+
   constructor({ db }: { db: Drizzle }) {
     this.db = db;
+  }
+
+  private getSearchParams(search?: string) {
+    const queryInput = search?.trim();
+    const hasQuery = !!queryInput;
+    const fields = VolunteerService.SEARCH_FIELDS;
+
+    const similarity = hasQuery
+      ? buildSimilarityExpression(fields, queryInput)
+      : undefined;
+
+    const condition = hasQuery
+      ? buildSearchCondition(fields, queryInput)
+      : undefined;
+
+    return { hasQuery, similarity, condition };
   }
 
   async getVolunteersForRequest(
     listRequest: ListRequestWithSearch,
   ): Promise<ListResponse<Volunteer>> {
     const { perPage, offset } = getPagination(listRequest);
-    const queryInput = listRequest.search?.trim();
-    const hasQuery = !!queryInput;
-
-    const similarity = hasQuery
-      ? buildSimilarityExpression(
-          [
-            volunteerUserView.name,
-            volunteerUserView.lastName,
-            volunteerUserView.email,
-          ],
-          queryInput,
-        )
-      : undefined;
+    const { hasQuery, similarity, condition } = this.getSearchParams(
+      listRequest.search,
+    );
 
     const baseSelect = {
       count: sql<number>`count(*) over()`,
@@ -81,18 +94,7 @@ export class VolunteerService implements IVolunteerService {
       .$dynamic();
 
     if (hasQuery) {
-      builder = builder
-        .where(
-          buildSearchCondition(
-            [
-              volunteerUserView.name,
-              volunteerUserView.lastName,
-              volunteerUserView.email,
-            ],
-            queryInput,
-          ),
-        )
-        .orderBy(desc(similarity!));
+      builder = builder.where(condition!).orderBy(desc(similarity!));
     }
 
     const rows = await builder.limit(perPage).offset(offset).execute();
@@ -209,5 +211,26 @@ export class VolunteerService implements IVolunteerService {
         NeuronErrorCodes.NOT_FOUND,
       );
     }
+  }
+
+  async getVolunteersForExport(search?: string): Promise<Volunteer[]> {
+    const { hasQuery, similarity, condition } = this.getSearchParams(search);
+
+    let builder = this.db
+      .select(getViewColumns(volunteerUserView))
+      .from(volunteerUserView)
+      .$dynamic();
+
+    if (hasQuery) {
+      builder = builder.where(condition!).orderBy(desc(similarity!));
+    } else {
+      builder = builder.orderBy(
+        volunteerUserView.lastName,
+        volunteerUserView.name,
+      );
+    }
+
+    const rows = await builder.limit(5000).execute();
+    return rows.map((d) => buildVolunteer(d));
   }
 }

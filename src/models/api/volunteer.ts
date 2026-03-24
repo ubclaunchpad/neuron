@@ -33,3 +33,7 @@ export const UpdateVolunteerAvailabilityInput = z.object({
 export const AdminSignoffInput = z.object({
   signoff: z.string(),
 });
+
+export const VolunteerExportInput = z.object({
+  search: z.string().optional(),
+});

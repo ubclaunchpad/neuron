@@ -11,6 +11,12 @@ export type User = {
   image?: string;
   createdAt: Date;
   updatedAt: Date;
+  preferredName?: string;
+  bio?: string;
+  pronouns?: string;
+  phoneNumber?: string;
+  city?: string;
+  province?: string;
 };
 
 export function buildUser(userDB: UserDB): User {

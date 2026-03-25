@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useImageUrl } from "@/lib/build-image-url";
 import { Role } from "@/models/interfaces";
 import type { ListUser, User } from "@/models/user";
@@ -58,13 +59,13 @@ export const UserProfileDialog = NiceModal.create(
             <DialogTitle>User Profile</DialogTitle>
           </DialogHeader>
 
+          {/* Identity header */}
           <div className="flex flex-col items-center gap-3">
             <Avatar
               src={avatarSrc}
               fallbackText={`${user.name} ${user.lastName}`}
               className="size-22"
             />
-
             <div className="space-y-1 text-center">
               <p className="text-base font-semibold">
                 {user.name} {user.lastName}
@@ -73,25 +74,105 @@ export const UserProfileDialog = NiceModal.create(
             </div>
           </div>
 
-          <Separator className="my-6" />
+          <Separator />
 
-          <div className="space-y-4">
-            <ReadonlyField label="Role">
-              <Badge variant="outline">{Role.getName(user.role)}</Badge>
-            </ReadonlyField>
+          {/* Tabbed content */}
+          <Tabs defaultValue="overview">
+            <TabsList className="w-full">
+              <TabsTrigger value="overview" className="flex-1">
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="general" className="flex-1">
+                General info
+              </TabsTrigger>
+              <TabsTrigger value="scheduling" className="flex-1">
+                Scheduling
+              </TabsTrigger>
+            </TabsList>
 
-            <ReadonlyField label="Status">
-              <StatusBadge status={user.status} />
-            </ReadonlyField>
+            <TabsContent value="overview" className="mt-4 space-y-4">
+              <ReadonlyField label="Role">
+                <Badge variant="outline">{Role.getName(user.role)}</Badge>
+              </ReadonlyField>
+              <ReadonlyField label="Status">
+                <StatusBadge status={user.status} />
+              </ReadonlyField>
+              <ReadonlyField label="Email address">
+                <span className="truncate">{user.email}</span>
+              </ReadonlyField>
+              <ReadonlyField label="Joined date">
+                {joinedDate ?? "Not available"}
+              </ReadonlyField>
+            </TabsContent>
 
-            <ReadonlyField label="Email address">
-              <span className="truncate">{user.email}</span>
-            </ReadonlyField>
+            <TabsContent value="general" className="mt-4 space-y-4">
+              {user.preferredName && (
+                <ReadonlyField label="Preferred name">
+                  {user.preferredName}
+                </ReadonlyField>
+              )}
+              {user.pronouns && (
+                <ReadonlyField label="Pronouns">
+                  {user.pronouns}
+                </ReadonlyField>
+              )}
+              {user.phoneNumber && (
+                <ReadonlyField label="Phone number">
+                  {user.phoneNumber}
+                </ReadonlyField>
+              )}
+              {(user.city || user.province) && (
+                <ReadonlyField label="Location">
+                  {[user.city, user.province].filter(Boolean).join(", ")}
+                </ReadonlyField>
+              )}
+              {user.bio && (
+                <ReadonlyField label="Bio">
+                  <span className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {user.bio}
+                  </span>
+                </ReadonlyField>
+              )}
+              {!user.preferredName &&
+                !user.pronouns &&
+                !user.phoneNumber &&
+                !user.city &&
+                !user.province &&
+                !user.bio && (
+                  <p className="text-sm text-muted-foreground">
+                    No general info on file.
+                  </p>
+                )}
+            </TabsContent>
 
-            <ReadonlyField label="Joined date">
-              {joinedDate ?? "Not available"}
-            </ReadonlyField>
-          </div>
+            {/* <TabsContent value="scheduling" className="mt-4 space-y-4">
+              {user.preferredTimeCommitment && (
+                <ReadonlyField label="Preferred time commitment">
+                  {user.preferredTimeCommitment}
+                </ReadonlyField>
+              )}
+              {user.availability?.length > 0 && (
+                <ReadonlyField label="Availability">
+                  <div className="flex flex-wrap gap-1.5">
+                    {user.availability.map((slot: string) => (
+                      <Badge
+                        key={slot}
+                        variant="secondary"
+                        className="text-xs font-normal"
+                      >
+                        {slot}
+                      </Badge>
+                    ))}
+                  </div>
+                </ReadonlyField>
+              )}
+              {!user.preferredTimeCommitment && !user.availability?.length && (
+                <p className="text-sm text-muted-foreground">
+                  No scheduling info on file.
+                </p>
+              )}
+            </TabsContent> */}
+          </Tabs>
 
           <DialogFooter>
             <Button

@@ -29,7 +29,8 @@ import {
   UsersViewShell,
 } from "./users-view-shell";
 import { formatAvailabilityByDay } from "@/utils/availabilityUtils";
-import { clientApi, type RouterOutputs } from "@/trpc/client";
+import { clientApi } from "@/trpc/client";
+import type { RouterOutputs } from "@/trpc/types";
 
 export function ViewVolunteersView({ className }: { className?: string }) {
   return (

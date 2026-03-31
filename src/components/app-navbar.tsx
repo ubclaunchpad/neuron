@@ -151,7 +151,7 @@ export function AppNavbar() {
                 </span>
               </div>
 
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-1">
                 <SidebarMenuButton
                   onClick={toggleSidebar}
                   aria-label="Toggle sidebar"
@@ -168,7 +168,7 @@ export function AppNavbar() {
 
             <div
               className={cn(
-                "absolute inset-0 flex items-center justify-end w-full overflow-hidden",
+                "absolute inset-0 flex items-center justify-end gap-1 w-full overflow-hidden",
                 "transition-opacity duration-200 ease-in-out motion-safe",
                 "opacity-0 group-data-[state=collapsed]:opacity-100",
                 "group-data-[state=collapsed]:pointer-events-auto pointer-events-none",
@@ -202,6 +202,7 @@ export function AppNavbar() {
                         <SidebarMenuButton
                           asChild
                           isActive={isActive}
+                          tooltip={item.label}
                           className={cn(
                             "relative gap-3.5 h-11.4 group-data-[state=collapsed]:h-10 my-1.5 group-data-[state=collapsed]:my-[0.425rem]",
                             "overflow-visible transition-all",

@@ -7,6 +7,7 @@ import { TypographyPageTitle } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 import CaretLeftIcon from "@public/assets/icons/caret-left.svg";
 import { useRouter } from "next/navigation";
+import { NotificationInbox } from "./notifications/notification-inbox";
 import { SidebarTrigger } from "./ui/sidebar";
 
 type PageLayoutContextValue = {
@@ -187,10 +188,12 @@ function PageLayoutHeader({
 function PageLayoutHeaderContent({
   className,
   showBackButton,
+  hideInbox,
   children,
   ...props
 }: React.ComponentProps<"div"> & {
   showBackButton?: boolean;
+  hideInbox?: boolean;
 }) {
   const router = useRouter();
   return (
@@ -217,6 +220,12 @@ function PageLayoutHeaderContent({
       )}
 
       {children}
+
+      {!hideInbox && (
+        <div className="self-justify-end">
+          <NotificationInbox />
+        </div>
+      )}
     </div>
   );
 }

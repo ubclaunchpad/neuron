@@ -8,6 +8,10 @@ import type { ListResponse } from "@/models/list-response";
 import { buildUser, type User } from "@/models/user";
 import { type Drizzle } from "@/server/db";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import type { IJobService } from "@/server/services/jobService";
+import { renderVolunteerApproved } from "@/server/emails/templates/volunteer-approved";
+import { renderVolunteerReactivated } from "@/server/emails/templates/volunteer-reactivated";
+import { renderVolunteerDeactivated } from "@/server/emails/templates/volunteer-deactivated";
 import { buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
 import { and, desc, eq, getTableColumns, gt, inArray, sql } from "drizzle-orm";
 import { user } from "../../db/schema/user";
@@ -38,9 +42,11 @@ export interface IUserService {
 
 export class UserService implements IUserService {
   private readonly db: Drizzle;
+  private readonly jobService: IJobService;
 
-  constructor({ db }: { db: Drizzle }) {
+  constructor({ db, jobService }: { db: Drizzle; jobService: IJobService }) {
     this.db = db;
+    this.jobService = jobService;
   }
 
   async getUsersForRequest(
@@ -146,10 +152,40 @@ export class UserService implements IUserService {
 
   // any -> active
   async verifyVolunteer(id: string): Promise<string> {
+    const [existing] = await this.db
+      .select({ status: user.status, name: user.name, email: user.email })
+      .from(user)
+      .where(eq(user.id, id));
+
+    if (!existing) {
+      throw new NeuronError(
+        `Could not find user with id ${id}`,
+        NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+
     await this.db
       .update(user)
       .set({ status: UserStatus.active })
       .where(eq(user.id, id));
+
+    const isFirstApproval = existing.status === UserStatus.unverified;
+    const render = isFirstApproval
+      ? renderVolunteerApproved
+      : renderVolunteerReactivated;
+    const subject = isFirstApproval
+      ? "Welcome to BC BWP"
+      : "Your Account Has Been Reactivated";
+
+    void render({ volunteerName: existing.name }).then(({ html, text }) =>
+      this.jobService.run("jobs.send-email", {
+        to: existing.email,
+        subject,
+        text,
+        html,
+      }),
+    );
+
     return id;
   }
 
@@ -177,13 +213,12 @@ export class UserService implements IUserService {
 
   // active -> inactive
   async deactivateUser(id: string): Promise<string> {
-    const currentStatus = await this.db
-      .select()
+    const [existing] = await this.db
+      .select({ status: user.status, name: user.name, email: user.email })
       .from(user)
-      .where(eq(user.id, id))
-      .then(([user]) => user?.status);
+      .where(eq(user.id, id));
 
-    if (currentStatus !== UserStatus.active) {
+    if (existing?.status !== UserStatus.active) {
       throw new NeuronError(
         `Volunteer with id ${id} is not active`,
         NeuronErrorCodes.BAD_REQUEST,
@@ -194,6 +229,16 @@ export class UserService implements IUserService {
       .update(user)
       .set({ status: UserStatus.inactive })
       .where(eq(user.id, id));
+
+    void renderVolunteerDeactivated({ volunteerName: existing.name }).then(
+      ({ html, text }) =>
+        this.jobService.run("jobs.send-email", {
+          to: existing.email,
+          subject: "Your Account Has Been Deactivated",
+          text,
+          html,
+        }),
+    );
 
     return id;
   }

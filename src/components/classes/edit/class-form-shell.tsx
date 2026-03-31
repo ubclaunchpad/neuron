@@ -61,7 +61,7 @@ export function ClassEditShell({
     >
       <PageLayout>
         <PageLayoutHeader border="scroll">
-          <PageLayoutHeaderContent showBackButton>
+          <PageLayoutHeaderContent showBackButton hideInbox>
             <PageLayoutHeaderTitle>
               {isEditing ? "Edit Class" : "Create Class"}
             </PageLayoutHeaderTitle>

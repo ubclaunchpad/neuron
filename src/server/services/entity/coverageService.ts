@@ -12,6 +12,7 @@ import {
   type ListCoverageRequestWithReason,
 } from "@/models/coverage";
 import { hasPermission } from "@/lib/auth/extensions/permissions";
+import { formatDate } from "@/lib/constants";
 import { Role } from "@/models/interfaces";
 import type { EmbeddedShift } from "@/models/shift";
 import { buildUser } from "@/models/user";
@@ -26,7 +27,7 @@ import {
   type CoverageRequestDB,
 } from "@/server/db/schema";
 import { volunteerToSchedule } from "@/server/db/schema/schedule";
-import { instructorUserView } from "@/server/db/schema/user";
+import { instructorUserView, user } from "@/server/db/schema/user";
 import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
@@ -46,6 +47,7 @@ import {
 import type { IVolunteerService } from "./volunteerService";
 import type { IShiftService } from "./shiftService";
 import type { ICurrentSessionService } from "../currentSessionService";
+import type { INotificationEventService } from "../notificationEventService";
 
 export interface ICoverageService {
   getCoverageRequestsForShift(shiftId: string): Promise<CoverageRequest[]>;
@@ -81,22 +83,26 @@ export class CoverageService implements ICoverageService {
   private readonly currentSessionService: ICurrentSessionService;
   private readonly volunteerService: IVolunteerService;
   private readonly shiftService: IShiftService;
+  private readonly notificationEventService: INotificationEventService;
 
   constructor({
     db,
     currentSessionService,
     volunteerService,
     shiftService,
+    notificationEventService,
   }: {
     db: Drizzle;
     currentSessionService: ICurrentSessionService;
     volunteerService: IVolunteerService;
     shiftService: IShiftService;
+    notificationEventService: INotificationEventService;
   }) {
     this.db = db;
     this.currentSessionService = currentSessionService;
     this.volunteerService = volunteerService;
     this.shiftService = shiftService;
+    this.notificationEventService = notificationEventService;
   }
 
   async getCoverageRequestsForShift(
@@ -405,7 +411,40 @@ export class CoverageService implements ICoverageService {
       })
       .returning({ id: coverageRequest.id });
 
-    return created!.id;
+    const coverageRequestId = created!.id;
+
+    // Fetch shift + course info for notification
+    const [shiftInfo] = await this.db
+      .select({
+        courseId: shift.courseId,
+        startAt: shift.startAt,
+        endAt: shift.endAt,
+        courseName: course.name,
+      })
+      .from(shift)
+      .innerJoin(course, eq(course.id, shift.courseId))
+      .where(eq(shift.id, requestData.shiftId))
+      .limit(1);
+
+    if (shiftInfo) {
+      const currentUser = this.currentSessionService.getUser();
+      void this.notificationEventService.notifyCoverageRequested({
+        coverageRequestId,
+        shiftId: requestData.shiftId,
+        classId: shiftInfo.courseId,
+        className: shiftInfo.courseName,
+        shiftDate: formatDate(shiftInfo.startAt),
+        shiftStartAt: shiftInfo.startAt,
+        shiftEndAt: shiftInfo.endAt,
+        requestingVolunteerUserId,
+        requestingVolunteerName: currentUser
+          ? `${currentUser.name} ${currentUser.lastName}`
+          : "A volunteer",
+        reason: requestData.details,
+      });
+    }
+
+    return coverageRequestId;
   }
 
   async cancelCoverageRequest(
@@ -475,9 +514,13 @@ export class CoverageService implements ICoverageService {
         status: coverageRequest.status,
         shiftStartAt: shift.startAt,
         shiftId: shift.id,
+        courseId: shift.courseId,
+        courseName: course.name,
+        requestingVolunteerUserId: coverageRequest.requestingVolunteerUserId,
       })
       .from(coverageRequest)
       .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
+      .innerJoin(course, eq(course.id, shift.courseId))
       .where(eq(coverageRequest.id, coverageRequestId));
 
     if (!request) {
@@ -532,6 +575,31 @@ export class CoverageService implements ICoverageService {
         NeuronErrorCodes.BAD_REQUEST,
       );
     }
+
+    // Notify admins, instructors, and requesting volunteer
+    const [requestingUser] = await this.db
+      .select({ name: user.name, lastName: user.lastName })
+      .from(user)
+      .where(eq(user.id, request.requestingVolunteerUserId))
+      .limit(1);
+
+    const currentUser = this.currentSessionService.getUser();
+
+    void this.notificationEventService.notifyCoverageFilled({
+      coverageRequestId,
+      shiftId: request.shiftId,
+      classId: request.courseId,
+      className: request.courseName,
+      shiftDate: formatDate(request.shiftStartAt),
+      coveredByVolunteerUserId,
+      coveredByVolunteerName: currentUser
+        ? `${currentUser.name} ${currentUser.lastName}`
+        : "A volunteer",
+      requestingVolunteerUserId: request.requestingVolunteerUserId,
+      requestingVolunteerName: requestingUser
+        ? `${requestingUser.name} ${requestingUser.lastName}`
+        : "A volunteer",
+    });
   }
 
   async unassignCoverage(

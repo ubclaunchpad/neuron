@@ -76,7 +76,7 @@ export function ViewUserListItem({ user: initialUser }: { user: ListUser }) {
   const { data: user } = clientApi.user.byId.useQuery(
     { userId: initialUser.id },
     {
-      staleTime: 0,
+      staleTime: 30 * 1000,
       initialData: initialUser as User,
       placeholderData: (prev) => prev,
     },

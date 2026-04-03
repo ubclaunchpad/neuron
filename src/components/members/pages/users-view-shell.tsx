@@ -2,11 +2,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { cn } from "@/lib/utils";
 import { Role, UserStatus } from "@/models/interfaces";
-import type { ListUser } from "@/models/user";
+import type { ListUser, User } from "@/models/user";
 import { clientApi } from "@/trpc/client";
 import React, {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type JSX,
@@ -73,6 +74,14 @@ export function UsersViewShell({
   );
 
   const users = infiniteQuery.data?.users ?? [];
+
+  const apiUtils = clientApi.useUtils();
+
+  useEffect(() => {
+    users.forEach((user) => {
+      apiUtils.user.byId.setData({ userId: user.id }, user as User);
+    });
+  }, [users, apiUtils]);
 
   const hasUsers = users.length > 0;
   const isLoading = infiniteQuery.isFetching;

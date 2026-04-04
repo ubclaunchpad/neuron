@@ -18,6 +18,7 @@ import { user, volunteer } from "@/server/db/schema/user";
 import { renderForgotPassword } from "@/server/emails/templates/forgot-password";
 import { renderRequestChangeEmail } from "@/server/emails/templates/request-change-email";
 import { renderVerifyEmail } from "@/server/emails/templates/verify-email";
+import { renderVerifyNewEmail } from "@/server/emails/templates/verify-new-email";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -83,7 +84,7 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        after: async (user: { role: Role; id: string }) => {
+        after: async (user) => {
           switch (user.role) {
             case Role.volunteer:
               await db.insert(volunteer).values({ userId: user.id });
@@ -123,18 +124,26 @@ export const auth = betterAuth({
       user,
       url,
     }: {
-      user: { name: string; email: string };
+      user: { name: string; email: string; emailVerified: boolean };
       url: string;
     }) => {
       const scope = createRequestScope();
       const { emailService } = scope.cradle;
-      const { html, text } = await renderVerifyEmail({
-        url,
-        userName: user.name,
-      });
+      const isEmailChange = user.emailVerified;
+      const { html, text } = isEmailChange
+        ? await renderVerifyNewEmail({
+            url,
+            userName: user.name,
+          })
+        : await renderVerifyEmail({
+            url,
+            userName: user.name,
+          });
       await emailService.send(
         user.email,
-        "Verify your email address",
+        isEmailChange
+          ? "Verify your new email address"
+          : "Verify your email address",
         text,
         html,
       );

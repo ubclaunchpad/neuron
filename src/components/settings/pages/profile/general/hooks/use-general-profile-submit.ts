@@ -125,6 +125,7 @@ export function useGeneralProfileSubmit() {
         buildProfileUpdateSuccessMessage(
           didRequestEmailChange ? requestedEmail : undefined,
         ),
+        didRequestEmailChange ? { duration: 30000, dismissible: true } : undefined,
       );
 
       return {

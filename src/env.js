@@ -28,6 +28,9 @@ export const env = createEnv({
     MINIO_USE_SSL: z.string().transform((val) => val === "true"),
     FILES_BASE_URL: z.url(),
     FILES_BUCKET: z.string(),
+
+    // Sentry / Bugsink
+    SENTRY_DSN: z.string().url(),
   },
 
   /**
@@ -58,6 +61,8 @@ export const env = createEnv({
 
     FILES_BASE_URL: process.env.FILES_BASE_URL,
     FILES_BUCKET: process.env.FILES_BUCKET,
+
+    SENTRY_DSN: process.env.SENTRY_DSN,
   },
 
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

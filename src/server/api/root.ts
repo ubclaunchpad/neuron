@@ -1,4 +1,4 @@
-import "server-only";
+import { bugReportRouter } from "@/server/api/routers/bug-report-router";
 import { classRouter } from "@/server/api/routers/class-router";
 import { coverageRouter } from "@/server/api/routers/coverage-router";
 import { logRouter } from "@/server/api/routers/log-router";
@@ -8,6 +8,7 @@ import { termRouter } from "@/server/api/routers/term-router";
 import { userRouter } from "@/server/api/routers/user-router";
 import { volunteerRouter } from "@/server/api/routers/volunteer-router";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { notificationRouter } from "./routers/notification-router";
 import { storageRouter } from "./routers/storage-router";
 
 /**
@@ -24,7 +25,9 @@ export const appRouter = createTRPCRouter({
   user: userRouter,
   term: termRouter,
   profile: profileRouter,
+  notification: notificationRouter,
   storage: storageRouter,
+  bugReport: bugReportRouter,
 });
 
 // export type definition of API

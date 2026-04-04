@@ -3,13 +3,12 @@
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { httpBatchStreamLink, loggerLink, TRPCClientError } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
-import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import { useState } from "react";
 import superjson from "superjson";
 import cleanDeep from "clean-deep";
 
-import { type AppRouter } from "@/server/api/root";
 import { createQueryClient } from "./query-client";
+import type { AppRouter, RouterInputs, RouterOutputs } from "./types";
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
 const getQueryClient = () => {
@@ -24,20 +23,6 @@ const getQueryClient = () => {
 };
 
 export const clientApi = createTRPCReact<AppRouter>();
-
-/**
- * Inference helper for inputs.
- *
- * @example type HelloInput = RouterInputs['example']['hello']
- */
-export type RouterInputs = inferRouterInputs<AppRouter>;
-
-/**
- * Inference helper for outputs.
- *
- * @example type HelloOutput = RouterOutputs['example']['hello']
- */
-export type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();

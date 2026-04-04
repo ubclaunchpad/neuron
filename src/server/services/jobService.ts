@@ -30,6 +30,7 @@ export interface IJobService {
     jobName: RunnableJobName,
     options?: { correlationId?: string },
   ): Promise<void>;
+  cancelJob(jobName: RunnableJobName, jobId: string): Promise<void>;
 }
 
 type SharedBossState = {
@@ -78,7 +79,6 @@ export class JobService implements IJobService {
   }
 
   async start(): Promise<void> {
-    if (this.env.NODE_ENV === "test") return;
     if (sharedBossState.isStarted) return;
 
     sharedBossState.startPromise ??= this.bootstrap().catch((error) => {
@@ -160,6 +160,12 @@ export class JobService implements IJobService {
     sharedBossState.recurringQueuesByJob.delete(jobName);
   }
 
+  async cancelJob(jobName: RunnableJobName, jobId: string): Promise<void> {
+    this.getJobDefinition(jobName);
+    await this.start();
+    await this.boss.cancel(jobName, jobId);
+  }
+
   private async runWithStartedBoss<TJobName extends KnownJobName>(
     jobName: TJobName,
     data?: JobPayload<TJobName>,
@@ -190,7 +196,7 @@ export class JobService implements IJobService {
         queueName,
         cron,
         (data ?? null) as object | null,
-        scheduleOptions as any,
+        scheduleOptions,
       );
       this.trackRecurringQueue(jobName, queueName);
       return null;
@@ -331,7 +337,7 @@ export class JobService implements IJobService {
     if (!normalized) {
       throw new Error("correlationId must be a non-empty string.");
     }
-    return `${jobName}:${normalized}`;
+    return `${jobName}/${normalized}`;
   }
 
   private async ensureWorkerRegistered(

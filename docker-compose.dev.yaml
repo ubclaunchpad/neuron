@@ -40,7 +40,19 @@ services:
     volumes:
       - miniodata:/data
 
+  bugsink:
+    image: bugsink/bugsink:latest
+    restart: unless-stopped
+    environment:
+      SECRET_KEY: ${BUGSINK_SECRET_KEY}
+      CREATE_SUPERUSER: admin:admin
+    ports:
+      - "8000:8000"
+    volumes:
+      - bugsinkdata:/data
+
 volumes:
   pgdata:
   redisdata:
   miniodata:
+  bugsinkdata:

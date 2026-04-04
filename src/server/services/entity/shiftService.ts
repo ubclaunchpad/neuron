@@ -1,4 +1,5 @@
 import { hasPermission } from "@/lib/auth/extensions/permissions";
+import { formatDate } from "@/lib/constants";
 import type { ICurrentSessionService } from "@/server/services/currentSessionService";
 import { CoverageStatus } from "@/models/api/coverage";
 import type {
@@ -48,6 +49,8 @@ import {
   volunteerUserView,
 } from "@/server/db/schema/user";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import type { INotificationEventService } from "@/server/services/notificationEventService";
+import type { IJobService } from "@/server/services/jobService";
 import { term } from "@/server/db/schema/course";
 import { and, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 
@@ -104,16 +107,24 @@ function sortCoverageRequestsByStatus(
 export class ShiftService implements IShiftService {
   private readonly db: Drizzle;
   private readonly currentSessionService: ICurrentSessionService;
+  private readonly notificationEventService: INotificationEventService;
+  private readonly jobService: IJobService;
 
   constructor({
     db,
     currentSessionService,
+    notificationEventService,
+    jobService,
   }: {
     db: Drizzle;
     currentSessionService: ICurrentSessionService;
+    notificationEventService: INotificationEventService;
+    jobService: IJobService;
   }) {
     this.db = db;
     this.currentSessionService = currentSessionService;
+    this.notificationEventService = notificationEventService;
+    this.jobService = jobService;
   }
 
   private async getViewer(
@@ -683,18 +694,42 @@ export class ShiftService implements IShiftService {
       );
     }
 
+    const startAt = new Date(input.startAt);
+    const endAt = new Date(input.endAt);
+
     const [row] = await transaction
       .insert(shift)
       .values({
         courseId: scheduleRow.courseId,
         scheduleId: input.scheduleId,
         date: input.date,
-        startAt: new Date(input.startAt),
-        endAt: new Date(input.endAt),
+        startAt,
+        endAt,
       })
       .returning({ id: shift.id });
 
-    return row!.id;
+    const shiftId = row!.id;
+
+    // Schedule shift reminder (1 hour before start)
+    const reminderAt = new Date(startAt.getTime() - 60 * 60 * 1000);
+    if (reminderAt > new Date()) {
+      void this.jobService.run(
+        "jobs.check-shift-notifications",
+        { shiftId, checkType: "reminder" },
+        { startAfter: reminderAt },
+      );
+    }
+
+    // Schedule no-checkin check (at shift end)
+    if (endAt > new Date()) {
+      void this.jobService.run(
+        "jobs.check-shift-notifications",
+        { shiftId, checkType: "no-checkin" },
+        { startAfter: endAt },
+      );
+    }
+
+    return shiftId;
   }
 
   async deleteShift(input: ShiftIdInput): Promise<void> {
@@ -720,8 +755,10 @@ export class ShiftService implements IShiftService {
         id: shift.id,
         startAt: shift.startAt,
         canceled: shift.canceled,
+        courseName: course.name,
       })
       .from(shift)
+      .innerJoin(course, eq(course.id, shift.courseId))
       .where(eq(shift.id, shiftId))
       .limit(1);
 
@@ -743,11 +780,13 @@ export class ShiftService implements IShiftService {
       return;
     }
 
+    const currentUserId = this.currentSessionService.getUserId();
+
     const [updated] = await this.db
       .update(shift)
       .set({
         canceled: true,
-        cancelledByUserId: this.currentSessionService.getUserId() ?? null,
+        cancelledByUserId: currentUserId ?? null,
         canceledAt: new Date(),
         cancelReason,
       })
@@ -760,6 +799,18 @@ export class ShiftService implements IShiftService {
         NeuronErrorCodes.BAD_REQUEST,
       );
     }
+
+    const currentUser = this.currentSessionService.getUser();
+    void this.notificationEventService.notifyShiftCancelled({
+      shiftId,
+      className: shiftRow.courseName,
+      shiftDate: formatDate(shiftRow.startAt),
+      cancelReason,
+      cancelledByUserId: currentUserId,
+      cancelledByName: currentUser
+        ? `${currentUser.name} ${currentUser.lastName}`
+        : "System",
+    });
   }
 
   async assertValidShift(volunteerId: string, shiftId: string): Promise<void> {

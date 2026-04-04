@@ -26,7 +26,7 @@ const badgeVariants = cva(
         primary: "bg-primary/10 text-primary",
         success: "bg-emerald-50 text-emerald-700",
         warning: "bg-amber-50 text-amber-800",
-        error: "bg-destructive text-destructive/20",
+        error: "bg-destructive/20 text-destructive",
         info: "bg-blue-50 text-blue-700",
       },
     },

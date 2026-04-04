@@ -18,7 +18,6 @@ import { UserList } from "@/components/users/user-list";
 import { clientApi } from "@/trpc/client";
 import { Video } from "lucide-react";
 import type { Route } from "next";
-import Link from "next/link";
 import { CancelShiftButton } from "./cancel-shift-button";
 import { useSchedulePage } from "./schedule-page-context";
 import { WithPermission } from "../utils/with-permission";

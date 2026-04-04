@@ -1,5 +1,3 @@
-import "server-only";
-
 import { Role, RoleEnum, UserStatus } from "@/models/interfaces";
 import { createRequestScope } from "@/server/api/di-container";
 import { db } from "@/server/db";
@@ -19,7 +17,7 @@ export const appInvitePlugin = appInvite({
     }
 
     const scope = createRequestScope();
-    const { emailService } = scope.cradle;
+    const { jobService } = scope.cradle;
 
     const origin = request ? new URL(request.url).origin : env.NEURON_BASE_URL;
     const inviteUrl = new URL(
@@ -32,12 +30,12 @@ export const appInvitePlugin = appInvite({
       inviterName: invitation.inviter.name,
       inviterEmail: invitation.inviter.email,
     });
-    await emailService.send(
-      invitation.email,
-      "You've been invited to Neuron",
+    await jobService.run("jobs.send-email", {
+      to: invitation.email,
+      subject: "You've been invited to Neuron",
       text,
       html,
-    );
+    });
   },
   canCreateInvitation: (ctx): boolean => {
     const inviter = ctx.context.session?.user as User;

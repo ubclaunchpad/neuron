@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useImageUrl } from "@/lib/build-image-url";
 import { Role } from "@/models/interfaces";
 import type { ListUser, User } from "@/models/user";
@@ -31,6 +32,7 @@ export const UserProfileDialog = NiceModal.create(
     const { data: user } = clientApi.user.byId.useQuery(
       { userId },
       {
+        staleTime: 0,
         initialData: initialUser as User,
         placeholderData: (prev) => prev,
       },
@@ -89,7 +91,7 @@ export const UserProfileDialog = NiceModal.create(
             </ReadonlyField>
 
             <ReadonlyField label="Joined date">
-              {joinedDate ?? "Not available"}
+              {joinedDate ?? <Skeleton className="h-4 w-32" />}
             </ReadonlyField>
           </div>
 

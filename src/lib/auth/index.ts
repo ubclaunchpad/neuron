@@ -131,17 +131,25 @@ export const auth = betterAuth({
       url: string;
     }) => {
       const scope = createRequestScope();
-      const { jobService } = scope.cradle;
-      const { html, text } = await renderVerifyEmail({
-        url,
-        userName: user.name,
-      });
-      await jobService.run("jobs.send-email", {
-        to: user.email,
-        subject: "Verify your email address",
+      const { emailService } = scope.cradle;
+      const isEmailChange = user.emailVerified;
+      const { html, text } = isEmailChange
+        ? await renderVerifyNewEmail({
+            url,
+            userName: user.name,
+          })
+        : await renderVerifyEmail({
+            url,
+            userName: user.name,
+          });
+      await emailService.send(
+        user.email,
+        isEmailChange
+          ? "Verify your new email address"
+          : "Verify your email address",
         text,
         html,
-      });
+      );
     },
   },
   plugins: [nextCookies(), appInvitePlugin],

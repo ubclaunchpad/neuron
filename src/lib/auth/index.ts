@@ -1,3 +1,5 @@
+import "server-only";
+
 import {
   Role,
   RoleEnum,
@@ -14,7 +16,9 @@ import {
 } from "@/server/db/schema/auth";
 import { user, volunteer } from "@/server/db/schema/user";
 import { renderForgotPassword } from "@/server/emails/templates/forgot-password";
+import { renderRequestChangeEmail } from "@/server/emails/templates/request-change-email";
 import { renderVerifyEmail } from "@/server/emails/templates/verify-email";
+import { renderVerifyNewEmail } from "@/server/emails/templates/verify-new-email";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -34,6 +38,32 @@ export const auth = betterAuth({
         input: false,
       },
       lastName: { type: "string" },
+    },
+    changeEmail: {
+      enabled: true,
+      sendChangeEmailConfirmation: async ({
+        user,
+        newEmail,
+        url,
+      }: {
+        user: { name: string; email: string };
+        newEmail: string;
+        url: string;
+      }) => {
+        const scope = createRequestScope();
+        const { emailService } = scope.cradle;
+        const { html, text } = await renderRequestChangeEmail({
+          url,
+          userName: user.name,
+          newEmail: newEmail,
+        });
+        await emailService.send(
+          user.email,
+          `Confirm your email address change to ${newEmail}`,
+          text,
+          html,
+        );
+      },
     },
   },
   database: drizzleAdapter(db, {
@@ -72,7 +102,13 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendResetPassword: async ({ user, url }) => {
+    sendResetPassword: async ({
+      user,
+      url,
+    }: {
+      user: { name: string; email: string };
+      url: string;
+    }) => {
       const scope = createRequestScope();
       const { jobService } = scope.cradle;
       const { html, text } = await renderForgotPassword({
@@ -89,19 +125,33 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendOnSignUp: true,
-    sendVerificationEmail: async ({ user, url }) => {
+    sendVerificationEmail: async ({
+      user,
+      url,
+    }: {
+      user: { name: string; email: string; emailVerified: boolean };
+      url: string;
+    }) => {
       const scope = createRequestScope();
-      const { jobService } = scope.cradle;
-      const { html, text } = await renderVerifyEmail({
-        url,
-        userName: user.name,
-      });
-      await jobService.run("jobs.send-email", {
-        to: user.email,
-        subject: "Verify your email address",
+      const { emailService } = scope.cradle;
+      const isEmailChange = user.emailVerified;
+      const { html, text } = isEmailChange
+        ? await renderVerifyNewEmail({
+            url,
+            userName: user.name,
+          })
+        : await renderVerifyEmail({
+            url,
+            userName: user.name,
+          });
+      await emailService.send(
+        user.email,
+        isEmailChange
+          ? "Verify your new email address"
+          : "Verify your email address",
         text,
         html,
-      });
+      );
     },
   },
   plugins: [nextCookies(), appInvitePlugin],

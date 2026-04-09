@@ -51,8 +51,7 @@ function CheckInActiveCard({ shift }: { shift: ListShiftWithPersonalStatus }) {
   const endAt = toDate(shift.endAt);
   const hasCheckedIn =
     shift.attendance?.status === AttendanceStatus.present ||
-    shift.attendance?.status === AttendanceStatus.late ||
-    shift.attendance?.status === AttendanceStatus.excused;
+    shift.attendance?.status === AttendanceStatus.late;
 
   if (hasCheckedIn) {
     return (

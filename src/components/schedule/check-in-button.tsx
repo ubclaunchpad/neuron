@@ -18,7 +18,8 @@ import {
   subMinutes,
 } from "date-fns";
 import { Clock4Icon } from "lucide-react";
-import { useEffect, useMemo, useState, type ComponentProps } from "react";
+import { useMemo, type ComponentProps } from "react";
+import { useCurrentTime } from "@/hooks/use-current-time";
 
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
 
@@ -42,12 +43,7 @@ export function CheckInButton({
   size?: ComponentProps<typeof Button>["size"];
   className?: string;
 }) {
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 30_000);
-    return () => window.clearInterval(id);
-  }, []);
+  const now = useCurrentTime();
 
   const checkInOpensAt = useMemo(
     () => subMinutes(shift.startAt, 15),

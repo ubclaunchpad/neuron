@@ -11,6 +11,7 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { useCurrentTime } from "@/hooks/use-current-time";
 
 function toDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
@@ -32,7 +33,7 @@ function groupByDay(shifts: ListShift[]): DayGroup[] {
 
 export function DashboardUpcomingShifts() {
   const router = useRouter();
-  const now = useMemo(() => new Date(), []);
+  const now = useCurrentTime();
   const rangeStart = useMemo(() => startOfMonth(now), [now]);
   const rangeEnd = useMemo(() => endOfMonth(now), [now]);
 

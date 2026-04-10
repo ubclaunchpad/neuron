@@ -8,18 +8,15 @@ import { AttendanceStatus } from "@/models/interfaces";
 import { differenceInSeconds, format, subMinutes } from "date-fns";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { ChevronRight, Clock } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useCurrentTime } from "@/hooks/use-current-time";
 
 function toDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
 }
 
 function useCountdownToDate(target: Date) {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 30_000);
-    return () => clearInterval(id);
-  }, []);
+  const now = useCurrentTime();
   const totalSeconds = Math.max(0, differenceInSeconds(target, now));
   const days = Math.floor(totalSeconds / (60 * 60 * 24));
   const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
@@ -110,11 +107,7 @@ function CountdownCard({ shift }: { shift: ListShiftWithPersonalStatus }) {
 }
 
 export function DashboardCheckInWidget() {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 30_000);
-    return () => window.clearInterval(id);
-  }, []);
+  const now = useCurrentTime();
   const rangeStart = useMemo(() => startOfMonth(now), [now]);
   const rangeEnd = useMemo(() => endOfMonth(now), [now]);
 

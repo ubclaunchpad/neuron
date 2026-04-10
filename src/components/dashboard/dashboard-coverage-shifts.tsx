@@ -24,6 +24,7 @@ import { ChevronRight, Plus, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { useCurrentTime } from "@/hooks/use-current-time";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/client-auth-provider";
 
@@ -150,7 +151,7 @@ function DashboardCoverageItem({
 
 export function DashboardCoverageShifts() {
   const router = useRouter();
-  const now = useMemo(() => new Date(), []);
+  const now = useCurrentTime();
 
   const { data, isLoading } = clientApi.coverage.list.useInfiniteQuery(
     {

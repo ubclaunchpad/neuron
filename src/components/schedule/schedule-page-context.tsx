@@ -19,7 +19,7 @@ type SchedulePageContextValue = {
   closeAside: () => void;
 };
 
-const SchedulePageContext = createContext<SchedulePageContextValue | null>(
+export const SchedulePageContext = createContext<SchedulePageContextValue | null>(
   null,
 );
 

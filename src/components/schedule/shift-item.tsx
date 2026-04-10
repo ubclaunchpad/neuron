@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/primitives/button";
-import { useSchedulePage } from "@/components/schedule/schedule-page-context";
+import { SchedulePageContext } from "@/components/schedule/schedule-page-context";
 import {
   Item,
   ItemActions,
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import type { ListShift } from "@/models/shift";
 import { createPrng } from "@/utils/prngUtils";
 import { differenceInMinutes, format } from "date-fns";
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
 import { backgroundColors } from "../ui/avatar";
 import { WithPermission } from "../utils/with-permission";
 import { CheckInButton } from "./check-in-button";
@@ -37,11 +37,16 @@ function formatDuration(start: Date, end: Date) {
 export function ShiftItem({
   shift,
   className,
+  onOpen,
 }: {
   shift: ListShift;
   className?: string;
+  /** called when the item is clicked. defaults to opening the schedule-page aside */
+  onOpen?: (shiftId: string) => void;
 }) {
-  const { openAsideFor } = useSchedulePage();
+  const schedulePage = useContext(SchedulePageContext);
+  const handleOpen = onOpen ?? schedulePage?.openAsideFor ?? (() => {});
+
   const { startAt, endAt } = shift;
 
   const color = useMemo(() => {
@@ -63,7 +68,7 @@ export function ShiftItem({
         unstyled
         aria-label={`Open ${shift.className}`}
         className="absolute inset-0 z-0 cursor-pointer"
-        onClick={() => openAsideFor(shift.id)}
+        onClick={() => handleOpen(shift.id)}
       />
 
       <ItemContent className="flex-row gap-4">

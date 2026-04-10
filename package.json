@@ -84,7 +84,7 @@
     "minio": "^8.0.7",
     "next": "^16.2.3",
     "next-themes": "^0.4.6",
-    "nodemailer": "^7.0.13",
+    "nodemailer": "^8.0.5",
     "nuqs": "^2.8.9",
     "pg-boss": "^12.15.0",
     "postcss": "^8.5.9",
@@ -106,7 +106,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
     "@hookform/devtools": "^4.4.0",
-    "@react-email/preview-server": "5.2.9",
+    "@react-email/preview-server": "5.2.10",
     "@svgr/webpack": "^8.1.0",
     "@types/node": "^20.19.39",
     "@types/nodemailer": "^7.0.11",

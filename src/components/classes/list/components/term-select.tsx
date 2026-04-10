@@ -33,10 +33,11 @@ export function TermSelect({
     isRefetching,
   } = clientApi.term.all.useQuery();
 
-  // If the current term is not in the list, select the first term
+  // If the selected term no longer exists (e.g. deleted), fall back to the first term.
+  // Only runs when selectedTermId is already set — initial selection is handled by class-list-view.
   useEffect(() => {
     const selectedTerm = terms?.find((t) => t.id === selectedTermId);
-    if (!selectedTerm && terms?.[0] && !isRefetching)
+    if (selectedTermId && !selectedTerm && terms?.[0] && !isRefetching)
       setSelectedTermId(terms[0].id);
   }, [terms, selectedTermId, setSelectedTermId]);
 

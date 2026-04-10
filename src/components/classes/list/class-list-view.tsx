@@ -112,6 +112,9 @@ export function ClassListView({ classId, setClassId }: ClassListViewProps) {
     if (queryTerm === "current") {
       if (!selectedTermId && currentTerm) {
         setSelectedTermId(currentTerm.id);
+      } else if (!selectedTermId && !isLoadingCurrentTerm && terms?.[0]) {
+        // No current term returned from backend; fall back to first term
+        setSelectedTermId(terms[0].id);
       }
       return;
     }

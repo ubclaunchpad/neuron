@@ -54,7 +54,7 @@ export function DashboardUpcomingShifts() {
   };
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col h-full">
       <CardHeader className="pb-2">
         <Link
             href="/schedule"
@@ -64,7 +64,7 @@ export function DashboardUpcomingShifts() {
           <ChevronRight className="size-4 text-muted-foreground" />
         </Link>
       </CardHeader>
-      <CardContent className="flex-1 min-h-0">
+      <CardContent className="flex-1 min-h-0 overflow-y-auto">
         {query.isLoading ? (
           <SkeletonListGroup
             containerClassName="space-y-3"

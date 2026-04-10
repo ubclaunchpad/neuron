@@ -23,14 +23,12 @@ import { DashboardCheckInWidget } from "@/components/dashboard/dashboard-checkin
 
 function VolunteerDashboard() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:grid-rows-[auto_auto]">
-      <div className="md:row-span-2">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:grid-rows-[1fr_auto] md:h-[calc(100dvh-var(--page-header-h)-4.5rem)]">
+      <div className="md:row-span-2 h-full">
         <DashboardUpcomingShifts />
       </div>
-      <div className="flex flex-col gap-4">
-        <DashboardCoverageShifts />
-        <DashboardCheckInWidget />
-      </div>
+      <DashboardCoverageShifts />
+      <DashboardCheckInWidget />
     </div>
   );
 }

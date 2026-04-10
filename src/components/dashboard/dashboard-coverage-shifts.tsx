@@ -176,14 +176,14 @@ export function DashboardCoverageShifts() {
   };
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col h-full">
       <CardHeader className="pb-2">
         <Link href="/coverage" className="inline-flex items-center gap-0.5">
           <CardTitle className="text-base font-semibold">Shifts in Need of Coverage</CardTitle>
           <ChevronRight className="size-3.5 text-muted-foreground" />
         </Link>
       </CardHeader>
-      <CardContent className="flex-1 min-h-0">
+      <CardContent className="flex-1 min-h-0 overflow-y-auto">
         {isLoading ? (
           <SkeletonListGroup
             containerClassName="space-y-3"

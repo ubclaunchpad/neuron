@@ -213,7 +213,7 @@ export function ClassListView({ classId, setClassId }: ClassListViewProps) {
                 <Link
                   href={{
                     pathname: "classes/edit",
-                    query: { termId: selectedTermId },
+                    query: { term: selectedTermId },
                   }}
                 >
                   <AddIcon />

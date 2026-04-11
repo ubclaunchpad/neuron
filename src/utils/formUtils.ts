@@ -27,13 +27,10 @@ export const diffArray = <T extends Primitive>(
   added: Array<T>;
   deleted: Array<T>;
 } => {
-  const changes = diff(beforeArray, afterArray);
-  const added: Array<T> = changes
-    .filter((c) => c.type === "CREATE" || c.type === "CHANGE")
-    .map((c) => c.value as T);
-  const deleted: Array<T> = changes
-    .filter((c) => c.type === "REMOVE" || c.type === "CHANGE")
-    .map((c) => c.oldValue as T);
+  const beforeSet = new Set(beforeArray);
+  const afterSet = new Set(afterArray);
+  const added = afterArray.filter((item) => !beforeSet.has(item));
+  const deleted = beforeArray.filter((item) => !afterSet.has(item));
   return { added, deleted };
 };
 

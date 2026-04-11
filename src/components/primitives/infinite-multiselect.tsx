@@ -70,7 +70,7 @@ function InfiniteMultiSelect<
   );
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       {values.map((value, idx) => {
         const content = (
           <InputGroup className="w-fit gap-1">

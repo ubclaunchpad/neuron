@@ -582,12 +582,20 @@ export class ClassService implements IClassService {
           Role.volunteer,
           addedVolunteerUserIds,
         );
-        await tx.insert(volunteerToSchedule).values(
-          addedVolunteerUserIds?.map((volunteerId) => ({
-            scheduleId: id,
-            volunteerUserId: volunteerId,
-          })),
-        );
+        await tx
+          .insert(volunteerToSchedule)
+          .values(
+            addedVolunteerUserIds?.map((volunteerId) => ({
+              scheduleId: id,
+              volunteerUserId: volunteerId,
+            })),
+          )
+          .onConflictDoNothing({
+            target: [
+              volunteerToSchedule.volunteerUserId,
+              volunteerToSchedule.scheduleId,
+            ],
+          });
       }
 
       // Remove volunteers from schedule
@@ -612,12 +620,20 @@ export class ClassService implements IClassService {
           Role.instructor,
           addedInstructorUserIds,
         );
-        await tx.insert(instructorToSchedule).values(
-          addedInstructorUserIds?.map((instructorId) => ({
-            scheduleId: id,
-            instructorUserId: instructorId,
-          })),
-        );
+        await tx
+          .insert(instructorToSchedule)
+          .values(
+            addedInstructorUserIds?.map((instructorId) => ({
+              scheduleId: id,
+              instructorUserId: instructorId,
+            })),
+          )
+          .onConflictDoNothing({
+            target: [
+              instructorToSchedule.instructorUserId,
+              instructorToSchedule.scheduleId,
+            ],
+          });
       }
 
       // Remove instructors from schedule

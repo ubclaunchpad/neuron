@@ -43,7 +43,7 @@ export function ClassesEmptyView() {
             <Link
               href={{
                 pathname: "classes/edit",
-                query: { termId: selectedTermId },
+                query: { term: selectedTermId },
               }}
             >
               <Plus />

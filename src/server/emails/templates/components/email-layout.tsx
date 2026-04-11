@@ -67,9 +67,7 @@ const tailwindConfig = {
   },
 } satisfies TailwindConfig;
 
-const baseUrl = process.env.NEURON_BASE_URL
-  ? `https://${process.env.NEURON_BASE_URL}`
-  : "http://localhost:3000";
+const baseUrl = process.env.NEURON_BASE_URL ?? "http://localhost:3000";
 
 export function EmailLayout({ preview, children }: EmailLayoutProps) {
   return (

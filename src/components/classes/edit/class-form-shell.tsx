@@ -1,7 +1,7 @@
 import { usePublicConfig } from "@/lib/public-config";
 import type { SingleClass } from "@/models/class";
 import type { Term } from "@/models/term";
-import { useEffect } from "react";
+import { useEventListener } from "usehooks-ts";
 import {
   PageLayout,
   PageLayoutContent,
@@ -40,16 +40,11 @@ export function ClassEditShell({
   });
 
   // Warn before navigating away during submission
-  useEffect(() => {
-    if (!isPending) return;
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  useEventListener("beforeunload", (e: BeforeUnloadEvent) => {
+    if (isPending) {
       e.preventDefault();
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isPending]);
+    }
+  });
 
   return (
     <ClassFormProvider

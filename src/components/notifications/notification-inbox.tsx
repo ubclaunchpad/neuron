@@ -26,6 +26,24 @@ export function NotificationInbox() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [stuckHeader, setStuckHeader] = useState<string | null>(null);
 
+  const { data: unreadCount = 0 } = clientApi.notification.unreadCount.useQuery(
+    undefined,
+    {
+      refetchInterval: 30_000,
+    },
+  );
+
+  const { data, isLoading } = clientApi.notification.list.useQuery(
+    { limit: 20, ...getQueryParams(filter) },
+    { enabled: open },
+  );
+
+  const items = data?.items ?? [];
+  const groups = groupByDate(items);
+  const isArchivedView = filter === "archived";
+  const hasUnread = items.some((n) => !n.read);
+  const hasItems = items.length > 0;
+
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -53,25 +71,7 @@ export function NotificationInbox() {
 
     sentinels.forEach((s) => observer.observe(s));
     return () => observer.disconnect();
-  });
-
-  const { data: unreadCount = 0 } = clientApi.notification.unreadCount.useQuery(
-    undefined,
-    {
-      refetchInterval: 30_000,
-    },
-  );
-
-  const { data, isLoading } = clientApi.notification.list.useQuery(
-    { limit: 20, ...getQueryParams(filter) },
-    { enabled: open },
-  );
-
-  const items = data?.items ?? [];
-  const groups = groupByDate(items);
-  const isArchivedView = filter === "archived";
-  const hasUnread = items.some((n) => !n.read);
-  const hasItems = items.length > 0;
+  }, [groups.length]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

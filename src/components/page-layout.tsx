@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useEventListener, useResizeObserver } from "usehooks-ts";
 
 import { Button } from "@/components/ui/button";
 import { TypographyPageTitle } from "@/components/ui/typography";
@@ -149,24 +150,12 @@ function PageLayoutHeader({
   const hideBorder =
     border === "never" || (border === "scroll" && !isPageScrolled);
 
-  const headerRef = React.useRef<HTMLElement | null>(null);
-  React.useLayoutEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
+  const headerRef = React.useRef<HTMLElement>(null!);
+  const { height = 0 } = useResizeObserver({ ref: headerRef, box: "border-box" });
 
-    const update = () => {
-      setHeaderHeight(el.offsetHeight);
-    };
-
-    update();
-
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-
-    return () => {
-      ro.disconnect();
-    };
-  }, [setHeaderHeight]);
+  React.useEffect(() => {
+    setHeaderHeight(height);
+  }, [height, setHeaderHeight]);
 
   return (
     <header
@@ -248,20 +237,22 @@ function PageLayoutContent({
   ...props
 }: React.ComponentProps<"main">) {
   const { setIsPageScrolled } = usePageLayout();
-  const mainRef = React.useRef<HTMLElement>(null);
+  const mainRef = React.useRef<HTMLElement>(null!);
+
+  useEventListener(
+    "scroll",
+    () => {
+      if (mainRef.current) {
+        setIsPageScrolled(mainRef.current.scrollTop > 0);
+      }
+    },
+    mainRef,
+  );
 
   React.useEffect(() => {
-    const element = mainRef.current;
-    if (!element) return;
-
-    const handleScroll = () => {
-      setIsPageScrolled(element.scrollTop > 0);
-    };
-
-    element.addEventListener("scroll", handleScroll);
-    handleScroll(); // Check initial state
-
-    return () => element.removeEventListener("scroll", handleScroll);
+    if (mainRef.current) {
+      setIsPageScrolled(mainRef.current.scrollTop > 0);
+    }
   }, [setIsPageScrolled]);
 
   return (

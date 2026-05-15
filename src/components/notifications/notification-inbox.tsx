@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Inbox } from "lucide-react";
 import { Button } from "@/components/primitives/button";
 import {
@@ -8,8 +8,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { clientApi } from "@/trpc/client";
+import { cn } from "@/lib/utils";
 import { NotificationFilterMenu } from "./notification-filter-menu";
 import { NotificationActionsMenu } from "./notification-actions-menu";
 import { NotificationItem } from "./notification-item";
@@ -23,6 +23,37 @@ import {
 export function NotificationInbox() {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [stuckHeader, setStuckHeader] = useState<string | null>(null);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const sentinels = container.querySelectorAll("[data-header-sentinel]");
+    if (sentinels.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      () => {
+        const containerRect = container.getBoundingClientRect();
+        let topStuck: string | null = null;
+
+        for (const sentinel of sentinels) {
+          const rect = sentinel.getBoundingClientRect();
+          const isAboveViewport = rect.top < containerRect.top;
+          if (isAboveViewport) {
+            topStuck = (sentinel as HTMLElement).dataset.headerSentinel ?? null;
+          }
+        }
+
+        setStuckHeader(topStuck);
+      },
+      { root: container, threshold: 0 },
+    );
+
+    sentinels.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  });
 
   const { data: unreadCount = 0 } = clientApi.notification.unreadCount.useQuery(
     undefined,
@@ -81,7 +112,7 @@ export function NotificationInbox() {
         </div>
 
         {/* Notification list */}
-        <ScrollArea className="max-h-96">
+        <div ref={scrollContainerRef} className="max-h-96 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <p className="text-sm text-muted-foreground">Loading...</p>
@@ -96,7 +127,18 @@ export function NotificationInbox() {
             <div>
               {groups.map((group) => (
                 <div key={group.label}>
-                  <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                  <div
+                    data-header-sentinel={group.label}
+                    className="h-0"
+                    aria-hidden="true"
+                  />
+                  <p
+                    className={cn(
+                      "sticky top-0 z-20 bg-popover px-3 py-1.5 text-xs font-medium text-muted-foreground",
+                      "before:absolute before:inset-x-0 before:-top-px before:h-px before:bg-popover",
+                      stuckHeader === group.label && "shadow-bottom",
+                    )}
+                  >
                     {group.label}
                   </p>
                   <div className="divide-y">
@@ -113,7 +155,7 @@ export function NotificationInbox() {
               ))}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );

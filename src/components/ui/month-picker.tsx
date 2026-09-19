@@ -17,16 +17,18 @@ const MONTHS: Month[][] = [
     { number: 0, name: "Jan" },
     { number: 1, name: "Feb" },
     { number: 2, name: "Mar" },
-    { number: 3, name: "Apr" },
   ],
   [
+    { number: 3, name: "Apr" },
     { number: 4, name: "May" },
     { number: 5, name: "Jun" },
-    { number: 6, name: "Jul" },
-    { number: 7, name: "Aug" },
   ],
   [
+    { number: 6, name: "Jul" },
+    { number: 7, name: "Aug" },
     { number: 8, name: "Sep" },
+  ],
+  [
     { number: 9, name: "Oct" },
     { number: 10, name: "Nov" },
     { number: 11, name: "Dec" },
@@ -78,7 +80,7 @@ function MonthPicker({
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & MonthCalProps) {
   return (
-    <div className={cn("min-w-[200px] w-[280px] p-3", className)} {...props}>
+    <div className={cn("w-60 min-w-[200px] p-3", className)} {...props}>
       <div className="flex w-full flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
         <div className="w-full space-y-4">
           <MonthCal
@@ -133,7 +135,7 @@ function MonthCal({
 
   return (
     <>
-      <div className="relative flex items-center justify-center pt-1">
+      <div className="relative mb-3 flex items-center justify-center pt-1">
         <div className="text-sm font-medium" aria-live="polite">
           {callbacks?.yearLabel ? callbacks.yearLabel(menuYear) : menuYear}
         </div>
@@ -168,66 +170,68 @@ function MonthCal({
           </button>
         </div>
       </div>
-      <table className="w-full border-collapse space-y-1">
-        <tbody>
-          {MONTHS.map((monthRow, row) => (
-            <tr key={`row-${row}`} className="mt-2 flex w-full">
-              {monthRow.map((monthOption) => {
-                const isSelected =
-                  month === monthOption.number && menuYear === year;
-                const isDisabled =
-                  (maxDate
-                    ? menuYear > maxDate.getFullYear() ||
-                      (menuYear === maxDate.getFullYear() &&
-                        monthOption.number > maxDate.getMonth())
-                    : false) ||
-                  (normalizedMinDate
-                    ? menuYear < normalizedMinDate.getFullYear() ||
-                      (menuYear === normalizedMinDate.getFullYear() &&
-                        monthOption.number < normalizedMinDate.getMonth())
-                    : false) ||
-                  (disabledDatesMapped?.some(
-                    (date) =>
-                      date.year === menuYear &&
-                      date.month === monthOption.number,
-                  ) ??
-                    false);
+      <div
+        role="grid"
+        aria-label={`Months in ${menuYear}`}
+        className="space-y-2"
+      >
+        {MONTHS.map((monthRow, row) => (
+          <div key={`row-${row}`} role="row" className="grid grid-cols-3 gap-2">
+            {monthRow.map((monthOption) => {
+              const isSelected =
+                month === monthOption.number && menuYear === year;
+              const isDisabled =
+                (maxDate
+                  ? menuYear > maxDate.getFullYear() ||
+                    (menuYear === maxDate.getFullYear() &&
+                      monthOption.number > maxDate.getMonth())
+                  : false) ||
+                (normalizedMinDate
+                  ? menuYear < normalizedMinDate.getFullYear() ||
+                    (menuYear === normalizedMinDate.getFullYear() &&
+                      monthOption.number < normalizedMinDate.getMonth())
+                  : false) ||
+                (disabledDatesMapped?.some(
+                  (date) =>
+                    date.year === menuYear && date.month === monthOption.number,
+                ) ??
+                  false);
 
-                return (
-                  <td
-                    key={monthOption.number}
-                    className="relative h-10 w-1/4 p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
+              return (
+                <div
+                  key={monthOption.number}
+                  role="gridcell"
+                  className="relative h-9 p-0 text-center text-sm focus-within:z-20"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMonth(monthOption.number);
+                      setYear(menuYear);
+                      onMonthSelect?.(new Date(menuYear, monthOption.number));
+                    }}
+                    disabled={isDisabled}
+                    className={cn(
+                      buttonVariants({
+                        variant: isSelected
+                          ? (variant?.calendar?.selected ?? "default")
+                          : (variant?.calendar?.main ?? "ghost"),
+                      }),
+                      "h-full w-full rounded-md p-0 font-normal aria-selected:opacity-100",
+                    )}
+                    aria-label={`Choose ${monthOption.name} ${menuYear}`}
+                    aria-selected={isSelected}
                   >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMonth(monthOption.number);
-                        setYear(menuYear);
-                        onMonthSelect?.(new Date(menuYear, monthOption.number));
-                      }}
-                      disabled={isDisabled}
-                      className={cn(
-                        buttonVariants({
-                          variant: isSelected
-                            ? (variant?.calendar?.selected ?? "default")
-                            : (variant?.calendar?.main ?? "ghost"),
-                        }),
-                        "h-full w-full p-0 font-normal aria-selected:opacity-100",
-                      )}
-                      aria-label={`Choose ${monthOption.name} ${menuYear}`}
-                      aria-selected={isSelected}
-                    >
-                      {callbacks?.monthLabel
-                        ? callbacks.monthLabel(monthOption)
-                        : monthOption.name}
-                    </button>
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                    {callbacks?.monthLabel
+                      ? callbacks.monthLabel(monthOption)
+                      : monthOption.name}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </>
   );
 }

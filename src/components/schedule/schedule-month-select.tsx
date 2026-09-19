@@ -44,13 +44,12 @@ export function MonthSelect({
 
       <PopoverContent className="w-auto p-0" align="start">
         <MonthPicker
-          className="w-80"
+          className="w-60"
           selectedMonth={value}
           onMonthSelect={(date) => {
             onValueChange(date);
             setOpen(false);
           }}
-          variant={{ chevrons: "ghost" }}
         />
       </PopoverContent>
     </Popover>

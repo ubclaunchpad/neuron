@@ -14,6 +14,10 @@ const unauthorized = (error: unknown) =>
   error.data?.code &&
   error.data.code === "UNAUTHORIZED";
 
+const serviceUnavailable = (error: unknown) =>
+  error instanceof TRPCClientError &&
+  error.data?.code === "SERVICE_UNAVAILABLE";
+
 const shouldRetry = (attempt: number, error: unknown) => {
   if (error instanceof TRPCClientError) {
     const code = error.data?.code;
@@ -21,6 +25,7 @@ const shouldRetry = (attempt: number, error: unknown) => {
       code === "TOO_MANY_REQUESTS" ||
       code === "GATEWAY_TIMEOUT" ||
       code === "TIMEOUT" ||
+      code === "SERVICE_UNAVAILABLE" ||
       code === "INTERNAL_SERVER_ERROR"
     ) {
       return attempt < 3;
@@ -32,6 +37,13 @@ const shouldRetry = (attempt: number, error: unknown) => {
 const handleError = (error: unknown, suppressToast?: boolean) => {
   if (unauthorized(error)) {
     void forceLogout();
+    return;
+  }
+  if (!suppressToast && serviceUnavailable(error)) {
+    toast.error("Service temporarily unavailable", {
+      id: "service-unavailable",
+      description: "Please try again shortly.",
+    });
     return;
   }
   if (!suppressToast && error instanceof Error) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
-import { httpBatchStreamLink, loggerLink, TRPCClientError } from "@trpc/client";
+import { httpBatchLink, loggerLink, TRPCClientError } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import { useState } from "react";
 import superjson from "superjson";
@@ -47,7 +47,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
             return true;
           },
         }),
-        httpBatchStreamLink({
+        httpBatchLink({
           transformer: {
             deserialize: (object: any) => superjson.deserialize(object),
             serialize: (object: any) => {

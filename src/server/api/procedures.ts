@@ -1,8 +1,13 @@
 import type { Permissions } from "@/lib/auth/extensions/permissions";
 import { isAuthorized } from "./middleware/authorizationMiddleware";
+import { serviceAvailabilityMiddleware } from "./middleware/serviceAvailabilityMiddleware";
 import { timingMiddleware } from "./middleware/timingMiddleware";
 import { trpc } from "./trpc";
 
-export const publicProcedure = trpc.procedure.use(timingMiddleware);
+const baseProcedure = trpc.procedure
+  .use(serviceAvailabilityMiddleware)
+  .use(timingMiddleware);
+
+export const publicProcedure = baseProcedure;
 export const authorizedProcedure = (permissions?: Permissions) =>
-  trpc.procedure.use(timingMiddleware).use(isAuthorized(permissions));
+  baseProcedure.use(isAuthorized(permissions));

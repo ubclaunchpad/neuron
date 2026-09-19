@@ -1,11 +1,12 @@
 import type { CreateClassInput, UpdateClassInput } from "@/models/api/class";
 import type { SingleClass } from "@/models/class";
 import type { Term } from "@/models/term";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ClassFormValues } from "../schema";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { useClassMutations } from "./use-class-mutations";
+import { useRouter } from "next/navigation";
 
 export function useClassUpsert({
   isEditing,
@@ -19,7 +20,8 @@ export function useClassUpsert({
   queryTermId: string | null;
 }) {
   const [isPending, setIsSubmitting] = useState(false);
-  const [isSaveAndPublish, setSaveAndPublish] = useState(false);
+  const saveAndPublishRef = useRef(false);
+  const router = useRouter();
 
   const { createClass, updateClass, publishClass } = useClassMutations();
   const { uploadImage } = useImageUpload();
@@ -65,20 +67,23 @@ export function useClassUpsert({
       setIsSubmitting(true);
       const classId = await submitHandler(data);
 
-      if (isSaveAndPublish) {
+      if (saveAndPublishRef.current) {
         await publishClass({ classId });
       }
+      router.back();
     } catch (e: any) {
       toast.error(
         e.message || `Failed to ${isEditing ? "update" : "create"} class.`,
       );
     } finally {
-      setSaveAndPublish(false);
+      saveAndPublishRef.current = false;
       setIsSubmitting(false);
     }
   };
 
-  const handleSaveAndPublish = () => setSaveAndPublish(true);
+  const handleSaveAndPublish = () => {
+    saveAndPublishRef.current = true;
+  };
 
   return {
     onSubmit,

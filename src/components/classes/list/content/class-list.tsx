@@ -8,6 +8,7 @@ import { TypographyTitle } from "@/components/ui/typography";
 import { CLASS_CATEGORIES, DEFAULT_CLASS_CATEGORY } from "../../constants";
 import { getCategorySectionId } from "./class-categories-nav";
 import { ClassCategorySection } from "../components/class-category-section";
+import { ClassCardGrid } from "../components/class-card-grid";
 
 type ClassCategory = (typeof CLASS_CATEGORIES)[number];
 const CATEGORY_ORDER: Map<ClassCategory, number> = new Map(
@@ -65,7 +66,7 @@ export function ClassList({ classes }: { classes: ListClass[] }) {
         return (
           <ClassCategorySection key={category} id={sectionId} title={category}>
             {classesWithoutSubCategory.length > 0 && (
-              <div className="grid gap-6 px-5 grid-cols-[repeat(auto-fit,minmax(180px,258px))] justify-stretch">
+              <ClassCardGrid>
                 {classesWithoutSubCategory.map((c) => (
                   <ClassCard
                     key={c.id}
@@ -73,7 +74,7 @@ export function ClassList({ classes }: { classes: ListClass[] }) {
                     onClickAction={() => openAsideFor(c.id)}
                   />
                 ))}
-              </div>
+              </ClassCardGrid>
             )}
             {Object.entries(classesBySubcategory ?? {}).map(
               ([subcategory, classesForSubcategory]) => (
@@ -82,7 +83,7 @@ export function ClassList({ classes }: { classes: ListClass[] }) {
                   className="flex flex-col gap-3 scroll-mt-9 items-stretch px-5"
                 >
                   <TypographyTitle>{subcategory}</TypographyTitle>
-                  <div className="grid gap-6 px-5 grid-cols-[repeat(auto-fit,minmax(180px,258px))] justify-stretch">
+                  <ClassCardGrid>
                     {classesForSubcategory.map((c) => (
                       <ClassCard
                         key={c.id}
@@ -90,7 +91,7 @@ export function ClassList({ classes }: { classes: ListClass[] }) {
                         onClickAction={() => openAsideFor(c.id)}
                       />
                     ))}
-                  </div>
+                  </ClassCardGrid>
                 </div>
               ),
             )}

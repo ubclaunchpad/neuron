@@ -39,7 +39,7 @@ function PageLayout({
   style,
   children,
   asideWidth = "448px",
-  mainMinWidth = "412px",
+  mainMinWidth = "min(412px, 100svw)",
   defaultOpen = false,
   open: controlledOpen,
   onOpenChange,
@@ -199,7 +199,7 @@ function PageLayoutHeaderContent({
   return (
     <div
       className={cn(
-        "mx-auto w-full",
+        "mx-auto w-full min-w-0",
         "flex flex-wrap justify-auto items-center gap-2 pt-5 pb-7 px-9",
         className,
       )}

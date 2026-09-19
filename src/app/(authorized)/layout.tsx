@@ -17,7 +17,7 @@ export default async function ProtectedLayout({
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppNavbar />
-      <div className="flex-1">{children}</div>
+      <div className="min-w-0 flex-1">{children}</div>
     </SidebarProvider>
   );
 }

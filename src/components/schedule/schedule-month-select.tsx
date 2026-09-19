@@ -1,26 +1,16 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { MonthPicker } from "@/components/ui/month-picker";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { addMonths, compareAsc, format, startOfToday } from "date-fns";
-import { useMemo } from "react";
-
-function monthKeyFromDate(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  return `${y}-${m}`;
-}
-
-function monthKeyToDate(key: string) {
-  const [yStr, mStr] = key.split("-");
-  const y = Number(yStr);
-  const m = Number(mStr);
-  return new Date(y, m - 1, 1, 12, 0, 0, 0);
-}
+import { format } from "date-fns";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 export function MonthSelect({
   value,
@@ -29,46 +19,40 @@ export function MonthSelect({
   value: Date;
   onValueChange: (date: Date) => void;
 }) {
-  const monthKey = useMemo(() => monthKeyFromDate(value), [value]);
-
-  const monthOptions = useMemo(() => {
-    const selectedMonth = monthKeyToDate(monthKey);
-    const options = new Set<string>([monthKeyFromDate(startOfToday())]);
-
-    for (let offset = -12; offset <= 12; offset += 1) {
-      const date = addMonths(selectedMonth, offset);
-      options.add(monthKeyFromDate(date));
-    }
-
-    return Array.from(options).sort((a, b) =>
-      compareAsc(monthKeyToDate(a), monthKeyToDate(b)),
-    );
-  }, [monthKey]);
+  const [open, setOpen] = useState(false);
 
   return (
-    <Select
-      value={monthKey}
-      onValueChange={(k) => onValueChange(monthKeyToDate(k))}
-    >
-      <SelectTrigger
-        className={cn(
-          "w-45 rounded-b-none border-none shadow-none ring-0! outline-0",
-          "enabled:hover:bg-accent enabled:hover:text-accent-foreground cursor-pointer",
-        )}
-      >
-        <SelectValue>{format(value, "MMMM yyyy")}</SelectValue>
-      </SelectTrigger>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-45 justify-between rounded-b-none px-4 font-normal shadow-none",
+            "hover:bg-accent hover:text-accent-foreground",
+          )}
+          aria-label={`Choose month, ${format(value, "MMMM yyyy")}`}
+        >
+          <span>{format(value, "MMMM yyyy")}</span>
+          <ChevronDown
+            className={cn(
+              "size-4 text-muted-foreground transition-transform",
+              open && "rotate-180",
+            )}
+          />
+        </Button>
+      </PopoverTrigger>
 
-      <SelectContent className="max-h-72">
-        {monthOptions.map((key) => {
-          const date = monthKeyToDate(key);
-          return (
-            <SelectItem key={key} value={key}>
-              {format(date, "MMMM yyyy")}
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
+      <PopoverContent className="w-auto p-0" align="start">
+        <MonthPicker
+          className="w-80"
+          selectedMonth={value}
+          onMonthSelect={(date) => {
+            onValueChange(date);
+            setOpen(false);
+          }}
+          variant={{ chevrons: "ghost" }}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }

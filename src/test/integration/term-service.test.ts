@@ -47,6 +47,41 @@ describe("TermService", () => {
       expect(result).toHaveLength(1);
       expect(result[0]?.name).toBe("Fall 2024");
     });
+
+    it("should return the most recent terms first", async () => {
+      const termInputs = [
+        {
+          name: "Fall 2025",
+          startDate: "2025-09-01",
+          endDate: "2025-12-15",
+          holidays: [],
+        },
+        {
+          name: "Spring 2026",
+          startDate: "2026-05-01",
+          endDate: "2026-08-15",
+          holidays: [],
+        },
+        {
+          name: "Winter 2026",
+          startDate: "2026-01-01",
+          endDate: "2026-04-15",
+          holidays: [],
+        },
+      ];
+
+      for (const input of termInputs) {
+        createdTermIds.push(await termService.createTerm(input));
+      }
+
+      const result = await termService.getAllTerms();
+
+      expect(result.map((term) => term.name)).toEqual([
+        "Spring 2026",
+        "Winter 2026",
+        "Fall 2025",
+      ]);
+    });
   });
 
   describe("createTerm", () => {

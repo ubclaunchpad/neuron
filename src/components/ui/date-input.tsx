@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { formatDateLabel, formatDateRange } from "@/utils/dateUtils";
 import { CalendarIcon } from "lucide-react";
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -9,20 +10,6 @@ import type { DateRange } from "react-day-picker";
 import { Button } from "./button";
 import { Calendar } from "./calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-
-const defaultDateFormat: Intl.DateTimeFormatOptions = {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-};
-
-function defaultFormatDateLabel(
-  date: Date,
-  fmt = defaultDateFormat,
-  locale = "en-US",
-) {
-  return date.toLocaleDateString(locale, fmt);
-}
 
 type CalendarOwnProps = Omit<
   React.ComponentProps<typeof Calendar>,
@@ -60,7 +47,7 @@ export function DatePicker({
   placeholder = "Pick a date",
   disabled,
   className,
-  formatDateLabel = defaultFormatDateLabel,
+  formatDateLabel: formatDateLabelProp = formatDateLabel,
   calendarProps,
   ...buttonProps
 }: DatePickerProps) {
@@ -82,7 +69,7 @@ export function DatePicker({
     if (!isControlled) setInternal(value ?? undefined);
   }, [value]);
 
-  const label = selected ? formatDateLabel(selected) : undefined;
+  const label = selected ? formatDateLabelProp(selected) : undefined;
 
   return (
     <Popover
@@ -180,14 +167,7 @@ export function DateRangePicker({
     onChange?.(next);
   };
 
-  formatRangeLabel =
-    formatRangeLabel ??
-    ((from: Date, to: Date): string => {
-      const fromLabel = defaultFormatDateLabel(from);
-      const toLabel = defaultFormatDateLabel(to);
-      if (fromLabel === toLabel) return fromLabel;
-      return `${fromLabel} - ${toLabel}`;
-    });
+  formatRangeLabel = formatRangeLabel ?? formatDateRange;
 
   const label =
     selected?.from && selected?.to

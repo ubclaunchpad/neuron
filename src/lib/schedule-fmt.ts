@@ -1,7 +1,7 @@
 import type { ScheduleType, Weekday } from "@/models/api/schedule";
 import type { Locale as DateFnsLocale } from "date-fns";
 import { addDays, compareAsc, format, isSameDay } from "date-fns";
-import { timeToJSDate } from "./temporal-conversions";
+import { isoDateToJSDate, timeToJSDate } from "./temporal-conversions";
 
 export type ListSeparators = {
   sep: string; // between items except the last two
@@ -87,7 +87,12 @@ export function formatCompressedDateList(
 
   if (dates.length === 0) return "";
 
-  const realDates = dates.map((d) => (typeof d === "string" ? new Date(d) : d));
+  // Date-only ISO strings are calendar dates, not UTC instants. `new Date(iso)`
+  // treats them as midnight UTC and displays the previous day in western time
+  // zones, so preserve the date in the browser's local calendar instead.
+  const realDates = dates.map((d) =>
+    typeof d === "string" ? isoDateToJSDate(d)! : d,
+  );
   const sorted = [...realDates].sort(compareAsc);
 
   type MonthGroup = { key: string; representative: Date; days: Date[] };
@@ -328,8 +333,7 @@ function formatDatesRecurrence(
     return style === "short" ? noDatesShortLabel : noDatesLongLabel;
   }
 
-  const dates = recurrence.extraDates.map((d) => new Date(d));
-  const compressed = formatCompressedDateList(dates, {
+  const compressed = formatCompressedDateList(recurrence.extraDates, {
     ...(compressedDateOptions || {}),
     locale,
   });

@@ -88,11 +88,15 @@ export function ClassListView({ classId, setClassId }: ClassListViewProps) {
   );
 
   useEffect(() => {
-    if (linkedClass?.termId && linkedClass.termId !== selectedTermId) {
+    if (
+      classId &&
+      linkedClass?.termId &&
+      linkedClass.termId !== selectedTermId
+    ) {
       setSelectedTermId(linkedClass.termId);
       void setQueryTerm(linkedClass.termId);
     }
-  }, [linkedClass?.termId, selectedTermId, setQueryTerm]);
+  }, [classId, linkedClass?.termId, selectedTermId, setQueryTerm]);
 
   const canCreateTerm = usePermission({ permission: { terms: ["create"] } });
 
@@ -129,10 +133,13 @@ export function ClassListView({ classId, setClassId }: ClassListViewProps) {
 
   const handleSelectTerm = useCallback(
     (termId: string) => {
+      if (termId === selectedTermId) return;
+
+      closeAside();
       setSelectedTermId(termId);
-      setQueryTerm(termId);
+      void setQueryTerm(termId);
     },
-    [setQueryTerm, setSelectedTermId],
+    [closeAside, selectedTermId, setQueryTerm],
   );
 
   const hasTerms = (terms?.length ?? 0) > 0;

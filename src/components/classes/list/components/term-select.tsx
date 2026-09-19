@@ -5,6 +5,7 @@ import { clientApi } from "@/trpc/client";
 
 import { TermFormDialog } from "@/components/classes/list/content/term-form/term-form-dialog";
 import { Button } from "@/components/primitives/button";
+import { Tooltip } from "@/components/primitives/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +14,9 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isoDateToJSDate } from "@/lib/temporal-conversions";
 import { cn } from "@/lib/utils";
+import { formatDateRange } from "@/utils/dateUtils";
 import NiceModal from "@ebay/nice-modal-react";
 import { Check, ChevronDown, Edit, Plus } from "lucide-react";
 import { useClassesPage } from "../class-list-view";
@@ -56,39 +59,60 @@ export function TermSelect({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild disabled={isDisabled}>
-        <Button
-          variant="outline"
-          endIcon=<ChevronDown />
-          className={cn(
-            "min-w-45 max-w-80 h-9 shrink justify-between gap-2",
-            className,
-          )}
-        >
-          <span className="truncate">
-            {selectedTerm?.name ?? "Select term"}
-          </span>
-        </Button>
-      </DropdownMenuTrigger>
+      <Tooltip
+        content={
+          selectedTerm
+            ? formatDateRange(
+                isoDateToJSDate(selectedTerm.startDate)!,
+                isoDateToJSDate(selectedTerm.endDate)!,
+              )
+            : "Select a term"
+        }
+        side="bottom"
+        sideOffset={6}
+      >
+        <span className={cn("inline-flex", className)}>
+          <DropdownMenuTrigger asChild disabled={isDisabled}>
+            <Button
+              variant="outline"
+              endIcon=<ChevronDown className="ml-2" />
+              className="min-w-45 max-w-80 h-9 shrink justify-between gap-2"
+            >
+              <span className="truncate text-left">
+                {selectedTerm?.name ?? "Select term"}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+        </span>
+      </Tooltip>
       <DropdownMenuContent align="end" className="w-80">
         {terms.map((t) => {
           const isSelected = t.id === selectedTermId;
           return (
             <div key={t.id} className="flex gap-0.5 items-center-safe">
-              <DropdownMenuItem
-                className="min-w-0 flex-1"
-                onSelect={() => setSelectedTermId(t.id)}
-              >
-                <span className="truncate flex-1">{t.name}</span>
-                {isSelected && (
-                  <WithPermission
-                    permissions={{ permission: { terms: ["create"] } }}
-                    fallback={<Check />}
-                  >
-                    <span className="size-2.5 rounded-full bg-primary shrink-0" />
-                  </WithPermission>
+              <Tooltip
+                content={formatDateRange(
+                  isoDateToJSDate(t.startDate)!,
+                  isoDateToJSDate(t.endDate)!,
                 )}
-              </DropdownMenuItem>
+                side="left"
+                sideOffset={6}
+              >
+                <DropdownMenuItem
+                  className="min-w-0 flex-1"
+                  onSelect={() => setSelectedTermId(t.id)}
+                >
+                  <span className="truncate flex-1">{t.name}</span>
+                  {isSelected && (
+                    <WithPermission
+                      permissions={{ permission: { terms: ["create"] } }}
+                      fallback={<Check />}
+                    >
+                      <span className="size-2.5 rounded-full bg-primary shrink-0" />
+                    </WithPermission>
+                  )}
+                </DropdownMenuItem>
+              </Tooltip>
               <WithPermission
                 permissions={{ permission: { terms: ["create"] } }}
               >

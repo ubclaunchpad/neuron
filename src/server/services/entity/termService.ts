@@ -91,7 +91,7 @@ export class TermService implements ITermService {
     const terms = await this.db.query.term.findMany({
       where: this.publishedFilter(),
       with: { blackouts: true },
-      orderBy: [term.startDate, term.id],
+      orderBy: [desc(term.startDate), desc(term.id)],
     });
     return terms.map((d) => buildTerm(d));
   }

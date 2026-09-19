@@ -32,7 +32,9 @@ export function ClassEditView() {
       enabled: !queryTermId && !isEditing,
     });
 
-  const isLoading = isEditing ? isLoadingEditingClass : isLoadingCurrentTerm;
+  const isLoading = isEditing
+    ? isLoadingEditingClass
+    : !queryTermId && isLoadingCurrentTerm;
 
   // Navigate user how if class doesn't exist
   useEffect(() => {

@@ -56,9 +56,16 @@ export default function ForgotPasswordForm() {
       noValidate
       className="w-full max-w-3xl space-y-8 p-8"
     >
-      <h1 className="text-2xl font-display font-medium leading-none text-primary">
-        {isSubmitSuccessful ? "Check your mail" : "Reset your password"}
-      </h1>
+      <div className="space-y-2">
+        <h1 className="text-2xl font-display font-medium leading-none text-primary">
+          {isSubmitSuccessful ? "Check your email" : "Reset your password"}
+        </h1>
+        {!isSubmitSuccessful && (
+          <p className="text-sm text-muted-foreground">
+            Enter your email address and we&apos;ll send you reset instructions.
+          </p>
+        )}
+      </div>
 
       <div className="space-y-5">
         {!isSubmitSuccessful ? (

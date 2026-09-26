@@ -255,7 +255,8 @@ function formatWeeklyRecurrence(
     weekdayLongPattern,
   );
 
-  const { interval } = recurrence;
+  // Form values can briefly contain numeric strings before schema parsing.
+  const interval = Number(recurrence.interval);
   const pluralWeeks = interval === 1 ? weekLabel : weeksLabel;
 
   if (style === "short") {

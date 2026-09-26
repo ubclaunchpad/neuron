@@ -13,8 +13,9 @@ import {
 import { forceLogout } from "@/lib/auth/logout";
 import { useAuth } from "@/providers/client-auth-provider";
 import NiceModal from "@ebay/nice-modal-react";
+import { useQueryState } from "nuqs";
 import { ReportIssueDialog } from "../report-issue-dialog";
-import { SettingsDialog } from "./settings-dialog";
+import { SettingsDialog, settingsTabParser } from "./settings-dialog";
 
 export function SettingsDropdown({
   children,
@@ -24,6 +25,7 @@ export function SettingsDropdown({
   className?: string;
 }) {
   const { user } = useAuth();
+  const [, setSettingsTab] = useQueryState("settings", settingsTabParser);
   const handleLogout = async () => {
     await forceLogout();
   };
@@ -40,14 +42,16 @@ export function SettingsDropdown({
               <UserCircle2 />
               <span>{user?.email}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => NiceModal.show(SettingsDialog)}>
+            <DropdownMenuItem onSelect={() => void setSettingsTab("profile")}>
               <Settings />
               Settings
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem onSelect={() => NiceModal.show(ReportIssueDialog)}>
+            <DropdownMenuItem
+              onSelect={() => NiceModal.show(ReportIssueDialog)}
+            >
               <Flag />
               <span>Report Issue</span>
             </DropdownMenuItem>
@@ -58,6 +62,7 @@ export function SettingsDropdown({
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
+      <SettingsDialog />
     </>
   );
 }

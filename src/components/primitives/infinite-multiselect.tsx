@@ -80,15 +80,19 @@ function InfiniteMultiSelect<
               </InputGroupText>
             </InputGroupAddon>
             <InputGroupAddon align="inline-end">
-              <InputGroupButton variant="ghost" size="icon-xs" asChild>
-                <Button
-                  unstyled
-                  tooltip="Remove"
-                  onClick={() => onRemove(idx, value)}
-                >
-                  <X />
-                </Button>
-              </InputGroupButton>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <InputGroupButton
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="Remove"
+                    onClick={() => onRemove(idx, value)}
+                  >
+                    <X />
+                  </InputGroupButton>
+                </TooltipTrigger>
+                <TooltipContent>Remove</TooltipContent>
+              </Tooltip>
             </InputGroupAddon>
           </InputGroup>
         );

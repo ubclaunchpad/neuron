@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 [&_svg:not([class*='size-'])]:size-3 gap-1 has-[>svg]:px-1.5",
+  "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
   {
     variants: {
       variant: {
@@ -15,8 +15,8 @@ const badgeVariants = cva(
           "border-transparent bg-destructive text-primary-foreground shadow hover:bg-destructive/80",
         outline: "text-foreground",
         notification:
-          "border-transparent bg-destructive/80 text-primary-foreground shadow h-5 min-w-5 px-1.5 flex justify-center items-center border-none",
-        filter: "border-transparent rounded font-medium px-1 py-px",
+          "flex h-5 min-w-5 items-center justify-center border-none border-transparent bg-destructive/80 px-1.5 text-primary-foreground shadow",
+        filter: "rounded border-transparent px-1 py-px font-medium",
         colored: "border-transparent",
       },
       color: {
@@ -30,11 +30,7 @@ const badgeVariants = cva(
         info: "bg-blue-50 text-blue-700",
       },
     },
-    compoundVariants: [],
-    defaultVariants: {
-      variant: "default",
-      color: "default",
-    },
+    defaultVariants: { variant: "default", color: "default" },
   },
 );
 
@@ -46,13 +42,8 @@ export interface BadgeProps
 function Badge({ className, variant, color, ...props }: BadgeProps) {
   return (
     <div
-      className={cn(
-        badgeVariants({
-          variant,
-          color,
-        }),
-        className,
-      )}
+      data-slot="badge"
+      className={cn(badgeVariants({ variant, color }), className)}
       {...props}
     />
   );

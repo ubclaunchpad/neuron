@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { Bell, Clock, LockKeyhole, User, X } from "lucide-react";
+import { parseAsStringEnum, useQueryState } from "nuqs";
 import { AvailabilitySettingsContent } from "./pages/availability/availability-settings-content";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { NotificationsSettingsContent } from "./pages/notifications-settings-content";
@@ -20,18 +20,31 @@ import { SecuritySettingsContent } from "./pages/security-settings-content";
 import type { Permissions } from "@/lib/auth/extensions/permissions";
 import { WithPermission } from "../utils/with-permission";
 
+export const SETTINGS_TABS = [
+  "profile",
+  "availability",
+  "notifications",
+  "security",
+] as const;
+
+export type SettingsTab = (typeof SETTINGS_TABS)[number];
+
+export const settingsTabParser = parseAsStringEnum<SettingsTab>([
+  ...SETTINGS_TABS,
+]);
+
 const settingsItems = [
   {
     id: "profile",
     label: "Profile",
-    description: "Edit how your profile appears across Neuron",
+    description: "Edit how your profile appears across Neuron.",
     icon: User,
     content: ProfileSettingsContent,
   },
   {
     id: "availability",
     label: "Availability",
-    description: "Configure times when you are available for class placement",
+    description: "Configure times when you are available for class placement.",
     icon: Clock,
     permissions: {
       permission: { "volunteer-profile": ["update", "view"] },
@@ -41,37 +54,47 @@ const settingsItems = [
   {
     id: "notifications",
     label: "Notifications",
+    description: "Choose which activity updates you receive by email.",
     icon: Bell,
     content: NotificationsSettingsContent,
   },
   {
     id: "security",
     label: "Security",
+    description: "Manage your password and active sessions.",
     icon: LockKeyhole,
     content: SecuritySettingsContent,
   },
 ];
 
-export const SettingsDialog = NiceModal.create(() => {
-  const modal = useModal();
+export function SettingsDialog() {
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useQueryState(
+    "settings",
+    settingsTabParser,
+  );
+
+  const handleOpenChange = (open: boolean) => {
+    void setActiveTab(open ? (activeTab ?? "profile") : null);
+  };
 
   return (
-    <Dialog open={modal.visible} onOpenChange={modal.hide}>
+    <Dialog open={activeTab !== null} onOpenChange={handleOpenChange}>
       <DialogContent
         hideCloseButton
         className="sm:max-w-[min(calc(100vw-2rem),48rem)] md:h-[60vh] max-h-[85lvh] h-auto flex flex-col"
         contentClassName="p-0 gap-0 block h-full overflow-hidden min-h-0 flex flex-col"
       >
         <Tabs
-          defaultValue="profile"
-          className="flex min-h-0 flex-1 flex-col md:grid md:grid-cols-[180px_1fr] md:grid-rows-[1fr] h-full"
+          value={activeTab ?? "profile"}
+          onValueChange={(value) => void setActiveTab(value as SettingsTab)}
+          className="flex min-h-0 flex-1 flex-col gap-0 md:grid md:grid-cols-[180px_1fr] md:grid-rows-[1fr] h-full"
         >
           <div className="not-sm:sticky not-sm:top-0">
             <header className="md:hidden flex items-center justify-between h-13 px-3">
               <DialogTitle>Settings</DialogTitle>
               <Button
-                onClick={() => modal.hide()}
+                onClick={() => void setActiveTab(null)}
                 className={cn(
                   "text-sidebar-foreground data-[state=active]:bg-sidebar-accent hover:bg-sidebar-accent",
                 )}
@@ -84,7 +107,7 @@ export const SettingsDialog = NiceModal.create(() => {
             <TabsList className="md:h-full not-md:h-max w-full not-md:gap-2 not-md:border-t not-md:border-b md:flex-col not-md:flex-wrap align-start justify-start md:border-r rounded-none md:py-0 p-1.5 items-start bg-sidebar">
               <div className="not-md:hidden px-0.5 py-2">
                 <Button
-                  onClick={() => modal.hide()}
+                  onClick={() => void setActiveTab(null)}
                   className={cn(
                     "text-sidebar-foreground hover:bg-sidebar-accent!",
                   )}
@@ -96,22 +119,20 @@ export const SettingsDialog = NiceModal.create(() => {
               </div>
               {settingsItems.map((item) => (
                 <WithPermission key={item.id} permissions={item.permissions}>
-                  <Button
-                    asChild
-                    variant="ghost"
-                    size={isMobile ? "sm" : "default"}
+                  <TabsTrigger
+                    className={cn(
+                      buttonVariants({
+                        variant: "ghost",
+                        size: isMobile ? "sm" : "default",
+                      }),
+                      "md:w-full justify-start ring-0! shadow-none!",
+                      "text-sidebar-foreground data-active:bg-sidebar-accent hover:bg-sidebar-accent!",
+                    )}
+                    value={item.id}
                   >
-                    <TabsTrigger
-                      className={cn(
-                        "md:w-full justify-start ring-0! shadow-none!",
-                        "text-sidebar-foreground data-[state=active]:bg-sidebar-accent hover:bg-sidebar-accent!",
-                      )}
-                      value={item.id}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </TabsTrigger>
-                  </Button>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </TabsTrigger>
                 </WithPermission>
               ))}
             </TabsList>
@@ -137,4 +158,4 @@ export const SettingsDialog = NiceModal.create(() => {
       </DialogContent>
     </Dialog>
   );
-});
+}

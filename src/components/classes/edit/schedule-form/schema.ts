@@ -54,7 +54,7 @@ export const ScheduleEditSchema = z.object({
   preferredVolunteerCount: z.coerce
     .number<any>("Please fill out the preferred number of volunteers.")
     .int("Please enter only whole numbers.")
-    .min(1, "The preferred volunteer count must be at least 1"),
+    .min(1, "The preferred volunteer count must be at least 1."),
   instructors: z.array(UserSchema),
   effectiveStart: z.iso.date().optional(),
   effectiveEnd: z.iso.date().optional(),

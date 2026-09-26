@@ -182,7 +182,7 @@ export const RequestCoverageModal = NiceModal.create(
           <DialogHeader>
             <DialogTitle>Request Coverage for {shift.class.name}</DialogTitle>
             <DialogDescription>
-              {day} at {startTime} to {endTime}
+              Request coverage for {day}, from {startTime} to {endTime}.
             </DialogDescription>
           </DialogHeader>
 

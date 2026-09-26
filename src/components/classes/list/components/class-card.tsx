@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/primitives/button";
+import { Button as UIButton } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { WithPermission } from "@/components/utils/with-permission";
 import { useImageUrl } from "@/lib/build-image-url";
@@ -27,13 +28,13 @@ export function ClassCard({
       className="relative w-full max-w-64.5 has-[button[data-overlay]:hover]:bg-secondary/90 has-[button[data-overlay]:focus-visible]:ring-2 has-[button[data-overlay]:focus-visible]:ring-ring/50"
     >
       {/* Button that covers the entire card*/}
-      <Button
+      <UIButton
         data-overlay
         unstyled
         aria-label={`Open ${classData.name}`}
         className="absolute inset-0 cursor-pointer"
         onClick={onClickAction}
-      ></Button>
+      ></UIButton>
 
       {/* Edit button (prevents bubbling to main press area) */}
       <WithPermission permissions={{ permission: { classes: ["update"] } }}>
@@ -41,17 +42,13 @@ export function ClassCard({
           variant="outline"
           size="icon"
           className="absolute right-6 top-6 z-10"
-          asChild
-        >
-          <Link
-            href={{
-              pathname: "/classes/edit",
-              query: { class: classData.id },
-            }}
-          >
-            <EditIcon />
-          </Link>
-        </Button>
+          tooltip="Edit Class"
+          href={{
+            pathname: "/classes/edit",
+            query: { class: classData.id },
+          }}
+          startIcon={<EditIcon />}
+        ></Button>
       </WithPermission>
 
       <CardContent className="flex flex-col gap-2">

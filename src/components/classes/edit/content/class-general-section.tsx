@@ -24,7 +24,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { LabelRequiredMarker } from "@/components/ui/label";
-import { SelectItem } from "@/components/ui/select";
+import { SelectGroup, SelectItem, SelectLabel } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import {
   DropdownMenu,
@@ -82,11 +82,14 @@ export function ClassGeneralSection() {
               placeholder="Select Category"
               required
             >
-              {CLASS_CATEGORIES.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
+              <SelectGroup>
+                <SelectLabel>Class Categories</SelectLabel>
+                {CLASS_CATEGORIES.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </FormSelectField>
 
             <FormInputField
@@ -142,14 +145,14 @@ export function ClassGeneralSection() {
             name="description"
             label="Description"
             placeholder="Enter Description"
-            description="Provide a brief overview for users"
+            description="Provide a brief overview for users."
           />
 
           <FormFieldController control={control} name="location">
             {({ value, onChange, ...field }) => (
               <FormFieldLayout
                 label="Location"
-                description="Add a meeting link (Online) or an address (In-person)"
+                description="Add a meeting link for online classes or an address for in-person classes."
               >
                 <InputGroup>
                   <InputGroupAddon

@@ -24,6 +24,7 @@ export function ClassFormActions({
   } = useClassForm();
   const router = useRouter();
   const isDirty = formState.isDirty;
+  const classLabel = formState.defaultValues?.name ?? "this class";
 
   const canPublish = !isEditing || !isClassPublished;
   const showSaveAndPublish = canPublish && isDirty;
@@ -59,6 +60,7 @@ export function ClassFormActions({
           <DeleteClassButton
             size="icon-sm"
             classId={editingClassId!}
+            classLabel={classLabel}
             tooltip="Delete"
             onSuccess={() => router.push("/classes")}
           />

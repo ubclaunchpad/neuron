@@ -1,6 +1,5 @@
 import { Button as UIButton } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Slottable } from "@radix-ui/react-slot";
 import Link from "next/link";
 import React from "react";
 import { Tooltip } from "../primitives/tooltip";
@@ -48,17 +47,28 @@ export function Button({
     />;
   }
 
-  const content = (
+  const renderContent = (label: React.ReactNode) => (
     <>
       {pending ? <Spinner /> : startIcon}
       <div
         className={cn(props.size?.startsWith("icon") ? "sr-only" : "contents")}
       >
-        {children}
+        {label}
       </div>
       {endIcon}
     </>
   );
+
+  const content = renderContent(children);
+  const composedChild = React.isValidElement<{ children?: React.ReactNode }>(
+    children,
+  )
+    ? React.cloneElement(
+        children,
+        undefined,
+        renderContent(children.props.children),
+      )
+    : children;
 
   let buttonContent = props.href ? (
     <UIButton asChild {...props}>
@@ -66,9 +76,7 @@ export function Button({
     </UIButton>
   ) : asChild ? (
     <UIButton asChild {...props}>
-      {pending ? <Spinner /> : startIcon}
-      <Slottable>{children}</Slottable>
-      {endIcon}
+      {composedChild}
     </UIButton>
   ) : (
     <UIButton {...props}>{content}</UIButton>

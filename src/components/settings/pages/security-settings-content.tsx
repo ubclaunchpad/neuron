@@ -10,18 +10,16 @@ import { forceLogout } from "@/lib/auth/logout";
 
 import { FormInputField } from "@/components/form/FormInput";
 import { Button } from "@/components/primitives/button";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import {
   Card,
   CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
-import { Lock, LogOut, Shield } from "lucide-react";
-import { FieldGroup } from "@/components/ui/field";
+import { LogOut } from "lucide-react";
 
 const ChangePasswordSchema = z
   .object({
@@ -87,67 +85,54 @@ export function SecuritySettingsContent() {
     });
 
   return (
-    <>
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock />
-            Change Password
-          </CardTitle>
-          <CardDescription>
-            Update your password to keep your account secure
-          </CardDescription>
-        </CardHeader>
-        <form
-          onSubmit={handleSubmit((data) => changePassword(data))}
-          noValidate
-          className="space-y-4"
-        >
-          <CardContent>
-            <FieldGroup>
-              <FormInputField
-                control={control}
-                type="password"
-                name="currentPassword"
-                placeholder="•••••••••••••"
-                label="Current Password"
-                className="gap-1"
-              />
-              <FormInputField
-                control={control}
-                type="password"
-                name="newPassword"
-                autoComplete="new-password"
-                placeholder="•••••••••••••"
-                label="New Password (at least 8 characters)"
-                className="gap-1"
-              />
-              <FormInputField
-                control={control}
-                type="password"
-                name="confirmPassword"
-                autoComplete="new-password"
-                placeholder="•••••••••••••"
-                label="Confirm New Password"
-                className="gap-1"
-              />
-            </FieldGroup>
-          </CardContent>
-          <CardFooter className="flex justify-end">
-            <Button type="submit" pending={isSubmitting}>
-              Update Password
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit((data) => changePassword(data))} noValidate>
+        <Card>
+          <CardHeader>
+            <CardTitle>Change Password</CardTitle>
+            <CardDescription>
+              Update your password to keep your account secure.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <FormInputField
+              control={control}
+              type="password"
+              name="currentPassword"
+              placeholder="•••••••••••••"
+              label="Current Password"
+            />
+            <FormInputField
+              control={control}
+              type="password"
+              name="newPassword"
+              autoComplete="new-password"
+              placeholder="•••••••••••••"
+              label="New Password (at least 8 characters)"
+            />
+            <FormInputField
+              control={control}
+              type="password"
+              name="confirmPassword"
+              autoComplete="new-password"
+              placeholder="•••••••••••••"
+              label="Confirm New Password"
+            />
 
-      <Card size="sm">
+            <div className="flex justify-end">
+              <Button type="submit" pending={isSubmitting}>
+                Update Password
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </form>
+
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Log out of this device
-          </CardTitle>
+          <CardTitle>Log Out of This Device</CardTitle>
           <CardDescription>
-            Sign out of your account on this device
+            Sign out of your account on this device.
           </CardDescription>
           <CardAction>
             <Button
@@ -155,32 +140,38 @@ export function SecuritySettingsContent() {
               onClick={forceLogout}
               startIcon={<LogOut />}
             >
-              Logout
+              Log Out
             </Button>
           </CardAction>
         </CardHeader>
       </Card>
 
-      <Card size="sm">
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Log out of all devices
-          </CardTitle>
+          <CardTitle>Log Out of Other Devices</CardTitle>
           <CardDescription>
-            Log out of all active sessions across all devices, including your
-            current session.
+            Log out of all other active sessions while staying signed in on this
+            device.
           </CardDescription>
           <CardAction>
-            <Button
-              variant="destructive-outline"
-              onClick={() => revokeOtherSessions()}
-              pending={isRevokingSession}
+            <ConfirmDialog
+              title="Log out of all other devices?"
+              description="This will end every other active session for your account. You will remain signed in on this device."
+              confirmLabel="Log out other devices"
+              cancelLabel="Keep sessions"
+              confirmVariant="destructive"
             >
-              Revoke All Sessions
-            </Button>
+              <Button
+                variant="destructive-outline"
+                onClick={() => revokeOtherSessions()}
+                pending={isRevokingSession}
+              >
+                Log Out Other Devices
+              </Button>
+            </ConfirmDialog>
           </CardAction>
         </CardHeader>
       </Card>
-    </>
+    </div>
   );
 }

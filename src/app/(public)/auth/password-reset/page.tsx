@@ -86,9 +86,14 @@ export default function PasswordResetForm() {
       noValidate
       className="w-full max-w-3xl space-y-8 p-8"
     >
-      <h1 className="text-2xl font-display font-medium leading-none text-primary">
-        Set your new password
-      </h1>
+      <div className="space-y-2">
+        <h1 className="text-2xl font-display font-medium leading-none text-primary">
+          Set your new password
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Choose a secure password for your account.
+        </p>
+      </div>
 
       {/* Token error from query param */}
       {tokenError && (

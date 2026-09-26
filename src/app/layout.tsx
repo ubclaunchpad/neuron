@@ -25,7 +25,7 @@ const fontDisplay = Montserrat({
 
 export const metadata: Metadata = {
   title: "Neuron",
-  description: "TODO",
+  description: "Manage classes, schedules, volunteers, and coverage in Neuron.",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 

@@ -121,6 +121,7 @@ export function TermSelect({
                   variant="ghost"
                   size="icon-sm"
                   className="shrink-0"
+                  tooltip="Edit Term"
                   startIcon={<Edit />}
                   onClick={() => {
                     NiceModal.show(TermFormDialog, {

@@ -45,7 +45,7 @@ export const CreateUserDialog = NiceModal.create(() => {
     clientApi.user.create.useMutation({
       onSuccess: async () => {
         await apiUtils.user.list.invalidate();
-        toast.success("User created successfully");
+        toast.success("User created successfully.");
         modal.hide();
         form.reset();
       },

@@ -108,9 +108,9 @@ export function ClassImageInput() {
 
               <Button
                 size="sm"
-                variant="outline"
+                variant="destructive-outline"
                 onClick={() => onChange(null)}
-                className="[grid-area:btn] self-center not-sm:w-min text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="[grid-area:btn] self-center not-sm:w-min"
               >
                 <Trash2 />
                 <span>Clear Image</span>
@@ -128,11 +128,11 @@ export function ClassImageInput() {
 
                   <DropzoneDescription>
                     Drag and drop or{" "}
-                    <DropzoneLabel>click to upload</DropzoneLabel>
+                    <DropzoneLabel>click to upload</DropzoneLabel>.
                   </DropzoneDescription>
 
                   <DropzoneHint>
-                    SVG, PNG, JPG, or other supported image formats (max. 4MB)
+                    SVG, PNG, JPG, or other supported image formats (max. 4 MB)
                   </DropzoneHint>
                 </DropzoneHeader>
               </DropzoneArea>

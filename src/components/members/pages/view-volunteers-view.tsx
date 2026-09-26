@@ -1,5 +1,6 @@
 import { Avatar } from "@/components/primitives/avatar";
 import { Button as PrimitivesButton } from "@/components/primitives/button";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -241,13 +242,23 @@ export function ViewVolunteerListItem({
                   <>
                     <DropdownMenuSeparator />
                     {user.status === "active" ? (
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onSelect={() => deactivateMutation({ userId: user.id })}
+                      <ConfirmDialog
+                        title={`Disable access for ${user.name} ${user.lastName}?`}
+                        description={`${user.name} ${user.lastName} will no longer be able to access Neuron and will receive a notification email. You can re-enable access later.`}
+                        confirmLabel="Disable access"
+                        cancelLabel="Keep access"
+                        confirmVariant="destructive"
                       >
-                        <Ban />
-                        <span>Disable Neuron Access</span>
-                      </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onSelect={() =>
+                            deactivateMutation({ userId: user.id })
+                          }
+                        >
+                          <Ban />
+                          <span>Disable Neuron Access</span>
+                        </DropdownMenuItem>
+                      </ConfirmDialog>
                     ) : (
                       <DropdownMenuItem
                         onSelect={() => activateMutation({ userId: user.id })}

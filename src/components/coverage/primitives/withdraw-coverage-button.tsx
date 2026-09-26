@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertDialog } from "@/components/primitives/alert-dialog";
 import { Button } from "@/components/primitives/button";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import { CoverageStatus } from "@/models/api/coverage";
 import type { CoverageListItem } from "@/components/coverage/list/coverage-page-context";
 import { clientApi } from "@/trpc/client";
@@ -27,29 +27,26 @@ export function WithdrawCoverageButton({
   }
 
   return (
-    <AlertDialog
-      alertTitle="Withdraw coverage request?"
-      alertDescription="This will close your coverage request for this shift. Other volunteers will no longer see it."
-      alertActionAsOverride
-      alertActionContent={
-        <Button size="sm" variant="destructive" pending={isPending}>
-          Yes, withdraw request
-        </Button>
-      }
-      onAccept={() =>
-        cancelCoverageRequest({
-          coverageRequestId: item.id,
-        })
-      }
+    <ConfirmDialog
+      title="Withdraw coverage request?"
+      description="This will close your coverage request for this shift. Other volunteers will no longer be able to claim it."
+      confirmLabel="Withdraw request"
+      cancelLabel="Keep request"
+      confirmVariant="destructive"
     >
       <Button
         variant="destructive-outline"
         className={className}
         pending={isPending}
+        onClick={() =>
+          cancelCoverageRequest({
+            coverageRequestId: item.id,
+          })
+        }
       >
         <XIcon />
         <span>Withdraw</span>
       </Button>
-    </AlertDialog>
+    </ConfirmDialog>
   );
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/primitives/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -29,9 +30,9 @@ export function NotificationDetailDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{notification.title}</DialogTitle>
-          <p className="text-xs text-muted-foreground">
+          <DialogDescription className="text-xs">
             {timeAgo(new Date(notification.createdAt))}
-          </p>
+          </DialogDescription>
         </DialogHeader>
         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
           {notification.body}

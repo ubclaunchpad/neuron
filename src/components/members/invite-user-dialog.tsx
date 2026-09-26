@@ -59,7 +59,7 @@ export const InviteUserDialog = NiceModal.create(() => {
         }
       },
       onSuccess: (_, data) => {
-        toast.success(`Invitation sent to ${data.email}`);
+        toast.success(`Invitation sent to ${data.email}.`);
         modal.hide();
       },
     });

@@ -8,7 +8,7 @@ export function useVolunteerProfileSubmit(userId: string) {
   const mutation = clientApi.volunteer.updateVolunteerProfile.useMutation({
     onSuccess: async () => {
       void utils.volunteer.byId.invalidate({ userId });
-      toast.success("Your volunteer profile has been successfully updated!");
+      toast.success("Your volunteer profile has been updated.");
     },
   });
 

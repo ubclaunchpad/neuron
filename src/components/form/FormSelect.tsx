@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { Children, isValidElement, useMemo, type ComponentProps } from "react";
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import {
   Select,
@@ -8,6 +8,27 @@ import {
 } from "../ui/select";
 import { FormFieldController } from "./FormField";
 import { FormFieldLayout, type FormFieldLayoutProps } from "./FormLayout";
+
+type SelectItemLikeProps = {
+  value?: unknown;
+  children?: React.ReactNode;
+};
+
+function inferSelectItems(
+  children: React.ReactNode,
+): { value: string; label: React.ReactNode }[] {
+  return Children.toArray(children).flatMap((child) => {
+    if (!isValidElement<SelectItemLikeProps>(child)) {
+      return [];
+    }
+
+    if (typeof child.props.value === "string") {
+      return [{ value: child.props.value, label: child.props.children }];
+    }
+
+    return inferSelectItems(child.props.children);
+  });
+}
 
 export interface FormSelectProps extends Omit<
   React.ComponentProps<typeof Select>,
@@ -31,10 +52,18 @@ function FormSelect({
   "aria-invalid": ariaInvalid,
   className,
   children,
+  items,
   ...props
 }: FormSelectProps) {
+  const inferredItems = useMemo(() => inferSelectItems(children), [children]);
+
   return (
-    <Select value={value} onValueChange={onChange} {...props}>
+    <Select
+      value={value}
+      onValueChange={onChange}
+      items={items ?? inferredItems}
+      {...props}
+    >
       <SelectTrigger
         aria-invalid={ariaInvalid}
         id={id}

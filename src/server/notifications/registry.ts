@@ -7,6 +7,11 @@ import { renderShiftNoCheckin } from "@/server/emails/templates/shift-no-checkin
 import { renderCoverageFilled } from "@/server/emails/templates/coverage-filled";
 import { renderCoverageFilledPersonal } from "@/server/emails/templates/coverage-filled-personal";
 
+function asSentence(value: string): string {
+  const trimmed = value.trim();
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
 export interface ShiftCancelledContext {
   shiftId: string;
   className: string;
@@ -68,17 +73,15 @@ export const notificationTypes = {
     key: "shift.cancelled",
     label: "Shift cancellations",
     description: {
-      admin: "Get notified when any shift is cancelled across the program",
-      instructor:
-        "Get notified when a shift you're instructing is cancelled",
-      volunteer:
-        "Get notified when a shift you're assigned to is cancelled",
+      admin: "Get notified when any shift is cancelled across the program.",
+      instructor: "Get notified when a shift you're instructing is cancelled.",
+      volunteer: "Get notified when a shift you're assigned to is cancelled.",
     },
     applicableRoles: ["admin", "volunteer", "instructor"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Shift Cancelled: ${ctx.className}`,
     body: (ctx) =>
-      `The shift on ${ctx.shiftDate} for ${ctx.className} has been cancelled. Reason: ${ctx.cancelReason}`,
+      `The shift on ${ctx.shiftDate} for ${ctx.className} has been cancelled. Reason: ${asSentence(ctx.cancelReason)}`,
     linkUrl: (ctx) => `/schedule?shiftId=${ctx.shiftId}`,
     sourceType: "shift",
     sourceId: (ctx) => ctx.shiftId,
@@ -95,10 +98,9 @@ export const notificationTypes = {
     key: "coverage.requested",
     label: "Coverage requests",
     description: {
-      admin:
-        "Get notified when any volunteer requests coverage for a shift",
+      admin: "Get notified when any volunteer requests coverage for a shift.",
       instructor:
-        "Get notified when a volunteer requests coverage for one of your classes",
+        "Get notified when a volunteer requests coverage for one of your classes.",
     },
     applicableRoles: ["admin", "instructor"],
     channelDefaults: { email: true, in_app: true },
@@ -121,7 +123,7 @@ export const notificationTypes = {
     key: "coverage.available",
     label: "Coverage opportunities",
     description:
-      "Get notified when a shift you're eligible for needs coverage",
+      "Get notified when a shift you're eligible for needs coverage.",
     applicableRoles: ["volunteer"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Coverage Opportunity: ${ctx.className}`,
@@ -141,8 +143,7 @@ export const notificationTypes = {
   "shift.reminder": {
     key: "shift.reminder",
     label: "Shift reminders",
-    description:
-      "Get a reminder 1 hour before your upcoming shifts",
+    description: "Get a reminder one hour before your upcoming shifts.",
     applicableRoles: ["volunteer"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Shift Reminder: ${ctx.className}`,
@@ -164,12 +165,12 @@ export const notificationTypes = {
     key: "shift.no-checkin",
     label: "Missed check-ins",
     description:
-      "Get notified when volunteers don't check in for their scheduled shift",
+      "Get notified when volunteers don't check in for their scheduled shift.",
     applicableRoles: ["admin"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Missed Check-in: ${ctx.className}`,
     body: (ctx) =>
-      `${ctx.volunteerCount} volunteer${ctx.volunteerCount !== 1 ? "s" : ""} did not check in for ${ctx.className} on ${ctx.shiftDate}: ${ctx.volunteerNames}`,
+      `${ctx.volunteerCount} volunteer${ctx.volunteerCount !== 1 ? "s" : ""} did not check in for ${ctx.className} on ${ctx.shiftDate}: ${ctx.volunteerNames}.`,
     linkUrl: (ctx) => `/schedule?shiftId=${ctx.shiftId}`,
     sourceType: "shift",
     sourceId: (ctx) => ctx.shiftId,
@@ -186,10 +187,9 @@ export const notificationTypes = {
     key: "coverage.filled",
     label: "Coverage updates",
     description: {
-      admin:
-        "Get notified when a volunteer picks up an open coverage request",
+      admin: "Get notified when a volunteer picks up an open coverage request.",
       instructor:
-        "Get notified when coverage is filled for one of your classes",
+        "Get notified when coverage is filled for one of your classes.",
     },
     applicableRoles: ["admin", "instructor"],
     channelDefaults: { email: true, in_app: true },
@@ -212,7 +212,7 @@ export const notificationTypes = {
     key: "coverage.filled-personal",
     label: "Your coverage requests",
     description:
-      "Get notified when another volunteer picks up a shift you requested coverage for",
+      "Get notified when another volunteer picks up a shift you requested coverage for.",
     applicableRoles: ["volunteer"],
     channelDefaults: { email: true, in_app: true },
     title: (ctx) => `Your Coverage Request Was Filled: ${ctx.className}`,

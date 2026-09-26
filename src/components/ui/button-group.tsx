@@ -1,8 +1,10 @@
-import { Slot } from "@radix-ui/react-slot";
+import * as React from "react";
+import { mergeProps } from "@base-ui/react/merge-props";
+import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 
 const buttonGroupVariants = cva(
   "flex w-fit items-stretch has-[>[data-slot=button-group]]:gap-2 [&>*]:focus-visible:relative [&>*]:focus-visible:z-10 has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-md [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1 has-[>[data-slot=button-group]]:has-[>[data-slot=button-group-separator]]:gap-3",
@@ -39,22 +41,28 @@ function ButtonGroup({
 
 function ButtonGroupText({
   className,
+  render,
   asChild = false,
+  children,
   ...props
-}: React.ComponentProps<"div"> & {
-  asChild?: boolean;
-}) {
-  const Comp = asChild ? Slot : "div";
-
-  return (
-    <Comp
-      className={cn(
-        "bg-muted shadow-xs flex items-center gap-2 rounded-md border px-4 text-sm font-medium [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none",
-        className,
-      )}
-      {...props}
-    />
-  );
+}: useRender.ComponentProps<"div"> & { asChild?: boolean }) {
+  return useRender({
+    defaultTagName: "div",
+    props: mergeProps<"div">(
+      {
+        className: cn(
+          "flex items-center gap-2 rounded-md border bg-muted px-4 text-sm font-medium shadow-xs [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
+          className,
+        ),
+        children: asChild ? undefined : children,
+      },
+      props,
+    ),
+    render: asChild && React.isValidElement(children) ? children : render,
+    state: {
+      slot: "button-group-text",
+    },
+  });
 }
 
 function ButtonGroupSeparator({
@@ -67,7 +75,7 @@ function ButtonGroupSeparator({
       data-slot="button-group-separator"
       orientation={orientation}
       className={cn(
-        "bg-input relative m-0! self-center data-[orientation=vertical]:h-auto w-0.5! h-7! rounded-full!",
+        "relative m-0! h-7! w-0.5! self-center rounded-full! bg-input data-[orientation=vertical]:h-auto",
         className,
       )}
       {...props}

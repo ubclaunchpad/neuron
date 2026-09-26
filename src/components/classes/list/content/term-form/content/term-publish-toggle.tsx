@@ -31,7 +31,7 @@ export function TermPublishToggle({
       onSuccess: async () => {
         await apiUtils.term.byId.invalidate({ termId });
         await apiUtils.term.all.invalidate();
-        toast.success(`"${termName}" published successfully`);
+        toast.success(`"${termName}" published successfully.`);
       },
     });
 
@@ -40,7 +40,7 @@ export function TermPublishToggle({
       onSuccess: async () => {
         await apiUtils.term.byId.invalidate({ termId });
         await apiUtils.term.all.invalidate();
-        toast.success(`"${termName}" unpublished successfully`);
+        toast.success(`"${termName}" unpublished successfully.`);
       },
     });
 

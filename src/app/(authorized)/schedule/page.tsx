@@ -67,7 +67,13 @@ export default function SchedulePage() {
             <ShiftDetailsAside />
           </PageLayoutAside>
 
-          <PageLayoutContent className="flex-1">
+          <PageLayoutContent
+            className={cn(
+              "flex-1",
+              currentView === "week" &&
+                "overflow-hidden [scrollbar-gutter:auto]",
+            )}
+          >
             {currentView === "week" && (
               <div className={cn("h-[calc(100dvh-var(--page-header-h))]")}>
                 <ScheduleCalendarView />

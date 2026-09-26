@@ -56,7 +56,7 @@ export default function LoginForm() {
       return;
     }
 
-    toast.success("Signed in successfully");
+    toast.success("Signed in successfully.");
   };
 
   return (
@@ -65,9 +65,14 @@ export default function LoginForm() {
       noValidate
       className="w-full max-w-3xl space-y-8 p-8"
     >
-      <h1 className="text-2xl font-display font-medium leading-none text-primary">
-        Welcome!
-      </h1>
+      <div className="space-y-2">
+        <h1 className="text-2xl font-display font-medium leading-none text-primary">
+          Welcome!
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Sign in to continue to Neuron.
+        </p>
+      </div>
 
       {/* Root error */}
       {errors.root?.message && (

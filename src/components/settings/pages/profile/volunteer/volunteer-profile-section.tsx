@@ -4,7 +4,13 @@ import { useVolunteerProfileForm } from "./volunteer-form-provider";
 
 import { FormInputField } from "@/components/form/FormInput";
 import { FormTextareaField } from "@/components/form/FormTextarea";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/primitives/button";
 
 export function VolunteerProfileSection({ isPending }: { isPending: boolean }) {
@@ -13,9 +19,12 @@ export function VolunteerProfileSection({ isPending }: { isPending: boolean }) {
   } = useVolunteerProfileForm();
 
   return (
-    <Card size="sm">
+    <Card>
       <CardHeader>
         <CardTitle>Volunteer Information</CardTitle>
+        <CardDescription>
+          Add details that help staff and instructors get to know you.
+        </CardDescription>
       </CardHeader>
 
       <CardContent className="grid gap-4">

@@ -91,9 +91,9 @@ export function ProfileImageInput({
           <Button
             type="button"
             size="sm"
-            variant="outline"
+            variant="destructive-outline"
             onClick={() => setValue("image", null, { shouldDirty: true })}
-            className="w-full max-w-35 text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="w-full max-w-35"
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Clear
@@ -107,10 +107,10 @@ export function ProfileImageInput({
             </DropzoneMedia>
 
             <DropzoneDescription>
-              Drag and drop or click to upload
+              Drag and drop or click to upload.
             </DropzoneDescription>
 
-            <DropzoneHint>JPG, PNG, WEBP (max 4MB)</DropzoneHint>
+            <DropzoneHint>JPG, PNG, or WEBP (max. 4 MB)</DropzoneHint>
           </DropzoneHeader>
         </DropzoneArea>
       </div>

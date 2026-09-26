@@ -192,9 +192,14 @@ export default function SignupForm() {
       noValidate
       className="w-full max-w-3xl space-y-8 p-8"
     >
-      <h1 className="text-2xl font-display font-medium leading-none text-primary">
-        Welcome!
-      </h1>
+      <div className="space-y-2">
+        <h1 className="text-2xl font-display font-medium leading-none text-primary">
+          Welcome!
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Create your account to get started with Neuron.
+        </p>
+      </div>
 
       {/* Root error */}
       {errors.root?.message && (

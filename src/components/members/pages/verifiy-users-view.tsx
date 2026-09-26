@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { UserStatus } from "@/models/interfaces";
@@ -92,14 +93,22 @@ export function VerifyUserListItem({ user }: { user: ListUser }) {
             <Check />
             <span>Verify</span>
           </Button>
-          <Button
-            variant="destructive-outline"
-            size="sm"
-            onClick={() => rejectMutation({ userId: user.id })}
+          <ConfirmDialog
+            title={`Deny ${user.name} ${user.lastName}’s request?`}
+            description="Their account request will be rejected and removed from the pending requests list. You can review rejected users later."
+            confirmLabel="Deny request"
+            cancelLabel="Keep pending"
+            confirmVariant="destructive"
           >
-            <X />
-            <span>Deny</span>
-          </Button>
+            <Button
+              variant="destructive-outline"
+              size="sm"
+              onClick={() => rejectMutation({ userId: user.id })}
+            >
+              <X />
+              <span>Deny</span>
+            </Button>
+          </ConfirmDialog>
         </div>
       }
     />

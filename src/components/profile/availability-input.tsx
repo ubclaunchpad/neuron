@@ -6,7 +6,13 @@ import { mergeProps, useMove } from "react-aria";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -221,7 +227,12 @@ export function AvailabilityInput({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CardTitle>{title}</CardTitle>
+            <div className="space-y-2">
+              <CardTitle>{title}</CardTitle>
+              <CardDescription>
+                Select the times when you are typically available.
+              </CardDescription>
+            </div>
             {hasUnsavedChanges && (
               <Badge variant="outline" className="text-muted-foreground">
                 Unsaved

@@ -19,7 +19,7 @@ export const PhoneNumber = z.string().transform((arg, ctx) => {
   // when it's not
   ctx.addIssue({
     code: z.ZodIssueCode.custom,
-    message: "Invalid phone number",
+    message: "Enter a valid phone number.",
   });
 
   return z.NEVER;

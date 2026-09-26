@@ -5,6 +5,7 @@ import { SkeletonListGroup } from "@/components/ui/skeleton";
 import { ShiftItemSkeleton } from "@/components/schedule/shift-item-skeleton";
 import { AlertDialog } from "@/components/primitives/alert-dialog";
 import { Button } from "@/components/primitives/button";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import {
   Item,
   ItemActions,
@@ -88,7 +89,10 @@ function DashboardCoverageItem({
       <ItemContent className="flex-row gap-4">
         <div
           style={{ "--avatar-bg": color } as React.CSSProperties}
-          className={cn("w-1.5 self-stretch shrink-0 rounded", "bg-(--avatar-bg)")}
+          className={cn(
+            "w-1.5 self-stretch shrink-0 rounded",
+            "bg-(--avatar-bg)",
+          )}
         />
         <ItemContent className="flex-0 min-w-max">
           <TypographyRegBold className="text-sm font-semibold">
@@ -127,22 +131,24 @@ function DashboardCoverageItem({
         )}
 
         {isOpen && isMyRequest && (
-          <AlertDialog
-            alertTitle="Withdraw coverage request?"
-            alertDescription="This will close your coverage request for this shift."
-            alertActionAsOverride
-            alertActionContent={
-              <Button size="sm" variant="destructive" pending={isCancelling}>
-                Yes, withdraw request
-              </Button>
-            }
-            onAccept={() => cancelCoverageRequest({ coverageRequestId: item.id })}
+          <ConfirmDialog
+            title="Withdraw coverage request?"
+            description="This will close your coverage request for this shift. Other volunteers will no longer be able to claim it."
+            confirmLabel="Withdraw request"
+            cancelLabel="Keep request"
+            confirmVariant="destructive"
           >
-            <Button variant="destructive-outline" pending={isCancelling}>
+            <Button
+              variant="destructive-outline"
+              pending={isCancelling}
+              onClick={() =>
+                cancelCoverageRequest({ coverageRequestId: item.id })
+              }
+            >
               <XIcon />
               <span>Withdraw</span>
             </Button>
-          </AlertDialog>
+          </ConfirmDialog>
         )}
       </ItemActions>
     </Item>
@@ -166,7 +172,9 @@ export function DashboardCoverageShifts() {
   );
 
   const items = useMemo(
-    () => (data?.pages.flatMap((page) => page.data) ?? []) as ListCoverageRequestBase[],
+    () =>
+      (data?.pages.flatMap((page) => page.data) ??
+        []) as ListCoverageRequestBase[],
     [data],
   );
 
@@ -180,7 +188,9 @@ export function DashboardCoverageShifts() {
     <Card className="flex flex-col h-full">
       <CardHeader className="pb-2">
         <Link href="/coverage" className="inline-flex items-center gap-0.5">
-          <CardTitle className="text-base font-semibold">Shifts in Need of Coverage</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Shifts in Need of Coverage
+          </CardTitle>
           <ChevronRight className="size-3.5 text-muted-foreground" />
         </Link>
       </CardHeader>
@@ -206,12 +216,18 @@ export function DashboardCoverageShifts() {
                     {format(group.date, "MMM d")}
                   </span>
                   {isToday(group.date) && (
-                    <span className="text-xs font-semibold text-primary">Today</span>
+                    <span className="text-xs font-semibold text-primary">
+                      Today
+                    </span>
                   )}
                 </div>
                 <div className="flex flex-col gap-0.5">
                   {group.items.map((item) => (
-                    <DashboardCoverageItem key={item.id} item={item} onOpen={handleOpen} />
+                    <DashboardCoverageItem
+                      key={item.id}
+                      item={item}
+                      onOpen={handleOpen}
+                    />
                   ))}
                 </div>
               </div>

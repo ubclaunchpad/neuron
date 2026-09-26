@@ -1,22 +1,14 @@
-"use client";
-
-import { cn } from "@/lib/utils";
-import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
+import { mergeProps } from "@base-ui/react/merge-props";
+import { useRender } from "@base-ui/react/use-render";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
 const cardVariants = cva(
-  "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border shadow-sm",
+  "flex flex-col gap-6 rounded-xl border bg-card text-card-foreground shadow-sm",
   {
-    variants: {
-      size: {
-        default: "py-6",
-        sm: "py-4",
-      },
-    },
-    defaultVariants: {
-      size: "default",
-    },
+    variants: { size: { default: "py-6", sm: "py-4" } },
+    defaultVariants: { size: "default" },
   },
 );
 
@@ -24,18 +16,25 @@ function Card({
   className,
   size = "default",
   asChild = false,
+  children,
+  render,
   ...props
-}: React.ComponentProps<"div"> &
+}: useRender.ComponentProps<"div"> &
+  React.ComponentProps<"div"> &
   VariantProps<typeof cardVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : "div";
-  return (
-    <Comp
-      data-slot="card"
-      data-size={size}
-      className={cn("group/card", cardVariants({ size }), className)}
-      {...props}
-    />
-  );
+  const defaultProps = {
+    "data-slot": "card",
+    "data-size": size,
+    className: cn("group/card", cardVariants({ size }), className),
+    children: asChild ? undefined : children,
+  };
+
+  return useRender({
+    defaultTagName: "div",
+    props: mergeProps<"div">(defaultProps, props),
+    render: asChild && React.isValidElement(children) ? children : render,
+    state: { slot: "card", size },
+  });
 }
 
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
@@ -65,7 +64,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("text-sm text-muted-foreground", className)}
       {...props}
     />
   );
@@ -109,10 +108,10 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 
 export {
   Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
+  CardFooter,
   CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
 };

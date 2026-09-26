@@ -41,7 +41,7 @@ export const TermFormDialog = NiceModal.create(
         onSuccess: async (createdTermId) => {
           onCreated?.(createdTermId);
           await apiUtils.term.all.invalidate();
-          toast.success("Term created");
+          toast.success("Term created.");
           modal.remove();
         },
       });
@@ -51,7 +51,7 @@ export const TermFormDialog = NiceModal.create(
         onSuccess: async (_, { id }) => {
           await apiUtils.term.byId.invalidate({ termId: id });
           await apiUtils.term.all.invalidate();
-          toast.success("Term saved");
+          toast.success("Term saved.");
           modal.remove();
         },
       });

@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertDialog } from "@/components/primitives/alert-dialog";
 import { Button } from "@/components/primitives/button";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import { CoverageStatus } from "@/models/api/coverage";
 import type { SingleShiftWithPersonalContext } from "@/models/shift";
 import { clientApi } from "@/trpc/client";
@@ -43,30 +43,27 @@ export function RequestCoverageButton({
 
   if (shift.coverageRequest.status === CoverageStatus.open) {
     return (
-      <AlertDialog
-        alertTitle="Withdraw coverage request?"
-        alertDescription="This will close your coverage request for this shift."
-        alertActionAsOverride
-        alertActionContent={
-          <Button size="sm" variant="destructive" pending={isCancelling}>
-            Yes, withdraw request
-          </Button>
-        }
-        onAccept={() =>
-          cancelCoverageRequest({
-            coverageRequestId: shift.coverageRequest!.id,
-          })
-        }
+      <ConfirmDialog
+        title="Withdraw coverage request?"
+        description="This will close your coverage request for this shift. Other volunteers will no longer be able to claim it."
+        confirmLabel="Withdraw request"
+        cancelLabel="Keep request"
+        confirmVariant="destructive"
       >
         <Button
           variant="destructive-outline"
           className={className}
           pending={isCancelling}
+          onClick={() =>
+            cancelCoverageRequest({
+              coverageRequestId: shift.coverageRequest!.id,
+            })
+          }
         >
           <XIcon />
           <span>Withdraw coverage request</span>
         </Button>
-      </AlertDialog>
+      </ConfirmDialog>
     );
   }
 

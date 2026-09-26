@@ -174,6 +174,7 @@ export function ClassDetailsAside() {
           />
           <DeleteClassButton
             classId={classData.id}
+            classLabel={classData.name}
             onSuccess={() => closeAside()}
           />
         </div>

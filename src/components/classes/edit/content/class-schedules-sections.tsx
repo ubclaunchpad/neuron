@@ -1,4 +1,5 @@
 import { Button } from "@/components/primitives/button";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
   Card,
@@ -156,7 +157,7 @@ export function ClassSchedulesSection() {
           </Empty>
         ) : (
           <>
-            <ItemGroup className="border divide-y &[*]:border-0 rounded-md">
+            <ItemGroup className="gap-0 overflow-hidden rounded-md border divide-y has-data-[size=sm]:gap-0">
               {schedules.map((field, index) => {
                 const schedule = getValues(
                   `schedules.${index}`,
@@ -166,6 +167,7 @@ export function ClassSchedulesSection() {
                   <Item
                     key={field.key}
                     variant="noBorder"
+                    size="sm"
                     className="rounded-none"
                   >
                     <ItemContent className="gap-1">
@@ -176,27 +178,36 @@ export function ClassSchedulesSection() {
                           schedule.localEndTime,
                           {
                             rangeSeparator: " to ",
+                            meridiemSeparator: " ",
                           },
                         )}
                       </ItemTitle>
                       <ItemDescription>
-                        Taught by:{" "}
+                        Taught by{" "}
                         {joinWithSeparators(
                           schedule.instructors.map((i) => i.label),
                           { sep: ", " },
-                          "No instructors chosen",
+                          "No instructors assigned",
                         )}
                       </ItemDescription>
                     </ItemContent>
                     <ItemActions>
                       <ButtonGroup>
-                        <Button
-                          variant="outline"
-                          onClick={() => removeSchedule(index)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        <ConfirmDialog
+                          title="Remove this schedule?"
+                          description="This schedule will be removed when you save the class. Its generated shifts and assignments will also be deleted."
+                          confirmLabel="Remove schedule"
+                          cancelLabel="Keep schedule"
+                          confirmVariant="destructive"
                         >
-                          <Trash2 />
-                        </Button>
+                          <Button
+                            variant="destructive-outline"
+                            onClick={() => removeSchedule(index)}
+                            aria-label="Remove schedule"
+                          >
+                            <Trash2 />
+                          </Button>
+                        </ConfirmDialog>
                         <Button
                           variant="outline"
                           onClick={() => handleEditSchedule(index, schedule)}
@@ -221,7 +232,7 @@ export function ClassSchedulesSection() {
               onClick={() => handleAddSchedule()}
               variant="ghost"
               size="sm"
-              className="mt-6"
+              className="mt-4"
             >
               <Plus />
               Add a schedule

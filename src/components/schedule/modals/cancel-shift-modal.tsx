@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/primitives/button";
+import { ConfirmDialog } from "@/components/primitives/confirm-dialog";
 import {
   Dialog,
   DialogClose,
@@ -40,9 +41,11 @@ type ClassCancellationSchemaType = z.infer<typeof ClassCancellationSchema>;
 function CancelShiftForm({
   onSubmit,
   isSubmitting,
+  shiftLabel,
 }: {
   onSubmit: (data: ClassCancellationSchemaType) => void;
   isSubmitting: boolean;
+  shiftLabel: string;
 }) {
   const form = useForm({
     resolver: zodResolver(ClassCancellationSchema),
@@ -75,15 +78,23 @@ function CancelShiftForm({
             Close
           </Button>
         </DialogClose>
-        <Button
-          type="submit"
-          size="sm"
-          variant="destructive"
-          pending={isSubmitting}
-          startIcon={<X />}
+        <ConfirmDialog
+          title="Cancel this class?"
+          description={`This will cancel ${shiftLabel} and notify the assigned volunteers. This action cannot be undone.`}
+          confirmLabel="Cancel class"
+          cancelLabel="Keep class"
+          confirmVariant="destructive"
         >
-          Cancel Class
-        </Button>
+          <Button
+            type="submit"
+            size="sm"
+            variant="destructive"
+            pending={isSubmitting}
+            startIcon={<X />}
+          >
+            Cancel Class
+          </Button>
+        </ConfirmDialog>
       </DialogFooter>
     </form>
   );
@@ -122,9 +133,9 @@ export const CancelShiftModal = NiceModal.create(
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Class cancellation notice</DialogTitle>
+            <DialogTitle>Cancel {shift.class.name}</DialogTitle>
             <DialogDescription>
-              {day} {startTime} {endTime}
+              Cancel the class on {day}, from {startTime} to {endTime}.
             </DialogDescription>
           </DialogHeader>
 
@@ -132,6 +143,7 @@ export const CancelShiftModal = NiceModal.create(
             key={shift.id}
             onSubmit={onSubmit}
             isSubmitting={isPending}
+            shiftLabel={`${shift.class.name} on ${day} from ${startTime} to ${endTime}`}
           />
         </DialogContent>
       </Dialog>

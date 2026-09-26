@@ -41,10 +41,10 @@ function getImageKeyFromValue(image: string | null | undefined): string | null {
 
 function buildProfileUpdateSuccessMessage(requestedEmail?: string): string {
   if (!requestedEmail) {
-    return "Your profile has been successfully updated!";
+    return "Your profile has been updated.";
   }
 
-  return `Your profile has been successfully updated! A confirmation link was sent to your current email. After you click it, we will send a verification email to ${requestedEmail}.`;
+  return `Your profile has been updated. A confirmation link was sent to your current email address. After you confirm the change, we will send a verification email to ${requestedEmail}.`;
 }
 
 async function requestEmailChangeIfNeeded({
@@ -63,7 +63,9 @@ async function requestEmailChangeIfNeeded({
   });
 
   if (!changeEmailResult) {
-    throw new Error("Profile updated, but email change could not be started. Please try again.");
+    throw new Error(
+      "Profile updated, but email change could not be started. Please try again.",
+    );
   }
   if (changeEmailResult.error) {
     throw new Error(getBetterAuthErrorMessage(changeEmailResult.error.code));
@@ -125,7 +127,9 @@ export function useGeneralProfileSubmit() {
         buildProfileUpdateSuccessMessage(
           didRequestEmailChange ? requestedEmail : undefined,
         ),
-        didRequestEmailChange ? { duration: 30000, dismissible: true } : undefined,
+        didRequestEmailChange
+          ? { duration: 30000, dismissible: true }
+          : undefined,
       );
 
       return {

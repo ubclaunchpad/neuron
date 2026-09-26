@@ -4,12 +4,12 @@ import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DialogClose } from "@radix-ui/react-dialog";
 
 import { Button } from "@/components/ui/button";
 import { FieldGroup } from "@/components/ui/field";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -70,7 +70,7 @@ export const ScheduleFormDialog = NiceModal.create(
       >
         <DialogContent className="max-w-150!">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <DialogHeader>
+            <DialogHeader className="mb-4">
               <DialogTitle>
                 {isEditing ? "Edit schedule" : "Add a schedule"}
               </DialogTitle>

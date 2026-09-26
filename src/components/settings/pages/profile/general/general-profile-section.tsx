@@ -5,7 +5,13 @@ import { ProfileImageInput } from "./profile-image-input";
 
 import { FieldLabel } from "@/components/ui/field";
 import { FormInputField } from "@/components/form/FormInput";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/primitives/button";
 
 export function GeneralProfileSection({
@@ -25,6 +31,9 @@ export function GeneralProfileSection({
     <Card>
       <CardHeader>
         <CardTitle>Profile Information</CardTitle>
+        <CardDescription>
+          Update your profile picture, name, and email address.
+        </CardDescription>
       </CardHeader>
 
       <CardContent className="grid gap-4">
@@ -59,7 +68,7 @@ export function GeneralProfileSection({
           type="email"
           description={
             pendingEmailChange
-              ? `Pending change requested to ${pendingEmailChange}`
+              ? `Pending change requested to ${pendingEmailChange}.`
               : undefined
           }
         />

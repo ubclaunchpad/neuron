@@ -4,7 +4,13 @@ import { Controller } from "react-hook-form";
 
 import { AvailabilityInput } from "@/components/profile/availability-input";
 import { FormInputField } from "@/components/form/FormInput";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/primitives/button";
 
 import { useAvailabilityForm } from "./availability-form-provider";
@@ -23,7 +29,7 @@ export function AvailabilitySection({
   } = useAvailabilityForm();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Controller
         name="availability"
         control={control}
@@ -46,9 +52,12 @@ export function AvailabilitySection({
         )}
       />
 
-      <Card size="sm">
+      <Card>
         <CardHeader>
           <CardTitle>Preferred Time Commitment</CardTitle>
+          <CardDescription>
+            Set the number of hours you would like to volunteer each week.
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="grid gap-4">

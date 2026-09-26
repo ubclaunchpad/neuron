@@ -8,6 +8,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { clientApi } from "@/trpc/client";
 import { cn } from "@/lib/utils";
 import { NotificationFilterMenu } from "./notification-filter-menu";
@@ -19,6 +21,28 @@ import {
   emptyMessages,
   groupByDate,
 } from "./utils";
+
+function NotificationInboxSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading notifications">
+      <div className="px-3 py-2">
+        <Skeleton className="h-3 w-14" />
+      </div>
+      <div className="divide-y">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div key={index} className="space-y-2 px-3 py-3">
+            <div className="flex items-center justify-between gap-4">
+              <Skeleton className="h-4 w-3/5" />
+              <Skeleton className="h-3 w-12" />
+            </div>
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-4/5" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function NotificationInbox() {
   const [open, setOpen] = useState(false);
@@ -112,11 +136,13 @@ export function NotificationInbox() {
         </div>
 
         {/* Notification list */}
-        <div ref={scrollContainerRef} className="max-h-96 overflow-y-auto">
+        <ScrollArea
+          className="max-h-96"
+          viewPortClassName="max-h-96"
+          viewPortRef={scrollContainerRef}
+        >
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <p className="text-sm text-muted-foreground">Loading...</p>
-            </div>
+            <NotificationInboxSkeleton />
           ) : items.length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <p className="text-sm text-muted-foreground">
@@ -155,7 +181,7 @@ export function NotificationInbox() {
               ))}
             </div>
           )}
-        </div>
+        </ScrollArea>
       </PopoverContent>
     </Popover>
   );

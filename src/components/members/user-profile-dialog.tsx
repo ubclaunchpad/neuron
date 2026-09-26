@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -58,6 +59,9 @@ export const UserProfileDialog = NiceModal.create(
         <DialogContent className="max-w-md flex flex-col">
           <DialogHeader className="items-center text-center">
             <DialogTitle>User Profile</DialogTitle>
+            <DialogDescription>
+              View this member&apos;s account and membership details.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-col items-center gap-3">

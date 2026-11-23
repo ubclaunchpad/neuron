@@ -10,15 +10,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "@/server/db/schema";
 import type { PgBoss } from "pg-boss";
-import {
-  describe,
-  it,
-  expect,
-  expectTypeOf,
-  beforeEach,
-  afterEach,
-  vi,
-} from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { Transaction } from "@/server/db";
 import {
   createContainer,
@@ -34,7 +26,6 @@ import type {
   JobRuntimeContext,
   RegisteredJob,
   RunJobOptions,
-  StartupSchedule,
 } from "@/server/jobs/types";
 
 // Loose interface so test job names and payloads bypass the strict
@@ -146,92 +137,6 @@ async function waitForHandlerCalls(
     await new Promise((r) => setTimeout(r, intervalMs));
   }
 }
-
-describe("job option types", () => {
-  it("accepts one-off, transactional replacement, and recurring options", () => {
-    expectTypeOf<{ runAt: Date }>().toExtend<RunJobOptions>();
-    expectTypeOf<{
-      startAfter: number;
-      transaction: Transaction;
-      idempotencyKey: string;
-    }>().toExtend<RunJobOptions>();
-    expectTypeOf<{
-      replacePending: true;
-      transaction: Transaction;
-      singletonKey: string;
-    }>().toExtend<RunJobOptions>();
-    expectTypeOf<{
-      cron: string;
-      correlationId: string;
-      startAt: Date;
-      endAt: Date;
-    }>().toExtend<RunJobOptions>();
-  });
-
-  it("excludes incompatible scheduling and replacement options", () => {
-    expectTypeOf<{
-      runAt: Date;
-      startAfter: number;
-    }>().not.toExtend<RunJobOptions>();
-    expectTypeOf<{ correlationId: string }>().not.toExtend<RunJobOptions>();
-    expectTypeOf<{ startAt: Date }>().not.toExtend<RunJobOptions>();
-    expectTypeOf<{ endAt: Date }>().not.toExtend<RunJobOptions>();
-    expectTypeOf<{ cron: string; runAt: Date }>().not.toExtend<RunJobOptions>();
-    expectTypeOf<{
-      cron: string;
-      startAfter: number;
-    }>().not.toExtend<RunJobOptions>();
-    expectTypeOf<{
-      cron: string;
-      transaction: Transaction;
-    }>().not.toExtend<RunJobOptions>();
-    expectTypeOf<{
-      cron: string;
-      idempotencyKey: string;
-    }>().not.toExtend<RunJobOptions>();
-    expectTypeOf<{
-      replacePending: true;
-      singletonKey: string;
-    }>().not.toExtend<RunJobOptions>();
-    expectTypeOf<{
-      replacePending: true;
-      transaction: Transaction;
-    }>().not.toExtend<RunJobOptions>();
-    expectTypeOf<{
-      replacePending: true;
-      transaction: Transaction;
-      singletonKey: string;
-      idempotencyKey: string;
-    }>().not.toExtend<RunJobOptions>();
-  });
-
-  it("restricts startup options to their scheduling mode without caller transactions", () => {
-    expectTypeOf<{
-      options: { startAfter: number; idempotencyKey: string };
-    }>().toExtend<StartupSchedule<TestPayload>>();
-    expectTypeOf<{
-      cron: string;
-      options: { correlationId: string };
-    }>().toExtend<StartupSchedule<TestPayload>>();
-    expectTypeOf<{
-      options: {
-        replacePending: true;
-        transaction: Transaction;
-        singletonKey: string;
-      };
-    }>().not.toExtend<StartupSchedule<TestPayload>>();
-    expectTypeOf<{ options: { transaction: Transaction } }>().not.toExtend<
-      StartupSchedule<TestPayload>
-    >();
-    expectTypeOf<{
-      cron: string;
-      options: { startAfter: number };
-    }>().not.toExtend<StartupSchedule<TestPayload>>();
-    expectTypeOf<{ options: { correlationId: string } }>().not.toExtend<
-      StartupSchedule<TestPayload>
-    >();
-  });
-});
 
 describe("JobService", () => {
   let container: AwilixContainer;

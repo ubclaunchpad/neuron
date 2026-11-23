@@ -127,7 +127,6 @@ export class JobService implements IJobService {
     { transaction }: { transaction: Transaction },
   ): Promise<void> {
     this.getJobDefinition(jobName);
-    await this.start();
     const db = transaction ? this.transactionDb(transaction) : undefined;
     await this.cancelMatchingJobs(jobName, singletonKey, db);
   }
@@ -137,7 +136,7 @@ export class JobService implements IJobService {
     key: string,
     db: PgBossDatabase,
   ): Promise<void> {
-    // Serialize keyed producers until commit, including enqueue vs. cancel.
+    // Serialize transactional keyed producers until commit, including enqueue vs. cancel.
     // Job transitions and storage remain entirely owned by pg-boss.
     await db.executeSql(
       "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
@@ -152,6 +151,7 @@ export class JobService implements IJobService {
   ): Promise<void> {
     if (!db || !key?.trim())
       throw new Error("Cancellation requires a transaction and singletonKey");
+    await this.start();
     await this.lockJobKey(jobName, key, db);
     for (let attempt = 0; attempt <= 3; attempt++) {
       const jobs = await this.boss.findJobs(jobName, { key, db });
@@ -168,7 +168,8 @@ export class JobService implements IJobService {
         throw new Error(
           "Pending jobs changed during cancellation; retry transaction",
         );
-      await this.boss.cancel(jobName, ids, { db });
+      const result = await this.boss.cancel(jobName, ids, { db });
+      if ("affected" in result && result.affected === ids.length) return;
       // Native retries delete/reinsert rows. A cancel waiting on that delete
       // can miss the replacement tuple, so re-read with a fresh snapshot.
     }
@@ -286,12 +287,13 @@ export class JobService implements IJobService {
       await this.cancelMatchingJobs(jobName, queueOptions.singletonKey, db);
     else if (db && queueOptions.singletonKey !== undefined)
       await this.lockJobKey(jobName, queueOptions.singletonKey, db);
-    const digest = idempotencyKey
-      ? createHash("sha256")
-          .update(`${jobName}:${idempotencyKey}`)
-          .digest("hex")
-          .slice(0, 32)
-      : undefined;
+    const digest =
+      idempotencyKey !== undefined
+        ? createHash("sha256")
+            .update(`${jobName}:${idempotencyKey}`)
+            .digest("hex")
+            .slice(0, 32)
+        : undefined;
     const id = digest
       ? `${digest.slice(0, 8)}-${digest.slice(8, 12)}-${digest.slice(12, 16)}-${digest.slice(16, 20)}-${digest.slice(20)}`
       : undefined;
@@ -526,7 +528,9 @@ function mergeRetryOptions<TOptions extends JobRetryOptions>(
   if (!defaults && !options) return undefined;
   return {
     ...(defaults ?? {}),
-    ...(options ?? {}),
+    ...Object.fromEntries(
+      Object.entries(options ?? {}).filter(([, value]) => value !== undefined),
+    ),
   } as TOptions;
 }
 

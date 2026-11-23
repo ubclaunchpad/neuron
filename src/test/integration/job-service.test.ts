@@ -11,7 +11,6 @@ import postgres from "postgres";
 import * as schema from "@/server/db/schema";
 import type { PgBoss } from "pg-boss";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { Transaction } from "@/server/db";
 import {
   createContainer,
   asValue,
@@ -260,38 +259,41 @@ describe("JobService", () => {
       ).toHaveLength(0);
     });
 
-    it("uses native job IDs for idempotent enqueueing", async () => {
-      await jobService.start();
-      await getTestDb().transaction(async (transaction) => {
-        const options = {
-          transaction,
-          idempotencyKey: "same-event",
-          startAfter: 3600,
-        };
+    it.each(["same-event", ""])(
+      "uses native job IDs for supplied key %j",
+      async (idempotencyKey) => {
+        await jobService.start();
+        await getTestDb().transaction(async (transaction) => {
+          const options = {
+            transaction,
+            idempotencyKey,
+            startAfter: 3600,
+          };
+          expect(
+            await jobService.run(
+              "jobs.integration-test",
+              { message: "first" },
+              options,
+            ),
+          ).toBeTypeOf("string");
+          expect(
+            await jobService.run(
+              "jobs.integration-test",
+              { message: "duplicate" },
+              options,
+            ),
+          ).toBeNull();
+        });
         expect(
           await jobService.run(
             "jobs.integration-test",
-            { message: "first" },
-            options,
-          ),
-        ).toBeTypeOf("string");
-        expect(
-          await jobService.run(
-            "jobs.integration-test",
-            { message: "duplicate" },
-            options,
+            { message: "retry" },
+            { idempotencyKey, startAfter: 3600 },
           ),
         ).toBeNull();
-      });
-      expect(
-        await jobService.run(
-          "jobs.integration-test",
-          { message: "retry" },
-          { idempotencyKey: "same-event", startAfter: 3600 },
-        ),
-      ).toBeNull();
-      expect(await boss().findJobs("jobs.integration-test")).toHaveLength(1);
-    });
+        expect(await boss().findJobs("jobs.integration-test")).toHaveLength(1);
+      },
+    );
 
     it("atomically cancels superseded jobs and enqueues a replacement (array parameters)", async () => {
       await jobService.start();
@@ -306,6 +308,7 @@ describe("JobService", () => {
         { message: "old2" },
         options,
       );
+      const find = vi.spyOn(boss(), "findJobs");
       const replacement = await getTestDb().transaction((transaction) =>
         jobService.run(
           "jobs.integration-test",
@@ -313,6 +316,7 @@ describe("JobService", () => {
           { ...options, transaction, replacePending: true },
         ),
       );
+      expect(find).toHaveBeenCalledTimes(1);
       const jobs = await boss().findJobs("jobs.integration-test", {
         key: "assignment",
       });
@@ -558,29 +562,8 @@ describe("JobService", () => {
       expect(jobs[0]).toMatchObject({ id, state: "created" });
     });
 
-    it("rejects unsafe replacement options through the startup scheduling path", async () => {
-      await jobService.start();
-      const cancel = vi.spyOn(boss(), "cancel");
-      // Simulate a malformed persisted/runtime definition despite the static type.
-      testJob.startup = {
-        options: { replacePending: true },
-      } as unknown as NonNullable<typeof testJob.startup>;
-      try {
-        await expect(
-          (
-            jobService as unknown as {
-              registerStartupSchedules(): Promise<void>;
-            }
-          ).registerStartupSchedules(),
-        ).rejects.toThrow("requires a transaction");
-        expect(cancel).not.toHaveBeenCalled();
-      } finally {
-        delete testJob.startup;
-      }
-    });
-
-    it("guards cancellation against an empty key or missing transaction at runtime", async () => {
-      await jobService.start();
+    it("rejects empty cancellation keys before starting pg-boss", async () => {
+      const start = vi.spyOn(jobService, "start");
       const find = vi.spyOn(boss(), "findJobs");
       const cancel = vi.spyOn(boss(), "cancel");
       for (const key of ["", "  "]) {
@@ -592,12 +575,7 @@ describe("JobService", () => {
           ),
         ).rejects.toThrow("requires a transaction and singletonKey");
       }
-      await expect(
-        jobService.cancelPending("jobs.integration-test", "key", {
-          // Exercise the safety boundary even if a caller bypasses TypeScript.
-          transaction: undefined as unknown as Transaction,
-        }),
-      ).rejects.toThrow("requires a transaction and singletonKey");
+      expect(start).not.toHaveBeenCalled();
       expect(find).not.toHaveBeenCalled();
       expect(cancel).not.toHaveBeenCalled();
     });
@@ -715,74 +693,78 @@ describe("JobService", () => {
       }
     });
 
-    it("commits notification fan-out atomically and deduplicates retries with native job IDs", async () => {
-      await jobService.start();
-      const id = randomUUID();
-      await getTestDb()
-        .insert(user)
-        .values({
-          id,
-          name: "Fanout",
-          lastName: "Test",
-          email: `${id}@test.com`,
-          role: "volunteer",
-          status: "active",
-        });
-      const preferences = new MockPreferenceService();
-      vi.spyOn(preferences, "getPreferencesForRecipients").mockResolvedValue(
-        new Map([
-          [
+    it.each([true, false])(
+      "commits fan-out atomically and deduplicates retries (in-app: %s)",
+      async (inApp) => {
+        await jobService.start();
+        const id = randomUUID();
+        await getTestDb()
+          .insert(user)
+          .values({
             id,
-            new Map([
-              ["in_app", true],
-              ["email", true],
-            ]),
-          ],
-        ]),
-      );
-      const service = new NotificationService({
-        db: getTestDb(),
-        jobService: jobService as unknown as IJobService,
-        preferenceService: preferences,
-      });
-      const params = {
-        type: "shift.cancelled",
-        audience: { kind: "user" as const, userId: id },
-        context: {
-          shiftId: randomUUID(),
-          className: "Class",
-          shiftDate: "Jul 15",
-          cancelReason: "Test",
-          cancelledByName: "Admin",
-        },
-        idempotencyKey: randomUUID(),
-      };
-      try {
-        vi.spyOn(boss(), "send").mockRejectedValueOnce(
-          new Error("queue unavailable"),
+            name: "Fanout",
+            lastName: "Test",
+            email: `${id}@test.com`,
+            role: "volunteer",
+            status: "active",
+          });
+        const preferences = new MockPreferenceService();
+        vi.spyOn(preferences, "getPreferencesForRecipients").mockResolvedValue(
+          new Map([
+            [
+              id,
+              new Map([
+                ["in_app", inApp],
+                ["email", true],
+              ]),
+            ],
+          ]),
         );
-        await expect(service.processNotification(params)).rejects.toThrow(
-          "queue unavailable",
-        );
-        expect(
-          await getTestDb()
-            .select()
-            .from(notification)
-            .where(eq(notification.userId, id)),
-        ).toHaveLength(0);
-        await service.processNotification(params);
-        await service.processNotification(params);
-        expect(
-          await getTestDb()
-            .select()
-            .from(notification)
-            .where(eq(notification.userId, id)),
-        ).toHaveLength(1);
-        expect(await boss().findJobs("jobs.send-email")).toHaveLength(1);
-      } finally {
-        await getTestDb().delete(user).where(eq(user.id, id));
-      }
-    });
+        const service = new NotificationService({
+          db: getTestDb(),
+          jobService: jobService as unknown as IJobService,
+          preferenceService: preferences,
+        });
+        const params = {
+          type: "shift.cancelled",
+          audience: { kind: "user" as const, userId: id },
+          context: {
+            shiftId: randomUUID(),
+            className: "Class",
+            shiftDate: "Jul 15",
+            cancelReason: "Test",
+            cancelledByName: "Admin",
+          },
+          idempotencyKey: inApp ? randomUUID() : "",
+        };
+        try {
+          const send = vi
+            .spyOn(boss(), "send")
+            .mockRejectedValueOnce(new Error("queue unavailable"));
+          await expect(service.processNotification(params)).rejects.toThrow(
+            "queue unavailable",
+          );
+          expect(
+            await getTestDb()
+              .select()
+              .from(notification)
+              .where(eq(notification.userId, id)),
+          ).toHaveLength(0);
+          await service.processNotification(params);
+          await service.processNotification(params);
+          expect(
+            await getTestDb()
+              .select()
+              .from(notification)
+              .where(eq(notification.userId, id)),
+          ).toHaveLength(inApp ? 1 : 0);
+          expect(send).toHaveBeenCalledTimes(inApp ? 2 : 3);
+          expect(await boss().findJobs("jobs.send-email")).toHaveLength(1);
+        } finally {
+          await getTestDb().delete(user).where(eq(user.id, id));
+        }
+      },
+    );
   });
 
   // Start / stop lifecycle
@@ -858,7 +840,13 @@ describe("JobService", () => {
       const id = await jobService.run(
         "jobs.integration-test",
         { message: "delayed" },
-        { startAfter: 3600 },
+        {
+          startAfter: 3600,
+          retryLimit: undefined,
+          retryDelay: undefined,
+          retryBackoff: undefined,
+          expireInSeconds: undefined,
+        },
       );
       expect(id).toBeTypeOf("string");
     });

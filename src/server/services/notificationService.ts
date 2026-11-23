@@ -314,7 +314,7 @@ export class NotificationService implements INotificationService {
   }): Promise<void> {
     // Check idempotency — per-user keys are stored as `${baseKey}:${userId}`,
     // so we check for any row whose key starts with the base key.
-    if (idempotencyKey) {
+    if (idempotencyKey !== undefined) {
       const [existing] = await this.db
         .select({ id: notification.id })
         .from(notification)
@@ -400,9 +400,10 @@ export class NotificationService implements INotificationService {
           sourceType,
           sourceId,
           actorId,
-          idempotencyKey: idempotencyKey
-            ? `${idempotencyKey}:${r.userId}`
-            : undefined,
+          idempotencyKey:
+            idempotencyKey !== undefined
+              ? `${idempotencyKey}:${r.userId}`
+              : undefined,
         }));
 
         await tx
@@ -422,9 +423,10 @@ export class NotificationService implements INotificationService {
           },
           {
             transaction: tx,
-            idempotencyKey: idempotencyKey
-              ? `${idempotencyKey}:${recipient.userId}`
-              : undefined,
+            idempotencyKey:
+              idempotencyKey !== undefined
+                ? `${idempotencyKey}:${recipient.userId}`
+                : undefined,
           },
         );
       }

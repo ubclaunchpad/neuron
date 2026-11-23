@@ -10,13 +10,13 @@ export interface JobRetryOptions {
 }
 
 interface SharedJobOptions extends JobRetryOptions {
+  /** All producers for a replaceable key must use a transaction to serialize with cancellation. */
   singletonKey?: string;
   singletonSeconds?: number;
   singletonMinutes?: number;
   singletonHours?: number;
   singletonDays?: number;
   expireInSeconds?: number;
-  tz?: string;
 }
 
 type OneOffJobOptions = SharedJobOptions & {
@@ -24,6 +24,7 @@ type OneOffJobOptions = SharedJobOptions & {
   correlationId?: never;
   startAt?: never;
   endAt?: never;
+  tz?: never;
 } & (
     | { runAt: Date | string; startAfter?: never }
     | { runAt?: never; startAfter?: Date | string | number }
@@ -40,7 +41,7 @@ type OneOffJobOptions = SharedJobOptions & {
         replacePending?: false;
         /** Insert the job in the caller's PostgreSQL transaction. */
         transaction?: Transaction;
-        /** Stable job ID, deduplicated while pg-boss retains the job. */
+        /** Any supplied key, including an empty string, maps to a stable job ID while pg-boss retains it. */
         idempotencyKey?: string;
       }
   );
@@ -51,6 +52,7 @@ type RecurringJobOptions = SharedJobOptions & {
   correlationId?: string;
   startAt?: Date | string;
   endAt?: Date | string;
+  tz?: string;
   runAt?: never;
   startAfter?: never;
   transaction?: never;
@@ -77,12 +79,11 @@ export interface JobRuntimeContext {
 type StartupRecurringOptions = Omit<RecurringJobOptions, "cron">;
 type StartupOneOffOptions = Omit<
   OneOffJobOptions,
-  "runAt" | "transaction" | "replacePending" | "tz"
+  "runAt" | "transaction" | "replacePending"
 > & {
   runAt?: never;
   transaction?: never;
   replacePending?: never;
-  tz?: never;
 };
 
 export type StartupSchedule<TPayload extends object> =

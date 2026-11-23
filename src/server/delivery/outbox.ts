@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { and, eq, isNull, lte, sql } from "drizzle-orm";
+import { and, eq, isNull, lte } from "drizzle-orm";
 import type { Drizzle, Transaction } from "@/server/db";
 import {
   deliveryOutbox,
@@ -23,6 +23,8 @@ export async function recordDelivery(
     deliveryKey: intent.key ? `${intent.kind}:${intent.key}` : null,
     revisionId: randomUUID(),
     processedAt: null,
+    failedAt: null,
+    lastErrorCode: null,
     nextAttemptAt: new Date(),
     attempts: 0,
   };
@@ -38,6 +40,17 @@ export async function recordDelivery(
   }
 }
 
+export async function cancelDelivery(
+  db: Transaction,
+  kind: string,
+  key: string,
+) {
+  await db
+    .update(deliveryOutbox)
+    .set({ revisionId: randomUUID(), processedAt: new Date(), payload: {} })
+    .where(eq(deliveryOutbox.deliveryKey, `${kind}:${key}`));
+}
+
 export interface DeliveryHandler {
   // Acquire any domain locks before the outbox lock, consistent with the writer.
   // Return null to suppress obsolete delivery; return a closure to send under lock.
@@ -46,6 +59,80 @@ export interface DeliveryHandler {
     tx: Transaction,
     cradle: NeuronCradle,
   ): Promise<(() => Promise<void>) | null>;
+}
+
+export const MAX_DELIVERY_ATTEMPTS = 8;
+
+class UnknownDeliveryKind extends Error {}
+
+function diagnose(error: unknown) {
+  if (error instanceof UnknownDeliveryKind)
+    return { code: "UNKNOWN_KIND", permanent: true };
+  if (error instanceof Error && error.name === "ZodError")
+    return { code: "INVALID_PAYLOAD", permanent: true };
+  const responseCode =
+    typeof error === "object" && error !== null && "responseCode" in error
+      ? error.responseCode
+      : undefined;
+  if (
+    typeof responseCode === "number" &&
+    Number.isInteger(responseCode) &&
+    responseCode >= 400 &&
+    responseCode <= 599
+  ) {
+    return { code: `SMTP_${responseCode}`, permanent: responseCode >= 500 };
+  }
+  const transportCode =
+    typeof error === "object" && error !== null && "code" in error
+      ? error.code
+      : undefined;
+  if (
+    typeof transportCode === "string" &&
+    [
+      "ETIMEDOUT",
+      "ECONNREFUSED",
+      "ECONNRESET",
+      "ECONNECTION",
+      "ESOCKET",
+      "EDNS",
+      "EPIPE",
+      "EAUTH",
+      "ETLS",
+      "EENVELOPE",
+      "EMESSAGE",
+    ].includes(transportCode)
+  ) {
+    return { code: transportCode, permanent: false };
+  }
+  return { code: "DELIVERY_FAILED", permanent: false };
+}
+
+async function recordFailure(
+  tx: Transaction,
+  current: DeliveryIntent,
+  error: unknown,
+) {
+  const { code, permanent } = diagnose(error);
+  const attempts = current.attempts + 1;
+  const terminal = permanent || attempts >= MAX_DELIVERY_ATTEMPTS;
+  await tx
+    .update(deliveryOutbox)
+    .set({
+      attempts,
+      failedAt: terminal ? new Date() : null,
+      lastErrorCode: code,
+      nextAttemptAt: new Date(
+        Date.now() + Math.min(3600, 30 * 2 ** Math.min(attempts - 1, 7)) * 1000,
+      ),
+    })
+    .where(eq(deliveryOutbox.id, current.id));
+  // Log only whitelisted codes, never payloads, links, or transport error text.
+  console.error("[delivery-outbox] delivery failed", {
+    id: current.id,
+    kind: current.kind,
+    code,
+    terminal,
+  });
 }
 
 export async function drainDeliveries(
@@ -58,6 +145,7 @@ export async function drainDeliveries(
     .where(
       and(
         isNull(deliveryOutbox.processedAt),
+        isNull(deliveryOutbox.failedAt),
         lte(deliveryOutbox.nextAttemptAt, new Date()),
       ),
     )
@@ -66,9 +154,17 @@ export async function drainDeliveries(
   for (const candidate of pending) {
     try {
       await cradle.db.transaction(async (tx) => {
-        const handler = handlers[candidate.kind];
-        if (!handler) throw new Error("Unknown delivery kind");
-        const send = await handler.prepare(candidate, tx, cradle);
+        let send: (() => Promise<void>) | null = null;
+        let preparationFailed = false;
+        let preparationError: unknown;
+        try {
+          if (!Object.hasOwn(handlers, candidate.kind))
+            throw new UnknownDeliveryKind();
+          send = await handlers[candidate.kind]!.prepare(candidate, tx, cradle);
+        } catch (error) {
+          preparationFailed = true;
+          preparationError = error;
+        }
         const [current] = await tx
           .select()
           .from(deliveryOutbox)
@@ -78,39 +174,44 @@ export async function drainDeliveries(
           !current ||
           current.revisionId !== candidate.revisionId ||
           current.processedAt ||
+          current.failedAt ||
           current.nextAttemptAt > new Date()
         )
           return;
-        // SMTP acceptance and this commit cannot be atomic. A crash between them
-        // can resend; concurrent workers and normal retries are serialized here.
-        if (send) await send();
-        // Erase rendered content (which may contain personal data) after delivery.
-        await tx
-          .update(deliveryOutbox)
-          .set({ processedAt: new Date(), payload: {} })
-          .where(eq(deliveryOutbox.id, current.id));
+        try {
+          if (preparationFailed) throw preparationError;
+          // SMTP and this commit cannot be atomic. A crash between acceptance
+          // and commit can resend; concurrent workers are serialized here.
+          if (send) await send();
+          await tx
+            .update(deliveryOutbox)
+            .set({ processedAt: new Date(), payload: {}, lastErrorCode: null })
+            .where(eq(deliveryOutbox.id, current.id));
+        } catch (error) {
+          // Commit failure/backoff while still holding the row lock. A waiting
+          // worker then sees the future retry time instead of immediately sending.
+          await recordFailure(tx, current, error);
+        }
       });
-    } catch {
-      await cradle.db
-        .update(deliveryOutbox)
-        .set({
-          attempts: sql`${deliveryOutbox.attempts} + 1`,
-          nextAttemptAt: new Date(
-            Date.now() +
-              Math.min(3600, 30 * 2 ** Math.min(candidate.attempts, 7)) * 1000,
-          ),
-        })
-        .where(
-          and(
-            eq(deliveryOutbox.id, candidate.id),
-            eq(deliveryOutbox.revisionId, candidate.revisionId),
-            isNull(deliveryOutbox.processedAt),
-          ),
-        );
-      // Never include payloads, links or transport errors containing email content.
-      console.error("[delivery-outbox] delivery failed", {
-        id: candidate.id,
-        kind: candidate.kind,
+    } catch (error) {
+      // SQL/deadlock failures abort the transaction. Reacquire the row before
+      // recording recovery state. A commit failure after SMTP acceptance retains
+      // the at-least-once limitation described above.
+      await cradle.db.transaction(async (tx) => {
+        const [current] = await tx
+          .select()
+          .from(deliveryOutbox)
+          .where(eq(deliveryOutbox.id, candidate.id))
+          .for("update");
+        if (
+          !current ||
+          current.revisionId !== candidate.revisionId ||
+          current.processedAt ||
+          current.failedAt ||
+          current.nextAttemptAt > new Date()
+        )
+          return;
+        await recordFailure(tx, current, error);
       });
     }
   }

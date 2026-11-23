@@ -112,6 +112,8 @@ export const deliveryOutbox = pgTable(
     kind: text("kind").notNull(),
     payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
     processedAt: timestamp("processed_at", { withTimezone: true }),
+    failedAt: timestamp("failed_at", { withTimezone: true }),
+    lastErrorCode: text("last_error_code"),
     nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -120,7 +122,7 @@ export const deliveryOutbox = pgTable(
   (table) => [
     index("delivery_outbox_pending_idx")
       .on(table.nextAttemptAt)
-      .where(sql`${table.processedAt} IS NULL`),
+      .where(sql`${table.processedAt} IS NULL AND ${table.failedAt} IS NULL`),
   ],
 );
 export type DeliveryIntent = typeof deliveryOutbox.$inferSelect;

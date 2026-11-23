@@ -1,4 +1,4 @@
-import { recordDelivery } from "@/server/delivery/outbox";
+import { recordDelivery, cancelDelivery } from "@/server/delivery/outbox";
 import type {
   DeliveryOptions,
   DeliveryPayloads,
@@ -35,6 +35,11 @@ export interface IJobService {
     kind: TKind,
     data: DeliveryPayloads[TKind],
     options: DeliveryOptions,
+  ): Promise<void>;
+  cancelDelivery<TKind extends keyof DeliveryPayloads>(
+    kind: TKind,
+    idempotencyKey: string,
+    options: Pick<DeliveryOptions, "transaction">,
   ): Promise<void>;
   unschedule(
     jobName: RunnableJobName,
@@ -136,6 +141,14 @@ export class JobService implements IJobService {
       key: options.idempotencyKey,
       replace: options.replacePending,
     });
+  }
+
+  async cancelDelivery<TKind extends keyof DeliveryPayloads>(
+    kind: TKind,
+    idempotencyKey: string,
+    options: Pick<DeliveryOptions, "transaction">,
+  ): Promise<void> {
+    await cancelDelivery(options.transaction, kind, idempotencyKey);
   }
 
   async unschedule(

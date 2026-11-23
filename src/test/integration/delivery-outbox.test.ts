@@ -11,7 +11,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as schema from "@/server/db/schema";
 import { deliveryOutbox, user, notification } from "@/server/db/schema";
 import { env } from "@/env";
-import { recordDelivery, drainDeliveries } from "@/server/delivery/outbox";
+import {
+  recordDelivery,
+  drainDeliveries,
+  MAX_DELIVERY_ATTEMPTS,
+} from "@/server/delivery/outbox";
 import { deliveryHandlers } from "@/server/delivery/handlers";
 import type { MockEmailService } from "../mocks/mock-email-service";
 import {
@@ -230,6 +234,127 @@ describe("transactional delivery outbox", () => {
     await scope.db.update(deliveryOutbox).set({ nextAttemptAt: new Date(0) });
     await drain();
     expect(mail.sentEmails).toHaveLength(1);
+  });
+
+  it("does not bypass failure backoff when workers overlap", async () => {
+    await queueEmail();
+    const connection = postgres(env.DATABASE_URL, { max: 4 });
+    const cradle = {
+      ...scope.container.cradle,
+      db: drizzle(connection, { schema }),
+    };
+    let prepared = 0;
+    let release!: () => void;
+    const bothPrepared = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const prepare = deliveryHandlers.email!.prepare;
+    vi.spyOn(deliveryHandlers.email!, "prepare").mockImplementation(
+      async (...args) => {
+        if (++prepared === 2) release();
+        return prepare(...args);
+      },
+    );
+    const send = vi.spyOn(mail, "send").mockImplementation(async () => {
+      await bothPrepared;
+      throw new Error("temporary SMTP failure");
+    });
+    try {
+      await Promise.all([
+        drainDeliveries(cradle, deliveryHandlers),
+        drainDeliveries(cradle, deliveryHandlers),
+      ]);
+    } finally {
+      await connection.end();
+    }
+    expect(send).toHaveBeenCalledTimes(1);
+    expect((await rows())[0]).toMatchObject({
+      attempts: 1,
+      processedAt: null,
+      failedAt: null,
+      lastErrorCode: "DELIVERY_FAILED",
+    });
+  });
+
+  it("stops permanent SMTP errors and records a safe code", async () => {
+    await queueEmail();
+    const send = vi
+      .spyOn(mail, "send")
+      .mockRejectedValue(
+        Object.assign(new Error("SECRET_TOKEN"), { responseCode: 550 }),
+      );
+    await drain();
+    expect((await rows())[0]).toMatchObject({
+      attempts: 1,
+      failedAt: expect.any(Date),
+      lastErrorCode: "SMTP_550",
+    });
+    await scope.db.update(deliveryOutbox).set({ nextAttemptAt: new Date(0) });
+    await drain();
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("caps retries for repeated transient failures", async () => {
+    await queueEmail();
+    const send = vi
+      .spyOn(mail, "send")
+      .mockRejectedValue(new Error("temporary failure"));
+    for (let attempt = 0; attempt < MAX_DELIVERY_ATTEMPTS + 1; attempt++) {
+      await scope.db.update(deliveryOutbox).set({ nextAttemptAt: new Date(0) });
+      await drain();
+    }
+    expect(send).toHaveBeenCalledTimes(MAX_DELIVERY_ATTEMPTS);
+    expect((await rows())[0]).toMatchObject({
+      attempts: MAX_DELIVERY_ATTEMPTS,
+      failedAt: expect.any(Date),
+      lastErrorCode: "DELIVERY_FAILED",
+    });
+  });
+
+  it("cancels pending delivery using JobService without a table write by the caller", async () => {
+    await queueEmail("cancelled-event");
+    await scope.db.transaction((tx) =>
+      jobs.cancelDelivery("email", "cancelled-event", { transaction: tx }),
+    );
+    await drain();
+    expect(mail.sentEmails).toHaveLength(0);
+    expect((await rows())[0]?.payload).toEqual({});
+  });
+
+  it("serializes duplicate account approvals and deactivations", async () => {
+    const id = randomUUID();
+    await scope.db
+      .insert(user)
+      .values({
+        id,
+        name: "Test",
+        lastName: "Concurrent",
+        email: `${id}@test.com`,
+        role: "volunteer",
+        status: "unverified",
+      });
+    const connection = postgres(env.DATABASE_URL, { max: 4 });
+    const { UserService } =
+      await import("@/server/services/entity/userService");
+    const service = new UserService({
+      db: drizzle(connection, { schema }),
+      jobService: scope.resolve("jobService"),
+    });
+    try {
+      await Promise.all([
+        service.verifyVolunteer(id),
+        service.verifyVolunteer(id),
+      ]);
+      expect(await rows()).toHaveLength(1);
+      await Promise.allSettled([
+        service.deactivateUser(id),
+        service.deactivateUser(id),
+      ]);
+      expect(await rows()).toHaveLength(2);
+    } finally {
+      await connection.end();
+      await scope.db.delete(user).where(eq(user.id, id));
+    }
   });
 
   it("rejects a superseded revision even when a worker already prepared it", async () => {

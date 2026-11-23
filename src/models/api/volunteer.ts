@@ -15,7 +15,6 @@ export const ShiftCheckInInput = z.object({
 });
 
 export const UpdateVolunteerProfileInput = z.object({
-  volunteerUserId: z.uuid(),
   preferredName: z.string().optional(),
   bio: z.string().optional(),
   pronouns: z.string().optional(),
@@ -25,7 +24,6 @@ export const UpdateVolunteerProfileInput = z.object({
 });
 
 export const UpdateVolunteerAvailabilityInput = z.object({
-  volunteerUserId: z.uuid(),
   availability: BitString(AVAILABILITY_SLOTS),
   preferredTimeCommitmentHours: z.number().int().min(0).optional(),
 });

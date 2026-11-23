@@ -20,11 +20,81 @@ import { renderRequestChangeEmail } from "@/server/emails/templates/request-chan
 import { renderVerifyEmail } from "@/server/emails/templates/verify-email";
 import { renderVerifyNewEmail } from "@/server/emails/templates/verify-new-email";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
+import {
+  APIError,
+  createAuthMiddleware,
+  getSessionFromCtx,
+} from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { appInvitePlugin } from "@/lib/auth/extensions/app-invite/server-plugin";
+import { hasPermission } from "@/lib/auth/extensions/permissions";
+
+const NON_ACTIVE_ALLOWED_AUTH_PATHS = new Set([
+  "/ok",
+  "/error",
+  "/get-session",
+  "/sign-in/email",
+  "/sign-in/social",
+  "/sign-up/email",
+  "/sign-out",
+  "/callback/:id",
+  "/send-verification-email",
+  "/verify-email",
+  "/request-password-reset",
+  "/reset-password",
+  "/reset-password/:token",
+  "/get-app-invitation",
+  "/accept-invitation",
+  "/reject-invitation",
+]);
+
+const INVITATION_MANAGEMENT_AUTH_PATHS = new Set([
+  "/invite-user",
+  "/cancel-invitation",
+  "/list-invitations",
+]);
 
 export const auth = betterAuth({
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (!ctx.path || NON_ACTIVE_ALLOWED_AUTH_PATHS.has(ctx.path)) {
+        return;
+      }
+
+      const activeSession = await getSessionFromCtx(ctx, {
+        disableCookieCache: true,
+      });
+      if (!activeSession?.user) {
+        return;
+      }
+
+      const currentUser = (await ctx.context.internalAdapter.findUserById(
+        activeSession.user.id,
+      )) as User | null;
+
+      if (!currentUser || currentUser.status !== UserStatus.active) {
+        throw new APIError("FORBIDDEN", {
+          code: "ACCOUNT_NOT_ACTIVE",
+          message: "Account is not active.",
+        });
+      }
+
+      if (
+        INVITATION_MANAGEMENT_AUTH_PATHS.has(ctx.path) &&
+        !hasPermission({
+          user: currentUser,
+          permission: { users: ["invite"] },
+        })
+      ) {
+        throw new APIError("FORBIDDEN", {
+          code: "YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_APPLICATION",
+          message:
+            "You are not allowed to invite users to this application.",
+        });
+      }
+    }),
+  },
   user: {
     additionalFields: {
       role: {

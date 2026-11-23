@@ -20,14 +20,12 @@ export function AvailabilitySettingsContent() {
   
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  const { data: volunteer } = clientApi.volunteer.byId.useQuery(
-    { userId: user!.id },
-    { enabled: !!user },
-  );
+  const { data: volunteer } = clientApi.volunteer.me.useQuery(undefined, {
+    enabled: !!user,
+  });
 
-  const { onSubmit, isPending } = useAvailabilitySubmit(
-    user?.id ?? "",
-    () => setHasUnsavedChanges(false),
+  const { onSubmit, isPending } = useAvailabilitySubmit(() =>
+    setHasUnsavedChanges(false),
   );
 
   if (!user || !volunteer) {

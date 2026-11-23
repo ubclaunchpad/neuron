@@ -24,6 +24,7 @@ import {
   inArray,
   sql,
 } from "drizzle-orm";
+import { session } from "../../db/schema/auth";
 import { user } from "../../db/schema/user";
 
 export interface IUserService {
@@ -243,6 +244,7 @@ export class UserService implements IUserService {
         .update(user)
         .set({ status: UserStatus.inactive })
         .where(eq(user.id, id));
+      await tx.delete(session).where(eq(session.userId, id));
       await this.jobService.run(
         "jobs.send-email",
         {

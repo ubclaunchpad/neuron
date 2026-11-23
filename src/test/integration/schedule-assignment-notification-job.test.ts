@@ -2,6 +2,7 @@ import { asValue } from "awilix";
 import { randomUUID } from "crypto";
 import { Temporal } from "@js-temporal/polyfill";
 import { eq } from "drizzle-orm";
+import postgres from "postgres";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { env } from "@/env";
 import {
@@ -45,17 +46,15 @@ describe("schedule assignment notification job", () => {
     mail = scope.resolve("emailService");
     jobs = scope.resolve("jobService");
     volunteerId = randomUUID();
-    await scope.db
-      .insert(user)
-      .values({
-        id: volunteerId,
-        name: "Target",
-        lastName: "Volunteer",
-        email: `${volunteerId}@test.com`,
-        role: "volunteer",
-        status: "active",
-        emailVerified: true,
-      });
+    await scope.db.insert(user).values({
+      id: volunteerId,
+      name: "Target",
+      lastName: "Volunteer",
+      email: `${volunteerId}@test.com`,
+      role: "volunteer",
+      status: "active",
+      emailVerified: true,
+    });
     await scope.db.insert(volunteer).values({ userId: volunteerId });
     termId = await terms.createTerm({
       name: `Assignment ${randomUUID()}`,
@@ -240,6 +239,61 @@ describe("schedule assignment notification job", () => {
     await execute();
     expect(mail.sentEmails).toHaveLength(1);
     expect(mail.sentEmails[0]?.subject).toContain("removed");
+  });
+
+  it("releases domain locks and the database connection before a stalled SMTP send", async () => {
+    await update([volunteerId], []);
+    let release!: () => void;
+    let entered = false;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    vi.spyOn(mail, "send").mockImplementationOnce(async () => {
+      entered = true;
+      await gate;
+      return { messageId: "delayed-smtp" };
+    });
+    const connection = postgres(env.DATABASE_URL, { max: 1 });
+    let completed = false;
+    const delivery = execute().then(() => {
+      completed = true;
+    });
+    try {
+      await vi.waitFor(() => expect(entered).toBe(true));
+      await connection.begin(async (tx) => {
+        await tx`SET LOCAL lock_timeout = '500ms'`;
+        await tx`UPDATE term SET term_name = term_name WHERE id = ${termId}`;
+        await tx`UPDATE course SET name = name WHERE id = ${classId}`;
+        await tx`UPDATE schedule SET preferred_volunteer_count = preferred_volunteer_count WHERE id = ${scheduleId}`;
+        await tx`UPDATE "user" SET name = name WHERE id = ${volunteerId}`;
+      });
+      // Exercise the real save path using the test pool's single connection.
+      await update([], [volunteerId]);
+      expect(latest().change).toBe("removed");
+      expect(completed).toBe(false);
+    } finally {
+      release();
+      await delivery.finally(() => connection.end());
+    }
+  });
+
+  it("checks cancellation after releasing domain locks and suppresses the email", async () => {
+    await update([volunteerId], []);
+    const connection = postgres(env.DATABASE_URL, { max: 1 });
+    const isCancelled = vi.fn(async () => {
+      await connection.begin(async (tx) => {
+        await tx`SET LOCAL lock_timeout = '500ms'`;
+        await tx`UPDATE "user" SET status = 'inactive' WHERE id = ${volunteerId}`;
+      });
+      return true;
+    });
+    try {
+      await execute(latest(), isCancelled);
+      expect(isCancelled).toHaveBeenCalledOnce();
+      expect(mail.sentEmails).toHaveLength(0);
+    } finally {
+      await connection.end();
+    }
   });
 
   it("does not retrospectively enqueue draft class assignments", async () => {

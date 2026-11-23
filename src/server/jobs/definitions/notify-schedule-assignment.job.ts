@@ -27,10 +27,10 @@ export const notifyScheduleAssignmentJob = {
   retryOpts: { retryLimit: 3, retryDelay: 30, retryBackoff: true },
   async handler(payload, { cradle, isCancelled }) {
     payload = assignmentChange.parse(payload);
-    await cradle.db.transaction(async (tx) => {
+    const email = await cradle.db.transaction(async (tx) => {
       await tx.execute(sql`SET LOCAL lock_timeout = '5s'`);
       // Lock term -> course -> schedule -> user, matching class saves and
-      // cascading term deletion. Retain those locks through delivery.
+      // cascading term deletion. Release these locks before contacting SMTP.
       const [details] = await tx
         .select({
           className: course.name,
@@ -78,18 +78,25 @@ export const notifyScheduleAssignmentJob = {
         ).toString(),
         change: payload.change,
       });
-      // A superseded job may already have been fetched. Producer edits lock
-      // these domain rows before cancelling jobs, so this check fences delivery.
-      if (await isCancelled?.()) return;
-      await cradle.emailService.send(
-        volunteer.email,
-        payload.change === "added"
-          ? `New schedule assignment: ${details.className}`
-          : `Schedule assignment removed: ${details.className}`,
+      return {
+        to: volunteer.email,
+        subject:
+          payload.change === "added"
+            ? `New schedule assignment: ${details.className}`
+            : `Schedule assignment removed: ${details.className}`,
         text,
         html,
-      );
+      };
     });
+    // Recheck native cancellation after releasing the database transaction.
+    // Once SMTP starts, later edits cannot retract an in-flight message.
+    if (!email || (await isCancelled?.())) return;
+    await cradle.emailService.send(
+      email.to,
+      email.subject,
+      email.text,
+      email.html,
+    );
   },
 } as const satisfies RegisteredJob<ScheduleAssignmentChange>;
 

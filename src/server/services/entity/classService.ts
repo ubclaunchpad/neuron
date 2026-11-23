@@ -38,7 +38,7 @@ import type { IUserService } from "./userService";
 import type { IVolunteerService } from "./volunteerService";
 import { tryCatch } from "@/lib/try-catch";
 import { type ScheduleAssignmentChange } from "@/server/delivery/schedule-assignment";
-import { recordDelivery } from "@/server/delivery/outbox";
+import type { IJobService } from "../jobService";
 
 export interface IClassService {
   getClassesForSelect(): Promise<{ id: string; name: string }[]>;
@@ -68,6 +68,7 @@ export class ClassService implements IClassService {
   private readonly termService: ITermService;
   private readonly shiftService: IShiftService;
   private readonly imageService: IImageService;
+  private readonly jobService: IJobService;
 
   constructor({
     db,
@@ -77,6 +78,7 @@ export class ClassService implements IClassService {
     termService,
     shiftService,
     imageService,
+    jobService,
   }: {
     db: Drizzle;
     currentSessionService: ICurrentSessionService;
@@ -85,6 +87,7 @@ export class ClassService implements IClassService {
     termService: ITermService;
     shiftService: IShiftService;
     imageService: IImageService;
+    jobService: IJobService;
   }) {
     this.db = db;
     this.currentSessionService = currentSessionService;
@@ -93,6 +96,7 @@ export class ClassService implements IClassService {
     this.termService = termService;
     this.shiftService = shiftService;
     this.imageService = imageService;
+    this.jobService = jobService;
   }
 
   async getClassesForSelect(): Promise<{ id: string; name: string }[]> {
@@ -783,11 +787,10 @@ export class ClassService implements IClassService {
       else changes.set(key, assignment);
     }
     for (const assignment of changes.values()) {
-      await recordDelivery(tx, {
-        kind: "schedule-assignment",
-        payload: assignment,
-        key: `${assignment.scheduleId}:${assignment.volunteerUserId}`,
-        replace: true,
+      await this.jobService.deliver("schedule-assignment", assignment, {
+        transaction: tx,
+        idempotencyKey: `${assignment.scheduleId}:${assignment.volunteerUserId}`,
+        replacePending: true,
       });
     }
   }

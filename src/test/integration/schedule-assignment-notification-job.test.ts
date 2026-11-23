@@ -291,6 +291,30 @@ describe("durable schedule assignment delivery", () => {
     expect(mail.sentEmails).toHaveLength(0);
   });
 
+  it.each([true, false])(
+    "does not retrospectively notify hidden term edits (worker before publish: %s)",
+    async (tickBeforePublication) => {
+      await terms.unpublishTerm(termId);
+      await update([volunteerId], []);
+      expect(await intents()).toHaveLength(0);
+      if (tickBeforePublication) await drain();
+      await terms.publishTerm(termId);
+      await drain();
+      expect(mail.sentEmails).toHaveLength(0);
+    },
+  );
+
+  it("invalidates an older pending notice when assignments change in a hidden term", async () => {
+    await update([volunteerId], []);
+    await terms.unpublishTerm(termId);
+    await update([], [volunteerId]);
+    await update([volunteerId], []);
+    await terms.publishTerm(termId);
+    await drain();
+    expect(mail.sentEmails).toHaveLength(0);
+    expect((await intents())[0]?.processedAt).toBeInstanceOf(Date);
+  });
+
   it("keeps failed mail durable and retries successfully", async () => {
     await update([volunteerId], []);
     vi.spyOn(mail, "send").mockRejectedValueOnce(

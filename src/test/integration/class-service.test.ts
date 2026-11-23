@@ -15,13 +15,11 @@ import {
   createTestScope,
   type ITestServiceScope,
 } from "../helpers/test-service-scope";
-import type { MockJobService } from "../mocks/mock-job-service";
 
 describe("ClassService", () => {
   let scope: ITestServiceScope;
   let termService: ITermService;
   let classService: IClassService;
-  let jobService: MockJobService;
 
   let createdUserIds: string[] = [];
   let createdTermIds: string[] = [];
@@ -35,7 +33,6 @@ describe("ClassService", () => {
     scope.mockSession.setAsAdmin();
     termService = scope.resolve<ITermService>("termService");
     classService = scope.resolve<IClassService>("classService");
-    jobService = scope.resolve<MockJobService>("jobService");
   });
 
   beforeEach(async () => {
@@ -174,14 +171,16 @@ describe("ClassService", () => {
         ],
       });
 
-      const notificationCalls = jobService.calls.filter(
-        (call) => call.jobName === "jobs.notify-schedule-assignment",
-      );
-      expect(notificationCalls).toHaveLength(0);
+      expect(
+        await scope.db
+          .select()
+          .from(deliveryOutbox)
+          .where(eq(deliveryOutbox.kind, "schedule-assignment")),
+      ).toHaveLength(0);
     });
 
     it("records only newly inserted schedule assignments", async () => {
-      const { classId } = await createTermAndClass();
+      const { classId } = await createTermAndClass({ publishTerm: true });
       const classData = await classService.getClass(classId);
       const scheduleId = classData.schedules[0]!.id;
       const addedVolunteerId = randomUUID();
@@ -198,7 +197,6 @@ describe("ClassService", () => {
       });
       await scope.db.insert(volunteer).values({ userId: addedVolunteerId });
       await classService.publishClass(classId);
-      jobService.calls.length = 0;
 
       const update = {
         id: classId,
@@ -234,9 +232,10 @@ describe("ClassService", () => {
         change: "added",
       });
 
-      jobService.calls.length = 0;
+      const originalRevision = (await intents())[0]!.revisionId;
       await classService.updateClass(update);
-      expect(jobService.calls).toHaveLength(0);
+      expect((await intents())[0]!.revisionId).toBe(originalRevision);
+      expect(await intents()).toHaveLength(1);
 
       await classService.updateClass({
         id: classId,
@@ -259,7 +258,6 @@ describe("ClassService", () => {
         change: "removed",
       });
 
-      jobService.calls.length = 0;
       await classService.updateClass(update);
       expect(await intents()).toHaveLength(1);
       expect((await intents())[0]?.payload).toMatchObject({

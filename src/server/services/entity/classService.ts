@@ -220,6 +220,18 @@ export class ClassService implements IClassService {
         );
       }
 
+      // Lock the visibility boundary before changing course/schedule rows.
+      const [originalTerm] = await tx
+        .select({ published: term.published })
+        .from(term)
+        .where(eq(term.id, originalClass.termId))
+        .for("share");
+      if (!originalTerm)
+        throw new NeuronError(
+          "Term does not exist",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+
       // Update class itself
       if (Object.values(dbClassUpdate).length > 0) {
         const row = await tx
@@ -289,12 +301,11 @@ export class ClassService implements IClassService {
           );
       }
 
-      if (originalClass.published) {
-        await this.recordScheduleAssignments(tx, [
-          ...updatedScheduleAssignments,
-          ...addedScheduleAssignments,
-        ]);
-      }
+      await this.recordScheduleAssignments(
+        tx,
+        [...updatedScheduleAssignments, ...addedScheduleAssignments],
+        originalClass.published && originalTerm.published,
+      );
     });
   }
 
@@ -778,6 +789,7 @@ export class ClassService implements IClassService {
   private async recordScheduleAssignments(
     tx: Transaction,
     assignments: ScheduleAssignmentChange[],
+    shouldNotify: boolean,
   ): Promise<void> {
     const changes = new Map<string, ScheduleAssignmentChange>();
     for (const assignment of assignments) {
@@ -787,9 +799,20 @@ export class ClassService implements IClassService {
       else changes.set(key, assignment);
     }
     for (const assignment of changes.values()) {
+      const idempotencyKey = `${assignment.scheduleId}:${assignment.volunteerUserId}`;
+      if (!shouldNotify) {
+        // Hidden edits also invalidate older queued revisions, so republishing
+        // before a worker tick cannot resurrect a stale assignment notice.
+        await this.jobService.cancelDelivery(
+          "schedule-assignment",
+          idempotencyKey,
+          { transaction: tx },
+        );
+        continue;
+      }
       await this.jobService.deliver("schedule-assignment", assignment, {
         transaction: tx,
-        idempotencyKey: `${assignment.scheduleId}:${assignment.volunteerUserId}`,
+        idempotencyKey,
         replacePending: true,
       });
     }

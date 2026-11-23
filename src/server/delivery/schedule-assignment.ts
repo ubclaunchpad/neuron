@@ -25,8 +25,8 @@ export type ScheduleAssignmentChange = z.infer<typeof assignmentChange>;
 export const scheduleAssignmentDelivery: DeliveryHandler = {
   async prepare(intent, tx, cradle) {
     const payload = assignmentChange.parse(intent.payload);
-    // Class saves lock domain rows before replacing the outbox revision. Match
-    // that order and hold these locks through the final SMTP delivery attempt.
+    // Lock term -> course -> schedule -> user before the outbox, matching
+    // both class saves and cascading term deletion. Hold that order and hold these locks through the final SMTP delivery attempt.
     const [details] = await tx
       .select({
         className: course.name,
@@ -35,9 +35,9 @@ export const scheduleAssignmentDelivery: DeliveryHandler = {
         rrule: schedule.rrule,
         durationMinutes: schedule.durationMinutes,
       })
-      .from(course)
+      .from(term)
+      .innerJoin(course, eq(course.termId, term.id))
       .innerJoin(schedule, eq(schedule.courseId, course.id))
-      .innerJoin(term, eq(term.id, course.termId))
       .where(eq(schedule.id, payload.scheduleId))
       .for("share");
     const [volunteer] = await tx

@@ -19,11 +19,13 @@ const errorMessages: ErrorMessages = {
   INVALID_EMAIL: "Please enter a valid email address.",
   INVALID_EMAIL_OR_PASSWORD:
     "The email or password you entered is incorrect. Please try again.",
+  INVALID_USER: "We couldn't verify your account. Please try again.",
   SOCIAL_ACCOUNT_ALREADY_LINKED:
     "This social account is already connected to another user.",
   PROVIDER_NOT_FOUND:
     "This login method is currently unavailable. Please try another option.",
   INVALID_TOKEN: "Your authentication token is invalid. Please sign in again.",
+  TOKEN_EXPIRED: "Your authentication token has expired. Please try again.",
   ID_TOKEN_NOT_SUPPORTED: "This type of authentication is not supported.",
   FAILED_TO_GET_USER_INFO:
     "We couldn't retrieve your account information. Please try again later.",
@@ -36,6 +38,8 @@ const errorMessages: ErrorMessages = {
     "An account with this email already exists. Please sign in instead.",
   EMAIL_CAN_NOT_BE_UPDATED:
     "This email address cannot be updated. Please contact support if you need help.",
+  CHANGE_EMAIL_DISABLED:
+    "Changing your email address is currently disabled. Please contact support if you need help.",
   CREDENTIAL_ACCOUNT_NOT_FOUND:
     "We couldn't find your login credentials. Please try signing in again.",
   SESSION_EXPIRED:
@@ -46,6 +50,7 @@ const errorMessages: ErrorMessages = {
     "We couldn't find your account. Please check your information and try again.",
   USER_ALREADY_HAS_PASSWORD:
     "A password has already been set for this account.",
+  PASSWORD_ALREADY_SET: "A password has already been set for this account.",
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL:
     "An account with this email already exists. Please use a different email address.",
   CROSS_SITE_NAVIGATION_LOGIN_BLOCKED:
@@ -76,6 +81,9 @@ const errorMessages: ErrorMessages = {
   VALIDATION_ERROR:
     "There was a validation error. Please check your input and try again.",
   MISSING_FIELD: "A required field is missing. Please fill in all fields.",
+  METHOD_NOT_ALLOWED_DEFER_SESSION_REQUIRED:
+    "This request method is not allowed for this operation.",
+  BODY_MUST_BE_AN_OBJECT: "The request body is invalid. Please try again.",
   APP_INVITATION_NOT_FOUND:
     "This invitation is invalid or expired. Please request a new invitation.",
   USER_WAS_ALREADY_INVITED_TO_THIS_APPLICATION:

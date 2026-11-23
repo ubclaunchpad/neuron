@@ -48,7 +48,6 @@ export const shift = pgTable(
   },
   (table) => [
     index().on(table.courseId),
-    index().on(table.scheduleId),
     index("idx_shift_date")
       .on(table.date, table.courseId)
       .where(not(table.canceled)),
@@ -69,6 +68,7 @@ export const shiftRelations = relations(shift, ({ one, many }) => ({
     references: [schedule.id],
   }),
   coverageRequests: many(coverageRequest),
+  attendances: many(shiftAttendance),
 }));
 
 export const coverageRequest = pgTable(
@@ -123,10 +123,12 @@ export const coverageRequestRelations = relations(
     requestingVolunteer: one(volunteer, {
       fields: [coverageRequest.requestingVolunteerUserId],
       references: [volunteer.userId],
+      relationName: "coverageRequester",
     }),
     coveredByVolunteer: one(volunteer, {
       fields: [coverageRequest.coveredByVolunteerUserId],
       references: [volunteer.userId],
+      relationName: "coverageCoverer",
     }),
   }),
 );

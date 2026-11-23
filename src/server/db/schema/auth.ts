@@ -27,7 +27,7 @@ export const session = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => [index().on(table.userId), index().on(table.token)],
+  (table) => [index().on(table.userId)],
 );
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -69,6 +69,13 @@ export const account = pgTable(
     uniqueIndex().on(table.providerId, table.accountId),
   ],
 );
+
+export const accountRelations = relations(account, ({ one }) => ({
+  user: one(user, {
+    fields: [account.userId],
+    references: [user.id],
+  }),
+}));
 
 export const verification = pgTable(
   "verification",

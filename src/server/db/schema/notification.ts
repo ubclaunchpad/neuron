@@ -86,7 +86,6 @@ export const notificationPreference = pgTable(
       table.type,
       table.channel,
     ),
-    index("idx_notification_pref_user").on(table.userId),
   ],
 );
 export type NotificationPreferenceDB =

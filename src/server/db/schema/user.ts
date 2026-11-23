@@ -14,7 +14,11 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { account, appInvitation, session } from "./auth";
 import { course } from "./course";
+import { notification, notificationPreference } from "./notification";
+import { instructorToSchedule, volunteerToSchedule } from "./schedule";
+import { coverageRequest } from "./shift";
 
 export const role = pgEnum("role", Role.values);
 export const status = pgEnum("status", UserStatus.values);
@@ -42,7 +46,6 @@ export const user = pgTable(
     lastName: text("last_name").notNull(),
   },
   (table) => [
-    index("idx_user_email").on(table.email),
     index("idx_user_role").on(table.role),
     index("idx_user_status").on(table.status),
     index("idx_user_created_at").on(table.createdAt),
@@ -50,11 +53,22 @@ export const user = pgTable(
 );
 export type UserDB = typeof user.$inferSelect;
 
-export const userRelations = relations(user, ({ one }) => ({
+export const userRelations = relations(user, ({ one, many }) => ({
   volunteerProfile: one(volunteer, {
     fields: [user.id],
     references: [volunteer.userId],
   }),
+  sessions: many(session),
+  accounts: many(account),
+  appInvitations: many(appInvitation),
+  notifications: many(notification, {
+    relationName: "notificationRecipient",
+  }),
+  actedNotifications: many(notification, {
+    relationName: "notificationActor",
+  }),
+  notificationPreferences: many(notificationPreference),
+  instructorSchedules: many(instructorToSchedule),
 }));
 
 export const volunteer = pgTable(
@@ -87,6 +101,13 @@ export const volunteerRelations = relations(volunteer, ({ one, many }) => ({
     references: [user.id],
   }),
   coursePreferences: many(coursePreference),
+  schedules: many(volunteerToSchedule),
+  requestedCoverages: many(coverageRequest, {
+    relationName: "coverageRequester",
+  }),
+  coveredCoverages: many(coverageRequest, {
+    relationName: "coverageCoverer",
+  }),
 }));
 
 export const coursePreference = pgTable(

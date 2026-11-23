@@ -26,7 +26,10 @@ import {
 } from "@/server/db/schema";
 import { user } from "@/server/db/schema/user";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { isVolunteerEffectivelyAssignedToShiftSql } from "@/server/services/entity/shiftAssignment";
+import {
+  isVolunteerEffectivelyAssignedToShift,
+  isVolunteerEffectivelyAssignedToShiftSql,
+} from "@/server/services/entity/shiftAssignment";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import { getPagination } from "@/utils/searchUtils";
 import {
@@ -36,7 +39,9 @@ import {
   eq,
   gte,
   inArray,
+  isNull,
   lte,
+  ne,
   not,
   or,
   sql,
@@ -362,36 +367,87 @@ export class CoverageService implements ICoverageService {
     requestingVolunteerUserId: string,
     requestData: CreateCoverageRequest,
   ): Promise<string> {
-    await this.shiftService.assertValidShift(
-      requestingVolunteerUserId,
-      requestData.shiftId,
+    const { coverageRequestId, shiftInfo } = await this.db.transaction(
+      async (tx) => {
+        // Lock the shift row so creation serializes with cancellation and
+        // competing assignment/coverage mutations on the same shift.
+        const [lockedShift] = await tx
+          .select({
+            id: shift.id,
+            courseId: shift.courseId,
+            startAt: shift.startAt,
+            endAt: shift.endAt,
+            canceled: shift.canceled,
+          })
+          .from(shift)
+          .where(eq(shift.id, requestData.shiftId))
+          .for("update");
+
+        if (!lockedShift) {
+          throw new NeuronError(
+            `Could not find a shift with id ${requestData.shiftId} assigned to volunteer with id ${requestingVolunteerUserId}.`,
+            NeuronErrorCodes.NOT_FOUND,
+          );
+        }
+
+        await this.shiftService.assertValidShift(
+          requestingVolunteerUserId,
+          requestData.shiftId,
+          tx,
+        );
+
+        const [existingActiveRequest] = await tx
+          .select({ id: coverageRequest.id })
+          .from(coverageRequest)
+          .where(
+            and(
+              eq(coverageRequest.shiftId, requestData.shiftId),
+              eq(
+                coverageRequest.requestingVolunteerUserId,
+                requestingVolunteerUserId,
+              ),
+              ne(coverageRequest.status, CoverageStatus.withdrawn),
+            ),
+          )
+          .limit(1);
+
+        if (existingActiveRequest) {
+          throw new NeuronError(
+            "An active coverage request already exists for this shift.",
+            NeuronErrorCodes.BAD_REQUEST,
+          );
+        }
+
+        const [created] = await tx
+          .insert(coverageRequest)
+          .values({
+            shiftId: requestData.shiftId,
+            category: requestData.category,
+            details: requestData.details,
+            comments: requestData.comments,
+            requestingVolunteerUserId,
+          })
+          .returning({ id: coverageRequest.id });
+
+        const [courseRow] = await tx
+          .select({ name: course.name })
+          .from(course)
+          .where(eq(course.id, lockedShift.courseId))
+          .limit(1);
+
+        return {
+          coverageRequestId: created!.id,
+          shiftInfo: courseRow
+            ? {
+                courseId: lockedShift.courseId,
+                startAt: lockedShift.startAt,
+                endAt: lockedShift.endAt,
+                courseName: courseRow.name,
+              }
+            : null,
+        };
+      },
     );
-
-    const [created] = await this.db
-      .insert(coverageRequest)
-      .values({
-        shiftId: requestData.shiftId,
-        category: requestData.category,
-        details: requestData.details,
-        comments: requestData.comments,
-        requestingVolunteerUserId: requestingVolunteerUserId,
-      })
-      .returning({ id: coverageRequest.id });
-
-    const coverageRequestId = created!.id;
-
-    // Fetch shift + course info for notification
-    const [shiftInfo] = await this.db
-      .select({
-        courseId: shift.courseId,
-        startAt: shift.startAt,
-        endAt: shift.endAt,
-        courseName: course.name,
-      })
-      .from(shift)
-      .innerJoin(course, eq(course.id, shift.courseId))
-      .where(eq(shift.id, requestData.shiftId))
-      .limit(1);
 
     if (shiftInfo) {
       const currentUser = this.currentSessionService.getUser();
@@ -418,154 +474,278 @@ export class CoverageService implements ICoverageService {
     requestingVolunteerUserId: string,
     coverageRequestId: string,
   ): Promise<void> {
-    const [request] = await this.db
-      .select({
-        status: coverageRequest.status,
-        shiftStartAt: shift.startAt,
-      })
-      .from(coverageRequest)
-      .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
-      .where(
-        and(
-          eq(coverageRequest.id, coverageRequestId),
-          eq(
-            coverageRequest.requestingVolunteerUserId,
-            requestingVolunteerUserId,
+    await this.db.transaction(async (tx) => {
+      const [requestRef] = await tx
+        .select({ shiftId: coverageRequest.shiftId })
+        .from(coverageRequest)
+        .where(eq(coverageRequest.id, coverageRequestId))
+        .limit(1);
+
+      if (!requestRef) {
+        throw new NeuronError(
+          `Could not find coverage request with id ${coverageRequestId} requested by volunteer with id ${requestingVolunteerUserId}.`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      const [lockedShift] = await tx
+        .select({
+          id: shift.id,
+          startAt: shift.startAt,
+          canceled: shift.canceled,
+        })
+        .from(shift)
+        .where(eq(shift.id, requestRef.shiftId))
+        .for("update");
+
+      if (!lockedShift) {
+        throw new NeuronError(
+          `Could not find coverage request with id ${coverageRequestId} requested by volunteer with id ${requestingVolunteerUserId}.`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      const [request] = await tx
+        .select({
+          id: coverageRequest.id,
+          status: coverageRequest.status,
+          coveredByVolunteerUserId: coverageRequest.coveredByVolunteerUserId,
+        })
+        .from(coverageRequest)
+        .where(
+          and(
+            eq(coverageRequest.id, coverageRequestId),
+            eq(
+              coverageRequest.requestingVolunteerUserId,
+              requestingVolunteerUserId,
+            ),
           ),
-        ),
-      );
+        )
+        .limit(1);
 
-    if (!request) {
-      throw new NeuronError(
-        `Could not find coverage request with id ${coverageRequestId} requested by volunteer with id ${requestingVolunteerUserId}.`,
-        NeuronErrorCodes.NOT_FOUND,
-      );
-    }
+      if (!request) {
+        throw new NeuronError(
+          `Could not find coverage request with id ${coverageRequestId} requested by volunteer with id ${requestingVolunteerUserId}.`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
 
-    if (request.status != CoverageStatus.open) {
-      throw new NeuronError(
-        "Coverage request is not open.",
-        NeuronErrorCodes.BAD_REQUEST,
-      );
-    }
+      if (lockedShift.canceled) {
+        throw new NeuronError(
+          "Cannot cancel a coverage request for a canceled shift.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
 
-    if (request.shiftStartAt <= new Date()) {
-      throw new NeuronError(
-        "Can not cancel a coverage request for a past shift.",
-        NeuronErrorCodes.BAD_REQUEST,
-      );
-    }
+      if (
+        request.status !== CoverageStatus.open ||
+        request.coveredByVolunteerUserId !== null
+      ) {
+        throw new NeuronError(
+          "Coverage request is not open.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
 
-    const affected = await this.db
-      .update(coverageRequest)
-      .set({
-        status: CoverageStatus.withdrawn,
-      })
-      .where(eq(coverageRequest.id, coverageRequestId))
-      .returning();
+      if (lockedShift.startAt <= new Date()) {
+        throw new NeuronError(
+          "Can not cancel a coverage request for a past shift.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
 
-    if (affected.length < 1) {
-      throw new NeuronError(
-        "Failed to cancel coverage request",
-        NeuronErrorCodes.BAD_REQUEST,
-      );
-    }
+      const affected = await tx
+        .update(coverageRequest)
+        .set({
+          status: CoverageStatus.withdrawn,
+        })
+        .where(
+          and(
+            eq(coverageRequest.id, coverageRequestId),
+            eq(coverageRequest.shiftId, lockedShift.id),
+            eq(
+              coverageRequest.requestingVolunteerUserId,
+              requestingVolunteerUserId,
+            ),
+            eq(coverageRequest.status, CoverageStatus.open),
+            isNull(coverageRequest.coveredByVolunteerUserId),
+          ),
+        )
+        .returning({ id: coverageRequest.id });
+
+      if (affected.length < 1) {
+        throw new NeuronError(
+          "Failed to cancel coverage request",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+    });
   }
 
   async fulfillCoverageRequest(
     coveredByVolunteerUserId: string,
     coverageRequestId: string,
   ): Promise<void> {
-    const [request] = await this.db
-      .select({
-        status: coverageRequest.status,
-        shiftStartAt: shift.startAt,
-        shiftId: shift.id,
-        courseId: shift.courseId,
-        courseName: course.name,
-        requestingVolunteerUserId: coverageRequest.requestingVolunteerUserId,
-      })
-      .from(coverageRequest)
-      .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
-      .innerJoin(course, eq(course.id, shift.courseId))
-      .where(eq(coverageRequest.id, coverageRequestId));
+    const notificationContext = await this.db.transaction(async (tx) => {
+      const [requestRef] = await tx
+        .select({ shiftId: coverageRequest.shiftId })
+        .from(coverageRequest)
+        .where(eq(coverageRequest.id, coverageRequestId))
+        .limit(1);
 
-    if (!request) {
-      throw new NeuronError(
-        `Could not find coverage request with id ${coverageRequestId}.`,
-        NeuronErrorCodes.NOT_FOUND,
+      if (!requestRef) {
+        throw new NeuronError(
+          `Could not find coverage request with id ${coverageRequestId}.`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      const [lockedShift] = await tx
+        .select({
+          id: shift.id,
+          courseId: shift.courseId,
+          startAt: shift.startAt,
+          canceled: shift.canceled,
+        })
+        .from(shift)
+        .where(eq(shift.id, requestRef.shiftId))
+        .for("update");
+
+      if (!lockedShift) {
+        throw new NeuronError(
+          `Could not find coverage request with id ${coverageRequestId}.`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      const [request] = await tx
+        .select({
+          id: coverageRequest.id,
+          status: coverageRequest.status,
+          requestingVolunteerUserId: coverageRequest.requestingVolunteerUserId,
+          coveredByVolunteerUserId: coverageRequest.coveredByVolunteerUserId,
+        })
+        .from(coverageRequest)
+        .where(eq(coverageRequest.id, coverageRequestId))
+        .limit(1);
+
+      if (!request) {
+        throw new NeuronError(
+          `Could not find coverage request with id ${coverageRequestId}.`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      if (lockedShift.canceled) {
+        throw new NeuronError(
+          "Cannot fulfill a coverage request for a canceled shift.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      if (
+        request.status !== CoverageStatus.open ||
+        request.coveredByVolunteerUserId !== null
+      ) {
+        throw new NeuronError(
+          "Coverage request is not open.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      if (lockedShift.startAt <= new Date()) {
+        throw new NeuronError(
+          "Can not fulfill a coverage request for a past shift.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      // Check effective assignment under the shift lock so a volunteer already
+      // on the shift (base or covering another slot) cannot occupy multiple
+      // slots on the same shift even under concurrent claims.
+      const isAssigned = await isVolunteerEffectivelyAssignedToShift(
+        tx,
+        lockedShift.id,
+        coveredByVolunteerUserId,
       );
-    }
 
-    if (request.status != CoverageStatus.open) {
-      throw new NeuronError(
-        "Coverage request is not open.",
-        NeuronErrorCodes.BAD_REQUEST,
-      );
-    }
+      if (isAssigned) {
+        throw new NeuronError(
+          "Cannot cover a shift you are already assigned to.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
 
-    if (request.shiftStartAt <= new Date()) {
-      throw new NeuronError(
-        "Can not fulfill a coverage request for a past shift.",
-        NeuronErrorCodes.BAD_REQUEST,
-      );
-    }
+      if (request.requestingVolunteerUserId === coveredByVolunteerUserId) {
+        throw new NeuronError(
+          "Cannot cover your own coverage request.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
 
-    // Check if volunteer is already assigned to this shift
-    const shiftModel = await this.shiftService.getShiftById(
-      request.shiftId,
-      coveredByVolunteerUserId,
-    );
-    const isAssigned = shiftModel.volunteers.some(
-      (v) => v.id === coveredByVolunteerUserId,
-    );
+      const affected = await tx
+        .update(coverageRequest)
+        .set({
+          status: CoverageStatus.resolved,
+          coveredByVolunteerUserId,
+        })
+        .where(
+          and(
+            eq(coverageRequest.id, coverageRequestId),
+            eq(coverageRequest.shiftId, lockedShift.id),
+            eq(coverageRequest.status, CoverageStatus.open),
+            isNull(coverageRequest.coveredByVolunteerUserId),
+          ),
+        )
+        .returning({ id: coverageRequest.id });
 
-    if (isAssigned) {
-      throw new NeuronError(
-        "Cannot cover a shift you are already assigned to.",
-        NeuronErrorCodes.BAD_REQUEST,
-      );
-    }
+      if (affected.length < 1) {
+        throw new NeuronError(
+          "Coverage request is not open.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
 
-    const affected = await this.db
-      .update(coverageRequest)
-      .set({
-        status: CoverageStatus.resolved,
-        coveredByVolunteerUserId: coveredByVolunteerUserId,
-      })
-      .where(eq(coverageRequest.id, coverageRequestId))
-      .returning();
+      const [[courseRow], [requestingUser]] = await Promise.all([
+        tx
+          .select({ name: course.name })
+          .from(course)
+          .where(eq(course.id, lockedShift.courseId))
+          .limit(1),
+        tx
+          .select({ name: user.name, lastName: user.lastName })
+          .from(user)
+          .where(eq(user.id, request.requestingVolunteerUserId))
+          .limit(1),
+      ]);
 
-    if (affected.length < 1) {
-      throw new NeuronError(
-        "Failed to fill coverage request",
-        NeuronErrorCodes.BAD_REQUEST,
-      );
-    }
+      return {
+        shiftId: lockedShift.id,
+        courseId: lockedShift.courseId,
+        courseName: courseRow?.name ?? "",
+        shiftStartAt: lockedShift.startAt,
+        requestingVolunteerUserId: request.requestingVolunteerUserId,
+        requestingVolunteerName: requestingUser
+          ? `${requestingUser.name} ${requestingUser.lastName}`
+          : "A volunteer",
+      };
+    });
 
-    // Notify admins, instructors, and requesting volunteer
-    const [requestingUser] = await this.db
-      .select({ name: user.name, lastName: user.lastName })
-      .from(user)
-      .where(eq(user.id, request.requestingVolunteerUserId))
-      .limit(1);
-
+    // Notify admins, instructors, and requesting volunteer after commit
     const currentUser = this.currentSessionService.getUser();
 
     void this.notificationEventService.notifyCoverageFilled({
       coverageRequestId,
-      shiftId: request.shiftId,
-      classId: request.courseId,
-      className: request.courseName,
-      shiftDate: formatDate(request.shiftStartAt),
+      shiftId: notificationContext.shiftId,
+      classId: notificationContext.courseId,
+      className: notificationContext.courseName,
+      shiftDate: formatDate(notificationContext.shiftStartAt),
       coveredByVolunteerUserId,
       coveredByVolunteerName: currentUser
         ? `${currentUser.name} ${currentUser.lastName}`
         : "A volunteer",
-      requestingVolunteerUserId: request.requestingVolunteerUserId,
-      requestingVolunteerName: requestingUser
-        ? `${requestingUser.name} ${requestingUser.lastName}`
-        : "A volunteer",
+      requestingVolunteerUserId: notificationContext.requestingVolunteerUserId,
+      requestingVolunteerName: notificationContext.requestingVolunteerName,
     });
   }
 
@@ -573,53 +753,150 @@ export class CoverageService implements ICoverageService {
     coveredByVolunteerUserId: string,
     coverageRequestId: string,
   ): Promise<void> {
-    const [request] = await this.db
-      .select({
-        status: coverageRequest.status,
-        shiftStartAt: shift.startAt,
-      })
-      .from(coverageRequest)
-      .innerJoin(shift, eq(coverageRequest.shiftId, shift.id))
-      .where(
-        and(
-          eq(coverageRequest.id, coverageRequestId),
-          eq(
-            coverageRequest.coveredByVolunteerUserId,
-            coveredByVolunteerUserId,
+    await this.db.transaction(async (tx) => {
+      const [requestRef] = await tx
+        .select({ shiftId: coverageRequest.shiftId })
+        .from(coverageRequest)
+        .where(eq(coverageRequest.id, coverageRequestId))
+        .limit(1);
+
+      if (!requestRef) {
+        throw new NeuronError(
+          `Could not find coverage request with id ${coverageRequestId} covered by volunteer with id ${coveredByVolunteerUserId}.`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      const [lockedShift] = await tx
+        .select({
+          id: shift.id,
+          startAt: shift.startAt,
+          canceled: shift.canceled,
+        })
+        .from(shift)
+        .where(eq(shift.id, requestRef.shiftId))
+        .for("update");
+
+      if (!lockedShift) {
+        throw new NeuronError(
+          `Could not find coverage request with id ${coverageRequestId} covered by volunteer with id ${coveredByVolunteerUserId}.`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      const [request] = await tx
+        .select({
+          id: coverageRequest.id,
+          status: coverageRequest.status,
+          requestingVolunteerUserId: coverageRequest.requestingVolunteerUserId,
+          coveredByVolunteerUserId: coverageRequest.coveredByVolunteerUserId,
+        })
+        .from(coverageRequest)
+        .where(
+          and(
+            eq(coverageRequest.id, coverageRequestId),
+            eq(
+              coverageRequest.coveredByVolunteerUserId,
+              coveredByVolunteerUserId,
+            ),
           ),
-        ),
+        )
+        .limit(1);
+
+      if (!request) {
+        throw new NeuronError(
+          `Could not find coverage request with id ${coverageRequestId} covered by volunteer with id ${coveredByVolunteerUserId}.`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      if (lockedShift.canceled) {
+        throw new NeuronError(
+          "Cannot unassign coverage for a canceled shift.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      if (request.status !== CoverageStatus.resolved) {
+        throw new NeuronError(
+          "Coverage request is not resolved.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      if (lockedShift.startAt <= new Date()) {
+        throw new NeuronError(
+          "Can not unassign coverage to a coverage request for a past shift.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      const isEffectivelyAssigned = await isVolunteerEffectivelyAssignedToShift(
+        tx,
+        lockedShift.id,
+        coveredByVolunteerUserId,
       );
 
-    if (!request) {
-      throw new NeuronError(
-        `Could not find coverage request with id ${coverageRequestId} covered by volunteer with id ${coveredByVolunteerUserId}.`,
-        NeuronErrorCodes.NOT_FOUND,
-      );
-    }
+      if (!isEffectivelyAssigned) {
+        throw new NeuronError(
+          "Cannot unassign coverage after your assignment has already been transferred.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
 
-    if (request.shiftStartAt <= new Date()) {
-      throw new NeuronError(
-        "Can not unassign coverage to a coverage request for a past shift.",
-        NeuronErrorCodes.BAD_REQUEST,
-      );
-    }
+      // Preserve the original requestingVolunteerUserId so the original absence
+      // survives coverer withdrawal and subsequent replacement (A -> B -> C).
+      const affected = await tx
+        .update(coverageRequest)
+        .set({
+          status: CoverageStatus.open,
+          coveredByVolunteerUserId: null,
+        })
+        .where(
+          and(
+            eq(coverageRequest.id, coverageRequestId),
+            eq(coverageRequest.shiftId, lockedShift.id),
+            eq(coverageRequest.status, CoverageStatus.resolved),
+            eq(
+              coverageRequest.coveredByVolunteerUserId,
+              coveredByVolunteerUserId,
+            ),
+          ),
+        )
+        .returning({ id: coverageRequest.id });
 
-    const affected = await this.db
-      .update(coverageRequest)
-      .set({
-        status: CoverageStatus.open,
-        requestingVolunteerUserId: coveredByVolunteerUserId,
-        coveredByVolunteerUserId: null,
-      })
-      .where(eq(coverageRequest.id, coverageRequestId))
-      .returning();
+      if (affected.length < 1) {
+        throw new NeuronError(
+          "Failed to unassign coverage.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
 
-    if (affected.length < 1) {
-      throw new NeuronError(
-        "Failed to unassign coverage.",
-        NeuronErrorCodes.BAD_REQUEST,
+      // If the outgoing coverer had an open outgoing coverage request on this
+      // shift and is no longer assigned after unassigning, withdraw it so it
+      // cannot be fulfilled to create an extra roster slot.
+      const stillAssigned = await isVolunteerEffectivelyAssignedToShift(
+        tx,
+        lockedShift.id,
+        coveredByVolunteerUserId,
       );
-    }
+      if (!stillAssigned) {
+        await tx
+          .update(coverageRequest)
+          .set({ status: CoverageStatus.withdrawn })
+          .where(
+            and(
+              eq(coverageRequest.shiftId, lockedShift.id),
+              eq(
+                coverageRequest.requestingVolunteerUserId,
+                coveredByVolunteerUserId,
+              ),
+              eq(coverageRequest.status, CoverageStatus.open),
+              isNull(coverageRequest.coveredByVolunteerUserId),
+            ),
+          );
+      }
+    });
   }
 
   private async loadCoverageRequestModels(

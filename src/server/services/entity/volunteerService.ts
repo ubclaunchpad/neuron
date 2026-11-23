@@ -11,6 +11,7 @@ import {
 } from "@/utils/searchUtils";
 import {
   and,
+  asc,
   desc,
   eq,
   getViewSelectedFields,
@@ -102,7 +103,15 @@ export class VolunteerService implements IVolunteerService {
       .$dynamic();
 
     if (hasQuery) {
-      builder = builder.where(condition!).orderBy(desc(similarity!));
+      builder = builder
+        .where(condition!)
+        .orderBy(desc(similarity!), asc(volunteerUserView.id));
+    } else {
+      builder = builder.orderBy(
+        asc(volunteerUserView.lastName),
+        asc(volunteerUserView.name),
+        asc(volunteerUserView.id),
+      );
     }
 
     const rows = await builder.limit(perPage).offset(offset).execute();
@@ -230,11 +239,14 @@ export class VolunteerService implements IVolunteerService {
       .$dynamic();
 
     if (hasQuery) {
-      builder = builder.where(condition!).orderBy(desc(similarity!));
+      builder = builder
+        .where(condition!)
+        .orderBy(desc(similarity!), asc(volunteerUserView.id));
     } else {
       builder = builder.orderBy(
-        volunteerUserView.lastName,
-        volunteerUserView.name,
+        asc(volunteerUserView.lastName),
+        asc(volunteerUserView.name),
+        asc(volunteerUserView.id),
       );
     }
 

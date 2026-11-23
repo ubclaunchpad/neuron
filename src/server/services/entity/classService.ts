@@ -451,6 +451,8 @@ export class ClassService implements IClassService {
         .where(and(where, eq(term.published, true)));
     }
 
+    idsQuery = idsQuery.orderBy(asc(course.id));
+
     if (limit !== undefined) {
       idsQuery = idsQuery.limit(limit);
     }

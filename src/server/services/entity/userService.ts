@@ -17,6 +17,7 @@ import { normalizeEmail } from "@/utils/emailUtils";
 import { buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
 import {
   and,
+  asc,
   count,
   desc,
   eq,
@@ -87,7 +88,13 @@ export class UserService implements IUserService {
     let builder = this.db.select(selectShape).from(user).$dynamic();
 
     if (hasQuery) {
-      builder = builder.orderBy(desc(similarity!));
+      builder = builder.orderBy(desc(similarity!), asc(user.id));
+    } else {
+      builder = builder.orderBy(
+        asc(user.lastName),
+        asc(user.name),
+        asc(user.id),
+      );
     }
 
     const whereConditions = [];

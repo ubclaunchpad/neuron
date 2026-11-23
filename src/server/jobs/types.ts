@@ -1,4 +1,3 @@
-import type { z } from "zod";
 import type { Transaction } from "@/server/db";
 import type { NeuronContainer, NeuronCradle } from "@/server/api/di-container";
 
@@ -11,6 +10,12 @@ export interface JobRetryOptions {
 }
 
 export interface RunJobOptions extends JobRetryOptions {
+  /** Insert/cancel jobs in the caller's PostgreSQL transaction. One-off jobs only. */
+  transaction?: Transaction;
+  /** Stable job ID, deduplicated while pg-boss retains the job. */
+  idempotencyKey?: string;
+  /** Cancel pending/active jobs with this singletonKey before enqueueing. Requires a transaction. */
+  replacePending?: boolean;
   // Logical identifier used to target specific schedule instances.
   correlationId?: string;
 
@@ -43,15 +48,28 @@ export interface WorkRegistrationOptions {
 export interface JobRuntimeContext {
   container: NeuronContainer;
   cradle: NeuronCradle;
+  /** Cooperative cancellation: check under domain locks before an external side effect. */
+  isCancelled?: () => Promise<boolean>;
 }
 
 type StartupRecurringOptions = Omit<
   RunJobOptions,
-  "cron" | "runAt" | "startAfter"
+  | "cron"
+  | "runAt"
+  | "startAfter"
+  | "transaction"
+  | "replacePending"
+  | "idempotencyKey"
 >;
 type StartupOneOffOptions = Omit<
   RunJobOptions,
-  "cron" | "runAt" | "correlationId" | "startAt" | "endAt" | "tz"
+  | "cron"
+  | "runAt"
+  | "correlationId"
+  | "startAt"
+  | "endAt"
+  | "transaction"
+  | "tz"
 >;
 
 export type StartupSchedule<TPayload extends object> =
@@ -71,32 +89,7 @@ export interface RegisteredJob<
 > {
   name: JobName;
   retryOpts?: JobRetryOptions;
-  queuePolicy?: "singleton";
   workOptions?: WorkRegistrationOptions;
   startup?: StartupSchedule<TPayload>;
   handler: (payload: TPayload, context: JobRuntimeContext) => Promise<void>;
-}
-
-export interface DeliveryOptions {
-  transaction: Transaction;
-  idempotencyKey?: string;
-  /** Replace this key's latest revision, including a previously completed one. */
-  replaceExisting?: boolean;
-}
-
-export interface DeliveryFailure {
-  code: string;
-  permanent: boolean;
-}
-
-export interface DeliveryDefinition<TPayload extends object> {
-  name: JobName;
-  payloadSchema: z.ZodType<TPayload>;
-  // Lock domain rows before claiming the outbox revision. Return null to suppress.
-  prepare(
-    payload: TPayload,
-    tx: Transaction,
-    context: JobRuntimeContext,
-  ): Promise<(() => Promise<void>) | null>;
-  classifyFailure?: (error: unknown) => DeliveryFailure;
 }

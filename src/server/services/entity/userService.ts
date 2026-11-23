@@ -180,7 +180,7 @@ export class UserService implements IUserService {
         .update(user)
         .set({ status: UserStatus.active })
         .where(eq(user.id, id));
-      await this.jobService.deliver(
+      await this.jobService.run(
         "jobs.send-email",
         { to: existing.email, subject, text, html },
         { transaction: tx },
@@ -232,7 +232,7 @@ export class UserService implements IUserService {
         .update(user)
         .set({ status: UserStatus.inactive })
         .where(eq(user.id, id));
-      await this.jobService.deliver(
+      await this.jobService.run(
         "jobs.send-email",
         {
           to: existing.email,

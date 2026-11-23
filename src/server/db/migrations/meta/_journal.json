@@ -78,13 +78,6 @@
       "when": 1774117341138,
       "tag": "0010_add_notification_system",
       "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1795414015594,
-      "tag": "0011_delivery_outbox",
-      "breakpoints": true
     }
   ]
 }

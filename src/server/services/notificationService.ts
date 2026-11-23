@@ -413,7 +413,7 @@ export class NotificationService implements INotificationService {
       }
 
       for (const recipient of emailRecipients) {
-        await this.jobService.deliver(
+        await this.jobService.run(
           "jobs.send-email",
           {
             to: recipient.email,

@@ -1,4 +1,3 @@
-import type { DeliveryFailure } from "@/server/jobs/types";
 import { type env as environment } from "@/env";
 import nodemailer, { type Transporter } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
@@ -58,42 +57,4 @@ export class EmailService implements IEmailService {
       html: html ?? text,
     });
   }
-}
-
-export function classifyEmailFailure(error: unknown): DeliveryFailure {
-  const responseCode =
-    typeof error === "object" && error !== null && "responseCode" in error
-      ? error.responseCode
-      : undefined;
-  if (
-    typeof responseCode === "number" &&
-    Number.isInteger(responseCode) &&
-    responseCode >= 400 &&
-    responseCode <= 599
-  ) {
-    return { code: `SMTP_${responseCode}`, permanent: responseCode >= 500 };
-  }
-  const transportCode =
-    typeof error === "object" && error !== null && "code" in error
-      ? error.code
-      : undefined;
-  if (
-    typeof transportCode === "string" &&
-    [
-      "ETIMEDOUT",
-      "ECONNREFUSED",
-      "ECONNRESET",
-      "ECONNECTION",
-      "ESOCKET",
-      "EDNS",
-      "EPIPE",
-      "EAUTH",
-      "ETLS",
-      "EENVELOPE",
-      "EMESSAGE",
-    ].includes(transportCode)
-  ) {
-    return { code: transportCode, permanent: false };
-  }
-  return { code: "DELIVERY_FAILED", permanent: false };
 }

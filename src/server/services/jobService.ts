@@ -1,5 +1,8 @@
+import { createHash } from "crypto";
+import { sql, type SQL } from "drizzle-orm";
+import type { Transaction } from "@/server/db";
 import { asValue } from "awilix";
-import { PgBoss, type Schedule } from "pg-boss";
+import { PgBoss, type Schedule, type Db as PgBossDatabase } from "pg-boss";
 
 import type { env as environment } from "@/env";
 import type { NeuronContainer } from "@/server/api/di-container";
@@ -11,12 +14,8 @@ import {
   type JobPayload,
   type KnownJobName,
   type RunnableJobName,
-  type DeliverableJobName,
-  type DeliveryPayload,
 } from "../jobs/registry";
 import type {
-  DeliveryOptions,
-  JobRuntimeContext,
   JobRetryOptions,
   RegisteredJob,
   RunJobOptions,
@@ -30,17 +29,11 @@ export interface IJobService {
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
   ): Promise<string | null>;
-  deliver<TKind extends DeliverableJobName>(
-    kind: TKind,
-    data: DeliveryPayload<TKind>,
-    options: DeliveryOptions,
+  cancelPending(
+    jobName: RunnableJobName,
+    singletonKey: string,
+    options: { transaction: Transaction },
   ): Promise<void>;
-  cancelDelivery<TKind extends DeliverableJobName>(
-    kind: TKind,
-    idempotencyKey: string,
-    options: Pick<DeliveryOptions, "transaction">,
-  ): Promise<void>;
-  processDeliveryOutbox(context?: JobRuntimeContext): Promise<void>;
   unschedule(
     jobName: RunnableJobName,
     options?: { correlationId?: string },
@@ -96,6 +89,8 @@ export class JobService implements IJobService {
   }
 
   async start(): Promise<void> {
+    // Queue registration must finish even after pg-boss itself has connected.
+    if (sharedBossState.startPromise) return sharedBossState.startPromise;
     if (sharedBossState.isStarted) return;
     sharedBossState.stopping = false;
     sharedBossState.startPromise ??= this.bootstrap()
@@ -154,37 +149,79 @@ export class JobService implements IJobService {
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
   ): Promise<string | null> {
+    if (
+      options?.cron &&
+      (options.transaction || options.replacePending || options.idempotencyKey)
+    ) {
+      throw new Error(
+        "Transactional and idempotent enqueueing supports one-off jobs only",
+      );
+    }
+    if (
+      options?.replacePending &&
+      (!options.transaction || !options.singletonKey?.trim())
+    ) {
+      throw new Error(
+        "Replacing pending jobs requires a transaction and singletonKey",
+      );
+    }
     await this.start();
     return this.runWithStartedBoss(jobName, data, options);
   }
 
-  async deliver<TKind extends DeliverableJobName>(
-    kind: TKind,
-    data: DeliveryPayload<TKind>,
-    options: DeliveryOptions,
+  async cancelPending(
+    jobName: RunnableJobName,
+    singletonKey: string,
+    { transaction }: { transaction: Transaction },
   ): Promise<void> {
-    await this.container.cradle.deliveryService.deliver(kind, data, options);
-  }
-
-  async cancelDelivery<TKind extends DeliverableJobName>(
-    kind: TKind,
-    idempotencyKey: string,
-    options: Pick<DeliveryOptions, "transaction">,
-  ): Promise<void> {
-    await this.container.cradle.deliveryService.cancel(
-      kind,
-      idempotencyKey,
-      options,
+    this.getJobDefinition(jobName);
+    if (!singletonKey.trim()) throw new Error("singletonKey must be non-empty");
+    await this.start();
+    await this.cancelMatchingJobs(
+      jobName,
+      singletonKey,
+      this.transactionDb(transaction),
     );
   }
 
-  async processDeliveryOutbox(
-    context: JobRuntimeContext = {
-      container: this.container,
-      cradle: this.container.cradle,
-    },
+  private async cancelMatchingJobs(
+    jobName: RunnableJobName,
+    key: string,
+    db: PgBossDatabase,
   ): Promise<void> {
-    await context.cradle.deliveryService.process(context);
+    const jobs = await this.boss.findJobs(jobName, { key, db });
+    const ids = jobs
+      .filter(
+        (job) =>
+          job.state === "created" ||
+          job.state === "retry" ||
+          job.state === "active",
+      )
+      .map((job) => job.id);
+    if (ids.length > 0) await this.boss.cancel(jobName, ids, { db });
+  }
+
+  private transactionDb(transaction: Transaction): PgBossDatabase {
+    return {
+      executeSql: async (text, values = []) => {
+        // pg-boss supplies parameterized SQL. Bind each $n through Drizzle's
+        // public SQL API; never interpolate values or access ORM internals.
+        const chunks: SQL[] = [];
+        let offset = 0;
+        for (const match of text.matchAll(/\$(\d+)/g)) {
+          chunks.push(sql.raw(text.slice(offset, match.index)));
+          const index = Number(match[1]) - 1;
+          if (index < 0 || index >= values.length)
+            throw new Error("Invalid pg-boss SQL parameter");
+          chunks.push(sql`${sql.param(values[index])}`);
+          offset = match.index! + match[0].length;
+        }
+        chunks.push(sql.raw(text.slice(offset)));
+        const rows = await transaction.execute(sql.join(chunks, sql.raw("")));
+        // postgres-js returns a flat RowList, not node-postgres's { rows } shape.
+        return { rows: Array.from(rows) };
+      },
+    };
   }
 
   async unschedule(
@@ -285,6 +322,20 @@ export class JobService implements IJobService {
       throw new Error("startAt/endAt require cron for recurring runs.");
     }
 
+    const { transaction, replacePending, idempotencyKey, ...queueOptions } =
+      mergedOptions ?? {};
+    const db = transaction ? this.transactionDb(transaction) : undefined;
+    if (replacePending)
+      await this.cancelMatchingJobs(jobName, queueOptions.singletonKey!, db!);
+    const digest = idempotencyKey
+      ? createHash("sha256")
+          .update(`${jobName}:${idempotencyKey}`)
+          .digest("hex")
+          .slice(0, 32)
+      : undefined;
+    const id = digest
+      ? `${digest.slice(0, 8)}-${digest.slice(8, 12)}-${digest.slice(12, 16)}-${digest.slice(16, 20)}-${digest.slice(20)}`
+      : undefined;
     const sendOptions = mergedOptions
       ? (() => {
           const {
@@ -295,13 +346,15 @@ export class JobService implements IJobService {
             runAt,
             startAfter: rawStartAfter,
             ...rest
-          } = mergedOptions;
+          } = queueOptions;
           if (runAt !== undefined && rawStartAfter !== undefined) {
             throw new Error("Provide either runAt or startAfter, not both.");
           }
           const startAfter = runAt ?? rawStartAfter;
           return {
             ...rest,
+            ...(db ? { db } : {}),
+            ...(id ? { id } : {}),
             ...(startAfter !== undefined ? { startAfter } : {}),
           };
         })()
@@ -431,12 +484,10 @@ export class JobService implements IJobService {
       if (await this.boss.getQueue(queueName)) {
         await this.boss.updateQueue(queueName, {
           ...definition.retryOpts,
-          ...(definition.queuePolicy ? { policy: definition.queuePolicy } : {}),
         });
       } else {
         await this.boss.createQueue(queueName, {
           ...definition.retryOpts,
-          ...(definition.queuePolicy ? { policy: definition.queuePolicy } : {}),
         });
       }
 
@@ -456,6 +507,12 @@ export class JobService implements IJobService {
               {
                 container: scope,
                 cradle: scope.cradle,
+                isCancelled: async () => {
+                  const [current] = await this.boss.findJobs(queueName, {
+                    id: jobItem.id,
+                  });
+                  return !current || current.state !== "active";
+                },
               },
             );
           } catch (error) {

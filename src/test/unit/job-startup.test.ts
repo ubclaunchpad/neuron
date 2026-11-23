@@ -51,3 +51,34 @@ it("successful manual startup cancels an earlier retry", async () => {
   await vi.advanceTimersByTimeAsync(30_000);
   expect(bootstrap).toHaveBeenCalledTimes(2);
 });
+
+it("waits for queue registration when pg-boss is already connected", async () => {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const state = (
+    globalThis as unknown as { __neuronPgBossState: { isStarted: boolean } }
+  ).__neuronPgBossState;
+  const bootstrap = vi
+    .spyOn(jobs as unknown as { bootstrap: () => Promise<void> }, "bootstrap")
+    .mockImplementation(async () => {
+      state.isStarted = true;
+      await gate;
+      state.isStarted = false;
+    });
+  const first = jobs.start();
+  let resolved = false;
+  const second = jobs.start().then(() => {
+    resolved = true;
+  });
+  try {
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(resolved).toBe(false);
+  } finally {
+    release();
+  }
+  await Promise.all([first, second]);
+  expect(bootstrap).toHaveBeenCalledTimes(1);
+});

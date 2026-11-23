@@ -4,7 +4,7 @@ import {
   MigrationsFolder,
   MigrationsSchema,
   MigrationsTable,
-} from "../../../drizzle.config";
+} from "@/server/db/migration-config";
 
 export async function migrate() {
   // Only run in the Node.js runtime, not the Edge runtime.

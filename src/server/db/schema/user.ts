@@ -1,6 +1,6 @@
 import { AVAILABILITY_SLOTS } from "@/constants";
 import { Role, UserStatus } from "@/models/interfaces";
-import { eq, relations } from "drizzle-orm";
+import { eq, relations, sql } from "drizzle-orm";
 import {
   bit,
   boolean,
@@ -33,6 +33,7 @@ export const user = pgTable(
       .notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
+      .$onUpdate(() => sql`now()`)
       .notNull(),
 
     // Additional fields

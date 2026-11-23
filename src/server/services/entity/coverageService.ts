@@ -28,18 +28,20 @@ import {
 } from "@/server/db/schema";
 import { volunteerToSchedule } from "@/server/db/schema/schedule";
 import { instructorUserView, user } from "@/server/db/schema/user";
-import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import { getPagination } from "@/utils/searchUtils";
 import {
+  aliasedTable,
   asc,
   desc,
   and,
   eq,
+  getViewSelectedFields,
   gte,
   inArray,
   lte,
+  notExists,
   or,
   sql,
   type SQL,
@@ -169,24 +171,37 @@ export class CoverageService implements ICoverageService {
         permission: { shifts: ["view-all"] },
       })
     ) {
+      const cr2 = aliasedTable(coverageRequest, "cr2");
       whereConditions.push(
         or(
           // Show open requests only if volunteer is NOT already assigned to the shift
           and(
             eq(coverageRequest.status, CoverageStatus.open),
             // Not assigned via schedule
-            sql`NOT EXISTS (
-              SELECT 1 FROM ${volunteerToSchedule}
-              WHERE ${volunteerToSchedule.scheduleId} = ${shift.scheduleId}
-              AND ${volunteerToSchedule.volunteerUserId} = ${viewerUserId}
-            )`,
+            notExists(
+              this.db
+                .select({ one: sql`1` })
+                .from(volunteerToSchedule)
+                .where(
+                  and(
+                    eq(volunteerToSchedule.scheduleId, shift.scheduleId),
+                    eq(volunteerToSchedule.volunteerUserId, viewerUserId),
+                  ),
+                ),
+            ),
             // Not already covering this shift via another resolved coverage request
-            sql`NOT EXISTS (
-              SELECT 1 FROM ${coverageRequest} AS cr2
-              WHERE cr2.shift_id = ${shift.id}
-              AND cr2.covered_by_volunteer_user_id = ${viewerUserId}
-              AND cr2.status = ${CoverageStatus.resolved}
-            )`,
+            notExists(
+              this.db
+                .select({ one: sql`1` })
+                .from(cr2)
+                .where(
+                  and(
+                    eq(cr2.shiftId, shift.id),
+                    eq(cr2.coveredByVolunteerUserId, viewerUserId),
+                    eq(cr2.status, CoverageStatus.resolved),
+                  ),
+                ),
+            ),
           ),
           // Always show their own requests (as requester)
           eq(coverageRequest.requestingVolunteerUserId, viewerUserId),
@@ -241,7 +256,7 @@ export class CoverageService implements ICoverageService {
     const instructorRecords = await this.db
       .select({
         scheduleId: instructorToSchedule.scheduleId,
-        instructor: getViewColumns(instructorUserView),
+        instructor: getViewSelectedFields(instructorUserView),
       })
       .from(instructorToSchedule)
       .innerJoin(

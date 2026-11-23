@@ -118,7 +118,7 @@ export class PreferenceService implements IPreferenceService {
           notificationPreference.type,
           notificationPreference.channel,
         ],
-        set: { enabled, updatedAt: new Date() },
+        set: { enabled },
       });
   }
 

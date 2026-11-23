@@ -3,14 +3,20 @@ import type { UpdateVolunteerAvailabilityInput, UpdateVolunteerProfileInput } fr
 import type { ListResponse } from "@/models/list-response";
 import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
-import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import {
   buildSearchCondition,
   buildSimilarityExpression,
   getPagination,
 } from "@/utils/searchUtils";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  getViewSelectedFields,
+  inArray,
+  sql,
+} from "drizzle-orm";
 import type { z } from "zod";
 import {
   coursePreference,
@@ -81,7 +87,7 @@ export class VolunteerService implements IVolunteerService {
 
     const baseSelect = {
       count: sql<number>`count(*) over()`,
-      ...getViewColumns(volunteerUserView),
+      ...getViewSelectedFields(volunteerUserView),
     } as const;
 
     const selectShape = hasQuery
@@ -217,7 +223,7 @@ export class VolunteerService implements IVolunteerService {
     const { hasQuery, similarity, condition } = this.getSearchParams(search);
 
     let builder = this.db
-      .select(getViewColumns(volunteerUserView))
+      .select(getViewSelectedFields(volunteerUserView))
       .from(volunteerUserView)
       .$dynamic();
 

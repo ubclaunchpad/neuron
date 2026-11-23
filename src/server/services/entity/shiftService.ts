@@ -29,7 +29,6 @@ import {
 import { buildUser } from "@/models/user";
 import { buildVolunteer } from "@/models/volunteer";
 import { type Drizzle, type Transaction } from "@/server/db";
-import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { course, type CourseDB } from "@/server/db/schema/course";
 import {
   instructorToSchedule,
@@ -52,7 +51,18 @@ import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import type { INotificationEventService } from "@/server/services/notificationEventService";
 import type { IJobService } from "@/server/services/jobService";
 import { term } from "@/server/db/schema/course";
-import { and, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  eq,
+  exists,
+  getViewSelectedFields,
+  gte,
+  inArray,
+  lte,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 
 type ShiftRow = {
   shift: ShiftDB;
@@ -155,31 +165,55 @@ export class ShiftService implements IShiftService {
     userId: string,
   ): SQL<unknown> | undefined {
     return or(
-      sql`EXISTS (
-        SELECT 1 FROM ${volunteerToSchedule}
-        WHERE ${volunteerToSchedule.scheduleId} = ${shift.scheduleId}
-        AND ${volunteerToSchedule.volunteerUserId} = ${userId}
-      )`,
-      sql`EXISTS (
-        SELECT 1 FROM ${coverageRequest}
-        WHERE ${coverageRequest.shiftId} = ${shift.id}
-        AND ${coverageRequest.requestingVolunteerUserId} = ${userId}
-      )`,
-      sql`EXISTS (
-        SELECT 1 FROM ${coverageRequest}
-        WHERE ${coverageRequest.shiftId} = ${shift.id}
-        AND ${coverageRequest.coveredByVolunteerUserId} = ${userId}
-        AND ${coverageRequest.status} = ${CoverageStatus.resolved}
-      )`,
+      exists(
+        this.db
+          .select({ one: sql`1` })
+          .from(volunteerToSchedule)
+          .where(
+            and(
+              eq(volunteerToSchedule.scheduleId, shift.scheduleId),
+              eq(volunteerToSchedule.volunteerUserId, userId),
+            ),
+          ),
+      ),
+      exists(
+        this.db
+          .select({ one: sql`1` })
+          .from(coverageRequest)
+          .where(
+            and(
+              eq(coverageRequest.shiftId, shift.id),
+              eq(coverageRequest.requestingVolunteerUserId, userId),
+            ),
+          ),
+      ),
+      exists(
+        this.db
+          .select({ one: sql`1` })
+          .from(coverageRequest)
+          .where(
+            and(
+              eq(coverageRequest.shiftId, shift.id),
+              eq(coverageRequest.coveredByVolunteerUserId, userId),
+              eq(coverageRequest.status, CoverageStatus.resolved),
+            ),
+          ),
+      ),
     );
   }
 
   private buildInstructorVisibilityCondition(userId: string): SQL<unknown> {
-    return sql`EXISTS (
-      SELECT 1 FROM ${instructorToSchedule}
-      WHERE ${instructorToSchedule.scheduleId} = ${shift.scheduleId}
-      AND ${instructorToSchedule.instructorUserId} = ${userId}
-    )`;
+    return exists(
+      this.db
+        .select({ one: sql`1` })
+        .from(instructorToSchedule)
+        .where(
+          and(
+            eq(instructorToSchedule.scheduleId, shift.scheduleId),
+            eq(instructorToSchedule.instructorUserId, userId),
+          ),
+        ),
+    );
   }
 
   private async hydrateShiftRows(rows: ShiftRow[]): Promise<Shift[]> {
@@ -202,7 +236,7 @@ export class ShiftService implements IShiftService {
     const volunteerAssignments = await this.db
       .select({
         scheduleId: volunteerToSchedule.scheduleId,
-        volunteer: getViewColumns(volunteerUserView),
+        volunteer: getViewSelectedFields(volunteerUserView),
       })
       .from(volunteerToSchedule)
       .innerJoin(
@@ -240,7 +274,7 @@ export class ShiftService implements IShiftService {
     const instructorRecords = await this.db
       .select({
         scheduleId: instructorToSchedule.scheduleId,
-        instructor: getViewColumns(instructorUserView),
+        instructor: getViewSelectedFields(instructorUserView),
       })
       .from(instructorToSchedule)
       .innerJoin(
@@ -293,7 +327,7 @@ export class ShiftService implements IShiftService {
     if (missingVolunteerIds.length > 0) {
       const extraVolunteerRows = await this.db
         .select({
-          volunteer: getViewColumns(volunteerUserView),
+          volunteer: getViewSelectedFields(volunteerUserView),
         })
         .from(volunteerUserView)
         .where(inArray(volunteerUserView.id, missingVolunteerIds));

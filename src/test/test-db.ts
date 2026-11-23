@@ -8,7 +8,7 @@ import {
   MigrationsFolder,
   MigrationsSchema,
   MigrationsTable,
-} from "../../drizzle.config";
+} from "@/server/db/migration-config";
 
 const testDbUrl = env.DATABASE_URL;
 
@@ -21,7 +21,7 @@ export function getTestDb() {
       max: 1,
       onnotice: () => {}, // Suppress NOTICE messages from PostgreSQL
     });
-    db = drizzle(conn, { schema });
+    db = drizzle({ client: conn, schema });
   }
   return db;
 }

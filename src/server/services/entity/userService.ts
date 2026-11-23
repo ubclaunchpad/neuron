@@ -1,4 +1,3 @@
-import type { IJobService } from "@/server/services/jobService";
 import type {
   CreateInstructorInput,
   UpdateInstructorInput,
@@ -9,6 +8,7 @@ import type { ListResponse } from "@/models/list-response";
 import { buildUser, type User } from "@/models/user";
 import { type Drizzle } from "@/server/db";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import type { IJobService } from "@/server/services/jobService";
 import { renderVolunteerApproved } from "@/server/emails/templates/volunteer-approved";
 import { renderVolunteerReactivated } from "@/server/emails/templates/volunteer-reactivated";
 import { renderVolunteerDeactivated } from "@/server/emails/templates/volunteer-deactivated";
@@ -42,7 +42,6 @@ export interface IUserService {
 
 export class UserService implements IUserService {
   private readonly db: Drizzle;
-
   private readonly jobService: IJobService;
 
   constructor({ db, jobService }: { db: Drizzle; jobService: IJobService }) {

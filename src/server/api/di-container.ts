@@ -94,8 +94,9 @@ const createRootContainer = (): NeuronContainer => {
   registerDb(container);
   //registerCacheClient(container);
   registerServices(container);
-  // JobService owns startup diagnostics and automatic recovery.
-  void container.cradle.jobService.start().catch(() => {});
+  void container.cradle.jobService.start().catch((error) => {
+    console.error("[pg-boss] failed to start job service", error);
+  });
 
   return container;
 };
@@ -117,9 +118,8 @@ const registerServices = (container: NeuronContainer) => {
     preferenceService: asClass<IPreferenceService>(PreferenceService).scoped(),
     notificationService:
       asClass<INotificationService>(NotificationService).scoped(),
-    notificationEventService: asClass<INotificationEventService>(
-      NotificationEventService,
-    ).scoped(),
+    notificationEventService:
+      asClass<INotificationEventService>(NotificationEventService).scoped(),
     // cacheService: asClass<ICacheService>(CacheService).scoped(),
   });
 };

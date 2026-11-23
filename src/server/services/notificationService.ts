@@ -314,7 +314,7 @@ export class NotificationService implements INotificationService {
   }): Promise<void> {
     // Check idempotency — per-user keys are stored as `${baseKey}:${userId}`,
     // so we check for any row whose key starts with the base key.
-    if (idempotencyKey) {
+    if (idempotencyKey !== undefined) {
       const [existing] = await this.db
         .select({ id: notification.id })
         .from(notification)
@@ -370,61 +370,67 @@ export class NotificationService implements INotificationService {
       return channelPrefs?.get("in_app") !== false;
     });
 
-    if (inAppRecipients.length > 0) {
-      // Use the same idempotency key base but append userId for per-user uniqueness
-      const notificationRows = inAppRecipients.map((r) => ({
-        userId: r.userId,
-        type,
-        title,
-        body,
-        linkUrl,
-        sourceType,
-        sourceId,
-        actorId,
-        idempotencyKey: idempotencyKey
-          ? `${idempotencyKey}:${r.userId}`
-          : undefined,
-      }));
-
-      await this.db
-        .insert(notification)
-        .values(notificationRows)
-        .onConflictDoNothing({ target: notification.idempotencyKey });
+    const emailRecipients = recipients.filter(
+      (recipient) => preferences.get(recipient.userId)?.get("email") === true,
+    );
+    let html: string | undefined;
+    let emailText: string | undefined;
+    if (emailRecipients.length > 0 && typeDef.renderEmail) {
+      try {
+        const rendered = await typeDef.renderEmail(context);
+        html = rendered.html;
+        emailText = rendered.text;
+      } catch (error) {
+        console.error(
+          `[notification] Failed to render email template for ${type}:`,
+          error,
+        );
+      }
     }
 
-    // Process email channel
-    const emailRecipients = recipients.filter((r) => {
-      const channelPrefs = preferences.get(r.userId);
-      return channelPrefs?.get("email") === true;
-    });
+    await this.db.transaction(async (tx) => {
+      if (inAppRecipients.length > 0) {
+        // Use the same idempotency key base but append userId for per-user uniqueness
+        const notificationRows = inAppRecipients.map((r) => ({
+          userId: r.userId,
+          type,
+          title,
+          body,
+          linkUrl,
+          sourceType,
+          sourceId,
+          actorId,
+          idempotencyKey:
+            idempotencyKey !== undefined
+              ? `${idempotencyKey}:${r.userId}`
+              : undefined,
+        }));
 
-    if (emailRecipients.length > 0) {
-      // Render HTML email once for all recipients (content is identical)
-      let html: string | undefined;
-      let emailText: string | undefined;
-
-      if (typeDef.renderEmail) {
-        try {
-          const rendered = await typeDef.renderEmail(context);
-          html = rendered.html;
-          emailText = rendered.text;
-        } catch (error) {
-          console.error(
-            `[notification] Failed to render email template for ${type}:`,
-            error,
-          );
-        }
+        await tx
+          .insert(notification)
+          .values(notificationRows)
+          .onConflictDoNothing({ target: notification.idempotencyKey });
       }
 
       for (const recipient of emailRecipients) {
-        void this.jobService.run("jobs.send-email", {
-          to: recipient.email,
-          subject: title,
-          text: emailText ?? body,
-          ...(html ? { html } : {}),
-        });
+        await this.jobService.run(
+          "jobs.send-email",
+          {
+            to: recipient.email,
+            subject: title,
+            text: emailText ?? body,
+            ...(html ? { html } : {}),
+          },
+          {
+            transaction: tx,
+            idempotencyKey:
+              idempotencyKey !== undefined
+                ? `${idempotencyKey}:${recipient.userId}`
+                : undefined,
+          },
+        );
       }
-    }
+    });
   }
 
   private async resolveAudience(

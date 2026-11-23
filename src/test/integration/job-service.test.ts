@@ -1,3 +1,15 @@
+import { UserService } from "@/server/services/entity/userService";
+import { NotificationService } from "@/server/services/notificationService";
+import type { IJobService } from "@/server/services/jobService";
+import { MockPreferenceService } from "../mocks/mock-notification-services";
+import { notification } from "@/server/db/schema";
+import { randomUUID } from "crypto";
+import { user } from "@/server/db/schema";
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import * as schema from "@/server/db/schema";
+import type { PgBoss } from "pg-boss";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   createContainer,
@@ -25,6 +37,11 @@ interface TestableJobService {
     data?: unknown,
     options?: RunJobOptions,
   ): Promise<string | null>;
+  cancelPending(
+    name: string,
+    key: string,
+    options: { transaction: import("@/server/db").Transaction },
+  ): Promise<void>;
   unschedule(
     jobName: string,
     options?: { correlationId?: string },
@@ -35,7 +52,7 @@ interface TestableJobService {
 
 type TestPayload = { message: string };
 
-const { testJob, failingJob, handlerCalls } = vi.hoisted(() => {
+const { testJob, failingJob, emailJob, handlerCalls } = vi.hoisted(() => {
   const handlerCalls: { payload: TestPayload; context: JobRuntimeContext }[] =
     [];
 
@@ -55,13 +72,23 @@ const { testJob, failingJob, handlerCalls } = vi.hoisted(() => {
     },
   };
 
-  return { testJob, failingJob, handlerCalls };
+  const emailJob: RegisteredJob<{
+    to: string;
+    subject: string;
+    text: string;
+    html?: string;
+  }> = {
+    name: "jobs.send-email",
+    retryOpts: { retryLimit: 0 },
+    handler: async () => {},
+  };
+  return { testJob, failingJob, emailJob, handlerCalls };
 });
 
 // Mock the job registry so JobService sees our test jobs
 
 vi.mock("@/server/jobs/registry", () => {
-  const jobs = [testJob, failingJob];
+  const jobs: RegisteredJob<any>[] = [testJob, failingJob, emailJob];
   const byName = new Map(jobs.map((j) => [j.name, j]));
   const knownNames: Set<string> = new Set(jobs.map((j) => j.name));
 
@@ -124,6 +151,7 @@ describe("JobService", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     try {
       await jobService.stop();
     } catch {
@@ -132,6 +160,611 @@ describe("JobService", () => {
 
     const db = getTestDb();
     await db.execute(sql`DROP SCHEMA IF EXISTS pgboss CASCADE`);
+  });
+
+  const boss = () => (jobService as unknown as { boss: PgBoss }).boss;
+
+  describe("transactional enqueue", () => {
+    it("commits application state and job together, invisible to workers until commit", async () => {
+      await jobService.start();
+      const userId = randomUUID();
+      let id: string | null = null;
+      try {
+        await getTestDb().transaction(async (transaction) => {
+          await transaction.insert(user).values({
+            id: userId,
+            name: "Transaction",
+            lastName: "Test",
+            email: `${userId}@test.com`,
+            role: "volunteer",
+            status: "active",
+          });
+          id = await jobService.run(
+            "jobs.integration-test",
+            { message: "committed" },
+            { transaction },
+          );
+          expect(id).toBeTypeOf("string");
+          expect(
+            await boss().findJobs("jobs.integration-test", { id: id! }),
+          ).toHaveLength(0);
+          expect(handlerCalls).toHaveLength(0);
+        });
+        await waitForHandlerCalls();
+        expect(handlerCalls[0]?.payload.message).toBe("committed");
+        expect(
+          await getTestDb().select().from(user).where(eq(user.id, userId)),
+        ).toHaveLength(1);
+      } finally {
+        await getTestDb().delete(user).where(eq(user.id, userId));
+      }
+    });
+
+    it("rolls back both application state and the job", async () => {
+      await jobService.start();
+      const userId = randomUUID();
+      let id: string | null = null;
+      await expect(
+        getTestDb().transaction(async (transaction) => {
+          await transaction.insert(user).values({
+            id: userId,
+            name: "Rollback",
+            lastName: "Test",
+            email: `${userId}@test.com`,
+            role: "volunteer",
+            status: "active",
+          });
+          id = await jobService.run(
+            "jobs.integration-test",
+            { message: "rolled back" },
+            { transaction },
+          );
+          throw new Error("rollback");
+        }),
+      ).rejects.toThrow("rollback");
+      expect(
+        await getTestDb().select().from(user).where(eq(user.id, userId)),
+      ).toHaveLength(0);
+      expect(
+        await boss().findJobs("jobs.integration-test", { id: id! }),
+      ).toHaveLength(0);
+      expect(handlerCalls).toHaveLength(0);
+    });
+
+    it("rolls back application state when enqueue fails", async () => {
+      await jobService.start();
+      vi.spyOn(boss(), "send").mockRejectedValueOnce(
+        new Error("enqueue unavailable"),
+      );
+      const userId = randomUUID();
+      await expect(
+        getTestDb().transaction(async (transaction) => {
+          await transaction.insert(user).values({
+            id: userId,
+            name: "Failure",
+            lastName: "Test",
+            email: `${userId}@test.com`,
+            role: "volunteer",
+            status: "active",
+          });
+          await jobService.run(
+            "jobs.integration-test",
+            { message: "not queued" },
+            { transaction },
+          );
+        }),
+      ).rejects.toThrow("enqueue unavailable");
+      expect(
+        await getTestDb().select().from(user).where(eq(user.id, userId)),
+      ).toHaveLength(0);
+    });
+
+    it.each(["same-event", ""])(
+      "uses native job IDs for supplied key %j",
+      async (idempotencyKey) => {
+        await jobService.start();
+        await getTestDb().transaction(async (transaction) => {
+          const options = {
+            transaction,
+            idempotencyKey,
+            startAfter: 3600,
+          };
+          expect(
+            await jobService.run(
+              "jobs.integration-test",
+              { message: "first" },
+              options,
+            ),
+          ).toBeTypeOf("string");
+          expect(
+            await jobService.run(
+              "jobs.integration-test",
+              { message: "duplicate" },
+              options,
+            ),
+          ).toBeNull();
+        });
+        expect(
+          await jobService.run(
+            "jobs.integration-test",
+            { message: "retry" },
+            { idempotencyKey, startAfter: 3600 },
+          ),
+        ).toBeNull();
+        expect(await boss().findJobs("jobs.integration-test")).toHaveLength(1);
+      },
+    );
+
+    it("atomically cancels superseded jobs and enqueues a replacement (array parameters)", async () => {
+      await jobService.start();
+      const options = { singletonKey: "assignment", startAfter: 3600 };
+      const first = await jobService.run(
+        "jobs.integration-test",
+        { message: "old1" },
+        options,
+      );
+      const second = await jobService.run(
+        "jobs.integration-test",
+        { message: "old2" },
+        options,
+      );
+      const find = vi.spyOn(boss(), "findJobs");
+      const replacement = await getTestDb().transaction((transaction) =>
+        jobService.run(
+          "jobs.integration-test",
+          { message: "latest" },
+          { ...options, transaction, replacePending: true },
+        ),
+      );
+      expect(find).toHaveBeenCalledTimes(1);
+      const jobs = await boss().findJobs("jobs.integration-test", {
+        key: "assignment",
+      });
+      expect(jobs.find((job) => job.id === first)?.state).toBe("cancelled");
+      expect(jobs.find((job) => job.id === second)?.state).toBe("cancelled");
+      expect(jobs.find((job) => job.id === replacement)?.state).toBe("created");
+    });
+
+    it("rolls back cancellation and replacement together", async () => {
+      await jobService.start();
+      const options = { singletonKey: "assignment", startAfter: 3600 };
+      const original = await jobService.run(
+        "jobs.integration-test",
+        { message: "original" },
+        options,
+      );
+      let replacement: string | null = null;
+      await expect(
+        getTestDb().transaction(async (transaction) => {
+          replacement = await jobService.run(
+            "jobs.integration-test",
+            { message: "rolled back" },
+            { ...options, transaction, replacePending: true },
+          );
+          throw new Error("rollback");
+        }),
+      ).rejects.toThrow("rollback");
+      expect(
+        (await boss().findJobs("jobs.integration-test", { id: original! }))[0]
+          ?.state,
+      ).toBe("created");
+      expect(
+        await boss().findJobs("jobs.integration-test", { id: replacement! }),
+      ).toHaveLength(0);
+    });
+
+    it("rolls back replacement when pg-boss rejects a native option", async () => {
+      const options = { singletonKey: "invalid-retry", startAfter: 3600 };
+      const original = await jobService.run(
+        "jobs.integration-test",
+        {},
+        options,
+      );
+      await expect(
+        getTestDb().transaction((transaction) =>
+          jobService.run(
+            "jobs.integration-test",
+            {},
+            {
+              ...options,
+              transaction,
+              replacePending: true,
+              retryLimit: -1,
+            },
+          ),
+        ),
+      ).rejects.toThrow("retryLimit must be an integer >= 0");
+      const jobs = await boss().findJobs("jobs.integration-test", {
+        key: options.singletonKey,
+      });
+      expect(jobs).toHaveLength(1);
+      expect(jobs[0]).toMatchObject({ id: original, state: "created" });
+    });
+
+    it("supports native cancellation inside an application transaction", async () => {
+      await jobService.start();
+      const id = await jobService.run(
+        "jobs.integration-test",
+        { message: "cancel me" },
+        { singletonKey: "hidden", startAfter: 3600 },
+      );
+      await getTestDb().transaction((transaction) =>
+        jobService.cancelPending("jobs.integration-test", "hidden", {
+          transaction,
+        }),
+      );
+      expect(
+        (await boss().findJobs("jobs.integration-test", { id: id! }))[0]?.state,
+      ).toBe("cancelled");
+    });
+
+    it("cancels a retry reinserted while native cancellation waits on its old row", async () => {
+      await jobService.start();
+      await boss().offWork("jobs.integration-test");
+      const id = await jobService.run(
+        "jobs.integration-test",
+        { message: "retry race" },
+        { singletonKey: "retry-race", retryLimit: 3, retryDelay: 3600 },
+      );
+      expect((await boss().fetch("jobs.integration-test"))[0]?.id).toBe(id);
+      const cancel = vi.spyOn(boss(), "cancel");
+
+      const connection = postgres(testEnv.DATABASE_URL, { max: 3 });
+      let release!: () => void;
+      let failed!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const ready = new Promise<void>((resolve) => {
+        failed = resolve;
+      });
+      const failure = connection.begin(async (tx) => {
+        await boss().fail(
+          "jobs.integration-test",
+          id!,
+          {},
+          {
+            db: {
+              executeSql: async (text, values = []) => ({
+                rows: Array.from(
+                  await tx.unsafe(
+                    text,
+                    values as Parameters<typeof tx.unsafe>[1],
+                  ),
+                ),
+              }),
+            },
+          },
+        );
+        failed();
+        await gate;
+      });
+      let cancellation: Promise<void> | undefined;
+      try {
+        await ready;
+        cancellation = getTestDb().transaction((transaction) =>
+          jobService.cancelPending("jobs.integration-test", "retry-race", {
+            transaction,
+          }),
+        );
+        await vi.waitFor(async () => {
+          const [row] = await connection`
+            SELECT count(*)::int AS waiting FROM pg_stat_activity
+            WHERE datname = current_database() AND wait_event_type = 'Lock'
+              AND query LIKE '%completed_on = now()%'
+          `;
+          expect(row!.waiting).toBeGreaterThan(0);
+        });
+        release();
+        await failure;
+        await cancellation;
+        const [current] = await boss().findJobs("jobs.integration-test", {
+          id: id!,
+        });
+        expect(current?.state).toBe("cancelled");
+        expect(cancel).toHaveBeenCalledTimes(2);
+      } finally {
+        release();
+        await Promise.allSettled([failure, cancellation]);
+        await connection.end();
+      }
+    });
+
+    it("serializes concurrent replacements and keyed enqueues until transaction commit", async () => {
+      await jobService.start();
+      const connection = postgres(testEnv.DATABASE_URL, { max: 3 });
+      const db = drizzle(connection, { schema });
+      let release!: () => void;
+      let enqueued!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const ready = new Promise<void>((resolve) => {
+        enqueued = resolve;
+      });
+      const options = { singletonKey: "concurrent", startAfter: 3600 };
+      const first = getTestDb().transaction(async (transaction) => {
+        const id = await jobService.run(
+          "jobs.integration-test",
+          { message: "first" },
+          { ...options, transaction },
+        );
+        enqueued();
+        await gate;
+        return id;
+      });
+      let replacement: Promise<string | null> | undefined;
+      try {
+        await ready;
+        replacement = db.transaction((transaction) =>
+          jobService.run(
+            "jobs.integration-test",
+            { message: "latest" },
+            { ...options, transaction, replacePending: true },
+          ),
+        );
+        await vi.waitFor(async () => {
+          const [row] = await connection`
+            SELECT count(*)::int AS waiting FROM pg_stat_activity
+            WHERE datname = current_database() AND wait_event = 'advisory'
+          `;
+          expect(row!.waiting).toBeGreaterThan(0);
+        });
+        // Other keys can still progress while the same-key producer waits.
+        await db.transaction((transaction) =>
+          jobService.run(
+            "jobs.integration-test",
+            {},
+            { transaction, singletonKey: "independent", startAfter: 3600 },
+          ),
+        );
+        release();
+        const [originalId, latestId] = await Promise.all([first, replacement]);
+        const jobs = await boss().findJobs("jobs.integration-test", {
+          key: options.singletonKey,
+        });
+        expect(jobs.find((job) => job.id === originalId)?.state).toBe(
+          "cancelled",
+        );
+        expect(jobs.find((job) => job.id === latestId)?.state).toBe("created");
+      } finally {
+        release();
+        await Promise.allSettled([first, replacement]);
+        await connection.end();
+      }
+    });
+
+    it("aborts replacement if native cancellation cannot settle", async () => {
+      await jobService.start();
+      const id = await jobService.run(
+        "jobs.integration-test",
+        {},
+        {
+          singletonKey: "unsettled",
+          startAfter: 3600,
+        },
+      );
+      const cancel = vi.spyOn(boss(), "cancel").mockResolvedValue({});
+      await expect(
+        getTestDb().transaction((transaction) =>
+          jobService.run(
+            "jobs.integration-test",
+            {},
+            { transaction, singletonKey: "unsettled", replacePending: true },
+          ),
+        ),
+      ).rejects.toThrow("retry transaction");
+      expect(cancel).toHaveBeenCalledTimes(3);
+      const jobs = await boss().findJobs("jobs.integration-test", {
+        key: "unsettled",
+      });
+      expect(jobs).toHaveLength(1);
+      expect(jobs[0]).toMatchObject({ id, state: "created" });
+    });
+
+    it("rejects empty cancellation keys before starting pg-boss", async () => {
+      const start = vi.spyOn(jobService, "start");
+      const find = vi.spyOn(boss(), "findJobs");
+      const cancel = vi.spyOn(boss(), "cancel");
+      for (const key of ["", "  "]) {
+        await expect(
+          getTestDb().transaction((transaction) =>
+            jobService.cancelPending("jobs.integration-test", key, {
+              transaction,
+            }),
+          ),
+        ).rejects.toThrow("requires a transaction and singletonKey");
+      }
+      expect(start).not.toHaveBeenCalled();
+      expect(find).not.toHaveBeenCalled();
+      expect(cancel).not.toHaveBeenCalled();
+    });
+
+    it("lets a running handler detect native cancellation before its side effect", async () => {
+      let entered = false;
+      let observed: boolean | undefined;
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      vi.spyOn(testJob, "handler").mockImplementationOnce(
+        async (_payload, context) => {
+          entered = true;
+          await gate;
+          observed = await context.isCancelled?.();
+        },
+      );
+      try {
+        await jobService.run(
+          "jobs.integration-test",
+          { message: "old" },
+          { singletonKey: "active" },
+        );
+        await vi.waitFor(() => expect(entered).toBe(true), { timeout: 10_000 });
+        await getTestDb().transaction((transaction) =>
+          jobService.run(
+            "jobs.integration-test",
+            { message: "latest" },
+            { transaction, singletonKey: "active", replacePending: true },
+          ),
+        );
+        release();
+        await vi.waitFor(() => expect(observed).toBe(true), {
+          timeout: 10_000,
+        });
+        await waitForHandlerCalls();
+        expect(handlerCalls[0]?.payload.message).toBe("latest");
+      } finally {
+        release();
+      }
+    });
+  });
+
+  describe("transactional email producers", () => {
+    it("rolls back account approval if pg-boss enqueue fails", async () => {
+      await jobService.start();
+      const id = randomUUID();
+      await getTestDb()
+        .insert(user)
+        .values({
+          id,
+          name: "Approval",
+          lastName: "Test",
+          email: `${id}@test.com`,
+          role: "volunteer",
+          status: "unverified",
+        });
+      const service = new UserService({
+        db: getTestDb(),
+        jobService: jobService as unknown as IJobService,
+      });
+      try {
+        vi.spyOn(boss(), "send").mockRejectedValueOnce(
+          new Error("queue unavailable"),
+        );
+        await expect(service.verifyVolunteer(id)).rejects.toThrow(
+          "queue unavailable",
+        );
+        expect(
+          (await getTestDb().select().from(user).where(eq(user.id, id)))[0]
+            ?.status,
+        ).toBe("unverified");
+        expect(await boss().findJobs("jobs.send-email")).toHaveLength(0);
+      } finally {
+        await getTestDb().delete(user).where(eq(user.id, id));
+      }
+    });
+
+    it("serializes duplicate account transitions before enqueueing", async () => {
+      await jobService.start();
+      const id = randomUUID();
+      await getTestDb()
+        .insert(user)
+        .values({
+          id,
+          name: "Concurrent",
+          lastName: "Test",
+          email: `${id}@test.com`,
+          role: "volunteer",
+          status: "unverified",
+        });
+      const connection = postgres(env.DATABASE_URL, { max: 4 });
+      const service = new UserService({
+        db: drizzle(connection, { schema }),
+        jobService: jobService as unknown as IJobService,
+      });
+      try {
+        await Promise.all([
+          service.verifyVolunteer(id),
+          service.verifyVolunteer(id),
+        ]);
+        expect(await boss().findJobs("jobs.send-email")).toHaveLength(1);
+        const results = await Promise.allSettled([
+          service.deactivateUser(id),
+          service.deactivateUser(id),
+        ]);
+        expect(
+          results.filter((result) => result.status === "fulfilled"),
+        ).toHaveLength(1);
+        expect(await boss().findJobs("jobs.send-email")).toHaveLength(2);
+      } finally {
+        await connection.end();
+        await getTestDb().delete(user).where(eq(user.id, id));
+      }
+    });
+
+    it.each([true, false])(
+      "commits fan-out atomically and deduplicates retries (in-app: %s)",
+      async (inApp) => {
+        await jobService.start();
+        const id = randomUUID();
+        await getTestDb()
+          .insert(user)
+          .values({
+            id,
+            name: "Fanout",
+            lastName: "Test",
+            email: `${id}@test.com`,
+            role: "volunteer",
+            status: "active",
+          });
+        const preferences = new MockPreferenceService();
+        vi.spyOn(preferences, "getPreferencesForRecipients").mockResolvedValue(
+          new Map([
+            [
+              id,
+              new Map([
+                ["in_app", inApp],
+                ["email", true],
+              ]),
+            ],
+          ]),
+        );
+        const service = new NotificationService({
+          db: getTestDb(),
+          jobService: jobService as unknown as IJobService,
+          preferenceService: preferences,
+        });
+        const params = {
+          type: "shift.cancelled",
+          audience: { kind: "user" as const, userId: id },
+          context: {
+            shiftId: randomUUID(),
+            className: "Class",
+            shiftDate: "Jul 15",
+            cancelReason: "Test",
+            cancelledByName: "Admin",
+          },
+          idempotencyKey: inApp ? randomUUID() : "",
+        };
+        try {
+          const send = vi
+            .spyOn(boss(), "send")
+            .mockRejectedValueOnce(new Error("queue unavailable"));
+          await expect(service.processNotification(params)).rejects.toThrow(
+            "queue unavailable",
+          );
+          expect(
+            await getTestDb()
+              .select()
+              .from(notification)
+              .where(eq(notification.userId, id)),
+          ).toHaveLength(0);
+          await service.processNotification(params);
+          await service.processNotification(params);
+          expect(
+            await getTestDb()
+              .select()
+              .from(notification)
+              .where(eq(notification.userId, id)),
+          ).toHaveLength(inApp ? 1 : 0);
+          expect(send).toHaveBeenCalledTimes(inApp ? 2 : 3);
+          expect(await boss().findJobs("jobs.send-email")).toHaveLength(1);
+        } finally {
+          await getTestDb().delete(user).where(eq(user.id, id));
+        }
+      },
+    );
   });
 
   // Start / stop lifecycle
@@ -207,7 +840,13 @@ describe("JobService", () => {
       const id = await jobService.run(
         "jobs.integration-test",
         { message: "delayed" },
-        { startAfter: 3600 },
+        {
+          startAfter: 3600,
+          retryLimit: undefined,
+          retryDelay: undefined,
+          retryBackoff: undefined,
+          expireInSeconds: undefined,
+        },
       );
       expect(id).toBeTypeOf("string");
     });
@@ -220,46 +859,6 @@ describe("JobService", () => {
         { runAt: future },
       );
       expect(id).toBeTypeOf("string");
-    });
-
-    it("rejects when both runAt and startAfter are provided", async () => {
-      await expect(
-        jobService.run(
-          "jobs.integration-test",
-          { message: "both" },
-          { runAt: new Date(), startAfter: 30 },
-        ),
-      ).rejects.toThrow("Provide either runAt or startAfter, not both");
-    });
-
-    it("rejects correlationId without cron", async () => {
-      await expect(
-        jobService.run(
-          "jobs.integration-test",
-          { message: "corr" },
-          { correlationId: "abc" },
-        ),
-      ).rejects.toThrow("correlationId is only supported for recurring");
-    });
-
-    it("rejects startAt without cron", async () => {
-      await expect(
-        jobService.run(
-          "jobs.integration-test",
-          { message: "startAt" },
-          { startAt: new Date() },
-        ),
-      ).rejects.toThrow("startAt/endAt require cron");
-    });
-
-    it("rejects endAt without cron", async () => {
-      await expect(
-        jobService.run(
-          "jobs.integration-test",
-          { message: "endAt" },
-          { endAt: new Date() },
-        ),
-      ).rejects.toThrow("startAt/endAt require cron");
     });
   });
 
@@ -280,26 +879,6 @@ describe("JobService", () => {
         { cron: "0 * * * *", correlationId: "tenant-1" },
       );
       expect(result).toBeNull();
-    });
-
-    it("rejects cron with runAt", async () => {
-      await expect(
-        jobService.run(
-          "jobs.integration-test",
-          { message: "bad" },
-          { cron: "* * * * *", runAt: new Date() },
-        ),
-      ).rejects.toThrow("Recurring runs cannot include runAt/startAfter");
-    });
-
-    it("rejects cron with startAfter", async () => {
-      await expect(
-        jobService.run(
-          "jobs.integration-test",
-          { message: "bad" },
-          { cron: "* * * * *", startAfter: 30 },
-        ),
-      ).rejects.toThrow("Recurring runs cannot include runAt/startAfter");
     });
   });
 

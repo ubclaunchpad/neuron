@@ -152,41 +152,40 @@ export class UserService implements IUserService {
 
   // any -> active
   async verifyVolunteer(id: string): Promise<string> {
-    const [existing] = await this.db
-      .select({ status: user.status, name: user.name, email: user.email })
-      .from(user)
-      .where(eq(user.id, id));
-
-    if (!existing) {
-      throw new NeuronError(
-        `Could not find user with id ${id}`,
-        NeuronErrorCodes.NOT_FOUND,
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ status: user.status, name: user.name, email: user.email })
+        .from(user)
+        .where(eq(user.id, id))
+        .for("update");
+      if (!existing) {
+        throw new NeuronError(
+          `Could not find user with id ${id}`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+      if (existing.status === UserStatus.active) {
+        return id;
+      }
+      const isFirstApproval = existing.status === UserStatus.unverified;
+      const render = isFirstApproval
+        ? renderVolunteerApproved
+        : renderVolunteerReactivated;
+      const subject = isFirstApproval
+        ? "Welcome to BC BWP"
+        : "Your Account Has Been Reactivated";
+      const { html, text } = await render({ volunteerName: existing.name });
+      await tx
+        .update(user)
+        .set({ status: UserStatus.active })
+        .where(eq(user.id, id));
+      await this.jobService.run(
+        "jobs.send-email",
+        { to: existing.email, subject, text, html },
+        { transaction: tx },
       );
-    }
-
-    await this.db
-      .update(user)
-      .set({ status: UserStatus.active })
-      .where(eq(user.id, id));
-
-    const isFirstApproval = existing.status === UserStatus.unverified;
-    const render = isFirstApproval
-      ? renderVolunteerApproved
-      : renderVolunteerReactivated;
-    const subject = isFirstApproval
-      ? "Welcome to BC BWP"
-      : "Your Account Has Been Reactivated";
-
-    void render({ volunteerName: existing.name }).then(({ html, text }) =>
-      this.jobService.run("jobs.send-email", {
-        to: existing.email,
-        subject,
-        text,
-        html,
-      }),
-    );
-
-    return id;
+      return id;
+    });
   }
 
   // unverified -> rejected
@@ -213,34 +212,37 @@ export class UserService implements IUserService {
 
   // active -> inactive
   async deactivateUser(id: string): Promise<string> {
-    const [existing] = await this.db
-      .select({ status: user.status, name: user.name, email: user.email })
-      .from(user)
-      .where(eq(user.id, id));
-
-    if (existing?.status !== UserStatus.active) {
-      throw new NeuronError(
-        `Volunteer with id ${id} is not active`,
-        NeuronErrorCodes.BAD_REQUEST,
-      );
-    }
-
-    await this.db
-      .update(user)
-      .set({ status: UserStatus.inactive })
-      .where(eq(user.id, id));
-
-    void renderVolunteerDeactivated({ volunteerName: existing.name }).then(
-      ({ html, text }) =>
-        this.jobService.run("jobs.send-email", {
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ status: user.status, name: user.name, email: user.email })
+        .from(user)
+        .where(eq(user.id, id))
+        .for("update");
+      if (existing?.status !== UserStatus.active) {
+        throw new NeuronError(
+          `Volunteer with id ${id} is not active`,
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+      const { html, text } = await renderVolunteerDeactivated({
+        volunteerName: existing.name,
+      });
+      await tx
+        .update(user)
+        .set({ status: UserStatus.inactive })
+        .where(eq(user.id, id));
+      await this.jobService.run(
+        "jobs.send-email",
+        {
           to: existing.email,
           subject: "Your Account Has Been Deactivated",
           text,
           html,
-        }),
-    );
-
-    return id;
+        },
+        { transaction: tx },
+      );
+      return id;
+    });
   }
 
   async getVerificationRequestCount(): Promise<number> {

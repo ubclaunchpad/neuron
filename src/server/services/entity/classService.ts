@@ -37,7 +37,7 @@ import type { ITermService } from "./termService";
 import type { IUserService } from "./userService";
 import type { IVolunteerService } from "./volunteerService";
 import { tryCatch } from "@/lib/try-catch";
-import { type ScheduleAssignmentChange } from "@/server/delivery/schedule-assignment";
+import { type ScheduleAssignmentChange } from "@/server/jobs/definitions/notify-schedule-assignment.job";
 import type { IJobService } from "../jobService";
 
 export interface IClassService {
@@ -804,17 +804,21 @@ export class ClassService implements IClassService {
         // Hidden edits also invalidate older queued revisions, so republishing
         // before a worker tick cannot resurrect a stale assignment notice.
         await this.jobService.cancelDelivery(
-          "schedule-assignment",
+          "jobs.notify-schedule-assignment",
           idempotencyKey,
           { transaction: tx },
         );
         continue;
       }
-      await this.jobService.deliver("schedule-assignment", assignment, {
-        transaction: tx,
-        idempotencyKey,
-        replacePending: true,
-      });
+      await this.jobService.deliver(
+        "jobs.notify-schedule-assignment",
+        assignment,
+        {
+          transaction: tx,
+          idempotencyKey,
+          replaceExisting: true,
+        },
+      );
     }
   }
 

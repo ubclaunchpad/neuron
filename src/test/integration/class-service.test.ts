@@ -71,7 +71,7 @@ describe("ClassService", () => {
   afterEach(async () => {
     await scope.db
       .delete(deliveryOutbox)
-      .where(eq(deliveryOutbox.kind, "schedule-assignment"));
+      .where(eq(deliveryOutbox.kind, "jobs.notify-schedule-assignment"));
     if (createdClassIds.length > 0) {
       await scope.db.delete(course).where(inArray(course.id, createdClassIds));
       createdClassIds = [];
@@ -175,7 +175,7 @@ describe("ClassService", () => {
         await scope.db
           .select()
           .from(deliveryOutbox)
-          .where(eq(deliveryOutbox.kind, "schedule-assignment")),
+          .where(eq(deliveryOutbox.kind, "jobs.notify-schedule-assignment")),
       ).toHaveLength(0);
     });
 
@@ -222,7 +222,7 @@ describe("ClassService", () => {
           .where(
             eq(
               deliveryOutbox.deliveryKey,
-              `schedule-assignment:${scheduleId}:${addedVolunteerId}`,
+              `jobs.notify-schedule-assignment:${scheduleId}:${addedVolunteerId}`,
             ),
           );
       expect(await intents()).toHaveLength(1);

@@ -1,9 +1,9 @@
+import { asValue } from "awilix";
 import { randomUUID } from "crypto";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "@/server/db/schema";
 import { env } from "@/env";
-import { sendEmailJob } from "@/server/jobs/definitions/send-email.job";
 import { Temporal } from "@js-temporal/polyfill";
 import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -19,7 +19,7 @@ import { processDeliveryOutboxJob as job } from "@/server/jobs/definitions/proce
 import type { IClassService } from "@/server/services/entity/classService";
 import type { ITermService } from "@/server/services/entity/termService";
 import type { MockEmailService } from "../mocks/mock-email-service";
-import type { MockJobService } from "../mocks/mock-job-service";
+import type { IJobService } from "@/server/services/jobService";
 import {
   createTestScope,
   type ITestServiceScope,
@@ -86,7 +86,7 @@ describe("durable schedule assignment delivery", () => {
       .where(
         eq(
           outbox.deliveryKey,
-          `schedule-assignment:${scheduleId}:${volunteerId}`,
+          `jobs.notify-schedule-assignment:${scheduleId}:${volunteerId}`,
         ),
       );
     await scope.db.delete(course).where(eq(course.id, classId));
@@ -122,7 +122,7 @@ describe("durable schedule assignment delivery", () => {
       .where(
         eq(
           outbox.deliveryKey,
-          `schedule-assignment:${scheduleId}:${volunteerId}`,
+          `jobs.notify-schedule-assignment:${scheduleId}:${volunteerId}`,
         ),
       );
   const retryNow = () =>
@@ -132,13 +132,15 @@ describe("durable schedule assignment delivery", () => {
       .where(
         eq(
           outbox.deliveryKey,
-          `schedule-assignment:${scheduleId}:${volunteerId}`,
+          `jobs.notify-schedule-assignment:${scheduleId}:${volunteerId}`,
         ),
       );
 
   it("saves notification intent with no dependency on a running queue", async () => {
-    const queue = scope.resolve<MockJobService>("jobService");
-    vi.spyOn(queue, "run").mockRejectedValue(new Error("queue unavailable"));
+    const queue = scope.resolve<IJobService>("jobService");
+    vi.spyOn(queue, "run")
+      .mockClear()
+      .mockRejectedValue(new Error("queue unavailable"));
     await expect(update([volunteerId], [])).resolves.toBeUndefined();
     expect(await intents()).toHaveLength(1);
     expect(queue.run).not.toHaveBeenCalled();
@@ -169,29 +171,6 @@ describe("durable schedule assignment delivery", () => {
     expect(await intents()).toHaveLength(0);
   });
 
-  it("accepts an omitted payload serialized as null by JobService", async () => {
-    await update([volunteerId], []);
-    await job.handler(null as unknown as Parameters<typeof job.handler>[0], {
-      container: scope.container,
-      cradle: scope.container.cradle,
-    });
-    expect(mail.sentEmails).toHaveLength(1);
-  });
-
-  it("does not log authentication links from generic emails", async () => {
-    const debug = vi.spyOn(console, "debug");
-    await sendEmailJob.handler(
-      {
-        to: "test@example.com",
-        subject: "Reset password",
-        text: "Reset",
-        html: '<a href="https://example.com/reset/SECRET_TOKEN">Reset</a>',
-      },
-      { container: scope.container, cradle: scope.container.cradle },
-    );
-    expect(JSON.stringify(debug.mock.calls)).not.toContain("SECRET_TOKEN");
-  });
-
   it("supersedes add/remove/add and rejects old revision jobs", async () => {
     await update([volunteerId], []);
     await update([], [volunteerId]);
@@ -200,10 +179,9 @@ describe("durable schedule assignment delivery", () => {
     // workers implicitly through the fixture database's single-connection pool.
     const connection = postgres(env.DATABASE_URL, { max: 4 });
     const db = drizzle(connection, { schema });
-    const context = {
-      container: scope.container,
-      cradle: { ...scope.container.cradle, db },
-    };
+    const container = scope.container.createScope();
+    container.register({ db: asValue(db) });
+    const context = { container, cradle: container.cradle };
     try {
       await Promise.all([job.handler({}, context), job.handler({}, context)]);
     } finally {

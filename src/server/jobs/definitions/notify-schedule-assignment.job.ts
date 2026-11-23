@@ -13,7 +13,8 @@ import {
   volunteerToSchedule,
 } from "@/server/db/schema";
 import { renderScheduleAssignment } from "@/server/emails/templates/schedule-assignment";
-import type { DeliveryHandler } from "./outbox";
+import type { DeliveryDefinition } from "../types";
+import { classifyEmailFailure } from "@/server/services/emailService";
 
 const assignmentChange = z.object({
   scheduleId: z.uuid(),
@@ -22,11 +23,13 @@ const assignmentChange = z.object({
 });
 export type ScheduleAssignmentChange = z.infer<typeof assignmentChange>;
 
-export const scheduleAssignmentDelivery: DeliveryHandler = {
-  async prepare(intent, tx, cradle) {
-    const payload = assignmentChange.parse(intent.payload);
-    // Lock term -> course -> schedule -> user before the outbox, matching
-    // both class saves and cascading term deletion. Hold that order and hold these locks through the final SMTP delivery attempt.
+export const notifyScheduleAssignmentDelivery = {
+  name: "jobs.notify-schedule-assignment",
+  payloadSchema: assignmentChange,
+  classifyFailure: classifyEmailFailure,
+  async prepare(payload, tx, { cradle }) {
+    // Lock term -> course -> schedule -> user before the outbox, matching class
+    // saves and cascading term deletion. Retain those locks through delivery.
     const [details] = await tx
       .select({
         className: course.name,
@@ -85,7 +88,7 @@ export const scheduleAssignmentDelivery: DeliveryHandler = {
       );
     };
   },
-};
+} as const satisfies DeliveryDefinition<ScheduleAssignmentChange>;
 
 function describeSchedule(rruleString: string, durationMinutes: number) {
   const options = new RRuleTemporal({ rruleString }).options();

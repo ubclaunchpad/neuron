@@ -76,6 +76,24 @@ const coverageStatusPriority = {
   [CoverageStatus.withdrawn]: 2,
 } as const;
 
+export type CreatedShiftOccurrence = {
+  id: string;
+  scheduleId: string;
+  date: string;
+  startAt: Date;
+  endAt: Date;
+};
+
+export type CreateShiftOccurrencesInput = {
+  courseId: string;
+  scheduleId: string;
+  occurrences: readonly {
+    date: string;
+    startAt: string;
+    endAt: string;
+  }[];
+};
+
 export interface IShiftService {
   checkIn(
     shiftId: string,
@@ -90,6 +108,13 @@ export interface IShiftService {
   getShiftById(shiftId: string, userId: string): Promise<SingleShiftView>;
   getShiftsByIds(shiftIds: string[]): Promise<Shift[]>;
   createShift(input: CreateShiftInput, tx?: Transaction): Promise<string>;
+  createShifts(
+    input: CreateShiftOccurrencesInput,
+    tx?: Transaction,
+  ): Promise<CreatedShiftOccurrence[]>;
+  scheduleShiftNotifications(
+    shifts: readonly Pick<CreatedShiftOccurrence, "id" | "startAt" | "endAt">[],
+  ): void;
   deleteShift(input: ShiftIdInput): Promise<void>;
   cancelShift(input: CancelShiftInput): Promise<void>;
   assertValidShift(volunteerId: string, shiftId: string): Promise<void>;
@@ -673,6 +698,70 @@ export class ShiftService implements IShiftService {
     return this.loadShiftModels(inArray(shift.id, shiftIds));
   }
 
+  scheduleShiftNotifications(
+    shifts: readonly Pick<CreatedShiftOccurrence, "id" | "startAt" | "endAt">[],
+  ): void {
+    const now = new Date();
+    for (const created of shifts) {
+      // Schedule shift reminder (1 hour before start)
+      const reminderAt = new Date(created.startAt.getTime() - 60 * 60 * 1000);
+      if (reminderAt > now) {
+        void this.jobService.run(
+          "jobs.check-shift-notifications",
+          { shiftId: created.id, checkType: "reminder" },
+          { startAfter: reminderAt },
+        );
+      }
+
+      // Schedule no-checkin check (at shift end)
+      if (created.endAt > now) {
+        void this.jobService.run(
+          "jobs.check-shift-notifications",
+          { shiftId: created.id, checkType: "no-checkin" },
+          { startAfter: created.endAt },
+        );
+      }
+    }
+  }
+
+  async createShifts(
+    input: CreateShiftOccurrencesInput,
+    tx?: Transaction,
+  ): Promise<CreatedShiftOccurrence[]> {
+    if (input.occurrences.length === 0) return [];
+
+    const executor = tx ?? this.db;
+    const inserted = await executor
+      .insert(shift)
+      .values(
+        input.occurrences.map((occurrence) => ({
+          courseId: input.courseId,
+          scheduleId: input.scheduleId,
+          date: occurrence.date,
+          startAt: new Date(occurrence.startAt),
+          endAt: new Date(occurrence.endAt),
+        })),
+      )
+      .onConflictDoNothing({
+        target: [shift.scheduleId, shift.date],
+      })
+      .returning({
+        id: shift.id,
+        scheduleId: shift.scheduleId,
+        date: shift.date,
+        startAt: shift.startAt,
+        endAt: shift.endAt,
+      });
+
+    // When called outside a transaction, schedule notifications immediately.
+    // Transactional callers should call scheduleShiftNotifications after commit.
+    if (!tx && inserted.length > 0) {
+      this.scheduleShiftNotifications(inserted);
+    }
+
+    return inserted;
+  }
+
   async createShift(
     input: CreateShiftInput,
     tx?: Transaction,
@@ -697,7 +786,7 @@ export class ShiftService implements IShiftService {
     const startAt = new Date(input.startAt);
     const endAt = new Date(input.endAt);
 
-    const [row] = await transaction
+    const [inserted] = await transaction
       .insert(shift)
       .values({
         courseId: scheduleRow.courseId,
@@ -706,30 +795,36 @@ export class ShiftService implements IShiftService {
         startAt,
         endAt,
       })
-      .returning({ id: shift.id });
+      .onConflictDoNothing({
+        target: [shift.scheduleId, shift.date],
+      })
+      .returning({
+        id: shift.id,
+        startAt: shift.startAt,
+        endAt: shift.endAt,
+      });
 
-    const shiftId = row!.id;
+    if (inserted) {
+      this.scheduleShiftNotifications([inserted]);
+      return inserted.id;
+    }
 
-    // Schedule shift reminder (1 hour before start)
-    const reminderAt = new Date(startAt.getTime() - 60 * 60 * 1000);
-    if (reminderAt > new Date()) {
-      void this.jobService.run(
-        "jobs.check-shift-notifications",
-        { shiftId, checkType: "reminder" },
-        { startAfter: reminderAt },
+    const [existing] = await transaction
+      .select({ id: shift.id })
+      .from(shift)
+      .where(
+        and(eq(shift.scheduleId, input.scheduleId), eq(shift.date, input.date)),
+      )
+      .limit(1);
+
+    if (!existing) {
+      throw new NeuronError(
+        "Failed to create or locate shift occurrence",
+        NeuronErrorCodes.INTERNAL_SERVER_ERROR,
       );
     }
 
-    // Schedule no-checkin check (at shift end)
-    if (endAt > new Date()) {
-      void this.jobService.run(
-        "jobs.check-shift-notifications",
-        { shiftId, checkType: "no-checkin" },
-        { startAfter: endAt },
-      );
-    }
-
-    return shiftId;
+    return existing.id;
   }
 
   async deleteShift(input: ShiftIdInput): Promise<void> {

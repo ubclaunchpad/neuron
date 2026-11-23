@@ -18,9 +18,9 @@ import {
 } from "@/models/api/schedule";
 import { buildClass, type Class, type ClassResponse } from "@/models/class";
 import { buildSchedule, type ScheduleRule } from "@/models/schedule";
-import type { Term } from "@/models/term";
 import { type Drizzle, type Transaction } from "@/server/db";
 import {
+  blackout,
   course,
   term,
   instructorToSchedule,
@@ -32,11 +32,217 @@ import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import type { ICurrentSessionService } from "@/server/services/currentSessionService";
 import type { IImageService } from "../imageService";
-import type { IShiftService } from "./shiftService";
+import type { CreatedShiftOccurrence, IShiftService } from "./shiftService";
 import type { ITermService } from "./termService";
 import type { IUserService } from "./userService";
 import type { IVolunteerService } from "./volunteerService";
 import { tryCatch } from "@/lib/try-catch";
+
+export type ScheduleOccurrence = {
+  date: string;
+  startAt: string;
+  endAt: string;
+};
+
+export type ExpandScheduleOccurrencesInput = {
+  rule: ScheduleRule;
+  durationMinutes: number;
+  effectiveStart?: string | null;
+  effectiveEnd?: string | null;
+  termStartDate: string;
+  termEndDate: string;
+  blackouts: readonly { startsOn: string; endsOn: string }[];
+};
+
+export type PublishClassResult = {
+  classId: string;
+  status: "published" | "already_published";
+  createdShiftCount: number;
+};
+
+export type PublishClassOutcome =
+  | PublishClassResult
+  | {
+      classId: string;
+      status: "failed";
+      error: string;
+      errorCode?: string;
+    };
+
+export type PublishAllClassesResult = {
+  total: number;
+  publishedCount: number;
+  alreadyPublishedCount: number;
+  failedCount: number;
+  results: PublishClassOutcome[];
+};
+
+const PLACEHOLDER_DATE =
+  Temporal.Instant.fromEpochMilliseconds(0).toZonedDateTimeISO("UTC");
+
+function toTemporalZonedDateTime(
+  date: string,
+  rule: Pick<ScheduleRule, "tzid" | "localStartTime">,
+): Temporal.ZonedDateTime {
+  return Temporal.PlainDate.from(date).toZonedDateTime({
+    timeZone: rule.tzid,
+    plainTime: Temporal.PlainTime.from(rule.localStartTime),
+  });
+}
+
+function buildRRuleFromScheduleRule(rule: ScheduleRule): RRuleTemporal {
+  const { hour, minute, second } = Temporal.PlainTime.from(rule.localStartTime);
+  const baseRRuleParams = {
+    dtstart: PLACEHOLDER_DATE,
+    byHour: [hour],
+    byMinute: [minute],
+    bySecond: [second],
+    tzid: rule.tzid,
+  };
+
+  switch (rule.type) {
+    case "weekly":
+      return new RRuleTemporal({
+        ...baseRRuleParams,
+        freq: "WEEKLY",
+        byDay: [rule.weekday],
+        interval: rule.interval,
+      });
+    case "monthly":
+      return new RRuleTemporal({
+        ...baseRRuleParams,
+        freq: "MONTHLY",
+        byDay: [rule.weekday],
+        bySetPos: [rule.nth],
+      });
+    case "single":
+      return new RRuleTemporal({
+        ...baseRRuleParams,
+        freq: "YEARLY",
+        count: rule.extraDates.length,
+        rDate: rule.extraDates.map((date) =>
+          toTemporalZonedDateTime(date, rule),
+        ),
+      });
+  }
+}
+
+function buildBlackoutDateSet(
+  blackouts: readonly { startsOn: string; endsOn: string }[],
+  windowStart: Temporal.PlainDate,
+  windowEnd: Temporal.PlainDate,
+): Set<string> {
+  const dates = new Set<string>();
+  for (const range of blackouts) {
+    const start = Temporal.PlainDate.from(range.startsOn);
+    const end = Temporal.PlainDate.from(range.endsOn);
+    const clampedStart =
+      Temporal.PlainDate.compare(start, windowStart) < 0 ? windowStart : start;
+    const clampedEnd =
+      Temporal.PlainDate.compare(end, windowEnd) > 0 ? windowEnd : end;
+
+    for (
+      let d = clampedStart;
+      Temporal.PlainDate.compare(d, clampedEnd) <= 0;
+      d = d.add({ days: 1 })
+    ) {
+      dates.add(d.toString());
+    }
+  }
+  return dates;
+}
+
+/**
+ * Expands a schedule rule into concrete shift occurrences within its effective
+ * date window, excluding blackout dates. Each occurrence is uniquely identified
+ * within its schedule by calendar date (`date` in `rule.tzid`).
+ */
+export function expandScheduleOccurrences(
+  input: ExpandScheduleOccurrencesInput,
+): ScheduleOccurrence[] {
+  const {
+    rule,
+    durationMinutes,
+    effectiveStart,
+    effectiveEnd,
+    termStartDate,
+    termEndDate,
+    blackouts,
+  } = input;
+
+  // Schedule start/end dates override term start/end dates.
+  const startDate = effectiveStart ?? termStartDate;
+  const endDate = effectiveEnd ?? termEndDate;
+  const startPlainDate = Temporal.PlainDate.from(startDate);
+  const endPlainDate = Temporal.PlainDate.from(endDate);
+
+  if (Temporal.PlainDate.compare(endPlainDate, startPlainDate) < 0) {
+    return [];
+  }
+
+  const blackoutDates = buildBlackoutDateSet(
+    blackouts,
+    startPlainDate,
+    endPlainDate,
+  );
+
+  if (rule.type === ScheduleType.single) {
+    const uniqueDates = Array.from(
+      new Set(
+        rule.extraDates
+          .map((d) => Temporal.PlainDate.from(d))
+          .filter(
+            (d) =>
+              Temporal.PlainDate.compare(d, startPlainDate) >= 0 &&
+              Temporal.PlainDate.compare(d, endPlainDate) <= 0 &&
+              !blackoutDates.has(d.toString()),
+          )
+          .sort(Temporal.PlainDate.compare)
+          .map((d) => d.toString()),
+      ),
+    );
+
+    return uniqueDates.map((date) => {
+      const dt = toTemporalZonedDateTime(date, rule);
+      return {
+        date,
+        startAt: dt.toInstant().toString(),
+        endAt: dt.add({ minutes: durationMinutes }).toInstant().toString(),
+      };
+    });
+  }
+
+  const dtstart = toTemporalZonedDateTime(startDate, rule);
+  const until = toTemporalZonedDateTime(endDate, rule);
+  const rrule = buildRRuleFromScheduleRule(rule);
+  const exDate = Array.from(blackoutDates, (date) =>
+    toTemporalZonedDateTime(date, rule),
+  );
+
+  const finishedRule = new RRuleTemporal({
+    ...rrule.options(),
+    dtstart,
+    until,
+    exDate,
+  });
+
+  const seenDates = new Set<string>();
+  const occurrences: ScheduleOccurrence[] = [];
+
+  for (const dt of finishedRule.all()) {
+    const date = dt.toPlainDate().toString();
+    if (blackoutDates.has(date) || seenDates.has(date)) continue;
+    seenDates.add(date);
+
+    occurrences.push({
+      date,
+      startAt: dt.toInstant().toString(),
+      endAt: dt.add({ minutes: durationMinutes }).toInstant().toString(),
+    });
+  }
+
+  return occurrences;
+}
 
 export interface IClassService {
   getClassesForSelect(): Promise<{ id: string; name: string }[]>;
@@ -48,8 +254,8 @@ export interface IClassService {
   createClass(classCreate: CreateClassOutput): Promise<string>;
   updateClass(classUpdate: UpdateClassOutput): Promise<void>;
   deleteClass(classId: string): Promise<void>;
-  publishClass(classId: string): Promise<void>;
-  publishAllClasses(): Promise<void>;
+  publishClass(classId: string): Promise<PublishClassResult>;
+  publishAllClasses(): Promise<PublishAllClassesResult>;
   retrieveFullClasses(input: {
     where: SQL<unknown>;
     withTotalCount?: boolean;
@@ -293,112 +499,203 @@ export class ClassService implements IClassService {
     }
   }
 
-  async publishClass(classId: string): Promise<void> {
-    const classToPublish = await this.getClass(classId);
-    const term = await this.termService.getTerm(classToPublish.termId);
-
-    return await this.db.transaction(async (tx: Transaction) => {
-      const schedulesToPublish = classToPublish.schedules;
-      for (const schedule of schedulesToPublish) {
-        // schedule start/end dates override term start/end dates
-        const startDate = schedule.effectiveStart ?? term.startDate;
-        const endDate = schedule.effectiveEnd ?? term.endDate;
-
-        const rule = schedule.rule;
-        const dtstart = this.toTemporalZonedDateTime(startDate, rule);
-        const until = this.toTemporalZonedDateTime(endDate, rule);
-
-        const rrule = this.buildRRuleFromScheduleRule(rule);
-        const exDate = this.getExDate(term, rule, dtstart);
-
-        const finishedRule = new RRuleTemporal({
-          ...rrule.options(),
-          dtstart,
-          until,
-          exDate,
-        });
-
-        // create shifts for all dates in rrule
-        const occurrences = finishedRule.all();
-        const durationMinutes = schedule.durationMinutes;
-
-        for (const dt of occurrences) {
-          const shiftDate = dt.toPlainDate();
-
-          const startAt = dt.toInstant().toString();
-          const endAt = dt
-            .add({ minutes: durationMinutes })
-            .toInstant()
-            .toString();
-
-          // store start/end times in UTC
-          await this.shiftService.createShift(
-            {
-              scheduleId: schedule.id,
-              date: shiftDate.toString(),
-              startAt,
-              endAt,
-            },
-            tx,
-          );
-        }
-
-        // update class to published
-        const row = await tx
-          .update(course)
-          .set({ published: true })
-          .where(eq(course.id, classId))
-          .returning({ id: course.id });
-
-        if (row.length !== 1) {
-          throw new NeuronError(
-            "Failed to update Class",
-            NeuronErrorCodes.INTERNAL_SERVER_ERROR,
-          );
-        }
-      }
+  async publishClass(classId: string): Promise<PublishClassResult> {
+    const canViewUnpublishedTerms = hasPermission({
+      user: this.currentSessionService.getUser(),
+      permission: { terms: ["view-unpublished"] },
     });
-  }
 
-  private getExDate(
-    term: Term,
-    rule: ScheduleRule,
-    startDate: Temporal.ZonedDateTime,
-  ) {
-    const exDate: Temporal.ZonedDateTime[] = [];
-    for (const holiday of term.holidays) {
-      const start = Temporal.PlainDate.from(holiday.startsOn);
-      const end = Temporal.PlainDate.from(holiday.endsOn);
+    const txResult = await this.db.transaction(async (tx: Transaction) => {
+      // Lock the course row so concurrent publish attempts serialize and
+      // observe committed publication state before generating shifts.
+      const [lockedCourse] = await tx
+        .select({
+          id: course.id,
+          termId: course.termId,
+          published: course.published,
+        })
+        .from(course)
+        .where(eq(course.id, classId))
+        .for("update");
 
-      for (
-        let d = start;
-        Temporal.PlainDate.compare(d, end) <= 0;
-        d = d.add({ days: 1 })
-      ) {
-        exDate.push(
-          d.toZonedDateTime({
-            plainTime: Temporal.PlainTime.from(rule.localStartTime),
-            timeZone: rule.tzid,
-          }),
+      if (!lockedCourse) {
+        throw new NeuronError(
+          `Could not find Class with id ${classId}`,
+          NeuronErrorCodes.NOT_FOUND,
         );
       }
+
+      const [termRow] = await tx
+        .select()
+        .from(term)
+        .where(
+          and(
+            eq(term.id, lockedCourse.termId),
+            canViewUnpublishedTerms ? undefined : eq(term.published, true),
+          ),
+        );
+
+      if (!termRow) {
+        throw new NeuronError(
+          `Could not find Class with id ${classId}`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      if (lockedCourse.published) {
+        return {
+          status: "already_published" as const,
+          createdShifts: [] as CreatedShiftOccurrence[],
+        };
+      }
+
+      const termBlackouts = await tx
+        .select({
+          startsOn: blackout.startsOn,
+          endsOn: blackout.endsOn,
+        })
+        .from(blackout)
+        .where(eq(blackout.termId, termRow.id));
+
+      const scheduleRows = await tx
+        .select()
+        .from(schedule)
+        .where(eq(schedule.courseId, classId))
+        .orderBy(asc(schedule.id));
+
+      const scheduleIds = scheduleRows.map((s) => s.id);
+      const scheduleBlackouts =
+        scheduleIds.length > 0
+          ? await tx
+              .select({
+                scheduleId: blackout.scheduleId,
+                startsOn: blackout.startsOn,
+                endsOn: blackout.endsOn,
+              })
+              .from(blackout)
+              .where(inArray(blackout.scheduleId, scheduleIds))
+          : [];
+
+      const blackoutsByScheduleId = new Map<
+        string,
+        { startsOn: string; endsOn: string }[]
+      >();
+      for (const b of scheduleBlackouts) {
+        if (!b.scheduleId) continue;
+        const list = blackoutsByScheduleId.get(b.scheduleId) ?? [];
+        list.push({ startsOn: b.startsOn, endsOn: b.endsOn });
+        blackoutsByScheduleId.set(b.scheduleId, list);
+      }
+
+      const createdShifts: CreatedShiftOccurrence[] = [];
+
+      for (const scheduleRow of scheduleRows) {
+        const rule = this.buildScheduleRuleFromRRule(scheduleRow.rrule);
+        const occurrences = expandScheduleOccurrences({
+          rule,
+          durationMinutes: scheduleRow.durationMinutes,
+          effectiveStart: scheduleRow.effectiveStart,
+          effectiveEnd: scheduleRow.effectiveEnd,
+          termStartDate: termRow.startDate,
+          termEndDate: termRow.endDate,
+          blackouts: [
+            ...termBlackouts,
+            ...(blackoutsByScheduleId.get(scheduleRow.id) ?? []),
+          ],
+        });
+
+        if (occurrences.length === 0) continue;
+
+        const inserted = await this.shiftService.createShifts(
+          {
+            courseId: classId,
+            scheduleId: scheduleRow.id,
+            occurrences,
+          },
+          tx,
+        );
+        createdShifts.push(...inserted);
+      }
+
+      const updated = await tx
+        .update(course)
+        .set({ published: true })
+        .where(eq(course.id, classId))
+        .returning({ id: course.id });
+
+      if (updated.length !== 1) {
+        throw new NeuronError(
+          "Failed to update Class",
+          NeuronErrorCodes.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      return {
+        status: "published" as const,
+        createdShifts,
+      };
+    });
+
+    if (txResult.createdShifts.length > 0) {
+      this.shiftService.scheduleShiftNotifications(txResult.createdShifts);
     }
-    // prevent start dates from being included in singles
-    if (rule.type == ScheduleType.single) {
-      exDate.push(startDate);
-    }
-    return exDate;
+
+    return {
+      classId,
+      status: txResult.status,
+      createdShiftCount: txResult.createdShifts.length,
+    };
   }
 
-  async publishAllClasses(): Promise<void> {
+  async publishAllClasses(): Promise<PublishAllClassesResult> {
     const courseIds = await this.db
       .select({ id: course.id })
       .from(course)
-      .where(eq(course.published, false));
+      .where(eq(course.published, false))
+      .orderBy(asc(course.id));
 
-    if (courseIds.length === 0) return;
+    if (courseIds.length === 0) {
+      return {
+        total: 0,
+        publishedCount: 0,
+        alreadyPublishedCount: 0,
+        failedCount: 0,
+        results: [],
+      };
+    }
 
-    await Promise.allSettled(courseIds.map(({ id }) => this.publishClass(id)));
+    const results: PublishClassOutcome[] = [];
+    let publishedCount = 0;
+    let alreadyPublishedCount = 0;
+    let failedCount = 0;
+
+    for (const { id } of courseIds) {
+      try {
+        const outcome = await this.publishClass(id);
+        results.push(outcome);
+        if (outcome.status === "published") {
+          publishedCount += 1;
+        } else {
+          alreadyPublishedCount += 1;
+        }
+      } catch (error) {
+        failedCount += 1;
+        results.push({
+          classId: id,
+          status: "failed",
+          error: error instanceof Error ? error.message : String(error),
+          ...(error instanceof NeuronError ? { errorCode: error.code } : {}),
+        });
+      }
+    }
+
+    return {
+      total: courseIds.length,
+      publishedCount,
+      alreadyPublishedCount,
+      failedCount,
+      results,
+    };
   }
 
   async retrieveFullClasses({
@@ -735,56 +1032,8 @@ export class ClassService implements IClassService {
     }
   }
 
-  private readonly PlaceholderDate =
-    Temporal.Instant.fromEpochMilliseconds(0).toZonedDateTimeISO("UTC");
   private buildRRuleFromScheduleRule(rule: ScheduleRule): RRuleTemporal {
-    // Build base RRule parameters
-    const { hour, minute, second } = Temporal.PlainTime.from(
-      rule.localStartTime,
-    );
-    let baseRRuleParams = {
-      dtstart: this.PlaceholderDate,
-      byHour: [hour],
-      byMinute: [minute],
-      bySecond: [second],
-      tzid: rule.tzid,
-    };
-
-    switch (rule.type) {
-      case "weekly":
-        return new RRuleTemporal({
-          ...baseRRuleParams,
-          freq: "WEEKLY",
-          byDay: [rule.weekday],
-          interval: rule.interval,
-        });
-      case "monthly":
-        return new RRuleTemporal({
-          ...baseRRuleParams,
-          freq: "MONTHLY",
-          byDay: [rule.weekday],
-          bySetPos: [rule.nth],
-        });
-      case "single":
-        return new RRuleTemporal({
-          ...baseRRuleParams,
-          freq: "YEARLY",
-          count: rule.extraDates.length,
-          rDate: rule.extraDates.map((date) =>
-            this.toTemporalZonedDateTime(date, rule),
-          ),
-        });
-    }
-  }
-
-  private toTemporalZonedDateTime(
-    date: string,
-    rule: ScheduleRule,
-  ): Temporal.ZonedDateTime {
-    return Temporal.PlainDate.from(date).toZonedDateTime({
-      timeZone: rule.tzid,
-      plainTime: Temporal.PlainTime.from(rule.localStartTime),
-    });
+    return buildRRuleFromScheduleRule(rule);
   }
 
   private buildScheduleRuleFromRRule(rruleString: string): ScheduleRule {

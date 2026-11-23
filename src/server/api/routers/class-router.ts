@@ -11,6 +11,10 @@ import {
   type ListClass,
   type SingleClass,
 } from "@/models/class";
+import {
+  type PublishAllClassesResult,
+  type PublishClassResult,
+} from "@/server/services/entity/classService";
 import { authorizedProcedure } from "@/server/api/procedures";
 import { createTRPCRouter } from "@/server/api/trpc";
 
@@ -53,12 +57,12 @@ export const classRouter = createTRPCRouter({
     }),
   publish: authorizedProcedure({ permission: { classes: ["create"] } })
     .input(ClassIdInput)
-    .mutation(async ({ input, ctx }): Promise<void> => {
-      await ctx.classService.publishClass(input.classId);
+    .mutation(async ({ input, ctx }): Promise<PublishClassResult> => {
+      return ctx.classService.publishClass(input.classId);
     }),
   publishAll: authorizedProcedure({
     permission: { classes: ["create"] },
-  }).mutation(async ({ ctx }): Promise<void> => {
-    await ctx.classService.publishAllClasses();
+  }).mutation(async ({ ctx }): Promise<PublishAllClassesResult> => {
+    return ctx.classService.publishAllClasses();
   }),
 });

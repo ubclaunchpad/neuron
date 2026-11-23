@@ -6,7 +6,7 @@ WORKDIR /app
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
 
-# Copy dependency files
+# Copy dependency files and patches (required by postinstall: patch-package)
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 

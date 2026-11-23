@@ -38,7 +38,8 @@ async function runMigrations() {
 export async function resetDatabase() {
   const db = getTestDb();
 
-  // Drop and recreate public schema to clear all data and tables
+  // Drop and recreate schemas to clear all data, tables, and pg-boss state
+  await db.execute(sql`DROP SCHEMA IF EXISTS pgboss CASCADE`);
   await db.execute(sql`DROP SCHEMA IF EXISTS public CASCADE`);
   await db.execute(sql`CREATE SCHEMA IF NOT EXISTS public`);
 

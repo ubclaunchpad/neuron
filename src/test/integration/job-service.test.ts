@@ -410,6 +410,18 @@ describe("JobService", () => {
             { transaction, cron: "* * * * *" },
           ),
         ).rejects.toThrow("one-off");
+        await expect(
+          jobService.run(
+            "jobs.integration-test",
+            {},
+            {
+              transaction,
+              singletonKey: "key",
+              replacePending: true,
+              idempotencyKey: "reused-id",
+            },
+          ),
+        ).rejects.toThrow("fresh IDs");
       });
       await expect(
         jobService.run(

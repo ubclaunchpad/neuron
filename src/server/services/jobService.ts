@@ -165,6 +165,11 @@ export class JobService implements IJobService {
         "Replacing pending jobs requires a transaction and singletonKey",
       );
     }
+    if (options?.replacePending && options.idempotencyKey) {
+      throw new Error(
+        "Replacement jobs require fresh IDs; omit idempotencyKey",
+      );
+    }
     await this.start();
     return this.runWithStartedBoss(jobName, data, options);
   }

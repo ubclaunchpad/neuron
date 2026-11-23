@@ -136,7 +136,7 @@ jobs:
 
       - name: Run integration tests
         env:
-          DATABASE_URL: postgresql://postgres:ci_test_password@localhost:5432/neuron_test
+          TEST_DATABASE_URL: postgresql://postgres:ci_test_password@localhost:5432/neuron_test
           TZ: UTC
         run: pnpm test:integration
 

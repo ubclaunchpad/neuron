@@ -1,12 +1,17 @@
 import { defineConfig } from "vitest/config";
-import { config } from "dotenv";
 import path from "path";
+import { resolveTestEnv } from "./src/test/test-env";
 
-// Load environment variables from .env.test (existing env vars take precedence)
-config({ path: ".env.test" });
+const testEnv = resolveTestEnv(__dirname);
+
+// Apply resolved test env in the main process (for globalSetup) as well as workers
+Object.assign(process.env, testEnv);
 
 export default defineConfig({
+  // Prevent Vite from auto-loading `.env` (dev DB) when `.env.test` is absent
+  envDir: false,
   test: {
+    env: testEnv,
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],

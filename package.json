@@ -29,8 +29,7 @@
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:coverage": "vitest run --coverage",
-    "test:db:create": "docker compose -f docker-compose.dev.yaml exec postgres psql -U postgres -c 'CREATE DATABASE neuron_test;' || true",
-    "test:db:push": "dotenv -e .env.test -- drizzle-kit push --force"
+    "test:db:create": "docker compose -f docker-compose.dev.yaml exec postgres psql -U postgres -c 'CREATE DATABASE neuron_test;' || true"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

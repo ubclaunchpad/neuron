@@ -7,6 +7,7 @@ import { UserStatus } from "@/models/interfaces";
 import type { ListResponse } from "@/models/list-response";
 import { buildUser, type User } from "@/models/user";
 import { type Drizzle } from "@/server/db";
+import { isUniqueViolation } from "@/server/db/errors";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import type { IJobService } from "@/server/services/jobService";
 import { renderVolunteerApproved } from "@/server/emails/templates/volunteer-approved";
@@ -284,8 +285,8 @@ export class UserService implements IUserService {
       }
 
       return buildUser(createdUser);
-    } catch (error: any) {
-      if (error?.code === "23505" || error?.message?.includes("unique")) {
+    } catch (error) {
+      if (isUniqueViolation(error)) {
         throw new NeuronError(
           "A user with this email already exists",
           NeuronErrorCodes.BAD_REQUEST,
@@ -317,8 +318,8 @@ export class UserService implements IUserService {
       }
 
       return buildUser(createdUser);
-    } catch (error: any) {
-      if (error?.code === "23505" || error?.message?.includes("unique")) {
+    } catch (error) {
+      if (isUniqueViolation(error)) {
         throw new NeuronError(
           "An instructor with this email already exists",
           NeuronErrorCodes.BAD_REQUEST,
@@ -383,8 +384,8 @@ export class UserService implements IUserService {
       }
 
       return buildUser(updatedUser);
-    } catch (error: any) {
-      if (error?.code === "23505" || error?.message?.includes("unique")) {
+    } catch (error) {
+      if (isUniqueViolation(error)) {
         throw new NeuronError(
           "An instructor with this email already exists",
           NeuronErrorCodes.BAD_REQUEST,

@@ -149,6 +149,12 @@ export class JobService implements IJobService {
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
   ): Promise<string | null> {
+    this.validateRunOptions(options);
+    await this.start();
+    return this.runWithStartedBoss(jobName, data, options);
+  }
+
+  private validateRunOptions(options?: RunJobOptions): void {
     if (
       options?.cron &&
       (options.transaction || options.replacePending || options.idempotencyKey)
@@ -170,8 +176,20 @@ export class JobService implements IJobService {
         "Replacement jobs require fresh IDs; omit idempotencyKey",
       );
     }
-    await this.start();
-    return this.runWithStartedBoss(jobName, data, options);
+    if (options?.cron && (options.runAt || options.startAfter)) {
+      throw new Error("Recurring runs cannot include runAt/startAfter.");
+    }
+    if (!options?.cron && options?.correlationId) {
+      throw new Error(
+        "correlationId is only supported for recurring (cron) runs.",
+      );
+    }
+    if (!options?.cron && (options?.startAt || options?.endAt)) {
+      throw new Error("startAt/endAt require cron for recurring runs.");
+    }
+    if (options?.runAt !== undefined && options.startAfter !== undefined) {
+      throw new Error("Provide either runAt or startAfter, not both.");
+    }
   }
 
   async cancelPending(
@@ -180,12 +198,24 @@ export class JobService implements IJobService {
     { transaction }: { transaction: Transaction },
   ): Promise<void> {
     this.getJobDefinition(jobName);
-    if (!singletonKey.trim()) throw new Error("singletonKey must be non-empty");
+    if (!transaction || !singletonKey?.trim())
+      throw new Error("Cancellation requires a transaction and singletonKey");
     await this.start();
-    await this.cancelMatchingJobs(
-      jobName,
-      singletonKey,
-      this.transactionDb(transaction),
+    const db = this.transactionDb(transaction);
+    await this.lockJobKey(jobName, singletonKey, db);
+    await this.cancelMatchingJobs(jobName, singletonKey, db);
+  }
+
+  private async lockJobKey(
+    jobName: RunnableJobName,
+    key: string,
+    db: PgBossDatabase,
+  ): Promise<void> {
+    // Serialize keyed producers until commit, including enqueue vs. cancel.
+    // Job transitions and storage remain entirely owned by pg-boss.
+    await db.executeSql(
+      "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
+      [JSON.stringify(["neuron.jobs", jobName, key])],
     );
   }
 
@@ -194,16 +224,27 @@ export class JobService implements IJobService {
     key: string,
     db: PgBossDatabase,
   ): Promise<void> {
-    const jobs = await this.boss.findJobs(jobName, { key, db });
-    const ids = jobs
-      .filter(
-        (job) =>
-          job.state === "created" ||
-          job.state === "retry" ||
-          job.state === "active",
-      )
-      .map((job) => job.id);
-    if (ids.length > 0) await this.boss.cancel(jobName, ids, { db });
+    if (!db || !key?.trim())
+      throw new Error("Cancellation requires a transaction and singletonKey");
+    for (let attempt = 0; attempt <= 3; attempt++) {
+      const jobs = await this.boss.findJobs(jobName, { key, db });
+      const ids = jobs
+        .filter(
+          (job) =>
+            job.state === "created" ||
+            job.state === "retry" ||
+            job.state === "active",
+        )
+        .map((job) => job.id);
+      if (ids.length === 0) return;
+      if (attempt === 3)
+        throw new Error(
+          "Pending jobs changed during cancellation; retry transaction",
+        );
+      await this.boss.cancel(jobName, ids, { db });
+      // Native retries delete/reinsert rows. A cancel waiting on that delete
+      // can miss the replacement tuple, so re-read with a fresh snapshot.
+    }
   }
 
   private transactionDb(transaction: Transaction): PgBossDatabase {
@@ -287,6 +328,8 @@ export class JobService implements IJobService {
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
   ): Promise<string | null> {
+    // Startup schedules also enter here, bypassing the public run() method.
+    this.validateRunOptions(options);
     const definition = this.getJobDefinition(jobName);
     const mergedOptions = mergeRetryOptions(definition.retryOpts, options);
     const cron = mergedOptions?.cron;
@@ -294,10 +337,6 @@ export class JobService implements IJobService {
     if (cron) {
       const correlationId = mergedOptions?.correlationId;
       const queueName = this.getQueueName(jobName, correlationId);
-
-      if (mergedOptions?.runAt || mergedOptions?.startAfter) {
-        throw new Error("Recurring runs cannot include runAt/startAfter.");
-      }
 
       await this.ensureWorkerRegistered(queueName, definition);
 
@@ -318,18 +357,11 @@ export class JobService implements IJobService {
       return null;
     }
 
-    if (mergedOptions?.correlationId) {
-      throw new Error(
-        "correlationId is only supported for recurring (cron) runs.",
-      );
-    }
-    if (mergedOptions?.startAt || mergedOptions?.endAt) {
-      throw new Error("startAt/endAt require cron for recurring runs.");
-    }
-
     const { transaction, replacePending, idempotencyKey, ...queueOptions } =
       mergedOptions ?? {};
     const db = transaction ? this.transactionDb(transaction) : undefined;
+    if (db && queueOptions.singletonKey !== undefined)
+      await this.lockJobKey(jobName, queueOptions.singletonKey, db);
     if (replacePending)
       await this.cancelMatchingJobs(jobName, queueOptions.singletonKey!, db!);
     const digest = idempotencyKey
@@ -352,9 +384,6 @@ export class JobService implements IJobService {
             startAfter: rawStartAfter,
             ...rest
           } = queueOptions;
-          if (runAt !== undefined && rawStartAfter !== undefined) {
-            throw new Error("Provide either runAt or startAfter, not both.");
-          }
           const startAfter = runAt ?? rawStartAfter;
           return {
             ...rest,

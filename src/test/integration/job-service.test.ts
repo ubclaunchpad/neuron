@@ -6,6 +6,9 @@ import { notification } from "@/server/db/schema";
 import { randomUUID } from "crypto";
 import { user } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import * as schema from "@/server/db/schema";
 import type { PgBoss } from "pg-boss";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
@@ -360,6 +363,212 @@ describe("JobService", () => {
       expect(
         (await boss().findJobs("jobs.integration-test", { id: id! }))[0]?.state,
       ).toBe("cancelled");
+    });
+
+    it("cancels a retry reinserted while native cancellation waits on its old row", async () => {
+      await jobService.start();
+      await boss().offWork("jobs.integration-test");
+      const id = await jobService.run(
+        "jobs.integration-test",
+        { message: "retry race" },
+        { singletonKey: "retry-race", retryLimit: 3, retryDelay: 3600 },
+      );
+      expect((await boss().fetch("jobs.integration-test"))[0]?.id).toBe(id);
+      const cancel = vi.spyOn(boss(), "cancel");
+
+      const connection = postgres(testEnv.DATABASE_URL, { max: 3 });
+      let release!: () => void;
+      let failed!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const ready = new Promise<void>((resolve) => {
+        failed = resolve;
+      });
+      const failure = connection.begin(async (tx) => {
+        await boss().fail(
+          "jobs.integration-test",
+          id!,
+          {},
+          {
+            db: {
+              executeSql: async (text, values = []) => ({
+                rows: Array.from(
+                  await tx.unsafe(
+                    text,
+                    values as Parameters<typeof tx.unsafe>[1],
+                  ),
+                ),
+              }),
+            },
+          },
+        );
+        failed();
+        await gate;
+      });
+      let cancellation: Promise<void> | undefined;
+      try {
+        await ready;
+        cancellation = getTestDb().transaction((transaction) =>
+          jobService.cancelPending("jobs.integration-test", "retry-race", {
+            transaction,
+          }),
+        );
+        await vi.waitFor(async () => {
+          const [row] = await connection`
+            SELECT count(*)::int AS waiting FROM pg_stat_activity
+            WHERE datname = current_database() AND wait_event_type = 'Lock'
+              AND query LIKE '%completed_on = now()%'
+          `;
+          expect(row!.waiting).toBeGreaterThan(0);
+        });
+        release();
+        await failure;
+        await cancellation;
+        const [current] = await boss().findJobs("jobs.integration-test", {
+          id: id!,
+        });
+        expect(current?.state).toBe("cancelled");
+        expect(cancel).toHaveBeenCalledTimes(2);
+      } finally {
+        release();
+        await Promise.allSettled([failure, cancellation]);
+        await connection.end();
+      }
+    });
+
+    it("serializes concurrent replacements and keyed enqueues until transaction commit", async () => {
+      await jobService.start();
+      const connection = postgres(testEnv.DATABASE_URL, { max: 3 });
+      const db = drizzle(connection, { schema });
+      let release!: () => void;
+      let enqueued!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const ready = new Promise<void>((resolve) => {
+        enqueued = resolve;
+      });
+      const options = { singletonKey: "concurrent", startAfter: 3600 };
+      const first = getTestDb().transaction(async (transaction) => {
+        const id = await jobService.run(
+          "jobs.integration-test",
+          { message: "first" },
+          { ...options, transaction },
+        );
+        enqueued();
+        await gate;
+        return id;
+      });
+      let replacement: Promise<string | null> | undefined;
+      try {
+        await ready;
+        replacement = db.transaction((transaction) =>
+          jobService.run(
+            "jobs.integration-test",
+            { message: "latest" },
+            { ...options, transaction, replacePending: true },
+          ),
+        );
+        await vi.waitFor(async () => {
+          const [row] = await connection`
+            SELECT count(*)::int AS waiting FROM pg_stat_activity
+            WHERE datname = current_database() AND wait_event = 'advisory'
+          `;
+          expect(row!.waiting).toBeGreaterThan(0);
+        });
+        // Other keys can still progress while the same-key producer waits.
+        await db.transaction((transaction) =>
+          jobService.run(
+            "jobs.integration-test",
+            {},
+            { transaction, singletonKey: "independent", startAfter: 3600 },
+          ),
+        );
+        release();
+        const [originalId, latestId] = await Promise.all([first, replacement]);
+        const jobs = await boss().findJobs("jobs.integration-test", {
+          key: options.singletonKey,
+        });
+        expect(jobs.find((job) => job.id === originalId)?.state).toBe(
+          "cancelled",
+        );
+        expect(jobs.find((job) => job.id === latestId)?.state).toBe("created");
+      } finally {
+        release();
+        await Promise.allSettled([first, replacement]);
+        await connection.end();
+      }
+    });
+
+    it("aborts replacement if native cancellation cannot settle", async () => {
+      await jobService.start();
+      const id = await jobService.run(
+        "jobs.integration-test",
+        {},
+        {
+          singletonKey: "unsettled",
+          startAfter: 3600,
+        },
+      );
+      const cancel = vi.spyOn(boss(), "cancel").mockResolvedValue({});
+      await expect(
+        getTestDb().transaction((transaction) =>
+          jobService.run(
+            "jobs.integration-test",
+            {},
+            { transaction, singletonKey: "unsettled", replacePending: true },
+          ),
+        ),
+      ).rejects.toThrow("retry transaction");
+      expect(cancel).toHaveBeenCalledTimes(3);
+      const jobs = await boss().findJobs("jobs.integration-test", {
+        key: "unsettled",
+      });
+      expect(jobs).toHaveLength(1);
+      expect(jobs[0]).toMatchObject({ id, state: "created" });
+    });
+
+    it("validates conflicting scheduling options before cancelling existing jobs", async () => {
+      await jobService.start();
+      const cancel = vi.spyOn(boss(), "cancel");
+      await getTestDb().transaction(async (transaction) => {
+        await expect(
+          jobService.run(
+            "jobs.integration-test",
+            {},
+            {
+              transaction,
+              singletonKey: "key",
+              replacePending: true,
+              runAt: new Date(),
+              startAfter: 60,
+            },
+          ),
+        ).rejects.toThrow("either runAt or startAfter");
+      });
+      expect(cancel).not.toHaveBeenCalled();
+    });
+
+    it("rejects unsafe replacement options through the startup scheduling path", async () => {
+      await jobService.start();
+      const cancel = vi.spyOn(boss(), "cancel");
+      // Simulate a malformed persisted/runtime definition despite the static type.
+      testJob.startup = {
+        options: { replacePending: true },
+      } as unknown as NonNullable<typeof testJob.startup>;
+      try {
+        await expect(
+          (
+            jobService as unknown as {
+              registerStartupSchedules(): Promise<void>;
+            }
+          ).registerStartupSchedules(),
+        ).rejects.toThrow("requires a transaction");
+        expect(cancel).not.toHaveBeenCalled();
+      } finally {
+        delete testJob.startup;
+      }
     });
 
     it("lets a running handler detect native cancellation before its side effect", async () => {

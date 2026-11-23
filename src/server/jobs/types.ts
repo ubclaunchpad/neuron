@@ -48,7 +48,7 @@ export interface WorkRegistrationOptions {
 export interface JobRuntimeContext {
   container: NeuronContainer;
   cradle: NeuronCradle;
-  /** Cooperative cancellation: check under domain locks before an external side effect. */
+  /** Cooperative cancellation: check immediately before an external side effect. */
   isCancelled?: () => Promise<boolean>;
 }
 
@@ -69,6 +69,7 @@ type StartupOneOffOptions = Omit<
   | "startAt"
   | "endAt"
   | "transaction"
+  | "replacePending"
   | "tz"
 >;
 

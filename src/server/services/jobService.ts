@@ -49,8 +49,6 @@ type SharedBossState = {
   pendingWorkerRegistrations: Map<string, Promise<void>>;
   recurringQueuesByJob: Map<KnownJobName, Set<string>>;
   startPromise?: Promise<void>;
-  startupRetryTimer?: ReturnType<typeof setTimeout>;
-  stopping?: boolean;
 };
 
 type GlobalWithBoss = typeof globalThis & {
@@ -89,50 +87,20 @@ export class JobService implements IJobService {
   }
 
   async start(): Promise<void> {
-    // Queue registration must finish even after pg-boss itself has connected.
-    if (sharedBossState.startPromise) return sharedBossState.startPromise;
     if (sharedBossState.isStarted) return;
-    sharedBossState.stopping = false;
-    sharedBossState.startPromise ??= this.bootstrap()
-      .then(() => {
-        this.clearStartupRetry();
-      })
-      .catch((error) => {
-        sharedBossState.startPromise = undefined;
-        if (!sharedBossState.stopping) this.scheduleStartupRetry(error);
-        throw error;
-      });
+
+    sharedBossState.startPromise ??= this.bootstrap().catch((error) => {
+      sharedBossState.startPromise = undefined;
+      throw error;
+    });
     return sharedBossState.startPromise;
   }
 
-  private clearStartupRetry(): void {
-    if (sharedBossState.startupRetryTimer)
-      clearTimeout(sharedBossState.startupRetryTimer);
-    sharedBossState.startupRetryTimer = undefined;
-  }
-
-  private scheduleStartupRetry(error: unknown): void {
-    if (sharedBossState.startupRetryTimer) return;
-    console.error("[pg-boss] startup failed; retry scheduled", {
-      errorType: error instanceof Error ? error.name : "UnknownError",
-    });
-    sharedBossState.startupRetryTimer = setTimeout(() => {
-      sharedBossState.startupRetryTimer = undefined;
-      if (sharedBossState.stopping) return;
-      // start() owns diagnostics and rescheduling on failure.
-      void this.start().catch(() => {});
-    }, 30_000);
-    sharedBossState.startupRetryTimer.unref?.();
-  }
-
   async stop(): Promise<void> {
-    sharedBossState.stopping = true;
-    this.clearStartupRetry();
     try {
-      // An in-flight bootstrap must settle before shutdown completes.
-      await sharedBossState.startPromise?.catch(() => {});
-      if (sharedBossState.boss && sharedBossState.isStarted)
+      if (sharedBossState.boss && sharedBossState.isStarted) {
         await this.boss.stop();
+      }
     } finally {
       sharedBossState.boss = undefined;
       sharedBossState.isStarted = false;
@@ -290,19 +258,11 @@ export class JobService implements IJobService {
     const definition = this.getJobDefinition(jobName);
     const mergedOptions = mergeRetryOptions(definition.retryOpts, options);
     if (mergedOptions?.cron !== undefined) {
-      const cron = mergedOptions.cron;
-      const correlationId = mergedOptions.correlationId;
+      const { cron, correlationId, ...scheduleOptions } = mergedOptions;
       const queueName = this.getQueueName(jobName, correlationId);
 
       await this.ensureWorkerRegistered(queueName, definition);
 
-      const {
-        cron: _cron,
-        runAt: _runAt,
-        startAfter: _startAfter,
-        correlationId: _correlationId,
-        ...scheduleOptions
-      } = mergedOptions;
       await this.boss.schedule(
         queueName,
         cron,
@@ -313,8 +273,14 @@ export class JobService implements IJobService {
       return null;
     }
 
-    const { transaction, replacePending, idempotencyKey, ...queueOptions } =
-      mergedOptions ?? {};
+    const {
+      transaction,
+      replacePending,
+      idempotencyKey,
+      runAt,
+      startAfter = runAt,
+      ...queueOptions
+    } = mergedOptions ?? {};
     const db = transaction ? this.transactionDb(transaction) : undefined;
     if (replacePending)
       await this.cancelMatchingJobs(jobName, queueOptions.singletonKey, db);
@@ -329,32 +295,12 @@ export class JobService implements IJobService {
     const id = digest
       ? `${digest.slice(0, 8)}-${digest.slice(8, 12)}-${digest.slice(12, 16)}-${digest.slice(16, 20)}-${digest.slice(20)}`
       : undefined;
-    const sendOptions = mergedOptions
-      ? (() => {
-          const {
-            cron: _cron,
-            startAt: _startAt,
-            endAt: _endAt,
-            correlationId: _correlationId,
-            runAt,
-            startAfter: rawStartAfter,
-            ...rest
-          } = queueOptions;
-          const startAfter = runAt ?? rawStartAfter;
-          return {
-            ...rest,
-            ...(db ? { db } : {}),
-            ...(id ? { id } : {}),
-            ...(startAfter !== undefined ? { startAfter } : {}),
-          };
-        })()
-      : undefined;
-
-    return this.boss.send(
-      jobName,
-      (data ?? null) as object | null,
-      sendOptions as any,
-    );
+    return this.boss.send(jobName, (data ?? null) as object | null, {
+      ...queueOptions,
+      ...(db ? { db } : {}),
+      ...(id ? { id } : {}),
+      ...(startAfter !== undefined ? { startAfter } : {}),
+    });
   }
 
   private async bootstrap(): Promise<void> {

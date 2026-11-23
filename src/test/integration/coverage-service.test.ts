@@ -11,15 +11,6 @@ import {
   type ITestServiceScope,
 } from "../helpers/test-service-scope";
 
-const fixtureYear = Temporal.Now.plainDateISO("UTC").add({ years: 1 }).year;
-const fixtureDates = {
-  termStart: `${fixtureYear}-06-01`,
-  sortFirst: `${fixtureYear}-07-01`,
-  primary: `${fixtureYear}-07-15`,
-  sortLast: `${fixtureYear}-08-01`,
-  termEnd: `${fixtureYear}-08-31`,
-};
-
 describe("CoverageService", () => {
   let scope: ITestServiceScope;
   let coverageService: ICoverageService;
@@ -110,8 +101,8 @@ describe("CoverageService", () => {
 
     const termId = await termService.createTerm({
       name: `Test Term ${randomUUID()}`,
-      startDate: fixtureDates.termStart,
-      endDate: fixtureDates.termEnd,
+      startDate: "2026-06-01",
+      endDate: "2026-08-31",
       holidays: [],
     });
     createdTermIds.push(termId);
@@ -133,7 +124,7 @@ describe("CoverageService", () => {
           instructorUserIds: [instructorId],
           rule: {
             type: "single",
-            extraDates: [fixtureDates.primary],
+            extraDates: ["2026-07-15"],
           },
         },
       ],
@@ -259,14 +250,14 @@ describe("CoverageService", () => {
         details: "Need coverage",
       });
 
-      const openResult = await coverageService.listCoverageRequests({
-        status: "open",
-      });
+      const openResult = await coverageService.listCoverageRequests(
+        { status: "open" },
+      );
       expect(openResult.data).toHaveLength(1);
 
-      const withdrawnResult = await coverageService.listCoverageRequests({
-        status: "withdrawn",
-      });
+      const withdrawnResult = await coverageService.listCoverageRequests(
+        { status: "withdrawn" },
+      );
       expect(withdrawnResult.data).toHaveLength(0);
     });
 
@@ -290,11 +281,7 @@ describe("CoverageService", () => {
               instructorUserIds: [instructorId],
               rule: {
                 type: "single",
-                extraDates: [
-                  fixtureDates.sortFirst,
-                  fixtureDates.primary,
-                  fixtureDates.sortLast,
-                ],
+                extraDates: ["2026-07-01", "2026-07-15", "2026-08-01"],
               },
             },
           ],
@@ -323,18 +310,18 @@ describe("CoverageService", () => {
       });
 
       it("should return results in ascending order when sortOrder is asc", async () => {
-        const result = await coverageService.listCoverageRequests({
-          sortOrder: "asc",
-        });
+        const result = await coverageService.listCoverageRequests(
+          { sortOrder: "asc" },
+        );
 
         const resultShiftIds = result.data.map((item) => item.shift.id);
         expect(resultShiftIds).toEqual(shiftIds);
       });
 
       it("should return results in descending order when sortOrder is desc", async () => {
-        const result = await coverageService.listCoverageRequests({
-          sortOrder: "desc",
-        });
+        const result = await coverageService.listCoverageRequests(
+          { sortOrder: "desc" },
+        );
 
         const resultShiftIds = result.data.map((item) => item.shift.id);
         expect(resultShiftIds).toEqual([...shiftIds].reverse());

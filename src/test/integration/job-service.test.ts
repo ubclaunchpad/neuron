@@ -690,9 +690,6 @@ describe("JobService", () => {
           role: "volunteer",
           status: "unverified",
         });
-      const { default: postgres } = await import("postgres");
-      const { drizzle } = await import("drizzle-orm/postgres-js");
-      const schema = await import("@/server/db/schema");
       const connection = postgres(env.DATABASE_URL, { max: 4 });
       const service = new UserService({
         db: drizzle(connection, { schema }),

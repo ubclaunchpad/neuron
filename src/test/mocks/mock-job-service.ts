@@ -1,6 +1,10 @@
-import type { IJobService } from "@/server/services/jobService";
+import type {
+  IJobService,
+} from "@/server/services/jobService";
 import type { JobPayload, RunnableJobName } from "@/server/jobs/registry";
-import type { RunJobOptions } from "@/server/jobs/types";
+import type {
+  RunJobOptions,
+} from "@/server/jobs/types";
 
 export class MockJobService implements IJobService {
   readonly calls: {
@@ -41,5 +45,8 @@ export class MockJobService implements IJobService {
     _options?: { correlationId?: string },
   ): Promise<void> {}
 
-  async cancelJob(_jobName: RunnableJobName, _jobId: string): Promise<void> {}
+  async cancelJob(
+    _jobName: RunnableJobName,
+    _jobId: string,
+  ): Promise<void> {}
 }

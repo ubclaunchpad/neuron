@@ -167,8 +167,7 @@ export class NotificationService implements INotificationService {
     const hasMore = items.length > limit;
     if (hasMore) items.pop();
 
-    const lastItem =
-      hasMore && items.length > 0 ? items[items.length - 1]! : null;
+    const lastItem = hasMore && items.length > 0 ? items[items.length - 1]! : null;
     const nextCursor = lastItem
       ? `${lastItem.createdAt.toISOString()}|${lastItem.id}`
       : null;
@@ -450,10 +449,7 @@ export class NotificationService implements INotificationService {
           .select({ userId: user.id, email: user.email })
           .from(user)
           .where(
-            and(
-              inArray(user.id, audience.userIds),
-              eq(user.status, UserStatus.active),
-            ),
+            and(inArray(user.id, audience.userIds), eq(user.status, UserStatus.active)),
           );
       }
 
@@ -461,12 +457,7 @@ export class NotificationService implements INotificationService {
         return this.db
           .select({ userId: user.id, email: user.email })
           .from(user)
-          .where(
-            and(
-              eq(user.role, audience.role),
-              eq(user.status, UserStatus.active),
-            ),
-          );
+          .where(and(eq(user.role, audience.role), eq(user.status, UserStatus.active)));
       }
 
       case "shift": {

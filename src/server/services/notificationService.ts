@@ -19,6 +19,7 @@ import type {
 import type { IJobService } from "@/server/services/jobService";
 import type { IPreferenceService } from "@/server/services/preferenceService";
 import { UserStatus } from "@/models/interfaces";
+import { parseNotificationCursor } from "@/models/api/notification";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { and, count, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 import type { RunnableJobName } from "@/server/jobs/registry";
@@ -143,36 +144,45 @@ export class NotificationService implements INotificationService {
       eq(notification.archived, archived !== undefined ? archived : false),
     );
     if (cursor) {
-      const [cursorTs, cursorId] = cursor.split("|");
-      if (cursorTs && cursorId) {
-        conditions.push(
-          or(
-            lt(notification.createdAt, new Date(cursorTs)),
-            and(
-              eq(notification.createdAt, new Date(cursorTs)),
-              lt(notification.id, cursorId),
-            ),
-          )!,
+      const parsed = parseNotificationCursor(cursor);
+      if (!parsed) {
+        throw new NeuronError(
+          "Invalid notification cursor",
+          NeuronErrorCodes.BAD_REQUEST,
         );
       }
+
+      const cursorTimestamp = sql`${parsed.createdAt}::timestamptz`;
+      conditions.push(
+        or(
+          lt(notification.createdAt, cursorTimestamp),
+          and(
+            eq(notification.createdAt, cursorTimestamp),
+            lt(notification.id, parsed.id),
+          ),
+        )!,
+      );
     }
 
-    const items = await this.db
-      .select()
+    const rows = await this.db
+      .select({
+        notification,
+        createdAtIso: sql<string>`to_char(${notification.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
+      })
       .from(notification)
       .where(and(...conditions))
       .orderBy(desc(notification.createdAt), desc(notification.id))
       .limit(limit + 1);
 
-    const hasMore = items.length > limit;
-    if (hasMore) items.pop();
+    const hasMore = rows.length > limit;
+    if (hasMore) rows.pop();
 
-    const lastItem = hasMore && items.length > 0 ? items[items.length - 1]! : null;
-    const nextCursor = lastItem
-      ? `${lastItem.createdAt.toISOString()}|${lastItem.id}`
+    const lastRow = hasMore && rows.length > 0 ? rows[rows.length - 1]! : null;
+    const nextCursor = lastRow
+      ? `${lastRow.createdAtIso}|${lastRow.notification.id}`
       : null;
 
-    return { items, nextCursor };
+    return { items: rows.map((row) => row.notification), nextCursor };
   }
 
   async getUnreadCount(userId: string): Promise<number> {
@@ -451,7 +461,10 @@ export class NotificationService implements INotificationService {
           .select({ userId: user.id, email: user.email })
           .from(user)
           .where(
-            and(inArray(user.id, audience.userIds), eq(user.status, UserStatus.active)),
+            and(
+              inArray(user.id, audience.userIds),
+              eq(user.status, UserStatus.active),
+            ),
           );
       }
 
@@ -459,7 +472,12 @@ export class NotificationService implements INotificationService {
         return this.db
           .select({ userId: user.id, email: user.email })
           .from(user)
-          .where(and(eq(user.role, audience.role), eq(user.status, UserStatus.active)));
+          .where(
+            and(
+              eq(user.role, audience.role),
+              eq(user.status, UserStatus.active),
+            ),
+          );
       }
 
       case "shift": {

@@ -1,5 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { RRuleTemporal } from "rrule-temporal";
 import { z } from "zod";
 import { formatScheduleRecurrence, formatTimeRange } from "@/lib/schedule-fmt";
@@ -13,8 +13,7 @@ import {
   volunteerToSchedule,
 } from "@/server/db/schema";
 import { renderScheduleAssignment } from "@/server/emails/templates/schedule-assignment";
-import type { DeliveryDefinition } from "../types";
-import { classifyEmailFailure } from "@/server/services/emailService";
+import type { RegisteredJob } from "../types";
 
 const assignmentChange = z.object({
   scheduleId: z.uuid(),
@@ -23,48 +22,49 @@ const assignmentChange = z.object({
 });
 export type ScheduleAssignmentChange = z.infer<typeof assignmentChange>;
 
-export const notifyScheduleAssignmentDelivery = {
+export const notifyScheduleAssignmentJob = {
   name: "jobs.notify-schedule-assignment",
-  payloadSchema: assignmentChange,
-  classifyFailure: classifyEmailFailure,
-  async prepare(payload, tx, { cradle }) {
-    // Lock term -> course -> schedule -> user before the outbox, matching class
-    // saves and cascading term deletion. Retain those locks through delivery.
-    const [details] = await tx
-      .select({
-        className: course.name,
-        classPublished: course.published,
-        termPublished: term.published,
-        rrule: schedule.rrule,
-        durationMinutes: schedule.durationMinutes,
-      })
-      .from(term)
-      .innerJoin(course, eq(course.termId, term.id))
-      .innerJoin(schedule, eq(schedule.courseId, course.id))
-      .where(eq(schedule.id, payload.scheduleId))
-      .for("share");
-    const [volunteer] = await tx
-      .select({ name: user.name, email: user.email, status: user.status })
-      .from(user)
-      .where(eq(user.id, payload.volunteerUserId))
-      .for("share");
-    const [assignment] = await tx
-      .select()
-      .from(volunteerToSchedule)
-      .where(
-        and(
-          eq(volunteerToSchedule.scheduleId, payload.scheduleId),
-          eq(volunteerToSchedule.volunteerUserId, payload.volunteerUserId),
-        ),
-      );
-    if (
-      !details?.classPublished ||
-      !details.termPublished ||
-      volunteer?.status !== UserStatus.active
-    )
-      return null;
-    if ((payload.change === "added") !== !!assignment) return null;
-    return async () => {
+  retryOpts: { retryLimit: 3, retryDelay: 30, retryBackoff: true },
+  async handler(payload, { cradle, isCancelled }) {
+    payload = assignmentChange.parse(payload);
+    await cradle.db.transaction(async (tx) => {
+      await tx.execute(sql`SET LOCAL lock_timeout = '5s'`);
+      // Lock term -> course -> schedule -> user, matching class saves and
+      // cascading term deletion. Retain those locks through delivery.
+      const [details] = await tx
+        .select({
+          className: course.name,
+          classPublished: course.published,
+          termPublished: term.published,
+          rrule: schedule.rrule,
+          durationMinutes: schedule.durationMinutes,
+        })
+        .from(term)
+        .innerJoin(course, eq(course.termId, term.id))
+        .innerJoin(schedule, eq(schedule.courseId, course.id))
+        .where(eq(schedule.id, payload.scheduleId))
+        .for("share");
+      const [volunteer] = await tx
+        .select({ name: user.name, email: user.email, status: user.status })
+        .from(user)
+        .where(eq(user.id, payload.volunteerUserId))
+        .for("share");
+      const [assignment] = await tx
+        .select()
+        .from(volunteerToSchedule)
+        .where(
+          and(
+            eq(volunteerToSchedule.scheduleId, payload.scheduleId),
+            eq(volunteerToSchedule.volunteerUserId, payload.volunteerUserId),
+          ),
+        );
+      if (
+        !details?.classPublished ||
+        !details.termPublished ||
+        volunteer?.status !== UserStatus.active
+      )
+        return;
+      if ((payload.change === "added") !== !!assignment) return;
       const { html, text } = await renderScheduleAssignment({
         volunteerName: volunteer.name,
         className: details.className,
@@ -78,6 +78,9 @@ export const notifyScheduleAssignmentDelivery = {
         ).toString(),
         change: payload.change,
       });
+      // A superseded job may already have been fetched. Producer edits lock
+      // these domain rows before cancelling jobs, so this check fences delivery.
+      if (await isCancelled?.()) return;
       await cradle.emailService.send(
         volunteer.email,
         payload.change === "added"
@@ -86,9 +89,9 @@ export const notifyScheduleAssignmentDelivery = {
         text,
         html,
       );
-    };
+    });
   },
-} as const satisfies DeliveryDefinition<ScheduleAssignmentChange>;
+} as const satisfies RegisteredJob<ScheduleAssignmentChange>;
 
 function describeSchedule(rruleString: string, durationMinutes: number) {
   const options = new RRuleTemporal({ rruleString }).options();

@@ -301,7 +301,7 @@ export class ClassService implements IClassService {
           );
       }
 
-      await this.recordScheduleAssignments(
+      await this.enqueueScheduleAssignments(
         tx,
         [...updatedScheduleAssignments, ...addedScheduleAssignments],
         originalClass.published && originalTerm.published,
@@ -786,7 +786,7 @@ export class ClassService implements IClassService {
     return assignments;
   }
 
-  private async recordScheduleAssignments(
+  private async enqueueScheduleAssignments(
     tx: Transaction,
     assignments: ScheduleAssignmentChange[],
     shouldNotify: boolean,
@@ -799,26 +799,22 @@ export class ClassService implements IClassService {
       else changes.set(key, assignment);
     }
     for (const assignment of changes.values()) {
-      const idempotencyKey = `${assignment.scheduleId}:${assignment.volunteerUserId}`;
+      const assignmentKey = `${assignment.scheduleId}:${assignment.volunteerUserId}`;
       if (!shouldNotify) {
         // Hidden edits also invalidate older queued revisions, so republishing
         // before a worker tick cannot resurrect a stale assignment notice.
-        await this.jobService.cancelDelivery(
+        await this.jobService.cancelPending(
           "jobs.notify-schedule-assignment",
-          idempotencyKey,
+          assignmentKey,
           { transaction: tx },
         );
         continue;
       }
-      await this.jobService.deliver(
-        "jobs.notify-schedule-assignment",
-        assignment,
-        {
-          transaction: tx,
-          idempotencyKey,
-          replaceExisting: true,
-        },
-      );
+      await this.jobService.run("jobs.notify-schedule-assignment", assignment, {
+        transaction: tx,
+        singletonKey: assignmentKey,
+        replacePending: true,
+      });
     }
   }
 

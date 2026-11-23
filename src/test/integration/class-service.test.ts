@@ -1,14 +1,9 @@
+import type { MockJobService } from "../mocks/mock-job-service";
 import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { randomUUID } from "crypto";
 import { Temporal } from "@js-temporal/polyfill";
-import {
-  user,
-  volunteer,
-  term,
-  course,
-  deliveryOutbox,
-} from "@/server/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { user, volunteer, term, course } from "@/server/db/schema";
+import { inArray } from "drizzle-orm";
 import type { IClassService } from "@/server/services/entity/classService";
 import type { ITermService } from "@/server/services/entity/termService";
 import {
@@ -20,6 +15,7 @@ describe("ClassService", () => {
   let scope: ITestServiceScope;
   let termService: ITermService;
   let classService: IClassService;
+  let jobs: MockJobService;
 
   let createdUserIds: string[] = [];
   let createdTermIds: string[] = [];
@@ -33,6 +29,7 @@ describe("ClassService", () => {
     scope.mockSession.setAsAdmin();
     termService = scope.resolve<ITermService>("termService");
     classService = scope.resolve<IClassService>("classService");
+    jobs = scope.resolve<MockJobService>("jobService");
   });
 
   beforeEach(async () => {
@@ -69,9 +66,6 @@ describe("ClassService", () => {
   });
 
   afterEach(async () => {
-    await scope.db
-      .delete(deliveryOutbox)
-      .where(eq(deliveryOutbox.kind, "jobs.notify-schedule-assignment"));
     if (createdClassIds.length > 0) {
       await scope.db.delete(course).where(inArray(course.id, createdClassIds));
       createdClassIds = [];
@@ -172,10 +166,9 @@ describe("ClassService", () => {
       });
 
       expect(
-        await scope.db
-          .select()
-          .from(deliveryOutbox)
-          .where(eq(deliveryOutbox.kind, "jobs.notify-schedule-assignment")),
+        jobs.calls.filter(
+          (call) => call.jobName === "jobs.notify-schedule-assignment",
+        ),
       ).toHaveLength(0);
     });
 
@@ -215,27 +208,19 @@ describe("ClassService", () => {
 
       await classService.updateClass(update);
 
-      const intents = () =>
-        scope.db
-          .select()
-          .from(deliveryOutbox)
-          .where(
-            eq(
-              deliveryOutbox.deliveryKey,
-              `jobs.notify-schedule-assignment:${scheduleId}:${addedVolunteerId}`,
-            ),
-          );
-      expect(await intents()).toHaveLength(1);
-      expect((await intents())[0]?.payload).toMatchObject({
+      const queued = () =>
+        jobs.calls.filter(
+          (call) => call.jobName === "jobs.notify-schedule-assignment",
+        );
+      expect(queued()).toHaveLength(1);
+      expect(queued()[0]?.data).toMatchObject({
         scheduleId,
         volunteerUserId: addedVolunteerId,
         change: "added",
       });
 
-      const originalRevision = (await intents())[0]!.revisionId;
       await classService.updateClass(update);
-      expect((await intents())[0]!.revisionId).toBe(originalRevision);
-      expect(await intents()).toHaveLength(1);
+      expect(queued()).toHaveLength(1);
 
       await classService.updateClass({
         id: classId,
@@ -251,16 +236,16 @@ describe("ClassService", () => {
           },
         ],
       });
-      expect(await intents()).toHaveLength(1);
-      expect((await intents())[0]?.payload).toMatchObject({
+      expect(queued()).toHaveLength(2);
+      expect(queued()[1]?.data).toMatchObject({
         scheduleId,
         volunteerUserId: addedVolunteerId,
         change: "removed",
       });
 
       await classService.updateClass(update);
-      expect(await intents()).toHaveLength(1);
-      expect((await intents())[0]?.payload).toMatchObject({
+      expect(queued()).toHaveLength(3);
+      expect(queued()[2]?.data).toMatchObject({
         scheduleId,
         volunteerUserId: addedVolunteerId,
         change: "added",

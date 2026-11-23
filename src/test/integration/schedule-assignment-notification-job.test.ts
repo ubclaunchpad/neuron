@@ -1,35 +1,36 @@
 import { asValue } from "awilix";
 import { randomUUID } from "crypto";
-import postgres from "postgres";
-import { drizzle } from "drizzle-orm/postgres-js";
-import * as schema from "@/server/db/schema";
-import { env } from "@/env";
 import { Temporal } from "@js-temporal/polyfill";
 import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { env } from "@/env";
 import {
   course,
   term,
   user,
   volunteer,
   volunteerToSchedule,
-  deliveryOutbox as outbox,
 } from "@/server/db/schema";
-import { processDeliveryOutboxJob as job } from "@/server/jobs/definitions/process-delivery-outbox.job";
+import {
+  notifyScheduleAssignmentJob as job,
+  type ScheduleAssignmentChange,
+} from "@/server/jobs/definitions/notify-schedule-assignment.job";
+import { JobService } from "@/server/services/jobService";
 import type { IClassService } from "@/server/services/entity/classService";
 import type { ITermService } from "@/server/services/entity/termService";
 import type { MockEmailService } from "../mocks/mock-email-service";
-import type { IJobService } from "@/server/services/jobService";
+import type { MockJobService } from "../mocks/mock-job-service";
 import {
   createTestScope,
   type ITestServiceScope,
 } from "../helpers/test-service-scope";
 
-describe("durable schedule assignment delivery", () => {
+describe("schedule assignment notification job", () => {
   let scope: ITestServiceScope;
   let classes: IClassService;
   let terms: ITermService;
   let mail: MockEmailService;
+  let jobs: MockJobService;
   let volunteerId: string;
   let termId: string;
   let classId: string;
@@ -42,16 +43,19 @@ describe("durable schedule assignment delivery", () => {
     classes = scope.resolve("classService");
     terms = scope.resolve("termService");
     mail = scope.resolve("emailService");
+    jobs = scope.resolve("jobService");
     volunteerId = randomUUID();
-    await scope.db.insert(user).values({
-      id: volunteerId,
-      name: "Target",
-      lastName: "Volunteer",
-      email: `${volunteerId}@test.com`,
-      role: "volunteer",
-      status: "active",
-      emailVerified: true,
-    });
+    await scope.db
+      .insert(user)
+      .values({
+        id: volunteerId,
+        name: "Target",
+        lastName: "Volunteer",
+        email: `${volunteerId}@test.com`,
+        role: "volunteer",
+        status: "active",
+        emailVerified: true,
+      });
     await scope.db.insert(volunteer).values({ userId: volunteerId });
     termId = await terms.createTerm({
       name: `Assignment ${randomUUID()}`,
@@ -77,90 +81,69 @@ describe("durable schedule assignment delivery", () => {
     scheduleId = (await classes.getClass(classId)).schedules[0]!.id;
     await classes.publishClass(classId);
     await terms.publishTerm(termId);
+    jobs.calls.length = 0;
+    jobs.cancellations.length = 0;
   });
 
   afterEach(async () => {
     vi.restoreAllMocks();
-    await scope.db
-      .delete(outbox)
-      .where(
-        eq(
-          outbox.deliveryKey,
-          `jobs.notify-schedule-assignment:${scheduleId}:${volunteerId}`,
-        ),
-      );
     await scope.db.delete(course).where(eq(course.id, classId));
     await scope.db.delete(term).where(eq(term.id, termId));
     await scope.db.delete(user).where(eq(user.id, volunteerId));
     scope.dispose();
   });
 
+  const updateInput = (added: string[], removed: string[]) => ({
+    id: classId,
+    addedSchedules: [],
+    deletedSchedules: [],
+    updatedSchedules: [
+      {
+        id: scheduleId,
+        addedVolunteerUserIds: added,
+        removedVolunteerUserIds: removed,
+        addedInstructorUserIds: [],
+        removedInstructorUserIds: [],
+      },
+    ],
+  });
   const update = (added: string[], removed: string[]) =>
-    classes.updateClass({
-      id: classId,
-      addedSchedules: [],
-      deletedSchedules: [],
-      updatedSchedules: [
-        {
-          id: scheduleId,
-          addedVolunteerUserIds: added,
-          removedVolunteerUserIds: removed,
-          addedInstructorUserIds: [],
-          removedInstructorUserIds: [],
-        },
-      ],
-    });
-  const drain = () =>
-    job.handler(
-      {},
-      { container: scope.container, cradle: scope.container.cradle },
+    classes.updateClass(updateInput(added, removed));
+  const queued = () =>
+    jobs.calls.filter(
+      (call) => call.jobName === "jobs.notify-schedule-assignment",
     );
-  const intents = () =>
-    scope.db
-      .select()
-      .from(outbox)
-      .where(
-        eq(
-          outbox.deliveryKey,
-          `jobs.notify-schedule-assignment:${scheduleId}:${volunteerId}`,
-        ),
-      );
-  const retryNow = () =>
-    scope.db
-      .update(outbox)
-      .set({ nextAttemptAt: new Date(0) })
-      .where(
-        eq(
-          outbox.deliveryKey,
-          `jobs.notify-schedule-assignment:${scheduleId}:${volunteerId}`,
-        ),
-      );
+  const latest = () => queued().at(-1)!.data as ScheduleAssignmentChange;
+  const execute = (payload = latest(), isCancelled = async () => false) =>
+    job.handler(payload, {
+      container: scope.container,
+      cradle: scope.container.cradle,
+      isCancelled,
+    });
 
-  it("saves notification intent with no dependency on a running queue", async () => {
-    const queue = scope.resolve<IJobService>("jobService");
-    vi.spyOn(queue, "run")
-      .mockClear()
-      .mockRejectedValue(new Error("queue unavailable"));
-    await expect(update([volunteerId], [])).resolves.toBeUndefined();
-    expect(await intents()).toHaveLength(1);
-    expect(queue.run).not.toHaveBeenCalled();
-    await drain();
+  it("enqueues with the application transaction and native replacement key", async () => {
+    await update([volunteerId], []);
+    expect(queued()).toHaveLength(1);
+    expect(queued()[0]?.options).toMatchObject({
+      transaction: expect.any(Object),
+      singletonKey: `${scheduleId}:${volunteerId}`,
+      replacePending: true,
+    });
+    await execute();
     expect(mail.sentEmails).toHaveLength(1);
     expect(mail.sentEmails[0]).toMatchObject({
       to: `${volunteerId}@test.com`,
+      subject: "New schedule assignment: Assignment class",
       text: expect.stringContaining("Jul 15"),
       html: expect.stringContaining('href="http://localhost:3000/schedule"'),
     });
-    expect((await intents())[0]?.processedAt).toBeInstanceOf(Date);
+    expect(queued()).toHaveLength(1); // No second rendered-email queue.
   });
 
-  it("rolls back assignment changes if recording notification intent fails", async () => {
-    vi.spyOn(
-      classes as unknown as { recordScheduleAssignments: () => Promise<void> },
-      "recordScheduleAssignments",
-    ).mockRejectedValueOnce(new Error("outbox write failed"));
+  it("rolls back the assignment when enqueueing fails", async () => {
+    vi.spyOn(jobs, "run").mockRejectedValueOnce(new Error("queue unavailable"));
     await expect(update([volunteerId], [])).rejects.toThrow(
-      "outbox write failed",
+      "queue unavailable",
     );
     expect(
       await scope.db
@@ -168,58 +151,42 @@ describe("durable schedule assignment delivery", () => {
         .from(volunteerToSchedule)
         .where(eq(volunteerToSchedule.scheduleId, scheduleId)),
     ).toHaveLength(0);
-    expect(await intents()).toHaveLength(0);
   });
 
-  it("supersedes add/remove/add and rejects old revision jobs", async () => {
+  it("ignores cancelled additions after add/remove/add and sends the latest addition", async () => {
     await update([volunteerId], []);
+    const old = latest();
     await update([], [volunteerId]);
     await update([volunteerId], []);
-    // Independent connections exercise row locks, rather than serializing the
-    // workers implicitly through the fixture database's single-connection pool.
-    const connection = postgres(env.DATABASE_URL, { max: 4 });
-    const db = drizzle(connection, { schema });
-    const container = scope.container.createScope();
-    container.register({ db: asValue(db) });
-    const context = { container, cradle: container.cradle };
-    try {
-      await Promise.all([job.handler({}, context), job.handler({}, context)]);
-    } finally {
-      await connection.end();
-    }
-    expect(mail.sentEmails).toHaveLength(1);
-    await drain();
-    expect(mail.sentEmails).toHaveLength(1);
-  });
-
-  it("does not resend an unchanged assignment", async () => {
-    await update([volunteerId], []);
-    await drain();
-    await update([volunteerId], []);
-    await drain();
-    expect(mail.sentEmails).toHaveLength(1);
-  });
-
-  it("does not notify about a net-zero insertion and removal", async () => {
-    await update([volunteerId], [volunteerId]);
-    await drain();
-    expect(await intents()).toHaveLength(0);
+    expect(queued()).toHaveLength(3);
+    expect(
+      queued().every(
+        (call) =>
+          call.options?.singletonKey === `${scheduleId}:${volunteerId}` &&
+          call.options.replacePending,
+      ),
+    ).toBe(true);
+    await execute(old, async () => true);
     expect(mail.sentEmails).toHaveLength(0);
+    await execute();
+    expect(mail.sentEmails).toHaveLength(1);
   });
 
-  it("revalidates removal after an SMTP failure instead of sending stale content", async () => {
+  it("does not enqueue unchanged assignments", async () => {
     await update([volunteerId], []);
-    const send = vi
-      .spyOn(mail, "send")
-      .mockRejectedValueOnce(new Error("SMTP unavailable"));
-    await drain();
-    expect((await intents())[0]).toMatchObject({
-      attempts: 1,
-      processedAt: null,
-    });
+    await update([volunteerId], []);
+    expect(queued()).toHaveLength(1);
+  });
+
+  it("does not notify net-zero insert/remove changes", async () => {
+    await update([volunteerId], [volunteerId]);
+    expect(queued()).toHaveLength(0);
+  });
+
+  it("describes the removed schedule clearly", async () => {
+    await update([volunteerId], []);
     await update([], [volunteerId]);
-    await drain();
-    expect(send).toHaveBeenCalledTimes(2);
+    await execute();
     expect(mail.sentEmails).toHaveLength(1);
     expect(mail.sentEmails[0]).toMatchObject({
       subject: "Schedule assignment removed: Assignment class",
@@ -227,14 +194,25 @@ describe("durable schedule assignment delivery", () => {
     });
   });
 
+  it.each(["added", "removed"] as const)(
+    "rechecks current membership for stale %s jobs",
+    async (change) => {
+      await update([volunteerId], []);
+      let old = latest();
+      await update([], [volunteerId]);
+      if (change === "removed") {
+        old = latest();
+        await update([volunteerId], []);
+      }
+      await execute(old);
+      expect(mail.sentEmails).toHaveLength(0);
+    },
+  );
+
   it.each(["inactive", "unpublished term", "unpublished class"])(
-    "suppresses retry after %s",
+    "revalidates %s at delivery",
     async (state) => {
       await update([volunteerId], []);
-      const send = vi
-        .spyOn(mail, "send")
-        .mockRejectedValueOnce(new Error("SMTP unavailable"));
-      await drain();
       if (state === "inactive")
         await scope.db
           .update(user)
@@ -246,15 +224,25 @@ describe("durable schedule assignment delivery", () => {
           .update(course)
           .set({ published: false })
           .where(eq(course.id, classId));
-      await retryNow();
-      await drain();
-      expect(send).toHaveBeenCalledTimes(1);
+      await execute();
       expect(mail.sentEmails).toHaveLength(0);
-      expect((await intents())[0]?.processedAt).toBeInstanceOf(Date);
     },
   );
 
-  it("does not retroactively notify assignments made before class publication", async () => {
+  it("throws SMTP failures for pg-boss to retry and rechecks state on the next attempt", async () => {
+    await update([volunteerId], []);
+    const old = latest();
+    vi.spyOn(mail, "send").mockRejectedValueOnce(new Error("SMTP unavailable"));
+    await expect(execute(old)).rejects.toThrow("SMTP unavailable");
+    await update([], [volunteerId]);
+    await execute(old, async () => true);
+    expect(mail.sentEmails).toHaveLength(0);
+    await execute();
+    expect(mail.sentEmails).toHaveLength(1);
+    expect(mail.sentEmails[0]?.subject).toContain("removed");
+  });
+
+  it("does not retrospectively enqueue draft class assignments", async () => {
     await scope.db
       .update(course)
       .set({ published: false })
@@ -264,46 +252,54 @@ describe("durable schedule assignment delivery", () => {
       .update(course)
       .set({ published: true })
       .where(eq(course.id, classId));
-    await drain();
-    expect(await intents()).toHaveLength(0);
-    expect(mail.sentEmails).toHaveLength(0);
+    expect(queued()).toHaveLength(0);
   });
 
-  it.each([true, false])(
-    "does not retrospectively notify hidden term edits (worker before publish: %s)",
-    async (tickBeforePublication) => {
-      await terms.unpublishTerm(termId);
-      await update([volunteerId], []);
-      expect(await intents()).toHaveLength(0);
-      if (tickBeforePublication) await drain();
-      await terms.publishTerm(termId);
-      await drain();
-      expect(mail.sentEmails).toHaveLength(0);
-    },
-  );
-
-  it("invalidates an older pending notice when assignments change in a hidden term", async () => {
+  it("does not retrospectively enqueue unpublished term assignments", async () => {
+    await terms.unpublishTerm(termId);
     await update([volunteerId], []);
+    await terms.publishTerm(termId);
+    expect(queued()).toHaveLength(0);
+  });
+
+  it("requests native cancellation of an older job when hidden assignments change", async () => {
+    await update([volunteerId], []);
+    const old = latest();
     await terms.unpublishTerm(termId);
     await update([], [volunteerId]);
     await update([volunteerId], []);
     await terms.publishTerm(termId);
-    await drain();
+    expect(queued()).toHaveLength(1);
+    expect(jobs.cancellations).toHaveLength(2);
+    expect(
+      jobs.cancellations.every(
+        (call) => call.singletonKey === `${scheduleId}:${volunteerId}`,
+      ),
+    ).toBe(true);
+    await execute(old, async () => true);
     expect(mail.sentEmails).toHaveLength(0);
-    expect((await intents())[0]?.processedAt).toBeInstanceOf(Date);
   });
 
-  it("keeps failed mail durable and retries successfully", async () => {
-    await update([volunteerId], []);
-    vi.spyOn(mail, "send").mockRejectedValueOnce(
-      new Error("temporary failure"),
-    );
-    await drain();
-    expect((await intents())[0]?.processedAt).toBeNull();
-    await drain();
-    expect(mail.sentEmails).toHaveLength(0);
-    await retryNow();
-    await drain();
-    expect(mail.sentEmails).toHaveLength(1);
+  it("delivers additions and removals through the real pg-boss worker", async () => {
+    const container = scope.container.createScope();
+    const realJobs = new JobService({ container, env });
+    container.register({ jobService: asValue(realJobs) });
+    const realClasses = container.resolve<IClassService>("classService");
+    try {
+      await realJobs.start();
+      await realClasses.updateClass(updateInput([volunteerId], []));
+      await vi.waitFor(() => expect(mail.sentEmails).toHaveLength(1), {
+        timeout: 10_000,
+      });
+      expect(mail.sentEmails[0]?.subject).toContain("New schedule assignment");
+      await realClasses.updateClass(updateInput([], [volunteerId]));
+      await vi.waitFor(() => expect(mail.sentEmails).toHaveLength(2), {
+        timeout: 10_000,
+      });
+      expect(mail.sentEmails[1]?.subject).toContain("removed");
+    } finally {
+      await realJobs.stop();
+      await container.dispose();
+    }
   });
 });

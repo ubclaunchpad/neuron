@@ -25,6 +25,7 @@ import {
   term,
   instructorToSchedule,
   schedule,
+  type ScheduleDB,
   user,
   volunteerToSchedule,
 } from "@/server/db/schema";
@@ -399,6 +400,18 @@ export class ClassService implements IClassService {
     });
   }
 
+  /**
+   * Updates a class and its schedules atomically.
+   *
+   * Published-occurrence immutability policy:
+   * Once a class is published, schedules cannot be added or deleted, and
+   * occurrence-defining schedule parameters (`rule`, `localStartTime`,
+   * `localEndTime`, `effectiveStart`, `effectiveEnd`) are immutable and
+   * rejected with `BAD_REQUEST`. Non-occurrence updates (class metadata,
+   * `preferredVolunteerCount`, and volunteer/instructor assignments) remain
+   * permitted without rewriting stored recurrence rules or drifting generated
+   * shifts and pending notification jobs.
+   */
   async updateClass(classUpdate: UpdateClassOutput): Promise<void> {
     const {
       id,
@@ -409,13 +422,95 @@ export class ClassService implements IClassService {
     } = classUpdate;
 
     return await this.db.transaction(async (tx: Transaction) => {
-      const originalClass = (
-        await tx.select().from(course).where(eq(course.id, id))
-      )[0];
+      // Lock the course row so concurrent publishClass and updateClass calls
+      // serialize around course.published and schedule mutations.
+      const [originalClass] = await tx
+        .select()
+        .from(course)
+        .where(eq(course.id, id))
+        .for("update");
 
       if (!originalClass) {
         throw new NeuronError(
           "Class does not exist",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      const updatedScheduleIds = updatedSchedules.map((s) => s.id);
+      const updatedScheduleIdSet = new Set(updatedScheduleIds);
+      if (updatedScheduleIdSet.size !== updatedScheduleIds.length) {
+        throw new NeuronError(
+          "Duplicate schedule IDs in update request.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      const deletedScheduleIdSet = new Set(deletedSchedules);
+      if (deletedScheduleIdSet.size !== deletedSchedules.length) {
+        throw new NeuronError(
+          "Duplicate schedule IDs in delete request.",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      for (const scheduleId of deletedScheduleIdSet) {
+        if (updatedScheduleIdSet.has(scheduleId)) {
+          throw new NeuronError(
+            `Schedule with id ${scheduleId} cannot be both updated and deleted.`,
+            NeuronErrorCodes.BAD_REQUEST,
+          );
+        }
+      }
+
+      // Validate that all referenced schedule IDs belong to the target class
+      // and index originals by ID (never relying on SQL IN result order).
+      const referencedScheduleIds = [
+        ...updatedScheduleIds,
+        ...deletedSchedules,
+      ];
+      const ownedSchedules =
+        referencedScheduleIds.length > 0
+          ? await tx
+              .select()
+              .from(schedule)
+              .where(
+                and(
+                  eq(schedule.courseId, id),
+                  inArray(schedule.id, referencedScheduleIds),
+                ),
+              )
+          : [];
+      const ownedSchedulesById = new Map(
+        ownedSchedules.map((row) => [row.id, row]),
+      );
+
+      const invalidScheduleId = referencedScheduleIds.find(
+        (scheduleId) => !ownedSchedulesById.has(scheduleId),
+      );
+      if (invalidScheduleId) {
+        throw new NeuronError(
+          `Schedule with id ${invalidScheduleId} does not belong to class ${id}.`,
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      // Cannot add, delete, or update occurrence-defining schedule fields once published.
+      if (
+        originalClass.published &&
+        (addedSchedules.length > 0 ||
+          deletedSchedules.length > 0 ||
+          updatedSchedules.some(
+            (s) =>
+              s.effectiveEnd !== undefined ||
+              s.effectiveStart !== undefined ||
+              s.rule !== undefined ||
+              s.localStartTime !== undefined ||
+              s.localEndTime !== undefined,
+          ))
+      ) {
+        throw new NeuronError(
+          "Schedule recurrences and timing cannot be changed for a published class.",
           NeuronErrorCodes.BAD_REQUEST,
         );
       }
@@ -444,42 +539,39 @@ export class ClassService implements IClassService {
         await tryCatch(this.imageService.deleteImage(oldImageKey));
       }
 
-      // Cannot add, delete, or update recurrances
-      if (
-        originalClass.published &&
-        (addedSchedules.length > 0 ||
-          deletedSchedules.length > 0 ||
-          updatedSchedules.some(
-            (s) =>
-              s.effectiveEnd !== undefined ||
-              s.effectiveStart !== undefined ||
-              s.rule !== undefined ||
-              s.localEndTime !== undefined ||
-              s.localEndTime !== undefined,
-          ))
-      ) {
-        throw new NeuronError(
-          "Schedules recurrances can not be changed for a published class.",
-          NeuronErrorCodes.BAD_REQUEST,
+      // Update schedules
+      if (updatedSchedules.length > 0) {
+        await this.updateSchedules(
+          tx,
+          id,
+          updatedSchedules,
+          ownedSchedulesById,
         );
       }
 
-      // Update schedules
-      await this.updateSchedules(tx, updatedSchedules);
-
       // Insert schedules
-      await this.insertSchedules(tx, id, addedSchedules);
+      if (addedSchedules.length > 0) {
+        await this.insertSchedules(tx, id, addedSchedules);
+      }
 
       // Delete schedules
-      if (deletedSchedules) {
-        await tx
+      if (deletedSchedules.length > 0) {
+        const deleted = await tx
           .delete(schedule)
           .where(
             and(
               eq(schedule.courseId, id),
               inArray(schedule.id, deletedSchedules),
             ),
+          )
+          .returning({ id: schedule.id });
+
+        if (deleted.length !== deletedSchedules.length) {
+          throw new NeuronError(
+            "Failed to delete schedules",
+            NeuronErrorCodes.INTERNAL_SERVER_ERROR,
           );
+        }
       }
     });
   }
@@ -793,27 +885,12 @@ export class ClassService implements IClassService {
 
   private async updateSchedules(
     tx: Transaction,
+    courseId: string,
     schedules: UpdateScheduleInput[],
+    originalById: Map<string, ScheduleDB>,
   ): Promise<void> {
-    const originalSchedules = await tx
-      .select()
-      .from(schedule)
-      .where(
-        inArray(
-          schedule.id,
-          schedules.map((s) => s.id),
-        ),
-      );
-
-    if (originalSchedules.length != schedules.length) {
-      throw new NeuronError(
-        "Failed to update schedule",
-        "INTERNAL_SERVER_ERROR",
-      );
-    }
-
     // Update schedules
-    for (const [idx, updateSchedule] of schedules.entries()) {
+    for (const updateSchedule of schedules) {
       const {
         id,
         rule,
@@ -823,53 +900,99 @@ export class ClassService implements IClassService {
         removedVolunteerUserIds,
         addedInstructorUserIds,
         removedInstructorUserIds,
-        ...scheduleUpdate
+        effectiveStart,
+        effectiveEnd,
+        preferredVolunteerCount,
       } = updateSchedule;
-      const originalSchedule = originalSchedules[idx]!;
+      const originalSchedule = originalById.get(id);
 
-      const originalRRruleObject = this.buildScheduleRuleFromRRule(
-        originalSchedule.rrule,
-      );
-      const rruleObject = this.buildRRuleFromScheduleRule({
-        ...originalRRruleObject,
-        ...rule,
-        localStartTime:
-          localStartTime?.toString() ?? originalRRruleObject.localStartTime,
-        tzid: NEURON_TIMEZONE,
-      });
-
-      let durationMinutes = undefined;
-      if (localStartTime || localEndTime) {
-        // This is what we have to use in case they only updated
-        const newStartTime =
-          localStartTime ??
-          Temporal.PlainTime.from(originalRRruleObject.localStartTime);
-        const newEndTime =
-          localEndTime ??
-          Temporal.PlainTime.from(originalRRruleObject.localStartTime).add(
-            Temporal.Duration.from({
-              minutes: originalSchedule.durationMinutes,
-            }),
-          );
-
-        durationMinutes = newStartTime.until(newEndTime).total("minutes");
+      if (!originalSchedule) {
+        throw new NeuronError(
+          `Schedule with id ${id} does not belong to class ${courseId}.`,
+          NeuronErrorCodes.BAD_REQUEST,
+        );
       }
 
-      const updated = await tx
-        .update(schedule)
-        .set({
-          durationMinutes,
-          rrule: rruleObject.toString(),
-          ...scheduleUpdate,
-        })
-        .where(eq(schedule.id, id))
-        .returning({ id: schedule.id });
+      const schedulePatch: Partial<typeof schedule.$inferInsert> = {};
 
-      if (updated.length != 1) {
-        throw new NeuronError(
-          "Failed to update schedule",
-          "INTERNAL_SERVER_ERROR",
+      if (effectiveStart !== undefined) {
+        schedulePatch.effectiveStart = effectiveStart;
+      }
+      if (effectiveEnd !== undefined) {
+        schedulePatch.effectiveEnd = effectiveEnd;
+      }
+      if (preferredVolunteerCount !== undefined) {
+        schedulePatch.preferredVolunteerCount = preferredVolunteerCount;
+      }
+
+      // Only parse/rebuild recurrence or duration when recurrence or timing fields are supplied.
+      // Assignment-only updates leave stored rrule and durationMinutes untouched.
+      if (
+        rule !== undefined ||
+        localStartTime !== undefined ||
+        localEndTime !== undefined
+      ) {
+        const originalRule = this.buildScheduleRuleFromRRule(
+          originalSchedule.rrule,
         );
+
+        if (rule !== undefined || localStartTime !== undefined) {
+          const nextLocalStartTime =
+            localStartTime?.toString() ?? originalRule.localStartTime;
+          const nextRule: ScheduleRule = rule
+            ? {
+                ...rule,
+                localStartTime: nextLocalStartTime,
+                tzid: NEURON_TIMEZONE,
+              }
+            : {
+                ...originalRule,
+                localStartTime: nextLocalStartTime,
+                tzid: NEURON_TIMEZONE,
+              };
+          schedulePatch.rrule =
+            this.buildRRuleFromScheduleRule(nextRule).toString();
+        }
+
+        if (localStartTime !== undefined || localEndTime !== undefined) {
+          const originalStartTime = Temporal.PlainTime.from(
+            originalRule.localStartTime,
+          );
+          const newStartTime = localStartTime ?? originalStartTime;
+          const newEndTime =
+            localEndTime ??
+            originalStartTime.add(
+              Temporal.Duration.from({
+                minutes: originalSchedule.durationMinutes,
+              }),
+            );
+
+          const durationMinutes = newStartTime
+            .until(newEndTime)
+            .total("minutes");
+          if (durationMinutes <= 0) {
+            throw new NeuronError(
+              "Schedule end time must be after start time.",
+              NeuronErrorCodes.BAD_REQUEST,
+            );
+          }
+          schedulePatch.durationMinutes = durationMinutes;
+        }
+      }
+
+      if (Object.keys(schedulePatch).length > 0) {
+        const updated = await tx
+          .update(schedule)
+          .set(schedulePatch)
+          .where(and(eq(schedule.id, id), eq(schedule.courseId, courseId)))
+          .returning({ id: schedule.id });
+
+        if (updated.length !== 1) {
+          throw new NeuronError(
+            "Failed to update schedule",
+            NeuronErrorCodes.INTERNAL_SERVER_ERROR,
+          );
+        }
       }
 
       // Insert volunteers to schedule
@@ -1019,12 +1142,13 @@ export class ClassService implements IClassService {
     role: Role,
     userIds: string[],
   ): Promise<void> {
+    const uniqueUserIds = Array.from(new Set(userIds));
     const users = await tx
       .select({ id: user.id })
       .from(user)
-      .where(and(eq(user.role, role), inArray(user.id, userIds)));
+      .where(and(eq(user.role, role), inArray(user.id, uniqueUserIds)));
 
-    if (users.length !== userIds.length) {
+    if (users.length !== uniqueUserIds.length) {
       throw new NeuronError(
         `All assigned ${role}s must have the ${role} role.`,
         NeuronErrorCodes.BAD_REQUEST,

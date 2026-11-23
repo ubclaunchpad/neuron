@@ -1,7 +1,12 @@
 import { describe, it, expect, afterEach, beforeEach } from "vitest";
-import { term } from "@/server/db/schema";
-import { inArray } from "drizzle-orm";
+import { randomUUID } from "crypto";
+import { Temporal } from "@js-temporal/polyfill";
+import { course, shift, term } from "@/server/db/schema";
+import { eq, inArray } from "drizzle-orm";
+import { NeuronErrorCodes } from "@/server/errors/neuron-error";
+import type { IClassService } from "@/server/services/entity/classService";
 import type { ITermService } from "@/server/services/entity/termService";
+import type { MockJobService } from "../mocks/mock-job-service";
 import {
   createTestScope,
   type ITestServiceScope,
@@ -284,6 +289,277 @@ describe("TermService", () => {
       if (current) {
         expect(current.published).toBe(true);
       }
+    });
+  });
+
+  describe("holiday transaction atomicity and ownership", () => {
+    it("awaits holiday insertion and rolls back term creation when a holiday is invalid", async () => {
+      const uniqueName = `Invalid Holiday Term ${randomUUID()}`;
+
+      await expect(
+        termService.createTerm({
+          name: uniqueName,
+          startDate: "2027-01-01",
+          endDate: "2027-04-30",
+          // Violates chk_blackout_range_valid (endsOn < startsOn)
+          holidays: [{ startsOn: "2027-02-20", endsOn: "2027-02-15" }],
+        }),
+      ).rejects.toThrow();
+
+      // Transaction must have rolled back so no orphaned term row was committed.
+      const matchingTerms = await scope.db
+        .select()
+        .from(term)
+        .where(eq(term.name, uniqueName));
+      expect(matchingTerms).toHaveLength(0);
+    });
+
+    it("rejects cross-term holiday IDs in updatedHolidays and deletedHolidays", async () => {
+      const termAId = await termService.createTerm({
+        name: `Term A ${randomUUID()}`,
+        startDate: "2027-01-01",
+        endDate: "2027-04-30",
+        holidays: [{ startsOn: "2027-02-10", endsOn: "2027-02-10" }],
+      });
+      const termBId = await termService.createTerm({
+        name: `Term B ${randomUUID()}`,
+        startDate: "2027-05-01",
+        endDate: "2027-08-31",
+        holidays: [{ startsOn: "2027-07-01", endsOn: "2027-07-01" }],
+      });
+      createdTermIds.push(termAId, termBId);
+
+      const termB = await termService.getTerm(termBId);
+      const termBHolidayId = termB.holidays[0]!.id;
+
+      await expect(
+        termService.updateTerm({
+          id: termAId,
+          name: "Term A Renamed",
+          addedHolidays: [],
+          updatedHolidays: [
+            {
+              id: termBHolidayId,
+              startsOn: "2027-07-02",
+              endsOn: "2027-07-02",
+            },
+          ],
+          deletedHolidays: [],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      await expect(
+        termService.updateTerm({
+          id: termAId,
+          name: "Term A Renamed",
+          addedHolidays: [],
+          updatedHolidays: [],
+          deletedHolidays: [termBHolidayId],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      const termBAfter = await termService.getTerm(termBId);
+      expect(termBAfter.holidays).toHaveLength(1);
+      expect(termBAfter.holidays[0]!.startsOn).toBe("2027-07-01");
+    });
+  });
+
+  describe("term date and holiday edits around class publication", () => {
+    async function createTermWithClass(opts?: {
+      holidays?: { startsOn: string; endsOn: string }[];
+      publishClass?: boolean;
+    }) {
+      const classService = scope.resolve<IClassService>("classService");
+      const termId = await termService.createTerm({
+        name: `Published Policy Term ${randomUUID()}`,
+        startDate: "2027-06-01",
+        endDate: "2027-06-30",
+        holidays: opts?.holidays ?? [],
+      });
+      createdTermIds.push(termId);
+
+      const classId = await classService.createClass({
+        termId,
+        name: `Term Policy Class ${randomUUID()}`,
+        lowerLevel: 1,
+        upperLevel: 2,
+        category: "literacy",
+        schedules: [
+          {
+            localStartTime: Temporal.PlainTime.from("10:00:00"),
+            localEndTime: Temporal.PlainTime.from("11:00:00"),
+            volunteerUserIds: [],
+            preferredVolunteerCount: 1,
+            instructorUserIds: [],
+            rule: {
+              type: "weekly",
+              weekday: "MO",
+              interval: 1,
+            },
+          },
+        ],
+      });
+
+      if (opts?.publishClass) {
+        await classService.publishClass(classId);
+      }
+
+      return { termId, classId, classService };
+    }
+
+    it("allows editing term dates and holidays before publication and applies them when published", async () => {
+      const { termId, classId, classService } = await createTermWithClass({
+        publishClass: false,
+      });
+
+      // Mondays in June 2027: 2027-06-07, 2027-06-14, 2027-06-21, 2027-06-28.
+      // Exclude 2027-06-14 via holiday and shorten term endDate to 2027-06-22.
+      await termService.updateTerm({
+        id: termId,
+        name: "Updated Before Publish",
+        startDate: "2027-06-01",
+        endDate: "2027-06-22",
+        addedHolidays: [{ startsOn: "2027-06-14", endsOn: "2027-06-14" }],
+        updatedHolidays: [],
+        deletedHolidays: [],
+      });
+
+      await classService.publishClass(classId);
+
+      const generatedShifts = await scope.db
+        .select()
+        .from(shift)
+        .where(eq(shift.courseId, classId));
+      expect(generatedShifts.map((s) => s.date).sort()).toEqual([
+        "2027-06-07",
+        "2027-06-21",
+      ]);
+    });
+
+    it("rejects adding holidays or changing dates after a class in the term is published while preserving shifts and pending jobs", async () => {
+      const mockJobService = scope.resolve<MockJobService>("jobService");
+      const { termId, classId } = await createTermWithClass({
+        holidays: [{ startsOn: "2027-06-28", endsOn: "2027-06-28" }],
+        publishClass: true,
+      });
+
+      const originalTerm = await termService.getTerm(termId);
+      const existingHolidayId = originalTerm.holidays[0]!.id;
+      const shiftsBefore = await scope.db
+        .select()
+        .from(shift)
+        .where(eq(shift.courseId, classId));
+      // Mondays 2027-06-07, 2027-06-14, 2027-06-21 (2027-06-28 excluded by holiday)
+      expect(shiftsBefore.map((s) => s.date).sort()).toEqual([
+        "2027-06-07",
+        "2027-06-14",
+        "2027-06-21",
+      ]);
+      const jobCallsBefore = mockJobService.calls.length;
+      expect(jobCallsBefore).toBe(shiftsBefore.length * 2);
+
+      // Adding a holiday after publication must be rejected.
+      await expect(
+        termService.updateTerm({
+          id: termId,
+          name: originalTerm.name,
+          startDate: originalTerm.startDate,
+          endDate: originalTerm.endDate,
+          addedHolidays: [{ startsOn: "2027-06-14", endsOn: "2027-06-14" }],
+          updatedHolidays: [],
+          deletedHolidays: [],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      // Updating an existing holiday after publication must be rejected.
+      await expect(
+        termService.updateTerm({
+          id: termId,
+          name: originalTerm.name,
+          addedHolidays: [],
+          updatedHolidays: [
+            {
+              id: existingHolidayId,
+              startsOn: "2027-06-21",
+              endsOn: "2027-06-21",
+            },
+          ],
+          deletedHolidays: [],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      // Deleting an existing holiday after publication must be rejected.
+      await expect(
+        termService.updateTerm({
+          id: termId,
+          name: originalTerm.name,
+          addedHolidays: [],
+          updatedHolidays: [],
+          deletedHolidays: [existingHolidayId],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      // Changing term startDate or endDate after publication must be rejected.
+      await expect(
+        termService.updateTerm({
+          id: termId,
+          name: originalTerm.name,
+          startDate: "2027-06-10",
+          endDate: originalTerm.endDate,
+          addedHolidays: [],
+          updatedHolidays: [],
+          deletedHolidays: [],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      await expect(
+        termService.updateTerm({
+          id: termId,
+          name: originalTerm.name,
+          startDate: originalTerm.startDate,
+          endDate: "2027-07-15",
+          addedHolidays: [],
+          updatedHolidays: [],
+          deletedHolidays: [],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      // Existing holidays, generated shifts, and pending notification jobs remain untouched.
+      const termAfterRejects = await termService.getTerm(termId);
+      expect(termAfterRejects.holidays).toHaveLength(1);
+      expect(termAfterRejects.holidays[0]!.startsOn).toBe("2027-06-28");
+
+      const shiftsAfter = await scope.db
+        .select()
+        .from(shift)
+        .where(eq(shift.courseId, classId));
+      expect(shiftsAfter.map((s) => s.id).sort()).toEqual(
+        shiftsBefore.map((s) => s.id).sort(),
+      );
+      expect(mockJobService.calls).toHaveLength(jobCallsBefore);
+
+      // Metadata-only rename (even when passing unchanged startDate/endDate, matching TermFormDialog) succeeds.
+      await termService.updateTerm({
+        id: termId,
+        name: "Renamed Published Term",
+        startDate: originalTerm.startDate,
+        endDate: originalTerm.endDate,
+        addedHolidays: [],
+        updatedHolidays: [],
+        deletedHolidays: [],
+      });
+
+      const renamedTerm = await termService.getTerm(termId);
+      expect(renamedTerm.name).toBe("Renamed Published Term");
+      expect(renamedTerm.startDate).toBe(originalTerm.startDate);
+      expect(renamedTerm.endDate).toBe(originalTerm.endDate);
+
+      // Verify course cleanup cascade works cleanly via term delete in afterEach.
+      const courses = await scope.db
+        .select()
+        .from(course)
+        .where(eq(course.termId, termId));
+      expect(courses).toHaveLength(1);
     });
   });
 });

@@ -1,4 +1,3 @@
-import { recordEmail } from "@/server/delivery/outbox";
 import type { Drizzle } from "@/server/db";
 import {
   notification,
@@ -420,17 +419,20 @@ export class NotificationService implements INotificationService {
         }
 
         for (const recipient of emailRecipients) {
-          await recordEmail(
-            tx,
+          await this.jobService.deliver(
+            "email",
             {
               to: recipient.email,
               subject: title,
               text: emailText ?? body,
               ...(html ? { html } : {}),
             },
-            idempotencyKey
-              ? `${idempotencyKey}:${recipient.userId}`
-              : undefined,
+            {
+              transaction: tx,
+              idempotencyKey: idempotencyKey
+                ? `${idempotencyKey}:${recipient.userId}`
+                : undefined,
+            },
           );
         }
       }

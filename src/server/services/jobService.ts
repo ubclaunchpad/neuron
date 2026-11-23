@@ -1,3 +1,8 @@
+import { recordDelivery } from "@/server/delivery/outbox";
+import type {
+  DeliveryOptions,
+  DeliveryPayloads,
+} from "@/server/delivery/types";
 import { asValue } from "awilix";
 import { PgBoss, type Schedule } from "pg-boss";
 
@@ -26,6 +31,11 @@ export interface IJobService {
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
   ): Promise<string | null>;
+  deliver<TKind extends keyof DeliveryPayloads>(
+    kind: TKind,
+    data: DeliveryPayloads[TKind],
+    options: DeliveryOptions,
+  ): Promise<void>;
   unschedule(
     jobName: RunnableJobName,
     options?: { correlationId?: string },
@@ -111,6 +121,21 @@ export class JobService implements IJobService {
   ): Promise<string | null> {
     await this.start();
     return this.runWithStartedBoss(jobName, data, options);
+  }
+
+  async deliver<TKind extends keyof DeliveryPayloads>(
+    kind: TKind,
+    data: DeliveryPayloads[TKind],
+    options: DeliveryOptions,
+  ): Promise<void> {
+    // This path intentionally does not bootstrap pg-boss or enqueue after commit.
+    // The recovery worker discovers committed intents independently.
+    await recordDelivery(options.transaction, {
+      kind,
+      payload: data,
+      key: options.idempotencyKey,
+      replace: options.replacePending,
+    });
   }
 
   async unschedule(
@@ -363,7 +388,7 @@ export class JobService implements IJobService {
           ...definition.retryOpts,
         });
       }
-      
+
       const worker = async (job: any) => {
         const jobItems = Array.isArray(job) ? job : [job];
 

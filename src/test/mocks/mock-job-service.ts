@@ -1,10 +1,11 @@
+import { recordDelivery } from "@/server/delivery/outbox";
 import type {
-  IJobService,
-} from "@/server/services/jobService";
+  DeliveryOptions,
+  DeliveryPayloads,
+} from "@/server/delivery/types";
+import type { IJobService } from "@/server/services/jobService";
 import type { JobPayload, RunnableJobName } from "@/server/jobs/registry";
-import type {
-  RunJobOptions,
-} from "@/server/jobs/types";
+import type { RunJobOptions } from "@/server/jobs/types";
 
 export class MockJobService implements IJobService {
   readonly calls: {
@@ -27,13 +28,25 @@ export class MockJobService implements IJobService {
     return "mock-job-id";
   }
 
+  // Keep transactional persistence real in service integration tests; queue and
+  // transport operations remain mocked.
+  async deliver<TKind extends keyof DeliveryPayloads>(
+    kind: TKind,
+    data: DeliveryPayloads[TKind],
+    options: DeliveryOptions,
+  ): Promise<void> {
+    await recordDelivery(options.transaction, {
+      kind,
+      payload: data,
+      key: options.idempotencyKey,
+      replace: options.replacePending,
+    });
+  }
+
   async unschedule(
     _jobName: RunnableJobName,
     _options?: { correlationId?: string },
   ): Promise<void> {}
 
-  async cancelJob(
-    _jobName: RunnableJobName,
-    _jobId: string,
-  ): Promise<void> {}
+  async cancelJob(_jobName: RunnableJobName, _jobId: string): Promise<void> {}
 }

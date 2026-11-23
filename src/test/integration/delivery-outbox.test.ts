@@ -1,7 +1,7 @@
 import { NotificationService } from "@/server/services/notificationService";
 import type { MockPreferenceService } from "../mocks/mock-notification-services";
 import type { MockJobService } from "../mocks/mock-job-service";
-import * as delivery from "@/server/delivery/outbox";
+import { JobService, type IJobService } from "@/server/services/jobService";
 import type { IUserService } from "@/server/services/entity/userService";
 import { randomUUID } from "crypto";
 import postgres from "postgres";
@@ -11,11 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as schema from "@/server/db/schema";
 import { deliveryOutbox, user, notification } from "@/server/db/schema";
 import { env } from "@/env";
-import {
-  recordDelivery,
-  recordEmail,
-  drainDeliveries,
-} from "@/server/delivery/outbox";
+import { recordDelivery, drainDeliveries } from "@/server/delivery/outbox";
 import { deliveryHandlers } from "@/server/delivery/handlers";
 import type { MockEmailService } from "../mocks/mock-email-service";
 import {
@@ -33,9 +29,11 @@ const email = {
 describe("transactional delivery outbox", () => {
   let scope: ITestServiceScope;
   let mail: MockEmailService;
+  let jobs: JobService;
   beforeEach(async () => {
     scope = createTestScope();
     mail = scope.resolve("emailService");
+    jobs = new JobService({ container: scope.container, env });
     await scope.db.delete(deliveryOutbox);
   });
   afterEach(async () => {
@@ -45,6 +43,30 @@ describe("transactional delivery outbox", () => {
   });
   const rows = () => scope.db.select().from(deliveryOutbox);
   const drain = () => drainDeliveries(scope.container.cradle, deliveryHandlers);
+  const queueEmail = (key?: string) =>
+    scope.db.transaction((tx) =>
+      jobs.deliver("email", email, { transaction: tx, idempotencyKey: key }),
+    );
+
+  it("persists through the real JobService API without bootstrapping the queue", async () => {
+    const start = vi
+      .spyOn(jobs, "start")
+      .mockRejectedValue(new Error("queue unavailable"));
+    await scope.db.transaction(async (tx) => {
+      await jobs.deliver("email", email, {
+        transaction: tx,
+        idempotencyKey: "api-event",
+      });
+      await jobs.deliver("email", email, {
+        transaction: tx,
+        idempotencyKey: "api-event",
+      });
+    });
+    expect(start).not.toHaveBeenCalled();
+    expect(await rows()).toHaveLength(1);
+    await drain();
+    expect(mail.sentEmails).toHaveLength(1);
+  });
 
   it("rolls back domain state and mail intent together", async () => {
     const id = randomUUID();
@@ -58,7 +80,7 @@ describe("transactional delivery outbox", () => {
           role: "volunteer",
           status: "active",
         });
-        await recordEmail(tx, email);
+        await jobs.deliver("email", email, { transaction: tx });
         throw new Error("rollback");
       }),
     ).rejects.toThrow("rollback");
@@ -79,9 +101,10 @@ describe("transactional delivery outbox", () => {
       status: "unverified",
     });
     try {
-      vi.spyOn(delivery, "recordEmail").mockRejectedValueOnce(
-        new Error("outbox unavailable"),
-      );
+      vi.spyOn(
+        scope.resolve<IJobService>("jobService"),
+        "deliver",
+      ).mockRejectedValueOnce(new Error("outbox unavailable"));
       await expect(
         scope.resolve<IUserService>("userService").verifyVolunteer(id),
       ).rejects.toThrow("outbox unavailable");
@@ -94,11 +117,11 @@ describe("transactional delivery outbox", () => {
   });
 
   it("commits without the queue, deduplicates retries, and erases delivered content", async () => {
-    await recordEmail(scope.db, email, "event:recipient");
-    await recordEmail(scope.db, email, "event:recipient");
+    await queueEmail("event:recipient");
+    await queueEmail("event:recipient");
     expect(await rows()).toHaveLength(1);
     await drain();
-    await recordEmail(scope.db, email, "event:recipient");
+    await queueEmail("event:recipient");
     await drain();
     expect(mail.sentEmails).toHaveLength(1);
     expect((await rows())[0]).toMatchObject({
@@ -109,16 +132,14 @@ describe("transactional delivery outbox", () => {
 
   it("commits in-app and email fan-out together and deduplicates job retries", async () => {
     const id = randomUUID();
-    await scope.db
-      .insert(user)
-      .values({
-        id,
-        name: "Test",
-        lastName: "Fanout",
-        email: `${id}@test.com`,
-        role: "volunteer",
-        status: "active",
-      });
+    await scope.db.insert(user).values({
+      id,
+      name: "Test",
+      lastName: "Fanout",
+      email: `${id}@test.com`,
+      role: "volunteer",
+      status: "active",
+    });
     const preferences =
       scope.resolve<MockPreferenceService>("preferenceService");
     vi.spyOn(preferences, "getPreferencesForRecipients").mockResolvedValue(
@@ -150,9 +171,10 @@ describe("transactional delivery outbox", () => {
       idempotencyKey: `event:${randomUUID()}`,
     };
     try {
-      vi.spyOn(delivery, "recordEmail").mockRejectedValueOnce(
-        new Error("outbox unavailable"),
-      );
+      vi.spyOn(
+        scope.resolve<IJobService>("jobService"),
+        "deliver",
+      ).mockRejectedValueOnce(new Error("outbox unavailable"));
       await expect(service.processNotification(params)).rejects.toThrow(
         "outbox unavailable",
       );
@@ -179,7 +201,7 @@ describe("transactional delivery outbox", () => {
   });
 
   it("serializes delivery across independent database connections", async () => {
-    await recordEmail(scope.db, email);
+    await queueEmail();
     const connection = postgres(env.DATABASE_URL, { max: 4 });
     const db = drizzle(connection, { schema });
     const cradle = { ...scope.container.cradle, db };
@@ -195,7 +217,7 @@ describe("transactional delivery outbox", () => {
   });
 
   it("retains failed mail with backoff and does not log content", async () => {
-    await recordEmail(scope.db, email);
+    await queueEmail();
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(mail, "send").mockRejectedValueOnce(
       new Error("SMTP SECRET_TOKEN"),

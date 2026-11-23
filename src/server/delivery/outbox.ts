@@ -6,7 +6,6 @@ import {
   type DeliveryIntent,
 } from "@/server/db/schema/notification";
 import type { NeuronCradle } from "@/server/api/di-container";
-import type { SendEmailPayload } from "@/server/jobs/definitions/send-email.job";
 
 /** Call with the domain transaction to commit state and delivery intent together. */
 export async function recordDelivery(
@@ -37,14 +36,6 @@ export async function recordDelivery(
   } else {
     await insert.onConflictDoNothing({ target: deliveryOutbox.deliveryKey });
   }
-}
-
-export async function recordEmail(
-  db: Drizzle | Transaction,
-  payload: SendEmailPayload,
-  key?: string,
-) {
-  await recordDelivery(db, { kind: "email", payload, key });
 }
 
 export interface DeliveryHandler {

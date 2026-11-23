@@ -1,4 +1,4 @@
-import { recordEmail } from "@/server/delivery/outbox";
+import type { IJobService } from "@/server/services/jobService";
 import type {
   CreateInstructorInput,
   UpdateInstructorInput,
@@ -43,8 +43,11 @@ export interface IUserService {
 export class UserService implements IUserService {
   private readonly db: Drizzle;
 
-  constructor({ db }: { db: Drizzle }) {
+  private readonly jobService: IJobService;
+
+  constructor({ db, jobService }: { db: Drizzle; jobService: IJobService }) {
     this.db = db;
+    this.jobService = jobService;
   }
 
   async getUsersForRequest(
@@ -175,7 +178,11 @@ export class UserService implements IUserService {
         .update(user)
         .set({ status: UserStatus.active })
         .where(eq(user.id, id));
-      await recordEmail(tx, { to: existing.email, subject, text, html });
+      await this.jobService.deliver(
+        "email",
+        { to: existing.email, subject, text, html },
+        { transaction: tx },
+      );
     });
 
     return id;
@@ -225,12 +232,16 @@ export class UserService implements IUserService {
         .update(user)
         .set({ status: UserStatus.inactive })
         .where(eq(user.id, id));
-      await recordEmail(tx, {
-        to: existing.email,
-        subject: "Your Account Has Been Deactivated",
-        text,
-        html,
-      });
+      await this.jobService.deliver(
+        "email",
+        {
+          to: existing.email,
+          subject: "Your Account Has Been Deactivated",
+          text,
+          html,
+        },
+        { transaction: tx },
+      );
     });
 
     return id;

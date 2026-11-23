@@ -106,4 +106,32 @@ describe("UserService", () => {
       );
     });
   });
+
+  describe("count queries and empty array guards", () => {
+    it("returns numeric totals from getUsersForRequest and getVerificationRequestCount", async () => {
+      const id = randomUUID();
+      await scope.db.insert(user).values({
+        id,
+        name: "Unverified",
+        lastName: "Volunteer",
+        email: `unverified-${randomUUID()}@test.com`,
+        role: "volunteer",
+        status: "unverified",
+        emailVerified: false,
+      });
+      createdUserIds.push(id);
+
+      const list = await userService.getUsersForRequest({ perPage: 10 });
+      expect(typeof list.total).toBe("number");
+      expect(list.total).toBeGreaterThanOrEqual(1);
+
+      const pendingCount = await userService.getVerificationRequestCount();
+      expect(typeof pendingCount).toBe("number");
+      expect(pendingCount).toBeGreaterThanOrEqual(1);
+    });
+
+    it("returns an empty array for getUsers([])", async () => {
+      await expect(userService.getUsers([])).resolves.toEqual([]);
+    });
+  });
 });

@@ -86,7 +86,7 @@ export class VolunteerService implements IVolunteerService {
     );
 
     const baseSelect = {
-      count: sql<number>`count(*) over()`,
+      count: sql<number>`count(*) over()`.mapWith(Number),
       ...getViewSelectedFields(volunteerUserView),
     } as const;
 
@@ -117,6 +117,8 @@ export class VolunteerService implements IVolunteerService {
   }
 
   async getVolunteers(ids: string[]): Promise<Volunteer[]> {
+    if (ids.length === 0) return [];
+
     const data = await this.db
       .select()
       .from(volunteerUserView)

@@ -14,7 +14,16 @@ import { renderVolunteerApproved } from "@/server/emails/templates/volunteer-app
 import { renderVolunteerReactivated } from "@/server/emails/templates/volunteer-reactivated";
 import { renderVolunteerDeactivated } from "@/server/emails/templates/volunteer-deactivated";
 import { buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
-import { and, desc, eq, getTableColumns, gt, inArray, sql } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  gt,
+  inArray,
+  sql,
+} from "drizzle-orm";
 import { user } from "../../db/schema/user";
 
 export interface IUserService {
@@ -66,7 +75,7 @@ export class UserService implements IUserService {
       : undefined;
 
     const baseSelect = {
-      totalRecords: sql<number>`count(*) over()`,
+      totalRecords: sql<number>`count(*) over()`.mapWith(Number),
       ...getTableColumns(user),
     } as const;
 
@@ -121,6 +130,8 @@ export class UserService implements IUserService {
   }
 
   async getUsers(ids: string[]): Promise<User[]> {
+    if (ids.length === 0) return [];
+
     const data = await this.db.select().from(user).where(inArray(user.id, ids));
 
     if (data.length !== ids.length) {
@@ -247,15 +258,14 @@ export class UserService implements IUserService {
   }
 
   async getVerificationRequestCount(): Promise<number> {
-    let rows = await this.db
+    const [row] = await this.db
       .select({
-        totalRecords: sql<number>`count(*) over()`,
-      } as const)
+        totalRecords: count(),
+      })
       .from(user)
-      .where(inArray(user.status, [UserStatus.unverified]))
-      .limit(1);
+      .where(eq(user.status, UserStatus.unverified));
 
-    return rows[0]?.totalRecords ?? 0;
+    return row?.totalRecords ?? 0;
   }
 
   async createUser(input: {

@@ -47,7 +47,7 @@ const instructor = accessControl.newRole({
   profile: ["view", "update"],
 });
 
-const roleToAccessControlRole: Record<Role, AccessRole> = {
+const roleToAccessControlRole: Record<Role, AccessRole<any, Statement>> = {
   [Role.admin]: admin,
   [Role.volunteer]: volunteer,
   [Role.instructor]: instructor,
@@ -83,10 +83,13 @@ export const hasPermission = (
   const role = roleToAccessControlRole[roleToCheck as Role]; // We know this is safe because we check above
 
   if (input.permissions) {
-    return role?.authorize(
-      input.permissions.statements,
-      input.permissions.connector,
-    )?.success;
+    const { statements, connector = "AND" } = input.permissions;
+    if (statements.length === 0) {
+      return false;
+    }
+    return connector === "OR"
+      ? statements.some((statement) => role?.authorize(statement)?.success)
+      : statements.every((statement) => role?.authorize(statement)?.success);
   } else {
     return role?.authorize(input.permission)?.success;
   }

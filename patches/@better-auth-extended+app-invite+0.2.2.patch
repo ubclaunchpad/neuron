@@ -1,3 +1,83 @@
+diff --git a/node_modules/@better-auth-extended/app-invite/dist/client-B11vr3pJ.d.cts b/node_modules/@better-auth-extended/app-invite/dist/client-B11vr3pJ.d.cts
+index 0000000..1111111 100644
+--- a/node_modules/@better-auth-extended/app-invite/dist/client-B11vr3pJ.d.cts
++++ b/node_modules/@better-auth-extended/app-invite/dist/client-B11vr3pJ.d.cts
+@@ -1733,15 +1733,15 @@ declare const appInvite: <O extends AppInviteOptions, UseAdminPlugin extends boo
+     AppInvitation: AppInvitation & better_auth_db0.InferAdditionalFieldsFromPluginOptions<"appInvitation", O, false>;
+   };
+   $ERROR_CODES: {
+-    readonly USER_IS_ALREADY_A_MEMBER_OF_THIS_APPLICATION: "User is already a member of this application";
+-    readonly USER_WAS_ALREADY_INVITED_TO_THIS_APPLICATION: "User was already invited to this application";
+-    readonly INVITER_IS_NO_LONGER_A_MEMBER_OF_THIS_APPLICATION: "Inviter is no longer a member of this application";
+-    readonly APP_INVITATION_NOT_FOUND: "App invitation not found";
+-    readonly YOU_ARE_NOT_ALLOWED_TO_CANCEL_THIS_APP_INVITATION: "You are not allowed to cancel this app invitation";
+-    readonly YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_APPLICATION: "You are not allowed to invite users to this application";
+-    readonly THIS_APP_INVITATION_CANT_BE_REJECTED: "This app invitation can't be rejected";
+-    readonly EMAIL_DOMAIN_IS_NOT_IN_WHITELIST: "Email domain is not in whitelist";
+-    readonly ADMIN_PLUGIN_IS_NOT_SET_UP: "Admin plugin is not set-up.";
++    readonly USER_IS_ALREADY_A_MEMBER_OF_THIS_APPLICATION: { readonly code: "USER_IS_ALREADY_A_MEMBER_OF_THIS_APPLICATION"; readonly message: "User is already a member of this application"; };
++    readonly USER_WAS_ALREADY_INVITED_TO_THIS_APPLICATION: { readonly code: "USER_WAS_ALREADY_INVITED_TO_THIS_APPLICATION"; readonly message: "User was already invited to this application"; };
++    readonly INVITER_IS_NO_LONGER_A_MEMBER_OF_THIS_APPLICATION: { readonly code: "INVITER_IS_NO_LONGER_A_MEMBER_OF_THIS_APPLICATION"; readonly message: "Inviter is no longer a member of this application"; };
++    readonly APP_INVITATION_NOT_FOUND: { readonly code: "APP_INVITATION_NOT_FOUND"; readonly message: "App invitation not found"; };
++    readonly YOU_ARE_NOT_ALLOWED_TO_CANCEL_THIS_APP_INVITATION: { readonly code: "YOU_ARE_NOT_ALLOWED_TO_CANCEL_THIS_APP_INVITATION"; readonly message: "You are not allowed to cancel this app invitation"; };
++    readonly YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_APPLICATION: { readonly code: "YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_APPLICATION"; readonly message: "You are not allowed to invite users to this application"; };
++    readonly THIS_APP_INVITATION_CANT_BE_REJECTED: { readonly code: "THIS_APP_INVITATION_CANT_BE_REJECTED"; readonly message: "This app invitation can't be rejected"; };
++    readonly EMAIL_DOMAIN_IS_NOT_IN_WHITELIST: { readonly code: "EMAIL_DOMAIN_IS_NOT_IN_WHITELIST"; readonly message: "Email domain is not in whitelist"; };
++    readonly ADMIN_PLUGIN_IS_NOT_SET_UP: { readonly code: "ADMIN_PLUGIN_IS_NOT_SET_UP"; readonly message: "Admin plugin is not set-up."; };
+   };
+ };
+ //#endregion
+diff --git a/node_modules/@better-auth-extended/app-invite/dist/client-Bv7_jEoZ.d.ts b/node_modules/@better-auth-extended/app-invite/dist/client-Bv7_jEoZ.d.ts
+index 0000000..1111111 100644
+--- a/node_modules/@better-auth-extended/app-invite/dist/client-Bv7_jEoZ.d.ts
++++ b/node_modules/@better-auth-extended/app-invite/dist/client-Bv7_jEoZ.d.ts
+@@ -1733,15 +1733,15 @@ declare const appInvite: <O extends AppInviteOptions, UseAdminPlugin extends boo
+     AppInvitation: AppInvitation & better_auth_db0.InferAdditionalFieldsFromPluginOptions<"appInvitation", O, false>;
+   };
+   $ERROR_CODES: {
+-    readonly USER_IS_ALREADY_A_MEMBER_OF_THIS_APPLICATION: "User is already a member of this application";
+-    readonly USER_WAS_ALREADY_INVITED_TO_THIS_APPLICATION: "User was already invited to this application";
+-    readonly INVITER_IS_NO_LONGER_A_MEMBER_OF_THIS_APPLICATION: "Inviter is no longer a member of this application";
+-    readonly APP_INVITATION_NOT_FOUND: "App invitation not found";
+-    readonly YOU_ARE_NOT_ALLOWED_TO_CANCEL_THIS_APP_INVITATION: "You are not allowed to cancel this app invitation";
+-    readonly YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_APPLICATION: "You are not allowed to invite users to this application";
+-    readonly THIS_APP_INVITATION_CANT_BE_REJECTED: "This app invitation can't be rejected";
+-    readonly EMAIL_DOMAIN_IS_NOT_IN_WHITELIST: "Email domain is not in whitelist";
+-    readonly ADMIN_PLUGIN_IS_NOT_SET_UP: "Admin plugin is not set-up.";
++    readonly USER_IS_ALREADY_A_MEMBER_OF_THIS_APPLICATION: { readonly code: "USER_IS_ALREADY_A_MEMBER_OF_THIS_APPLICATION"; readonly message: "User is already a member of this application"; };
++    readonly USER_WAS_ALREADY_INVITED_TO_THIS_APPLICATION: { readonly code: "USER_WAS_ALREADY_INVITED_TO_THIS_APPLICATION"; readonly message: "User was already invited to this application"; };
++    readonly INVITER_IS_NO_LONGER_A_MEMBER_OF_THIS_APPLICATION: { readonly code: "INVITER_IS_NO_LONGER_A_MEMBER_OF_THIS_APPLICATION"; readonly message: "Inviter is no longer a member of this application"; };
++    readonly APP_INVITATION_NOT_FOUND: { readonly code: "APP_INVITATION_NOT_FOUND"; readonly message: "App invitation not found"; };
++    readonly YOU_ARE_NOT_ALLOWED_TO_CANCEL_THIS_APP_INVITATION: { readonly code: "YOU_ARE_NOT_ALLOWED_TO_CANCEL_THIS_APP_INVITATION"; readonly message: "You are not allowed to cancel this app invitation"; };
++    readonly YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_APPLICATION: { readonly code: "YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_APPLICATION"; readonly message: "You are not allowed to invite users to this application"; };
++    readonly THIS_APP_INVITATION_CANT_BE_REJECTED: { readonly code: "THIS_APP_INVITATION_CANT_BE_REJECTED"; readonly message: "This app invitation can't be rejected"; };
++    readonly EMAIL_DOMAIN_IS_NOT_IN_WHITELIST: { readonly code: "EMAIL_DOMAIN_IS_NOT_IN_WHITELIST"; readonly message: "Email domain is not in whitelist"; };
++    readonly ADMIN_PLUGIN_IS_NOT_SET_UP: { readonly code: "ADMIN_PLUGIN_IS_NOT_SET_UP"; readonly message: "Admin plugin is not set-up."; };
+   };
+ };
+ //#endregion
+diff --git a/node_modules/@better-auth-extended/app-invite/dist/index.cjs b/node_modules/@better-auth-extended/app-invite/dist/index.cjs
+index 0000000..1111111 100644
+--- a/node_modules/@better-auth-extended/app-invite/dist/index.cjs
++++ b/node_modules/@better-auth-extended/app-invite/dist/index.cjs
+@@ -26,7 +26,7 @@ let better_auth = require("better-auth");
+ better_auth = __toESM(better_auth);
+ let better_auth_api = require("better-auth/api");
+ better_auth_api = __toESM(better_auth_api);
+-let better_auth_plugins = require("better-auth/plugins");
++let better_auth_plugins = require("better-auth/api");
+ better_auth_plugins = __toESM(better_auth_plugins);
+ let __better_auth_extended_internal_utils = require("@better-auth-extended/internal-utils");
+ __better_auth_extended_internal_utils = __toESM(__better_auth_extended_internal_utils);
+@@ -896,7 +896,7 @@ const appInvite = (options) => {
+ 			}
+ 		} },
+ 		$Infer: { AppInvitation: {} },
+-		$ERROR_CODES: APP_INVITE_ERROR_CODES
++		$ERROR_CODES: Object.fromEntries(Object.entries(APP_INVITE_ERROR_CODES).map(([code, message]) => [code, { code, message, toString: () => code }]))
+ 	};
+ };
+ 
 diff --git a/node_modules/@better-auth-extended/app-invite/dist/index.js b/node_modules/@better-auth-extended/app-invite/dist/index.js
 index 0000000..1111111 100644
 --- a/node_modules/@better-auth-extended/app-invite/dist/index.js
@@ -11,3 +91,12 @@ index 0000000..1111111 100644
  import { getAdditionalPluginFields, getDate, getPlugin, matchWildcard, tryCatch } from "@better-auth-extended/internal-utils";
  import { z } from "zod";
  import { parseUserInput, toZodSchema } from "better-auth/db";
+@@ -865,7 +865,7 @@ const appInvite = (options) => {
+ 			}
+ 		} },
+ 		$Infer: { AppInvitation: {} },
+-		$ERROR_CODES: APP_INVITE_ERROR_CODES
++		$ERROR_CODES: Object.fromEntries(Object.entries(APP_INVITE_ERROR_CODES).map(([code, message]) => [code, { code, message, toString: () => code }]))
+ 	};
+ };
+ 

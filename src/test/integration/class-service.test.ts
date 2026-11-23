@@ -11,6 +11,7 @@ import * as schema from "@/server/db/schema";
 import {
   coverageRequest,
   notification,
+  schedule,
   shift,
   shiftAttendance,
   user,
@@ -18,6 +19,7 @@ import {
   term,
   course,
 } from "@/server/db/schema";
+import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { AttendanceStatus } from "@/models/interfaces";
 import { CoverageRequestCategory, CoverageStatus } from "@/models/api/coverage";
 import {
@@ -811,6 +813,596 @@ describe("ClassService", () => {
           .where(eq(shift.courseId, id));
         expect(rows).toHaveLength(1);
       }
+    });
+  });
+
+  describe("schedule edit consistency and ownership", () => {
+    async function createExtraUsers() {
+      const volunteer2Id = randomUUID();
+      const instructor2Id = randomUUID();
+      await scope.db.insert(user).values([
+        {
+          id: volunteer2Id,
+          name: "Vol",
+          lastName: "Two",
+          email: `vol2-${Date.now()}-${randomUUID()}@test.com`,
+          role: "volunteer",
+          status: "active",
+          emailVerified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: instructor2Id,
+          name: "Inst",
+          lastName: "Two",
+          email: `inst2-${Date.now()}-${randomUUID()}@test.com`,
+          role: "instructor",
+          status: "active",
+          emailVerified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]);
+      createdUserIds.push(volunteer2Id, instructor2Id);
+      await scope.db.insert(volunteer).values([{ userId: volunteer2Id }]);
+      return { volunteer2Id, instructor2Id };
+    }
+
+    async function createMultiScheduleClass(opts?: { publishClass?: boolean }) {
+      const termId = await termService.createTerm({
+        name: `Multi-Schedule Term ${randomUUID()}`,
+        startDate: "2027-06-01",
+        endDate: "2027-08-31",
+        holidays: [],
+      });
+      createdTermIds.push(termId);
+
+      const classId = await classService.createClass({
+        termId,
+        name: `Multi-Schedule Class ${randomUUID()}`,
+        lowerLevel: 1,
+        upperLevel: 2,
+        category: "literacy",
+        schedules: [
+          {
+            localStartTime: Temporal.PlainTime.from("09:00:00"),
+            localEndTime: Temporal.PlainTime.from("10:00:00"),
+            volunteerUserIds: [volunteerId],
+            preferredVolunteerCount: 1,
+            instructorUserIds: [instructorId],
+            rule: {
+              type: "weekly",
+              weekday: "MO",
+              interval: 1,
+            },
+          },
+          {
+            localStartTime: Temporal.PlainTime.from("14:00:00"),
+            localEndTime: Temporal.PlainTime.from("15:30:00"),
+            volunteerUserIds: [],
+            preferredVolunteerCount: 2,
+            instructorUserIds: [instructorId],
+            rule: {
+              type: "monthly",
+              weekday: "FR",
+              nth: 2,
+            },
+          },
+          {
+            localStartTime: Temporal.PlainTime.from("11:15:00"),
+            localEndTime: Temporal.PlainTime.from("12:00:00"),
+            volunteerUserIds: [volunteerId],
+            preferredVolunteerCount: 1,
+            instructorUserIds: [],
+            rule: {
+              type: "single",
+              extraDates: ["2027-07-15"],
+            },
+          },
+        ],
+      });
+      createdClassIds.push(classId);
+
+      if (opts?.publishClass) {
+        await classService.publishClass(classId);
+      }
+
+      const rawSchedules = await scope.db
+        .select()
+        .from(schedule)
+        .where(eq(schedule.courseId, classId));
+
+      return { termId, classId, rawSchedules };
+    }
+
+    it("preserves each schedule recurrence when updating assignments in reversed or forward input order", async () => {
+      const { volunteer2Id, instructor2Id } = await createExtraUsers();
+      const { classId, rawSchedules } = await createMultiScheduleClass();
+
+      expect(rawSchedules).toHaveLength(3);
+      const originalById = new Map(rawSchedules.map((s) => [s.id, s]));
+      const reversedIds = [...rawSchedules].reverse().map((s) => s.id);
+
+      // Update assignments in reversed order relative to DB row order.
+      await classService.updateClass({
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: [
+          {
+            id: reversedIds[0]!,
+            addedVolunteerUserIds: [volunteer2Id],
+            removedVolunteerUserIds: [volunteerId],
+            addedInstructorUserIds: [instructor2Id],
+            removedInstructorUserIds: [],
+          },
+          {
+            id: reversedIds[1]!,
+            addedVolunteerUserIds: [volunteerId],
+            removedVolunteerUserIds: [],
+            addedInstructorUserIds: [instructor2Id],
+            removedInstructorUserIds: [instructorId],
+          },
+          {
+            id: reversedIds[2]!,
+            addedVolunteerUserIds: [volunteer2Id],
+            removedVolunteerUserIds: [],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [instructorId],
+          },
+        ],
+      });
+
+      const afterReversed = await scope.db
+        .select()
+        .from(schedule)
+        .where(eq(schedule.courseId, classId));
+      for (const row of afterReversed) {
+        const original = originalById.get(row.id)!;
+        expect(row.rrule).toBe(original.rrule);
+        expect(row.durationMinutes).toBe(original.durationMinutes);
+        expect(row.effectiveStart).toBe(original.effectiveStart);
+        expect(row.effectiveEnd).toBe(original.effectiveEnd);
+      }
+
+      const updatedClass = await classService.getClass(classId);
+      const schedById = new Map(updatedClass.schedules.map((s) => [s.id, s]));
+      expect(
+        schedById.get(reversedIds[0]!)!.volunteers.map((v) => v.id),
+      ).toEqual([volunteer2Id]);
+      expect(
+        schedById.get(reversedIds[0]!)!.instructors.map((i) => i.id),
+      ).toEqual([instructor2Id]);
+      expect(
+        schedById.get(reversedIds[1]!)!.volunteers.map((v) => v.id),
+      ).toEqual([volunteerId]);
+      expect(
+        schedById.get(reversedIds[1]!)!.instructors.map((i) => i.id),
+      ).toEqual([instructor2Id]);
+      expect(
+        schedById
+          .get(reversedIds[2]!)!
+          .volunteers.map((v) => v.id)
+          .sort(),
+      ).toEqual([volunteerId, volunteer2Id].sort());
+      expect(schedById.get(reversedIds[2]!)!.instructors).toHaveLength(0);
+
+      // Repeat assignment edit in forward order to guarantee both input orders
+      // preserve exact stored rrule strings regardless of Postgres scan order.
+      const forwardIds = [...reversedIds].reverse();
+      await classService.updateClass({
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: forwardIds.map((scheduleId) => ({
+          id: scheduleId,
+          addedVolunteerUserIds: [],
+          removedVolunteerUserIds: [volunteer2Id],
+          addedInstructorUserIds: [],
+          removedInstructorUserIds: [],
+        })),
+      });
+
+      const afterForward = await scope.db
+        .select()
+        .from(schedule)
+        .where(eq(schedule.courseId, classId));
+      for (const row of afterForward) {
+        const original = originalById.get(row.id)!;
+        expect(row.rrule).toBe(original.rrule);
+        expect(row.durationMinutes).toBe(original.durationMinutes);
+      }
+    });
+
+    it("matches originals by schedule ID when editing timing and counts in reversed order on an unpublished class", async () => {
+      const { classId, rawSchedules } = await createMultiScheduleClass();
+      const weeklyOrig = rawSchedules.find((s) => s.rrule.includes("WEEKLY"))!;
+      const monthlyOrig = rawSchedules.find((s) =>
+        s.rrule.includes("MONTHLY"),
+      )!;
+      const singleOrig = rawSchedules.find((s) => s.rrule.includes("YEARLY"))!;
+
+      await classService.updateClass({
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: [
+          {
+            id: singleOrig.id,
+            localStartTime: Temporal.PlainTime.from("11:30:00"),
+            addedVolunteerUserIds: [],
+            removedVolunteerUserIds: [],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+          {
+            id: monthlyOrig.id,
+            localEndTime: Temporal.PlainTime.from("16:00:00"),
+            addedVolunteerUserIds: [],
+            removedVolunteerUserIds: [],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+          {
+            id: weeklyOrig.id,
+            preferredVolunteerCount: 4,
+            addedVolunteerUserIds: [],
+            removedVolunteerUserIds: [],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+        ],
+      });
+
+      const afterRows = await scope.db
+        .select()
+        .from(schedule)
+        .where(eq(schedule.courseId, classId));
+      const afterById = new Map(afterRows.map((s) => [s.id, s]));
+
+      // Weekly schedule only changed preferredVolunteerCount: rrule and duration untouched.
+      expect(afterById.get(weeklyOrig.id)!.rrule).toBe(weeklyOrig.rrule);
+      expect(afterById.get(weeklyOrig.id)!.durationMinutes).toBe(60);
+      expect(afterById.get(weeklyOrig.id)!.preferredVolunteerCount).toBe(4);
+
+      // Monthly schedule only changed localEndTime (14:00 -> 16:00 = 120m): rrule untouched.
+      expect(afterById.get(monthlyOrig.id)!.rrule).toBe(monthlyOrig.rrule);
+      expect(afterById.get(monthlyOrig.id)!.durationMinutes).toBe(120);
+
+      // Single schedule changed localStartTime (11:15 -> 11:30, end still 12:00 = 30m).
+      expect(afterById.get(singleOrig.id)!.durationMinutes).toBe(30);
+      const loaded = await classService.getClass(classId);
+      const loadedSingle = loaded.schedules.find(
+        (s) => s.id === singleOrig.id,
+      )!;
+      expect(loadedSingle.rule.type).toBe("single");
+      expect(loadedSingle.rule.localStartTime).toBe("11:30:00");
+    });
+
+    it("rejects cross-class schedule IDs in updatedSchedules and deletedSchedules without modifying either class", async () => {
+      const { volunteer2Id } = await createExtraUsers();
+      const { classId: classA } = await createMultiScheduleClass();
+      const { classId: classB, rawSchedules: classBSchedules } =
+        await createMultiScheduleClass();
+
+      const classBSchedule = classBSchedules[0]!;
+      const originalClassAName = (await classService.getClass(classA)).name;
+
+      // Cross-class ID in updatedSchedules must fail with BAD_REQUEST and roll back classA name change.
+      await expect(
+        classService.updateClass({
+          id: classA,
+          name: "Should Roll Back Update",
+          addedSchedules: [],
+          deletedSchedules: [],
+          updatedSchedules: [
+            {
+              id: classBSchedule.id,
+              addedVolunteerUserIds: [volunteer2Id],
+              removedVolunteerUserIds: [],
+              addedInstructorUserIds: [],
+              removedInstructorUserIds: [],
+            },
+          ],
+        }),
+      ).rejects.toMatchObject({
+        code: NeuronErrorCodes.BAD_REQUEST,
+      });
+
+      expect((await classService.getClass(classA)).name).toBe(
+        originalClassAName,
+      );
+      const classBAfterUpdateAttempt = await classService.getClass(classB);
+      const classBSchedAfter = classBAfterUpdateAttempt.schedules.find(
+        (s) => s.id === classBSchedule.id,
+      )!;
+      expect(classBSchedAfter.volunteers.map((v) => v.id)).not.toContain(
+        volunteer2Id,
+      );
+
+      // Cross-class ID in deletedSchedules must fail with BAD_REQUEST and preserve classB's schedule.
+      await expect(
+        classService.updateClass({
+          id: classA,
+          name: "Should Roll Back Delete",
+          addedSchedules: [],
+          updatedSchedules: [],
+          deletedSchedules: [classBSchedule.id],
+        }),
+      ).rejects.toMatchObject({
+        code: NeuronErrorCodes.BAD_REQUEST,
+      });
+
+      expect((await classService.getClass(classA)).name).toBe(
+        originalClassAName,
+      );
+      expect((await classService.getClass(classB)).schedules).toHaveLength(
+        classBSchedules.length,
+      );
+
+      // Non-existent schedule ID is also rejected.
+      await expect(
+        classService.updateClass({
+          id: classA,
+          addedSchedules: [],
+          deletedSchedules: [],
+          updatedSchedules: [
+            {
+              id: randomUUID(),
+              addedVolunteerUserIds: [],
+              removedVolunteerUserIds: [],
+              addedInstructorUserIds: [],
+              removedInstructorUserIds: [],
+            },
+          ],
+        }),
+      ).rejects.toMatchObject({
+        code: NeuronErrorCodes.BAD_REQUEST,
+      });
+    });
+
+    it("rejects duplicate or overlapping schedule IDs in a single updateClass call", async () => {
+      const { classId, rawSchedules } = await createMultiScheduleClass();
+      const scheduleId = rawSchedules[0]!.id;
+
+      await expect(
+        classService.updateClass({
+          id: classId,
+          addedSchedules: [],
+          deletedSchedules: [],
+          updatedSchedules: [
+            {
+              id: scheduleId,
+              preferredVolunteerCount: 2,
+              addedVolunteerUserIds: [],
+              removedVolunteerUserIds: [],
+              addedInstructorUserIds: [],
+              removedInstructorUserIds: [],
+            },
+            {
+              id: scheduleId,
+              preferredVolunteerCount: 3,
+              addedVolunteerUserIds: [],
+              removedVolunteerUserIds: [],
+              addedInstructorUserIds: [],
+              removedInstructorUserIds: [],
+            },
+          ],
+        }),
+      ).rejects.toMatchObject({
+        code: NeuronErrorCodes.BAD_REQUEST,
+      });
+
+      await expect(
+        classService.updateClass({
+          id: classId,
+          addedSchedules: [],
+          updatedSchedules: [
+            {
+              id: scheduleId,
+              preferredVolunteerCount: 2,
+              addedVolunteerUserIds: [],
+              removedVolunteerUserIds: [],
+              addedInstructorUserIds: [],
+              removedInstructorUserIds: [],
+            },
+          ],
+          deletedSchedules: [scheduleId],
+        }),
+      ).rejects.toMatchObject({
+        code: NeuronErrorCodes.BAD_REQUEST,
+      });
+    });
+
+    it("rejects localStartTime, localEndTime, rule, effective date, add, and delete edits on a published class while preserving assignments and shifts", async () => {
+      const { volunteer2Id } = await createExtraUsers();
+      const mockJobService = scope.resolve<MockJobService>("jobService");
+      const { classId, rawSchedules } = await createMultiScheduleClass({
+        publishClass: true,
+      });
+
+      const shiftsBefore = await scope.db
+        .select()
+        .from(shift)
+        .where(eq(shift.courseId, classId));
+      expect(shiftsBefore.length).toBeGreaterThan(0);
+      const jobCallsBefore = mockJobService.calls.length;
+      expect(jobCallsBefore).toBeGreaterThan(0);
+
+      const targetSchedule = rawSchedules[0]!;
+
+      // localStartTime change on a published class must be rejected.
+      await expect(
+        classService.updateClass({
+          id: classId,
+          addedSchedules: [],
+          deletedSchedules: [],
+          updatedSchedules: [
+            {
+              id: targetSchedule.id,
+              localStartTime: Temporal.PlainTime.from("09:30:00"),
+              addedVolunteerUserIds: [],
+              removedVolunteerUserIds: [],
+              addedInstructorUserIds: [],
+              removedInstructorUserIds: [],
+            },
+          ],
+        }),
+      ).rejects.toSatisfy(
+        (err: unknown) =>
+          err instanceof NeuronError &&
+          err.code === NeuronErrorCodes.BAD_REQUEST,
+      );
+
+      // localEndTime change must be rejected.
+      await expect(
+        classService.updateClass({
+          id: classId,
+          addedSchedules: [],
+          deletedSchedules: [],
+          updatedSchedules: [
+            {
+              id: targetSchedule.id,
+              localEndTime: Temporal.PlainTime.from("10:30:00"),
+              addedVolunteerUserIds: [],
+              removedVolunteerUserIds: [],
+              addedInstructorUserIds: [],
+              removedInstructorUserIds: [],
+            },
+          ],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      // rule change must be rejected.
+      await expect(
+        classService.updateClass({
+          id: classId,
+          addedSchedules: [],
+          deletedSchedules: [],
+          updatedSchedules: [
+            {
+              id: targetSchedule.id,
+              rule: { type: "weekly", weekday: "TU", interval: 1 },
+              addedVolunteerUserIds: [],
+              removedVolunteerUserIds: [],
+              addedInstructorUserIds: [],
+              removedInstructorUserIds: [],
+            },
+          ],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      // effectiveStart change must be rejected.
+      await expect(
+        classService.updateClass({
+          id: classId,
+          addedSchedules: [],
+          deletedSchedules: [],
+          updatedSchedules: [
+            {
+              id: targetSchedule.id,
+              effectiveStart: "2027-07-01",
+              addedVolunteerUserIds: [],
+              removedVolunteerUserIds: [],
+              addedInstructorUserIds: [],
+              removedInstructorUserIds: [],
+            },
+          ],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      // Adding a schedule must be rejected.
+      await expect(
+        classService.updateClass({
+          id: classId,
+          updatedSchedules: [],
+          deletedSchedules: [],
+          addedSchedules: [
+            {
+              localStartTime: Temporal.PlainTime.from("16:00:00"),
+              localEndTime: Temporal.PlainTime.from("17:00:00"),
+              volunteerUserIds: [],
+              preferredVolunteerCount: 1,
+              instructorUserIds: [],
+              rule: { type: "single", extraDates: ["2027-07-20"] },
+            },
+          ],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      // Deleting a schedule must be rejected.
+      await expect(
+        classService.updateClass({
+          id: classId,
+          addedSchedules: [],
+          updatedSchedules: [],
+          deletedSchedules: [targetSchedule.id],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
+
+      // Assignment-only + metadata edit in reversed order on a published class succeeds
+      // without touching stored recurrences, shifts, or scheduled jobs.
+      const reversedSchedules = [...rawSchedules].reverse();
+      await classService.updateClass({
+        id: classId,
+        name: "Published Class Renamed",
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: reversedSchedules.map((s) => ({
+          id: s.id,
+          preferredVolunteerCount: 3,
+          addedVolunteerUserIds: [volunteer2Id],
+          removedVolunteerUserIds: [],
+          addedInstructorUserIds: [],
+          removedInstructorUserIds: [],
+        })),
+      });
+
+      const afterSchedules = await scope.db
+        .select()
+        .from(schedule)
+        .where(eq(schedule.courseId, classId));
+      const beforeById = new Map(rawSchedules.map((s) => [s.id, s]));
+      for (const row of afterSchedules) {
+        expect(row.rrule).toBe(beforeById.get(row.id)!.rrule);
+        expect(row.durationMinutes).toBe(
+          beforeById.get(row.id)!.durationMinutes,
+        );
+        expect(row.preferredVolunteerCount).toBe(3);
+      }
+
+      const shiftsAfter = await scope.db
+        .select()
+        .from(shift)
+        .where(eq(shift.courseId, classId));
+      expect(shiftsAfter.map((s) => s.id).sort()).toEqual(
+        shiftsBefore.map((s) => s.id).sort(),
+      );
+      expect(mockJobService.calls).toHaveLength(jobCallsBefore);
+    });
+
+    it("rejects unpublished start-time edits that make end time <= start time", async () => {
+      const { classId, rawSchedules } = await createMultiScheduleClass();
+      const target = rawSchedules[0]!; // 09:00 - 10:00
+
+      await expect(
+        classService.updateClass({
+          id: classId,
+          addedSchedules: [],
+          deletedSchedules: [],
+          updatedSchedules: [
+            {
+              id: target.id,
+              localStartTime: Temporal.PlainTime.from("11:00:00"),
+              addedVolunteerUserIds: [],
+              removedVolunteerUserIds: [],
+              addedInstructorUserIds: [],
+              removedInstructorUserIds: [],
+            },
+          ],
+        }),
+      ).rejects.toMatchObject({ code: NeuronErrorCodes.BAD_REQUEST });
     });
   });
 });

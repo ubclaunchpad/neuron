@@ -4,7 +4,7 @@ import type { Drizzle, Transaction } from "@/server/db";
 import {
   deliveryOutbox,
   type DeliveryIntent,
-} from "@/server/db/schema/delivery-outbox";
+} from "@/server/db/schema/notification";
 import type { NeuronCradle } from "@/server/api/di-container";
 import type { SendEmailPayload } from "@/server/jobs/definitions/send-email.job";
 

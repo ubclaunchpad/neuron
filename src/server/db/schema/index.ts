@@ -9,4 +9,3 @@ export * from "./schedule";
 export * from "./shift";
 export * from "./user";
 export * from "./notification";
-export * from "./delivery-outbox";

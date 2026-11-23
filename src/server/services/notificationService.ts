@@ -1,3 +1,4 @@
+import { recordEmail } from "@/server/delivery/outbox";
 import type { Drizzle } from "@/server/db";
 import {
   notification,
@@ -167,7 +168,8 @@ export class NotificationService implements INotificationService {
     const hasMore = items.length > limit;
     if (hasMore) items.pop();
 
-    const lastItem = hasMore && items.length > 0 ? items[items.length - 1]! : null;
+    const lastItem =
+      hasMore && items.length > 0 ? items[items.length - 1]! : null;
     const nextCursor = lastItem
       ? `${lastItem.createdAt.toISOString()}|${lastItem.id}`
       : null;
@@ -370,61 +372,69 @@ export class NotificationService implements INotificationService {
       return channelPrefs?.get("in_app") !== false;
     });
 
-    if (inAppRecipients.length > 0) {
-      // Use the same idempotency key base but append userId for per-user uniqueness
-      const notificationRows = inAppRecipients.map((r) => ({
-        userId: r.userId,
-        type,
-        title,
-        body,
-        linkUrl,
-        sourceType,
-        sourceId,
-        actorId,
-        idempotencyKey: idempotencyKey
-          ? `${idempotencyKey}:${r.userId}`
-          : undefined,
-      }));
+    await this.db.transaction(async (tx) => {
+      if (inAppRecipients.length > 0) {
+        // Use the same idempotency key base but append userId for per-user uniqueness
+        const notificationRows = inAppRecipients.map((r) => ({
+          userId: r.userId,
+          type,
+          title,
+          body,
+          linkUrl,
+          sourceType,
+          sourceId,
+          actorId,
+          idempotencyKey: idempotencyKey
+            ? `${idempotencyKey}:${r.userId}`
+            : undefined,
+        }));
 
-      await this.db
-        .insert(notification)
-        .values(notificationRows)
-        .onConflictDoNothing({ target: notification.idempotencyKey });
-    }
+        await tx
+          .insert(notification)
+          .values(notificationRows)
+          .onConflictDoNothing({ target: notification.idempotencyKey });
+      }
 
-    // Process email channel
-    const emailRecipients = recipients.filter((r) => {
-      const channelPrefs = preferences.get(r.userId);
-      return channelPrefs?.get("email") === true;
-    });
+      // Process email channel
+      const emailRecipients = recipients.filter((r) => {
+        const channelPrefs = preferences.get(r.userId);
+        return channelPrefs?.get("email") === true;
+      });
 
-    if (emailRecipients.length > 0) {
-      // Render HTML email once for all recipients (content is identical)
-      let html: string | undefined;
-      let emailText: string | undefined;
+      if (emailRecipients.length > 0) {
+        // Render HTML email once for all recipients (content is identical)
+        let html: string | undefined;
+        let emailText: string | undefined;
 
-      if (typeDef.renderEmail) {
-        try {
-          const rendered = await typeDef.renderEmail(context);
-          html = rendered.html;
-          emailText = rendered.text;
-        } catch (error) {
-          console.error(
-            `[notification] Failed to render email template for ${type}:`,
-            error,
+        if (typeDef.renderEmail) {
+          try {
+            const rendered = await typeDef.renderEmail(context);
+            html = rendered.html;
+            emailText = rendered.text;
+          } catch (error) {
+            console.error(
+              `[notification] Failed to render email template for ${type}:`,
+              error,
+            );
+          }
+        }
+
+        for (const recipient of emailRecipients) {
+          await recordEmail(
+            tx,
+            {
+              to: recipient.email,
+              subject: title,
+              text: emailText ?? body,
+              ...(html ? { html } : {}),
+            },
+            idempotencyKey
+              ? `${idempotencyKey}:${recipient.userId}`
+              : undefined,
           );
         }
       }
-
-      for (const recipient of emailRecipients) {
-        void this.jobService.run("jobs.send-email", {
-          to: recipient.email,
-          subject: title,
-          text: emailText ?? body,
-          ...(html ? { html } : {}),
-        });
-      }
-    }
+    });
   }
 
   private async resolveAudience(
@@ -445,7 +455,10 @@ export class NotificationService implements INotificationService {
           .select({ userId: user.id, email: user.email })
           .from(user)
           .where(
-            and(inArray(user.id, audience.userIds), eq(user.status, UserStatus.active)),
+            and(
+              inArray(user.id, audience.userIds),
+              eq(user.status, UserStatus.active),
+            ),
           );
       }
 
@@ -453,7 +466,12 @@ export class NotificationService implements INotificationService {
         return this.db
           .select({ userId: user.id, email: user.email })
           .from(user)
-          .where(and(eq(user.role, audience.role), eq(user.status, UserStatus.active)));
+          .where(
+            and(
+              eq(user.role, audience.role),
+              eq(user.status, UserStatus.active),
+            ),
+          );
       }
 
       case "shift": {

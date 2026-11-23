@@ -1,3 +1,4 @@
+import { processDeliveryOutboxJob } from "./definitions/process-delivery-outbox.job";
 import { cleanupOrphanedImagesJob } from "./definitions/cleanup-orphaned-images.job";
 import { processNotificationJob } from "./definitions/process-notification.job";
 import { checkShiftNotificationsJob } from "./definitions/check-shift-notifications.job";
@@ -5,6 +6,7 @@ import { sendEmailJob } from "./definitions/send-email.job";
 import type { RegisteredJob } from "./types";
 
 const allJobs = [
+  processDeliveryOutboxJob,
   cleanupOrphanedImagesJob,
   processNotificationJob,
   checkShiftNotificationsJob,

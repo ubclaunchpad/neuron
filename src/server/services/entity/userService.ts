@@ -1,3 +1,4 @@
+import { recordEmail } from "@/server/delivery/outbox";
 import type {
   CreateInstructorInput,
   UpdateInstructorInput,
@@ -8,7 +9,6 @@ import type { ListResponse } from "@/models/list-response";
 import { buildUser, type User } from "@/models/user";
 import { type Drizzle } from "@/server/db";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import type { IJobService } from "@/server/services/jobService";
 import { renderVolunteerApproved } from "@/server/emails/templates/volunteer-approved";
 import { renderVolunteerReactivated } from "@/server/emails/templates/volunteer-reactivated";
 import { renderVolunteerDeactivated } from "@/server/emails/templates/volunteer-deactivated";
@@ -42,11 +42,9 @@ export interface IUserService {
 
 export class UserService implements IUserService {
   private readonly db: Drizzle;
-  private readonly jobService: IJobService;
 
-  constructor({ db, jobService }: { db: Drizzle; jobService: IJobService }) {
+  constructor({ db }: { db: Drizzle }) {
     this.db = db;
-    this.jobService = jobService;
   }
 
   async getUsersForRequest(
@@ -164,11 +162,6 @@ export class UserService implements IUserService {
       );
     }
 
-    await this.db
-      .update(user)
-      .set({ status: UserStatus.active })
-      .where(eq(user.id, id));
-
     const isFirstApproval = existing.status === UserStatus.unverified;
     const render = isFirstApproval
       ? renderVolunteerApproved
@@ -176,15 +169,14 @@ export class UserService implements IUserService {
     const subject = isFirstApproval
       ? "Welcome to BC BWP"
       : "Your Account Has Been Reactivated";
-
-    void render({ volunteerName: existing.name }).then(({ html, text }) =>
-      this.jobService.run("jobs.send-email", {
-        to: existing.email,
-        subject,
-        text,
-        html,
-      }),
-    );
+    const { html, text } = await render({ volunteerName: existing.name });
+    await this.db.transaction(async (tx) => {
+      await tx
+        .update(user)
+        .set({ status: UserStatus.active })
+        .where(eq(user.id, id));
+      await recordEmail(tx, { to: existing.email, subject, text, html });
+    });
 
     return id;
   }
@@ -225,20 +217,21 @@ export class UserService implements IUserService {
       );
     }
 
-    await this.db
-      .update(user)
-      .set({ status: UserStatus.inactive })
-      .where(eq(user.id, id));
-
-    void renderVolunteerDeactivated({ volunteerName: existing.name }).then(
-      ({ html, text }) =>
-        this.jobService.run("jobs.send-email", {
-          to: existing.email,
-          subject: "Your Account Has Been Deactivated",
-          text,
-          html,
-        }),
-    );
+    const { html, text } = await renderVolunteerDeactivated({
+      volunteerName: existing.name,
+    });
+    await this.db.transaction(async (tx) => {
+      await tx
+        .update(user)
+        .set({ status: UserStatus.inactive })
+        .where(eq(user.id, id));
+      await recordEmail(tx, {
+        to: existing.email,
+        subject: "Your Account Has Been Deactivated",
+        text,
+        html,
+      });
+    });
 
     return id;
   }

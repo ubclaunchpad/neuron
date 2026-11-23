@@ -26,6 +26,9 @@ export class EmailService implements IEmailService {
       host: env.SMTP_HOST,
       port: env.SMTP_PORT,
       secure: false,
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 30_000,
       auth: {
         user: env.SMTP_USER,
         pass: env.SMTP_PASS,

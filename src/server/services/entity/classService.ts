@@ -37,6 +37,8 @@ import type { ITermService } from "./termService";
 import type { IUserService } from "./userService";
 import type { IVolunteerService } from "./volunteerService";
 import { tryCatch } from "@/lib/try-catch";
+import { type ScheduleAssignmentChange } from "@/server/jobs/definitions/notify-schedule-assignment.job";
+import type { IJobService } from "../jobService";
 
 export interface IClassService {
   getClassesForSelect(): Promise<{ id: string; name: string }[]>;
@@ -66,6 +68,7 @@ export class ClassService implements IClassService {
   private readonly termService: ITermService;
   private readonly shiftService: IShiftService;
   private readonly imageService: IImageService;
+  private readonly jobService: IJobService;
 
   constructor({
     db,
@@ -75,6 +78,7 @@ export class ClassService implements IClassService {
     termService,
     shiftService,
     imageService,
+    jobService,
   }: {
     db: Drizzle;
     currentSessionService: ICurrentSessionService;
@@ -83,6 +87,7 @@ export class ClassService implements IClassService {
     termService: ITermService;
     shiftService: IShiftService;
     imageService: IImageService;
+    jobService: IJobService;
   }) {
     this.db = db;
     this.currentSessionService = currentSessionService;
@@ -91,6 +96,7 @@ export class ClassService implements IClassService {
     this.termService = termService;
     this.shiftService = shiftService;
     this.imageService = imageService;
+    this.jobService = jobService;
   }
 
   async getClassesForSelect(): Promise<{ id: string; name: string }[]> {
@@ -179,7 +185,7 @@ export class ClassService implements IClassService {
   async createClass(classCreate: CreateClassOutput): Promise<string> {
     const { schedules, ...dbClassCreate } = classCreate;
 
-    return await this.db.transaction(async (tx: Transaction) => {
+    return this.db.transaction(async (tx: Transaction) => {
       // Insert class itself
       const [row] = await tx
         .insert(course)
@@ -202,7 +208,7 @@ export class ClassService implements IClassService {
       ...dbClassUpdate
     } = classUpdate;
 
-    return await this.db.transaction(async (tx: Transaction) => {
+    await this.db.transaction(async (tx: Transaction) => {
       const originalClass = (
         await tx.select().from(course).where(eq(course.id, id))
       )[0];
@@ -213,6 +219,18 @@ export class ClassService implements IClassService {
           NeuronErrorCodes.BAD_REQUEST,
         );
       }
+
+      // Lock the visibility boundary before changing course/schedule rows.
+      const [originalTerm] = await tx
+        .select({ published: term.published })
+        .from(term)
+        .where(eq(term.id, originalClass.termId))
+        .for("share");
+      if (!originalTerm)
+        throw new NeuronError(
+          "Term does not exist",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
 
       // Update class itself
       if (Object.values(dbClassUpdate).length > 0) {
@@ -259,10 +277,17 @@ export class ClassService implements IClassService {
       }
 
       // Update schedules
-      await this.updateSchedules(tx, updatedSchedules);
+      const updatedScheduleAssignments = await this.updateSchedules(
+        tx,
+        updatedSchedules,
+      );
 
       // Insert schedules
-      await this.insertSchedules(tx, id, addedSchedules);
+      const addedScheduleAssignments = await this.insertSchedules(
+        tx,
+        id,
+        addedSchedules,
+      );
 
       // Delete schedules
       if (deletedSchedules) {
@@ -275,6 +300,12 @@ export class ClassService implements IClassService {
             ),
           );
       }
+
+      await this.enqueueScheduleAssignments(
+        tx,
+        [...updatedScheduleAssignments, ...addedScheduleAssignments],
+        originalClass.published && originalTerm.published,
+      );
     });
   }
 
@@ -497,7 +528,8 @@ export class ClassService implements IClassService {
   private async updateSchedules(
     tx: Transaction,
     schedules: UpdateScheduleInput[],
-  ): Promise<void> {
+  ): Promise<ScheduleAssignmentChange[]> {
+    const assignments: ScheduleAssignmentChange[] = [];
     const originalSchedules = await tx
       .select()
       .from(schedule)
@@ -582,7 +614,7 @@ export class ClassService implements IClassService {
           Role.volunteer,
           addedVolunteerUserIds,
         );
-        await tx
+        const insertedAssignments = await tx
           .insert(volunteerToSchedule)
           .values(
             addedVolunteerUserIds?.map((volunteerId) => ({
@@ -595,12 +627,22 @@ export class ClassService implements IClassService {
               volunteerToSchedule.volunteerUserId,
               volunteerToSchedule.scheduleId,
             ],
+          })
+          .returning({
+            scheduleId: volunteerToSchedule.scheduleId,
+            volunteerUserId: volunteerToSchedule.volunteerUserId,
           });
+        assignments.push(
+          ...insertedAssignments.map((assignment) => ({
+            ...assignment,
+            change: "added" as const,
+          })),
+        );
       }
 
       // Remove volunteers from schedule
       if (removedVolunteerUserIds.length > 0) {
-        await tx
+        const removedAssignments = await tx
           .delete(volunteerToSchedule)
           .where(
             and(
@@ -610,7 +652,17 @@ export class ClassService implements IClassService {
                 removedVolunteerUserIds,
               ),
             ),
-          );
+          )
+          .returning({
+            scheduleId: volunteerToSchedule.scheduleId,
+            volunteerUserId: volunteerToSchedule.volunteerUserId,
+          });
+        assignments.push(
+          ...removedAssignments.map((assignment) => ({
+            ...assignment,
+            change: "removed" as const,
+          })),
+        );
       }
 
       // Insert instructors to schedule
@@ -651,13 +703,16 @@ export class ClassService implements IClassService {
           );
       }
     }
+
+    return assignments;
   }
 
   private async insertSchedules(
     tx: Transaction,
     courseId: string,
     schedules: CreateScheduleInput[],
-  ): Promise<void> {
+  ): Promise<ScheduleAssignmentChange[]> {
+    const assignments: ScheduleAssignmentChange[] = [];
     // Insert schedules
     for (const scheduleCreate of schedules) {
       const {
@@ -696,10 +751,22 @@ export class ClassService implements IClassService {
       // Insert volunteers to schedule
       if (volunteerUserIds.length > 0) {
         await this.ensureUsersAreRole(tx, Role.volunteer, volunteerUserIds);
-        await tx.insert(volunteerToSchedule).values(
-          volunteerUserIds.map((volunteerId) => ({
-            scheduleId: row.id,
-            volunteerUserId: volunteerId,
+        const insertedAssignments = await tx
+          .insert(volunteerToSchedule)
+          .values(
+            volunteerUserIds.map((volunteerId) => ({
+              scheduleId: row.id,
+              volunteerUserId: volunteerId,
+            })),
+          )
+          .returning({
+            scheduleId: volunteerToSchedule.scheduleId,
+            volunteerUserId: volunteerToSchedule.volunteerUserId,
+          });
+        assignments.push(
+          ...insertedAssignments.map((assignment) => ({
+            ...assignment,
+            change: "added" as const,
           })),
         );
       }
@@ -714,6 +781,40 @@ export class ClassService implements IClassService {
           })),
         );
       }
+    }
+
+    return assignments;
+  }
+
+  private async enqueueScheduleAssignments(
+    tx: Transaction,
+    assignments: ScheduleAssignmentChange[],
+    shouldNotify: boolean,
+  ): Promise<void> {
+    const changes = new Map<string, ScheduleAssignmentChange>();
+    for (const assignment of assignments) {
+      const key = `${assignment.scheduleId}:${assignment.volunteerUserId}`;
+      // Insert then remove in one save is a net-zero change.
+      if (changes.has(key)) changes.delete(key);
+      else changes.set(key, assignment);
+    }
+    for (const assignment of changes.values()) {
+      const assignmentKey = `${assignment.scheduleId}:${assignment.volunteerUserId}`;
+      if (!shouldNotify) {
+        // Hidden edits also invalidate older queued revisions, so republishing
+        // before a worker tick cannot resurrect a stale assignment notice.
+        await this.jobService.cancelPending(
+          "jobs.notify-schedule-assignment",
+          assignmentKey,
+          { transaction: tx },
+        );
+        continue;
+      }
+      await this.jobService.run("jobs.notify-schedule-assignment", assignment, {
+        transaction: tx,
+        singletonKey: assignmentKey,
+        replacePending: true,
+      });
     }
   }
 

@@ -1,3 +1,4 @@
+import type { MockJobService } from "../mocks/mock-job-service";
 import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { randomUUID } from "crypto";
 import { Temporal } from "@js-temporal/polyfill";
@@ -14,6 +15,7 @@ describe("ClassService", () => {
   let scope: ITestServiceScope;
   let termService: ITermService;
   let classService: IClassService;
+  let jobs: MockJobService;
 
   let createdUserIds: string[] = [];
   let createdTermIds: string[] = [];
@@ -27,6 +29,7 @@ describe("ClassService", () => {
     scope.mockSession.setAsAdmin();
     termService = scope.resolve<ITermService>("termService");
     classService = scope.resolve<IClassService>("classService");
+    jobs = scope.resolve<MockJobService>("jobService");
   });
 
   beforeEach(async () => {
@@ -140,6 +143,113 @@ describe("ClassService", () => {
       expect(result.id).toBe(classId);
       expect(result.lowerLevel).toBeNull();
       expect(result.upperLevel).toBeNull();
+    });
+
+    it("does not queue assignment changes for an unpublished class", async () => {
+      const { classId } = await createTermAndClass();
+      const classData = await classService.getClass(classId);
+      const scheduleId = classData.schedules[0]!.id;
+
+      await classService.updateClass({
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: [
+          {
+            id: scheduleId,
+            addedVolunteerUserIds: [],
+            removedVolunteerUserIds: [volunteerId],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+        ],
+      });
+
+      expect(
+        jobs.calls.filter(
+          (call) => call.jobName === "jobs.notify-schedule-assignment",
+        ),
+      ).toHaveLength(0);
+    });
+
+    it("records only newly inserted schedule assignments", async () => {
+      const { classId } = await createTermAndClass({ publishTerm: true });
+      const classData = await classService.getClass(classId);
+      const scheduleId = classData.schedules[0]!.id;
+      const addedVolunteerId = randomUUID();
+      createdUserIds.push(addedVolunteerId);
+
+      await scope.db.insert(user).values({
+        id: addedVolunteerId,
+        name: "Vol",
+        lastName: "Two",
+        email: `vol-${randomUUID()}@test.com`,
+        role: "volunteer",
+        status: "active",
+        emailVerified: true,
+      });
+      await scope.db.insert(volunteer).values({ userId: addedVolunteerId });
+      await classService.publishClass(classId);
+
+      const update = {
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: [
+          {
+            id: scheduleId,
+            addedVolunteerUserIds: [addedVolunteerId],
+            removedVolunteerUserIds: [],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+        ],
+      };
+
+      await classService.updateClass(update);
+
+      const queued = () =>
+        jobs.calls.filter(
+          (call) => call.jobName === "jobs.notify-schedule-assignment",
+        );
+      expect(queued()).toHaveLength(1);
+      expect(queued()[0]?.data).toMatchObject({
+        scheduleId,
+        volunteerUserId: addedVolunteerId,
+        change: "added",
+      });
+
+      await classService.updateClass(update);
+      expect(queued()).toHaveLength(1);
+
+      await classService.updateClass({
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: [
+          {
+            id: scheduleId,
+            addedVolunteerUserIds: [],
+            removedVolunteerUserIds: [addedVolunteerId],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+        ],
+      });
+      expect(queued()).toHaveLength(2);
+      expect(queued()[1]?.data).toMatchObject({
+        scheduleId,
+        volunteerUserId: addedVolunteerId,
+        change: "removed",
+      });
+
+      await classService.updateClass(update);
+      expect(queued()).toHaveLength(3);
+      expect(queued()[2]?.data).toMatchObject({
+        scheduleId,
+        volunteerUserId: addedVolunteerId,
+        change: "added",
+      });
     });
   });
 

@@ -9,34 +9,56 @@ export interface JobRetryOptions {
   retryBackoff?: boolean;
 }
 
-export interface RunJobOptions extends JobRetryOptions {
-  /** Insert/cancel jobs in the caller's PostgreSQL transaction. One-off jobs only. */
-  transaction?: Transaction;
-  /** Stable job ID, deduplicated while pg-boss retains the job. */
-  idempotencyKey?: string;
-  /** Cancel pending/active jobs with this singletonKey before enqueueing. Requires a transaction. */
-  replacePending?: boolean;
-  // Logical identifier used to target specific schedule instances.
-  correlationId?: string;
-
-  // One-off scheduling
-  runAt?: Date | string;
-  startAfter?: Date | string | number;
-
-  // Recurring scheduling
-  cron?: string;
-  startAt?: Date | string;
-  endAt?: Date | string;
-  tz?: string;
-
-  // Shared queue/schedule options
+interface SharedJobOptions extends JobRetryOptions {
   singletonKey?: string;
   singletonSeconds?: number;
   singletonMinutes?: number;
   singletonHours?: number;
   singletonDays?: number;
   expireInSeconds?: number;
+  tz?: string;
 }
+
+type OneOffJobOptions = SharedJobOptions & {
+  cron?: never;
+  correlationId?: never;
+  startAt?: never;
+  endAt?: never;
+} & (
+    | { runAt: Date | string; startAfter?: never }
+    | { runAt?: never; startAfter?: Date | string | number }
+  ) &
+  (
+    | {
+        /** Cancel matching pending/active jobs atomically before inserting a fresh job. */
+        replacePending: true;
+        transaction: Transaction;
+        singletonKey: string;
+        idempotencyKey?: never;
+      }
+    | {
+        replacePending?: false;
+        /** Insert the job in the caller's PostgreSQL transaction. */
+        transaction?: Transaction;
+        /** Stable job ID, deduplicated while pg-boss retains the job. */
+        idempotencyKey?: string;
+      }
+  );
+
+type RecurringJobOptions = SharedJobOptions & {
+  cron: string;
+  // Logical identifier used to target specific schedule instances.
+  correlationId?: string;
+  startAt?: Date | string;
+  endAt?: Date | string;
+  runAt?: never;
+  startAfter?: never;
+  transaction?: never;
+  replacePending?: never;
+  idempotencyKey?: never;
+};
+
+export type RunJobOptions = OneOffJobOptions | RecurringJobOptions;
 
 export interface WorkRegistrationOptions {
   teamSize?: number;
@@ -52,26 +74,16 @@ export interface JobRuntimeContext {
   isCancelled?: () => Promise<boolean>;
 }
 
-type StartupRecurringOptions = Omit<
-  RunJobOptions,
-  | "cron"
-  | "runAt"
-  | "startAfter"
-  | "transaction"
-  | "replacePending"
-  | "idempotencyKey"
->;
+type StartupRecurringOptions = Omit<RecurringJobOptions, "cron">;
 type StartupOneOffOptions = Omit<
-  RunJobOptions,
-  | "cron"
-  | "runAt"
-  | "correlationId"
-  | "startAt"
-  | "endAt"
-  | "transaction"
-  | "replacePending"
-  | "tz"
->;
+  OneOffJobOptions,
+  "runAt" | "transaction" | "replacePending" | "tz"
+> & {
+  runAt?: never;
+  transaction?: never;
+  replacePending?: never;
+  tz?: never;
+};
 
 export type StartupSchedule<TPayload extends object> =
   | {

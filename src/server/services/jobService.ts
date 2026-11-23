@@ -149,47 +149,8 @@ export class JobService implements IJobService {
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
   ): Promise<string | null> {
-    this.validateRunOptions(options);
     await this.start();
     return this.runWithStartedBoss(jobName, data, options);
-  }
-
-  private validateRunOptions(options?: RunJobOptions): void {
-    if (
-      options?.cron &&
-      (options.transaction || options.replacePending || options.idempotencyKey)
-    ) {
-      throw new Error(
-        "Transactional and idempotent enqueueing supports one-off jobs only",
-      );
-    }
-    if (
-      options?.replacePending &&
-      (!options.transaction || !options.singletonKey?.trim())
-    ) {
-      throw new Error(
-        "Replacing pending jobs requires a transaction and singletonKey",
-      );
-    }
-    if (options?.replacePending && options.idempotencyKey) {
-      throw new Error(
-        "Replacement jobs require fresh IDs; omit idempotencyKey",
-      );
-    }
-    if (options?.cron && (options.runAt || options.startAfter)) {
-      throw new Error("Recurring runs cannot include runAt/startAfter.");
-    }
-    if (!options?.cron && options?.correlationId) {
-      throw new Error(
-        "correlationId is only supported for recurring (cron) runs.",
-      );
-    }
-    if (!options?.cron && (options?.startAt || options?.endAt)) {
-      throw new Error("startAt/endAt require cron for recurring runs.");
-    }
-    if (options?.runAt !== undefined && options.startAfter !== undefined) {
-      throw new Error("Provide either runAt or startAfter, not both.");
-    }
   }
 
   async cancelPending(
@@ -198,11 +159,8 @@ export class JobService implements IJobService {
     { transaction }: { transaction: Transaction },
   ): Promise<void> {
     this.getJobDefinition(jobName);
-    if (!transaction || !singletonKey?.trim())
-      throw new Error("Cancellation requires a transaction and singletonKey");
     await this.start();
-    const db = this.transactionDb(transaction);
-    await this.lockJobKey(jobName, singletonKey, db);
+    const db = transaction ? this.transactionDb(transaction) : undefined;
     await this.cancelMatchingJobs(jobName, singletonKey, db);
   }
 
@@ -221,11 +179,12 @@ export class JobService implements IJobService {
 
   private async cancelMatchingJobs(
     jobName: RunnableJobName,
-    key: string,
-    db: PgBossDatabase,
+    key: string | undefined,
+    db: PgBossDatabase | undefined,
   ): Promise<void> {
     if (!db || !key?.trim())
       throw new Error("Cancellation requires a transaction and singletonKey");
+    await this.lockJobKey(jobName, key, db);
     for (let attempt = 0; attempt <= 3; attempt++) {
       const jobs = await this.boss.findJobs(jobName, { key, db });
       const ids = jobs
@@ -328,14 +287,11 @@ export class JobService implements IJobService {
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
   ): Promise<string | null> {
-    // Startup schedules also enter here, bypassing the public run() method.
-    this.validateRunOptions(options);
     const definition = this.getJobDefinition(jobName);
     const mergedOptions = mergeRetryOptions(definition.retryOpts, options);
-    const cron = mergedOptions?.cron;
-
-    if (cron) {
-      const correlationId = mergedOptions?.correlationId;
+    if (mergedOptions?.cron !== undefined) {
+      const cron = mergedOptions.cron;
+      const correlationId = mergedOptions.correlationId;
       const queueName = this.getQueueName(jobName, correlationId);
 
       await this.ensureWorkerRegistered(queueName, definition);
@@ -360,10 +316,10 @@ export class JobService implements IJobService {
     const { transaction, replacePending, idempotencyKey, ...queueOptions } =
       mergedOptions ?? {};
     const db = transaction ? this.transactionDb(transaction) : undefined;
-    if (db && queueOptions.singletonKey !== undefined)
-      await this.lockJobKey(jobName, queueOptions.singletonKey, db);
     if (replacePending)
-      await this.cancelMatchingJobs(jobName, queueOptions.singletonKey!, db!);
+      await this.cancelMatchingJobs(jobName, queueOptions.singletonKey, db);
+    else if (db && queueOptions.singletonKey !== undefined)
+      await this.lockJobKey(jobName, queueOptions.singletonKey, db);
     const digest = idempotencyKey
       ? createHash("sha256")
           .update(`${jobName}:${idempotencyKey}`)
@@ -450,13 +406,14 @@ export class JobService implements IJobService {
     for (const definition of registeredJobs) {
       const startup = definition.startup;
       if (!startup) continue;
+      const options: RunJobOptions =
+        startup.cron !== undefined
+          ? { ...startup.options, cron: startup.cron }
+          : (startup.options ?? {});
       await this.runWithStartedBoss(
         definition.name as KnownJobName,
         startup.data,
-        {
-          ...(startup.options ?? {}),
-          cron: startup.cron,
-        },
+        options,
       );
     }
   }

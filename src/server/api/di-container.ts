@@ -1,3 +1,4 @@
+import { startJobsWithRetry } from "../jobs/start-with-retry";
 import { env } from "@/env";
 import type { Session } from "@/lib/auth";
 import {
@@ -94,9 +95,7 @@ const createRootContainer = (): NeuronContainer => {
   registerDb(container);
   //registerCacheClient(container);
   registerServices(container);
-  void container.cradle.jobService.start().catch((error) => {
-    console.error("[pg-boss] failed to start job service", error);
-  });
+  startJobsWithRetry(container.cradle.jobService);
 
   return container;
 };

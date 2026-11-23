@@ -26,5 +26,6 @@ export async function migrate() {
     console.log("Migrations completed successfully");
   } catch (error) {
     console.error("Failed to run database migrations", error);
+    throw error;
   }
 }

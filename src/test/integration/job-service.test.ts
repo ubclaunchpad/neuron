@@ -169,6 +169,27 @@ describe("JobService", () => {
       expect(id).toBeTypeOf("string");
     });
 
+    it("multiple concurrent first sends on a cold service all await full initialization", async () => {
+      const results = await Promise.all([
+        jobService.run("jobs.integration-test", { message: "cold-1" }),
+        jobService.run("jobs.integration-test", { message: "cold-2" }),
+        jobService.run("jobs.integration-test", { message: "cold-3" }),
+      ]);
+
+      expect(results).toHaveLength(3);
+      for (const id of results) {
+        expect(id).toBeTypeOf("string");
+        expect(id).toBeTruthy();
+      }
+
+      await waitForHandlerCalls(3);
+      expect(handlerCalls.map((call) => call.payload.message).sort()).toEqual([
+        "cold-1",
+        "cold-2",
+        "cold-3",
+      ]);
+    });
+
     it("restart after stop works", async () => {
       await jobService.start();
       await jobService.stop();
@@ -184,6 +205,123 @@ describe("JobService", () => {
         message: "restarted",
       });
       expect(id).toBeTypeOf("string");
+    });
+
+    it("recovers pending delayed jobs after an idle restart without user traffic", async () => {
+      await jobService.run(
+        "jobs.integration-test",
+        { message: "reminder-pending-across-restart" },
+        { startAfter: 2 },
+      );
+
+      // Shut down before the delayed job becomes eligible
+      await jobService.stop();
+      expect(handlerCalls).toHaveLength(0);
+
+      // Cold/idle restart: only start() runs, no user request calls run()
+      jobService = new JobService({
+        container: container as any,
+        env: testEnv,
+      }) as unknown as TestableJobService;
+      await jobService.start();
+
+      await waitForHandlerCalls(1);
+      expect(handlerCalls).toHaveLength(1);
+      expect(handlerCalls[0]!.payload).toEqual({
+        message: "reminder-pending-across-restart",
+      });
+    });
+
+    it("recovers persisted regular and correlated schedules after an idle restart", async () => {
+      // Schedule a regular recurring job and two correlated recurring jobs
+      await jobService.run(
+        "jobs.integration-test",
+        { message: "regular-cron" },
+        { cron: "0 * * * *" },
+      );
+      await jobService.run(
+        "jobs.integration-test",
+        { message: "corr-a" },
+        { cron: "0 * * * *", correlationId: "tenant-a" },
+      );
+      await jobService.run(
+        "jobs.integration-test",
+        { message: "corr-b" },
+        { cron: "0 * * * *", correlationId: "tenant-b" },
+      );
+
+      // Simulate process shutdown (clears all in-memory worker & queue tracking state)
+      await jobService.stop();
+
+      // Simulate cold/idle restart: only start() is called, no user request calls run()
+      jobService = new JobService({
+        container: container as any,
+        env: testEnv,
+      }) as unknown as TestableJobService;
+      await jobService.start();
+
+      const state = (
+        globalThis as unknown as {
+          __neuronPgBossState: {
+            boss: {
+              send: (name: string, data: unknown) => Promise<string | null>;
+              getSchedules: () => Promise<{ name: string }[]>;
+            };
+            registeredWorkerQueues: Set<string>;
+            recurringQueuesByJob: Map<string, Set<string>>;
+          };
+        }
+      ).__neuronPgBossState;
+
+      // Both regular and correlated workers must have been recovered without traffic
+      expect(state.registeredWorkerQueues.has("jobs.integration-test")).toBe(
+        true,
+      );
+      expect(
+        state.registeredWorkerQueues.has("jobs.integration-test/tenant-a"),
+      ).toBe(true);
+      expect(
+        state.registeredWorkerQueues.has("jobs.integration-test/tenant-b"),
+      ).toBe(true);
+
+      // Jobs dispatched by pg-boss timekeeper to both regular and correlated queues execute
+      await state.boss.send("jobs.integration-test", {
+        message: "from-regular-after-restart",
+      });
+      await state.boss.send("jobs.integration-test/tenant-a", {
+        message: "from-correlated-after-restart",
+      });
+
+      await waitForHandlerCalls(2);
+      expect(handlerCalls.map((call) => call.payload.message).sort()).toEqual([
+        "from-correlated-after-restart",
+        "from-regular-after-restart",
+      ]);
+
+      // Targeted unschedule removes only tenant-a after restart
+      await jobService.unschedule("jobs.integration-test", {
+        correlationId: "tenant-a",
+      });
+      const remainingAfterTargeted = (await state.boss.getSchedules()).map(
+        (s) => s.name,
+      );
+      expect(remainingAfterTargeted).not.toContain(
+        "jobs.integration-test/tenant-a",
+      );
+      expect(remainingAfterTargeted).toContain("jobs.integration-test");
+      expect(remainingAfterTargeted).toContain(
+        "jobs.integration-test/tenant-b",
+      );
+
+      // Bulk unschedule removes all remaining regular and correlated schedules after restart
+      await jobService.unschedule("jobs.integration-test");
+      const remainingAfterBulk = (await state.boss.getSchedules()).map(
+        (s) => s.name,
+      );
+      expect(remainingAfterBulk).not.toContain("jobs.integration-test");
+      expect(remainingAfterBulk).not.toContain(
+        "jobs.integration-test/tenant-b",
+      );
     });
   });
 

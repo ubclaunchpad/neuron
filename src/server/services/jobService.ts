@@ -79,19 +79,38 @@ export class JobService implements IJobService {
   }
 
   async start(): Promise<void> {
-    if (sharedBossState.isStarted) return;
+    if (sharedBossState.isStarted) {
+      this.boss = this.getOrCreateBoss();
+      return;
+    }
 
-    sharedBossState.startPromise ??= this.bootstrap().catch((error) => {
-      sharedBossState.startPromise = undefined;
-      throw error;
-    });
-    return sharedBossState.startPromise;
+    if (!sharedBossState.startPromise) {
+      const bootstrapPromise = this.bootstrap().finally(() => {
+        if (sharedBossState.startPromise === bootstrapPromise) {
+          sharedBossState.startPromise = undefined;
+        }
+      });
+      sharedBossState.startPromise = bootstrapPromise;
+    }
+
+    await sharedBossState.startPromise;
+    this.boss = this.getOrCreateBoss();
   }
 
   async stop(): Promise<void> {
+    const pendingStart = sharedBossState.startPromise;
+    if (pendingStart) {
+      try {
+        await pendingStart;
+      } catch {
+        // Ignore startup failures during shutdown.
+      }
+    }
+
+    const boss = sharedBossState.boss;
     try {
-      if (sharedBossState.boss && sharedBossState.isStarted) {
-        await this.boss.stop();
+      if (boss && sharedBossState.isStarted) {
+        await boss.stop();
       }
     } finally {
       sharedBossState.boss = undefined;
@@ -121,7 +140,7 @@ export class JobService implements IJobService {
     await this.start();
 
     const correlationId = options?.correlationId;
-    if (correlationId) {
+    if (correlationId !== undefined) {
       const queueName = this.getQueueName(jobName, correlationId);
       await this.boss.unschedule(queueName);
       this.removeRecurringQueue(jobName, queueName);
@@ -132,7 +151,7 @@ export class JobService implements IJobService {
     const schedules = await this.getSchedules();
     const discoveredQueueNames = schedules
       .map((schedule) => schedule.name)
-      .filter((name) => name === jobName || name.startsWith(`${jobName}:`));
+      .filter((name) => isJobQueueName(name, jobName));
     const queueNames = new Set<string>([
       jobName,
       ...(trackedQueues ?? []),
@@ -202,7 +221,7 @@ export class JobService implements IJobService {
       return null;
     }
 
-    if (mergedOptions?.correlationId) {
+    if (mergedOptions?.correlationId !== undefined) {
       throw new Error(
         "correlationId is only supported for recurring (cron) runs.",
       );
@@ -249,16 +268,18 @@ export class JobService implements IJobService {
     // to the stopped instance created in the constructor.
     const boss = this.getOrCreateBoss();
     this.boss = boss;
-    await boss.start();
-    sharedBossState.isStarted = true;
 
     try {
+      await boss.start();
+
       if (!sharedBossState.isWorkersRegistered) {
         await this.registerWorkers();
         await this.registerWorkersForPersistedCorrelationSchedules();
         sharedBossState.isWorkersRegistered = true;
       }
       await this.registerStartupSchedules();
+
+      sharedBossState.isStarted = true;
     } catch (error) {
       sharedBossState.isStarted = false;
       sharedBossState.isWorkersRegistered = false;
@@ -304,17 +325,18 @@ export class JobService implements IJobService {
     const schedules = await this.getSchedules();
 
     for (const definition of registeredJobs) {
-      const correlatedQueueNames = schedules
-        .map((schedule) => schedule.name)
-        .filter(
-          (queueName) =>
-            queueName !== definition.name &&
-            queueName.startsWith(`${definition.name}:`),
-        );
+      const jobName = definition.name as KnownJobName;
+      const matchingQueueNames = new Set(
+        schedules
+          .map((schedule) => schedule.name)
+          .filter((queueName) => isJobQueueName(queueName, jobName)),
+      );
 
-      for (const queueName of correlatedQueueNames) {
-        await this.ensureWorkerRegistered(queueName, definition);
-        this.trackRecurringQueue(definition.name as KnownJobName, queueName);
+      for (const queueName of matchingQueueNames) {
+        if (isCorrelatedQueueName(queueName, jobName)) {
+          await this.ensureWorkerRegistered(queueName, definition);
+        }
+        this.trackRecurringQueue(jobName, queueName);
       }
     }
   }
@@ -332,12 +354,12 @@ export class JobService implements IJobService {
   }
 
   private getQueueName(jobName: KnownJobName, correlationId?: string): string {
-    if (!correlationId) return jobName;
+    if (correlationId === undefined) return jobName;
     const normalized = correlationId.trim();
     if (!normalized) {
       throw new Error("correlationId must be a non-empty string.");
     }
-    return `${jobName}/${normalized}`;
+    return `${getCorrelatedQueuePrefix(jobName)}${normalized}`;
   }
 
   private async ensureWorkerRegistered(
@@ -447,6 +469,23 @@ export class JobService implements IJobService {
       sharedBossState.recurringQueuesByJob.delete(jobName);
     }
   }
+}
+
+const CORRELATED_QUEUE_SEPARATOR = "/";
+
+function getCorrelatedQueuePrefix(jobName: KnownJobName): string {
+  return `${jobName}${CORRELATED_QUEUE_SEPARATOR}`;
+}
+
+function isCorrelatedQueueName(
+  queueName: string,
+  jobName: KnownJobName,
+): boolean {
+  return queueName.startsWith(getCorrelatedQueuePrefix(jobName));
+}
+
+function isJobQueueName(queueName: string, jobName: KnownJobName): boolean {
+  return queueName === jobName || isCorrelatedQueueName(queueName, jobName);
 }
 
 function mergeRetryOptions<TOptions extends JobRetryOptions>(

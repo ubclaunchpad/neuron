@@ -6,17 +6,15 @@ import type { IUserService } from "@/server/services/entity/userService";
 import { randomUUID } from "crypto";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as schema from "@/server/db/schema";
 import { deliveryOutbox, user, notification } from "@/server/db/schema";
 import { env } from "@/env";
-import {
-  recordDelivery,
-  drainDeliveries,
-  MAX_DELIVERY_ATTEMPTS,
-} from "@/server/delivery/outbox";
-import { deliveryHandlers } from "@/server/delivery/handlers";
+import { DeliveryService } from "@/server/services/deliveryService";
+import { sendEmailDelivery } from "@/server/jobs/definitions/send-email.job";
+import { asValue } from "awilix";
+import type { Drizzle } from "@/server/db";
 import type { MockEmailService } from "../mocks/mock-email-service";
 import {
   createTestScope,
@@ -46,10 +44,18 @@ describe("transactional delivery outbox", () => {
     scope.dispose();
   });
   const rows = () => scope.db.select().from(deliveryOutbox);
-  const drain = () => drainDeliveries(scope.container.cradle, deliveryHandlers);
+  const worker = (db: Drizzle) => {
+    const container = scope.container.createScope();
+    container.register({ db: asValue(db) });
+    return new JobService({ container, env });
+  };
+  const drain = () => jobs.processDeliveryOutbox();
   const queueEmail = (key?: string) =>
     scope.db.transaction((tx) =>
-      jobs.deliver("email", email, { transaction: tx, idempotencyKey: key }),
+      jobs.deliver("jobs.send-email", email, {
+        transaction: tx,
+        idempotencyKey: key,
+      }),
     );
 
   it("persists through the real JobService API without bootstrapping the queue", async () => {
@@ -57,11 +63,11 @@ describe("transactional delivery outbox", () => {
       .spyOn(jobs, "start")
       .mockRejectedValue(new Error("queue unavailable"));
     await scope.db.transaction(async (tx) => {
-      await jobs.deliver("email", email, {
+      await jobs.deliver("jobs.send-email", email, {
         transaction: tx,
         idempotencyKey: "api-event",
       });
-      await jobs.deliver("email", email, {
+      await jobs.deliver("jobs.send-email", email, {
         transaction: tx,
         idempotencyKey: "api-event",
       });
@@ -84,7 +90,7 @@ describe("transactional delivery outbox", () => {
           role: "volunteer",
           status: "active",
         });
-        await jobs.deliver("email", email, { transaction: tx });
+        await jobs.deliver("jobs.send-email", email, { transaction: tx });
         throw new Error("rollback");
       }),
     ).rejects.toThrow("rollback");
@@ -208,11 +214,11 @@ describe("transactional delivery outbox", () => {
     await queueEmail();
     const connection = postgres(env.DATABASE_URL, { max: 4 });
     const db = drizzle(connection, { schema });
-    const cradle = { ...scope.container.cradle, db };
+    const concurrentJobs = worker(db);
     try {
       await Promise.all([
-        drainDeliveries(cradle, deliveryHandlers),
-        drainDeliveries(cradle, deliveryHandlers),
+        concurrentJobs.processDeliveryOutbox(),
+        concurrentJobs.processDeliveryOutbox(),
       ]);
     } finally {
       await connection.end();
@@ -239,17 +245,14 @@ describe("transactional delivery outbox", () => {
   it("does not bypass failure backoff when workers overlap", async () => {
     await queueEmail();
     const connection = postgres(env.DATABASE_URL, { max: 4 });
-    const cradle = {
-      ...scope.container.cradle,
-      db: drizzle(connection, { schema }),
-    };
+    const concurrentJobs = worker(drizzle(connection, { schema }));
     let prepared = 0;
     let release!: () => void;
     const bothPrepared = new Promise<void>((resolve) => {
       release = resolve;
     });
-    const prepare = deliveryHandlers.email!.prepare;
-    vi.spyOn(deliveryHandlers.email!, "prepare").mockImplementation(
+    const prepare = sendEmailDelivery.prepare;
+    vi.spyOn(sendEmailDelivery, "prepare").mockImplementation(
       async (...args) => {
         if (++prepared === 2) release();
         return prepare(...args);
@@ -261,8 +264,8 @@ describe("transactional delivery outbox", () => {
     });
     try {
       await Promise.all([
-        drainDeliveries(cradle, deliveryHandlers),
-        drainDeliveries(cradle, deliveryHandlers),
+        concurrentJobs.processDeliveryOutbox(),
+        concurrentJobs.processDeliveryOutbox(),
       ]);
     } finally {
       await connection.end();
@@ -299,13 +302,17 @@ describe("transactional delivery outbox", () => {
     const send = vi
       .spyOn(mail, "send")
       .mockRejectedValue(new Error("temporary failure"));
-    for (let attempt = 0; attempt < MAX_DELIVERY_ATTEMPTS + 1; attempt++) {
+    for (
+      let attempt = 0;
+      attempt < DeliveryService.MAX_ATTEMPTS + 1;
+      attempt++
+    ) {
       await scope.db.update(deliveryOutbox).set({ nextAttemptAt: new Date(0) });
       await drain();
     }
-    expect(send).toHaveBeenCalledTimes(MAX_DELIVERY_ATTEMPTS);
+    expect(send).toHaveBeenCalledTimes(DeliveryService.MAX_ATTEMPTS);
     expect((await rows())[0]).toMatchObject({
-      attempts: MAX_DELIVERY_ATTEMPTS,
+      attempts: DeliveryService.MAX_ATTEMPTS,
       failedAt: expect.any(Date),
       lastErrorCode: "DELIVERY_FAILED",
     });
@@ -314,25 +321,63 @@ describe("transactional delivery outbox", () => {
   it("cancels pending delivery using JobService without a table write by the caller", async () => {
     await queueEmail("cancelled-event");
     await scope.db.transaction((tx) =>
-      jobs.cancelDelivery("email", "cancelled-event", { transaction: tx }),
+      jobs.cancelDelivery("jobs.send-email", "cancelled-event", {
+        transaction: tx,
+      }),
     );
     await drain();
     expect(mail.sentEmails).toHaveLength(0);
     expect((await rows())[0]?.payload).toEqual({});
   });
 
+  it("keeps completed cancellations unchanged and makes replacement explicit", async () => {
+    await queueEmail("completed");
+    await drain();
+    const original = (await rows())[0]!;
+    await scope.db.transaction((tx) =>
+      jobs.cancelDelivery("jobs.send-email", "completed", { transaction: tx }),
+    );
+    expect((await rows())[0]?.processedAt).toEqual(original.processedAt);
+    expect((await rows())[0]?.revisionId).toBe(original.revisionId);
+    await scope.db.transaction((tx) =>
+      jobs.deliver(
+        "jobs.send-email",
+        { ...email, subject: "new event" },
+        { transaction: tx, idempotencyKey: "completed", replaceExisting: true },
+      ),
+    );
+    await drain();
+    expect(mail.sentEmails).toHaveLength(2);
+    expect(mail.sentEmails[1]?.subject).toBe("new event");
+  });
+
+  it("preserves preparation SQL errors across transaction recovery", async () => {
+    await queueEmail();
+    vi.spyOn(sendEmailDelivery, "prepare").mockImplementationOnce(
+      async (_payload, tx) => {
+        await tx.execute(sql`SELECT * FROM nonexistent_delivery_test_table`);
+        return async () => {};
+      },
+    );
+    await drain();
+    expect((await rows())[0]).toMatchObject({
+      attempts: 1,
+      lastErrorCode: "SQL_42P01",
+      failedAt: null,
+    });
+    expect(mail.sentEmails).toHaveLength(0);
+  });
+
   it("serializes duplicate account approvals and deactivations", async () => {
     const id = randomUUID();
-    await scope.db
-      .insert(user)
-      .values({
-        id,
-        name: "Test",
-        lastName: "Concurrent",
-        email: `${id}@test.com`,
-        role: "volunteer",
-        status: "unverified",
-      });
+    await scope.db.insert(user).values({
+      id,
+      name: "Test",
+      lastName: "Concurrent",
+      email: `${id}@test.com`,
+      role: "volunteer",
+      status: "unverified",
+    });
     const connection = postgres(env.DATABASE_URL, { max: 4 });
     const { UserService } =
       await import("@/server/services/entity/userService");
@@ -358,37 +403,39 @@ describe("transactional delivery outbox", () => {
   });
 
   it("rejects a superseded revision even when a worker already prepared it", async () => {
-    await recordDelivery(scope.db, {
-      kind: "test",
-      payload: { value: "old" },
-      key: "assignment",
-      replace: true,
-    });
-    let superseded = false;
+    await scope.db.transaction((tx) =>
+      jobs.deliver(
+        "jobs.send-email",
+        { ...email, subject: "old" },
+        { transaction: tx, idempotencyKey: "revision", replaceExisting: true },
+      ),
+    );
+    const prepare = sendEmailDelivery.prepare;
     const send = vi.fn(async () => {});
-    await drainDeliveries(scope.container.cradle, {
-      test: {
-        async prepare() {
-          if (!superseded) {
-            superseded = true;
-            // Use another connection: the transaction retains the fixture pool connection.
-            const connection = postgres(env.DATABASE_URL);
-            try {
-              await recordDelivery(drizzle(connection, { schema }), {
-                kind: "test",
-                payload: { value: "new" },
-                key: "assignment",
-                replace: true,
-              });
-            } finally {
-              await connection.end();
-            }
-          }
-          return send;
-        },
+    vi.spyOn(sendEmailDelivery, "prepare").mockImplementationOnce(
+      async (...args) => {
+        const connection = postgres(env.DATABASE_URL);
+        try {
+          await drizzle(connection, { schema }).transaction((tx) =>
+            jobs.deliver(
+              "jobs.send-email",
+              { ...email, subject: "new" },
+              {
+                transaction: tx,
+                idempotencyKey: "revision",
+                replaceExisting: true,
+              },
+            ),
+          );
+        } finally {
+          await connection.end();
+        }
+        await prepare(...args);
+        return send;
       },
-    });
+    );
+    await drain();
     expect(send).not.toHaveBeenCalled();
-    expect((await rows())[0]?.payload).toEqual({ value: "new" });
+    expect((await rows())[0]?.payload.subject).toBe("new");
   });
 });

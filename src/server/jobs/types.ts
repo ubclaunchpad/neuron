@@ -1,3 +1,5 @@
+import type { z } from "zod";
+import type { Transaction } from "@/server/db";
 import type { NeuronContainer, NeuronCradle } from "@/server/api/di-container";
 
 export type JobName = `jobs.${string}`;
@@ -69,7 +71,32 @@ export interface RegisteredJob<
 > {
   name: JobName;
   retryOpts?: JobRetryOptions;
+  queuePolicy?: "singleton";
   workOptions?: WorkRegistrationOptions;
   startup?: StartupSchedule<TPayload>;
   handler: (payload: TPayload, context: JobRuntimeContext) => Promise<void>;
+}
+
+export interface DeliveryOptions {
+  transaction: Transaction;
+  idempotencyKey?: string;
+  /** Replace this key's latest revision, including a previously completed one. */
+  replaceExisting?: boolean;
+}
+
+export interface DeliveryFailure {
+  code: string;
+  permanent: boolean;
+}
+
+export interface DeliveryDefinition<TPayload extends object> {
+  name: JobName;
+  payloadSchema: z.ZodType<TPayload>;
+  // Lock domain rows before claiming the outbox revision. Return null to suppress.
+  prepare(
+    payload: TPayload,
+    tx: Transaction,
+    context: JobRuntimeContext,
+  ): Promise<(() => Promise<void>) | null>;
+  classifyFailure?: (error: unknown) => DeliveryFailure;
 }

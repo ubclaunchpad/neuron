@@ -1,11 +1,15 @@
-import { recordDelivery, cancelDelivery } from "@/server/delivery/outbox";
+import type { IJobService } from "@/server/services/jobService";
+import type {
+  DeliverableJobName,
+  DeliveryPayload,
+  JobPayload,
+  RunnableJobName,
+} from "@/server/jobs/registry";
 import type {
   DeliveryOptions,
-  DeliveryPayloads,
-} from "@/server/delivery/types";
-import type { IJobService } from "@/server/services/jobService";
-import type { JobPayload, RunnableJobName } from "@/server/jobs/registry";
-import type { RunJobOptions } from "@/server/jobs/types";
+  JobRuntimeContext,
+  RunJobOptions,
+} from "@/server/jobs/types";
 
 export class MockJobService implements IJobService {
   readonly calls: {
@@ -13,48 +17,36 @@ export class MockJobService implements IJobService {
     data?: unknown;
     options?: RunJobOptions;
   }[] = [];
-
+  readonly deliveries: {
+    name: DeliverableJobName;
+    data: unknown;
+    options: DeliveryOptions;
+  }[] = [];
+  readonly cancellations: { name: DeliverableJobName; key: string }[] = [];
   async start(): Promise<void> {}
-
   async stop(): Promise<void> {}
-
-  async run<TJobName extends RunnableJobName>(
-    jobName: TJobName,
-    data?: JobPayload<TJobName>,
+  async run<TName extends RunnableJobName>(
+    jobName: TName,
+    data?: JobPayload<TName>,
     options?: RunJobOptions,
   ): Promise<string | null> {
     this.calls.push({ jobName, data, options });
-    if (options?.cron) return null;
-    return "mock-job-id";
+    return options?.cron ? null : "mock-job-id";
   }
-
-  // Keep transactional persistence real in service integration tests; queue and
-  // transport operations remain mocked.
-  async deliver<TKind extends keyof DeliveryPayloads>(
-    kind: TKind,
-    data: DeliveryPayloads[TKind],
+  async deliver<TName extends DeliverableJobName>(
+    name: TName,
+    data: DeliveryPayload<TName>,
     options: DeliveryOptions,
   ): Promise<void> {
-    await recordDelivery(options.transaction, {
-      kind,
-      payload: data,
-      key: options.idempotencyKey,
-      replace: options.replacePending,
-    });
+    this.deliveries.push({ name, data, options });
   }
-
-  async cancelDelivery<TKind extends keyof DeliveryPayloads>(
-    kind: TKind,
-    idempotencyKey: string,
-    options: Pick<DeliveryOptions, "transaction">,
-  ): Promise<void> {
-    await cancelDelivery(options.transaction, kind, idempotencyKey);
+  async cancelDelivery(name: DeliverableJobName, key: string): Promise<void> {
+    this.cancellations.push({ name, key });
   }
-
+  async processDeliveryOutbox(_context?: JobRuntimeContext): Promise<void> {}
   async unschedule(
-    _jobName: RunnableJobName,
+    _name: RunnableJobName,
     _options?: { correlationId?: string },
   ): Promise<void> {}
-
-  async cancelJob(_jobName: RunnableJobName, _jobId: string): Promise<void> {}
+  async cancelJob(_name: RunnableJobName, _id: string): Promise<void> {}
 }

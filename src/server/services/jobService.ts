@@ -1,8 +1,3 @@
-import { recordDelivery, cancelDelivery } from "@/server/delivery/outbox";
-import type {
-  DeliveryOptions,
-  DeliveryPayloads,
-} from "@/server/delivery/types";
 import { asValue } from "awilix";
 import { PgBoss, type Schedule } from "pg-boss";
 
@@ -16,8 +11,12 @@ import {
   type JobPayload,
   type KnownJobName,
   type RunnableJobName,
+  type DeliverableJobName,
+  type DeliveryPayload,
 } from "../jobs/registry";
 import type {
+  DeliveryOptions,
+  JobRuntimeContext,
   JobRetryOptions,
   RegisteredJob,
   RunJobOptions,
@@ -31,16 +30,17 @@ export interface IJobService {
     data?: JobPayload<TJobName>,
     options?: RunJobOptions,
   ): Promise<string | null>;
-  deliver<TKind extends keyof DeliveryPayloads>(
+  deliver<TKind extends DeliverableJobName>(
     kind: TKind,
-    data: DeliveryPayloads[TKind],
+    data: DeliveryPayload<TKind>,
     options: DeliveryOptions,
   ): Promise<void>;
-  cancelDelivery<TKind extends keyof DeliveryPayloads>(
+  cancelDelivery<TKind extends DeliverableJobName>(
     kind: TKind,
     idempotencyKey: string,
     options: Pick<DeliveryOptions, "transaction">,
   ): Promise<void>;
+  processDeliveryOutbox(context?: JobRuntimeContext): Promise<void>;
   unschedule(
     jobName: RunnableJobName,
     options?: { correlationId?: string },
@@ -56,6 +56,8 @@ type SharedBossState = {
   pendingWorkerRegistrations: Map<string, Promise<void>>;
   recurringQueuesByJob: Map<KnownJobName, Set<string>>;
   startPromise?: Promise<void>;
+  startupRetryTimer?: ReturnType<typeof setTimeout>;
+  stopping?: boolean;
 };
 
 type GlobalWithBoss = typeof globalThis & {
@@ -95,19 +97,47 @@ export class JobService implements IJobService {
 
   async start(): Promise<void> {
     if (sharedBossState.isStarted) return;
-
-    sharedBossState.startPromise ??= this.bootstrap().catch((error) => {
-      sharedBossState.startPromise = undefined;
-      throw error;
-    });
+    sharedBossState.stopping = false;
+    sharedBossState.startPromise ??= this.bootstrap()
+      .then(() => {
+        this.clearStartupRetry();
+      })
+      .catch((error) => {
+        sharedBossState.startPromise = undefined;
+        if (!sharedBossState.stopping) this.scheduleStartupRetry(error);
+        throw error;
+      });
     return sharedBossState.startPromise;
   }
 
+  private clearStartupRetry(): void {
+    if (sharedBossState.startupRetryTimer)
+      clearTimeout(sharedBossState.startupRetryTimer);
+    sharedBossState.startupRetryTimer = undefined;
+  }
+
+  private scheduleStartupRetry(error: unknown): void {
+    if (sharedBossState.startupRetryTimer) return;
+    console.error("[pg-boss] startup failed; retry scheduled", {
+      errorType: error instanceof Error ? error.name : "UnknownError",
+    });
+    sharedBossState.startupRetryTimer = setTimeout(() => {
+      sharedBossState.startupRetryTimer = undefined;
+      if (sharedBossState.stopping) return;
+      // start() owns diagnostics and rescheduling on failure.
+      void this.start().catch(() => {});
+    }, 30_000);
+    sharedBossState.startupRetryTimer.unref?.();
+  }
+
   async stop(): Promise<void> {
+    sharedBossState.stopping = true;
+    this.clearStartupRetry();
     try {
-      if (sharedBossState.boss && sharedBossState.isStarted) {
+      // An in-flight bootstrap must settle before shutdown completes.
+      await sharedBossState.startPromise?.catch(() => {});
+      if (sharedBossState.boss && sharedBossState.isStarted)
         await this.boss.stop();
-      }
     } finally {
       sharedBossState.boss = undefined;
       sharedBossState.isStarted = false;
@@ -128,27 +158,33 @@ export class JobService implements IJobService {
     return this.runWithStartedBoss(jobName, data, options);
   }
 
-  async deliver<TKind extends keyof DeliveryPayloads>(
+  async deliver<TKind extends DeliverableJobName>(
     kind: TKind,
-    data: DeliveryPayloads[TKind],
+    data: DeliveryPayload<TKind>,
     options: DeliveryOptions,
   ): Promise<void> {
-    // This path intentionally does not bootstrap pg-boss or enqueue after commit.
-    // The recovery worker discovers committed intents independently.
-    await recordDelivery(options.transaction, {
-      kind,
-      payload: data,
-      key: options.idempotencyKey,
-      replace: options.replacePending,
-    });
+    await this.container.cradle.deliveryService.deliver(kind, data, options);
   }
 
-  async cancelDelivery<TKind extends keyof DeliveryPayloads>(
+  async cancelDelivery<TKind extends DeliverableJobName>(
     kind: TKind,
     idempotencyKey: string,
     options: Pick<DeliveryOptions, "transaction">,
   ): Promise<void> {
-    await cancelDelivery(options.transaction, kind, idempotencyKey);
+    await this.container.cradle.deliveryService.cancel(
+      kind,
+      idempotencyKey,
+      options,
+    );
+  }
+
+  async processDeliveryOutbox(
+    context: JobRuntimeContext = {
+      container: this.container,
+      cradle: this.container.cradle,
+    },
+  ): Promise<void> {
+    await context.cradle.deliveryService.process(context);
   }
 
   async unschedule(
@@ -395,10 +431,12 @@ export class JobService implements IJobService {
       if (await this.boss.getQueue(queueName)) {
         await this.boss.updateQueue(queueName, {
           ...definition.retryOpts,
+          ...(definition.queuePolicy ? { policy: definition.queuePolicy } : {}),
         });
       } else {
         await this.boss.createQueue(queueName, {
           ...definition.retryOpts,
+          ...(definition.queuePolicy ? { policy: definition.queuePolicy } : {}),
         });
       }
 

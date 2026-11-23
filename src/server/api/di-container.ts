@@ -1,4 +1,7 @@
-import { startJobsWithRetry } from "../jobs/start-with-retry";
+import {
+  DeliveryService,
+  type IDeliveryService,
+} from "../services/deliveryService";
 import { env } from "@/env";
 import type { Session } from "@/lib/auth";
 import {
@@ -72,6 +75,7 @@ export type NeuronCradle = {
   shiftService: IShiftService;
   coverageService: ICoverageService;
   jobService: IJobService;
+  deliveryService: IDeliveryService;
   preferenceService: IPreferenceService;
   notificationService: INotificationService;
   notificationEventService: INotificationEventService;
@@ -95,7 +99,8 @@ const createRootContainer = (): NeuronContainer => {
   registerDb(container);
   //registerCacheClient(container);
   registerServices(container);
-  startJobsWithRetry(container.cradle.jobService);
+  // JobService owns startup diagnostics and automatic recovery.
+  void container.cradle.jobService.start().catch(() => {});
 
   return container;
 };
@@ -114,6 +119,7 @@ const registerServices = (container: NeuronContainer) => {
     termService: asClass<ITermService>(TermService).scoped(),
     coverageService: asClass<ICoverageService>(CoverageService).scoped(),
     jobService: asClass<IJobService>(JobService).singleton(),
+    deliveryService: asClass<IDeliveryService>(DeliveryService).scoped(),
     preferenceService: asClass<IPreferenceService>(PreferenceService).scoped(),
     notificationService:
       asClass<INotificationService>(NotificationService).scoped(),

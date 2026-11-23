@@ -159,12 +159,15 @@ export class UserService implements IUserService {
         .from(user)
         .where(eq(user.id, id))
         .for("update");
-      if (!existing)
+      if (!existing) {
         throw new NeuronError(
           `Could not find user with id ${id}`,
           NeuronErrorCodes.NOT_FOUND,
         );
-      if (existing.status === UserStatus.active) return id;
+      }
+      if (existing.status === UserStatus.active) {
+        return id;
+      }
       const isFirstApproval = existing.status === UserStatus.unverified;
       const render = isFirstApproval
         ? renderVolunteerApproved
@@ -178,7 +181,7 @@ export class UserService implements IUserService {
         .set({ status: UserStatus.active })
         .where(eq(user.id, id));
       await this.jobService.deliver(
-        "email",
+        "jobs.send-email",
         { to: existing.email, subject, text, html },
         { transaction: tx },
       );
@@ -216,11 +219,12 @@ export class UserService implements IUserService {
         .from(user)
         .where(eq(user.id, id))
         .for("update");
-      if (existing?.status !== UserStatus.active)
+      if (existing?.status !== UserStatus.active) {
         throw new NeuronError(
           `Volunteer with id ${id} is not active`,
           NeuronErrorCodes.BAD_REQUEST,
         );
+      }
       const { html, text } = await renderVolunteerDeactivated({
         volunteerName: existing.name,
       });
@@ -229,7 +233,7 @@ export class UserService implements IUserService {
         .set({ status: UserStatus.inactive })
         .where(eq(user.id, id));
       await this.jobService.deliver(
-        "email",
+        "jobs.send-email",
         {
           to: existing.email,
           subject: "Your Account Has Been Deactivated",

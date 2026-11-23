@@ -1,3 +1,9 @@
+import { vi } from "vitest";
+import { JobService } from "@/server/services/jobService";
+import {
+  DeliveryService,
+  type IDeliveryService,
+} from "@/server/services/deliveryService";
 import {
   createContainer,
   asValue,
@@ -16,7 +22,6 @@ import { getTestDb } from "./test-db";
 import { MockEmailService } from "./mocks/mock-email-service";
 import { MockImageService } from "./mocks/mock-image-service";
 import { MockCurrentSessionService } from "./mocks/mock-current-session-service";
-import { MockJobService } from "./mocks/mock-job-service";
 import {
   MockNotificationService,
   MockPreferenceService,
@@ -73,10 +78,13 @@ export function createTestContainer(
 
   const db = getTestDb();
 
-  // Instantiate up front so the same instance is shared across all resolutions.
-  // asClass(.transient()) would return a new instance on every cradle access,
-  // making calls inspection impossible from tests.
-  const mockJobService = new MockJobService();
+  // Exercise real transactional delivery APIs; isolate queue/transport boundaries.
+  const jobService = new JobService({ container, env });
+  vi.spyOn(jobService, "run").mockResolvedValue("mock-job-id");
+  vi.spyOn(jobService, "start").mockResolvedValue();
+  vi.spyOn(jobService, "stop").mockResolvedValue();
+  vi.spyOn(jobService, "cancelJob").mockResolvedValue();
+  vi.spyOn(jobService, "unschedule").mockResolvedValue();
 
   container.register({
     env: asValue(env),
@@ -93,7 +101,8 @@ export function createTestContainer(
     currentSessionService: asClass<ICurrentSessionService>(
       MockCurrentSessionService,
     ).singleton(),
-    jobService: asValue<IJobService>(mockJobService),
+    jobService: asValue<IJobService>(jobService),
+    deliveryService: asClass<IDeliveryService>(DeliveryService).scoped(),
     emailService: asClass<IEmailService>(MockEmailService).singleton(),
     imageService: asClass<IImageService>(MockImageService).singleton(),
     // cacheService: asClass(CacheService).scoped(),
@@ -107,12 +116,15 @@ export function createTestContainer(
     coverageService: asClass<ICoverageService>(CoverageService).scoped(),
 
     // Notification services (mocked)
-    notificationService:
-      asClass<INotificationService>(MockNotificationService).singleton(),
-    preferenceService:
-      asClass<IPreferenceService>(MockPreferenceService).singleton(),
-    notificationEventService:
-      asClass<INotificationEventService>(MockNotificationEventService).singleton(),
+    notificationService: asClass<INotificationService>(
+      MockNotificationService,
+    ).singleton(),
+    preferenceService: asClass<IPreferenceService>(
+      MockPreferenceService,
+    ).singleton(),
+    notificationEventService: asClass<INotificationEventService>(
+      MockNotificationEventService,
+    ).singleton(),
   });
 
   return container;

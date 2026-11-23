@@ -371,6 +371,24 @@ export class NotificationService implements INotificationService {
       return channelPrefs?.get("in_app") !== false;
     });
 
+    const emailRecipients = recipients.filter(
+      (recipient) => preferences.get(recipient.userId)?.get("email") === true,
+    );
+    let html: string | undefined;
+    let emailText: string | undefined;
+    if (emailRecipients.length > 0 && typeDef.renderEmail) {
+      try {
+        const rendered = await typeDef.renderEmail(context);
+        html = rendered.html;
+        emailText = rendered.text;
+      } catch (error) {
+        console.error(
+          `[notification] Failed to render email template for ${type}:`,
+          error,
+        );
+      }
+    }
+
     await this.db.transaction(async (tx) => {
       if (inAppRecipients.length > 0) {
         // Use the same idempotency key base but append userId for per-user uniqueness
@@ -394,47 +412,22 @@ export class NotificationService implements INotificationService {
           .onConflictDoNothing({ target: notification.idempotencyKey });
       }
 
-      // Process email channel
-      const emailRecipients = recipients.filter((r) => {
-        const channelPrefs = preferences.get(r.userId);
-        return channelPrefs?.get("email") === true;
-      });
-
-      if (emailRecipients.length > 0) {
-        // Render HTML email once for all recipients (content is identical)
-        let html: string | undefined;
-        let emailText: string | undefined;
-
-        if (typeDef.renderEmail) {
-          try {
-            const rendered = await typeDef.renderEmail(context);
-            html = rendered.html;
-            emailText = rendered.text;
-          } catch (error) {
-            console.error(
-              `[notification] Failed to render email template for ${type}:`,
-              error,
-            );
-          }
-        }
-
-        for (const recipient of emailRecipients) {
-          await this.jobService.deliver(
-            "email",
-            {
-              to: recipient.email,
-              subject: title,
-              text: emailText ?? body,
-              ...(html ? { html } : {}),
-            },
-            {
-              transaction: tx,
-              idempotencyKey: idempotencyKey
-                ? `${idempotencyKey}:${recipient.userId}`
-                : undefined,
-            },
-          );
-        }
+      for (const recipient of emailRecipients) {
+        await this.jobService.deliver(
+          "jobs.send-email",
+          {
+            to: recipient.email,
+            subject: title,
+            text: emailText ?? body,
+            ...(html ? { html } : {}),
+          },
+          {
+            transaction: tx,
+            idempotencyKey: idempotencyKey
+              ? `${idempotencyKey}:${recipient.userId}`
+              : undefined,
+          },
+        );
       }
     });
   }

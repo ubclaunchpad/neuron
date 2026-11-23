@@ -1,12 +1,8 @@
-import { eq, and, inArray } from "drizzle-orm";
-import type { Drizzle } from "@/server/db";
-import { shift, coverageRequest, shiftAttendance } from "@/server/db/schema";
+import { eq } from "drizzle-orm";
+import { shift, shiftAttendance } from "@/server/db/schema";
 import { course } from "@/server/db/schema/course";
-import { volunteerToSchedule } from "@/server/db/schema/schedule";
-import { user } from "@/server/db/schema/user";
-import { CoverageStatus } from "@/models/api/coverage";
+import { getEffectiveVolunteerUsersForShift } from "@/server/services/entity/shiftAssignment";
 import { formatDate, formatTime } from "@/lib/constants";
-import { UserStatus } from "@/models/interfaces";
 import type { RegisteredJob } from "../types";
 
 export type CheckShiftNotificationsPayload = {
@@ -43,12 +39,15 @@ export const checkShiftNotificationsJob: RegisteredJob<CheckShiftNotificationsPa
 
       if (!shiftRow || shiftRow.canceled) return;
 
-      // Get effective volunteer roster (accounting for coverage swaps)
-      const effectiveVolunteers = await getEffectiveVolunteers(
-        db,
-        shiftRow.scheduleId,
-        shiftId,
-      );
+      // Resolve effective active volunteer roster via shared assignment contract
+      const effectiveVolunteers = (
+        await getEffectiveVolunteerUsersForShift(db, shiftId, {
+          activeOnly: true,
+        })
+      ).map((v) => ({
+        userId: v.volunteerUserId,
+        name: `${v.name} ${v.lastName}`,
+      }));
 
       if (effectiveVolunteers.length === 0) return;
 
@@ -86,77 +85,3 @@ export const checkShiftNotificationsJob: RegisteredJob<CheckShiftNotificationsPa
       }
     },
   };
-
-/**
- * Get the effective volunteer roster for a shift, accounting for coverage swaps.
- * Original volunteers with resolved coverage are replaced by covering volunteers.
- */
-async function getEffectiveVolunteers(
-  db: Drizzle,
-  scheduleId: string,
-  shiftId: string,
-) {
-  // Get all original volunteers for the schedule
-  const originalVolunteers = await db
-    .select({
-      userId: volunteerToSchedule.volunteerUserId,
-      name: user.name,
-      lastName: user.lastName,
-    })
-    .from(volunteerToSchedule)
-    .innerJoin(user, eq(user.id, volunteerToSchedule.volunteerUserId))
-    .where(
-      and(
-        eq(volunteerToSchedule.scheduleId, scheduleId),
-        eq(user.status, UserStatus.active),
-      ),
-    );
-
-  // Get resolved coverage requests for this shift
-  const resolvedCoverage = await db
-    .select({
-      requestingVolunteerUserId: coverageRequest.requestingVolunteerUserId,
-      coveredByVolunteerUserId: coverageRequest.coveredByVolunteerUserId,
-    })
-    .from(coverageRequest)
-    .where(
-      and(
-        eq(coverageRequest.shiftId, shiftId),
-        eq(coverageRequest.status, CoverageStatus.resolved),
-      ),
-    );
-
-  // Build sets for quick lookup
-  const replacedUserIds = new Set(
-    resolvedCoverage.map((c) => c.requestingVolunteerUserId),
-  );
-  const coveringUserIds = resolvedCoverage
-    .map((c) => c.coveredByVolunteerUserId)
-    .filter((id): id is string => id != null);
-
-  // Start with original volunteers minus those replaced by coverage
-  const effectiveVolunteers = originalVolunteers
-    .filter((v) => !replacedUserIds.has(v.userId))
-    .map((v) => ({ userId: v.userId, name: `${v.name} ${v.lastName}` }));
-
-  // Add covering volunteers
-  if (coveringUserIds.length > 0) {
-    const coveringUsers = await db
-      .select({
-        userId: user.id,
-        name: user.name,
-        lastName: user.lastName,
-      })
-      .from(user)
-      .where(and(inArray(user.id, coveringUserIds), eq(user.status, UserStatus.active)));
-
-    for (const u of coveringUsers) {
-      effectiveVolunteers.push({
-        userId: u.userId,
-        name: `${u.name} ${u.lastName}`,
-      });
-    }
-  }
-
-  return effectiveVolunteers;
-}

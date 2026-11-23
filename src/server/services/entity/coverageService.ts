@@ -15,21 +15,18 @@ import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { formatDate } from "@/lib/constants";
 import { Role } from "@/models/interfaces";
 import type { EmbeddedShift } from "@/models/shift";
-import { buildUser } from "@/models/user";
 import { getEmbeddedVolunteer } from "@/models/volunteer";
 import type { ListResponse } from "@/models/list-response";
 import type { Drizzle } from "@/server/db";
 import { course, term } from "@/server/db/schema/course";
 import {
   coverageRequest,
-  instructorToSchedule,
   shift,
   type CoverageRequestDB,
 } from "@/server/db/schema";
-import { volunteerToSchedule } from "@/server/db/schema/schedule";
-import { instructorUserView, user } from "@/server/db/schema/user";
-import { getViewColumns } from "@/server/db/extensions/get-view-columns";
+import { user } from "@/server/db/schema/user";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import { isVolunteerEffectivelyAssignedToShiftSql } from "@/server/services/entity/shiftAssignment";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import { getPagination } from "@/utils/searchUtils";
 import {
@@ -40,6 +37,7 @@ import {
   gte,
   inArray,
   lte,
+  not,
   or,
   sql,
   type SQL,
@@ -171,22 +169,12 @@ export class CoverageService implements ICoverageService {
     ) {
       whereConditions.push(
         or(
-          // Show open requests only if volunteer is NOT already assigned to the shift
+          // Show open requests only if volunteer is NOT already effectively assigned to the shift
           and(
             eq(coverageRequest.status, CoverageStatus.open),
-            // Not assigned via schedule
-            sql`NOT EXISTS (
-              SELECT 1 FROM ${volunteerToSchedule}
-              WHERE ${volunteerToSchedule.scheduleId} = ${shift.scheduleId}
-              AND ${volunteerToSchedule.volunteerUserId} = ${viewerUserId}
-            )`,
-            // Not already covering this shift via another resolved coverage request
-            sql`NOT EXISTS (
-              SELECT 1 FROM ${coverageRequest} AS cr2
-              WHERE cr2.shift_id = ${shift.id}
-              AND cr2.covered_by_volunteer_user_id = ${viewerUserId}
-              AND cr2.status = ${CoverageStatus.resolved}
-            )`,
+            not(
+              isVolunteerEffectivelyAssignedToShiftSql(shift.id, viewerUserId),
+            ),
           ),
           // Always show their own requests (as requester)
           eq(coverageRequest.requestingVolunteerUserId, viewerUserId),
@@ -236,33 +224,12 @@ export class CoverageService implements ICoverageService {
       return { data: [], total: 0, nextCursor: null };
     }
 
-    // Batch load instructors by schedule
-    const scheduleIds = [...new Set(rows.map((r) => r.shift.scheduleId))];
-    const instructorRecords = await this.db
-      .select({
-        scheduleId: instructorToSchedule.scheduleId,
-        instructor: getViewColumns(instructorUserView),
-      })
-      .from(instructorToSchedule)
-      .innerJoin(
-        instructorUserView,
-        eq(instructorToSchedule.instructorUserId, instructorUserView.id),
-      )
-      .where(inArray(instructorToSchedule.scheduleId, scheduleIds));
-
-    const instructorsBySchedule = new Map<
-      string,
-      ReturnType<typeof buildUser>[]
-    >();
-    for (const record of instructorRecords) {
-      const list = instructorsBySchedule.get(record.scheduleId) ?? [];
-      list.push(buildUser(record.instructor));
-      instructorsBySchedule.set(record.scheduleId, list);
-    }
-
-    // Batch load shifts to get volunteers
+    // Batch load shifts to get effective instructors and volunteers
     const shiftIds = [...new Set(rows.map((r) => r.shift.id))];
     const shiftModels = await this.shiftService.getShiftsByIds(shiftIds);
+    const instructorsByShift = new Map(
+      shiftModels.map((s) => [s.id, s.instructors]),
+    );
     const volunteersByShift = new Map(
       shiftModels.map((s) => [
         s.id,
@@ -315,7 +282,7 @@ export class CoverageService implements ICoverageService {
           category: row.course.category,
           subcategory: row.course.subcategory,
         },
-        instructors: instructorsBySchedule.get(row.shift.scheduleId) ?? [],
+        instructors: instructorsByShift.get(row.shift.id) ?? [],
         volunteers: volunteersByShift.get(row.shift.id) ?? [],
       };
 

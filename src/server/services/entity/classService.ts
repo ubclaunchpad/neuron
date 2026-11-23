@@ -32,6 +32,7 @@ import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import type { ICurrentSessionService } from "@/server/services/currentSessionService";
 import type { IImageService } from "../imageService";
+import { syncScheduleAssignmentsToFutureShifts } from "./shiftAssignment";
 import type { IShiftService } from "./shiftService";
 import type { ITermService } from "./termService";
 import type { IUserService } from "./userService";
@@ -650,6 +651,16 @@ export class ClassService implements IClassService {
             ),
           );
       }
+
+      // Sync roster edits to future, non-canceled shifts only so historical
+      // shift rosters and attendance remain immutable.
+      await syncScheduleAssignmentsToFutureShifts(tx, {
+        scheduleId: id,
+        addedVolunteerUserIds,
+        removedVolunteerUserIds,
+        addedInstructorUserIds,
+        removedInstructorUserIds,
+      });
     }
   }
 

@@ -9,7 +9,7 @@ import {
   volunteerToSchedule,
   instructorToSchedule,
 } from "@/server/db/schema/schedule";
-import { shift } from "@/server/db/schema/shift";
+import { getEffectiveShiftNotificationRecipients } from "@/server/services/entity/shiftAssignment";
 import { getNotificationTypeDefinition } from "@/server/notifications/registry";
 import type {
   Audience,
@@ -167,7 +167,8 @@ export class NotificationService implements INotificationService {
     const hasMore = items.length > limit;
     if (hasMore) items.pop();
 
-    const lastItem = hasMore && items.length > 0 ? items[items.length - 1]! : null;
+    const lastItem =
+      hasMore && items.length > 0 ? items[items.length - 1]! : null;
     const nextCursor = lastItem
       ? `${lastItem.createdAt.toISOString()}|${lastItem.id}`
       : null;
@@ -445,7 +446,10 @@ export class NotificationService implements INotificationService {
           .select({ userId: user.id, email: user.email })
           .from(user)
           .where(
-            and(inArray(user.id, audience.userIds), eq(user.status, UserStatus.active)),
+            and(
+              inArray(user.id, audience.userIds),
+              eq(user.status, UserStatus.active),
+            ),
           );
       }
 
@@ -453,42 +457,19 @@ export class NotificationService implements INotificationService {
         return this.db
           .select({ userId: user.id, email: user.email })
           .from(user)
-          .where(and(eq(user.role, audience.role), eq(user.status, UserStatus.active)));
+          .where(
+            and(
+              eq(user.role, audience.role),
+              eq(user.status, UserStatus.active),
+            ),
+          );
       }
 
       case "shift": {
-        // Get volunteers assigned to the shift's schedule
-        const shiftRow = await this.db
-          .select({ scheduleId: shift.scheduleId })
-          .from(shift)
-          .where(eq(shift.id, audience.shiftId))
-          .then((rows) => rows[0]);
-
-        if (!shiftRow) return [];
-
-        const volunteers = await this.db
-          .select({ userId: user.id, email: user.email })
-          .from(volunteerToSchedule)
-          .innerJoin(user, eq(user.id, volunteerToSchedule.volunteerUserId))
-          .where(
-            and(
-              eq(volunteerToSchedule.scheduleId, shiftRow.scheduleId),
-              eq(user.status, UserStatus.active),
-            ),
-          );
-
-        const instructors = await this.db
-          .select({ userId: user.id, email: user.email })
-          .from(instructorToSchedule)
-          .innerJoin(user, eq(user.id, instructorToSchedule.instructorUserId))
-          .where(
-            and(
-              eq(instructorToSchedule.scheduleId, shiftRow.scheduleId),
-              eq(user.status, UserStatus.active),
-            ),
-          );
-
-        return deduplicateRecipients([...volunteers, ...instructors]);
+        return getEffectiveShiftNotificationRecipients(
+          this.db,
+          audience.shiftId,
+        );
       }
 
       case "class": {

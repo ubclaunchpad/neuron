@@ -34,7 +34,7 @@ export const CreateUserDialog = NiceModal.create(() => {
     mode: "onSubmit",
     reValidateMode: "onChange",
     defaultValues: {
-      role: "" as Role,
+      role: "" as CreateUserSchemaType["role"],
       name: "",
       lastName: "",
       email: "",

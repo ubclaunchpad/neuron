@@ -14,11 +14,17 @@ import {
   session,
   verification,
 } from "@/server/db/schema/auth";
-import { user, volunteer } from "@/server/db/schema/user";
+import { user } from "@/server/db/schema/user";
 import { renderForgotPassword } from "@/server/emails/templates/forgot-password";
 import { renderRequestChangeEmail } from "@/server/emails/templates/request-change-email";
 import { renderVerifyEmail } from "@/server/emails/templates/verify-email";
 import { renderVerifyNewEmail } from "@/server/emails/templates/verify-new-email";
+import {
+  handleAuthUserCreated,
+  normalizeAuthRequestEmailBody,
+  normalizeAuthUserCreateInput,
+  normalizeAuthUserUpdateInput,
+} from "@/server/services/entity/accountProvisioning";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import {
   APIError,
@@ -58,6 +64,8 @@ const INVITATION_MANAGEMENT_AUTH_PATHS = new Set([
 export const auth = betterAuth({
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      const normalizedBody = normalizeAuthRequestEmailBody(ctx.body);
+      if (normalizedBody) Object.assign(ctx.body, normalizedBody);
       if (!ctx.path || NON_ACTIVE_ALLOWED_AUTH_PATHS.has(ctx.path)) {
         return;
       }
@@ -84,8 +92,7 @@ export const auth = betterAuth({
       ) {
         throw new APIError("FORBIDDEN", {
           code: "YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_APPLICATION",
-          message:
-            "You are not allowed to invite users to this application.",
+          message: "You are not allowed to invite users to this application.",
         });
       }
     }),
@@ -149,18 +156,13 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        after: async (user) => {
-          switch (user.role) {
-            case Role.volunteer:
-              await db.insert(volunteer).values({ userId: user.id });
-              return;
-            case Role.instructor:
-            case Role.admin:
-              return;
-          }
-
-          throw new Error(`Unknown role: ${user.role}`);
+        before: async (userData) => normalizeAuthUserCreateInput(userData),
+        after: async (createdUser) => {
+          await handleAuthUserCreated(db, createdUser);
         },
+      },
+      update: {
+        before: async (userData) => normalizeAuthUserUpdateInput(userData),
       },
     },
   },

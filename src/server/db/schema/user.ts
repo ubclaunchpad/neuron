@@ -12,6 +12,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { account, appInvitation, session } from "./auth";
@@ -46,6 +47,9 @@ export const user = pgTable(
     lastName: text("last_name").notNull(),
   },
   (table) => [
+    uniqueIndex("uq_user_email_normalized").on(
+      sql`lower(btrim(${table.email}))`,
+    ),
     index("idx_user_role").on(table.role),
     index("idx_user_status").on(table.status),
     index("idx_user_created_at").on(table.createdAt),

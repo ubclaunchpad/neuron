@@ -1,6 +1,13 @@
 import { z } from "zod";
-import { RoleEnum, UserStatusEnum } from "../interfaces";
+import { NormalizedEmail } from "../extensions/Email";
+import { Role, RoleEnum, UserStatusEnum } from "../interfaces";
 import { ListRequestWithSearch } from "./common";
+
+export const DirectProvisionRoleEnum = z.enum([
+  Role.admin,
+  Role.instructor,
+] as const);
+export type DirectProvisionRole = z.infer<typeof DirectProvisionRoleEnum>;
 
 export const UserIdInput = z.object({
   userId: z.uuid(),
@@ -13,9 +20,9 @@ export const ListUsersInput = ListRequestWithSearch.extend({
 export type ListUsersInput = z.infer<typeof ListUsersInput>;
 
 export const CreateUserInput = z.object({
-  role: RoleEnum,
+  role: DirectProvisionRoleEnum,
   name: z.string().nonempty("Please fill out this field."),
   lastName: z.string().nonempty("Please fill out this field."),
-  email: z.email("Please enter a valid email address."),
+  email: NormalizedEmail,
 });
 export type CreateUserInput = z.infer<typeof CreateUserInput>;

@@ -54,6 +54,7 @@ export const shift = pgTable(
       .where(not(table.canceled)),
     index("idx_shift_start").on(table.startAt).where(not(table.canceled)),
     index("idx_shift_slot").on(table.scheduleId),
+    uniqueIndex("uq_shift_schedule_date").on(table.scheduleId, table.date),
     check("chk_shift_time", sql`${table.endAt} > ${table.startAt}`),
   ],
 );

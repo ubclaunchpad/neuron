@@ -1,4 +1,4 @@
-import type { Drizzle } from "@/server/db";
+import type { Drizzle, Transaction } from "@/server/db";
 import {
   notification,
   type NotificationDB,
@@ -31,6 +31,10 @@ interface ResolvedRecipient {
 export interface INotificationService {
   notify(params: NotifyParams): Promise<string | null>;
   cancel(jobId: string): Promise<void>;
+  cancelPending(
+    idempotencyKey: string,
+    transaction: Transaction,
+  ): Promise<void>;
 
   getNotifications(params: {
     userId: string;
@@ -87,6 +91,7 @@ export class NotificationService implements INotificationService {
       deliverAt,
       idempotencyKey,
       excludeUserIds,
+      transaction,
     } = params;
 
     const payload = {
@@ -103,7 +108,11 @@ export class NotificationService implements INotificationService {
       payload as any,
       {
         ...(deliverAt && { startAfter: deliverAt }),
-        ...(idempotencyKey && { singletonKey: idempotencyKey }),
+        ...(idempotencyKey && {
+          singletonKey: idempotencyKey,
+          idempotencyKey,
+        }),
+        ...(transaction && { transaction }),
       },
     );
   }
@@ -112,6 +121,17 @@ export class NotificationService implements INotificationService {
     await this.jobService.cancelJob(
       "jobs.process-notification" as RunnableJobName,
       jobId,
+    );
+  }
+
+  async cancelPending(
+    idempotencyKey: string,
+    transaction: Transaction,
+  ): Promise<void> {
+    await this.jobService.cancelPending(
+      "jobs.process-notification" as RunnableJobName,
+      idempotencyKey,
+      { transaction },
     );
   }
 

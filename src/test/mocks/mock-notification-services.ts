@@ -18,6 +18,8 @@ export class MockNotificationService implements INotificationService {
 
   async cancel(): Promise<void> {}
 
+  async cancelPending(): Promise<void> {}
+
   async getNotifications(): Promise<{
     items: NotificationDB[];
     nextCursor: string | null;
@@ -58,9 +60,7 @@ export class MockPreferenceService implements IPreferenceService {
   }
 }
 
-export class MockNotificationEventService
-  implements INotificationEventService
-{
+export class MockNotificationEventService implements INotificationEventService {
   public calls: { method: string; params: unknown }[] = [];
 
   async notifyShiftCancelled(params: unknown): Promise<void> {
@@ -69,6 +69,13 @@ export class MockNotificationEventService
 
   async notifyCoverageRequested(params: unknown): Promise<void> {
     this.calls.push({ method: "notifyCoverageRequested", params });
+  }
+
+  async cancelCoverageRequested(coverageRequestId: string): Promise<void> {
+    this.calls.push({
+      method: "cancelCoverageRequested",
+      params: { coverageRequestId },
+    });
   }
 
   async notifyShiftReminder(params: unknown): Promise<void> {

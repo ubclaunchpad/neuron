@@ -1,4 +1,5 @@
 import type { Role } from "@/models/interfaces";
+import type { Transaction } from "@/server/db";
 
 export type NotificationChannel = "email" | "in_app" | "push";
 
@@ -36,6 +37,7 @@ export interface NotifyParams {
   deliverAt?: Date;
   idempotencyKey?: string;
   excludeUserIds?: string[];
+  transaction?: Transaction;
 }
 
 export interface EffectivePreference {

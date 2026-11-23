@@ -92,7 +92,11 @@ export interface IShiftService {
   createShift(input: CreateShiftInput, tx?: Transaction): Promise<string>;
   deleteShift(input: ShiftIdInput): Promise<void>;
   cancelShift(input: CancelShiftInput): Promise<void>;
-  assertValidShift(volunteerId: string, shiftId: string): Promise<void>;
+  assertValidShift(
+    volunteerId: string,
+    shiftId: string,
+    tx?: Transaction,
+  ): Promise<void>;
 }
 
 function sortCoverageRequestsByStatus(
@@ -677,9 +681,19 @@ export class ShiftService implements IShiftService {
     input: CreateShiftInput,
     tx?: Transaction,
   ): Promise<string> {
-    const transaction = tx ?? this.db;
+    if (tx) {
+      return this.createShiftInTransaction(input, tx);
+    }
+    return this.db.transaction((newTx) =>
+      this.createShiftInTransaction(input, newTx),
+    );
+  }
 
-    const scheduleRow = await transaction.query.schedule.findFirst({
+  private async createShiftInTransaction(
+    input: CreateShiftInput,
+    tx: Transaction,
+  ): Promise<string> {
+    const scheduleRow = await tx.query.schedule.findFirst({
       where: eq(schedule.id, input.scheduleId),
       columns: {
         id: true,
@@ -697,7 +711,7 @@ export class ShiftService implements IShiftService {
     const startAt = new Date(input.startAt);
     const endAt = new Date(input.endAt);
 
-    const [row] = await transaction
+    const [row] = await tx
       .insert(shift)
       .values({
         courseId: scheduleRow.courseId,
@@ -709,23 +723,34 @@ export class ShiftService implements IShiftService {
       .returning({ id: shift.id });
 
     const shiftId = row!.id;
+    const now = new Date();
 
-    // Schedule shift reminder (1 hour before start)
+    // Schedule shift reminder (1 hour before start) atomically with shift creation.
     const reminderAt = new Date(startAt.getTime() - 60 * 60 * 1000);
-    if (reminderAt > new Date()) {
-      void this.jobService.run(
+    if (reminderAt > now) {
+      await this.jobService.run(
         "jobs.check-shift-notifications",
         { shiftId, checkType: "reminder" },
-        { startAfter: reminderAt },
+        {
+          transaction: tx,
+          startAfter: reminderAt,
+          singletonKey: `reminder:${shiftId}`,
+          idempotencyKey: `reminder:${shiftId}`,
+        },
       );
     }
 
-    // Schedule no-checkin check (at shift end)
-    if (endAt > new Date()) {
-      void this.jobService.run(
+    // Schedule no-checkin check (at shift end) atomically with shift creation.
+    if (endAt > now) {
+      await this.jobService.run(
         "jobs.check-shift-notifications",
         { shiftId, checkType: "no-checkin" },
-        { startAfter: endAt },
+        {
+          transaction: tx,
+          startAfter: endAt,
+          singletonKey: `no-checkin:${shiftId}`,
+          idempotencyKey: `no-checkin:${shiftId}`,
+        },
       );
     }
 
@@ -733,88 +758,134 @@ export class ShiftService implements IShiftService {
   }
 
   async deleteShift(input: ShiftIdInput): Promise<void> {
-    const [deletedRow] = await this.db
-      .delete(shift)
-      .where(eq(shift.id, input.shiftId))
-      .returning({ id: shift.id });
+    await this.db.transaction(async (tx) => {
+      const [deletedRow] = await tx
+        .delete(shift)
+        .where(eq(shift.id, input.shiftId))
+        .returning({ id: shift.id });
 
-    if (!deletedRow) {
-      throw new NeuronError(
-        `Shift with id ${input.shiftId} was not found`,
-        NeuronErrorCodes.NOT_FOUND,
+      if (!deletedRow) {
+        throw new NeuronError(
+          `Shift with id ${input.shiftId} was not found`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      await this.jobService.cancelPending(
+        "jobs.check-shift-notifications",
+        `reminder:${input.shiftId}`,
+        { transaction: tx },
       );
-    }
+      await this.jobService.cancelPending(
+        "jobs.check-shift-notifications",
+        `no-checkin:${input.shiftId}`,
+        { transaction: tx },
+      );
+    });
   }
 
   async cancelShift({
     shiftId,
     cancelReason,
   }: CancelShiftInput): Promise<void> {
-    const [shiftRow] = await this.db
-      .select({
-        id: shift.id,
-        startAt: shift.startAt,
-        canceled: shift.canceled,
-        courseName: course.name,
-      })
-      .from(shift)
-      .innerJoin(course, eq(course.id, shift.courseId))
-      .where(eq(shift.id, shiftId))
-      .limit(1);
+    await this.db.transaction(async (tx) => {
+      const [shiftRow] = await tx
+        .select({
+          id: shift.id,
+          courseId: shift.courseId,
+          startAt: shift.startAt,
+          canceled: shift.canceled,
+        })
+        .from(shift)
+        .where(eq(shift.id, shiftId))
+        .for("update");
 
-    if (!shiftRow) {
-      throw new NeuronError(
-        `Shift with id ${shiftId} was not found`,
-        NeuronErrorCodes.NOT_FOUND,
+      if (!shiftRow) {
+        throw new NeuronError(
+          `Shift with id ${shiftId} was not found`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      if (shiftRow.startAt <= new Date()) {
+        throw new NeuronError(
+          "Cannot cancel a shift that has already started",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      if (shiftRow.canceled) {
+        return;
+      }
+
+      const [courseRow] = await tx
+        .select({ name: course.name })
+        .from(course)
+        .where(eq(course.id, shiftRow.courseId))
+        .limit(1);
+
+      if (!courseRow) {
+        throw new NeuronError(
+          `Course with id ${shiftRow.courseId} was not found`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      const currentUserId = this.currentSessionService.getUserId();
+
+      const [updated] = await tx
+        .update(shift)
+        .set({
+          canceled: true,
+          cancelledByUserId: currentUserId ?? null,
+          canceledAt: new Date(),
+          cancelReason,
+        })
+        .where(eq(shift.id, shiftId))
+        .returning({ id: shift.id });
+
+      if (!updated) {
+        throw new NeuronError(
+          `Failed to cancel shift with id ${shiftId}`,
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      await this.jobService.cancelPending(
+        "jobs.check-shift-notifications",
+        `reminder:${shiftId}`,
+        { transaction: tx },
       );
-    }
-
-    if (shiftRow.startAt <= new Date()) {
-      throw new NeuronError(
-        "Cannot cancel a shift that has already started",
-        NeuronErrorCodes.BAD_REQUEST,
+      await this.jobService.cancelPending(
+        "jobs.check-shift-notifications",
+        `no-checkin:${shiftId}`,
+        { transaction: tx },
       );
-    }
 
-    if (shiftRow.canceled) {
-      return;
-    }
-
-    const currentUserId = this.currentSessionService.getUserId();
-
-    const [updated] = await this.db
-      .update(shift)
-      .set({
-        canceled: true,
-        cancelledByUserId: currentUserId ?? null,
-        canceledAt: new Date(),
-        cancelReason,
-      })
-      .where(eq(shift.id, shiftId))
-      .returning({ id: shift.id });
-
-    if (!updated) {
-      throw new NeuronError(
-        `Failed to cancel shift with id ${shiftId}`,
-        NeuronErrorCodes.BAD_REQUEST,
+      const currentUser = this.currentSessionService.getUser();
+      await this.notificationEventService.notifyShiftCancelled(
+        {
+          shiftId,
+          className: courseRow.name,
+          shiftDate: formatDate(shiftRow.startAt),
+          cancelReason,
+          cancelledByUserId: currentUserId,
+          cancelledByName: currentUser
+            ? `${currentUser.name} ${currentUser.lastName}`
+            : "System",
+        },
+        tx,
       );
-    }
-
-    const currentUser = this.currentSessionService.getUser();
-    void this.notificationEventService.notifyShiftCancelled({
-      shiftId,
-      className: shiftRow.courseName,
-      shiftDate: formatDate(shiftRow.startAt),
-      cancelReason,
-      cancelledByUserId: currentUserId,
-      cancelledByName: currentUser
-        ? `${currentUser.name} ${currentUser.lastName}`
-        : "System",
     });
   }
 
-  async assertValidShift(volunteerId: string, shiftId: string): Promise<void> {
-    const [shiftRow] = await this.db
+  async assertValidShift(
+    volunteerId: string,
+    shiftId: string,
+    tx?: Transaction,
+  ): Promise<void> {
+    const db = tx ?? this.db;
+    const [shiftRow] = await db
       .select({
         shiftId: shift.id,
         startAt: shift.startAt,

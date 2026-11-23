@@ -1,19 +1,27 @@
 import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { randomUUID } from "crypto";
 import { Temporal } from "@js-temporal/polyfill";
-import { user, volunteer, term, course } from "@/server/db/schema";
-import { inArray } from "drizzle-orm";
+import {
+  user,
+  volunteer,
+  term,
+  course,
+  deliveryOutbox,
+} from "@/server/db/schema";
+import { eq, inArray } from "drizzle-orm";
 import type { IClassService } from "@/server/services/entity/classService";
 import type { ITermService } from "@/server/services/entity/termService";
 import {
   createTestScope,
   type ITestServiceScope,
 } from "../helpers/test-service-scope";
+import type { MockJobService } from "../mocks/mock-job-service";
 
 describe("ClassService", () => {
   let scope: ITestServiceScope;
   let termService: ITermService;
   let classService: IClassService;
+  let jobService: MockJobService;
 
   let createdUserIds: string[] = [];
   let createdTermIds: string[] = [];
@@ -27,6 +35,7 @@ describe("ClassService", () => {
     scope.mockSession.setAsAdmin();
     termService = scope.resolve<ITermService>("termService");
     classService = scope.resolve<IClassService>("classService");
+    jobService = scope.resolve<MockJobService>("jobService");
   });
 
   beforeEach(async () => {
@@ -63,6 +72,9 @@ describe("ClassService", () => {
   });
 
   afterEach(async () => {
+    await scope.db
+      .delete(deliveryOutbox)
+      .where(eq(deliveryOutbox.kind, "schedule-assignment"));
     if (createdClassIds.length > 0) {
       await scope.db.delete(course).where(inArray(course.id, createdClassIds));
       createdClassIds = [];
@@ -140,6 +152,121 @@ describe("ClassService", () => {
       expect(result.id).toBe(classId);
       expect(result.lowerLevel).toBeNull();
       expect(result.upperLevel).toBeNull();
+    });
+
+    it("does not queue assignment changes for an unpublished class", async () => {
+      const { classId } = await createTermAndClass();
+      const classData = await classService.getClass(classId);
+      const scheduleId = classData.schedules[0]!.id;
+
+      await classService.updateClass({
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: [
+          {
+            id: scheduleId,
+            addedVolunteerUserIds: [],
+            removedVolunteerUserIds: [volunteerId],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+        ],
+      });
+
+      const notificationCalls = jobService.calls.filter(
+        (call) => call.jobName === "jobs.notify-schedule-assignment",
+      );
+      expect(notificationCalls).toHaveLength(0);
+    });
+
+    it("records only newly inserted schedule assignments", async () => {
+      const { classId } = await createTermAndClass();
+      const classData = await classService.getClass(classId);
+      const scheduleId = classData.schedules[0]!.id;
+      const addedVolunteerId = randomUUID();
+      createdUserIds.push(addedVolunteerId);
+
+      await scope.db.insert(user).values({
+        id: addedVolunteerId,
+        name: "Vol",
+        lastName: "Two",
+        email: `vol-${randomUUID()}@test.com`,
+        role: "volunteer",
+        status: "active",
+        emailVerified: true,
+      });
+      await scope.db.insert(volunteer).values({ userId: addedVolunteerId });
+      await classService.publishClass(classId);
+      jobService.calls.length = 0;
+
+      const update = {
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: [
+          {
+            id: scheduleId,
+            addedVolunteerUserIds: [addedVolunteerId],
+            removedVolunteerUserIds: [],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+        ],
+      };
+
+      await classService.updateClass(update);
+
+      const intents = () =>
+        scope.db
+          .select()
+          .from(deliveryOutbox)
+          .where(
+            eq(
+              deliveryOutbox.deliveryKey,
+              `schedule-assignment:${scheduleId}:${addedVolunteerId}`,
+            ),
+          );
+      expect(await intents()).toHaveLength(1);
+      expect((await intents())[0]?.payload).toMatchObject({
+        scheduleId,
+        volunteerUserId: addedVolunteerId,
+        change: "added",
+      });
+
+      jobService.calls.length = 0;
+      await classService.updateClass(update);
+      expect(jobService.calls).toHaveLength(0);
+
+      await classService.updateClass({
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: [
+          {
+            id: scheduleId,
+            addedVolunteerUserIds: [],
+            removedVolunteerUserIds: [addedVolunteerId],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+        ],
+      });
+      expect(await intents()).toHaveLength(1);
+      expect((await intents())[0]?.payload).toMatchObject({
+        scheduleId,
+        volunteerUserId: addedVolunteerId,
+        change: "removed",
+      });
+
+      jobService.calls.length = 0;
+      await classService.updateClass(update);
+      expect(await intents()).toHaveLength(1);
+      expect((await intents())[0]?.payload).toMatchObject({
+        scheduleId,
+        volunteerUserId: addedVolunteerId,
+        change: "added",
+      });
     });
   });
 

@@ -28,7 +28,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:db:create": "docker compose -f docker-compose.dev.yaml exec postgres psql -U postgres -c 'CREATE DATABASE neuron_test;' || true",
-    "test:db:push": "dotenv -e .env.test -- drizzle-kit push"
+    "test:db:push": "dotenv -e .env.test -- drizzle-kit push --force"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

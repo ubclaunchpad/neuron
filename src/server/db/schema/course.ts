@@ -96,7 +96,8 @@ export const course = pgTable(
       .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
-      .defaultNow(),
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
   },
   (table) => [
     index().on(table.termId),

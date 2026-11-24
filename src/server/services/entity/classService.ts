@@ -146,6 +146,8 @@ export class ClassService implements IClassService {
   }
 
   async getClasses(ids: string[]): Promise<Class[]> {
+    if (ids.length === 0) return [];
+
     const classes = await this.retrieveFullClasses({
       where: inArray(course.id, ids),
     });
@@ -265,7 +267,7 @@ export class ClassService implements IClassService {
       await this.insertSchedules(tx, id, addedSchedules);
 
       // Delete schedules
-      if (deletedSchedules) {
+      if (deletedSchedules.length > 0) {
         await tx
           .delete(schedule)
           .where(
@@ -498,6 +500,8 @@ export class ClassService implements IClassService {
     tx: Transaction,
     schedules: UpdateScheduleInput[],
   ): Promise<void> {
+    if (schedules.length === 0) return;
+
     const originalSchedules = await tx
       .select()
       .from(schedule)
@@ -508,15 +512,19 @@ export class ClassService implements IClassService {
         ),
       );
 
-    if (originalSchedules.length != schedules.length) {
+    if (originalSchedules.length !== schedules.length) {
       throw new NeuronError(
         "Failed to update schedule",
         "INTERNAL_SERVER_ERROR",
       );
     }
 
+    const originalSchedulesById = new Map(
+      originalSchedules.map((s) => [s.id, s]),
+    );
+
     // Update schedules
-    for (const [idx, updateSchedule] of schedules.entries()) {
+    for (const updateSchedule of schedules) {
       const {
         id,
         rule,
@@ -528,7 +536,13 @@ export class ClassService implements IClassService {
         removedInstructorUserIds,
         ...scheduleUpdate
       } = updateSchedule;
-      const originalSchedule = originalSchedules[idx]!;
+      const originalSchedule = originalSchedulesById.get(id);
+      if (!originalSchedule) {
+        throw new NeuronError(
+          "Failed to update schedule",
+          "INTERNAL_SERVER_ERROR",
+        );
+      }
 
       const originalRRruleObject = this.buildScheduleRuleFromRRule(
         originalSchedule.rrule,

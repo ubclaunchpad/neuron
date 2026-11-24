@@ -78,6 +78,13 @@
       "when": 1774117341138,
       "tag": "0010_add_notification_system",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795483641186,
+      "tag": "0011_drop_redundant_indexes",
+      "breakpoints": true
     }
   ]
 }

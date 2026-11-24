@@ -27,7 +27,7 @@ const conn =
 if (env.NODE_ENV !== "production") globalForDb.conn = conn;
 
 // Export the database connection statically for better-auth
-export const db = drizzle(conn, { schema });
+export const db = drizzle({ client: conn, schema });
 
 // Register the database in the DI container
 export function registerDb(container: NeuronContainer) {

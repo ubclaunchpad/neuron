@@ -97,6 +97,8 @@ export class TermService implements ITermService {
   }
 
   async getTerms(ids: string[]): Promise<Term[]> {
+    if (ids.length === 0) return [];
+
     const data = await this.db
       .select()
       .from(term)
@@ -146,7 +148,7 @@ export class TermService implements ITermService {
       const termId = createdTerm.id;
 
       if (holidays.length > 0) {
-        this.insertHolidays(tx, termId, holidays);
+        await this.insertHolidays(tx, termId, holidays);
       }
 
       return termId;

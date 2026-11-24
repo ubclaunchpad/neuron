@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -77,7 +77,8 @@ export const notificationPreference = pgTable(
     enabled: boolean("enabled").notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
-      .defaultNow(),
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
   },
   (table) => [
     uniqueIndex("uq_notification_pref_user_type_channel").on(
@@ -85,7 +86,6 @@ export const notificationPreference = pgTable(
       table.type,
       table.channel,
     ),
-    index("idx_notification_pref_user").on(table.userId),
   ],
 );
 export type NotificationPreferenceDB =

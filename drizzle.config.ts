@@ -1,11 +1,12 @@
 import { env } from "@/env";
-import { type Config } from "drizzle-kit";
+import { defineConfig } from "drizzle-kit";
+import {
+  MigrationsFolder,
+  MigrationsSchema,
+  MigrationsTable,
+} from "./src/server/db/migration-config";
 
-export const MigrationsFolder = "src/server/db/migrations";
-export const MigrationsTable = "migrations";
-export const MigrationsSchema = "public";
-
-export default {
+export default defineConfig({
   dialect: "postgresql",
   out: MigrationsFolder,
   schema: ["src/server/db/schema/index.ts"],
@@ -16,4 +17,6 @@ export default {
     table: MigrationsTable,
     schema: MigrationsSchema,
   },
-} satisfies Config;
+  strict: true,
+  verbose: true,
+});

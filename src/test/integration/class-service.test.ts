@@ -222,4 +222,96 @@ describe("ClassService", () => {
       await expect(classService.getClasses([classId])).rejects.toThrow();
     });
   });
+
+  describe("schedule updates and empty array guards", () => {
+    it("preserves each schedule's own rule when updating multiple schedules in reverse order", async () => {
+      const termId = await termService.createTerm({
+        name: `Multi Schedule Term ${randomUUID()}`,
+        startDate: "2026-06-01",
+        endDate: "2026-08-31",
+        holidays: [],
+      });
+      createdTermIds.push(termId);
+
+      const classId = await classService.createClass({
+        termId,
+        name: `Multi Schedule Class ${randomUUID()}`,
+        lowerLevel: 1,
+        upperLevel: 2,
+        category: "literacy",
+        schedules: [
+          {
+            localStartTime: Temporal.PlainTime.from("09:00:00"),
+            localEndTime: Temporal.PlainTime.from("10:00:00"),
+            volunteerUserIds: [],
+            preferredVolunteerCount: 1,
+            instructorUserIds: [],
+            rule: { type: "weekly", weekday: "MO", interval: 1 },
+          },
+          {
+            localStartTime: Temporal.PlainTime.from("14:00:00"),
+            localEndTime: Temporal.PlainTime.from("16:00:00"),
+            volunteerUserIds: [],
+            preferredVolunteerCount: 2,
+            instructorUserIds: [],
+            rule: { type: "weekly", weekday: "FR", interval: 1 },
+          },
+        ],
+      });
+      createdClassIds.push(classId);
+
+      const created = await classService.getClass(classId);
+      const monSchedule = created.schedules.find(
+        (s) => s.rule.type === "weekly" && s.rule.weekday === "MO",
+      )!;
+      const friSchedule = created.schedules.find(
+        (s) => s.rule.type === "weekly" && s.rule.weekday === "FR",
+      )!;
+
+      // Update in reversed order so array index != DB return order
+      await classService.updateClass({
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: [
+          {
+            id: friSchedule.id,
+            preferredVolunteerCount: 3,
+            addedVolunteerUserIds: [],
+            removedVolunteerUserIds: [],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+          {
+            id: monSchedule.id,
+            preferredVolunteerCount: 4,
+            addedVolunteerUserIds: [],
+            removedVolunteerUserIds: [],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+        ],
+      });
+
+      const updated = await classService.getClass(classId);
+      const updatedMon = updated.schedules.find(
+        (s) => s.id === monSchedule.id,
+      )!;
+      const updatedFri = updated.schedules.find(
+        (s) => s.id === friSchedule.id,
+      )!;
+
+      expect(updatedMon.rule).toMatchObject({ type: "weekly", weekday: "MO" });
+      expect(updatedMon.durationMinutes).toBe(60);
+      expect(updatedMon.preferredVolunteerCount).toBe(4);
+
+      expect(updatedFri.rule).toMatchObject({ type: "weekly", weekday: "FR" });
+      expect(updatedFri.durationMinutes).toBe(120);
+      expect(updatedFri.preferredVolunteerCount).toBe(3);
+    });
+
+    it("returns an empty array for getClasses([])", async () => {
+      await expect(classService.getClasses([])).resolves.toEqual([]);
+    });
+  });
 });

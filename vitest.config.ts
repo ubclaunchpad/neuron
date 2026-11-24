@@ -12,6 +12,9 @@ export default defineConfig({
   envDir: false,
   test: {
     env: testEnv,
+    globals: true,
+    environment: "node",
+    exclude: ["node_modules", ".next"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
@@ -27,21 +30,15 @@ export default defineConfig({
         extends: true,
         test: {
           name: "unit",
-          globals: true,
-          environment: "node",
           include: ["src/test/unit/**/*.test.ts"],
-          exclude: ["node_modules", ".next"],
         },
       },
       {
         extends: true,
         test: {
           name: "integration",
-          globals: true,
-          environment: "node",
           globalSetup: ["./src/test/global-setup.ts"],
           include: ["src/test/integration/**/*.test.ts"],
-          exclude: ["node_modules", ".next"],
           // Run integration tests sequentially to avoid database conflicts
           sequence: {
             concurrent: false,

@@ -19,10 +19,20 @@ env:
   NODE_VERSION: "20"
 
 jobs:
-  lint:
-    name: Lint
+  checks:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Lint
+            command: pnpm lint
+          - name: Typecheck
+            command: SKIP_ENV_VALIDATION=1 pnpm exec next typegen && pnpm typecheck && SKIP_ENV_VALIDATION=1 pnpm exec drizzle-kit check
+          - name: Unit Tests
+            command: TZ=UTC pnpm test:unit
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,66 +49,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run ESLint
-        run: pnpm lint
-
-  typecheck:
-    name: Typecheck
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate Next.js types
-        env:
-          SKIP_ENV_VALIDATION: "1"
-        run: pnpm exec next typegen
-
-      - name: Run TypeScript typecheck
-        run: pnpm typecheck
-
-      - name: Check Drizzle migration metadata
-        env:
-          SKIP_ENV_VALIDATION: "1"
-        run: pnpm exec drizzle-kit check
-
-  test-unit:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run unit tests
-        env:
-          TZ: UTC
-        run: pnpm test:unit
+      - name: Run ${{ matrix.name }}
+        run: ${{ matrix.command }}
 
   test-integration:
     name: Integration Tests
@@ -162,18 +114,12 @@ jobs:
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
-    if: always()
-    needs: [lint, typecheck, test-unit, test-integration, docker-build]
+    if: ${{ !cancelled() }}
+    needs: [checks, test-integration, docker-build]
     steps:
       - name: Verify all required jobs succeeded
         env:
           RESULTS: ${{ toJSON(needs.*.result) }}
         run: |
           echo "Upstream job results: $RESULTS"
-          node -e '
-            const results = JSON.parse(process.env.RESULTS);
-            if (!Array.isArray(results) || results.length === 0 || !results.every((r) => r === "success")) {
-              console.error("One or more required CI jobs did not succeed:", results);
-              process.exit(1);
-            }
-          '
+          jq -e 'length > 0 and all(. == "success")' <<< "$RESULTS"

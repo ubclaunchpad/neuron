@@ -35,24 +35,16 @@ async function runMigrations() {
   });
 }
 
-function assertSafeTestDatabaseUrl(url: string): void {
-  let dbName: string;
-  try {
-    dbName = new URL(url).pathname.replace(/^\/+/, "");
-  } catch {
-    throw new Error(`Invalid test DATABASE_URL: "${url}"`);
-  }
-
-  if (!dbName.endsWith("_test")) {
+export async function resetDatabase() {
+  const db = getTestDb();
+  const [row] = await db.execute<{ db: string }>(
+    sql`SELECT current_database() AS db`,
+  );
+  if (!row?.db.endsWith("_test")) {
     throw new Error(
-      `Refusing to reset database "${dbName}": test database name must end with "_test".`,
+      `Refusing to reset database "${row?.db ?? "unknown"}": test database name must end with "_test".`,
     );
   }
-}
-
-export async function resetDatabase() {
-  assertSafeTestDatabaseUrl(testDbUrl);
-  const db = getTestDb();
 
   // Drop and recreate schemas to clear all data, tables, and pg-boss state
   await db.execute(sql`DROP SCHEMA IF EXISTS pgboss CASCADE`);

@@ -4,6 +4,7 @@ import { parse } from "dotenv";
 
 const DEFAULT_TEST_DB_NAME = "neuron_test";
 const FALLBACK_TEST_DATABASE_URL = `postgresql://postgres:postgres@localhost:5432/${DEFAULT_TEST_DB_NAME}`;
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 
 const MOCKED_SERVICE_ENV_DEFAULTS: Record<string, string> = {
   NODE_ENV: "test",
@@ -26,29 +27,23 @@ const MOCKED_SERVICE_ENV_DEFAULTS: Record<string, string> = {
   MAIL_FROM: "Test <test@neuron.test>",
 };
 
-function readEnvFileIfExists(filePath: string): Record<string, string> {
-  if (!fs.existsSync(filePath)) return {};
-  return parse(fs.readFileSync(filePath, "utf8"));
+function readEnvFile(filePath: string): Record<string, string> {
+  return fs.existsSync(filePath)
+    ? parse(fs.readFileSync(filePath, "utf8"))
+    : {};
 }
 
-function deriveLocalTestDbUrl(devEnv: Record<string, string>): string | null {
-  if (devEnv.DATABASE_URL) {
-    try {
-      const url = new URL(devEnv.DATABASE_URL);
-      url.pathname = `/${DEFAULT_TEST_DB_NAME}`;
-      return url.toString();
-    } catch {
-      // Fall through to password/port derivation
-    }
+function deriveLocalTestDbUrl(rawUrl?: string): string | undefined {
+  if (!rawUrl?.trim()) return undefined;
+  try {
+    const url = new URL(rawUrl);
+    if (!LOOPBACK_HOSTS.has(url.hostname.toLowerCase())) return undefined;
+    url.pathname = `/${DEFAULT_TEST_DB_NAME}`;
+    url.searchParams.delete("database");
+    return url.toString();
+  } catch {
+    return undefined;
   }
-
-  if (devEnv.DATABASE_PASSWORD) {
-    const port = devEnv.DB_PORT ?? "5432";
-    const password = encodeURIComponent(devEnv.DATABASE_PASSWORD);
-    return `postgresql://postgres:${password}@localhost:${port}/${DEFAULT_TEST_DB_NAME}`;
-  }
-
-  return null;
 }
 
 /**
@@ -58,21 +53,22 @@ function deriveLocalTestDbUrl(devEnv: Record<string, string>): string | null {
  * `DATABASE_URL` precedence:
  * 1. `process.env.TEST_DATABASE_URL` (CI or explicit CLI override)
  * 2. `.env.test.local` (`TEST_DATABASE_URL` or `DATABASE_URL`, gitignored)
- * 3. Local `.env` credentials retargeted to `/neuron_test`
+ * 3. Loopback `.env` `DATABASE_URL` retargeted to `/neuron_test`
  * 4. `postgresql://postgres:postgres@localhost:5432/neuron_test`
  */
 export function resolveTestEnv(rootDir: string): Record<string, string> {
-  const localTestEnv = readEnvFileIfExists(
-    path.join(rootDir, ".env.test.local"),
-  );
-  const devEnv = readEnvFileIfExists(path.join(rootDir, ".env"));
+  const localTestEnv = readEnvFile(path.join(rootDir, ".env.test.local"));
+  const devEnv = readEnvFile(path.join(rootDir, ".env"));
 
   const databaseUrl =
-    process.env.TEST_DATABASE_URL ??
-    localTestEnv.TEST_DATABASE_URL ??
-    localTestEnv.DATABASE_URL ??
-    deriveLocalTestDbUrl(devEnv) ??
-    FALLBACK_TEST_DATABASE_URL;
+    [
+      process.env.TEST_DATABASE_URL,
+      localTestEnv.TEST_DATABASE_URL,
+      localTestEnv.DATABASE_URL,
+      deriveLocalTestDbUrl(devEnv.DATABASE_URL),
+    ]
+      .find((v) => v?.trim())
+      ?.trim() ?? FALLBACK_TEST_DATABASE_URL;
 
   return {
     ...MOCKED_SERVICE_ENV_DEFAULTS,

@@ -57,14 +57,15 @@ function deriveLocalTestDbUrl(rawUrl?: string): string | undefined {
  * 4. `postgresql://postgres:postgres@localhost:5432/neuron_test`
  */
 export function resolveTestEnv(rootDir: string): Record<string, string> {
-  const localTestEnv = readEnvFile(path.join(rootDir, ".env.test.local"));
+  const { TEST_DATABASE_URL: localTestDatabaseUrl, ...restLocalTestEnv } =
+    readEnvFile(path.join(rootDir, ".env.test.local"));
   const devEnv = readEnvFile(path.join(rootDir, ".env"));
 
   const databaseUrl =
     [
       process.env.TEST_DATABASE_URL,
-      localTestEnv.TEST_DATABASE_URL,
-      localTestEnv.DATABASE_URL,
+      localTestDatabaseUrl,
+      restLocalTestEnv.DATABASE_URL,
       deriveLocalTestDbUrl(devEnv.DATABASE_URL),
     ]
       .find((v) => v?.trim())
@@ -72,7 +73,7 @@ export function resolveTestEnv(rootDir: string): Record<string, string> {
 
   return {
     ...MOCKED_SERVICE_ENV_DEFAULTS,
-    ...localTestEnv,
+    ...restLocalTestEnv,
     NODE_ENV: "test",
     DATABASE_URL: databaseUrl,
   };

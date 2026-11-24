@@ -52,7 +52,6 @@ export default tseslint.config(
       // linting immediately. Promote rules back to "error" as warnings are fixed.
       "react-hooks/refs": "warn",
       "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/preserve-manual-memoization": "warn",
       "react-hooks/purity": "warn",
       "react-hooks/immutability": "warn",
       "react/no-unescaped-entities": "warn",

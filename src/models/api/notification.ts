@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const NotificationCursorTimestamp = z.iso.datetime({ offset: true });
+const NotificationCursorTimestamp = z.iso.datetime();
 const NotificationCursorId = z.uuid();
 
 export function parseNotificationCursor(
@@ -13,6 +13,7 @@ export function parseNotificationCursor(
   if (
     !createdAt ||
     !id ||
+    createdAt.startsWith("0000-") ||
     !NotificationCursorTimestamp.safeParse(createdAt).success ||
     !NotificationCursorId.safeParse(id).success
   ) {

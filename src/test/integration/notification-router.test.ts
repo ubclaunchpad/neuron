@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { randomUUID } from "crypto";
 import { asClass } from "awilix";
 import { TRPCError } from "@trpc/server";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { notification, notificationPreference, user } from "@/server/db/schema";
 import { createCallerFactory } from "@/server/api/trpc";
 import { notificationRouter } from "@/server/api/routers/notification-router";
@@ -257,22 +257,42 @@ describe("notificationRouter", () => {
     });
 
     it("paginates deterministically with nextCursor including sub-millisecond timestamps", async () => {
-      // Batch insert with Postgres defaultNow() produces identical microsecond
-      // timestamps across rows, exercising tie-breaking and cursor precision.
+      // Distinct and tied microsecond timestamps within the same millisecond
+      // deterministically exercise precision preservation and UUID tie-breaking.
+      const timestamps = [
+        "2026-05-10T12:00:00.123456Z",
+        "2026-05-10T12:00:00.123456Z",
+        "2026-05-10T12:00:00.123455Z",
+        "2026-05-10T12:00:00.123455Z",
+        "2026-05-10T12:00:00.123000Z",
+      ];
+
       const inserted = await scope.db
         .insert(notification)
         .values(
-          Array.from({ length: 5 }, (_, index) => ({
+          timestamps.map((ts, index) => ({
             userId: userA.id,
             type: "shift.reminder",
             title: `Batch Notification ${index + 1}`,
             body: `Batch body ${index + 1}`,
+            createdAt: sql`${ts}::timestamptz`,
           })),
         )
         .returning();
 
-      const expectedIds = [...inserted]
-        .sort((a, b) => b.id.localeCompare(a.id))
+      const expectedIds = inserted
+        .map((row, index) => ({ id: row.id, ts: timestamps[index]! }))
+        .sort((a, b) =>
+          a.ts !== b.ts
+            ? a.ts < b.ts
+              ? 1
+              : -1
+            : a.id < b.id
+              ? 1
+              : a.id > b.id
+                ? -1
+                : 0,
+        )
         .map((n) => n.id);
 
       const caller = callerFor(userA);
@@ -295,7 +315,10 @@ describe("notificationRouter", () => {
       const caller = callerFor(userA);
 
       for (const badCursor of [
+        "",
         "2026-05-10T12:00:00.000Z",
+        "2026-05-10T12:00:00+16:00|00000000-0000-0000-0000-000000000000",
+        "0000-01-01T00:00:00.000000Z|00000000-0000-0000-0000-000000000000",
         "not-a-date|00000000-0000-0000-0000-000000000000",
         "2026-05-10T12:00:00.000Z|mock-1",
         "2026-05-10T12:00:00.000Z|00000000-0000-0000-0000-000000000000|extra",

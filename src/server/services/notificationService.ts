@@ -21,7 +21,7 @@ import type { IPreferenceService } from "@/server/services/preferenceService";
 import { UserStatus } from "@/models/interfaces";
 import { parseNotificationCursor } from "@/models/api/notification";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { and, count, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
 import type { RunnableJobName } from "@/server/jobs/registry";
 
 interface ResolvedRecipient {
@@ -143,7 +143,7 @@ export class NotificationService implements INotificationService {
     conditions.push(
       eq(notification.archived, archived !== undefined ? archived : false),
     );
-    if (cursor) {
+    if (cursor !== undefined) {
       const parsed = parseNotificationCursor(cursor);
       if (!parsed) {
         throw new NeuronError(
@@ -152,15 +152,8 @@ export class NotificationService implements INotificationService {
         );
       }
 
-      const cursorTimestamp = sql`${parsed.createdAt}::timestamptz`;
       conditions.push(
-        or(
-          lt(notification.createdAt, cursorTimestamp),
-          and(
-            eq(notification.createdAt, cursorTimestamp),
-            lt(notification.id, parsed.id),
-          ),
-        )!,
+        sql`(${notification.createdAt}, ${notification.id}) < (${parsed.createdAt}::timestamptz, ${parsed.id}::uuid)`,
       );
     }
 

@@ -41,6 +41,7 @@ export async function resetDatabase() {
     sql`SELECT current_database() AS db`,
   );
   if (!row?.db.endsWith("_test")) {
+    await closeDatabase();
     throw new Error(
       `Refusing to reset database "${row?.db ?? "unknown"}": test database name must end with "_test".`,
     );

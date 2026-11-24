@@ -59,13 +59,16 @@ function deriveLocalTestDbUrl(rawUrl?: string): string | undefined {
 export function resolveTestEnv(rootDir: string): Record<string, string> {
   const { TEST_DATABASE_URL: localTestDatabaseUrl, ...restLocalTestEnv } =
     readEnvFile(path.join(rootDir, ".env.test.local"));
+  const nonEmptyLocalTestEnv = Object.fromEntries(
+    Object.entries(restLocalTestEnv).filter(([, value]) => value.trim() !== ""),
+  );
   const devEnv = readEnvFile(path.join(rootDir, ".env"));
 
   const databaseUrl =
     [
       process.env.TEST_DATABASE_URL,
       localTestDatabaseUrl,
-      restLocalTestEnv.DATABASE_URL,
+      nonEmptyLocalTestEnv.DATABASE_URL,
       deriveLocalTestDbUrl(devEnv.DATABASE_URL),
     ]
       .find((v) => v?.trim())
@@ -73,7 +76,7 @@ export function resolveTestEnv(rootDir: string): Record<string, string> {
 
   return {
     ...MOCKED_SERVICE_ENV_DEFAULTS,
-    ...restLocalTestEnv,
+    ...nonEmptyLocalTestEnv,
     NODE_ENV: "test",
     DATABASE_URL: databaseUrl,
   };

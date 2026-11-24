@@ -16,7 +16,7 @@ concurrency:
 
 env:
   NEXT_TELEMETRY_DISABLED: "1"
-  NODE_VERSION: "22"
+  NODE_VERSION: "26"
 
 jobs:
   checks:
@@ -28,7 +28,7 @@ jobs:
       matrix:
         include:
           - name: Lint
-            command: SKIP_ENV_VALIDATION=1 pnpm exec next typegen && pnpm lint --max-warnings=280
+            command: SKIP_ENV_VALIDATION=1 pnpm exec next typegen && pnpm lint
           - name: Typecheck
             command: SKIP_ENV_VALIDATION=1 pnpm exec next typegen && pnpm typecheck && SKIP_ENV_VALIDATION=1 pnpm exec drizzle-kit check
           - name: Unit Tests
@@ -114,6 +114,7 @@ jobs:
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: ${{ !cancelled() }}
     needs: [checks, test-integration, docker-build]
     steps:

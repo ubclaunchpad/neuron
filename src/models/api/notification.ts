@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const NotificationCursorTimestamp = z.iso.datetime();
+const NotificationCursorTimestamp = z.iso.datetime().max(32);
 const NotificationCursorId = z.uuid();
 
 export function parseNotificationCursor(

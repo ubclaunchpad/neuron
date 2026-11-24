@@ -40,9 +40,11 @@ export interface IVolunteerService {
     classId: string,
   ): Promise<{ preferred: boolean }>;
   updateVolunteerProfile(
+    volunteerUserId: string,
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void>;
   updateVolunteerAvailability(
+    volunteerUserId: string,
     input: z.infer<typeof UpdateVolunteerAvailabilityInput>,
   ): Promise<void>;
   getVolunteersForExport(search?: string): Promise<Volunteer[]>;
@@ -182,14 +184,13 @@ export class VolunteerService implements IVolunteerService {
   }
 
   async updateVolunteerProfile(
+    volunteerUserId: string,
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void> {
     await this.db.transaction(async (tx) => {
-      const { volunteerUserId, ...updatePayload } = input;
-
       const [updatedVolunteer] = await tx
         .update(volunteer)
-        .set(updatePayload)
+        .set(input)
         .where(eq(volunteer.userId, volunteerUserId))
         .returning({ userId: volunteer.userId });
 
@@ -203,13 +204,12 @@ export class VolunteerService implements IVolunteerService {
   }
 
   async updateVolunteerAvailability(
+    volunteerUserId: string,
     input: z.infer<typeof UpdateVolunteerAvailabilityInput>,
   ): Promise<void> {
-    const { volunteerUserId, ...updatePayload } = input;
-
     const [updated] = await this.db
       .update(volunteer)
-      .set(updatePayload)
+      .set(input)
       .where(eq(volunteer.userId, volunteerUserId))
       .returning({ userId: volunteer.userId });
 

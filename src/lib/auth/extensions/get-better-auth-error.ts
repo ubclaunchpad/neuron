@@ -102,6 +102,8 @@ const errorMessages: ErrorMessages = {
     "This email domain is not allowed for this invitation.",
   ADMIN_PLUGIN_IS_NOT_SET_UP:
     "Invitation permissions are not configured correctly. Please contact support.",
+  ACCOUNT_NOT_ACTIVE:
+    "Your account is not active and cannot perform this action.",
 };
 
 export function getBetterAuthErrorMessage(code: ErrorCode | undefined): string {

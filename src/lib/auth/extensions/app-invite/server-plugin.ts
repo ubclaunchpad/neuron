@@ -10,6 +10,16 @@ import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { appInviteSchema } from "./shared";
 import type { User } from "../..";
 
+function canManageInvitations(ctx: {
+  context: { session?: { user?: unknown } | null };
+}): boolean {
+  const currentUser = ctx.context.session?.user as User | undefined;
+  return (
+    currentUser?.status === UserStatus.active &&
+    hasPermission({ user: currentUser, permission: { users: ["invite"] } })
+  );
+}
+
 export const appInvitePlugin = appInvite({
   sendInvitationEmail: async (invitation, request) => {
     if (!invitation.email) {
@@ -37,17 +47,8 @@ export const appInvitePlugin = appInvite({
       html,
     });
   },
-  canCreateInvitation: (ctx): boolean => {
-    const inviter = ctx.context.session?.user as User;
-    if (!inviter) {
-      return false;
-    }
-
-    return hasPermission({
-      user: inviter,
-      permission: { users: ["invite"] },
-    });
-  },
+  canCreateInvitation: canManageInvitations,
+  canCancelInvitation: canManageInvitations,
   verifyEmailOnAccept: true,
   schema: appInviteSchema,
   hooks: {

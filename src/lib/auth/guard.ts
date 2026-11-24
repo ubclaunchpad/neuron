@@ -9,23 +9,33 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 // Utility functions
-function defaultRedirectForUser(user?: User | null, fallback?: Route): Route {
+export function defaultRedirectForUser(
+  user?: Pick<User, "status"> | null,
+  fallback?: Route,
+): Route {
   if (!user) return "/auth/login";
-  if (user.status === UserStatus.unverified) return "/unverified";
-  if (user.status === UserStatus.inactive) return "/inactive";
-  return fallback ?? "/";
+  switch (user.status) {
+    case UserStatus.unverified:
+      return "/unverified";
+    case UserStatus.inactive:
+      return "/inactive";
+    case UserStatus.rejected:
+      return "/rejected";
+    case UserStatus.active:
+      return fallback ?? "/";
+    default:
+      return "/auth/login";
+  }
 }
 
-async function getActiveUser(): Promise<User | null> {
-  const session = await getSession();
-  return session?.user?.status === UserStatus.active ? session.user : null;
-}
-
-async function resolveActiveUserAndPermission(
+async function resolveSessionAndPermission(
   permissions: Permissions,
 ): Promise<{ user: User | null; allowed: boolean }> {
-  const user = await getActiveUser();
-  if (!user) return { user: null, allowed: false };
+  const session = await getSession();
+  const user = session?.user ?? null;
+  if (!user || user.status !== UserStatus.active) {
+    return { user, allowed: false };
+  }
 
   const success = hasPermission({ ...permissions, user });
 
@@ -69,7 +79,7 @@ export async function requireStatus(
 export async function checkPermissions(
   permission: Permissions,
 ): Promise<boolean> {
-  const { allowed } = await resolveActiveUserAndPermission(permission);
+  const { allowed } = await resolveSessionAndPermission(permission);
   return allowed;
 }
 
@@ -77,7 +87,9 @@ export async function requirePermission(
   permission: Permissions,
   fallback?: Route,
 ): Promise<User> {
-  const { user, allowed } = await resolveActiveUserAndPermission(permission);
-  if (!user || !allowed) redirect(defaultRedirectForUser(user, fallback));
+  const { user, allowed } = await resolveSessionAndPermission(permission);
+  if (!user || !allowed) {
+    redirect(defaultRedirectForUser(user, fallback));
+  }
   return user;
 }

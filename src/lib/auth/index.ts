@@ -23,7 +23,7 @@ import { betterAuth, type BetterAuthOptions } from "better-auth";
 import {
   APIError,
   createAuthMiddleware,
-  getSessionFromCtx,
+  getAuthoritativeSessionFromCtx,
 } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -62,18 +62,13 @@ export const auth = betterAuth({
         return;
       }
 
-      const activeSession = await getSessionFromCtx(ctx, {
-        disableCookieCache: true,
-      });
+      const activeSession = await getAuthoritativeSessionFromCtx(ctx);
       if (!activeSession?.user) {
         return;
       }
 
-      const currentUser = (await ctx.context.internalAdapter.findUserById(
-        activeSession.user.id,
-      )) as User | null;
-
-      if (!currentUser || currentUser.status !== UserStatus.active) {
+      const currentUser = activeSession.user as User;
+      if (currentUser.status !== UserStatus.active) {
         throw new APIError("FORBIDDEN", {
           code: "ACCOUNT_NOT_ACTIVE",
           message: "Account is not active.",

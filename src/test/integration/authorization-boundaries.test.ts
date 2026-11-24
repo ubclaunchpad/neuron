@@ -114,23 +114,36 @@ describe("Authorization boundaries, active status enforcement, and session revoc
     return appRouter.createCaller(scope.container.cradle as TRPCContext);
   }
 
-  async function seedVolunteer(overrides: {
-    name: string;
-    lastName: string;
-    phoneNumber: string;
-    bio: string;
-    city: string;
-    province: string;
-    preferredName: string;
-    availability: string;
-    preferredTimeCommitmentHours: number;
-    status?: UserStatus;
-  }): Promise<string> {
+  async function inviteUser(cookie: string, email: string, role: Role) {
+    return callAuth("/invite-user", {
+      cookie,
+      body: {
+        type: "personal",
+        email,
+        additionalFields: { role },
+      },
+    });
+  }
+
+  async function seedVolunteer(
+    overrides: Partial<{
+      name: string;
+      lastName: string;
+      phoneNumber: string;
+      bio: string;
+      city: string;
+      province: string;
+      preferredName: string;
+      availability: string;
+      preferredTimeCommitmentHours: number;
+      status: UserStatus;
+    }> = {},
+  ): Promise<string> {
     const id = randomUUID();
     await scope.db.insert(user).values({
       id,
-      name: overrides.name,
-      lastName: overrides.lastName,
+      name: overrides.name ?? "Vol",
+      lastName: overrides.lastName ?? "Test",
       email: `vol-${id}@test.com`,
       role: Role.volunteer,
       status: overrides.status ?? UserStatus.active,
@@ -140,13 +153,13 @@ describe("Authorization boundaries, active status enforcement, and session revoc
 
     await scope.db.insert(volunteer).values({
       userId: id,
-      preferredName: overrides.preferredName,
-      bio: overrides.bio,
-      phoneNumber: overrides.phoneNumber,
-      city: overrides.city,
-      province: overrides.province,
-      availability: overrides.availability,
-      preferredTimeCommitmentHours: overrides.preferredTimeCommitmentHours,
+      preferredName: overrides.preferredName ?? "Vol",
+      bio: overrides.bio ?? "Default bio",
+      phoneNumber: overrides.phoneNumber ?? "6045550100",
+      city: overrides.city ?? "Vancouver",
+      province: overrides.province ?? "BC",
+      availability: overrides.availability ?? "0".repeat(AVAILABILITY_SLOTS),
+      preferredTimeCommitmentHours: overrides.preferredTimeCommitmentHours ?? 2,
     });
 
     return id;
@@ -227,32 +240,19 @@ describe("Authorization boundaries, active status enforcement, and session revoc
   }
 
   describe("volunteer router object-level authorization", () => {
-    const allZeros = "0".repeat(AVAILABILITY_SLOTS);
     const firstSlotOn = `1${"0".repeat(AVAILABILITY_SLOTS - 1)}`;
     const secondSlotOn = `01${"0".repeat(AVAILABILITY_SLOTS - 2)}`;
 
     it("prevents a volunteer from reading another volunteer via byId while allowing self-service me and explicit admin byId", async () => {
       const volunteerAId = await seedVolunteer({
         name: "Alice",
-        lastName: "Volunteer",
-        preferredName: "Ali",
         bio: "Alice bio",
         phoneNumber: "6045550101",
-        city: "Vancouver",
-        province: "BC",
-        availability: firstSlotOn,
-        preferredTimeCommitmentHours: 4,
       });
       const volunteerBId = await seedVolunteer({
         name: "Bob",
-        lastName: "Volunteer",
-        preferredName: "Bobby",
         bio: "Bob private bio",
         phoneNumber: "6045550199",
-        city: "Victoria",
-        province: "BC",
-        availability: secondSlotOn,
-        preferredTimeCommitmentHours: 8,
       });
 
       scope.mockSession.setAsVolunteer({ id: volunteerAId });
@@ -285,24 +285,12 @@ describe("Authorization boundaries, active status enforcement, and session revoc
 
     it("always binds profile, availability, and class preference mutations/reads to the session user and never touches another volunteer", async () => {
       const volunteerAId = await seedVolunteer({
-        name: "Alice",
-        lastName: "One",
-        preferredName: "Alice",
         bio: "Original Alice bio",
-        phoneNumber: "6045550111",
         city: "Vancouver",
-        province: "BC",
-        availability: allZeros,
-        preferredTimeCommitmentHours: 2,
       });
       const volunteerBId = await seedVolunteer({
-        name: "Bob",
-        lastName: "Two",
-        preferredName: "Bob",
         bio: "Original Bob bio",
-        phoneNumber: "6045550222",
         city: "Burnaby",
-        province: "BC",
         availability: secondSlotOn,
         preferredTimeCommitmentHours: 6,
       });
@@ -383,17 +371,7 @@ describe("Authorization boundaries, active status enforcement, and session revoc
     });
 
     it("blocks non-active users across all non-active statuses on tRPC procedures", async () => {
-      const targetVolunteerId = await seedVolunteer({
-        name: "Target",
-        lastName: "Vol",
-        preferredName: "Target",
-        bio: "bio",
-        phoneNumber: "6045550333",
-        city: "Vancouver",
-        province: "BC",
-        availability: allZeros,
-        preferredTimeCommitmentHours: 1,
-      });
+      const targetVolunteerId = await seedVolunteer();
 
       const caller = createCaller();
 
@@ -505,14 +483,11 @@ describe("Authorization boundaries, active status enforcement, and session revoc
 
       // 1. Active admin can invite and list invitations
       const initialInviteEmail = `invited-legit-${randomUUID()}@test.com`;
-      const createRes = await callAuth("/invite-user", {
-        cookie: activeAdmin.cookie,
-        body: {
-          type: "personal",
-          email: initialInviteEmail,
-          additionalFields: { role: Role.instructor },
-        },
-      });
+      const createRes = await inviteUser(
+        activeAdmin.cookie,
+        initialInviteEmail,
+        Role.instructor,
+      );
       expect(createRes.status).toBe(200);
       const createdInvite = (await createRes.json()) as { id: string };
       expect(createdInvite.id).toBeTruthy();
@@ -532,14 +507,11 @@ describe("Authorization boundaries, active status enforcement, and session revoc
       expect(await revokedSessionRes.json()).toBeNull();
 
       const replacementInviteEmail = `replacement-admin-${randomUUID()}@test.com`;
-      const revokedInviteRes = await callAuth("/invite-user", {
-        cookie: activeAdmin.cookie,
-        body: {
-          type: "personal",
-          email: replacementInviteEmail,
-          additionalFields: { role: Role.admin },
-        },
-      });
+      const revokedInviteRes = await inviteUser(
+        activeAdmin.cookie,
+        replacementInviteEmail,
+        Role.admin,
+      );
       expect(revokedInviteRes.status).toBe(401);
 
       // 3. Even if the inactive admin signs back in (e.g. to view /inactive),
@@ -559,14 +531,11 @@ describe("Authorization boundaries, active status enforcement, and session revoc
       };
       expect(inactiveSessionBody.user.status).toBe(UserStatus.inactive);
 
-      const inactiveInviteRes = await callAuth("/invite-user", {
-        cookie: inactiveAdminCookie,
-        body: {
-          type: "personal",
-          email: replacementInviteEmail,
-          additionalFields: { role: Role.admin },
-        },
-      });
+      const inactiveInviteRes = await inviteUser(
+        inactiveAdminCookie,
+        replacementInviteEmail,
+        Role.admin,
+      );
       expect(inactiveInviteRes.status).toBe(403);
 
       const inactiveCancelRes = await callAuth("/cancel-invitation", {
@@ -632,14 +601,11 @@ describe("Authorization boundaries, active status enforcement, and session revoc
       for (const account of [unverifiedAdmin, rejectedAdmin]) {
         expect(
           (
-            await callAuth("/invite-user", {
-              cookie: account.cookie,
-              body: {
-                type: "personal",
-                email: `blocked-${randomUUID()}@test.com`,
-                additionalFields: { role: Role.admin },
-              },
-            })
+            await inviteUser(
+              account.cookie,
+              `blocked-${randomUUID()}@test.com`,
+              Role.admin,
+            )
           ).status,
         ).toBe(403);
 
@@ -665,14 +631,11 @@ describe("Authorization boundaries, active status enforcement, and session revoc
       // Active volunteer cannot use invitation endpoints, but CAN update their own profile
       expect(
         (
-          await callAuth("/invite-user", {
-            cookie: activeVolunteer.cookie,
-            body: {
-              type: "personal",
-              email: `vol-blocked-${randomUUID()}@test.com`,
-              additionalFields: { role: Role.admin },
-            },
-          })
+          await inviteUser(
+            activeVolunteer.cookie,
+            `vol-blocked-${randomUUID()}@test.com`,
+            Role.admin,
+          )
         ).status,
       ).toBe(403);
 

@@ -10,33 +10,14 @@ import { hasPermission } from "@/lib/auth/extensions/permissions";
 import { appInviteSchema } from "./shared";
 import type { User } from "../..";
 
-async function canManageInvitations(ctx: {
-  context: {
-    session?: { user?: unknown } | null;
-    internalAdapter?: {
-      findUserById: (id: string) => Promise<unknown>;
-    };
-  };
-}): Promise<boolean> {
-  const sessionUser = ctx.context.session?.user as User | undefined;
-  if (!sessionUser?.id || sessionUser.status !== UserStatus.active) {
-    return false;
-  }
-
-  const currentUser = ctx.context.internalAdapter
-    ? ((await ctx.context.internalAdapter.findUserById(
-        sessionUser.id,
-      )) as User | null)
-    : sessionUser;
-
-  if (!currentUser || currentUser.status !== UserStatus.active) {
-    return false;
-  }
-
-  return hasPermission({
-    user: currentUser,
-    permission: { users: ["invite"] },
-  });
+function canManageInvitations(ctx: {
+  context: { session?: { user?: unknown } | null };
+}): boolean {
+  const currentUser = ctx.context.session?.user as User | undefined;
+  return (
+    currentUser?.status === UserStatus.active &&
+    hasPermission({ user: currentUser, permission: { users: ["invite"] } })
+  );
 }
 
 export const appInvitePlugin = appInvite({
@@ -66,12 +47,8 @@ export const appInvitePlugin = appInvite({
       html,
     });
   },
-  canCreateInvitation: async (ctx): Promise<boolean> => {
-    return canManageInvitations(ctx);
-  },
-  canCancelInvitation: async (ctx): Promise<boolean> => {
-    return canManageInvitations(ctx);
-  },
+  canCreateInvitation: canManageInvitations,
+  canCancelInvitation: canManageInvitations,
   verifyEmailOnAccept: true,
   schema: appInviteSchema,
   hooks: {

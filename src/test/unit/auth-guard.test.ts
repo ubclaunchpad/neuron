@@ -66,6 +66,17 @@ function makeSession(user: User): Session {
   };
 }
 
+const STATUS_TO_ROUTE: Record<UserStatus, string> = {
+  [UserStatus.active]: "/",
+  [UserStatus.unverified]: "/unverified",
+  [UserStatus.inactive]: "/inactive",
+  [UserStatus.rejected]: "/rejected",
+};
+
+const NON_ACTIVE_STATUSES = UserStatus.values.filter(
+  (status) => status !== UserStatus.active,
+);
+
 describe("auth guard routing and status enforcement", () => {
   beforeEach(() => {
     redirectMock.mockClear();
@@ -79,19 +90,12 @@ describe("auth guard routing and status enforcement", () => {
     });
 
     it("routes every account status to an explicit destination", () => {
-      expect(defaultRedirectForUser({ status: UserStatus.active })).toBe("/");
+      for (const status of UserStatus.values) {
+        expect(defaultRedirectForUser({ status })).toBe(STATUS_TO_ROUTE[status]);
+      }
       expect(
         defaultRedirectForUser({ status: UserStatus.active }, "/classes"),
       ).toBe("/classes");
-      expect(defaultRedirectForUser({ status: UserStatus.unverified })).toBe(
-        "/unverified",
-      );
-      expect(defaultRedirectForUser({ status: UserStatus.inactive })).toBe(
-        "/inactive",
-      );
-      expect(defaultRedirectForUser({ status: UserStatus.rejected })).toBe(
-        "/rejected",
-      );
     });
 
     it("fails closed to /auth/login for unexpected status values", () => {
@@ -102,13 +106,6 @@ describe("auth guard routing and status enforcement", () => {
   });
 
   describe("requireStatus", () => {
-    const statusToRoute: Record<UserStatus, string> = {
-      [UserStatus.active]: "/",
-      [UserStatus.unverified]: "/unverified",
-      [UserStatus.inactive]: "/inactive",
-      [UserStatus.rejected]: "/rejected",
-    };
-
     for (const currentStatus of UserStatus.values) {
       it(`allows ${currentStatus} users on their own terminal route without redirecting`, async () => {
         const user = makeUser({ status: currentStatus });
@@ -122,15 +119,15 @@ describe("auth guard routing and status enforcement", () => {
       for (const requiredStatus of UserStatus.values) {
         if (requiredStatus === currentStatus) continue;
 
-        it(`redirects ${currentStatus} users from ${requiredStatus}-only routes to ${statusToRoute[currentStatus]}`, async () => {
+        it(`redirects ${currentStatus} users from ${requiredStatus}-only routes to ${STATUS_TO_ROUTE[currentStatus]}`, async () => {
           const user = makeUser({ status: currentStatus });
           getSessionMock.mockResolvedValue(makeSession(user));
 
           await expect(requireStatus(requiredStatus)).rejects.toThrow(
-            `NEXT_REDIRECT:${statusToRoute[currentStatus]}`,
+            `NEXT_REDIRECT:${STATUS_TO_ROUTE[currentStatus]}`,
           );
           expect(redirectMock).toHaveBeenCalledWith(
-            statusToRoute[currentStatus],
+            STATUS_TO_ROUTE[currentStatus],
           );
         });
       }
@@ -157,14 +154,8 @@ describe("auth guard routing and status enforcement", () => {
     });
 
     it("redirects authenticated users from public auth routes to their status destination", async () => {
-      const cases: Array<[UserStatus, string]> = [
-        [UserStatus.active, "/"],
-        [UserStatus.unverified, "/unverified"],
-        [UserStatus.inactive, "/inactive"],
-        [UserStatus.rejected, "/rejected"],
-      ];
-
-      for (const [status, expectedRoute] of cases) {
+      for (const status of UserStatus.values) {
+        const expectedRoute = STATUS_TO_ROUTE[status];
         getSessionMock.mockResolvedValue(makeSession(makeUser({ status })));
 
         await expect(requireNotAuth()).rejects.toThrow(
@@ -217,13 +208,8 @@ describe("auth guard routing and status enforcement", () => {
     });
 
     it("denies and redirects non-active admins directly to their status page", async () => {
-      const cases: Array<[UserStatus, string]> = [
-        [UserStatus.unverified, "/unverified"],
-        [UserStatus.inactive, "/inactive"],
-        [UserStatus.rejected, "/rejected"],
-      ];
-
-      for (const [status, expectedRoute] of cases) {
+      for (const status of NON_ACTIVE_STATUSES) {
+        const expectedRoute = STATUS_TO_ROUTE[status];
         const nonActiveAdmin = makeUser({ role: Role.admin, status });
         getSessionMock.mockResolvedValue(makeSession(nonActiveAdmin));
 

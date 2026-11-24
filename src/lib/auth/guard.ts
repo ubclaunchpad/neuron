@@ -88,7 +88,7 @@ export async function requirePermission(
   fallback?: Route,
 ): Promise<User> {
   const { user, allowed } = await resolveSessionAndPermission(permission);
-  if (!user || user.status !== UserStatus.active || !allowed) {
+  if (!user || !allowed) {
     redirect(defaultRedirectForUser(user, fallback));
   }
   return user;

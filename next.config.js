@@ -16,7 +16,7 @@ const nextConfig = {
     "awilix",
   ],
   outputFileTracingIncludes: {
-    "/*": ["src/server/db/migrations/**/*", "drizzle.config.*"],
+    "/*": ["src/server/db/migrations/**/*"],
   },
 
   webpack(config, { isServer, dev }) {

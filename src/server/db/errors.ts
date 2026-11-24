@@ -1,5 +1,3 @@
-import { DrizzleQueryError } from "drizzle-orm";
-
 const PG_UNIQUE_VIOLATION = "23505";
 
 /**
@@ -7,22 +5,26 @@ const PG_UNIQUE_VIOLATION = "23505";
  * represents a PostgreSQL unique constraint violation (SQLSTATE 23505).
  *
  * Since Drizzle ORM v0.44+, query failures are wrapped in `DrizzleQueryError`
- * with the underlying driver error attached as `error.cause`.
+ * with the underlying driver error attached as `error.cause`. We walk the
+ * `.cause` chain and treat any explicit SQLSTATE `code` as authoritative so
+ * unrelated errors whose messages mention "unique" are not misclassified.
  */
 export function isUniqueViolation(error: unknown): boolean {
-  const driverError = error instanceof DrizzleQueryError ? error.cause : error;
+  const visited = new Set<unknown>();
+  let current: unknown = error;
 
-  if (typeof driverError === "object" && driverError !== null) {
-    if ("code" in driverError && driverError.code === PG_UNIQUE_VIOLATION) {
-      return true;
+  while (
+    typeof current === "object" &&
+    current !== null &&
+    !visited.has(current)
+  ) {
+    visited.add(current);
+
+    if ("code" in current && typeof current.code === "string") {
+      return current.code === PG_UNIQUE_VIOLATION;
     }
-    if (
-      "message" in driverError &&
-      typeof driverError.message === "string" &&
-      driverError.message.toLowerCase().includes("unique")
-    ) {
-      return true;
-    }
+
+    current = "cause" in current ? current.cause : undefined;
   }
 
   return false;

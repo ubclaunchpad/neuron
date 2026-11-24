@@ -1,5 +1,5 @@
 {
-  "id": "f73197ac-e267-41e0-a04e-031fe813016e",
+  "id": "aac785c6-4915-4fe3-ad2b-89abadf89bb4",
   "prevId": "912223b0-c5dd-4889-9f94-bf066af68068",
   "version": "7",
   "dialect": "postgresql",
@@ -425,21 +425,6 @@
         }
       },
       "indexes": {
-        "verification_identifier_index": {
-          "name": "verification_identifier_index",
-          "columns": [
-            {
-              "expression": "identifier",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "verification_identifier_value_index": {
           "name": "verification_identifier_value_index",
           "columns": [

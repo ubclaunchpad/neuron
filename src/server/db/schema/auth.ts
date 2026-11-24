@@ -91,10 +91,7 @@ export const verification = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (table) => [
-    index().on(table.identifier),
-    uniqueIndex().on(table.identifier, table.value),
-  ],
+  (table) => [uniqueIndex().on(table.identifier, table.value)],
 );
 
 export const appInvitation = pgTable(

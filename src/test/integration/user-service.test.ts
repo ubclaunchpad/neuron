@@ -69,7 +69,7 @@ describe("UserService", () => {
         }),
       ).rejects.toMatchObject({
         code: NeuronErrorCodes.BAD_REQUEST,
-        message: "An instructor with this email already exists",
+        message: "A user with this email already exists",
       });
     });
 

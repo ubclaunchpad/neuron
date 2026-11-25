@@ -296,26 +296,12 @@ export class UserService implements IUserService {
   }
 
   async createInstructor(input: CreateInstructorInput): Promise<User> {
-    try {
-      const createdUser = await provisionUser(this.db, {
-        name: input.firstName,
-        lastName: input.lastName,
-        email: input.email,
-        role: Role.instructor,
-        status: UserStatus.active,
-        emailVerified: false,
-      });
-
-      return buildUser(createdUser);
-    } catch (error) {
-      if (isUniqueViolation(error)) {
-        throw new NeuronError(
-          "An instructor with this email already exists",
-          NeuronErrorCodes.BAD_REQUEST,
-        );
-      }
-      throw error;
-    }
+    return this.createUser({
+      name: input.firstName,
+      lastName: input.lastName,
+      email: input.email,
+      role: Role.instructor,
+    });
   }
 
   async updateInstructor(input: UpdateInstructorInput): Promise<User> {

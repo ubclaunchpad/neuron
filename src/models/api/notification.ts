@@ -1,11 +1,40 @@
 import { z } from "zod";
 
+const NotificationCursorTimestamp = z.iso.datetime().max(32);
+const NotificationCursorId = z.uuid();
+
+export function parseNotificationCursor(
+  cursor: string,
+): { createdAt: string; id: string } | null {
+  const parts = cursor.split("|");
+  if (parts.length !== 2) return null;
+
+  const [createdAt, id] = parts;
+  if (
+    !createdAt ||
+    !id ||
+    createdAt.startsWith("0000-") ||
+    !NotificationCursorTimestamp.safeParse(createdAt).success ||
+    !NotificationCursorId.safeParse(id).success
+  ) {
+    return null;
+  }
+
+  return { createdAt, id };
+}
+
+export const NotificationCursor = z
+  .string()
+  .refine((value) => parseNotificationCursor(value) !== null, {
+    message: "Cursor must be in '<ISO datetime>|<uuid>' format",
+  });
+
 export const ListNotificationsInput = z.object({
   type: z.string().optional(),
   read: z.boolean().optional(),
   archived: z.boolean().optional(),
   limit: z.number().int().min(1).max(100).default(20),
-  cursor: z.string().datetime().optional(),
+  cursor: NotificationCursor.optional(),
 });
 export type ListNotificationsInput = z.infer<typeof ListNotificationsInput>;
 
@@ -17,9 +46,7 @@ export type MarkAsReadInput = z.infer<typeof MarkAsReadInput>;
 export const ArchiveNotificationInput = z.object({
   notificationId: z.uuid(),
 });
-export type ArchiveNotificationInput = z.infer<
-  typeof ArchiveNotificationInput
->;
+export type ArchiveNotificationInput = z.infer<typeof ArchiveNotificationInput>;
 
 export const SetNotificationPreferenceInput = z.object({
   type: z.string(),

@@ -50,6 +50,19 @@ describe("Account provisioning and normalized identity invariants", () => {
     return `${prefix}-${Date.now()}-${randomUUID().slice(0, 8)}@${domain}`;
   }
 
+  function migrationStatements() {
+    return readFileSync(
+      path.resolve(
+        process.cwd(),
+        "src/server/db/migrations/0012_normalize_user_email_and_volunteer_profiles.sql",
+      ),
+      "utf8",
+    )
+      .split("--> statement-breakpoint")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
   beforeEach(() => {
     jobRunMock.mockClear();
     emailSendMock.mockClear();
@@ -69,43 +82,24 @@ describe("Account provisioning and normalized identity invariants", () => {
 
   describe("direct user creation (UserService.createUser)", () => {
     it("normalizes email and creates admin/instructor without a volunteer profile", async () => {
-      const rawAdminEmail = `  Admin.User.${uniqueEmail("Direct")}  `;
-      const admin = await userService.createUser({
-        name: "Ada",
-        lastName: "Admin",
-        email: rawAdminEmail,
-        role: Role.admin,
-      });
-      createdUserIds.push(admin.id);
-
-      expect(admin.email).toBe(rawAdminEmail.trim().toLowerCase());
-      expect(admin.role).toBe(Role.admin);
-      expect(admin.status).toBe(UserStatus.active);
-
-      const adminProfiles = await scope.db
-        .select()
-        .from(volunteer)
-        .where(eq(volunteer.userId, admin.id));
-      expect(adminProfiles).toHaveLength(0);
-
-      const rawInstructorEmail = `  Inst.User.${uniqueEmail("Direct")} `;
-      const instructor = await userService.createUser({
-        name: "Grace",
-        lastName: "Instructor",
-        email: rawInstructorEmail,
-        role: Role.instructor,
-      });
-      createdUserIds.push(instructor.id);
-
-      expect(instructor.email).toBe(rawInstructorEmail.trim().toLowerCase());
-      expect(instructor.role).toBe(Role.instructor);
-      expect(instructor.status).toBe(UserStatus.active);
-
-      const instructorProfiles = await scope.db
-        .select()
-        .from(volunteer)
-        .where(eq(volunteer.userId, instructor.id));
-      expect(instructorProfiles).toHaveLength(0);
+      for (const role of [Role.admin, Role.instructor] as const) {
+        const rawEmail = `  Direct.${uniqueEmail(role)}  `;
+        const created = await userService.createUser({
+          name: "Direct",
+          lastName: role,
+          email: rawEmail,
+          role,
+        });
+        createdUserIds.push(created.id);
+        expect(created.email).toBe(rawEmail.trim().toLowerCase());
+        expect(created.role).toBe(role);
+        expect(created.status).toBe(UserStatus.active);
+        const profiles = await scope.db
+          .select()
+          .from(volunteer)
+          .where(eq(volunteer.userId, created.id));
+        expect(profiles).toHaveLength(0);
+      }
     });
 
     it("rejects volunteer role in direct creation without persisting a malformed user", async () => {
@@ -405,132 +399,63 @@ describe("Account provisioning and normalized identity invariants", () => {
         cookie: setCookie!.split(";")[0]!,
       });
 
-      // 1. Invite admin with mixed-case/whitespace email -> stored normalized, duplicate case blocked.
-      const rawAdminInviteEmail = `  Invited.Admin.${uniqueEmail("Inv")}  `;
-      const normalizedAdminInviteEmail = rawAdminInviteEmail
-        .trim()
-        .toLowerCase();
-
-      const adminInvite = await auth.api.createAppInvitation({
-        headers: inviterHeaders,
-        body: {
-          type: "personal",
-          email: rawAdminInviteEmail,
-          additionalFields: {
-            role: Role.admin,
-          },
-        },
-      });
-      expect(adminInvite.email).toBe(normalizedAdminInviteEmail);
-
-      await expect(
-        auth.api.createAppInvitation({
+      for (const role of [Role.admin, Role.instructor, Role.volunteer]) {
+        const rawEmail = `  Invited.${uniqueEmail(role)}  `;
+        const normalizedEmail = rawEmail.trim().toLowerCase();
+        const invitation = await auth.api.createAppInvitation({
           headers: inviterHeaders,
           body: {
             type: "personal",
-            email: normalizedAdminInviteEmail.toUpperCase(),
-            additionalFields: {
-              role: Role.admin,
+            email: rawEmail,
+            additionalFields: { role },
+          },
+        });
+        expect(invitation.email).toBe(normalizedEmail);
+
+        await expect(
+          auth.api.createAppInvitation({
+            headers: inviterHeaders,
+            body: {
+              type: "personal",
+              email: normalizedEmail.toUpperCase(),
+              additionalFields: { role },
             },
+          }),
+        ).rejects.toThrow();
+
+        const accepted = await auth.api.acceptAppInvitation({
+          body: {
+            invitationId: invitation.id,
+            name: "Invited",
+            password: "StrongPassword123!",
+            additionalFields: { lastName: role },
           },
-        }),
-      ).rejects.toThrow();
-
-      // Accept admin invitation -> role=admin, status=active, no stray volunteer row.
-      const acceptedAdmin = await auth.api.acceptAppInvitation({
-        body: {
-          invitationId: adminInvite.id,
-          name: "Invited",
-          password: "StrongPassword123!",
-          additionalFields: {
-            lastName: "Admin",
-          },
-        },
-      });
-      createdUserIds.push(acceptedAdmin.user.id);
-
-      const [dbAdmin] = await scope.db
-        .select()
-        .from(user)
-        .where(eq(user.id, acceptedAdmin.user.id));
-      expect(dbAdmin?.email).toBe(normalizedAdminInviteEmail);
-      expect(dbAdmin?.role).toBe(Role.admin);
-      expect(dbAdmin?.status).toBe(UserStatus.active);
-      expect(dbAdmin?.emailVerified).toBe(true);
-
-      const adminVolRows = await scope.db
-        .select()
-        .from(volunteer)
-        .where(eq(volunteer.userId, acceptedAdmin.user.id));
-      expect(adminVolRows).toHaveLength(0);
-
-      // 2. Invite & accept instructor -> role=instructor, status=active, no stray volunteer row.
-      const rawInstInviteEmail = `  Invited.Inst.${uniqueEmail("Inv")} `;
-      const instInvite = await auth.api.createAppInvitation({
-        headers: inviterHeaders,
-        body: {
-          type: "personal",
-          email: rawInstInviteEmail,
-          additionalFields: {
-            role: Role.instructor,
-          },
-        },
-      });
-      const acceptedInst = await auth.api.acceptAppInvitation({
-        body: {
-          invitationId: instInvite.id,
-          name: "Invited",
-          password: "StrongPassword123!",
-          additionalFields: {
-            lastName: "Instructor",
-          },
-        },
-      });
-      createdUserIds.push(acceptedInst.user.id);
-
-      const [dbInst] = await scope.db
-        .select()
-        .from(user)
-        .where(eq(user.id, acceptedInst.user.id));
-      expect(dbInst?.email).toBe(rawInstInviteEmail.trim().toLowerCase());
-      expect(dbInst?.role).toBe(Role.instructor);
-      expect(dbInst?.status).toBe(UserStatus.active);
-      const instVolRows = await scope.db
-        .select()
-        .from(volunteer)
-        .where(eq(volunteer.userId, acceptedInst.user.id));
-      expect(instVolRows).toHaveLength(0);
-
-      // 3. Invite & accept volunteer -> role=volunteer, status=active, volunteer profile present.
-      const rawVolInviteEmail = `  Invited.Vol.${uniqueEmail("Inv")} `;
-      const volInvite = await auth.api.createAppInvitation({
-        headers: inviterHeaders,
-        body: {
-          type: "personal",
-          email: rawVolInviteEmail,
-          additionalFields: {
-            role: Role.volunteer,
-          },
-        },
-      });
-      const acceptedVol = await auth.api.acceptAppInvitation({
-        body: {
-          invitationId: volInvite.id,
-          name: "Invited",
-          password: "StrongPassword123!",
-          additionalFields: {
-            lastName: "Volunteer",
-          },
-        },
-      });
-      createdUserIds.push(acceptedVol.user.id);
-
-      const hydratedVol = await volunteerService.getVolunteer(
-        acceptedVol.user.id,
-      );
-      expect(hydratedVol.email).toBe(rawVolInviteEmail.trim().toLowerCase());
-      expect(hydratedVol.role).toBe(Role.volunteer);
-      expect(hydratedVol.status).toBe(UserStatus.active);
+        });
+        createdUserIds.push(accepted.user.id);
+        const [stored] = await scope.db
+          .select()
+          .from(user)
+          .where(eq(user.id, accepted.user.id));
+        expect(stored).toMatchObject({
+          email: normalizedEmail,
+          role,
+          status: UserStatus.active,
+          emailVerified: true,
+        });
+        const profiles = await scope.db
+          .select()
+          .from(volunteer)
+          .where(eq(volunteer.userId, accepted.user.id));
+        expect(profiles).toHaveLength(role === Role.volunteer ? 1 : 0);
+        if (role === Role.volunteer) {
+          const hydrated = await volunteerService.getVolunteer(
+            accepted.user.id,
+          );
+          expect(hydrated.email).toBe(normalizedEmail);
+          expect(hydrated.role).toBe(role);
+          expect(hydrated.status).toBe(UserStatus.active);
+        }
+      }
     });
   });
 
@@ -568,17 +493,7 @@ describe("Account provisioning and normalized identity invariants", () => {
     });
 
     it("migration 0012 aborts with an actionable error when case-colliding emails exist", async () => {
-      const migrationSql = readFileSync(
-        path.resolve(
-          process.cwd(),
-          "src/server/db/migrations/0012_normalize_user_email_and_volunteer_profiles.sql",
-        ),
-        "utf8",
-      );
-      const statements = migrationSql
-        .split("--> statement-breakpoint")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const statements = migrationStatements();
 
       const rollbackSentinel = new Error("ROLLBACK_TEST_TX");
       const baseEmail = uniqueEmail("MigCollision", "example.com");
@@ -627,17 +542,7 @@ describe("Account provisioning and normalized identity invariants", () => {
     });
 
     it("migration 0012 normalizes non-colliding emails, backfills missing volunteer profiles, and installs uq_user_email_normalized", async () => {
-      const migrationSql = readFileSync(
-        path.resolve(
-          process.cwd(),
-          "src/server/db/migrations/0012_normalize_user_email_and_volunteer_profiles.sql",
-        ),
-        "utf8",
-      );
-      const statements = migrationSql
-        .split("--> statement-breakpoint")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const statements = migrationStatements();
 
       const rollbackSentinel = new Error("ROLLBACK_TEST_TX");
       const rawVolunteerEmail = `\tLegacy.Vol.${uniqueEmail("MigHeal")}\n`;

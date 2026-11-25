@@ -204,28 +204,12 @@ export function normalizeAuthRequestEmailBody(
 export function normalizeAuthUserCreateInput<
   T extends Record<string, unknown> & { email?: unknown },
 >(userData: T): { data: T } {
-  const role =
-    userData.role === undefined
-      ? Role.volunteer
-      : parseProvisionRole(userData.role);
-  const status =
-    userData.status === undefined
-      ? UserStatus.unverified
-      : parseProvisionStatus(userData.status);
-
-  const email =
-    typeof userData.email === "string"
-      ? normalizeEmail(userData.email)
-      : userData.email;
-
-  return {
-    data: {
-      ...userData,
-      email,
-      role,
-      status,
-    },
-  };
+  return normalizeAuthUserUpdateInput({
+    ...userData,
+    role: userData.role === undefined ? Role.volunteer : userData.role,
+    status:
+      userData.status === undefined ? UserStatus.unverified : userData.status,
+  });
 }
 
 /**

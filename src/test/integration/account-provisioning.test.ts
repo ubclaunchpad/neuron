@@ -243,23 +243,22 @@ describe("Account provisioning and normalized identity invariants", () => {
 
     it("rolls back the auth user when profile insertion fails", async () => {
       const email = uniqueEmail("AtomicAuth").toLowerCase();
-      // Force the actual profile INSERT to fail within the adapter transaction.
-      await expect(
-        scope.db.transaction(async (tx) => {
-          const adapter = accountAdapter(tx)({
-            advanced: { database: { generateId: false } },
-            user: {
-              additionalFields: {
-                role: { type: "string" },
-                lastName: { type: "string" },
-              },
+      await scope.db.transaction(async (tx) => {
+        const adapter = accountAdapter(tx)({
+          advanced: { database: { generateId: false } },
+          user: {
+            additionalFields: {
+              role: { type: "string" },
+              lastName: { type: "string" },
             },
-          });
-          await tx.execute(sql`CREATE FUNCTION pg_temp.reject_profile() RETURNS trigger LANGUAGE plpgsql AS $$
+          },
+        });
+        await tx.execute(sql`CREATE FUNCTION pg_temp.reject_profile() RETURNS trigger LANGUAGE plpgsql AS $$
           BEGIN RAISE EXCEPTION 'profile insert failed'; END $$`);
-          await tx.execute(sql`CREATE TRIGGER reject_profile BEFORE INSERT ON volunteer
+        await tx.execute(sql`CREATE TRIGGER reject_profile BEFORE INSERT ON volunteer
           FOR EACH ROW EXECUTE FUNCTION pg_temp.reject_profile()`);
-          await adapter.create({
+        await expect(
+          adapter.create({
             model: "user",
             data: {
               name: "Broken",
@@ -267,12 +266,17 @@ describe("Account provisioning and normalized identity invariants", () => {
               email,
               role: Role.volunteer,
             },
-          });
-        }),
-      ).rejects.toMatchObject({ cause: { message: "profile insert failed" } });
-      expect(
-        await scope.db.select().from(user).where(eq(user.email, email)),
-      ).toHaveLength(0);
+          }),
+        ).rejects.toMatchObject({
+          cause: { message: "profile insert failed" },
+        });
+        // The adapter must roll back its own savepoint, leaving this transaction usable.
+        expect(
+          await tx.select().from(user).where(eq(user.email, email)),
+        ).toHaveLength(0);
+        await tx.execute(sql`DROP TRIGGER reject_profile ON volunteer`);
+        await tx.execute(sql`DROP FUNCTION pg_temp.reject_profile()`);
+      });
     });
   });
 

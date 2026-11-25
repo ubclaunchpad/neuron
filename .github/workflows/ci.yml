@@ -110,17 +110,3 @@ jobs:
           push: false
           cache-from: type=gha
           cache-to: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'type=gha,mode=max' || '' }}
-
-  ci-gate:
-    name: CI Gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    if: ${{ !cancelled() }}
-    needs: [checks, test-integration, docker-build]
-    steps:
-      - name: Verify all required jobs succeeded
-        env:
-          RESULTS: ${{ toJSON(needs.*.result) }}
-        run: |
-          echo "Upstream job results: $RESULTS"
-          jq -e 'length > 0 and all(. == "success")' <<< "$RESULTS"

@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build": "next build",
-    "check": "next lint && tsc --noEmit",
+    "check": "pnpm lint && pnpm typecheck",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -18,17 +18,18 @@
     "dev": "next dev --turbo",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
+    "lint": "eslint . --max-warnings=270",
+    "lint:fix": "eslint . --fix",
     "postinstall": "patch-package",
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
     "test:coverage": "vitest run --coverage",
-    "test:db:create": "docker compose -f docker-compose.dev.yaml exec postgres psql -U postgres -c 'CREATE DATABASE neuron_test;' || true",
-    "test:db:push": "dotenv -e .env.test -- drizzle-kit push --force"
+    "test:db:create": "docker compose -f docker-compose.dev.yaml exec postgres psql -U postgres -c 'CREATE DATABASE neuron_test;' || true"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -86,15 +87,13 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.5",
     "@svgr/webpack": "^8.1.0",
-    "@types/node": "^20.19.39",
+    "@types/node": "^26.6.6",
     "@types/react": "19.2.8",
     "@types/react-big-calendar": "^1.16.3",
     "@types/react-dom": "19.2.3",
     "@vitest/coverage-v8": "^4.1.12",
     "dotenv": "^17.4.1",
-    "dotenv-cli": "^10.0.0",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9.39.5",
     "eslint-config-next": "16.4.6",
@@ -110,6 +109,9 @@
   },
   "ct3aMetadata": {
     "initVersion": "7.39.3"
+  },
+  "engines": {
+    "node": ">=26"
   },
   "packageManager": "pnpm@10.32.1",
   "pnpm": {

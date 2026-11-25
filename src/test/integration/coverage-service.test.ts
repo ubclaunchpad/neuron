@@ -21,6 +21,16 @@ describe("CoverageService", () => {
   let createdTermIds: string[] = [];
   let createdClassIds: string[] = [];
 
+  const futureBaseDate = Temporal.Now.plainDateISO().add({ days: 30 });
+  const termStartDate = futureBaseDate.toString();
+  const termEndDate = futureBaseDate.add({ days: 90 }).toString();
+  const defaultShiftDate = futureBaseDate.add({ days: 30 }).toString();
+  const sortShiftDates = [
+    futureBaseDate.add({ days: 15 }).toString(),
+    futureBaseDate.add({ days: 30 }).toString(),
+    futureBaseDate.add({ days: 45 }).toString(),
+  ];
+
   let volunteer1Id: string;
   let volunteer2Id: string;
   let volunteer3Id: string; // Not assigned to the schedule - can cover shifts
@@ -101,8 +111,8 @@ describe("CoverageService", () => {
 
     const termId = await termService.createTerm({
       name: `Test Term ${randomUUID()}`,
-      startDate: "2026-06-01",
-      endDate: "2026-08-31",
+      startDate: termStartDate,
+      endDate: termEndDate,
       holidays: [],
     });
     createdTermIds.push(termId);
@@ -124,7 +134,7 @@ describe("CoverageService", () => {
           instructorUserIds: [instructorId],
           rule: {
             type: "single",
-            extraDates: ["2026-07-15"],
+            extraDates: [defaultShiftDate],
           },
         },
       ],
@@ -281,7 +291,7 @@ describe("CoverageService", () => {
               instructorUserIds: [instructorId],
               rule: {
                 type: "single",
-                extraDates: ["2026-07-01", "2026-07-15", "2026-08-01"],
+                extraDates: sortShiftDates,
               },
             },
           ],

@@ -2,32 +2,13 @@ import { isUniqueViolation } from "@/server/db/errors";
 import { randomUUID } from "crypto";
 import { readFileSync } from "fs";
 import path from "path";
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { createAuthMiddleware } from "better-auth/api";
 import { eq, inArray, sql } from "drizzle-orm";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createAppInvitePlugin } from "@/lib/auth/extensions/app-invite/server-plugin";
-import {
-  Role,
-  RoleEnum,
-  UserStatus,
-  UserStatusEnum,
-} from "@/models/interfaces";
-import {
-  account,
-  appInvitation,
-  session,
-  user,
-  verification,
-  volunteer,
-} from "@/server/db/schema";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Role, UserStatus } from "@/models/interfaces";
+import { appInvitation, user, volunteer } from "@/server/db/schema";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import {
-  handleAuthUserCreated,
-  normalizeAuthRequestEmailBody,
-  normalizeAuthUserCreateInput,
-  normalizeAuthUserUpdateInput,
+  accountAdapter,
   provisionUser,
 } from "@/server/services/entity/accountProvisioning";
 import type { IUserService } from "@/server/services/entity/userService";
@@ -36,6 +17,28 @@ import {
   createTestScope,
   type ITestServiceScope,
 } from "../helpers/test-service-scope";
+
+const { jobRunMock, emailSendMock } = vi.hoisted(() => ({
+  jobRunMock: vi.fn(async () => "mock-job-id"),
+  emailSendMock: vi.fn(async () => undefined),
+}));
+
+vi.mock("server-only", () => ({}));
+vi.mock("@/server/api/di-container", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/server/api/di-container")>();
+  return {
+    ...actual,
+    createRequestScope: () => ({
+      cradle: {
+        jobService: { run: jobRunMock },
+        emailService: { send: emailSendMock },
+      },
+    }),
+  };
+});
+
+import { auth } from "@/lib/auth";
 
 describe("Account provisioning and normalized identity invariants", () => {
   let scope: ITestServiceScope;
@@ -47,90 +50,9 @@ describe("Account provisioning and normalized identity invariants", () => {
     return `${prefix}-${Date.now()}-${randomUUID().slice(0, 8)}@${domain}`;
   }
 
-  function createTestAuth() {
-    const sentInvitations: Array<{ id: string; email?: string | null }> = [];
-    const auth = betterAuth({
-      baseURL: "http://localhost:3000",
-      secret: "test-secret-for-account-provisioning-integration-tests-123456",
-      user: {
-        additionalFields: {
-          role: {
-            type: RoleEnum.options,
-            defaultValue: Role.volunteer,
-            input: false,
-          },
-          status: {
-            type: UserStatusEnum.options,
-            defaultValue: UserStatus.unverified,
-            input: false,
-          },
-          lastName: { type: "string" },
-        },
-      },
-      database: drizzleAdapter(scope.db, {
-        provider: "pg",
-        schema: {
-          user,
-          session,
-          account,
-          verification,
-          appInvitation,
-        },
-      }),
-      advanced: {
-        database: {
-          generateId: false,
-        },
-      },
-      hooks: {
-        before: createAuthMiddleware(async (ctx) => {
-          const normalizedBody = normalizeAuthRequestEmailBody(ctx.body);
-          if (normalizedBody) {
-            return {
-              context: {
-                body: normalizedBody,
-              },
-            };
-          }
-        }),
-      },
-      databaseHooks: {
-        user: {
-          create: {
-            before: async (userData) => normalizeAuthUserCreateInput(userData),
-            after: async (createdUser) => {
-              await handleAuthUserCreated(scope.db, createdUser);
-            },
-          },
-          update: {
-            before: async (userData) => normalizeAuthUserUpdateInput(userData),
-          },
-        },
-      },
-      emailAndPassword: {
-        enabled: true,
-        requireEmailVerification: true,
-      },
-      emailVerification: {
-        sendOnSignUp: false,
-      },
-      plugins: [
-        createAppInvitePlugin({
-          db: scope.db,
-          sendInvitationEmail: async (invitation) => {
-            sentInvitations.push({
-              id: invitation.id,
-              email: invitation.email,
-            });
-          },
-        }),
-      ],
-    });
-
-    return { auth, sentInvitations };
-  }
-
   beforeEach(() => {
+    jobRunMock.mockClear();
+    emailSendMock.mockClear();
     scope = createTestScope();
     scope.mockSession.setAsAdmin();
     userService = scope.resolve<IUserService>("userService");
@@ -212,7 +134,7 @@ describe("Account provisioning and normalized identity invariants", () => {
       const first = await userService.createUser({
         name: "First",
         lastName: "Admin",
-        email: baseEmail.toUpperCase(),
+        email: `\t${baseEmail.toUpperCase()}\n`,
         role: Role.admin,
       });
       createdUserIds.push(first.id);
@@ -325,40 +247,43 @@ describe("Account provisioning and normalized identity invariants", () => {
       expect(hydrated.email).toBe(rawEmail.trim().toLowerCase());
     });
 
-    it("cleans up newly created user row if handleAuthUserCreated fails", async () => {
-      const email = uniqueEmail("HookCleanup").toLowerCase();
-      const [inserted] = await scope.db
-        .insert(user)
-        .values({
-          name: "Broken",
-          lastName: "Hook",
-          email,
-          role: Role.volunteer,
-          status: UserStatus.unverified,
-          emailVerified: false,
-        })
-        .returning();
-
-      expect(inserted).toBeDefined();
-
+    it("rolls back the auth user when profile insertion fails", async () => {
+      const email = uniqueEmail("AtomicAuth").toLowerCase();
+      // Force the actual profile INSERT to fail within the adapter transaction.
       await expect(
-        handleAuthUserCreated(scope.db, {
-          id: inserted!.id,
-          role: "invalid-role",
+        scope.db.transaction(async (tx) => {
+          const adapter = accountAdapter(tx)({
+            advanced: { database: { generateId: false } },
+            user: {
+              additionalFields: {
+                role: { type: "string" },
+                lastName: { type: "string" },
+              },
+            },
+          });
+          await tx.execute(sql`CREATE FUNCTION pg_temp.reject_profile() RETURNS trigger LANGUAGE plpgsql AS $$
+          BEGIN RAISE EXCEPTION 'profile insert failed'; END $$`);
+          await tx.execute(sql`CREATE TRIGGER reject_profile BEFORE INSERT ON volunteer
+          FOR EACH ROW EXECUTE FUNCTION pg_temp.reject_profile()`);
+          await adapter.create({
+            model: "user",
+            data: {
+              name: "Broken",
+              lastName: "Profile",
+              email,
+              role: Role.volunteer,
+            },
+          });
         }),
-      ).rejects.toThrow(/Invalid user role/);
-
-      const remaining = await scope.db
-        .select()
-        .from(user)
-        .where(eq(user.id, inserted!.id));
-      expect(remaining).toHaveLength(0);
+      ).rejects.toMatchObject({ cause: { message: "profile insert failed" } });
+      expect(
+        await scope.db.select().from(user).where(eq(user.email, email)),
+      ).toHaveLength(0);
     });
   });
 
   describe("Better Auth signup, signin, and app-invite provisioning", () => {
     it("self-signup normalizes email, creates volunteer profile, and blocks mixed-case duplicates", async () => {
-      const { auth } = createTestAuth();
       const rawEmail = `  Self.Signup.${uniqueEmail("Vol")}  `;
       const normalized = rawEmail.trim().toLowerCase();
 
@@ -384,17 +309,21 @@ describe("Account provisioning and normalized identity invariants", () => {
       expect(hydratedVolunteer.id).toBe(signupRes.user.id);
       expect(hydratedVolunteer.email).toBe(normalized);
 
-      // Duplicate self-signup with different casing is rejected.
-      await expect(
-        auth.api.signUpEmail({
-          body: {
-            name: "Dup",
-            lastName: "Volunteer",
-            email: normalized.toUpperCase(),
-            password: "StrongPassword123!",
-          },
-        }),
-      ).rejects.toThrow();
+      // Better Auth masks existing identities with a synthetic response.
+      await auth.api.signUpEmail({
+        body: {
+          name: "Dup",
+          lastName: "Volunteer",
+          email: normalized.toUpperCase(),
+          password: "StrongPassword123!",
+        },
+      });
+      const identities = await scope.db
+        .select()
+        .from(user)
+        .where(eq(user.email, normalized));
+      expect(identities).toHaveLength(1);
+      expect(identities[0]?.id).toBe(signupRes.user.id);
 
       // Mark email verified and confirm mixed-case sign-in resolves the same user.
       await scope.db
@@ -413,7 +342,6 @@ describe("Account provisioning and normalized identity invariants", () => {
     });
 
     it("blocks signup when an instructor with different email casing already exists", async () => {
-      const { auth } = createTestAuth();
       const rawEmail = `Existing.Inst.${uniqueEmail("CrossPath")}`;
       const instructor = await userService.createInstructor({
         firstName: "Existing",
@@ -422,21 +350,24 @@ describe("Account provisioning and normalized identity invariants", () => {
       });
       createdUserIds.push(instructor.id);
 
-      await expect(
-        auth.api.signUpEmail({
-          body: {
-            name: "Clash",
-            lastName: "Volunteer",
-            email: rawEmail.toUpperCase(),
-            password: "StrongPassword123!",
-          },
-        }),
-      ).rejects.toThrow();
+      await auth.api.signUpEmail({
+        body: {
+          name: "Clash",
+          lastName: "Volunteer",
+          email: rawEmail.toUpperCase(),
+          password: "StrongPassword123!",
+        },
+      });
+      const identities = await scope.db
+        .select()
+        .from(user)
+        .where(eq(user.email, instructor.email));
+      expect(identities).toHaveLength(1);
+      expect(identities[0]?.id).toBe(instructor.id);
+      expect(identities[0]?.role).toBe(Role.instructor);
     });
 
     it("normalizes invite emails and enforces role/profile/status invariants on accept for admin, instructor, and volunteer", async () => {
-      const { auth } = createTestAuth();
-
       // Create an authenticated admin inviter with a live session cookie.
       const inviterEmail = uniqueEmail("Inviter").toLowerCase();
       const inviterSignup = await auth.api.signUpEmail({
@@ -624,7 +555,7 @@ describe("Account provisioning and normalized identity invariants", () => {
         await scope.db.insert(user).values({
           name: "Raw",
           lastName: "Second",
-          email: `  ${rawEmail.toLowerCase()}  `,
+          email: `\t${rawEmail.toLowerCase()}\n`,
           role: Role.instructor,
           status: UserStatus.active,
           emailVerified: false,
@@ -670,7 +601,7 @@ describe("Account provisioning and normalized identity invariants", () => {
             {
               name: "Collide",
               lastName: "Two",
-              email: baseEmail.toUpperCase(),
+              email: `\t${baseEmail.toUpperCase()}\n`,
               role: Role.instructor,
               status: UserStatus.active,
               emailVerified: false,
@@ -685,9 +616,7 @@ describe("Account provisioning and normalized identity invariants", () => {
                   : String(err);
               return (
                 message.includes("case/whitespace-colliding email group(s)") &&
-                message.includes(
-                  "docs/reconciliation/account-identity-and-profiles.md",
-                )
+                message.includes("select a verified owner")
               );
             },
           );
@@ -711,7 +640,7 @@ describe("Account provisioning and normalized identity invariants", () => {
         .filter(Boolean);
 
       const rollbackSentinel = new Error("ROLLBACK_TEST_TX");
-      const rawVolunteerEmail = `  Legacy.Vol.${uniqueEmail("MigHeal")} `;
+      const rawVolunteerEmail = `\tLegacy.Vol.${uniqueEmail("MigHeal")}\n`;
       const rawInviteEmail = `  Legacy.Inv.${uniqueEmail("MigHeal")} `;
 
       await expect(

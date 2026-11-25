@@ -8,19 +8,12 @@ import {
 } from "@/models/interfaces";
 import { createRequestScope } from "@/server/api/di-container";
 import { db } from "@/server/db";
-import {
-  account,
-  appInvitation,
-  session,
-  verification,
-} from "@/server/db/schema/auth";
-import { user } from "@/server/db/schema/user";
 import { renderForgotPassword } from "@/server/emails/templates/forgot-password";
 import { renderRequestChangeEmail } from "@/server/emails/templates/request-change-email";
 import { renderVerifyEmail } from "@/server/emails/templates/verify-email";
 import { renderVerifyNewEmail } from "@/server/emails/templates/verify-new-email";
 import {
-  handleAuthUserCreated,
+  accountAdapter,
   normalizeAuthRequestEmailBody,
   normalizeAuthUserCreateInput,
   normalizeAuthUserUpdateInput,
@@ -31,7 +24,6 @@ import {
   createAuthMiddleware,
   getAuthoritativeSessionFromCtx,
 } from "better-auth/api";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { appInvitePlugin } from "@/lib/auth/extensions/app-invite/server-plugin";
 import { hasPermission } from "@/lib/auth/extensions/permissions";
@@ -65,14 +57,16 @@ export const auth = betterAuth({
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       const normalizedBody = normalizeAuthRequestEmailBody(ctx.body);
-      if (normalizedBody) Object.assign(ctx.body, normalizedBody);
+      const normalizedContext = normalizedBody
+        ? { context: { body: normalizedBody } }
+        : undefined;
       if (!ctx.path || NON_ACTIVE_ALLOWED_AUTH_PATHS.has(ctx.path)) {
-        return;
+        return normalizedContext;
       }
 
       const activeSession = await getAuthoritativeSessionFromCtx(ctx);
       if (!activeSession?.user) {
-        return;
+        return normalizedContext;
       }
 
       const currentUser = activeSession.user as User;
@@ -95,6 +89,7 @@ export const auth = betterAuth({
           message: "You are not allowed to invite users to this application.",
         });
       }
+      return normalizedContext;
     }),
   },
   user: {
@@ -138,16 +133,7 @@ export const auth = betterAuth({
       },
     },
   },
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema: {
-      user,
-      session,
-      account,
-      verification,
-      appInvitation,
-    },
-  }),
+  database: accountAdapter(db),
   advanced: {
     database: {
       generateId: false,
@@ -157,9 +143,6 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (userData) => normalizeAuthUserCreateInput(userData),
-        after: async (createdUser) => {
-          await handleAuthUserCreated(db, createdUser);
-        },
       },
       update: {
         before: async (userData) => normalizeAuthUserUpdateInput(userData),

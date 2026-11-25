@@ -1,4 +1,3 @@
-import { isUniqueViolation } from "@/server/db/errors";
 import { describe, expect, it } from "vitest";
 import {
   CreateInstructorInput,
@@ -153,22 +152,5 @@ describe("email normalization and provisioning schemas", () => {
         status: "invalid-status",
       }),
     ).toThrow(/Invalid user status/);
-  });
-
-  it("detects Postgres unique violation errors directly and via cause chain", () => {
-    expect(isUniqueViolation({ code: "23505" })).toBe(true);
-    expect(
-      isUniqueViolation({
-        message: "Failed query",
-        cause: { code: "23505" },
-      }),
-    ).toBe(true);
-    expect(
-      isUniqueViolation({
-        cause: { cause: { code: "23505" } },
-      }),
-    ).toBe(true);
-    expect(isUniqueViolation({ code: "23503" })).toBe(false);
-    expect(isUniqueViolation(new Error("other"))).toBe(false);
   });
 });

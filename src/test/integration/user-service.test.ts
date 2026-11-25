@@ -35,7 +35,7 @@ describe("UserService", () => {
         name: "Alice",
         lastName: "Smith",
         email,
-        role: "volunteer",
+        role: "instructor",
       });
       createdUserIds.push(created.id);
 
@@ -44,7 +44,7 @@ describe("UserService", () => {
           name: "Bob",
           lastName: "Jones",
           email,
-          role: "volunteer",
+          role: "instructor",
         }),
       ).rejects.toMatchObject({
         code: NeuronErrorCodes.BAD_REQUEST,

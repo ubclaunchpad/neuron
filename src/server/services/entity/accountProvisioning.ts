@@ -1,3 +1,5 @@
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import * as schema from "@/server/db/schema";
 import { DirectProvisionRoleEnum } from "@/models/api/user";
 import {
   Role,
@@ -181,19 +183,13 @@ export function normalizeAuthRequestEmailBody(
   let changed = false;
   const next: Record<string, unknown> = { ...record };
 
-  if (typeof record.email === "string") {
-    const normalized = normalizeEmail(record.email);
-    if (normalized !== record.email) {
-      next.email = normalized;
-      changed = true;
-    }
-  }
-
-  if (typeof record.newEmail === "string") {
-    const normalized = normalizeEmail(record.newEmail);
-    if (normalized !== record.newEmail) {
-      next.newEmail = normalized;
-      changed = true;
+  for (const field of ["email", "newEmail"] as const) {
+    if (typeof record[field] === "string") {
+      const normalized = normalizeEmail(record[field]);
+      if (normalized !== record[field]) {
+        next[field] = normalized;
+        changed = true;
+      }
     }
   }
 
@@ -257,26 +253,29 @@ export function normalizeAuthUserUpdateInput<T extends Record<string, unknown>>(
 }
 
 /**
- * Better Auth `databaseHooks.user.create.after` handler.
- * Ensures the volunteer profile invariant for auth-created users, cleaning up
- * the newly inserted user row if profile creation fails so no malformed account
- * is left behind.
+ * Keep auth user/profile inserts in one transaction, before the adapter returns.
+ * Better Auth after hooks run after persistence and cannot provide this guarantee.
  */
-export async function handleAuthUserCreated(
-  db: Drizzle,
-  createdUser: { id: string; role?: unknown },
-): Promise<void> {
-  try {
-    const role = parseProvisionRole(createdUser.role);
-    await syncVolunteerProfile(db, { userId: createdUser.id, role });
-  } catch (error) {
-    // Compensating cleanup because Better Auth's drizzle adapter runs
-    // databaseHooks.user.create.after outside an enclosing DB transaction.
-    try {
-      await db.delete(user).where(eq(user.id, createdUser.id));
-    } catch {
-      // Preserve the original provisioning failure.
-    }
-    throw error;
-  }
+export function accountAdapter(db: Drizzle): ReturnType<typeof drizzleAdapter> {
+  return (options) => {
+    const adapter = drizzleAdapter(db, { provider: "pg", schema })(options);
+    const create = adapter.create;
+    adapter.create = async <T extends Record<string, unknown>, R = T>(
+      input: Parameters<typeof create<T, R>>[0],
+    ): Promise<R> => {
+      if (input.model !== "user") return create<T, R>(input);
+      return db.transaction(async (tx) => {
+        const created = await drizzleAdapter(tx, { provider: "pg", schema })(
+          options,
+        ).create<T, R>(input);
+        const record = created as unknown as { id: string; role?: unknown };
+        await syncVolunteerProfile(tx, {
+          userId: record.id,
+          role: parseProvisionRole(record.role),
+        });
+        return created;
+      });
+    };
+    return adapter;
+  };
 }

@@ -71,7 +71,6 @@ export default tseslint.config(
       "@typescript-eslint/no-empty-object-type": "warn",
       "@typescript-eslint/restrict-template-expressions": "warn",
       "@typescript-eslint/no-inferrable-types": "warn",
-      "@typescript-eslint/no-non-null-asserted-optional-chain": "warn",
       "@typescript-eslint/non-nullable-type-assertion-style": "warn",
       "@typescript-eslint/consistent-indexed-object-style": "warn",
       "@typescript-eslint/no-unsafe-function-type": "warn",

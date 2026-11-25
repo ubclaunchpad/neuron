@@ -33,11 +33,15 @@ function readEnvFile(filePath: string): Record<string, string> {
     : {};
 }
 
+const POSTGRES_PROTOCOLS = new Set(["postgres:", "postgresql:"]);
+
 function deriveLocalTestDbUrl(rawUrl?: string): string | undefined {
   if (!rawUrl?.trim()) return undefined;
   try {
     const url = new URL(rawUrl);
+    if (!POSTGRES_PROTOCOLS.has(url.protocol)) return undefined;
     if (!LOOPBACK_HOSTS.has(url.hostname.toLowerCase())) return undefined;
+    if (url.searchParams.has("host")) return undefined;
     url.pathname = `/${DEFAULT_TEST_DB_NAME}`;
     url.searchParams.delete("database");
     return url.toString();

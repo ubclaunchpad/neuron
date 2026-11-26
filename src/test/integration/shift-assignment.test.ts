@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { randomUUID } from "crypto";
+import { readFileSync } from "node:fs";
 import { Temporal } from "@js-temporal/polyfill";
 import {
   course,
@@ -7,11 +8,12 @@ import {
   notification,
   schedule,
   shift,
+  shiftVolunteerAssignment,
   term,
   user,
   volunteer,
 } from "@/server/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import type { IClassService } from "@/server/services/entity/classService";
 import type { ICoverageService } from "@/server/services/entity/coverageService";
 import type { IShiftService } from "@/server/services/entity/shiftService";
@@ -175,6 +177,89 @@ describe("Effective shift assignments and historical preservation", () => {
   }
 
   describe("historical assignment edits", () => {
+    it("backfills coverage origins without double-counting covering volunteers or losing round trips", async () => {
+      const adminId = await createTestUser("admin", "Admin");
+      scope.mockSession.setAsAdmin({ id: adminId });
+      const v1 = await createTestUser("volunteer", "Origin");
+      const v2 = await createTestUser("volunteer", "Middle");
+      const v3 = await createTestUser("volunteer", "Coverer");
+      const termId = await createPublishedTerm();
+      const { shifts } = await createPublishedClass({
+        termId,
+        schedules: [
+          {
+            startTime: "10:00:00",
+            endTime: "11:00:00",
+            dates: [futureDate1, futureDate2],
+            volunteerUserIds: [v1],
+            instructorUserIds: [],
+          },
+        ],
+      });
+      const [chain, roundTrip] = shifts;
+      for (const [target, finalVolunteer] of [
+        [chain!, v3],
+        [roundTrip!, v1],
+      ] as const) {
+        await scope.db.insert(coverageRequest).values([
+          {
+            shiftId: target.id,
+            requestingVolunteerUserId: v1,
+            coveredByVolunteerUserId: v2,
+            status: "resolved",
+            category: "health",
+            details: "First handoff",
+            requestedAt: new Date("2026-01-01T00:00:00Z"),
+          },
+          {
+            shiftId: target.id,
+            requestingVolunteerUserId: v2,
+            coveredByVolunteerUserId: finalVolunteer,
+            status: "resolved",
+            category: "health",
+            details: "Second handoff",
+            requestedAt: new Date("2026-01-02T00:00:00Z"),
+          },
+        ]);
+      }
+      await shiftService.checkIn(chain!.id, v3);
+      // Simulate a legacy schedule now containing a covering volunteer as well.
+      await scope.db
+        .execute(sql`INSERT INTO volunteer_to_schedule (schedule_id, volunteer_user_id)
+        SELECT schedule_id, ${v3} FROM shift WHERE id = ${chain!.id}`);
+      await scope.db.delete(shiftVolunteerAssignment).where(
+        inArray(
+          shiftVolunteerAssignment.shiftId,
+          shifts.map((s) => s.id),
+        ),
+      );
+      const migration = readFileSync(
+        "src/server/db/migrations/0013_add_shift_assignments.sql",
+        "utf8",
+      );
+      const backfill = migration.slice(
+        migration.indexOf('INSERT INTO "shift_volunteer_assignment"'),
+      );
+      for (const statement of backfill.split("--> statement-breakpoint")) {
+        if (statement.trim()) await scope.db.execute(sql.raw(statement));
+      }
+      const models = await shiftService.getShiftsByIds(shifts.map((s) => s.id));
+      expect(
+        models.find((s) => s.id === chain!.id)!.volunteers.map((v) => v.id),
+      ).toEqual([v3]);
+      expect(
+        models.find((s) => s.id === chain!.id)!.volunteers[0]!.attendance,
+      ).toBeTruthy();
+      // v3 is a legacy base member on the second shift as well; the round trip
+      // must restore v1 even though v1 also appears as an incoming coverer.
+      expect(
+        models
+          .find((s) => s.id === roundTrip!.id)!
+          .volunteers.map((v) => v.id)
+          .sort(),
+      ).toEqual([v1, v3].sort());
+    });
+
     it("preserves past rosters, attendance, and visibility while updating future shifts", async () => {
       const adminId = await createTestUser("admin", "Admin");
       const v1 = await createTestUser("volunteer", "VolOne");
@@ -376,6 +461,93 @@ describe("Effective shift assignments and historical preservation", () => {
       expect(
         resolvedShiftView.volunteers.find((v) => v.id === v3)?.coveringFor?.id,
       ).toBe(v1);
+    });
+
+    it("removes a round-trip volunteer on schedule edit while preserving canceled and checked-in future shifts", async () => {
+      const adminId = await createTestUser("admin", "Admin");
+      scope.mockSession.setAsAdmin({ id: adminId });
+      const v1 = await createTestUser("volunteer", "VolOne");
+      const v2 = await createTestUser("volunteer", "VolTwo");
+      const v3 = await createTestUser("volunteer", "VolThree");
+      const i1 = await createTestUser("instructor", "InstOne");
+
+      const termId = await createPublishedTerm();
+      const { classId, schedules, shifts } = await createPublishedClass({
+        termId,
+        schedules: [
+          {
+            startTime: "10:00:00",
+            endTime: "11:00:00",
+            dates: [futureDate1, futureDate2, futureDate3],
+            volunteerUserIds: [v1],
+            instructorUserIds: [i1],
+          },
+        ],
+      });
+
+      const [roundTripShift, canceledShift, checkedInShift] = shifts;
+
+      // Round-trip v1 -> v2 -> v1 on roundTripShift.
+      const cr1 = await coverageService.createCoverageRequest(v1, {
+        shiftId: roundTripShift!.id,
+        category: "health",
+        details: "Out",
+      });
+      await coverageService.fulfillCoverageRequest(v2, cr1);
+      const cr2 = await coverageService.createCoverageRequest(v2, {
+        shiftId: roundTripShift!.id,
+        category: "conflict",
+        details: "Back to v1",
+      });
+      await coverageService.fulfillCoverageRequest(v1, cr2);
+
+      // Cancel canceledShift and record early check-in on checkedInShift.
+      await shiftService.cancelShift({
+        shiftId: canceledShift!.id,
+        cancelReason: "Holiday",
+      });
+      await shiftService.checkIn(checkedInShift!.id, v1);
+
+      // Remove v1 and add v3 on the schedule.
+      await classService.updateClass({
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: [
+          {
+            id: schedules[0]!.id,
+            addedVolunteerUserIds: [v3],
+            removedVolunteerUserIds: [v1],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+        ],
+      });
+
+      const roundTripView = (await shiftService.getShiftById(
+        roundTripShift!.id,
+        adminId,
+      )) as SingleShiftWithRosterContext;
+      expect(roundTripView.volunteers.map((v) => v.id)).toEqual([v3]);
+
+      const canceledView = (await shiftService.getShiftById(
+        canceledShift!.id,
+        adminId,
+      )) as SingleShiftWithRosterContext;
+      expect(canceledView.volunteers.map((v) => v.id)).toEqual([v1]);
+
+      const checkedInView = (await shiftService.getShiftById(
+        checkedInShift!.id,
+        adminId,
+      )) as SingleShiftWithRosterContext;
+      expect(checkedInView.volunteers.map((v) => v.id).sort()).toEqual(
+        [v1, v3].sort(),
+      );
+      expect(
+        (
+          await shiftService.getShiftsByIds([checkedInShift!.id])
+        )[0]!.volunteers.find((v) => v.id === v1)?.attendance,
+      ).toBeTruthy();
     });
   });
 

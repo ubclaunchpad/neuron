@@ -15,13 +15,11 @@ describe("resolveEffectiveShiftVolunteers", () => {
         shiftId,
         volunteerUserId: "v1",
         coveringForVolunteerUserId: null,
-        coverageRequestId: null,
       },
       {
         shiftId,
         volunteerUserId: "v2",
         coveringForVolunteerUserId: null,
-        coverageRequestId: null,
       },
     ]);
   });
@@ -48,13 +46,11 @@ describe("resolveEffectiveShiftVolunteers", () => {
         shiftId,
         volunteerUserId: "v2",
         coveringForVolunteerUserId: null,
-        coverageRequestId: null,
       },
       {
         shiftId,
         volunteerUserId: "v3",
         coveringForVolunteerUserId: "v1",
-        coverageRequestId: "cr-1",
       },
     ]);
   });
@@ -83,7 +79,6 @@ describe("resolveEffectiveShiftVolunteers", () => {
         shiftId,
         volunteerUserId: "v3",
         coveringForVolunteerUserId: "v2",
-        coverageRequestId: "cr-2",
       },
     ]);
   });
@@ -113,7 +108,6 @@ describe("resolveEffectiveShiftVolunteers", () => {
         shiftId,
         volunteerUserId: "v1",
         coveringForVolunteerUserId: "v2",
-        coverageRequestId: "cr-2",
       },
     ]);
   });

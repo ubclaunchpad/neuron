@@ -20,6 +20,12 @@ INSERT INTO "shift_volunteer_assignment" ("shift_id", "volunteer_user_id")
 SELECT s."id", vts."volunteer_user_id"
 FROM "shift" s
 INNER JOIN "volunteer_to_schedule" vts ON vts."schedule_id" = s."schedule_id"
+WHERE NOT EXISTS (
+	SELECT 1 FROM "coverage_request" cr
+	WHERE cr."shift_id" = s."id"
+		AND cr."covered_by_volunteer_user_id" = vts."volunteer_user_id"
+		AND cr."status" = 'resolved'
+)
 ON CONFLICT DO NOTHING;--> statement-breakpoint
 INSERT INTO "shift_volunteer_assignment" ("shift_id", "volunteer_user_id")
 SELECT sa."shift_id", sa."user_id"
@@ -41,6 +47,7 @@ WHERE cr."status" = 'resolved'
 		WHERE cr_prev."shift_id" = cr."shift_id"
 			AND cr_prev."covered_by_volunteer_user_id" = cr."requesting_volunteer_user_id"
 			AND cr_prev."status" = 'resolved'
+			AND (cr_prev."requested_at", cr_prev."id") < (cr."requested_at", cr."id")
 	)
 ON CONFLICT DO NOTHING;--> statement-breakpoint
 INSERT INTO "shift_instructor_assignment" ("shift_id", "instructor_user_id")

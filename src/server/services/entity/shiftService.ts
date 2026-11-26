@@ -44,12 +44,13 @@ import {
 } from "@/server/db/schema/user";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import {
-  getEffectiveVolunteerAssignmentsForShifts,
+  getBaseVolunteerAssignmentsForShifts,
   getShiftInstructorAssignmentsForShifts,
   isInstructorAssignedToShiftSql,
-  isVolunteerEffectivelyAssignedToShift,
   isVolunteerEffectivelyAssignedToShiftSql,
+  resolveEffectiveVolunteerAssignmentsByShift,
   snapshotScheduleAssignmentsToShift,
+  type ResolvedCoverageEdge,
 } from "@/server/services/entity/shiftAssignment";
 import type { INotificationEventService } from "@/server/services/notificationEventService";
 import type { IJobService } from "@/server/services/jobService";
@@ -207,12 +208,12 @@ export class ShiftService implements IShiftService {
     ];
 
     const [
-      effectiveVolunteersByShift,
+      baseVolunteersByShift,
       instructorIdsByShift,
       coverageRecords,
       attendanceRecords,
     ] = await Promise.all([
-      getEffectiveVolunteerAssignmentsForShifts(this.db, shiftIds),
+      getBaseVolunteerAssignmentsForShifts(this.db, shiftIds),
       getShiftInstructorAssignmentsForShifts(this.db, shiftIds),
       this.db
         .select({
@@ -239,6 +240,29 @@ export class ShiftService implements IShiftService {
         .from(shiftAttendance)
         .where(inArray(shiftAttendance.shiftId, shiftIds)),
     ]);
+
+    const resolvedCoverages: ResolvedCoverageEdge[] = [];
+    for (const record of coverageRecords) {
+      if (
+        record.status === CoverageStatus.resolved &&
+        record.coveredByVolunteerUserId
+      ) {
+        resolvedCoverages.push({
+          id: record.id,
+          shiftId: record.shiftId,
+          requestedAt: record.requestedAt,
+          requestingVolunteerUserId: record.requestingVolunteerUserId,
+          coveredByVolunteerUserId: record.coveredByVolunteerUserId,
+        });
+      }
+    }
+
+    const effectiveVolunteersByShift =
+      resolveEffectiveVolunteerAssignmentsByShift(
+        shiftIds,
+        baseVolunteersByShift,
+        resolvedCoverages,
+      );
 
     const neededVolunteerIds = new Set<string>();
     for (const assignments of effectiveVolunteersByShift.values()) {
@@ -805,17 +829,15 @@ export class ShiftService implements IShiftService {
         startAt: shift.startAt,
       })
       .from(shift)
-      .where(eq(shift.id, shiftId))
+      .where(
+        and(
+          eq(shift.id, shiftId),
+          isVolunteerEffectivelyAssignedToShiftSql(shift.id, volunteerId),
+        ),
+      )
       .limit(1);
 
-    if (
-      !shiftRow ||
-      !(await isVolunteerEffectivelyAssignedToShift(
-        transaction,
-        shiftId,
-        volunteerId,
-      ))
-    ) {
+    if (!shiftRow) {
       throw new NeuronError(
         `Could not find a shift with id ${shiftId} assigned to volunteer with id ${volunteerId}.`,
         NeuronErrorCodes.NOT_FOUND,

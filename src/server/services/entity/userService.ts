@@ -2,8 +2,8 @@ import type {
   CreateInstructorInput,
   UpdateInstructorInput,
 } from "@/models/api/instructor";
-import type { ListUsersInput } from "@/models/api/user";
-import { UserStatus } from "@/models/interfaces";
+import type { CreateUserInput, ListUsersInput } from "@/models/api/user";
+import { Role, UserStatus } from "@/models/interfaces";
 import type { ListResponse } from "@/models/list-response";
 import { buildUser, type User } from "@/models/user";
 import { type Drizzle } from "@/server/db";
@@ -13,6 +13,7 @@ import type { IJobService } from "@/server/services/jobService";
 import { renderVolunteerApproved } from "@/server/emails/templates/volunteer-approved";
 import { renderVolunteerReactivated } from "@/server/emails/templates/volunteer-reactivated";
 import { renderVolunteerDeactivated } from "@/server/emails/templates/volunteer-deactivated";
+import { normalizeEmail } from "@/utils/emailUtils";
 import { buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
 import {
   and,
@@ -26,6 +27,10 @@ import {
 } from "drizzle-orm";
 import { session } from "../../db/schema/auth";
 import { user } from "../../db/schema/user";
+import {
+  assertDirectProvisionRole,
+  provisionUser,
+} from "./accountProvisioning";
 
 export interface IUserService {
   getUsersForRequest(listRequest: ListUsersInput): Promise<ListResponse<User>>;
@@ -39,12 +44,7 @@ export interface IUserService {
   rejectVolunteer(id: string): Promise<string>;
   deactivateUser(id: string): Promise<string>;
   getVerificationRequestCount(): Promise<number>;
-  createUser(input: {
-    name: string;
-    lastName: string;
-    email: string;
-    role: string;
-  }): Promise<User>;
+  createUser(input: CreateUserInput): Promise<User>;
   createInstructor(input: CreateInstructorInput): Promise<User>;
   updateInstructor(input: UpdateInstructorInput): Promise<User>;
   deleteInstructor(id: string): Promise<string>;
@@ -270,31 +270,18 @@ export class UserService implements IUserService {
     return row?.totalRecords ?? 0;
   }
 
-  async createUser(input: {
-    name: string;
-    lastName: string;
-    email: string;
-    role: string;
-  }): Promise<User> {
-    try {
-      const [createdUser] = await this.db
-        .insert(user)
-        .values({
-          name: input.name,
-          lastName: input.lastName,
-          email: input.email,
-          role: input.role as any,
-          status: UserStatus.active,
-          emailVerified: false,
-        })
-        .returning();
+  async createUser(input: CreateUserInput): Promise<User> {
+    const role = assertDirectProvisionRole(input.role);
 
-      if (!createdUser) {
-        throw new NeuronError(
-          "Failed to create user",
-          NeuronErrorCodes.INTERNAL_SERVER_ERROR,
-        );
-      }
+    try {
+      const createdUser = await provisionUser(this.db, {
+        name: input.name,
+        lastName: input.lastName,
+        email: input.email,
+        role,
+        status: UserStatus.active,
+        emailVerified: false,
+      });
 
       return buildUser(createdUser);
     } catch (error) {
@@ -309,36 +296,12 @@ export class UserService implements IUserService {
   }
 
   async createInstructor(input: CreateInstructorInput): Promise<User> {
-    try {
-      const [createdUser] = await this.db
-        .insert(user)
-        .values({
-          name: input.firstName,
-          lastName: input.lastName,
-          email: input.email,
-          role: "instructor" as any,
-          status: UserStatus.active,
-          emailVerified: false,
-        })
-        .returning();
-
-      if (!createdUser) {
-        throw new NeuronError(
-          "Failed to create instructor",
-          NeuronErrorCodes.INTERNAL_SERVER_ERROR,
-        );
-      }
-
-      return buildUser(createdUser);
-    } catch (error) {
-      if (isUniqueViolation(error)) {
-        throw new NeuronError(
-          "An instructor with this email already exists",
-          NeuronErrorCodes.BAD_REQUEST,
-        );
-      }
-      throw error;
-    }
+    return this.createUser({
+      name: input.firstName,
+      lastName: input.lastName,
+      email: input.email,
+      role: Role.instructor,
+    });
   }
 
   async updateInstructor(input: UpdateInstructorInput): Promise<User> {
@@ -371,7 +334,7 @@ export class UserService implements IUserService {
       updatePayload.lastName = input.lastName;
     }
     if (input.email !== undefined) {
-      updatePayload.email = input.email;
+      updatePayload.email = normalizeEmail(input.email);
     }
 
     if (Object.keys(updatePayload).length === 0) {

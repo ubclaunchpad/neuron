@@ -450,82 +450,121 @@ export class ShiftService implements IShiftService {
       user: session.user,
       permission: { shifts: ["override-check-in"] },
     });
+    const canSeeUnpublished = this.canSeeUnpublishedTerms();
 
-    const [shiftModel] = await this.loadShiftModels(eq(shift.id, shiftId));
+    return this.db.transaction(async (tx) => {
+      // Lock the shift row so check-in serializes against shift cancellation
+      // and coverage assignment transitions.
+      const [lockedShift] = await tx
+        .select({
+          id: shift.id,
+          courseId: shift.courseId,
+          startAt: shift.startAt,
+          canceled: shift.canceled,
+        })
+        .from(shift)
+        .where(eq(shift.id, shiftId))
+        .for("update");
 
-    if (!shiftModel) {
-      throw new NeuronError(
-        `Shift with id ${shiftId} was not found`,
-        NeuronErrorCodes.NOT_FOUND,
-      );
-    }
-
-    const rosterVolunteer = shiftModel.volunteers.find(
-      (volunteer) => volunteer.id === volunteerId,
-    );
-
-    if (!rosterVolunteer) {
-      throw new NeuronError(
-        "Volunteer is not assigned to this shift",
-        NeuronErrorCodes.FORBIDDEN,
-      );
-    }
-
-    const now = new Date();
-    const checkInTime = now.getTime();
-    const shiftStart = shiftModel.startAt.getTime();
-    const fifteenMinutes = 15 * 60 * 1000;
-    const thirtyMinutes = 30 * 60 * 1000;
-
-    const earliestOnTime = shiftStart - fifteenMinutes;
-    const latestOnTime = shiftStart + fifteenMinutes;
-    const latestLate = shiftStart + thirtyMinutes;
-
-    let attendanceStatus: AttendanceStatus;
-
-    if (checkInTime >= earliestOnTime && checkInTime <= latestOnTime) {
-      attendanceStatus = AttendanceStatus.present;
-    } else if (checkInTime > latestOnTime && checkInTime <= latestLate) {
-      attendanceStatus = AttendanceStatus.late;
-    } else {
-      if (!hasOverride) {
+      if (!lockedShift) {
         throw new NeuronError(
-          "Check-in is not allowed at this time",
+          `Shift with id ${shiftId} was not found`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      if (!canSeeUnpublished) {
+        const [publishedRow] = await tx
+          .select({ published: term.published })
+          .from(course)
+          .innerJoin(term, eq(course.termId, term.id))
+          .where(eq(course.id, lockedShift.courseId))
+          .limit(1);
+
+        if (!publishedRow?.published) {
+          throw new NeuronError(
+            `Shift with id ${shiftId} was not found`,
+            NeuronErrorCodes.NOT_FOUND,
+          );
+        }
+      }
+
+      if (lockedShift.canceled) {
+        throw new NeuronError(
+          "Cannot check in to a canceled shift",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      const isAssigned = await isVolunteerEffectivelyAssignedToShift(
+        tx,
+        shiftId,
+        volunteerId,
+      );
+
+      if (!isAssigned) {
+        throw new NeuronError(
+          "Volunteer is not assigned to this shift",
           NeuronErrorCodes.FORBIDDEN,
         );
       }
 
-      attendanceStatus = AttendanceStatus.excused;
-    }
+      const now = new Date();
+      const checkInTime = now.getTime();
+      const shiftStart = lockedShift.startAt.getTime();
+      const fifteenMinutes = 15 * 60 * 1000;
+      const thirtyMinutes = 30 * 60 * 1000;
 
-    const [attendance] = await this.db
-      .insert(shiftAttendance)
-      .values({
-        shiftId: shiftId,
-        userId: volunteerId,
-        status: attendanceStatus,
-        checkedInAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [shiftAttendance.shiftId, shiftAttendance.userId],
-        set: {
+      const earliestOnTime = shiftStart - fifteenMinutes;
+      const latestOnTime = shiftStart + fifteenMinutes;
+      const latestLate = shiftStart + thirtyMinutes;
+
+      let attendanceStatus: AttendanceStatus;
+
+      if (checkInTime >= earliestOnTime && checkInTime <= latestOnTime) {
+        attendanceStatus = AttendanceStatus.present;
+      } else if (checkInTime > latestOnTime && checkInTime <= latestLate) {
+        attendanceStatus = AttendanceStatus.late;
+      } else {
+        if (!hasOverride) {
+          throw new NeuronError(
+            "Check-in is not allowed at this time",
+            NeuronErrorCodes.FORBIDDEN,
+          );
+        }
+
+        attendanceStatus = AttendanceStatus.excused;
+      }
+
+      const [attendance] = await tx
+        .insert(shiftAttendance)
+        .values({
+          shiftId: shiftId,
+          userId: volunteerId,
           status: attendanceStatus,
           checkedInAt: now,
-        },
-      })
-      .returning({
-        status: shiftAttendance.status,
-        checkedInAt: shiftAttendance.checkedInAt,
-        minutesWorked: shiftAttendance.minutesWorked,
-      });
+        })
+        .onConflictDoUpdate({
+          target: [shiftAttendance.shiftId, shiftAttendance.userId],
+          set: {
+            status: attendanceStatus,
+            checkedInAt: now,
+          },
+        })
+        .returning({
+          status: shiftAttendance.status,
+          checkedInAt: shiftAttendance.checkedInAt,
+          minutesWorked: shiftAttendance.minutesWorked,
+        });
 
-    return {
-      shiftId,
-      volunteerUserId: volunteerId,
-      status: attendance?.status ?? attendanceStatus,
-      checkedInAt: attendance?.checkedInAt ?? now,
-      minutesWorked: attendance?.minutesWorked ?? undefined,
-    };
+      return {
+        shiftId,
+        volunteerUserId: volunteerId,
+        status: attendance?.status ?? attendanceStatus,
+        checkedInAt: attendance?.checkedInAt ?? now,
+        minutesWorked: attendance?.minutesWorked ?? undefined,
+      };
+    });
   }
 
   async listWindow(input: GetShiftsInput): Promise<{
@@ -730,61 +769,74 @@ export class ShiftService implements IShiftService {
     shiftId,
     cancelReason,
   }: CancelShiftInput): Promise<void> {
-    const [shiftRow] = await this.db
-      .select({
-        id: shift.id,
-        startAt: shift.startAt,
-        canceled: shift.canceled,
-        courseName: course.name,
-      })
-      .from(shift)
-      .innerJoin(course, eq(course.id, shift.courseId))
-      .where(eq(shift.id, shiftId))
-      .limit(1);
-
-    if (!shiftRow) {
-      throw new NeuronError(
-        `Shift with id ${shiftId} was not found`,
-        NeuronErrorCodes.NOT_FOUND,
-      );
-    }
-
-    if (shiftRow.startAt <= new Date()) {
-      throw new NeuronError(
-        "Cannot cancel a shift that has already started",
-        NeuronErrorCodes.BAD_REQUEST,
-      );
-    }
-
-    if (shiftRow.canceled) {
-      return;
-    }
-
     const currentUserId = this.currentSessionService.getUserId();
 
-    const [updated] = await this.db
-      .update(shift)
-      .set({
-        canceled: true,
-        cancelledByUserId: currentUserId ?? null,
-        canceledAt: new Date(),
-        cancelReason,
-      })
-      .where(eq(shift.id, shiftId))
-      .returning({ id: shift.id });
+    const cancelledShift = await this.db.transaction(async (tx) => {
+      const [lockedShift] = await tx
+        .select({
+          id: shift.id,
+          courseId: shift.courseId,
+          startAt: shift.startAt,
+          canceled: shift.canceled,
+        })
+        .from(shift)
+        .where(eq(shift.id, shiftId))
+        .for("update");
 
-    if (!updated) {
-      throw new NeuronError(
-        `Failed to cancel shift with id ${shiftId}`,
-        NeuronErrorCodes.BAD_REQUEST,
-      );
+      if (!lockedShift) {
+        throw new NeuronError(
+          `Shift with id ${shiftId} was not found`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+
+      if (lockedShift.startAt <= new Date()) {
+        throw new NeuronError(
+          "Cannot cancel a shift that has already started",
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+
+      if (lockedShift.canceled) {
+        return null;
+      }
+
+      const [updated] = await tx
+        .update(shift)
+        .set({
+          canceled: true,
+          cancelledByUserId: currentUserId ?? null,
+          canceledAt: new Date(),
+          cancelReason,
+        })
+        .where(and(eq(shift.id, shiftId), eq(shift.canceled, false)))
+        .returning({ id: shift.id });
+
+      if (!updated) {
+        return null;
+      }
+
+      const [courseRow] = await tx
+        .select({ name: course.name })
+        .from(course)
+        .where(eq(course.id, lockedShift.courseId))
+        .limit(1);
+
+      return {
+        startAt: lockedShift.startAt,
+        courseName: courseRow?.name ?? "",
+      };
+    });
+
+    if (!cancelledShift) {
+      return;
     }
 
     const currentUser = this.currentSessionService.getUser();
     void this.notificationEventService.notifyShiftCancelled({
       shiftId,
-      className: shiftRow.courseName,
-      shiftDate: formatDate(shiftRow.startAt),
+      className: cancelledShift.courseName,
+      shiftDate: formatDate(cancelledShift.startAt),
       cancelReason,
       cancelledByUserId: currentUserId,
       cancelledByName: currentUser
@@ -803,6 +855,7 @@ export class ShiftService implements IShiftService {
       .select({
         shiftId: shift.id,
         startAt: shift.startAt,
+        canceled: shift.canceled,
       })
       .from(shift)
       .where(eq(shift.id, shiftId))
@@ -819,6 +872,13 @@ export class ShiftService implements IShiftService {
       throw new NeuronError(
         `Could not find a shift with id ${shiftId} assigned to volunteer with id ${volunteerId}.`,
         NeuronErrorCodes.NOT_FOUND,
+      );
+    }
+
+    if (shiftRow.canceled) {
+      throw new NeuronError(
+        "Coverage request can not be created for a canceled shift.",
+        NeuronErrorCodes.BAD_REQUEST,
       );
     }
 

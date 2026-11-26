@@ -10,7 +10,7 @@ import {
   text,
   uuid,
 } from "drizzle-orm/pg-core";
-import { course } from "./course";
+import { blackout, course } from "./course";
 import { user, volunteer } from "./user";
 
 export const schedule = pgTable(
@@ -45,6 +45,7 @@ export const scheduleRelations = relations(schedule, ({ one, many }) => ({
     references: [course.id],
   }),
   shifts: many(shift),
+  blackouts: many(blackout),
   instructors: many(instructorToSchedule),
   volunteers: many(volunteerToSchedule),
 }));
@@ -64,7 +65,6 @@ export const volunteerToSchedule = pgTable(
       name: "pk_volunteer_schedule",
       columns: [table.volunteerUserId, table.scheduleId],
     }),
-    index().on(table.volunteerUserId),
     index().on(table.scheduleId),
   ],
 );
@@ -99,7 +99,6 @@ export const instructorToSchedule = pgTable(
       name: "pk_instructor_schedule",
       columns: [table.instructorUserId, table.scheduleId],
     }),
-    index().on(table.instructorUserId),
     index().on(table.scheduleId),
   ],
 );

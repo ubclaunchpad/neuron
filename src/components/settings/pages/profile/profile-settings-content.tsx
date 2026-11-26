@@ -48,10 +48,9 @@ export function ProfileSettingsContent() {
   const hasVolunteerProfile = usePermission({
     permission: { "volunteer-profile": ["view"] },
   });
-  const { data: volunteer } = clientApi.volunteer.byId.useQuery(
-    { userId: user!.id },
-    { enabled: !!user && hasVolunteerProfile },
-  );
+  const { data: volunteer } = clientApi.volunteer.me.useQuery(undefined, {
+    enabled: !!user && hasVolunteerProfile,
+  });
 
   const imageUrl = useImageUrl(user?.image);
 
@@ -62,7 +61,7 @@ export function ProfileSettingsContent() {
   } = useGeneralProfileSubmit();
 
   const { onSubmit: onVolunteerSubmit, isPending: isVolunteerPending } =
-    useVolunteerProfileSubmit(user?.id ?? "");
+    useVolunteerProfileSubmit();
 
   if (!user) return null;
 

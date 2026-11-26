@@ -3,14 +3,21 @@ import type { UpdateVolunteerAvailabilityInput, UpdateVolunteerProfileInput } fr
 import type { ListResponse } from "@/models/list-response";
 import { buildVolunteer, type Volunteer } from "@/models/volunteer";
 import { type Drizzle } from "@/server/db";
-import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import {
   buildSearchCondition,
   buildSimilarityExpression,
   getPagination,
 } from "@/utils/searchUtils";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  getViewSelectedFields,
+  inArray,
+  sql,
+} from "drizzle-orm";
 import type { z } from "zod";
 import {
   coursePreference,
@@ -34,9 +41,11 @@ export interface IVolunteerService {
     classId: string,
   ): Promise<{ preferred: boolean }>;
   updateVolunteerProfile(
+    volunteerUserId: string,
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void>;
   updateVolunteerAvailability(
+    volunteerUserId: string,
     input: z.infer<typeof UpdateVolunteerAvailabilityInput>,
   ): Promise<void>;
   getVolunteersForExport(search?: string): Promise<Volunteer[]>;
@@ -80,8 +89,8 @@ export class VolunteerService implements IVolunteerService {
     );
 
     const baseSelect = {
-      count: sql<number>`count(*) over()`,
-      ...getViewColumns(volunteerUserView),
+      count: sql<number>`count(*) over()`.mapWith(Number),
+      ...getViewSelectedFields(volunteerUserView),
     } as const;
 
     const selectShape = hasQuery
@@ -94,7 +103,15 @@ export class VolunteerService implements IVolunteerService {
       .$dynamic();
 
     if (hasQuery) {
-      builder = builder.where(condition!).orderBy(desc(similarity!));
+      builder = builder
+        .where(condition!)
+        .orderBy(desc(similarity!), asc(volunteerUserView.id));
+    } else {
+      builder = builder.orderBy(
+        asc(volunteerUserView.lastName),
+        asc(volunteerUserView.name),
+        asc(volunteerUserView.id),
+      );
     }
 
     const rows = await builder.limit(perPage).offset(offset).execute();
@@ -111,6 +128,8 @@ export class VolunteerService implements IVolunteerService {
   }
 
   async getVolunteers(ids: string[]): Promise<Volunteer[]> {
+    if (ids.length === 0) return [];
+
     const data = await this.db
       .select()
       .from(volunteerUserView)
@@ -174,14 +193,13 @@ export class VolunteerService implements IVolunteerService {
   }
 
   async updateVolunteerProfile(
+    volunteerUserId: string,
     input: z.infer<typeof UpdateVolunteerProfileInput>,
   ): Promise<void> {
     await this.db.transaction(async (tx) => {
-      const { volunteerUserId, ...updatePayload } = input;
-
       const [updatedVolunteer] = await tx
         .update(volunteer)
-        .set(updatePayload)
+        .set(input)
         .where(eq(volunteer.userId, volunteerUserId))
         .returning({ userId: volunteer.userId });
 
@@ -195,13 +213,12 @@ export class VolunteerService implements IVolunteerService {
   }
 
   async updateVolunteerAvailability(
+    volunteerUserId: string,
     input: z.infer<typeof UpdateVolunteerAvailabilityInput>,
   ): Promise<void> {
-    const { volunteerUserId, ...updatePayload } = input;
-
     const [updated] = await this.db
       .update(volunteer)
-      .set(updatePayload)
+      .set(input)
       .where(eq(volunteer.userId, volunteerUserId))
       .returning({ userId: volunteer.userId });
 
@@ -217,16 +234,19 @@ export class VolunteerService implements IVolunteerService {
     const { hasQuery, similarity, condition } = this.getSearchParams(search);
 
     let builder = this.db
-      .select(getViewColumns(volunteerUserView))
+      .select(getViewSelectedFields(volunteerUserView))
       .from(volunteerUserView)
       .$dynamic();
 
     if (hasQuery) {
-      builder = builder.where(condition!).orderBy(desc(similarity!));
+      builder = builder
+        .where(condition!)
+        .orderBy(desc(similarity!), asc(volunteerUserView.id));
     } else {
       builder = builder.orderBy(
-        volunteerUserView.lastName,
-        volunteerUserView.name,
+        asc(volunteerUserView.lastName),
+        asc(volunteerUserView.name),
+        asc(volunteerUserView.id),
       );
     }
 

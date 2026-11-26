@@ -1,5 +1,5 @@
 {
-  "id": "f8b90954-e8b1-406b-89df-b3fa72e84654",
+  "id": "aac785c6-4915-4fe3-ad2b-89abadf89bb4",
   "prevId": "912223b0-c5dd-4889-9f94-bf066af68068",
   "version": "7",
   "dialect": "postgresql",
@@ -349,21 +349,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "session_token_index": {
-          "name": "session_token_index",
-          "columns": [
-            {
-              "expression": "token",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -440,21 +425,6 @@
         }
       },
       "indexes": {
-        "verification_identifier_index": {
-          "name": "verification_identifier_index",
-          "columns": [
-            {
-              "expression": "identifier",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "verification_identifier_value_index": {
           "name": "verification_identifier_value_index",
           "columns": [
@@ -1011,21 +981,6 @@
         }
       },
       "indexes": {
-        "instructor_to_schedule_instructor_user_id_index": {
-          "name": "instructor_to_schedule_instructor_user_id_index",
-          "columns": [
-            {
-              "expression": "instructor_user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "instructor_to_schedule_schedule_id_index": {
           "name": "instructor_to_schedule_schedule_id_index",
           "columns": [
@@ -1197,21 +1152,6 @@
         }
       },
       "indexes": {
-        "volunteer_to_schedule_volunteer_user_id_index": {
-          "name": "volunteer_to_schedule_volunteer_user_id_index",
-          "columns": [
-            {
-              "expression": "volunteer_user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "volunteer_to_schedule_schedule_id_index": {
           "name": "volunteer_to_schedule_schedule_id_index",
           "columns": [
@@ -1539,21 +1479,6 @@
           "method": "btree",
           "with": {}
         },
-        "shift_schedule_id_index": {
-          "name": "shift_schedule_id_index",
-          "columns": [
-            {
-              "expression": "schedule_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "idx_shift_date": {
           "name": "idx_shift_date",
           "columns": [
@@ -1755,158 +1680,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.shift_instructor_assignment": {
-      "name": "shift_instructor_assignment",
-      "schema": "",
-      "columns": {
-        "shift_id": {
-          "name": "shift_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "instructor_user_id": {
-          "name": "instructor_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "idx_shift_instructor_assignment_instructor": {
-          "name": "idx_shift_instructor_assignment_instructor",
-          "columns": [
-            {
-              "expression": "instructor_user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "shift_instructor_assignment_shift_id_shift_id_fk": {
-          "name": "shift_instructor_assignment_shift_id_shift_id_fk",
-          "tableFrom": "shift_instructor_assignment",
-          "tableTo": "shift",
-          "columnsFrom": [
-            "shift_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "shift_instructor_assignment_instructor_user_id_user_id_fk": {
-          "name": "shift_instructor_assignment_instructor_user_id_user_id_fk",
-          "tableFrom": "shift_instructor_assignment",
-          "tableTo": "user",
-          "columnsFrom": [
-            "instructor_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "pk_shift_instructor_assignment": {
-          "name": "pk_shift_instructor_assignment",
-          "columns": [
-            "shift_id",
-            "instructor_user_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.shift_volunteer_assignment": {
-      "name": "shift_volunteer_assignment",
-      "schema": "",
-      "columns": {
-        "shift_id": {
-          "name": "shift_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "volunteer_user_id": {
-          "name": "volunteer_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "idx_shift_volunteer_assignment_volunteer": {
-          "name": "idx_shift_volunteer_assignment_volunteer",
-          "columns": [
-            {
-              "expression": "volunteer_user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "shift_volunteer_assignment_shift_id_shift_id_fk": {
-          "name": "shift_volunteer_assignment_shift_id_shift_id_fk",
-          "tableFrom": "shift_volunteer_assignment",
-          "tableTo": "shift",
-          "columnsFrom": [
-            "shift_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "shift_volunteer_assignment_volunteer_user_id_volunteer_user_id_fk": {
-          "name": "shift_volunteer_assignment_volunteer_user_id_volunteer_user_id_fk",
-          "tableFrom": "shift_volunteer_assignment",
-          "tableTo": "volunteer",
-          "columnsFrom": [
-            "volunteer_user_id"
-          ],
-          "columnsTo": [
-            "user_id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "pk_shift_volunteer_assignment": {
-          "name": "pk_shift_volunteer_assignment",
-          "columns": [
-            "shift_id",
-            "volunteer_user_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.course_preference": {
       "name": "course_preference",
       "schema": "",
@@ -2047,21 +1820,6 @@
         }
       },
       "indexes": {
-        "idx_user_email": {
-          "name": "idx_user_email",
-          "columns": [
-            {
-              "expression": "email",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "idx_user_role": {
           "name": "idx_user_role",
           "columns": [
@@ -2546,21 +2304,6 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_notification_pref_user": {
-          "name": "idx_notification_pref_user",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}

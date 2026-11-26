@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { randomUUID } from "crypto";
 import { asClass } from "awilix";
 import { user, notificationPreference } from "@/server/db/schema";
-import { inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import {
   PreferenceService,
   type IPreferenceService,
@@ -131,13 +131,25 @@ describe("PreferenceService", () => {
       expect(pref!.isOverride).toBe(true);
     });
 
-    it("should update an existing preference override (upsert)", async () => {
+    it("should update an existing preference override (upsert) and advance updatedAt", async () => {
       await preferenceService.setPreference({
         userId,
         type: "shift.cancelled",
         channel: "email",
         enabled: false,
       });
+
+      const staleUpdatedAt = new Date("2020-01-01T00:00:00.000Z");
+      await scope.db
+        .update(notificationPreference)
+        .set({ updatedAt: staleUpdatedAt })
+        .where(
+          and(
+            eq(notificationPreference.userId, userId),
+            eq(notificationPreference.type, "shift.cancelled"),
+            eq(notificationPreference.channel, "email"),
+          ),
+        );
 
       await preferenceService.setPreference({
         userId,
@@ -152,6 +164,21 @@ describe("PreferenceService", () => {
       );
       expect(pref!.enabled).toBe(true);
       expect(pref!.isOverride).toBe(true);
+
+      const [row] = await scope.db
+        .select({ updatedAt: notificationPreference.updatedAt })
+        .from(notificationPreference)
+        .where(
+          and(
+            eq(notificationPreference.userId, userId),
+            eq(notificationPreference.type, "shift.cancelled"),
+            eq(notificationPreference.channel, "email"),
+          ),
+        );
+      expect(row).toBeDefined();
+      expect(row!.updatedAt.getTime()).toBeGreaterThan(
+        staleUpdatedAt.getTime(),
+      );
     });
 
     it("should set preferences independently per channel", async () => {

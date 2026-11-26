@@ -2,19 +2,36 @@ import type {
   CreateInstructorInput,
   UpdateInstructorInput,
 } from "@/models/api/instructor";
-import type { ListUsersInput } from "@/models/api/user";
-import { UserStatus } from "@/models/interfaces";
+import type { CreateUserInput, ListUsersInput } from "@/models/api/user";
+import { Role, UserStatus } from "@/models/interfaces";
 import type { ListResponse } from "@/models/list-response";
 import { buildUser, type User } from "@/models/user";
 import { type Drizzle } from "@/server/db";
+import { isUniqueViolation } from "@/server/db/errors";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import type { IJobService } from "@/server/services/jobService";
 import { renderVolunteerApproved } from "@/server/emails/templates/volunteer-approved";
 import { renderVolunteerReactivated } from "@/server/emails/templates/volunteer-reactivated";
 import { renderVolunteerDeactivated } from "@/server/emails/templates/volunteer-deactivated";
+import { normalizeEmail } from "@/utils/emailUtils";
 import { buildSimilarityExpression, getPagination } from "@/utils/searchUtils";
-import { and, desc, eq, getTableColumns, gt, inArray, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  gt,
+  inArray,
+  sql,
+} from "drizzle-orm";
+import { session } from "../../db/schema/auth";
 import { user } from "../../db/schema/user";
+import {
+  assertDirectProvisionRole,
+  provisionUser,
+} from "./accountProvisioning";
 
 export interface IUserService {
   getUsersForRequest(listRequest: ListUsersInput): Promise<ListResponse<User>>;
@@ -28,12 +45,7 @@ export interface IUserService {
   rejectVolunteer(id: string): Promise<string>;
   deactivateUser(id: string): Promise<string>;
   getVerificationRequestCount(): Promise<number>;
-  createUser(input: {
-    name: string;
-    lastName: string;
-    email: string;
-    role: string;
-  }): Promise<User>;
+  createUser(input: CreateUserInput): Promise<User>;
   createInstructor(input: CreateInstructorInput): Promise<User>;
   updateInstructor(input: UpdateInstructorInput): Promise<User>;
   deleteInstructor(id: string): Promise<string>;
@@ -65,7 +77,7 @@ export class UserService implements IUserService {
       : undefined;
 
     const baseSelect = {
-      totalRecords: sql<number>`count(*) over()`,
+      totalRecords: sql<number>`count(*) over()`.mapWith(Number),
       ...getTableColumns(user),
     } as const;
 
@@ -76,7 +88,13 @@ export class UserService implements IUserService {
     let builder = this.db.select(selectShape).from(user).$dynamic();
 
     if (hasQuery) {
-      builder = builder.orderBy(desc(similarity!));
+      builder = builder.orderBy(desc(similarity!), asc(user.id));
+    } else {
+      builder = builder.orderBy(
+        asc(user.lastName),
+        asc(user.name),
+        asc(user.id),
+      );
     }
 
     const whereConditions = [];
@@ -120,6 +138,8 @@ export class UserService implements IUserService {
   }
 
   async getUsers(ids: string[]): Promise<User[]> {
+    if (ids.length === 0) return [];
+
     const data = await this.db.select().from(user).where(inArray(user.id, ids));
 
     if (data.length !== ids.length) {
@@ -152,41 +172,40 @@ export class UserService implements IUserService {
 
   // any -> active
   async verifyVolunteer(id: string): Promise<string> {
-    const [existing] = await this.db
-      .select({ status: user.status, name: user.name, email: user.email })
-      .from(user)
-      .where(eq(user.id, id));
-
-    if (!existing) {
-      throw new NeuronError(
-        `Could not find user with id ${id}`,
-        NeuronErrorCodes.NOT_FOUND,
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ status: user.status, name: user.name, email: user.email })
+        .from(user)
+        .where(eq(user.id, id))
+        .for("update");
+      if (!existing) {
+        throw new NeuronError(
+          `Could not find user with id ${id}`,
+          NeuronErrorCodes.NOT_FOUND,
+        );
+      }
+      if (existing.status === UserStatus.active) {
+        return id;
+      }
+      const isFirstApproval = existing.status === UserStatus.unverified;
+      const render = isFirstApproval
+        ? renderVolunteerApproved
+        : renderVolunteerReactivated;
+      const subject = isFirstApproval
+        ? "Welcome to BC BWP"
+        : "Your Account Has Been Reactivated";
+      const { html, text } = await render({ volunteerName: existing.name });
+      await tx
+        .update(user)
+        .set({ status: UserStatus.active })
+        .where(eq(user.id, id));
+      await this.jobService.run(
+        "jobs.send-email",
+        { to: existing.email, subject, text, html },
+        { transaction: tx },
       );
-    }
-
-    await this.db
-      .update(user)
-      .set({ status: UserStatus.active })
-      .where(eq(user.id, id));
-
-    const isFirstApproval = existing.status === UserStatus.unverified;
-    const render = isFirstApproval
-      ? renderVolunteerApproved
-      : renderVolunteerReactivated;
-    const subject = isFirstApproval
-      ? "Welcome to BC BWP"
-      : "Your Account Has Been Reactivated";
-
-    void render({ volunteerName: existing.name }).then(({ html, text }) =>
-      this.jobService.run("jobs.send-email", {
-        to: existing.email,
-        subject,
-        text,
-        html,
-      }),
-    );
-
-    return id;
+      return id;
+    });
   }
 
   // unverified -> rejected
@@ -213,77 +232,67 @@ export class UserService implements IUserService {
 
   // active -> inactive
   async deactivateUser(id: string): Promise<string> {
-    const [existing] = await this.db
-      .select({ status: user.status, name: user.name, email: user.email })
-      .from(user)
-      .where(eq(user.id, id));
-
-    if (existing?.status !== UserStatus.active) {
-      throw new NeuronError(
-        `Volunteer with id ${id} is not active`,
-        NeuronErrorCodes.BAD_REQUEST,
-      );
-    }
-
-    await this.db
-      .update(user)
-      .set({ status: UserStatus.inactive })
-      .where(eq(user.id, id));
-
-    void renderVolunteerDeactivated({ volunteerName: existing.name }).then(
-      ({ html, text }) =>
-        this.jobService.run("jobs.send-email", {
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ status: user.status, name: user.name, email: user.email })
+        .from(user)
+        .where(eq(user.id, id))
+        .for("update");
+      if (existing?.status !== UserStatus.active) {
+        throw new NeuronError(
+          `Volunteer with id ${id} is not active`,
+          NeuronErrorCodes.BAD_REQUEST,
+        );
+      }
+      const { html, text } = await renderVolunteerDeactivated({
+        volunteerName: existing.name,
+      });
+      await tx
+        .update(user)
+        .set({ status: UserStatus.inactive })
+        .where(eq(user.id, id));
+      await tx.delete(session).where(eq(session.userId, id));
+      await this.jobService.run(
+        "jobs.send-email",
+        {
           to: existing.email,
           subject: "Your Account Has Been Deactivated",
           text,
           html,
-        }),
-    );
-
-    return id;
+        },
+        { transaction: tx },
+      );
+      return id;
+    });
   }
 
   async getVerificationRequestCount(): Promise<number> {
-    let rows = await this.db
+    const [row] = await this.db
       .select({
-        totalRecords: sql<number>`count(*) over()`,
-      } as const)
+        totalRecords: count(),
+      })
       .from(user)
-      .where(inArray(user.status, [UserStatus.unverified]))
-      .limit(1);
+      .where(eq(user.status, UserStatus.unverified));
 
-    return rows[0]?.totalRecords ?? 0;
+    return row?.totalRecords ?? 0;
   }
 
-  async createUser(input: {
-    name: string;
-    lastName: string;
-    email: string;
-    role: string;
-  }): Promise<User> {
-    try {
-      const [createdUser] = await this.db
-        .insert(user)
-        .values({
-          name: input.name,
-          lastName: input.lastName,
-          email: input.email,
-          role: input.role as any,
-          status: UserStatus.active,
-          emailVerified: false,
-        })
-        .returning();
+  async createUser(input: CreateUserInput): Promise<User> {
+    const role = assertDirectProvisionRole(input.role);
 
-      if (!createdUser) {
-        throw new NeuronError(
-          "Failed to create user",
-          NeuronErrorCodes.INTERNAL_SERVER_ERROR,
-        );
-      }
+    try {
+      const createdUser = await provisionUser(this.db, {
+        name: input.name,
+        lastName: input.lastName,
+        email: input.email,
+        role,
+        status: UserStatus.active,
+        emailVerified: false,
+      });
 
       return buildUser(createdUser);
-    } catch (error: any) {
-      if (error?.code === "23505" || error?.message?.includes("unique")) {
+    } catch (error) {
+      if (isUniqueViolation(error)) {
         throw new NeuronError(
           "A user with this email already exists",
           NeuronErrorCodes.BAD_REQUEST,
@@ -294,36 +303,12 @@ export class UserService implements IUserService {
   }
 
   async createInstructor(input: CreateInstructorInput): Promise<User> {
-    try {
-      const [createdUser] = await this.db
-        .insert(user)
-        .values({
-          name: input.firstName,
-          lastName: input.lastName,
-          email: input.email,
-          role: "instructor" as any,
-          status: UserStatus.active,
-          emailVerified: false,
-        })
-        .returning();
-
-      if (!createdUser) {
-        throw new NeuronError(
-          "Failed to create instructor",
-          NeuronErrorCodes.INTERNAL_SERVER_ERROR,
-        );
-      }
-
-      return buildUser(createdUser);
-    } catch (error: any) {
-      if (error?.code === "23505" || error?.message?.includes("unique")) {
-        throw new NeuronError(
-          "An instructor with this email already exists",
-          NeuronErrorCodes.BAD_REQUEST,
-        );
-      }
-      throw error;
-    }
+    return this.createUser({
+      name: input.firstName,
+      lastName: input.lastName,
+      email: input.email,
+      role: Role.instructor,
+    });
   }
 
   async updateInstructor(input: UpdateInstructorInput): Promise<User> {
@@ -356,7 +341,7 @@ export class UserService implements IUserService {
       updatePayload.lastName = input.lastName;
     }
     if (input.email !== undefined) {
-      updatePayload.email = input.email;
+      updatePayload.email = normalizeEmail(input.email);
     }
 
     if (Object.keys(updatePayload).length === 0) {
@@ -381,8 +366,8 @@ export class UserService implements IUserService {
       }
 
       return buildUser(updatedUser);
-    } catch (error: any) {
-      if (error?.code === "23505" || error?.message?.includes("unique")) {
+    } catch (error) {
+      if (isUniqueViolation(error)) {
         throw new NeuronError(
           "An instructor with this email already exists",
           NeuronErrorCodes.BAD_REQUEST,

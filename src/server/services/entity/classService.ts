@@ -31,13 +31,13 @@ import {
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
 import { toMap, uniqueDefined } from "@/utils/arrayUtils";
 import type { ICurrentSessionService } from "@/server/services/currentSessionService";
-import type { IImageService } from "../imageService";
+import { DELETE_IMAGE_JOB_NAME } from "@/server/jobs/definitions/delete-image.job";
+import type { IJobService } from "../jobService";
 import { syncScheduleAssignmentsToFutureShifts } from "./shiftAssignment";
 import type { IShiftService } from "./shiftService";
 import type { ITermService } from "./termService";
 import type { IUserService } from "./userService";
 import type { IVolunteerService } from "./volunteerService";
-import { tryCatch } from "@/lib/try-catch";
 
 export interface IClassService {
   getClassesForSelect(): Promise<{ id: string; name: string }[]>;
@@ -66,7 +66,7 @@ export class ClassService implements IClassService {
   private readonly volunteerService: IVolunteerService;
   private readonly termService: ITermService;
   private readonly shiftService: IShiftService;
-  private readonly imageService: IImageService;
+  private readonly jobService: IJobService;
 
   constructor({
     db,
@@ -75,7 +75,7 @@ export class ClassService implements IClassService {
     volunteerService,
     termService,
     shiftService,
-    imageService,
+    jobService,
   }: {
     db: Drizzle;
     currentSessionService: ICurrentSessionService;
@@ -83,7 +83,7 @@ export class ClassService implements IClassService {
     volunteerService: IVolunteerService;
     termService: ITermService;
     shiftService: IShiftService;
-    imageService: IImageService;
+    jobService: IJobService;
   }) {
     this.db = db;
     this.currentSessionService = currentSessionService;
@@ -91,7 +91,7 @@ export class ClassService implements IClassService {
     this.volunteerService = volunteerService;
     this.termService = termService;
     this.shiftService = shiftService;
-    this.imageService = imageService;
+    this.jobService = jobService;
   }
 
   async getClassesForSelect(): Promise<{ id: string; name: string }[]> {
@@ -147,6 +147,8 @@ export class ClassService implements IClassService {
   }
 
   async getClasses(ids: string[]): Promise<Class[]> {
+    if (ids.length === 0) return [];
+
     const classes = await this.retrieveFullClasses({
       where: inArray(course.id, ids),
     });
@@ -203,9 +205,9 @@ export class ClassService implements IClassService {
       ...dbClassUpdate
     } = classUpdate;
 
-    return await this.db.transaction(async (tx: Transaction) => {
+    await this.db.transaction(async (tx: Transaction) => {
       const originalClass = (
-        await tx.select().from(course).where(eq(course.id, id))
+        await tx.select().from(course).where(eq(course.id, id)).for("update")
       )[0];
 
       if (!originalClass) {
@@ -216,13 +218,15 @@ export class ClassService implements IClassService {
       }
 
       // Update class itself
-      if (Object.values(dbClassUpdate).length > 0) {
+      let updatedImage = originalClass.image;
+      if (Object.values(dbClassUpdate).some((value) => value !== undefined)) {
         const row = await tx
           .update(course)
           .set(dbClassUpdate)
           .where(eq(course.id, id))
           .returning({
             id: course.id,
+            image: course.image,
           });
 
         if (row.length !== 1) {
@@ -231,12 +235,8 @@ export class ClassService implements IClassService {
             NeuronErrorCodes.INTERNAL_SERVER_ERROR,
           );
         }
-      }
 
-      // Try and clean up image if we deleted it, ignore errors
-      const oldImageKey = originalClass.image;
-      if (!!oldImageKey && !!dbClassUpdate.image) {
-        await tryCatch(this.imageService.deleteImage(oldImageKey));
+        updatedImage = row[0]!.image;
       }
 
       // Cannot add, delete, or update recurrances
@@ -266,7 +266,7 @@ export class ClassService implements IClassService {
       await this.insertSchedules(tx, id, addedSchedules);
 
       // Delete schedules
-      if (deletedSchedules) {
+      if (deletedSchedules.length > 0) {
         await tx
           .delete(schedule)
           .where(
@@ -276,22 +276,42 @@ export class ClassService implements IClassService {
             ),
           );
       }
+
+      const oldImageKey = originalClass.image;
+      if (oldImageKey && oldImageKey !== updatedImage) {
+        await this.jobService.run(
+          DELETE_IMAGE_JOB_NAME,
+          { imageKey: oldImageKey },
+          { transaction: tx },
+        );
+      }
     });
   }
 
   async deleteClass(classId: string): Promise<void> {
-    // Cascade will delete schedules and volunteerToSchedules
-    const row = await this.db
-      .delete(course)
-      .where(eq(course.id, classId))
-      .returning({ id: course.id });
+    await this.db.transaction(async (tx: Transaction) => {
+      // Cascade will delete schedules and volunteerToSchedules
+      const row = await tx
+        .delete(course)
+        .where(eq(course.id, classId))
+        .returning({ id: course.id, image: course.image });
 
-    if (row.length !== 1) {
-      throw new NeuronError(
-        "Failed to delete Class",
-        NeuronErrorCodes.INTERNAL_SERVER_ERROR,
-      );
-    }
+      if (row.length !== 1) {
+        throw new NeuronError(
+          "Failed to delete Class",
+          NeuronErrorCodes.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const deletedImageKey = row[0]!.image;
+      if (deletedImageKey) {
+        await this.jobService.run(
+          DELETE_IMAGE_JOB_NAME,
+          { imageKey: deletedImageKey },
+          { transaction: tx },
+        );
+      }
+    });
   }
 
   async publishClass(classId: string): Promise<void> {
@@ -432,6 +452,8 @@ export class ClassService implements IClassService {
         .where(and(where, eq(term.published, true)));
     }
 
+    idsQuery = idsQuery.orderBy(asc(course.id));
+
     if (limit !== undefined) {
       idsQuery = idsQuery.limit(limit);
     }
@@ -499,6 +521,8 @@ export class ClassService implements IClassService {
     tx: Transaction,
     schedules: UpdateScheduleInput[],
   ): Promise<void> {
+    if (schedules.length === 0) return;
+
     const originalSchedules = await tx
       .select()
       .from(schedule)
@@ -509,15 +533,19 @@ export class ClassService implements IClassService {
         ),
       );
 
-    if (originalSchedules.length != schedules.length) {
+    if (originalSchedules.length !== schedules.length) {
       throw new NeuronError(
         "Failed to update schedule",
         "INTERNAL_SERVER_ERROR",
       );
     }
 
+    const originalSchedulesById = new Map(
+      originalSchedules.map((s) => [s.id, s]),
+    );
+
     // Update schedules
-    for (const [idx, updateSchedule] of schedules.entries()) {
+    for (const updateSchedule of schedules) {
       const {
         id,
         rule,
@@ -529,7 +557,13 @@ export class ClassService implements IClassService {
         removedInstructorUserIds,
         ...scheduleUpdate
       } = updateSchedule;
-      const originalSchedule = originalSchedules[idx]!;
+      const originalSchedule = originalSchedulesById.get(id);
+      if (!originalSchedule) {
+        throw new NeuronError(
+          "Failed to update schedule",
+          "INTERNAL_SERVER_ERROR",
+        );
+      }
 
       const originalRRruleObject = this.buildScheduleRuleFromRRule(
         originalSchedule.rrule,

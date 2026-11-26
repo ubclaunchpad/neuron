@@ -1,16 +1,19 @@
 import { defineConfig } from "vitest/config";
-import { config } from "dotenv";
 import path from "path";
+import { resolveTestEnv } from "./src/test/test-env";
 
-// Load environment variables from .env.test
-config({ path: ".env.test" });
+const testEnv = resolveTestEnv(__dirname);
+
+// Apply resolved test env in the main process (for globalSetup) as well as workers
+Object.assign(process.env, testEnv);
 
 export default defineConfig({
+  // Prevent Vite from auto-loading `.env` (dev DB) when `.env.test` is absent
+  envDir: false,
   test: {
+    env: testEnv,
     globals: true,
     environment: "node",
-    globalSetup: ["./src/test/global-setup.ts"],
-    include: ["src/test/**/*.test.ts"],
     exclude: ["node_modules", ".next"],
     coverage: {
       provider: "v8",
@@ -22,12 +25,29 @@ export default defineConfig({
         "**/*.test.ts",
       ],
     },
-    // Run tests sequentially to avoid database conflicts
-    sequence: {
-      concurrent: false,
-    },
-    fileParallelism: false,
-    testTimeout: 30000,
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          include: ["src/test/unit/**/*.test.ts"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "integration",
+          globalSetup: ["./src/test/global-setup.ts"],
+          include: ["src/test/integration/**/*.test.ts"],
+          // Run integration tests sequentially to avoid database conflicts
+          sequence: {
+            concurrent: false,
+          },
+          fileParallelism: false,
+          testTimeout: 30000,
+        },
+      },
+    ],
   },
   resolve: {
     alias: {

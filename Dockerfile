@@ -1,24 +1,23 @@
+# Shared build base with pnpm
+FROM node:26-alpine AS pnpm-base
+RUN npm install -g pnpm@10.32.1
+
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
+FROM pnpm-base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.18.1 --activate
-
 # Copy dependency files
 COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
 
 # Stage 2: Builder
-FROM node:20-alpine AS builder
+FROM pnpm-base AS builder
 WORKDIR /app
-
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.18.1 --activate
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -36,7 +35,7 @@ RUN pnpm build
 
 
 # Stage 3: Runner
-FROM node:20-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 
 # Set production environment

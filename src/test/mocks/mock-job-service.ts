@@ -27,6 +27,19 @@ export class MockJobService implements IJobService {
     return "mock-job-id";
   }
 
+  readonly cancellations: {
+    jobName: RunnableJobName;
+    singletonKey: string;
+    options: { transaction: import("@/server/db").Transaction };
+  }[] = [];
+  async cancelPending(
+    jobName: RunnableJobName,
+    singletonKey: string,
+    options: { transaction: import("@/server/db").Transaction },
+  ): Promise<void> {
+    this.cancellations.push({ jobName, singletonKey, options });
+  }
+
   async unschedule(
     _jobName: RunnableJobName,
     _options?: { correlationId?: string },

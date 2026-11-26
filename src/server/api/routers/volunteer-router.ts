@@ -17,18 +17,24 @@ export const volunteerRouter = createTRPCRouter({
         await ctx.volunteerService.getVolunteersForRequest(input);
       return volunteers;
     }),
+  me: authorizedProcedure({ permission: { "volunteer-profile": ["view"] } })
+    .query(async ({ ctx }) => {
+      const currentUser = ctx.currentSessionService.requireUser();
+      return await ctx.volunteerService.getVolunteer(currentUser.id);
+    }),
   setClassPreference: authorizedProcedure({
     permission: { classes: ["prefer"] },
   })
     .input(
-      UserIdInput.extend({
+      z.object({
         classId: z.uuid(),
         preferred: z.boolean(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const currentUser = ctx.currentSessionService.requireUser();
       await ctx.volunteerService.setClassPreference(
-        input.userId,
+        currentUser.id,
         input.classId,
         input.preferred,
       );
@@ -38,17 +44,18 @@ export const volunteerRouter = createTRPCRouter({
     permission: { classes: ["prefer"] },
   })
     .input(
-      UserIdInput.extend({
+      z.object({
         classId: z.uuid(),
       }),
     )
     .query(async ({ input, ctx }) => {
+      const currentUser = ctx.currentSessionService.requireUser();
       return await ctx.volunteerService.getClassPreference(
-        input.userId,
+        currentUser.id,
         input.classId,
       );
     }),
-  byId: authorizedProcedure({ permission: { "volunteer-profile": ["view"] } })
+  byId: authorizedProcedure({ permission: { users: ["view"] } })
     .input(UserIdInput)
     .query(async ({ input, ctx }) => {
       return await ctx.volunteerService.getVolunteer(input.userId);
@@ -58,7 +65,8 @@ export const volunteerRouter = createTRPCRouter({
   })
     .input(UpdateVolunteerProfileInput)
     .mutation(async ({ input, ctx }) => {
-      await ctx.volunteerService.updateVolunteerProfile(input);
+      const currentUser = ctx.currentSessionService.requireUser();
+      await ctx.volunteerService.updateVolunteerProfile(currentUser.id, input);
       return { ok: true };
     }),
   updateVolunteerAvailability: authorizedProcedure({
@@ -66,7 +74,11 @@ export const volunteerRouter = createTRPCRouter({
   })
     .input(UpdateVolunteerAvailabilityInput)
     .mutation(async ({ input, ctx }) => {
-      await ctx.volunteerService.updateVolunteerAvailability(input);
+      const currentUser = ctx.currentSessionService.requireUser();
+      await ctx.volunteerService.updateVolunteerAvailability(
+        currentUser.id,
+        input,
+      );
       return { ok: true };
     }),
   exportAvailability: authorizedProcedure({ permission: { users: ["view"] } })

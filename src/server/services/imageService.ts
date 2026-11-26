@@ -13,7 +13,7 @@ export class ImageService implements IImageService {
   private readonly minio: Minio.Client;
   private readonly expiration = 5 * 60; // 5 mins
   private readonly bucket = env.MINIO_BUCKET ?? "neuron";
-  private readonly bucketReady: Promise<void>;
+  private bucketReady: Promise<void> | null = null;
 
   constructor() {
     const accessKey = env.MINIO_ROOT_USER;
@@ -36,8 +36,14 @@ export class ImageService implements IImageService {
       accessKey,
       secretKey,
     });
+  }
 
-    this.bucketReady = this.ensureBucket();
+  private ensureBucketReady(): Promise<void> {
+    this.bucketReady ??= this.ensureBucket().catch((error) => {
+      this.bucketReady = null;
+      throw error;
+    });
+    return this.bucketReady;
   }
 
   private async ensureBucket(): Promise<void> {
@@ -46,11 +52,11 @@ export class ImageService implements IImageService {
 
       if (!exists) {
         await this.minio.makeBucket(this.bucket);
-        await this.minio.setBucketPolicy(
-          this.bucket,
-          this.buildNeuronBucketPolicy(),
-        );
       }
+      await this.minio.setBucketPolicy(
+        this.bucket,
+        this.buildNeuronBucketPolicy(),
+      );
     } catch (error) {
       console.error("Error Ensuring Bucket: ", error);
       throw new NeuronError(
@@ -71,7 +77,7 @@ export class ImageService implements IImageService {
     fileExtension: string,
   ): Promise<{ url: string; key: string }> {
     try {
-      await this.bucketReady;
+      await this.ensureBucketReady();
 
       const safeExt = (fileExtension ?? "").replace(/^\./, "");
       const key = safeExt ? `${randomUUID()}.${safeExt}` : randomUUID();
@@ -100,7 +106,7 @@ export class ImageService implements IImageService {
    */
   async deleteImage(key: string): Promise<void> {
     try {
-      await this.bucketReady;
+      await this.ensureBucketReady();
 
       await this.minio.removeObject(this.bucket, key);
     } catch (error: any) {

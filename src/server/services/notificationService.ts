@@ -19,8 +19,9 @@ import type {
 import type { IJobService } from "@/server/services/jobService";
 import type { IPreferenceService } from "@/server/services/preferenceService";
 import { UserStatus } from "@/models/interfaces";
+import { parseNotificationCursor } from "@/models/api/notification";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
-import { and, count, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
 import type { RunnableJobName } from "@/server/jobs/registry";
 
 interface ResolvedRecipient {
@@ -142,38 +143,39 @@ export class NotificationService implements INotificationService {
     conditions.push(
       eq(notification.archived, archived !== undefined ? archived : false),
     );
-    if (cursor) {
-      const [cursorTs, cursorId] = cursor.split("|");
-      if (cursorTs && cursorId) {
-        conditions.push(
-          or(
-            lt(notification.createdAt, new Date(cursorTs)),
-            and(
-              eq(notification.createdAt, new Date(cursorTs)),
-              lt(notification.id, cursorId),
-            ),
-          )!,
+    if (cursor !== undefined) {
+      const parsed = parseNotificationCursor(cursor);
+      if (!parsed) {
+        throw new NeuronError(
+          "Invalid notification cursor",
+          NeuronErrorCodes.BAD_REQUEST,
         );
       }
+
+      conditions.push(
+        sql`(${notification.createdAt}, ${notification.id}) < (${parsed.createdAt}::timestamptz, ${parsed.id}::uuid)`,
+      );
     }
 
-    const items = await this.db
-      .select()
+    const rows = await this.db
+      .select({
+        notification,
+        createdAtIso: sql<string>`to_char(${notification.createdAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
+      })
       .from(notification)
       .where(and(...conditions))
       .orderBy(desc(notification.createdAt), desc(notification.id))
       .limit(limit + 1);
 
-    const hasMore = items.length > limit;
-    if (hasMore) items.pop();
+    const hasMore = rows.length > limit;
+    if (hasMore) rows.pop();
 
-    const lastItem =
-      hasMore && items.length > 0 ? items[items.length - 1]! : null;
-    const nextCursor = lastItem
-      ? `${lastItem.createdAt.toISOString()}|${lastItem.id}`
+    const lastRow = hasMore && rows.length > 0 ? rows[rows.length - 1]! : null;
+    const nextCursor = lastRow
+      ? `${lastRow.createdAtIso}|${lastRow.notification.id}`
       : null;
 
-    return { items, nextCursor };
+    return { items: rows.map((row) => row.notification), nextCursor };
   }
 
   async getUnreadCount(userId: string): Promise<number> {
@@ -315,7 +317,7 @@ export class NotificationService implements INotificationService {
   }): Promise<void> {
     // Check idempotency — per-user keys are stored as `${baseKey}:${userId}`,
     // so we check for any row whose key starts with the base key.
-    if (idempotencyKey) {
+    if (idempotencyKey !== undefined) {
       const [existing] = await this.db
         .select({ id: notification.id })
         .from(notification)
@@ -371,61 +373,67 @@ export class NotificationService implements INotificationService {
       return channelPrefs?.get("in_app") !== false;
     });
 
-    if (inAppRecipients.length > 0) {
-      // Use the same idempotency key base but append userId for per-user uniqueness
-      const notificationRows = inAppRecipients.map((r) => ({
-        userId: r.userId,
-        type,
-        title,
-        body,
-        linkUrl,
-        sourceType,
-        sourceId,
-        actorId,
-        idempotencyKey: idempotencyKey
-          ? `${idempotencyKey}:${r.userId}`
-          : undefined,
-      }));
-
-      await this.db
-        .insert(notification)
-        .values(notificationRows)
-        .onConflictDoNothing({ target: notification.idempotencyKey });
+    const emailRecipients = recipients.filter(
+      (recipient) => preferences.get(recipient.userId)?.get("email") === true,
+    );
+    let html: string | undefined;
+    let emailText: string | undefined;
+    if (emailRecipients.length > 0 && typeDef.renderEmail) {
+      try {
+        const rendered = await typeDef.renderEmail(context);
+        html = rendered.html;
+        emailText = rendered.text;
+      } catch (error) {
+        console.error(
+          `[notification] Failed to render email template for ${type}:`,
+          error,
+        );
+      }
     }
 
-    // Process email channel
-    const emailRecipients = recipients.filter((r) => {
-      const channelPrefs = preferences.get(r.userId);
-      return channelPrefs?.get("email") === true;
-    });
+    await this.db.transaction(async (tx) => {
+      if (inAppRecipients.length > 0) {
+        // Use the same idempotency key base but append userId for per-user uniqueness
+        const notificationRows = inAppRecipients.map((r) => ({
+          userId: r.userId,
+          type,
+          title,
+          body,
+          linkUrl,
+          sourceType,
+          sourceId,
+          actorId,
+          idempotencyKey:
+            idempotencyKey !== undefined
+              ? `${idempotencyKey}:${r.userId}`
+              : undefined,
+        }));
 
-    if (emailRecipients.length > 0) {
-      // Render HTML email once for all recipients (content is identical)
-      let html: string | undefined;
-      let emailText: string | undefined;
-
-      if (typeDef.renderEmail) {
-        try {
-          const rendered = await typeDef.renderEmail(context);
-          html = rendered.html;
-          emailText = rendered.text;
-        } catch (error) {
-          console.error(
-            `[notification] Failed to render email template for ${type}:`,
-            error,
-          );
-        }
+        await tx
+          .insert(notification)
+          .values(notificationRows)
+          .onConflictDoNothing({ target: notification.idempotencyKey });
       }
 
       for (const recipient of emailRecipients) {
-        void this.jobService.run("jobs.send-email", {
-          to: recipient.email,
-          subject: title,
-          text: emailText ?? body,
-          ...(html ? { html } : {}),
-        });
+        await this.jobService.run(
+          "jobs.send-email",
+          {
+            to: recipient.email,
+            subject: title,
+            text: emailText ?? body,
+            ...(html ? { html } : {}),
+          },
+          {
+            transaction: tx,
+            idempotencyKey:
+              idempotencyKey !== undefined
+                ? `${idempotencyKey}:${recipient.userId}`
+                : undefined,
+          },
+        );
       }
-    }
+    });
   }
 
   private async resolveAudience(

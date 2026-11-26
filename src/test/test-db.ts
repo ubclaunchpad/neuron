@@ -8,7 +8,7 @@ import {
   MigrationsFolder,
   MigrationsSchema,
   MigrationsTable,
-} from "../../drizzle.config";
+} from "@/server/db/migration-config";
 
 const testDbUrl = env.DATABASE_URL;
 
@@ -21,7 +21,7 @@ export function getTestDb() {
       max: 1,
       onnotice: () => {}, // Suppress NOTICE messages from PostgreSQL
     });
-    db = drizzle(conn, { schema });
+    db = drizzle({ client: conn, schema });
   }
   return db;
 }
@@ -37,8 +37,18 @@ async function runMigrations() {
 
 export async function resetDatabase() {
   const db = getTestDb();
+  const [row] = await db.execute<{ db: string }>(
+    sql`SELECT current_database() AS db`,
+  );
+  if (!row?.db.endsWith("_test")) {
+    await closeDatabase();
+    throw new Error(
+      `Refusing to reset database "${row?.db ?? "unknown"}": test database name must end with "_test".`,
+    );
+  }
 
-  // Drop and recreate public schema to clear all data and tables
+  // Drop and recreate schemas to clear all data, tables, and pg-boss state
+  await db.execute(sql`DROP SCHEMA IF EXISTS pgboss CASCADE`);
   await db.execute(sql`DROP SCHEMA IF EXISTS public CASCADE`);
   await db.execute(sql`CREATE SCHEMA IF NOT EXISTS public`);
 

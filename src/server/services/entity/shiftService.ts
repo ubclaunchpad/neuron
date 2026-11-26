@@ -29,7 +29,6 @@ import {
 import { buildUser } from "@/models/user";
 import { buildVolunteer } from "@/models/volunteer";
 import { type Drizzle, type Transaction } from "@/server/db";
-import { getViewColumns } from "@/server/db/extensions/get-view-columns";
 import { course, type CourseDB } from "@/server/db/schema/course";
 import { schedule, type ScheduleDB } from "@/server/db/schema/schedule";
 import {
@@ -55,7 +54,18 @@ import {
 import type { INotificationEventService } from "@/server/services/notificationEventService";
 import type { IJobService } from "@/server/services/jobService";
 import { term } from "@/server/db/schema/course";
-import { and, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  eq,
+  exists,
+  getViewSelectedFields,
+  gte,
+  inArray,
+  lte,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 
 type ShiftRow = {
   shift: ShiftDB;
@@ -163,11 +173,17 @@ export class ShiftService implements IShiftService {
   ): SQL<unknown> | undefined {
     return or(
       isVolunteerEffectivelyAssignedToShiftSql(shift.id, userId),
-      sql`EXISTS (
-        SELECT 1 FROM ${coverageRequest}
-        WHERE ${coverageRequest.shiftId} = ${shift.id}
-        AND ${coverageRequest.requestingVolunteerUserId} = ${userId}
-      )`,
+      exists(
+        this.db
+          .select({ one: sql`1` })
+          .from(coverageRequest)
+          .where(
+            and(
+              eq(coverageRequest.shiftId, shift.id),
+              eq(coverageRequest.requestingVolunteerUserId, userId),
+            ),
+          ),
+      ),
     );
   }
 
@@ -252,7 +268,7 @@ export class ShiftService implements IShiftService {
         neededVolunteerIds.size > 0
           ? this.db
               .select({
-                volunteer: getViewColumns(volunteerUserView),
+                volunteer: getViewSelectedFields(volunteerUserView),
               })
               .from(volunteerUserView)
               .where(
@@ -262,7 +278,7 @@ export class ShiftService implements IShiftService {
         neededInstructorIds.length > 0
           ? this.db
               .select({
-                instructor: getViewColumns(instructorUserView),
+                instructor: getViewSelectedFields(instructorUserView),
               })
               .from(instructorUserView)
               .where(inArray(instructorUserView.id, neededInstructorIds))
@@ -291,7 +307,6 @@ export class ShiftService implements IShiftService {
     const cancelledByUsersById = new Map(
       cancelledByUsers.map((u) => [u.id, buildUser(u)] as const),
     );
-
     // Create a dense map keyed by shift + volunteer to speed up lookups below.
     const attendanceByShiftUser = new Map<
       string,

@@ -19,36 +19,41 @@ export function StarClassButton({
   const { user: currentUser } = useAuth();
   const apiUtils = clientApi.useUtils();
   const { data: preferenceData, isPending: preferenceLoading } =
-    clientApi.volunteer.getClassPreference.useQuery({
-      classId,
-      userId: currentUser?.id!,
-    });
+    clientApi.volunteer.getClassPreference.useQuery(
+      {
+        classId,
+      },
+      {
+        enabled: !!currentUser,
+      },
+    );
 
   const { mutate: setPreference, isPending } =
     clientApi.volunteer.setClassPreference.useMutation({
-      async onMutate({ userId, classId, preferred }) {
-        await apiUtils.volunteer.getClassPreference.cancel(); // stop in-flight fetches
-        const previous = apiUtils.volunteer.getClassPreference.getData();
+      async onMutate({ classId, preferred }) {
+        await apiUtils.volunteer.getClassPreference.cancel({ classId }); // stop in-flight fetches
+        const previous = apiUtils.volunteer.getClassPreference.getData({
+          classId,
+        });
 
         // optimistically update
         apiUtils.volunteer.getClassPreference.setData(
-          { userId, classId },
+          { classId },
           { preferred },
         );
 
         return { previous };
       },
-      onError(_, { userId, classId }, ctx) {
+      onError(_, { classId }, ctx) {
         // rollback
         apiUtils.volunteer.getClassPreference.setData(
-          { userId, classId },
+          { classId },
           ctx?.previous,
         );
       },
-      async onSettled(_, __, { userId, classId }) {
+      async onSettled(_, __, { classId }) {
         // finally, grab the canonical state from the server
         await apiUtils.volunteer.getClassPreference.invalidate({
-          userId,
           classId,
         });
       },
@@ -73,7 +78,6 @@ export function StarClassButton({
         pressed={preferenceData?.preferred}
         onPressedChange={(next) =>
           setPreference({
-            userId: currentUser!.id,
             classId,
             preferred: next,
           })

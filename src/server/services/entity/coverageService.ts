@@ -187,7 +187,7 @@ export class CoverageService implements ICoverageService {
     // Query with pagination and total count
     const rows = await this.db
       .select({
-        totalRecords: sql<number>`count(*) over()`,
+        totalRecords: sql<number>`count(*) over()`.mapWith(Number),
         coverageRequest: coverageRequest,
         shift: {
           id: shift.id,
@@ -343,6 +343,8 @@ export class CoverageService implements ICoverageService {
   }
 
   async getCoverageRequestByIds(ids: string[]): Promise<CoverageRequest[]> {
+    if (ids.length === 0) return [];
+
     const coverageRequestDBs = await this.db
       .select()
       .from(coverageRequest)

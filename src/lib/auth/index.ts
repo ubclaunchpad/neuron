@@ -8,23 +8,90 @@ import {
 } from "@/models/interfaces";
 import { createRequestScope } from "@/server/api/di-container";
 import { db } from "@/server/db";
-import {
-  account,
-  appInvitation,
-  session,
-  verification,
-} from "@/server/db/schema/auth";
-import { user, volunteer } from "@/server/db/schema/user";
 import { renderForgotPassword } from "@/server/emails/templates/forgot-password";
 import { renderRequestChangeEmail } from "@/server/emails/templates/request-change-email";
 import { renderVerifyEmail } from "@/server/emails/templates/verify-email";
 import { renderVerifyNewEmail } from "@/server/emails/templates/verify-new-email";
+import {
+  accountAdapter,
+  normalizeAuthRequestEmailBody,
+  normalizeAuthUserCreateInput,
+  normalizeAuthUserUpdateInput,
+} from "@/server/services/entity/accountProvisioning";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import {
+  APIError,
+  createAuthMiddleware,
+  getAuthoritativeSessionFromCtx,
+} from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { appInvitePlugin } from "@/lib/auth/extensions/app-invite/server-plugin";
+import { hasPermission } from "@/lib/auth/extensions/permissions";
+
+const NON_ACTIVE_ALLOWED_AUTH_PATHS = new Set([
+  "/ok",
+  "/error",
+  "/get-session",
+  "/sign-in/email",
+  "/sign-in/social",
+  "/sign-up/email",
+  "/sign-out",
+  "/callback/:id",
+  "/send-verification-email",
+  "/verify-email",
+  "/request-password-reset",
+  "/reset-password",
+  "/reset-password/:token",
+  "/get-app-invitation",
+  "/accept-invitation",
+  "/reject-invitation",
+]);
+
+const INVITATION_MANAGEMENT_AUTH_PATHS = new Set([
+  "/invite-user",
+  "/cancel-invitation",
+  "/list-invitations",
+]);
 
 export const auth = betterAuth({
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      const normalizedBody = normalizeAuthRequestEmailBody(ctx.body);
+      const normalizedContext = normalizedBody
+        ? { context: { body: normalizedBody } }
+        : undefined;
+      if (!ctx.path || NON_ACTIVE_ALLOWED_AUTH_PATHS.has(ctx.path)) {
+        return normalizedContext;
+      }
+
+      const activeSession = await getAuthoritativeSessionFromCtx(ctx);
+      if (!activeSession?.user) {
+        return normalizedContext;
+      }
+
+      const currentUser = activeSession.user as User;
+      if (currentUser.status !== UserStatus.active) {
+        throw new APIError("FORBIDDEN", {
+          code: "ACCOUNT_NOT_ACTIVE",
+          message: "Account is not active.",
+        });
+      }
+
+      if (
+        INVITATION_MANAGEMENT_AUTH_PATHS.has(ctx.path) &&
+        !hasPermission({
+          user: currentUser,
+          permission: { users: ["invite"] },
+        })
+      ) {
+        throw new APIError("FORBIDDEN", {
+          code: "YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_APPLICATION",
+          message: "You are not allowed to invite users to this application.",
+        });
+      }
+      return normalizedContext;
+    }),
+  },
   user: {
     additionalFields: {
       role: {
@@ -66,16 +133,7 @@ export const auth = betterAuth({
       },
     },
   },
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema: {
-      user,
-      session,
-      account,
-      verification,
-      appInvitation,
-    },
-  }),
+  database: accountAdapter(db),
   advanced: {
     database: {
       generateId: false,
@@ -84,18 +142,10 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        after: async (user) => {
-          switch (user.role) {
-            case Role.volunteer:
-              await db.insert(volunteer).values({ userId: user.id });
-              return;
-            case Role.instructor:
-            case Role.admin:
-              return;
-          }
-
-          throw new Error(`Unknown role: ${user.role}`);
-        },
+        before: async (userData) => normalizeAuthUserCreateInput(userData),
+      },
+      update: {
+        before: async (userData) => normalizeAuthUserUpdateInput(userData),
       },
     },
   },

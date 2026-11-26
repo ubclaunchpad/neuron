@@ -1,3 +1,4 @@
+import type { Transaction } from "@/server/db";
 import type { NeuronContainer, NeuronCradle } from "@/server/api/di-container";
 
 export type JobName = `jobs.${string}`;
@@ -8,21 +9,8 @@ export interface JobRetryOptions {
   retryBackoff?: boolean;
 }
 
-export interface RunJobOptions extends JobRetryOptions {
-  // Logical identifier used to target specific schedule instances.
-  correlationId?: string;
-
-  // One-off scheduling
-  runAt?: Date | string;
-  startAfter?: Date | string | number;
-
-  // Recurring scheduling
-  cron?: string;
-  startAt?: Date | string;
-  endAt?: Date | string;
-  tz?: string;
-
-  // Shared queue/schedule options
+interface SharedJobOptions extends JobRetryOptions {
+  /** All producers for a replaceable key must use a transaction to serialize with cancellation. */
   singletonKey?: string;
   singletonSeconds?: number;
   singletonMinutes?: number;
@@ -30,6 +18,49 @@ export interface RunJobOptions extends JobRetryOptions {
   singletonDays?: number;
   expireInSeconds?: number;
 }
+
+type OneOffJobOptions = SharedJobOptions & {
+  cron?: never;
+  correlationId?: never;
+  startAt?: never;
+  endAt?: never;
+  tz?: never;
+} & (
+    | { runAt: Date | string; startAfter?: never }
+    | { runAt?: never; startAfter?: Date | string | number }
+  ) &
+  (
+    | {
+        /** Cancel matching pending/active jobs atomically before inserting a fresh job. */
+        replacePending: true;
+        transaction: Transaction;
+        singletonKey: string;
+        idempotencyKey?: never;
+      }
+    | {
+        replacePending?: false;
+        /** Insert the job in the caller's PostgreSQL transaction. */
+        transaction?: Transaction;
+        /** Any supplied key, including an empty string, maps to a stable job ID while pg-boss retains it. */
+        idempotencyKey?: string;
+      }
+  );
+
+type RecurringJobOptions = SharedJobOptions & {
+  cron: string;
+  // Logical identifier used to target specific schedule instances.
+  correlationId?: string;
+  startAt?: Date | string;
+  endAt?: Date | string;
+  tz?: string;
+  runAt?: never;
+  startAfter?: never;
+  transaction?: never;
+  replacePending?: never;
+  idempotencyKey?: never;
+};
+
+export type RunJobOptions = OneOffJobOptions | RecurringJobOptions;
 
 export interface WorkRegistrationOptions {
   teamSize?: number;
@@ -41,16 +72,19 @@ export interface WorkRegistrationOptions {
 export interface JobRuntimeContext {
   container: NeuronContainer;
   cradle: NeuronCradle;
+  /** Cooperative cancellation: check immediately before an external side effect. */
+  isCancelled?: () => Promise<boolean>;
 }
 
-type StartupRecurringOptions = Omit<
-  RunJobOptions,
-  "cron" | "runAt" | "startAfter"
->;
+type StartupRecurringOptions = Omit<RecurringJobOptions, "cron">;
 type StartupOneOffOptions = Omit<
-  RunJobOptions,
-  "cron" | "runAt" | "correlationId" | "startAt" | "endAt" | "tz"
->;
+  OneOffJobOptions,
+  "runAt" | "transaction" | "replacePending"
+> & {
+  runAt?: never;
+  transaction?: never;
+  replacePending?: never;
+};
 
 export type StartupSchedule<TPayload extends object> =
   | {

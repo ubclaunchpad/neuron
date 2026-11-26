@@ -185,5 +185,19 @@ describe("ShiftService", () => {
       });
       expect(result.shifts.length).toBeGreaterThanOrEqual(1);
     });
+
+    it("instructor listWindow should return assigned shifts via exists() visibility query", async () => {
+      const { shiftId } = await createPublishedClassInTerm({
+        publishTerm: true,
+      });
+
+      scope.mockSession.setAsInstructor({ id: instructorId });
+
+      const result = await shiftService.listWindow({
+        cursor: "2026-07",
+        userId: instructorId,
+      });
+      expect(result.shifts.some((s) => s.id === shiftId)).toBe(true);
+    });
   });
 });

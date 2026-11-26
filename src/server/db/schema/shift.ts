@@ -69,7 +69,81 @@ export const shiftRelations = relations(shift, ({ one, many }) => ({
   }),
   coverageRequests: many(coverageRequest),
   attendances: many(shiftAttendance),
+  volunteerAssignments: many(shiftVolunteerAssignment),
+  instructorAssignments: many(shiftInstructorAssignment),
 }));
+
+export const shiftVolunteerAssignment = pgTable(
+  "shift_volunteer_assignment",
+  {
+    shiftId: uuid("shift_id")
+      .notNull()
+      .references(() => shift.id, { onDelete: "cascade" }),
+    volunteerUserId: uuid("volunteer_user_id")
+      .notNull()
+      .references(() => volunteer.userId, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({
+      name: "pk_shift_volunteer_assignment",
+      columns: [table.shiftId, table.volunteerUserId],
+    }),
+    index("idx_shift_volunteer_assignment_volunteer").on(table.volunteerUserId),
+  ],
+);
+export type ShiftVolunteerAssignmentDB =
+  typeof shiftVolunteerAssignment.$inferSelect;
+
+export const shiftVolunteerAssignmentRelations = relations(
+  shiftVolunteerAssignment,
+  ({ one }) => ({
+    shift: one(shift, {
+      fields: [shiftVolunteerAssignment.shiftId],
+      references: [shift.id],
+    }),
+    volunteer: one(volunteer, {
+      fields: [shiftVolunteerAssignment.volunteerUserId],
+      references: [volunteer.userId],
+    }),
+  }),
+);
+
+export const shiftInstructorAssignment = pgTable(
+  "shift_instructor_assignment",
+  {
+    shiftId: uuid("shift_id")
+      .notNull()
+      .references(() => shift.id, { onDelete: "cascade" }),
+    instructorUserId: uuid("instructor_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({
+      name: "pk_shift_instructor_assignment",
+      columns: [table.shiftId, table.instructorUserId],
+    }),
+    index("idx_shift_instructor_assignment_instructor").on(
+      table.instructorUserId,
+    ),
+  ],
+);
+export type ShiftInstructorAssignmentDB =
+  typeof shiftInstructorAssignment.$inferSelect;
+
+export const shiftInstructorAssignmentRelations = relations(
+  shiftInstructorAssignment,
+  ({ one }) => ({
+    shift: one(shift, {
+      fields: [shiftInstructorAssignment.shiftId],
+      references: [shift.id],
+    }),
+    instructor: one(user, {
+      fields: [shiftInstructorAssignment.instructorUserId],
+      references: [user.id],
+    }),
+  }),
+);
 
 export const coverageRequest = pgTable(
   "coverage_request",

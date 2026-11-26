@@ -5,10 +5,10 @@ import {
   volunteerToSchedule,
   instructorToSchedule,
 } from "@/server/db/schema/schedule";
-import { shift } from "@/server/db/schema/shift";
 import { user } from "@/server/db/schema/user";
 import { UserStatus } from "@/models/interfaces";
-import { and, eq, inArray, lt, gt, notInArray } from "drizzle-orm";
+import { getConflictingEffectiveVolunteerIds } from "@/server/services/entity/shiftAssignment";
+import { and, eq, inArray } from "drizzle-orm";
 
 interface ShiftCancelledParams {
   shiftId: string;
@@ -275,11 +275,17 @@ export class NotificationEventService implements INotificationEventService {
     const scheduleIds = schedules.map((s) => s.id);
     if (scheduleIds.length === 0) return [];
 
-    // Get all volunteers for the class
+    // Get all active volunteers for the class
     const volunteers = await this.db
       .select({ userId: volunteerToSchedule.volunteerUserId })
       .from(volunteerToSchedule)
-      .where(inArray(volunteerToSchedule.scheduleId, scheduleIds));
+      .innerJoin(user, eq(user.id, volunteerToSchedule.volunteerUserId))
+      .where(
+        and(
+          inArray(volunteerToSchedule.scheduleId, scheduleIds),
+          eq(user.status, UserStatus.active),
+        ),
+      );
 
     const allVolunteerIds = [
       ...new Set(volunteers.map((v) => v.userId)),
@@ -287,22 +293,14 @@ export class NotificationEventService implements INotificationEventService {
 
     if (allVolunteerIds.length === 0) return [];
 
-    // Find volunteers with a conflicting shift (overlapping time window)
-    // Two shifts overlap when: shift.startAt < shiftEndAt AND shift.endAt > shiftStartAt
-    const conflicting = await this.db
-      .selectDistinct({ userId: volunteerToSchedule.volunteerUserId })
-      .from(volunteerToSchedule)
-      .innerJoin(shift, eq(shift.scheduleId, volunteerToSchedule.scheduleId))
-      .where(
-        and(
-          inArray(volunteerToSchedule.volunteerUserId, allVolunteerIds),
-          lt(shift.startAt, shiftEndAt),
-          gt(shift.endAt, shiftStartAt),
-          eq(shift.canceled, false),
-        ),
-      );
+    // Exclude volunteers effectively assigned to any overlapping non-canceled shift
+    // (accounting for both released and covering assignments).
+    const conflictingIds = await getConflictingEffectiveVolunteerIds(this.db, {
+      volunteerUserIds: allVolunteerIds,
+      startAt: shiftStartAt,
+      endAt: shiftEndAt,
+    });
 
-    const conflictingIds = new Set(conflicting.map((c) => c.userId));
     return allVolunteerIds.filter((id) => !conflictingIds.has(id));
   }
 }

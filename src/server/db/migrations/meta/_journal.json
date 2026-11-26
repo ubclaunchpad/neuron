@@ -92,6 +92,13 @@
       "when": 1795521600000,
       "tag": "0012_normalize_user_email_and_volunteer_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795660063675,
+      "tag": "0013_add_shift_assignments",
+      "breakpoints": true
     }
   ]
 }

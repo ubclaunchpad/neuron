@@ -30,12 +30,7 @@ import { buildUser } from "@/models/user";
 import { buildVolunteer } from "@/models/volunteer";
 import { type Drizzle, type Transaction } from "@/server/db";
 import { course, type CourseDB } from "@/server/db/schema/course";
-import {
-  instructorToSchedule,
-  schedule,
-  type ScheduleDB,
-  volunteerToSchedule,
-} from "@/server/db/schema/schedule";
+import { schedule, type ScheduleDB } from "@/server/db/schema/schedule";
 import {
   coverageRequest,
   shift,
@@ -48,6 +43,15 @@ import {
   volunteerUserView,
 } from "@/server/db/schema/user";
 import { NeuronError, NeuronErrorCodes } from "@/server/errors/neuron-error";
+import {
+  getBaseVolunteerAssignmentsForShifts,
+  getShiftInstructorAssignmentsForShifts,
+  isInstructorAssignedToShiftSql,
+  isVolunteerEffectivelyAssignedToShiftSql,
+  resolveEffectiveVolunteerAssignmentsByShift,
+  snapshotScheduleAssignmentsToShift,
+  type ResolvedCoverageEdge,
+} from "@/server/services/entity/shiftAssignment";
 import type { INotificationEventService } from "@/server/services/notificationEventService";
 import type { IJobService } from "@/server/services/jobService";
 import { term } from "@/server/db/schema/course";
@@ -102,7 +106,11 @@ export interface IShiftService {
   createShift(input: CreateShiftInput, tx?: Transaction): Promise<string>;
   deleteShift(input: ShiftIdInput): Promise<void>;
   cancelShift(input: CancelShiftInput): Promise<void>;
-  assertValidShift(volunteerId: string, shiftId: string): Promise<void>;
+  assertValidShift(
+    volunteerId: string,
+    shiftId: string,
+    tx?: Transaction,
+  ): Promise<void>;
 }
 
 function sortCoverageRequestsByStatus(
@@ -165,17 +173,7 @@ export class ShiftService implements IShiftService {
     userId: string,
   ): SQL<unknown> | undefined {
     return or(
-      exists(
-        this.db
-          .select({ one: sql`1` })
-          .from(volunteerToSchedule)
-          .where(
-            and(
-              eq(volunteerToSchedule.scheduleId, shift.scheduleId),
-              eq(volunteerToSchedule.volunteerUserId, userId),
-            ),
-          ),
-      ),
+      isVolunteerEffectivelyAssignedToShiftSql(shift.id, userId),
       exists(
         this.db
           .select({ one: sql`1` })
@@ -187,33 +185,11 @@ export class ShiftService implements IShiftService {
             ),
           ),
       ),
-      exists(
-        this.db
-          .select({ one: sql`1` })
-          .from(coverageRequest)
-          .where(
-            and(
-              eq(coverageRequest.shiftId, shift.id),
-              eq(coverageRequest.coveredByVolunteerUserId, userId),
-              eq(coverageRequest.status, CoverageStatus.resolved),
-            ),
-          ),
-      ),
     );
   }
 
   private buildInstructorVisibilityCondition(userId: string): SQL<unknown> {
-    return exists(
-      this.db
-        .select({ one: sql`1` })
-        .from(instructorToSchedule)
-        .where(
-          and(
-            eq(instructorToSchedule.scheduleId, shift.scheduleId),
-            eq(instructorToSchedule.instructorUserId, userId),
-          ),
-        ),
-    );
+    return isInstructorAssignedToShiftSql(shift.id, userId);
   }
 
   private async hydrateShiftRows(rows: ShiftRow[]): Promise<Shift[]> {
@@ -223,7 +199,6 @@ export class ShiftService implements IShiftService {
 
     // Gather references up front so the rest of the method can use cheap lookups.
     const shiftIds = rows.map((row) => row.shift.id);
-    const scheduleIds = [...new Set(rows.map((s) => s.schedule.id))];
     const cancelledByUserIds = [
       ...new Set(
         rows
@@ -232,112 +207,127 @@ export class ShiftService implements IShiftService {
       ),
     ];
 
-    // Pull the latest roster assignments per schedule to avoid per-row queries.
-    const volunteerAssignments = await this.db
-      .select({
-        scheduleId: volunteerToSchedule.scheduleId,
-        volunteer: getViewSelectedFields(volunteerUserView),
-      })
-      .from(volunteerToSchedule)
-      .innerJoin(
-        volunteerUserView,
-        eq(volunteerToSchedule.volunteerUserId, volunteerUserView.id),
-      )
-      .where(inArray(volunteerToSchedule.scheduleId, scheduleIds));
+    const [
+      baseVolunteersByShift,
+      instructorIdsByShift,
+      coverageRecords,
+      attendanceRecords,
+    ] = await Promise.all([
+      getBaseVolunteerAssignmentsForShifts(this.db, shiftIds),
+      getShiftInstructorAssignmentsForShifts(this.db, shiftIds),
+      this.db
+        .select({
+          id: coverageRequest.id,
+          shiftId: coverageRequest.shiftId,
+          requestedAt: coverageRequest.requestedAt,
+          status: coverageRequest.status,
+          category: coverageRequest.category,
+          details: coverageRequest.details,
+          comments: coverageRequest.comments,
+          requestingVolunteerUserId: coverageRequest.requestingVolunteerUserId,
+          coveredByVolunteerUserId: coverageRequest.coveredByVolunteerUserId,
+        })
+        .from(coverageRequest)
+        .where(inArray(coverageRequest.shiftId, shiftIds)),
+      this.db
+        .select({
+          shiftId: shiftAttendance.shiftId,
+          userId: shiftAttendance.userId,
+          status: shiftAttendance.status,
+          checkedInAt: shiftAttendance.checkedInAt,
+          minutesWorked: shiftAttendance.minutesWorked,
+        })
+        .from(shiftAttendance)
+        .where(inArray(shiftAttendance.shiftId, shiftIds)),
+    ]);
 
-    const coverageRecords = await this.db
-      .select({
-        id: coverageRequest.id,
-        shiftId: coverageRequest.shiftId,
-        requestedAt: coverageRequest.requestedAt,
-        status: coverageRequest.status,
-        category: coverageRequest.category,
-        details: coverageRequest.details,
-        comments: coverageRequest.comments,
-        requestingVolunteerUserId: coverageRequest.requestingVolunteerUserId,
-        coveredByVolunteerUserId: coverageRequest.coveredByVolunteerUserId,
-      })
-      .from(coverageRequest)
-      .where(inArray(coverageRequest.shiftId, shiftIds));
+    const resolvedCoverages: ResolvedCoverageEdge[] = [];
+    for (const record of coverageRecords) {
+      if (
+        record.status === CoverageStatus.resolved &&
+        record.coveredByVolunteerUserId
+      ) {
+        resolvedCoverages.push({
+          id: record.id,
+          shiftId: record.shiftId,
+          requestedAt: record.requestedAt,
+          requestingVolunteerUserId: record.requestingVolunteerUserId,
+          coveredByVolunteerUserId: record.coveredByVolunteerUserId,
+        });
+      }
+    }
 
-    const attendanceRecords = await this.db
-      .select({
-        shiftId: shiftAttendance.shiftId,
-        userId: shiftAttendance.userId,
-        status: shiftAttendance.status,
-        checkedInAt: shiftAttendance.checkedInAt,
-        minutesWorked: shiftAttendance.minutesWorked,
-      })
-      .from(shiftAttendance)
-      .where(inArray(shiftAttendance.shiftId, shiftIds));
+    const effectiveVolunteersByShift =
+      resolveEffectiveVolunteerAssignmentsByShift(
+        shiftIds,
+        baseVolunteersByShift,
+        resolvedCoverages,
+      );
 
-    const instructorRecords = await this.db
-      .select({
-        scheduleId: instructorToSchedule.scheduleId,
-        instructor: getViewSelectedFields(instructorUserView),
-      })
-      .from(instructorToSchedule)
-      .innerJoin(
-        instructorUserView,
-        eq(instructorToSchedule.instructorUserId, instructorUserView.id),
-      )
-      .where(inArray(instructorToSchedule.scheduleId, scheduleIds));
+    const neededVolunteerIds = new Set<string>();
+    for (const assignments of effectiveVolunteersByShift.values()) {
+      for (const assignment of assignments) {
+        neededVolunteerIds.add(assignment.volunteerUserId);
+        if (assignment.coveringForVolunteerUserId) {
+          neededVolunteerIds.add(assignment.coveringForVolunteerUserId);
+        }
+      }
+    }
+    for (const record of coverageRecords) {
+      neededVolunteerIds.add(record.requestingVolunteerUserId);
+      if (record.coveredByVolunteerUserId) {
+        neededVolunteerIds.add(record.coveredByVolunteerUserId);
+      }
+    }
 
-    // Only load cancel authors if at least one shift was cancelled.
-    const cancelledByUsers = cancelledByUserIds.length
-      ? await this.db
-          .select()
-          .from(user)
-          .where(inArray(user.id, cancelledByUserIds))
-      : [];
+    const neededInstructorIds = [
+      ...new Set(Array.from(instructorIdsByShift.values()).flat()),
+    ];
+
+    const [volunteerRows, instructorRows, cancelledByUsers] = await Promise.all(
+      [
+        neededVolunteerIds.size > 0
+          ? this.db
+              .select({
+                volunteer: getViewSelectedFields(volunteerUserView),
+              })
+              .from(volunteerUserView)
+              .where(
+                inArray(volunteerUserView.id, Array.from(neededVolunteerIds)),
+              )
+          : Promise.resolve([]),
+        neededInstructorIds.length > 0
+          ? this.db
+              .select({
+                instructor: getViewSelectedFields(instructorUserView),
+              })
+              .from(instructorUserView)
+              .where(inArray(instructorUserView.id, neededInstructorIds))
+          : Promise.resolve([]),
+        cancelledByUserIds.length > 0
+          ? this.db
+              .select()
+              .from(user)
+              .where(inArray(user.id, cancelledByUserIds))
+          : Promise.resolve([]),
+      ],
+    );
+
+    const volunteersById = new Map<string, ReturnType<typeof buildVolunteer>>();
+    for (const row of volunteerRows) {
+      const volunteerModel = buildVolunteer(row.volunteer);
+      volunteersById.set(volunteerModel.id, volunteerModel);
+    }
+
+    const instructorsById = new Map<string, ReturnType<typeof buildUser>>();
+    for (const row of instructorRows) {
+      const instructorModel = buildUser(row.instructor);
+      instructorsById.set(instructorModel.id, instructorModel);
+    }
+
     const cancelledByUsersById = new Map(
       cancelledByUsers.map((u) => [u.id, buildUser(u)] as const),
     );
-
-    // Build reusable maps so we can merge roster, attendance, and coverage data.
-    const volunteersById = new Map<string, ReturnType<typeof buildVolunteer>>();
-    const volunteersBySchedule = new Map<string, string[]>();
-    for (const record of volunteerAssignments) {
-      const volunteerModel = buildVolunteer(record.volunteer);
-      volunteersById.set(volunteerModel.id, volunteerModel);
-      const scheduleVolunteers =
-        volunteersBySchedule.get(record.scheduleId) ?? [];
-      scheduleVolunteers.push(volunteerModel.id);
-      volunteersBySchedule.set(record.scheduleId, scheduleVolunteers);
-    }
-
-    // Coverage requests may reference volunteers not on the base schedule roster.
-    const coverageVolunteerIds = new Set<string>();
-    for (const record of coverageRecords) {
-      coverageVolunteerIds.add(record.requestingVolunteerUserId);
-      if (record.coveredByVolunteerUserId) {
-        coverageVolunteerIds.add(record.coveredByVolunteerUserId);
-      }
-    }
-
-    // Attendance rows similarly reference volunteers; capture everyone involved.
-    const attendanceVolunteerIds = new Set(
-      attendanceRecords.map((attendance) => attendance.userId),
-    );
-
-    const missingVolunteerIds = Array.from(
-      new Set([...coverageVolunteerIds, ...attendanceVolunteerIds]),
-    ).filter((id) => !volunteersById.has(id));
-
-    if (missingVolunteerIds.length > 0) {
-      const extraVolunteerRows = await this.db
-        .select({
-          volunteer: getViewSelectedFields(volunteerUserView),
-        })
-        .from(volunteerUserView)
-        .where(inArray(volunteerUserView.id, missingVolunteerIds));
-
-      for (const row of extraVolunteerRows) {
-        const volunteerModel = buildVolunteer(row.volunteer);
-        volunteersById.set(volunteerModel.id, volunteerModel);
-      }
-    }
-
     // Create a dense map keyed by shift + volunteer to speed up lookups below.
     const attendanceByShiftUser = new Map<
       string,
@@ -396,20 +386,9 @@ export class ShiftService implements IShiftService {
       coverageByShift.set(record.shiftId, coveragesForShift);
     }
 
-    const instructorsBySchedule = new Map<
-      string,
-      ReturnType<typeof buildUser>[]
-    >();
-    for (const record of instructorRecords) {
-      const instructorsForSchedule =
-        instructorsBySchedule.get(record.scheduleId) ?? [];
-      instructorsForSchedule.push(buildUser(record.instructor));
-      instructorsBySchedule.set(record.scheduleId, instructorsForSchedule);
-    }
-
     return rows.map((row) => {
-      // Start with the roster that comes directly from the schedule assignment.
-      const baseVolunteerIds = volunteersBySchedule.get(row.schedule.id) ?? [];
+      const effectiveAssignments =
+        effectiveVolunteersByShift.get(row.shift.id) ?? [];
       const coverageForShift = sortCoverageRequestsByStatus(
         coverageByShift.get(row.shift.id) ?? [],
       );
@@ -417,53 +396,35 @@ export class ShiftService implements IShiftService {
         ? cancelledByUsersById.get(row.shift.cancelledByUserId)
         : undefined;
 
-      // Track volunteers by id so coverage replacements can override originals.
-      const roster = new Map<string, Shift["volunteers"][number]>();
-
-      for (const volunteerId of baseVolunteerIds) {
-        const volunteer = volunteersById.get(volunteerId);
+      const roster: Shift["volunteers"] = [];
+      for (const assignment of effectiveAssignments) {
+        const volunteer = volunteersById.get(assignment.volunteerUserId);
         if (!volunteer) continue;
 
+        const coveringFor = assignment.coveringForVolunteerUserId
+          ? volunteersById.get(assignment.coveringForVolunteerUserId)
+          : undefined;
         const attendance =
           attendanceByShiftUser.get(`${row.shift.id}:${volunteer.id}`) ??
           undefined;
-        roster.set(volunteer.id, {
+
+        roster.push({
           ...volunteer,
+          ...(coveringFor ? { coveringFor } : {}),
           attendance,
         });
       }
 
-      for (const coverage of coverageForShift) {
-        if (
-          coverage.status !== CoverageStatus.resolved ||
-          !coverage.coveredByVolunteer
-        ) {
-          continue;
-        }
-
-        roster.delete(coverage.requestingVolunteer.id);
-
-        const attendance =
-          attendanceByShiftUser.get(
-            `${row.shift.id}:${coverage.coveredByVolunteer.id}`,
-          ) ?? undefined;
-        const existing = roster.get(coverage.coveredByVolunteer.id);
-
-        roster.set(coverage.coveredByVolunteer.id, {
-          ...(existing ?? coverage.coveredByVolunteer),
-          coveringFor: coverage.requestingVolunteer,
-          attendance: attendance ?? existing?.attendance,
-        });
-      }
-
-      const instructors = instructorsBySchedule.get(row.schedule.id) ?? [];
+      const instructors = (instructorIdsByShift.get(row.shift.id) ?? [])
+        .map((id) => instructorsById.get(id))
+        .filter((i): i is ReturnType<typeof buildUser> => Boolean(i));
 
       return buildShift(
         row.shift,
         row.course,
         cancelledByUser,
         instructors,
-        Array.from(roster.values()),
+        roster,
         coverageForShift,
       );
     });
@@ -558,26 +519,49 @@ export class ShiftService implements IShiftService {
       attendanceStatus = AttendanceStatus.excused;
     }
 
-    const [attendance] = await this.db
-      .insert(shiftAttendance)
-      .values({
-        shiftId: shiftId,
-        userId: volunteerId,
-        status: attendanceStatus,
-        checkedInAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [shiftAttendance.shiftId, shiftAttendance.userId],
-        set: {
+    const [attendance] = await this.db.transaction(async (tx) => {
+      // Serialize early attendance with schedule removal, which locks this row
+      // before checking attendance and deleting base assignments.
+      await tx
+        .select({ id: shift.id })
+        .from(shift)
+        .where(eq(shift.id, shiftId))
+        .for("update");
+      const [assigned] = await tx
+        .select({ id: shift.id })
+        .from(shift)
+        .where(
+          and(
+            eq(shift.id, shiftId),
+            isVolunteerEffectivelyAssignedToShiftSql(shift.id, volunteerId),
+          ),
+        );
+      if (!assigned)
+        throw new NeuronError(
+          "Volunteer is not assigned to this shift",
+          NeuronErrorCodes.FORBIDDEN,
+        );
+      return tx
+        .insert(shiftAttendance)
+        .values({
+          shiftId: shiftId,
+          userId: volunteerId,
           status: attendanceStatus,
           checkedInAt: now,
-        },
-      })
-      .returning({
-        status: shiftAttendance.status,
-        checkedInAt: shiftAttendance.checkedInAt,
-        minutesWorked: shiftAttendance.minutesWorked,
-      });
+        })
+        .onConflictDoUpdate({
+          target: [shiftAttendance.shiftId, shiftAttendance.userId],
+          set: {
+            status: attendanceStatus,
+            checkedInAt: now,
+          },
+        })
+        .returning({
+          status: shiftAttendance.status,
+          checkedInAt: shiftAttendance.checkedInAt,
+          minutesWorked: shiftAttendance.minutesWorked,
+        });
+    });
 
     return {
       shiftId,
@@ -711,7 +695,11 @@ export class ShiftService implements IShiftService {
     input: CreateShiftInput,
     tx?: Transaction,
   ): Promise<string> {
-    const transaction = tx ?? this.db;
+    if (!tx)
+      return this.db.transaction((transaction) =>
+        this.createShift(input, transaction),
+      );
+    const transaction = tx;
 
     const scheduleRow = await transaction.query.schedule.findFirst({
       where: eq(schedule.id, input.scheduleId),
@@ -743,6 +731,12 @@ export class ShiftService implements IShiftService {
       .returning({ id: shift.id });
 
     const shiftId = row!.id;
+
+    await snapshotScheduleAssignmentsToShift(
+      transaction,
+      shiftId,
+      input.scheduleId,
+    );
 
     // Schedule shift reminder (1 hour before start)
     const reminderAt = new Date(startAt.getTime() - 60 * 60 * 1000);
@@ -847,22 +841,22 @@ export class ShiftService implements IShiftService {
     });
   }
 
-  async assertValidShift(volunteerId: string, shiftId: string): Promise<void> {
-    const [shiftRow] = await this.db
+  async assertValidShift(
+    volunteerId: string,
+    shiftId: string,
+    tx?: Transaction,
+  ): Promise<void> {
+    const transaction = tx ?? this.db;
+    const [shiftRow] = await transaction
       .select({
         shiftId: shift.id,
         startAt: shift.startAt,
-        volunteerId: volunteerToSchedule.volunteerUserId,
       })
       .from(shift)
-      .innerJoin(
-        volunteerToSchedule,
-        eq(shift.scheduleId, volunteerToSchedule.scheduleId),
-      )
       .where(
         and(
           eq(shift.id, shiftId),
-          eq(volunteerToSchedule.volunteerUserId, volunteerId),
+          isVolunteerEffectivelyAssignedToShiftSql(shift.id, volunteerId),
         ),
       )
       .limit(1);

@@ -1,5 +1,5 @@
 import { eq, and, inArray } from "drizzle-orm";
-import type { Drizzle } from "@/server/db";
+import type { Drizzle, Transaction } from "@/server/db";
 import { shift, coverageRequest, shiftAttendance } from "@/server/db/schema";
 import { course } from "@/server/db/schema/course";
 import { volunteerToSchedule } from "@/server/db/schema/schedule";
@@ -22,68 +22,80 @@ export const checkShiftNotificationsJob: RegisteredJob<CheckShiftNotificationsPa
       retryDelay: 60,
       retryBackoff: true,
     },
-    handler: async (payload, { cradle }) => {
+    handler: async (payload, { cradle, isCancelled }) => {
       const { shiftId, checkType } = payload;
       const { db, notificationEventService } = cradle;
 
-      // Fetch shift details
-      const [shiftRow] = await db
-        .select({
-          id: shift.id,
-          startAt: shift.startAt,
-          endAt: shift.endAt,
-          canceled: shift.canceled,
-          scheduleId: shift.scheduleId,
-          courseId: shift.courseId,
-          className: course.name,
-        })
-        .from(shift)
-        .innerJoin(course, eq(course.id, shift.courseId))
-        .where(eq(shift.id, shiftId));
+      if (await isCancelled?.()) return;
 
-      if (!shiftRow || shiftRow.canceled) return;
+      await db.transaction(async (tx) => {
+        // Fetch shift details
+        const [shiftRow] = await tx
+          .select({
+            id: shift.id,
+            startAt: shift.startAt,
+            endAt: shift.endAt,
+            canceled: shift.canceled,
+            scheduleId: shift.scheduleId,
+            courseId: shift.courseId,
+            className: course.name,
+          })
+          .from(shift)
+          .innerJoin(course, eq(course.id, shift.courseId))
+          .where(eq(shift.id, shiftId));
 
-      // Get effective volunteer roster (accounting for coverage swaps)
-      const effectiveVolunteers = await getEffectiveVolunteers(
-        db,
-        shiftRow.scheduleId,
-        shiftId,
-      );
+        if (!shiftRow || shiftRow.canceled) return;
 
-      if (effectiveVolunteers.length === 0) return;
-
-      if (checkType === "reminder") {
-        await notificationEventService.notifyShiftReminder({
+        // Get effective volunteer roster (accounting for coverage swaps)
+        const effectiveVolunteers = await getEffectiveVolunteers(
+          tx,
+          shiftRow.scheduleId,
           shiftId,
-          className: shiftRow.className,
-          shiftDate: formatDate(shiftRow.startAt),
-          shiftTime: formatTime(shiftRow.startAt),
-          volunteerUserIds: effectiveVolunteers.map((v) => v.userId),
-        });
-      } else {
-        // no-checkin: find volunteers who have no attendance record
-        const attendanceRecords = await db
-          .select({ userId: shiftAttendance.userId })
-          .from(shiftAttendance)
-          .where(eq(shiftAttendance.shiftId, shiftId));
-
-        const checkedInUserIds = new Set(
-          attendanceRecords.map((a) => a.userId),
-        );
-        const missingVolunteers = effectiveVolunteers.filter(
-          (v) => !checkedInUserIds.has(v.userId),
         );
 
-        if (missingVolunteers.length === 0) return;
+        if (effectiveVolunteers.length === 0) return;
 
-        await notificationEventService.notifyShiftNoCheckin({
-          shiftId,
-          className: shiftRow.className,
-          shiftDate: formatDate(shiftRow.startAt),
-          volunteerNames: missingVolunteers.map((v) => v.name).join(", "),
-          volunteerCount: missingVolunteers.length,
-        });
-      }
+        if (await isCancelled?.()) return;
+
+        if (checkType === "reminder") {
+          await notificationEventService.notifyShiftReminder(
+            {
+              shiftId,
+              className: shiftRow.className,
+              shiftDate: formatDate(shiftRow.startAt),
+              shiftTime: formatTime(shiftRow.startAt),
+              volunteerUserIds: effectiveVolunteers.map((v) => v.userId),
+            },
+            tx,
+          );
+        } else {
+          // no-checkin: find volunteers who have no attendance record
+          const attendanceRecords = await tx
+            .select({ userId: shiftAttendance.userId })
+            .from(shiftAttendance)
+            .where(eq(shiftAttendance.shiftId, shiftId));
+
+          const checkedInUserIds = new Set(
+            attendanceRecords.map((a) => a.userId),
+          );
+          const missingVolunteers = effectiveVolunteers.filter(
+            (v) => !checkedInUserIds.has(v.userId),
+          );
+
+          if (missingVolunteers.length === 0) return;
+
+          await notificationEventService.notifyShiftNoCheckin(
+            {
+              shiftId,
+              className: shiftRow.className,
+              shiftDate: formatDate(shiftRow.startAt),
+              volunteerNames: missingVolunteers.map((v) => v.name).join(", "),
+              volunteerCount: missingVolunteers.length,
+            },
+            tx,
+          );
+        }
+      });
     },
   };
 
@@ -92,7 +104,7 @@ export const checkShiftNotificationsJob: RegisteredJob<CheckShiftNotificationsPa
  * Original volunteers with resolved coverage are replaced by covering volunteers.
  */
 async function getEffectiveVolunteers(
-  db: Drizzle,
+  db: Drizzle | Transaction,
   scheduleId: string,
   shiftId: string,
 ) {
@@ -148,7 +160,12 @@ async function getEffectiveVolunteers(
         lastName: user.lastName,
       })
       .from(user)
-      .where(and(inArray(user.id, coveringUserIds), eq(user.status, UserStatus.active)));
+      .where(
+        and(
+          inArray(user.id, coveringUserIds),
+          eq(user.status, UserStatus.active),
+        ),
+      );
 
     for (const u of coveringUsers) {
       effectiveVolunteers.push({

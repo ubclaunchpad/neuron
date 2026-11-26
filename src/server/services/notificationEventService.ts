@@ -1,4 +1,4 @@
-import type { Drizzle } from "@/server/db";
+import type { Drizzle, Transaction } from "@/server/db";
 import type { INotificationService } from "@/server/services/notificationService";
 import {
   schedule,
@@ -8,7 +8,7 @@ import {
 import { shift } from "@/server/db/schema/shift";
 import { user } from "@/server/db/schema/user";
 import { UserStatus } from "@/models/interfaces";
-import { and, eq, inArray, lt, gt, notInArray } from "drizzle-orm";
+import { and, eq, inArray, lt, gt } from "drizzle-orm";
 
 interface ShiftCancelledParams {
   shiftId: string;
@@ -61,11 +61,30 @@ interface CoverageFilledParams {
 }
 
 export interface INotificationEventService {
-  notifyShiftCancelled(params: ShiftCancelledParams): Promise<void>;
-  notifyCoverageRequested(params: CoverageRequestedParams): Promise<void>;
-  notifyShiftReminder(params: ShiftReminderParams): Promise<void>;
-  notifyShiftNoCheckin(params: ShiftNoCheckinParams): Promise<void>;
-  notifyCoverageFilled(params: CoverageFilledParams): Promise<void>;
+  notifyShiftCancelled(
+    params: ShiftCancelledParams,
+    tx?: Transaction,
+  ): Promise<void>;
+  notifyCoverageRequested(
+    params: CoverageRequestedParams,
+    tx?: Transaction,
+  ): Promise<void>;
+  cancelCoverageRequested(
+    coverageRequestId: string,
+    tx: Transaction,
+  ): Promise<void>;
+  notifyShiftReminder(
+    params: ShiftReminderParams,
+    tx?: Transaction,
+  ): Promise<void>;
+  notifyShiftNoCheckin(
+    params: ShiftNoCheckinParams,
+    tx?: Transaction,
+  ): Promise<void>;
+  notifyCoverageFilled(
+    params: CoverageFilledParams,
+    tx?: Transaction,
+  ): Promise<void>;
 }
 
 export class NotificationEventService implements INotificationEventService {
@@ -83,7 +102,10 @@ export class NotificationEventService implements INotificationEventService {
     this.db = db;
   }
 
-  async notifyShiftCancelled(params: ShiftCancelledParams): Promise<void> {
+  async notifyShiftCancelled(
+    params: ShiftCancelledParams,
+    tx?: Transaction,
+  ): Promise<void> {
     await this.notificationService.notify({
       type: "shift.cancelled",
       audience: [
@@ -99,14 +121,19 @@ export class NotificationEventService implements INotificationEventService {
       },
       actorId: params.cancelledByUserId,
       idempotencyKey: `shift-cancelled-${params.shiftId}`,
+      transaction: tx,
     });
   }
 
   async notifyCoverageRequested(
     params: CoverageRequestedParams,
+    tx?: Transaction,
   ): Promise<void> {
     // 1. Notify admins + class instructors (with reason)
-    const instructorIds = await this.getClassInstructorUserIds(params.classId);
+    const instructorIds = await this.getClassInstructorUserIds(
+      params.classId,
+      tx,
+    );
 
     await this.notificationService.notify({
       type: "coverage.requested",
@@ -127,6 +154,7 @@ export class NotificationEventService implements INotificationEventService {
       actorId: params.requestingVolunteerUserId,
       excludeUserIds: [params.requestingVolunteerUserId],
       idempotencyKey: `coverage-requested-${params.coverageRequestId}`,
+      transaction: tx,
     });
 
     // 2. Notify eligible volunteers (without reason)
@@ -135,6 +163,7 @@ export class NotificationEventService implements INotificationEventService {
       params.shiftStartAt,
       params.shiftEndAt,
       params.requestingVolunteerUserId,
+      tx,
     );
 
     if (eligibleIds.length > 0) {
@@ -149,11 +178,29 @@ export class NotificationEventService implements INotificationEventService {
         },
         actorId: params.requestingVolunteerUserId,
         idempotencyKey: `coverage-available-${params.coverageRequestId}`,
+        transaction: tx,
       });
     }
   }
 
-  async notifyShiftReminder(params: ShiftReminderParams): Promise<void> {
+  async cancelCoverageRequested(
+    coverageRequestId: string,
+    tx: Transaction,
+  ): Promise<void> {
+    await this.notificationService.cancelPending(
+      `coverage-requested-${coverageRequestId}`,
+      tx,
+    );
+    await this.notificationService.cancelPending(
+      `coverage-available-${coverageRequestId}`,
+      tx,
+    );
+  }
+
+  async notifyShiftReminder(
+    params: ShiftReminderParams,
+    tx?: Transaction,
+  ): Promise<void> {
     if (params.volunteerUserIds.length === 0) return;
 
     await this.notificationService.notify({
@@ -166,10 +213,14 @@ export class NotificationEventService implements INotificationEventService {
         shiftTime: params.shiftTime,
       },
       idempotencyKey: `shift-reminder-${params.shiftId}`,
+      transaction: tx,
     });
   }
 
-  async notifyShiftNoCheckin(params: ShiftNoCheckinParams): Promise<void> {
+  async notifyShiftNoCheckin(
+    params: ShiftNoCheckinParams,
+    tx?: Transaction,
+  ): Promise<void> {
     if (params.volunteerCount === 0) return;
 
     await this.notificationService.notify({
@@ -183,12 +234,20 @@ export class NotificationEventService implements INotificationEventService {
         volunteerCount: params.volunteerCount,
       },
       idempotencyKey: `shift-no-checkin-${params.shiftId}`,
+      transaction: tx,
     });
   }
 
-  async notifyCoverageFilled(params: CoverageFilledParams): Promise<void> {
+  async notifyCoverageFilled(
+    params: CoverageFilledParams,
+    tx?: Transaction,
+  ): Promise<void> {
     // 1. Notify admins + class instructors
-    const instructorIds = await this.getClassInstructorUserIds(params.classId);
+    const instructorIds = await this.getClassInstructorUserIds(
+      params.classId,
+      tx,
+    );
+    const fulfillmentKey = `${params.coverageRequestId}:${params.requestingVolunteerUserId}:${params.coveredByVolunteerUserId}`;
 
     await this.notificationService.notify({
       type: "coverage.filled",
@@ -211,7 +270,8 @@ export class NotificationEventService implements INotificationEventService {
         params.coveredByVolunteerUserId,
         params.requestingVolunteerUserId,
       ],
-      idempotencyKey: `coverage-filled-${params.coverageRequestId}`,
+      idempotencyKey: `coverage-filled-${fulfillmentKey}`,
+      transaction: tx,
     });
 
     // 2. Notify requesting volunteer with personal message
@@ -226,15 +286,20 @@ export class NotificationEventService implements INotificationEventService {
         coveredByVolunteerName: params.coveredByVolunteerName,
       },
       actorId: params.coveredByVolunteerUserId,
-      idempotencyKey: `coverage-filled-personal-${params.coverageRequestId}`,
+      idempotencyKey: `coverage-filled-personal-${fulfillmentKey}`,
+      transaction: tx,
     });
   }
 
   /**
    * Get instructor user IDs for all schedules of a class.
    */
-  private async getClassInstructorUserIds(classId: string): Promise<string[]> {
-    const schedules = await this.db
+  private async getClassInstructorUserIds(
+    classId: string,
+    tx?: Transaction,
+  ): Promise<string[]> {
+    const db = tx ?? this.db;
+    const schedules = await db
       .select({ id: schedule.id })
       .from(schedule)
       .where(eq(schedule.courseId, classId));
@@ -242,7 +307,7 @@ export class NotificationEventService implements INotificationEventService {
     const scheduleIds = schedules.map((s) => s.id);
     if (scheduleIds.length === 0) return [];
 
-    const instructors = await this.db
+    const instructors = await db
       .select({ userId: instructorToSchedule.instructorUserId })
       .from(instructorToSchedule)
       .innerJoin(user, eq(user.id, instructorToSchedule.instructorUserId))
@@ -265,9 +330,11 @@ export class NotificationEventService implements INotificationEventService {
     shiftStartAt: Date,
     shiftEndAt: Date,
     excludeUserId: string,
+    tx?: Transaction,
   ): Promise<string[]> {
+    const db = tx ?? this.db;
     // Get all schedules for the class
-    const schedules = await this.db
+    const schedules = await db
       .select({ id: schedule.id })
       .from(schedule)
       .where(eq(schedule.courseId, classId));
@@ -276,7 +343,7 @@ export class NotificationEventService implements INotificationEventService {
     if (scheduleIds.length === 0) return [];
 
     // Get all volunteers for the class
-    const volunteers = await this.db
+    const volunteers = await db
       .select({ userId: volunteerToSchedule.volunteerUserId })
       .from(volunteerToSchedule)
       .where(inArray(volunteerToSchedule.scheduleId, scheduleIds));
@@ -289,7 +356,7 @@ export class NotificationEventService implements INotificationEventService {
 
     // Find volunteers with a conflicting shift (overlapping time window)
     // Two shifts overlap when: shift.startAt < shiftEndAt AND shift.endAt > shiftStartAt
-    const conflicting = await this.db
+    const conflicting = await db
       .selectDistinct({ userId: volunteerToSchedule.volunteerUserId })
       .from(volunteerToSchedule)
       .innerJoin(shift, eq(shift.scheduleId, volunteerToSchedule.scheduleId))

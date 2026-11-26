@@ -18,7 +18,8 @@ export const processNotificationJob: RegisteredJob<ProcessNotificationPayload> =
       retryDelay: 30,
       retryBackoff: true,
     },
-    handler: async (payload, { cradle }) => {
+    handler: async (payload, { cradle, isCancelled }) => {
+      if (await isCancelled?.()) return;
       await cradle.notificationService.processNotification({
         type: payload.type,
         audience: payload.audience,

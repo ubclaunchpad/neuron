@@ -762,8 +762,8 @@ describe("ClassService", () => {
         expect(mockImageService.storedImages.has(oldImageKey)).toBe(false);
         expect(mockImageService.storedImages.has(newImageKey)).toBe(true);
       } finally {
-        await realJobService.stop().catch(() => {});
-        await e2eScope.dispose().catch(() => {});
+        await realJobService.stop().catch(() => undefined);
+        await e2eScope.dispose().catch(() => undefined);
         await scope.db.execute(sql`DROP SCHEMA IF EXISTS pgboss CASCADE`);
       }
     });

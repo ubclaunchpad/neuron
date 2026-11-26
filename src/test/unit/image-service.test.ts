@@ -35,7 +35,7 @@ describe("ImageService bucket readiness recovery", () => {
   });
 
   it("retries bucket initialization after a transient failure and succeeds on retry", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     bucketExistsMock
       .mockRejectedValueOnce(new Error("MinIO starting up"))
       .mockResolvedValueOnce(true);
@@ -61,7 +61,7 @@ describe("ImageService bucket readiness recovery", () => {
   });
 
   it("re-applies bucket policy on retry if makeBucket succeeded before setBucketPolicy failed", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     bucketExistsMock.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     makeBucketMock.mockResolvedValueOnce(undefined);
     setBucketPolicyMock

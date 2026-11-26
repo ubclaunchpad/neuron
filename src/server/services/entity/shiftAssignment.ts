@@ -17,6 +17,7 @@ import {
   aliasedTable,
   and,
   eq,
+  exists,
   gt,
   inArray,
   isNotNull,
@@ -35,17 +36,20 @@ import {
  *   `shift_instructor_assignment`) plus resolved `coverage_request` transfers.
  *   Shifts are already materialized on publish; snapshotting avoids surrogate PKs
  *   and non-overlapping interval constraints on schedule join tables, handles
- *   re-assignments and backdated shifts cleanly, and keeps `coverage_request` as
- *   the single source of truth for substitutions without dual-write drift.
+ *   backdated shifts, and keeps `coverage_request` as the substitution source.
  * - Migration backfill (`0013_add_shift_assignments.sql`) reconstructs prior
  *   shifts from current schedule membership, existing `shift_attendance` rows,
  *   and resolved `coverage_request` origins; pre-migration schedule removals
  *   without attendance or coverage history cannot be reconstructed retroactively.
+ *   Original base slots and later schedule additions can be indistinguishable;
+ *   request creation order is only a backfill heuristic, not fulfillment order.
  * - Schedule edits sync only future, non-canceled shifts (`start_at > now AND
  *   NOT canceled`). Base slots on future shifts are retained on removal only
  *   when the volunteer already has `shift_attendance` (early check-in) or when
  *   removing the base slot would drop their net slot count below 0 (their base
  *   slot was already transferred to a covering volunteer).
+ *   Re-adding a released volunteer does not grant a second base slot or revoke
+ *   their resolved substitute: the existing transfer still applies to that shift.
  * - Effective membership rule (net slot conservation):
  *     net(shift, volunteer) =
  *       base(shift, volunteer)
@@ -69,7 +73,7 @@ export type ResolvedCoverageEdge = {
 export type EffectiveShiftVolunteerAssignment = {
   shiftId: string;
   volunteerUserId: string;
-  /** Requester whose slot this volunteer is covering, when assigned via coverage. */
+  /** Requester for remaining net incoming coverage; null for a base-only net slot. */
   coveringForVolunteerUserId: string | null;
 };
 
@@ -145,7 +149,9 @@ export function resolveEffectiveShiftVolunteers(
         shiftId,
         volunteerUserId,
         coveringForVolunteerUserId:
-          latestIncoming?.requestingVolunteerUserId ?? null,
+          incoming.length > outgoingCount
+            ? (latestIncoming?.requestingVolunteerUserId ?? null)
+            : null,
       });
     }
   }
@@ -185,6 +191,24 @@ export function resolveEffectiveVolunteerAssignmentsByShift(
   return result;
 }
 
+// Net transfers, shared by visibility checks and base-slot removal guards.
+function resolvedCoverageBalanceSql(
+  shiftIdColumn: SQLWrapper,
+  volunteerUserId: string | SQLWrapper,
+): SQL<number> {
+  const cr = aliasedTable(coverageRequest, "cr_balance");
+  return sql<number>`(
+    SELECT COALESCE(SUM(
+      CASE WHEN ${cr.coveredByVolunteerUserId} = ${volunteerUserId} THEN 1 ELSE 0 END
+      - CASE WHEN ${cr.requestingVolunteerUserId} = ${volunteerUserId} THEN 1 ELSE 0 END
+    ), 0)::int
+    FROM ${coverageRequest} AS ${cr}
+    WHERE ${cr.shiftId} = ${shiftIdColumn}
+      AND ${cr.status} = ${CoverageStatus.resolved}
+      AND ${cr.coveredByVolunteerUserId} IS NOT NULL
+  )`;
+}
+
 /**
  * SQL predicate equivalent to `resolveEffectiveShiftVolunteers` (`net > 0`).
  */
@@ -193,8 +217,6 @@ export function isVolunteerEffectivelyAssignedToShiftSql(
   volunteerUserId: string | SQLWrapper,
 ): SQL<boolean> {
   const sva = aliasedTable(shiftVolunteerAssignment, "sva");
-  const crIn = aliasedTable(coverageRequest, "cr_in");
-  const crOut = aliasedTable(coverageRequest, "cr_out");
 
   return sql<boolean>`(
     (CASE WHEN EXISTS (
@@ -202,19 +224,7 @@ export function isVolunteerEffectivelyAssignedToShiftSql(
       WHERE ${sva.shiftId} = ${shiftIdColumn}
         AND ${sva.volunteerUserId} = ${volunteerUserId}
     ) THEN 1 ELSE 0 END)
-    + (
-      SELECT COUNT(*)::int FROM ${coverageRequest} AS ${crIn}
-      WHERE ${crIn.shiftId} = ${shiftIdColumn}
-        AND ${crIn.coveredByVolunteerUserId} = ${volunteerUserId}
-        AND ${crIn.status} = ${CoverageStatus.resolved}
-    )
-    - (
-      SELECT COUNT(*)::int FROM ${coverageRequest} AS ${crOut}
-      WHERE ${crOut.shiftId} = ${shiftIdColumn}
-        AND ${crOut.requestingVolunteerUserId} = ${volunteerUserId}
-        AND ${crOut.status} = ${CoverageStatus.resolved}
-        AND ${crOut.coveredByVolunteerUserId} IS NOT NULL
-    )
+    + ${resolvedCoverageBalanceSql(shiftIdColumn, volunteerUserId)}
   ) > 0`;
 }
 
@@ -345,28 +355,6 @@ export async function getShiftInstructorAssignmentsForShifts(
 }
 
 /**
- * Check whether a volunteer is effectively assigned to a shift.
- */
-export async function isVolunteerEffectivelyAssignedToShift(
-  db: ShiftAssignmentDb,
-  shiftId: string,
-  volunteerUserId: string,
-): Promise<boolean> {
-  const [match] = await db
-    .select({ id: shift.id })
-    .from(shift)
-    .where(
-      and(
-        eq(shift.id, shiftId),
-        isVolunteerEffectivelyAssignedToShiftSql(shift.id, volunteerUserId),
-      ),
-    )
-    .limit(1);
-
-  return Boolean(match);
-}
-
-/**
  * Load effective volunteers for a single shift enriched with basic user info.
  * Used by reminder and no-checkin notification jobs.
  */
@@ -463,37 +451,29 @@ export async function getConflictingEffectiveVolunteerIds(
   },
 ): Promise<Set<string>> {
   const { volunteerUserIds, startAt, endAt } = params;
-  const candidateSet = new Set(volunteerUserIds);
-  if (candidateSet.size === 0) return new Set();
-
-  const overlappingShifts = await db
-    .select({ id: shift.id })
-    .from(shift)
+  if (volunteerUserIds.length === 0) return new Set();
+  const conflicting = await db
+    .select({ id: user.id })
+    .from(user)
     .where(
       and(
-        lt(shift.startAt, endAt),
-        gt(shift.endAt, startAt),
-        eq(shift.canceled, false),
+        inArray(user.id, volunteerUserIds),
+        exists(
+          db
+            .select({ id: shift.id })
+            .from(shift)
+            .where(
+              and(
+                lt(shift.startAt, endAt),
+                gt(shift.endAt, startAt),
+                eq(shift.canceled, false),
+                isVolunteerEffectivelyAssignedToShiftSql(shift.id, user.id),
+              ),
+            ),
+        ),
       ),
     );
-
-  if (overlappingShifts.length === 0) return new Set();
-
-  const effectiveByShift = await getEffectiveVolunteerAssignmentsForShifts(
-    db,
-    overlappingShifts.map((s) => s.id),
-  );
-
-  const conflicting = new Set<string>();
-  for (const assignments of effectiveByShift.values()) {
-    for (const assignment of assignments) {
-      if (candidateSet.has(assignment.volunteerUserId)) {
-        conflicting.add(assignment.volunteerUserId);
-      }
-    }
-  }
-
-  return conflicting;
+  return new Set(conflicting.map((row) => row.id));
 }
 
 /**
@@ -602,9 +582,6 @@ export async function syncScheduleAssignmentsToFutureShifts(
   }
 
   if (removedVolunteers.length > 0) {
-    const crOut = aliasedTable(coverageRequest, "cr_out");
-    const crIn = aliasedTable(coverageRequest, "cr_in");
-
     // Preserve base slots only when the volunteer already checked in early or
     // removing the base slot would drop net below 0 (outgoing resolved > incoming resolved).
     const deletedRows = await db
@@ -618,18 +595,10 @@ export async function syncScheduleAssignmentsToFutureShifts(
             WHERE ${shiftAttendance.shiftId} = ${shiftVolunteerAssignment.shiftId}
               AND ${shiftAttendance.userId} = ${shiftVolunteerAssignment.volunteerUserId}
           )`,
-          sql`(
-            SELECT COUNT(*)::int FROM ${coverageRequest} AS ${crOut}
-            WHERE ${crOut.shiftId} = ${shiftVolunteerAssignment.shiftId}
-              AND ${crOut.requestingVolunteerUserId} = ${shiftVolunteerAssignment.volunteerUserId}
-              AND ${crOut.status} = ${CoverageStatus.resolved}
-              AND ${crOut.coveredByVolunteerUserId} IS NOT NULL
-          ) <= (
-            SELECT COUNT(*)::int FROM ${coverageRequest} AS ${crIn}
-            WHERE ${crIn.shiftId} = ${shiftVolunteerAssignment.shiftId}
-              AND ${crIn.coveredByVolunteerUserId} = ${shiftVolunteerAssignment.volunteerUserId}
-              AND ${crIn.status} = ${CoverageStatus.resolved}
-          )`,
+          sql`${resolvedCoverageBalanceSql(
+            shiftVolunteerAssignment.shiftId,
+            shiftVolunteerAssignment.volunteerUserId,
+          )} >= 0`,
         ),
       )
       .returning({

@@ -83,7 +83,7 @@ describe("resolveEffectiveShiftVolunteers", () => {
     ]);
   });
 
-  it("handles round-trip substitutions (v1 -> v2 -> v1)", () => {
+  it("restores the base member after round-trip substitutions (v1 -> v2 -> v1)", () => {
     const coverages: ResolvedCoverageEdge[] = [
       {
         id: "cr-1",
@@ -107,8 +107,32 @@ describe("resolveEffectiveShiftVolunteers", () => {
       {
         shiftId,
         volunteerUserId: "v1",
-        coveringForVolunteerUserId: "v2",
+        coveringForVolunteerUserId: null,
       },
+    ]);
+  });
+  it("does not label a new base assignment as coverage already passed on", () => {
+    const edges: ResolvedCoverageEdge[] = [
+      {
+        id: "1",
+        shiftId,
+        requestedAt: new Date("2026-01-01"),
+        requestingVolunteerUserId: "v2",
+        coveredByVolunteerUserId: "v1",
+      },
+      {
+        id: "2",
+        shiftId,
+        requestedAt: new Date("2026-01-02"),
+        requestingVolunteerUserId: "v1",
+        coveredByVolunteerUserId: "v3",
+      },
+    ];
+    expect(
+      resolveEffectiveShiftVolunteers(shiftId, ["v1", "v2"], edges),
+    ).toEqual([
+      { shiftId, volunteerUserId: "v1", coveringForVolunteerUserId: null },
+      { shiftId, volunteerUserId: "v3", coveringForVolunteerUserId: "v1" },
     ]);
   });
 });

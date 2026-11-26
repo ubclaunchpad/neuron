@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach, beforeEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { randomUUID } from "crypto";
 import { readFileSync } from "node:fs";
 import { Temporal } from "@js-temporal/polyfill";
@@ -9,6 +9,7 @@ import {
   schedule,
   shift,
   shiftVolunteerAssignment,
+  shiftAttendance,
   term,
   user,
   volunteer,
@@ -175,6 +176,140 @@ describe("Effective shift assignments and historical preservation", () => {
 
     return { classId, schedules: scheduleRows, shifts: shiftRows };
   }
+
+  async function runShiftNotificationJob(
+    shiftId: string,
+    checkType: "reminder" | "no-checkin",
+    mockEvents: MockNotificationEventService,
+  ) {
+    await checkShiftNotificationsJob.handler({ shiftId, checkType }, {
+      cradle: {
+        ...scope.container.cradle,
+        notificationEventService: mockEvents,
+      },
+    } as never);
+  }
+
+  async function getCancellationRecipients(shiftId: string) {
+    const service = new NotificationService({
+      db: scope.db,
+      jobService: new MockJobService(),
+      preferenceService: new MockPreferenceService(),
+    });
+    await service.processNotification({
+      type: "shift.cancelled",
+      audience: { kind: "shift", shiftId },
+      context: {
+        shiftId,
+        className: "Test Class",
+        shiftDate: futureDate1,
+        cancelReason: "Weather",
+        cancelledByName: "Admin Tester",
+      },
+      idempotencyKey: `test-cancel-${shiftId}`,
+    });
+    const rows = await scope.db
+      .select({ id: notification.id, userId: notification.userId })
+      .from(notification)
+      .where(eq(notification.sourceId, shiftId));
+    createdNotificationIds.push(...rows.map((row) => row.id));
+    return rows;
+  }
+
+  it("rolls back a standalone shift if snapshot creation fails", async () => {
+    const termId = await createPublishedTerm();
+    const v1 = await createTestUser("volunteer", "Original");
+    const { schedules, shifts } = await createPublishedClass({
+      termId,
+      schedules: [
+        {
+          startTime: "10:00:00",
+          endTime: "11:00:00",
+          dates: [futureDate1],
+          volunteerUserIds: [v1],
+          instructorUserIds: [],
+        },
+      ],
+    });
+    // Fail the new assignment insert after the shift has already been inserted.
+    await scope.db
+      .execute(sql`CREATE FUNCTION fail_n04_snapshot() RETURNS trigger
+      LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'snapshot failed'; END $$`);
+    try {
+      await scope.db.execute(sql`CREATE TRIGGER fail_n04_snapshot
+        BEFORE INSERT ON shift_volunteer_assignment FOR EACH ROW
+        EXECUTE FUNCTION fail_n04_snapshot()`);
+      await expect(
+        shiftService.createShift({
+          scheduleId: schedules[0]!.id,
+          date: futureDate2,
+          startAt: shifts[0]!.startAt.toISOString(),
+          endAt: shifts[0]!.endAt.toISOString(),
+        }),
+      ).rejects.toThrow();
+      const remaining = await scope.db
+        .select({ id: shift.id })
+        .from(shift)
+        .where(eq(shift.scheduleId, schedules[0]!.id));
+      expect(remaining.map((row) => row.id)).toEqual([shifts[0]!.id]);
+    } finally {
+      await scope.db.execute(sql`DROP FUNCTION fail_n04_snapshot() CASCADE`);
+    }
+  });
+
+  it("rechecks assignment if a schedule edit wins the early check-in race", async () => {
+    const adminId = await createTestUser("admin", "Admin");
+    scope.mockSession.setAsAdmin({ id: adminId });
+    const v1 = await createTestUser("volunteer", "Original");
+    const termId = await createPublishedTerm();
+    const { classId, schedules, shifts } = await createPublishedClass({
+      termId,
+      schedules: [
+        {
+          startTime: "10:00:00",
+          endTime: "11:00:00",
+          dates: [futureDate1],
+          volunteerUserIds: [v1],
+          instructorUserIds: [],
+        },
+      ],
+    });
+    const transaction = scope.db.transaction.bind(scope.db);
+    // The initial roster read succeeds, then the schedule edit commits before
+    // check-in acquires its shift lock. This deterministically exercises the race.
+    const spy = vi
+      .spyOn(scope.db, "transaction")
+      .mockImplementationOnce(async (callback) => {
+        await classService.updateClass({
+          id: classId,
+          addedSchedules: [],
+          deletedSchedules: [],
+          updatedSchedules: [
+            {
+              id: schedules[0]!.id,
+              addedVolunteerUserIds: [],
+              removedVolunteerUserIds: [v1],
+              addedInstructorUserIds: [],
+              removedInstructorUserIds: [],
+            },
+          ],
+        });
+        return transaction(callback);
+      });
+    try {
+      await expect(shiftService.checkIn(shifts[0]!.id, v1)).rejects.toThrow(
+        "Volunteer is not assigned to this shift",
+      );
+      expect(
+        await scope.db
+          .select()
+          .from(shiftAttendance)
+          .where(eq(shiftAttendance.shiftId, shifts[0]!.id)),
+      ).toEqual([]);
+    } finally {
+      spy.mockRestore();
+    }
+  });
 
   describe("historical assignment edits", () => {
     it("backfills coverage origins without double-counting covering volunteers or losing round trips", async () => {
@@ -369,15 +504,7 @@ describe("Effective shift assignments and historical preservation", () => {
 
       // No-checkin job on past shift sees v1 already checked in and does not flag v2.
       const mockEvents = new MockNotificationEventService();
-      await checkShiftNotificationsJob.handler(
-        { shiftId: pastShift.id, checkType: "no-checkin" },
-        {
-          cradle: {
-            ...scope.container.cradle,
-            notificationEventService: mockEvents,
-          },
-        } as never,
-      );
+      await runShiftNotificationJob(pastShift.id, "no-checkin", mockEvents);
       expect(mockEvents.calls).toHaveLength(0);
 
       // assertValidShift rejects removed v1 and accepts added v2 on the future shift.
@@ -461,6 +588,28 @@ describe("Effective shift assignments and historical preservation", () => {
       expect(
         resolvedShiftView.volunteers.find((v) => v.id === v3)?.coveringFor?.id,
       ).toBe(v1);
+      // Re-adding the schedule member preserves their accepted substitute on
+      // this occurrence rather than creating a second base slot.
+      await classService.updateClass({
+        id: classId,
+        addedSchedules: [],
+        deletedSchedules: [],
+        updatedSchedules: [
+          {
+            id: scheduleId,
+            addedVolunteerUserIds: [v1],
+            removedVolunteerUserIds: [],
+            addedInstructorUserIds: [],
+            removedInstructorUserIds: [],
+          },
+        ],
+      });
+      const [readded] = await shiftService.getShiftsByIds([
+        shiftWithResolvedCr.id,
+      ]);
+      expect(readded!.volunteers.map((v) => v.id).sort()).toEqual(
+        [v2, v3].sort(),
+      );
     });
 
     it("removes a round-trip volunteer on schedule edit while preserving canceled and checked-in future shifts", async () => {
@@ -604,15 +753,7 @@ describe("Effective shift assignments and historical preservation", () => {
 
       // 3. Reminder job notifies v2 and v3 (not released v1).
       const mockEvents = new MockNotificationEventService();
-      await checkShiftNotificationsJob.handler(
-        { shiftId: targetShift.id, checkType: "reminder" },
-        {
-          cradle: {
-            ...scope.container.cradle,
-            notificationEventService: mockEvents,
-          },
-        } as never,
-      );
+      await runShiftNotificationJob(targetShift.id, "reminder", mockEvents);
       expect(mockEvents.calls).toHaveLength(1);
       expect(mockEvents.calls[0]!.method).toBe("notifyShiftReminder");
       const reminderParams = mockEvents.calls[0]!.params as {
@@ -623,15 +764,7 @@ describe("Effective shift assignments and historical preservation", () => {
       // 4. No-checkin job flags v2 and v3 (not released v1). If v3 checks in, only v2 is flagged.
       mockEvents.clear();
       await shiftService.checkIn(targetShift.id, v3);
-      await checkShiftNotificationsJob.handler(
-        { shiftId: targetShift.id, checkType: "no-checkin" },
-        {
-          cradle: {
-            ...scope.container.cradle,
-            notificationEventService: mockEvents,
-          },
-        } as never,
-      );
+      await runShiftNotificationJob(targetShift.id, "no-checkin", mockEvents);
       expect(mockEvents.calls).toHaveLength(1);
       const noCheckinParams = mockEvents.calls[0]!.params as {
         volunteerCount: number;
@@ -643,29 +776,7 @@ describe("Effective shift assignments and historical preservation", () => {
       expect(noCheckinParams.volunteerNames).not.toContain("Covering");
 
       // 5. Cancellation audience (`{ kind: "shift", shiftId }`) notifies v2, v3, and i1 — NOT released v1.
-      const realNotificationService = new NotificationService({
-        db: scope.db,
-        jobService: new MockJobService(),
-        preferenceService: new MockPreferenceService(),
-      });
-      await realNotificationService.processNotification({
-        type: "shift.cancelled",
-        audience: { kind: "shift", shiftId: targetShift.id },
-        context: {
-          shiftId: targetShift.id,
-          className: "Test Class",
-          shiftDate: "2028-07-15",
-          cancelReason: "Weather",
-          cancelledByName: "Admin Tester",
-        },
-        idempotencyKey: `test-cancel-${targetShift.id}`,
-      });
-
-      const createdNotifs = await scope.db
-        .select({ id: notification.id, userId: notification.userId })
-        .from(notification)
-        .where(eq(notification.sourceId, targetShift.id));
-      createdNotificationIds.push(...createdNotifs.map((n) => n.id));
+      const createdNotifs = await getCancellationRecipients(targetShift.id);
 
       expect(createdNotifs.map((n) => n.userId).sort()).toEqual(
         [i1, v2, v3].sort(),
@@ -729,15 +840,7 @@ describe("Effective shift assignments and historical preservation", () => {
 
       // Reminder job still targets v1.
       const mockEvents = new MockNotificationEventService();
-      await checkShiftNotificationsJob.handler(
-        { shiftId: targetShift.id, checkType: "reminder" },
-        {
-          cradle: {
-            ...scope.container.cradle,
-            notificationEventService: mockEvents,
-          },
-        } as never,
-      );
+      await runShiftNotificationJob(targetShift.id, "reminder", mockEvents);
       expect(mockEvents.calls).toHaveLength(1);
       expect(
         (mockEvents.calls[0]!.params as { volunteerUserIds: string[] })
@@ -745,29 +848,7 @@ describe("Effective shift assignments and historical preservation", () => {
       ).toEqual([v1]);
 
       // Cancellation audience still includes v1 and i1.
-      const realNotificationService = new NotificationService({
-        db: scope.db,
-        jobService: new MockJobService(),
-        preferenceService: new MockPreferenceService(),
-      });
-      await realNotificationService.processNotification({
-        type: "shift.cancelled",
-        audience: { kind: "shift", shiftId: targetShift.id },
-        context: {
-          shiftId: targetShift.id,
-          className: "Test Class",
-          shiftDate: "2028-07-20",
-          cancelReason: "Room unavailable",
-          cancelledByName: "Admin Tester",
-        },
-        idempotencyKey: `test-cancel-withdrawn-${targetShift.id}`,
-      });
-
-      const createdNotifs = await scope.db
-        .select({ id: notification.id, userId: notification.userId })
-        .from(notification)
-        .where(eq(notification.sourceId, targetShift.id));
-      createdNotificationIds.push(...createdNotifs.map((n) => n.id));
+      const createdNotifs = await getCancellationRecipients(targetShift.id);
       expect(createdNotifs.map((n) => n.userId).sort()).toEqual(
         [i1, v1].sort(),
       );
@@ -833,15 +914,7 @@ describe("Effective shift assignments and historical preservation", () => {
 
       // Reminder job notifies only v3
       const mockEvents = new MockNotificationEventService();
-      await checkShiftNotificationsJob.handler(
-        { shiftId: targetShift.id, checkType: "reminder" },
-        {
-          cradle: {
-            ...scope.container.cradle,
-            notificationEventService: mockEvents,
-          },
-        } as never,
-      );
+      await runShiftNotificationJob(targetShift.id, "reminder", mockEvents);
       expect(mockEvents.calls).toHaveLength(1);
       expect(
         (mockEvents.calls[0]!.params as { volunteerUserIds: string[] })
@@ -849,29 +922,7 @@ describe("Effective shift assignments and historical preservation", () => {
       ).toEqual([v3]);
 
       // Cancellation audience notifies only v3 and i1 (not v1 or v2)
-      const realNotificationService = new NotificationService({
-        db: scope.db,
-        jobService: new MockJobService(),
-        preferenceService: new MockPreferenceService(),
-      });
-      await realNotificationService.processNotification({
-        type: "shift.cancelled",
-        audience: { kind: "shift", shiftId: targetShift.id },
-        context: {
-          shiftId: targetShift.id,
-          className: "Chained Class",
-          shiftDate: futureDate1,
-          cancelReason: "Weather",
-          cancelledByName: "Admin Tester",
-        },
-        idempotencyKey: `test-cancel-chain-${targetShift.id}`,
-      });
-
-      const createdNotifs = await scope.db
-        .select({ id: notification.id, userId: notification.userId })
-        .from(notification)
-        .where(eq(notification.sourceId, targetShift.id));
-      createdNotificationIds.push(...createdNotifs.map((n) => n.id));
+      const createdNotifs = await getCancellationRecipients(targetShift.id);
       expect(createdNotifs.map((n) => n.userId).sort()).toEqual(
         [i1, v3].sort(),
       );

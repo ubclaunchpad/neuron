@@ -279,9 +279,6 @@ export class ShiftService implements IShiftService {
         neededVolunteerIds.add(record.coveredByVolunteerUserId);
       }
     }
-    for (const attendance of attendanceRecords) {
-      neededVolunteerIds.add(attendance.userId);
-    }
 
     const neededInstructorIds = [
       ...new Set(Array.from(instructorIdsByShift.values()).flat()),
@@ -522,26 +519,49 @@ export class ShiftService implements IShiftService {
       attendanceStatus = AttendanceStatus.excused;
     }
 
-    const [attendance] = await this.db
-      .insert(shiftAttendance)
-      .values({
-        shiftId: shiftId,
-        userId: volunteerId,
-        status: attendanceStatus,
-        checkedInAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [shiftAttendance.shiftId, shiftAttendance.userId],
-        set: {
+    const [attendance] = await this.db.transaction(async (tx) => {
+      // Serialize early attendance with schedule removal, which locks this row
+      // before checking attendance and deleting base assignments.
+      await tx
+        .select({ id: shift.id })
+        .from(shift)
+        .where(eq(shift.id, shiftId))
+        .for("update");
+      const [assigned] = await tx
+        .select({ id: shift.id })
+        .from(shift)
+        .where(
+          and(
+            eq(shift.id, shiftId),
+            isVolunteerEffectivelyAssignedToShiftSql(shift.id, volunteerId),
+          ),
+        );
+      if (!assigned)
+        throw new NeuronError(
+          "Volunteer is not assigned to this shift",
+          NeuronErrorCodes.FORBIDDEN,
+        );
+      return tx
+        .insert(shiftAttendance)
+        .values({
+          shiftId: shiftId,
+          userId: volunteerId,
           status: attendanceStatus,
           checkedInAt: now,
-        },
-      })
-      .returning({
-        status: shiftAttendance.status,
-        checkedInAt: shiftAttendance.checkedInAt,
-        minutesWorked: shiftAttendance.minutesWorked,
-      });
+        })
+        .onConflictDoUpdate({
+          target: [shiftAttendance.shiftId, shiftAttendance.userId],
+          set: {
+            status: attendanceStatus,
+            checkedInAt: now,
+          },
+        })
+        .returning({
+          status: shiftAttendance.status,
+          checkedInAt: shiftAttendance.checkedInAt,
+          minutesWorked: shiftAttendance.minutesWorked,
+        });
+    });
 
     return {
       shiftId,
@@ -675,7 +695,11 @@ export class ShiftService implements IShiftService {
     input: CreateShiftInput,
     tx?: Transaction,
   ): Promise<string> {
-    const transaction = tx ?? this.db;
+    if (!tx)
+      return this.db.transaction((transaction) =>
+        this.createShift(input, transaction),
+      );
+    const transaction = tx;
 
     const scheduleRow = await transaction.query.schedule.findFirst({
       where: eq(schedule.id, input.scheduleId),
